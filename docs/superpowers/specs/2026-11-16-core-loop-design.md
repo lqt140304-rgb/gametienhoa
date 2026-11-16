@@ -1,6 +1,6 @@
 # Thiết kế vòng lặp chính — Project Evolve
 
-Ngày: 2026-11-16 · Trạng thái: chờ duyệt
+Ngày: 2026-11-16 · Trạng thái: đã duyệt
 
 ## Mục đích
 Chốt các quyết định về vòng lặp chính (trước đây là "Câu hỏi cần chốt" trong `docs/GDD.md`) để định hướng các bản sau Prototype 0.1, mà không làm phình phạm vi 0.1.

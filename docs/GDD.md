@@ -44,11 +44,33 @@ Mục tiêu: chứng minh "trườn, hấp thụ, sống sót" là vui, trước
 6. **Kiến trúc sẵn sàng cho mạng ngay từ đầu:** dữ liệu trạng thái (chỉ số, cơ quan) tách khỏi phần hiển thị; dựng sẵn khung Netcode for GameObjects (host + 1 client) trong 0.1.
 7. Bản 0.2: gắn cơ quan mô-đun qua **socket cố định** trên khung xương, chuyển động bằng procedural animation (IK).
 
-## Câu hỏi cần chốt trước khi mở rộng
+## Vòng lặp chính (đã chốt 2026-11-16)
 
-- **Vòng lặp chính:** một ván dài bao lâu? Khi nào thắng hay thua? Chết thì mất gì? Tiến trình có được lưu lại không?
-- **Cân bằng ngẫu nhiên trong co-op:** Dị Năng yếu thì được bù bằng Thiên Phú mạnh hơn? Cho đổi lại 1 lần? Khiếm Khuyết có kèm một lợi ích nhỏ không?
-- **Vai trò từng chỉ số:** đói, năng lượng và sinh khối khác nhau thế nào, mỗi chỉ số buộc người chơi đưa ra quyết định gì?
-- **Giới hạn tổ hợp cơ quan:** số socket, loại cơ quan cho mỗi socket.
+Chi tiết và lý do: `docs/superpowers/specs/2026-11-16-core-loop-design.md`.
+
+- **Sinh tồn thế giới mở**, không giới hạn thời gian, thế giới được lưu giữa các buổi chơi (kiểu Minecraft). Không có trùm cuối duy nhất.
+- **Chết = làm lại từ đầu:** mất toàn bộ cơ quan, chỉ số, sinh khối. **Dị Năng, Thiên Phú, Khiếm Khuyết cố định theo người chơi trong mỗi thế giới** (chống spam tự sát để bốc lại).
+- **Dị Năng:** tốn Năng lượng, có hồi chiêu; **mạnh lên khi dùng**, chỉ tính khi dùng có tác dụng. Đổi được bằng **vật phẩm rất hiếm** từ boss: bốc ngẫu nhiên, không thấp hơn bậc hiện tại, mất cấp tiến hóa cũ.
+- **Boss:** nhiều boss, ít nhất một con mỗi vùng; không bắt buộc thứ tự. Rơi cơ quan độc nhất, **mỗi người tham gia quay tỉ lệ riêng**, có cơ chế chống xui; boss hồi sinh sau một thời gian.
+- **Cơ quan:** tự mọc khi ăn/hấp thụ, người chơi chọn giữ hoặc bỏ; lớn dần **mầm → non → trưởng thành**, tiêu sinh khối, hoạt động một phần khi chưa trưởng thành; đang mọc thì năng lượng hồi chậm. Mọc vào vị trí cố định trên cơ thể, số vị trí tăng theo kích thước (nguyên sinh 2, trưởng thành 6–8).
+- **Chỉ số:** Máu (sống/chết), Đói (áp lực liên tục), Năng lượng (áp lực trong trận), Sinh khối (vật liệu tiến hóa).
+- **Tổ:** bản đầu đơn giản, là điểm hồi sinh + kho thức ăn dùng chung, còn lại khi chết, không cất cơ quan.
+- **Xây dựng: để sau**, theo hướng **sinh học** (vật liệu tiết ra từ cơ quan, đặt theo lưới). Nền chuẩn bị từ đầu: lưu thế giới, tài nguyên sinh khối/dưỡng chất rõ ràng, trường "tiết vật liệu" trên SO cơ quan, địa hình không cần voxel.
+
+## Lộ trình
+
+1. **0.1** — trườn, hấp thụ, sống sót (phạm vi giữ nguyên như trên).
+2. **0.2** — cơ quan mọc dần qua socket cố định, procedural animation.
+3. **Sau đó** — boss và Dị Năng tiến hóa, lưu thế giới, tổ đơn giản.
+4. **Sau nữa** — xây dựng sinh học.
+
+## Câu hỏi còn mở
+
+- ~~Vòng lặp chính, cái chết, lưu tiến trình~~ → đã chốt ở trên.
+- ~~Cân bằng ngẫu nhiên~~ → Dị Năng tiến hóa được + đổi bằng vật phẩm hiếm.
+- ~~Vai trò chỉ số~~, ~~giới hạn tổ hợp cơ quan~~ → đã chốt ở trên.
+- Con số cụ thể: tỉ lệ rơi, thời gian hồi boss, tốc độ lớn của cơ quan.
+- Danh sách vị trí và loại cơ quan cho từng vị trí.
+- Mục tiêu dài hạn ngoài boss.
 
 **Trạng thái:** tài liệu thiết kế; chưa có project Unity.
