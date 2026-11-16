@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Evolve.Survival;
 using UnityEngine;
 
@@ -10,6 +11,10 @@ namespace Evolve.World
     [RequireComponent(typeof(Collider))]
     public class Nutrient : MonoBehaviour
     {
+        static readonly List<Nutrient> active = new List<Nutrient>();
+        /// <summary>All nutrients currently available to eat.</summary>
+        public static IReadOnlyList<Nutrient> Active => active;
+
         [SerializeField] float totalNutrition = 25f;
         [Tooltip("Nutrition absorbed per second (primitive membrane is slow)")]
         [SerializeField] float absorbRate = 5f;
@@ -29,6 +34,9 @@ namespace Evolve.World
             baseScale = transform.localScale;
             remaining = totalNutrition;
         }
+
+        void OnEnable() { if (remaining > 0f) active.Add(this); }
+        void OnDisable() => active.Remove(this);
 
         void Update()
         {
@@ -61,6 +69,8 @@ namespace Evolve.World
 
         void SetActive(bool on)
         {
+            if (on) { if (!active.Contains(this)) active.Add(this); }
+            else active.Remove(this);
             col.enabled = on;
             if (rend) rend.enabled = on;
         }
