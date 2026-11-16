@@ -17,11 +17,18 @@ namespace Evolve.World
 
         void Update()
         {
-            if (pulsePrefab == null || Time.time < next) return;
+            if (Time.time < next) return;
             next = Time.time + interval;
+            Pulse(radius);
+        }
+
+        /// <summary>Emit one pulse revealing every Nutrient within r. Used by Rung Màng.</summary>
+        public void Pulse(float r)
+        {
+            if (pulsePrefab == null) return;
             foreach (var n in FindObjectsByType<Nutrient>(FindObjectsSortMode.None))
             {
-                if ((n.transform.position - transform.position).sqrMagnitude > radius * radius) continue;
+                if ((n.transform.position - transform.position).sqrMagnitude > r * r) continue;
                 var p = Instantiate(pulsePrefab, n.transform.position, Quaternion.identity);
                 Destroy(p.gameObject, p.main.duration + p.main.startLifetime.constantMax);
             }

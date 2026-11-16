@@ -2,11 +2,13 @@ using UnityEngine;
 
 namespace Evolve.Abilities
 {
-    /// <summary>Example C-tier ability: violent membrane contraction propels the slime forward.</summary>
+    /// <summary>Nảy Bật (C): violent membrane contraction propels the slime forward.</summary>
     [CreateAssetMenu(menuName = "Evolve/Abilities/Burst Dash", fileName = "BurstDashSO")]
     public class BurstDashAbility : AbilitySO
     {
         public float Force = 10f;
+
+        void Reset() { DisplayName = "Nảy Bật"; EnergyCost = 20f; Cooldown = 4f; }
 
         public override bool Activate(GameObject user)
         {

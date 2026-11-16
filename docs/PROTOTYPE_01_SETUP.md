@@ -31,7 +31,7 @@ Code nằm trong `Assets/_Project/Scripts`. Khi tạo project Unity (bước 4 t
 
 ## 7. HUD và Dị Năng
 1. Tạo GameObject rỗng `HUD`, thêm **Survival HUD**, kéo `Slime` vào ô **Stats**.
-2. Trong cửa sổ Project, chuột phải **Create → Evolve → Abilities → Burst Dash** để tạo `BurstDashSO`, kéo vào ô **Random Pool** của *Ability Caster*.
+2. Trong cửa sổ Project, chuột phải **Create → Evolve → Abilities** và tạo đủ 5 Dị Năng bậc C: **Burst Dash** (Nảy Bật), **Sticky Grip** (Bám Dính), **Mucus Spit** (Phun Dịch Nhầy), **Play Dead** (Giả Xác), **Membrane Pulse** (Rung Màng). Kéo cả 5 vào ô **Random Pool** của *Ability Caster*. Rung Màng cần slime có *Vibration Sense* với Pulse Prefab đã gán.
 3. (Tuỳ chọn) **Create → Evolve → Survival Config** để chỉnh tốc độ đói, hồi năng lượng…, kéo vào *Survival Stats*.
 
 ## Điều khiển

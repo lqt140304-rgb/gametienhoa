@@ -1,3 +1,4 @@
+using Evolve.Abilities;
 using Evolve.Survival;
 using UnityEngine;
 
@@ -47,7 +48,8 @@ namespace Evolve.World
             var stats = other.GetComponentInParent<SurvivalStats>();
             if (stats == null || stats.State.IsDead) return;
 
-            float amount = Mathf.Min(absorbRate * Time.fixedDeltaTime, remaining);
+            float rate = absorbRate * StickyGrip.AbsorbMultiplierFor(stats.gameObject);
+            float amount = Mathf.Min(rate * Time.fixedDeltaTime, remaining);
             remaining -= amount;
             stats.State.Feed(amount);
             transform.localScale = baseScale * Mathf.Lerp(0.3f, 1f, remaining / totalNutrition);

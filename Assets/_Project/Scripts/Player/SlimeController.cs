@@ -23,6 +23,9 @@ namespace Evolve.Player
         [Tooltip("Squash & stretch target (child mesh)")]
         [SerializeField] Transform visual;
 
+        /// <summary>When true, the slime ignores move and hop input (e.g. Giả Xác).</summary>
+        public bool InputLocked { get; set; }
+
         Rigidbody rb;
         SurvivalStats stats;
         Vector3 baseScale = Vector3.one;
@@ -41,7 +44,7 @@ namespace Evolve.Player
 
         void Update()
         {
-            if (ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
+            if (!InputLocked && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
                 rb.AddForce(Vector3.up * hopForce + dir * hopForward, ForceMode.VelocityChange);
@@ -64,6 +67,7 @@ namespace Evolve.Player
 
         Vector3 GetMoveDirection()
         {
+            if (InputLocked) return Vector3.zero;
             Vector2 input = ReadMove();
             if (input.sqrMagnitude < 0.01f) return Vector3.zero;
             Vector3 fwd = cameraTransform ? cameraTransform.forward : Vector3.forward;

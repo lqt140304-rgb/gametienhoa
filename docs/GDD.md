@@ -44,6 +44,18 @@ Mục tiêu: chứng minh "trườn, hấp thụ, sống sót" là vui, trước
 6. **Kiến trúc sẵn sàng cho mạng ngay từ đầu:** dữ liệu trạng thái (chỉ số, cơ quan) tách khỏi phần hiển thị; dựng sẵn khung Netcode for GameObjects (host + 1 client) trong 0.1.
 7. Bản 0.2: gắn cơ quan mô-đun qua **socket cố định** trên khung xương, chuyển động bằng procedural animation (IK).
 
+## 5 Dị Năng bậc C cho Prototype 0.1 (đã chốt)
+
+| Dị Năng | Vai trò | Tác dụng | Lên cấp khi (sau 0.1) | Code |
+|---|---|---|---|---|
+| Nảy Bật | Di chuyển | Bật mạnh theo hướng đang đi | Thoát kẻ thù / bật tới mồi | `BurstDashAbility` |
+| Bám Dính | Săn mồi | Vài giây: dính chặt vật thể chạm vào, hấp thụ nhanh gấp bội | Giữ mồi tới khi hấp thụ xong | `StickyGripAbility` |
+| Phun Dịch Nhầy | Tầm xa | Phun cục nhầy làm chậm mục tiêu | Trúng mục tiêu | `MucusSpitAbility` |
+| Giả Xác | Phòng thủ | Nằm im, kẻ thù mất dấu; không hồi năng lượng | Kẻ thù bỏ đi | `PlayDeadAbility` |
+| Rung Màng | Giác quan | Xung rung tầm rộng làm lộ mọi thứ xung quanh | Phát hiện mồi/kẻ thù chưa thấy | `MembranePulseAbility` |
+
+0.1 chưa có mồi sống và kẻ thù: Bám Dính, Phun Dịch Nhầy và Giả Xác có sẵn khung (`Slowed`, `PlayingDead.IsHidden`) cho AI sau này dùng.
+
 ## Vòng lặp chính (đã chốt 2026-11-16)
 
 Chi tiết và lý do: `docs/superpowers/specs/2026-11-16-core-loop-design.md`.
