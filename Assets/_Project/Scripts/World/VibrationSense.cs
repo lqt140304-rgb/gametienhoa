@@ -19,19 +19,28 @@ namespace Evolve.World
         {
             if (Time.time < next) return;
             next = Time.time + interval;
-            Pulse(radius);
+            Pulse(radius);  // passive sense: food only
         }
 
-        /// <summary>Emit one pulse revealing every Nutrient within r. Used by Rung Màng.</summary>
-        public void Pulse(float r)
+        /// <summary>Emit one pulse revealing food (and creatures if asked) within r. Rung Màng passes true.</summary>
+        public void Pulse(float r, bool includeCreatures = false)
         {
             if (pulsePrefab == null) return;
             foreach (var n in FindObjectsByType<Nutrient>(FindObjectsSortMode.None))
+                Emit(n.transform.position, r);
+            if (!includeCreatures) return;
+            foreach (var c in FindObjectsByType<Evolve.Creatures.CreatureMotor>(FindObjectsSortMode.None))
             {
-                if ((n.transform.position - transform.position).sqrMagnitude > r * r) continue;
-                var p = Instantiate(pulsePrefab, n.transform.position, Quaternion.identity);
-                Destroy(p.gameObject, p.main.duration + p.main.startLifetime.constantMax);
+                if (c.TryGetComponent(out Evolve.Creatures.Prey prey) && !prey.Alive) continue;
+                Emit(c.transform.position, r);
             }
+        }
+
+        void Emit(Vector3 at, float r)
+        {
+            if ((at - transform.position).sqrMagnitude > r * r) return;
+            var p = Instantiate(pulsePrefab, at, Quaternion.identity);
+            Destroy(p.gameObject, p.main.duration + p.main.startLifetime.constantMax);
         }
     }
 }

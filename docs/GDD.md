@@ -54,7 +54,7 @@ Mục tiêu: chứng minh "trườn, hấp thụ, sống sót" là vui, trước
 | Giả Xác | Phòng thủ | Nằm im, kẻ thù mất dấu; không hồi năng lượng | Kẻ thù bỏ đi | `PlayDeadAbility` |
 | Rung Màng | Giác quan | Xung rung tầm rộng làm lộ mọi thứ xung quanh | Phát hiện mồi/kẻ thù chưa thấy | `MembranePulseAbility` |
 
-0.1 chưa có mồi sống và kẻ thù: Bám Dính, Phun Dịch Nhầy và Giả Xác có sẵn khung (`Slowed`, `PlayingDead.IsHidden`) cho AI sau này dùng.
+0.1 có **mồi sống** (`Prey`: chạy trốn, nhanh hơn slime trườn, bị hấp thụ khi chạm) và **kẻ thù** (`Predator`: phát hiện, đuổi, cắn, bỏ cuộc khi xa hoặc khi slime Giả Xác).
 
 ## Vòng lặp chính (đã chốt 2026-11-16)
 

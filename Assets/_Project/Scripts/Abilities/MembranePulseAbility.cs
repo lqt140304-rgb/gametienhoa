@@ -15,7 +15,7 @@ namespace Evolve.Abilities
         public override bool Activate(GameObject user)
         {
             if (!user.TryGetComponent(out VibrationSense sense)) return false;
-            sense.Pulse(Radius);
+            sense.Pulse(Radius, includeCreatures: true);
             return true;
         }
     }

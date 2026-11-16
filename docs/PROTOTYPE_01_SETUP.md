@@ -34,6 +34,10 @@ Code nằm trong `Assets/_Project/Scripts`. Khi tạo project Unity (bước 4 t
 2. Trong cửa sổ Project, chuột phải **Create → Evolve → Abilities** và tạo đủ 5 Dị Năng bậc C: **Burst Dash** (Nảy Bật), **Sticky Grip** (Bám Dính), **Mucus Spit** (Phun Dịch Nhầy), **Play Dead** (Giả Xác), **Membrane Pulse** (Rung Màng). Kéo cả 5 vào ô **Random Pool** của *Ability Caster*. Rung Màng cần slime có *Vibration Sense* với Pulse Prefab đã gán.
 3. (Tuỳ chọn) **Create → Evolve → Survival Config** để chỉnh tốc độ đói, hồi năng lượng…, kéo vào *Survival Stats*.
 
+## Mồi sống và kẻ thù
+1. **Mồi:** tạo một Sphere nhỏ (scale 0.4), thêm **Rigidbody** và **Prey** (tự thêm *Creature Motor*). Collider **không** đánh dấu Is Trigger. Mặc định Run Speed 4, nhanh hơn slime (2.5), nên phải dùng Dị Năng mới bắt được. Đặt khoảng 5 con.
+2. **Kẻ thù:** tạo một Capsule (màu đỏ), thêm **Rigidbody** và **Predator**. Đặt Run Speed của *Creature Motor* khoảng 3, chậm hơn slime khi Nảy Bật nhưng nhanh hơn khi trườn. Đặt 1–2 con cách điểm xuất phát một quãng.
+
 ## Điều khiển
 | Phím | Tác dụng |
 |---|---|
@@ -48,3 +52,8 @@ Code nằm trong `Assets/_Project/Scripts`. Khi tạo project Unity (bước 4 t
 - Đứng yên thì hồi năng lượng; nảy và dùng Dị Năng thì tốn năng lượng.
 - Chạm vào thức ăn thì nó co lại và thanh đói tăng; sau 20 giây thức ăn xuất hiện lại.
 - Màn hình đen trắng, sương mù dày, nhìn xa khoảng 12 m.
+- Mồi bỏ chạy khi slime tới gần; chạm vào thì mồi teo lại, thanh đói tăng; hút cạn thì mồi biến mất và xuất hiện lại sau 30 giây ở chỗ cũ.
+- Bám Dính: chạm mồi thì dính chặt và hút nhanh hơn. Phun Dịch Nhầy: trúng mồi/kẻ thù thì nó chậm lại 3 giây.
+- Kẻ thù đuổi theo trong khoảng 10 m, cắn mất 15 máu mỗi 1,5 giây, bỏ cuộc khi slime cách xa hơn 16 m.
+- Giả Xác: kẻ thù bỏ đi, không cắn; mồi không bỏ chạy.
+- Rung Màng: làm lộ cả mồi và kẻ thù.
