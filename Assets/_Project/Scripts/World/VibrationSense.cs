@@ -19,7 +19,7 @@ namespace Evolve.World
         {
             if (pulsePrefab == null || Time.time < next) return;
             next = Time.time + interval;
-            foreach (var n in FindObjectsByType<Nutrient>(FindObjectsSortMode.None))
+            foreach (var n in Nutrient.Active)
             {
                 if ((n.transform.position - transform.position).sqrMagnitude > radius * radius) continue;
                 var p = Instantiate(pulsePrefab, n.transform.position, Quaternion.identity);
