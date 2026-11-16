@@ -1,0 +1,118 @@
+using Evolve.Survival;
+using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
+namespace Evolve.Player
+{
+    /// <summary>
+    /// Primordial slime: slow crawl (free) and hop (costs energy).
+    /// Movement is camera-relative. Requires a Rigidbody (freeze rotation).
+    /// </summary>
+    [RequireComponent(typeof(Rigidbody), typeof(SurvivalStats))]
+    public class SlimeController : MonoBehaviour
+    {
+        [SerializeField] float crawlSpeed = 2.5f;
+        [SerializeField] float acceleration = 12f;
+        [SerializeField] float hopForce = 5f;
+        [SerializeField] float hopForward = 3f;
+        [SerializeField] float groundCheckDistance = 0.15f;
+        [SerializeField] LayerMask groundMask = ~0;
+        [SerializeField] Transform cameraTransform;
+        [Tooltip("Squash & stretch target (child mesh)")]
+        [SerializeField] Transform visual;
+
+        Rigidbody rb;
+        SurvivalStats stats;
+        Vector3 baseScale = Vector3.one;
+        float squash;
+        Collider col;
+
+        void Awake()
+        {
+            rb = GetComponent<Rigidbody>();
+            rb.freezeRotation = true;
+            stats = GetComponent<SurvivalStats>();
+            col = GetComponent<Collider>();
+            if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
+            if (visual != null) baseScale = visual.localScale;
+        }
+
+        void Update()
+        {
+            if (ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
+            {
+                Vector3 dir = GetMoveDirection();
+                rb.AddForce(Vector3.up * hopForce + dir * hopForward, ForceMode.VelocityChange);
+                squash = 1f;
+            }
+            AnimateVisual();
+        }
+
+        void FixedUpdate()
+        {
+            if (stats.State.IsDead) return;
+            Vector3 dir = GetMoveDirection();
+            stats.IsMoving = dir.sqrMagnitude > 0.01f;
+
+            Vector3 v = rb.linearVelocity;
+            Vector3 target = dir * crawlSpeed;
+            Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
+            rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
+        }
+
+        Vector3 GetMoveDirection()
+        {
+            Vector2 input = ReadMove();
+            if (input.sqrMagnitude < 0.01f) return Vector3.zero;
+            Vector3 fwd = cameraTransform ? cameraTransform.forward : Vector3.forward;
+            Vector3 right = cameraTransform ? cameraTransform.right : Vector3.right;
+            fwd.y = 0; right.y = 0;
+            return Vector3.ClampMagnitude(fwd.normalized * input.y + right.normalized * input.x, 1f);
+        }
+
+        bool IsGrounded()
+        {
+            float extent = col ? col.bounds.extents.y : 0.5f;
+            return Physics.Raycast(transform.position, Vector3.down, extent + groundCheckDistance, groundMask, QueryTriggerInteraction.Ignore);
+        }
+
+        void AnimateVisual()
+        {
+            if (visual == null) return;
+            squash = Mathf.MoveTowards(squash, 0f, Time.deltaTime * 3f);
+            float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.05f : 0f;
+            float y = 1f + squash * 0.35f + wobble;
+            float xz = 1f / Mathf.Sqrt(y); // preserve volume
+            visual.localScale = Vector3.Scale(baseScale, new Vector3(xz, y, xz));
+        }
+
+        static Vector2 ReadMove()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var k = Keyboard.current;
+            Vector2 v = Vector2.zero;
+            if (k != null)
+            {
+                if (k.wKey.isPressed) v.y += 1; if (k.sKey.isPressed) v.y -= 1;
+                if (k.dKey.isPressed) v.x += 1; if (k.aKey.isPressed) v.x -= 1;
+            }
+            if (Gamepad.current != null) v += Gamepad.current.leftStick.ReadValue();
+            return Vector2.ClampMagnitude(v, 1f);
+#else
+            return Vector2.ClampMagnitude(new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1f);
+#endif
+        }
+
+        static bool ReadHop()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+                || (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame);
+#else
+            return Input.GetKeyDown(KeyCode.Space);
+#endif
+        }
+    }
+}
