@@ -32,7 +32,8 @@ namespace Evolve.Player
         SurvivalStats stats;
         OrganHost organs;
         Vector3 baseScale = Vector3.one;
-        float squash, squashTarget, wobbleAmp, airK, airTime;
+        float squash, squashTarget, wobbleAmp, airK, airTime, scaleK = 1f;
+        Evolve.Visuals.SlimeGelAnimator jellyAnimator;
         Vector3 spawnPoint;
         Collider col;
         SphereCollider sphere;
@@ -197,7 +198,11 @@ namespace Evolve.Player
             airK = Mathf.Lerp(airK, airTarget, 1f - Mathf.Exp(-16f * dt));
 
             float bs = BodyScale;
-            float y = 1f + squash * 0.35f + wobble + airK;
+            // One animation at a time: while a skill / attack / absorb plays, the hop squash and wobble step aside.
+            if (jellyAnimator == null) jellyAnimator = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
+            bool action = jellyAnimator != null && jellyAnimator.ActionPlaying;
+            scaleK = Mathf.Lerp(scaleK, action ? 0f : 1f, 1f - Mathf.Exp(-14f * dt));
+            float y = 1f + (squash * 0.35f + wobble + airK) * scaleK;
             float xz = 1f / Mathf.Sqrt(y); // preserve volume
             visual.localScale = Vector3.Scale(baseScale * bs, new Vector3(xz, y, xz));
 

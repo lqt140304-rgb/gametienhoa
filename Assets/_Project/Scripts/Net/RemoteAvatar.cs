@@ -63,7 +63,7 @@ namespace Evolve.Net
             var shared = FindSlimeMaterial();
             if (shared != null) renderer.sharedMaterial = shared;
             tint = visual.GetComponent<Evolve.Visuals.SlimeGelTint>();
-            if (tint != null) tint.SetColor(Color.HSVToRGB((clientId * 0.37f) % 1f, 0.45f, 0.95f)); // until their colour arrives
+
 
             // The sockets must exist before OrganHost, which looks for them when it wakes up.
             foreach (OrganSlot slot in System.Enum.GetValues(typeof(OrganSlot)))
@@ -99,7 +99,13 @@ namespace Evolve.Net
             MaxHealth = s.MaxHealth > 0f ? s.MaxHealth : 100f;
             Lives = s.Lives;
             Dead = s.Dead;
-            if (tint != null) tint.SetColor((Color)s.BodyColor);
+            if (tint != null && s.PartColors != null && s.PartColors.Length == 18)
+            {
+                var colors = new Color[Evolve.Visuals.SlimeColor.PartCount];
+                for (int i = 0; i < colors.Length; i++)
+                    colors[i] = new Color32(s.PartColors[i * 3], s.PartColors[i * 3 + 1], s.PartColors[i * 3 + 2], 255);
+                tint.SetColors(colors);
+            }
             Lost = s.Lost;
 
             // Mirror the numbers into the ghost's stats so creatures can react to it.

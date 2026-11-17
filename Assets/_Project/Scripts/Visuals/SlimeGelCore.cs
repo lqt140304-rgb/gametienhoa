@@ -16,6 +16,7 @@ namespace Evolve.Visuals
         Renderer coreRenderer;
         MaterialPropertyBlock block;
         SurvivalStats stats;
+        SlimeGelTint tint;
         float phase;
 
         /// <summary>Extra glow (0..1) other scripts can add for a moment, e.g. while absorbing.</summary>
@@ -24,7 +25,8 @@ namespace Evolve.Visuals
         void Awake()
         {
             stats = GetComponentInParent<SurvivalStats>();
-            if (GetComponent<SlimeGelTint>() == null) gameObject.AddComponent<SlimeGelTint>();
+            tint = GetComponent<SlimeGelTint>();
+            if (tint == null) tint = gameObject.AddComponent<SlimeGelTint>();
             if (GetComponent<SlimeGelAnimator>() == null) gameObject.AddComponent<SlimeGelAnimator>();
             block = new MaterialPropertyBlock();
             var amber = MakeMaterial(Amber, 1.0f, 1f);
@@ -62,7 +64,9 @@ namespace Evolve.Visuals
 
             float glow = (Mathf.Lerp(0.25f, 0.9f, health) + 0.8f * Boost) * (0.75f + 0.25f * beat);
             coreRenderer.GetPropertyBlock(block);
-            block.SetColor("_EmissionColor", Amber * glow);
+            Color coreColor = tint != null ? tint.CoreColor : Amber;
+            block.SetColor("_BaseColor", coreColor);
+            block.SetColor("_EmissionColor", coreColor * glow);
             coreRenderer.SetPropertyBlock(block);
         }
 
