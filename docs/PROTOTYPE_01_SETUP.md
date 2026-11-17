@@ -1,8 +1,21 @@
 # Dựng scene Prototype_01
 
-Code nằm trong `Assets/_Project/Scripts`. Khi tạo project Unity (bước 4 trong README), copy `Assets/`, `Packages/`, `ProjectSettings/` vào repo. Thư mục `Assets/_Project` đã có sẵn sẽ được giữ nguyên.
+## Cách nhanh (khuyên dùng)
 
-> Code chưa được biên dịch trong Unity. Nếu Console báo lỗi, gửi nội dung lỗi để sửa.
+1. Mở project `gametienhoa` trong Unity (thanh tiêu đề phải ghi `gametienhoa`).
+2. Trên thanh menu, bấm **Evolve → Build Prototype Scene**.
+3. Đợi vài giây. Scene `Assets/_Project/Scenes/Prototype_01` được tạo và mở sẵn.
+4. Bấm **Play**.
+
+Công cụ tự tạo: mặt đất, slime (kèm mọi component), camera góc nhìn thứ ba, 20 cục thức ăn, hiệu ứng đen trắng và sương mù, giác quan rung, thanh chỉ số, Dị Năng mẫu, cùng các material, prefab và ScriptableObject trong `Assets/_Project`.
+
+Chạy lại menu này bất cứ lúc nào để dựng lại scene từ đầu. Các asset đã có (material, prefab, cấu hình) được giữ nguyên, nên chỉnh thông số trong đó không bị mất.
+
+Dựng xong, commit các file mới (scene, prefab, material, `.meta`) lên Git.
+
+## Cách thủ công
+
+Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 
 ## 1. Mặt đất
 - **GameObject → 3D Object → Plane**, scale (10, 1, 10).

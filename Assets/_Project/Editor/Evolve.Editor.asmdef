@@ -1,0 +1,13 @@
+{
+    "name": "Evolve.Editor",
+    "rootNamespace": "Evolve.EditorTools",
+    "references": [
+        "Evolve",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "autoReferenced": false
+}
