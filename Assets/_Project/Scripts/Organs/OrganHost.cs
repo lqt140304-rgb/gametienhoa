@@ -49,6 +49,8 @@ namespace Evolve.Organs
         public event Action<OrganSO> Attached;
         /// <summary>Raised when an organ finishes growing.</summary>
         public event Action<OrganSO> Completed;
+        /// <summary>Raised when an organ is detached (removed or replaced).</summary>
+        public event Action<OrganSO> Removed;
         /// <summary>Raised whenever the combined effects change.</summary>
         public event Action Changed;
 
@@ -68,6 +70,8 @@ namespace Evolve.Organs
         public OrganSO GetInSlot(OrganSlot slot) => organs.TryGetValue(slot, out var e) ? e.Organ : null;
 
         public int Count => organs.Count;
+        /// <summary>Owned organs in the order they were attached.</summary>
+        public List<OrganSO> OrganList => order.ConvertAll(e => e.Organ);
         public int MaxOrgans => maxOrgans;
 
         /// <summary>What would happen if this organ were attached.</summary>
@@ -92,11 +96,7 @@ namespace Evolve.Organs
             var check = Check(organ);
             if (check == AttachCheck.AlreadyOwned || check == AttachCheck.NoRoom) return false;
 
-            if (organs.TryGetValue(organ.Slot, out var old))
-            {
-                if (old.Visual != null) Destroy(old.Visual);
-                order.Remove(old);
-            }
+            if (organs.ContainsKey(organ.Slot)) Detach(organ.Slot);
 
             var entry = new Entry { Organ = organ };
             if (organ.VisualPrefab != null)
@@ -113,6 +113,18 @@ namespace Evolve.Organs
             Attached?.Invoke(organ);
             CheckDone(entry);
             return true;
+        }
+
+        /// <summary>Remove the organ in a slot (its growth is lost). Returns it, or null if empty.</summary>
+        public OrganSO Detach(OrganSlot slot)
+        {
+            if (!organs.TryGetValue(slot, out var e)) return null;
+            if (e.Visual != null) Destroy(e.Visual);
+            organs.Remove(slot);
+            order.Remove(e);
+            Recalculate();
+            Removed?.Invoke(e.Organ);
+            return e.Organ;
         }
 
         /// <summary>FoodFilter: split a meal between growing organs and hunger.</summary>

@@ -29,7 +29,7 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\n\n" +
             "Đứng yên: không đói, hồi năng lượng\n" +
             "Chấm xanh = thức ăn, chấm đỏ = con mồi\n(giác quan rung, thay cho mắt)\n\n" +
-            "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E chọn, X bỏ qua.\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
+            "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E chọn, X bỏ qua.\nG  Bảng cơ thể (tháo cơ quan bằng 1, 2…)\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
 
         void Start()
         {
@@ -41,6 +41,7 @@ namespace Evolve.Survival
             {
                 organs.Attached += o => Toast($"Mầm {o.DisplayName}: ăn thêm {o.GrowthFoodRequired:0} thức ăn để phát triển");
                 organs.Completed += o => Toast($"Tiến hóa: {o.DisplayName}!\n{o.Description}");
+                organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(rơi ra đất, nhặt lại phải nuôi từ đầu)");
             }
         }
 
@@ -96,11 +97,31 @@ namespace Evolve.Survival
             }
 
             DrawOrganPrompt();
+            DrawBodyMenu();
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 400), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 420), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
+        }
+
+        void DrawBodyMenu()
+        {
+            if (interactor == null || !interactor.BodyMenuOpen) return;
+            var list = organs.OrganList;
+            string text = "<b><size=18>Cơ thể</size></b>\n\n";
+            if (list.Count == 0) text += "Chưa có cơ quan nào.\n";
+            for (int i = 0; i < list.Count; i++)
+            {
+                var o = list[i];
+                float g = organs.GetGrowth(o);
+                string state = g >= 1f ? "hoàn chỉnh" : $"{organs.GetFed(o):0}/{o.GrowthFoodRequired:0} thức ăn";
+                text += $"[{i + 1}] Tháo {o.DisplayName}  ({OrganInteractor.SlotName(o.Slot)}, {state})\n";
+            }
+            if (organs.MaxOrgans > 0) text += $"\nSức chứa: {list.Count}/{organs.MaxOrgans}";
+            text += "\n[G] Đóng";
+            var style = new GUIStyle(box) { alignment = TextAnchor.UpperLeft, fontSize = 15, wordWrap = true, richText = true };
+            GUI.Box(new Rect(Screen.width / 2f - 230, 80, 460, 70 + 24 * Mathf.Max(1, list.Count) + 40), text, style);
         }
 
         void DrawOrganPrompt()

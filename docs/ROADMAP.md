@@ -27,6 +27,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Chơi thử 0.2: con mồi quá dễ bắt, cơ quan mọc ngay lập tức
 - [x] Con mồi nhanh hơn (1.6); cơ quan lớn bằng thức ăn: mỗi cơ quan cần 30 thức ăn, một nửa mỗi bữa ăn nuôi cơ quan (cả bữa nếu đã no)
 - [x] Chơi thử lại 0.2: con mồi tăng lên 1.8
-- [x] Bảng chọn khi chạm cơ quan: lắp, thay thế, hấp thụ, bỏ qua
+- [x] Bảng chọn khi chạm cơ quan: lắp, thay thế, hấp thụ, bỏ qua; cơ quan bị thay rơi ra đất; bảng Cơ thể (G) để tự tháo
 - [ ] Chơi thử bảng chọn cơ quan
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
