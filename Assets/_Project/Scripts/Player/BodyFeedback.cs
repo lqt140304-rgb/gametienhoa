@@ -59,7 +59,9 @@ namespace Evolve.Player
             var s = stats.State;
             if (s == null) return;
             TintAmounts(s.Thirst, s.MaxThirst, s.Hunger, s.MaxHunger, s.ThirstEnabled, out float dry, out float pale);
-            Color c = Color.Lerp(original, DryColor, dry * 0.7f);
+            Color baseColor = Evolve.Visuals.SlimeColor.Get(Evolve.Visuals.SlimePart.Body); // the player's chosen colour
+            baseColor.a = Evolve.Visuals.SlimeColor.Alpha;
+            Color c = Color.Lerp(baseColor, DryColor, dry * 0.7f);
             c = Color.Lerp(c, PaleColor, pale * 0.6f);
             bodyRenderer.GetPropertyBlock(block);
             block.SetColor(BaseColorId, c);

@@ -238,7 +238,13 @@ namespace Evolve.Net
             s.Lives = (byte)Mathf.Clamp(st.Lives, 0, 255);
             s.Dead = st.IsDead;
             s.Lost = st.Lost;
-            s.BodyColor = (Color32)Evolve.Visuals.SlimeColor.Current;
+            var resolved = Evolve.Visuals.SlimeColor.Resolved();
+            s.PartColors = new byte[18];
+            for (int i = 0; i < resolved.Length; i++)
+            {
+                var c32 = (Color32)resolved[i];
+                s.PartColors[i * 3] = c32.r; s.PartColors[i * 3 + 1] = c32.g; s.PartColors[i * 3 + 2] = c32.b;
+            }
 
             var list = localOrgans != null ? localOrgans.OrganList : new List<OrganSO>();
             int n = Mathf.Min(list.Count, PlayerNetState.MaxOrgans);

@@ -66,6 +66,9 @@ namespace Evolve.Visuals
         }
 
         /// <summary>A jelly wobble: the body keeps bouncing a little and settles (call after landing, hits, ...).</summary>
+        /// <summary>True while an action (skill, attack, absorb) plays; everyday movement animation steps aside then.</summary>
+        public bool ActionPlaying => activeTime >= 0f && active != GelMotion.Gulp;
+
         public void Jiggle(float strength) => jigV += strength;
 
         public void Play(GelMotion motion)
@@ -196,6 +199,7 @@ namespace Evolve.Visuals
         float fTime, fMove, fAbsorb, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
         Vector3 fDir;
 
+        float locoK = 1f;  // 1 = everyday movement animation fully on, 0 = off (an action or a jump has the floor)
         float crawlK = 1f; // 1 = body crawls, 0.25 = legs do the walking (eased, so attaching legs does not pop)
 
         /// <summary>
@@ -211,6 +215,10 @@ namespace Evolve.Visuals
             fTime = Time.time;
             fDir = moveDir;
             fMove = Mathf.Lerp(fMove, Mathf.Clamp01(speed / 4f), 1f - Mathf.Exp(-9f * dt));
+            // One animation at a time: while an action plays or the slime is in the air, the everyday movement
+            // animation (breathing, crawl, steps) fades out, so animations never fight each other.
+            bool airborne = body != null && Mathf.Abs(body.linearVelocity.y) > 0.8f;
+            locoK = Mathf.Lerp(locoK, ActionPlaying || airborne ? 0f : 1f, 1f - Mathf.Exp(-14f * dt));
             crawlK = Mathf.Lerp(crawlK, hasLegs ? 0.25f : 1f, 1f - Mathf.Exp(-6f * dt));
 
             float tPulse = 0f, tKick = 0f, tStretch = 0f, tCharge = 0f, tBurst = 0f;
@@ -282,20 +290,20 @@ namespace Evolve.Visuals
             Vector3 o = Vector3.zero;
 
             // Breathing: the hump rises and sinks slightly.
-            o.y += 0.02f * Mathf.Sin(t * 2.1f) * h;
-            o += outward * 0.01f * Mathf.Sin(t * 2.1f + 1f) * low;
+            o.y += 0.02f * locoK * Mathf.Sin(t * 2.1f) * h;
+            o += outward * 0.01f * locoK * Mathf.Sin(t * 2.1f + 1f) * low;
 
             // Crawling: a wave runs along the body, the hump leans where it is going.
-            if (fMove > 0.01f && fDir.sqrMagnitude > 1e-4f)
+            if (fMove * locoK > 0.01f && fDir.sqrMagnitude > 1e-4f)
             {
                 float along = b.x * fDir.x + b.z * fDir.z;
-                float crawl = crawlK;                   // with legs the legs do the moving, the body only sways
+                float crawl = crawlK * locoK;                   // with legs the legs do the moving, the body only sways
                 float fast = 1f + speed * 0.15f;        // faster = bigger, quicker ripples
                 float wave = Mathf.Sin(along * 11f - t * (9f + speed * 1.5f));
                 o.y += fMove * 0.07f * fast * crawl * wave * (0.3f + 0.7f * h);
                 o += outward * fMove * 0.06f * fast * crawl * wave * low;
-                o += fDir * (fMove * 0.16f * fast * h * h);
-                if (hasLegs) o.y += fMove * 0.035f * Mathf.Sin(gaitPhase * 2f) * h;   // body bobs with each step
+                o += fDir * (fMove * locoK * 0.16f * fast * h * h);
+                if (hasLegs) o.y += fMove * locoK * 0.035f * Mathf.Sin(gaitPhase * 2f) * h;   // body bobs with each step
             }
 
             // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
@@ -352,13 +360,13 @@ namespace Evolve.Visuals
         /// </summary>
         Vector3 Gait(Vector3 b)
         {
-            if (fMove < 0.01f) return Vector3.zero;
+            if (fMove * locoK < 0.01f) return Vector3.zero;
             float sx = b.x >= 0f ? 1f : -1f, sz = b.z >= 0f ? 1f : -1f;
             float phase = gaitPhase + (sx * sz > 0f ? 0f : Mathf.PI);
             float reach = Mathf.Clamp01((Mathf.Sqrt(b.x * b.x + b.z * b.z) - 0.1f) / 0.22f);
             float lift = Mathf.Max(0f, Mathf.Cos(phase));
-            Vector3 o = fDir * (Mathf.Sin(phase) * 0.16f * fMove * reach);
-            o.y += lift * 0.13f * fMove * reach;
+            Vector3 o = fDir * (Mathf.Sin(phase) * 0.16f * fMove * locoK * reach);
+            o.y += lift * 0.13f * fMove * locoK * reach;
             return o;
         }
 
