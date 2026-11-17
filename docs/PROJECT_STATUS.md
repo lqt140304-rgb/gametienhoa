@@ -64,8 +64,9 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Creatures/` | `Prey`, `PreySpawner`, `Predator`, `PredatorSpawner` | Con mồi bỏ chạy và mệt; kẻ săn mồi tuần tra, đuổi, cắn |
 | `World/` | `Nutrient`, `MonochromeVision`, `VibrationSense`, `TemperatureZone`, `ClimateSensor` | Thức ăn; thị giác (đen trắng, ánh sáng quanh nhân vật); quét rung; vùng nhiệt độ |
 | `Net/` | `CoopManager`, `CoopMenu`, `RemoteAvatar`, `PlayerNetState`, `WorldSync` | **Co-op 0.4a** (Netcode for GameObjects, host + IP). Assembly riêng `Evolve.Net`, chỉ biên dịch khi đã cài gói `com.unity.netcode.gameobjects` (`defineConstraints` + `versionDefines`). Tự thêm khi Play, phím F2. Xem `docs/COOP_SETUP.md` |
+| `Ecology/` | `Region`, `RegionPopulation`, `SpeciesPopulation`, `SpeciesSO`, `Den`, `PopulationCap`, `EmbodiedCreature`, `PredatorIncursion`, `IncursionRule`, `Carcass`, `CarcassDecay`, `CarcassStage` | **0.5a, chưa biên dịch.** Quần thể theo vùng thay spawner trong khu hồ (L0 hiện thân từ tổ, L2 chạy phép tính), kẻ săn B đi vào từ rìa, xác 3 giai đoạn. Cùng với `World/VibrationEmitter` (rung phát ra từ sinh vật). Spec: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` |
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
-| `Editor/` | `PrototypeSceneBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
+| `Editor/` | `PrototypeSceneBuilder`, `UnderrootLakeBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; menu **Evolve → Build Underroot Lake** dựng scene `Scenes/Underroot_Lake` (tạo species asset D/C/B, prefab `Prey_C`, gắn `VibrationEmitter`, tag `ShallowWater`; dùng chung `CreateSharedAssets`/`CreatePlayer` của builder prototype); `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
 **Lưu ý về công cụ dựng scene:**
 - Nó **tạo lại scene** từ đầu nhưng **dùng lại** material, prefab và ScriptableObject đã có. Đổi giá trị mặc định trong code **không ảnh hưởng** prefab hay asset cũ.
@@ -133,9 +134,33 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - **Gợi ý thứ tự của Bestiary mục 8** (chủ dự án chưa duyệt, và chưa chọn giữa co-op và BIS): trước co-op nên gộp `Prey`/`Predator` thành một `Creature` đọc `CreatureSO` (giữ đúng thông số hiện tại), rồi thêm bầy Sói Gai (Alpha, hú gọi) và vài loài hoang mạc; sau đó 5 ô kỹ năng, BIS cho mắt/chân/giáp, và boss đầu tiên (Mẹ Bầy Ngàn Chân). Lý do: Netcode chỉ phải đồng bộ một lớp quái.
 - **Còn mở (cần hỏi chủ dự án):** quy tắc kích thước → số khe cơ quan; cách chọn ô khi có hơn 5 kỹ năng (đang dùng bảng Cơ thể G, tạm); nâng Nhảy vọt, Lặn cát, Pheromone lên bậc B.
 
+## 6.2. Bản 0.5a (Hồ Khởi Sinh): trạng thái và giới hạn
+
+**Code 0.5a chưa từng được biên dịch hay chạy** (môi trường viết code không có Unity). Việc đầu tiên: mở Unity, chờ biên dịch, sửa lỗi nếu có.
+
+- **Chạy test:** Window → General → Test Runner → EditMode → Run All. Cần gói **Test Framework** (Package Manager). Test nằm ở `Assets/_Project/Tests/EditMode/` (assembly `Evolve.Tests.EditMode`): quần thể, kẻ săn đi vào, xác phân hủy, bậc D, sinh vật hiện thân.
+- **Giới hạn co-op:** xác (`Carcass`) **chưa đồng bộ** qua mạng; bản sao D/C trên client **trông giống nhau**; scene có `Net Template (Prey)` và `Net Template (Predator)` (spawner count 0) chỉ để `WorldSync` tìm được mẫu bản sao. Mỗi người vẫn có thế giới riêng như 0.4a ở scene hồ.
+- Tên loài (Mudmite, Rootcrawler, Hunter) và số liệu là **[ĐỀ XUẤT]**. `TemperatureZone.Ambient` là °C tuyệt đối (hốc rễ 18°C, bãi mùn 26°C).
+- Builder hồ đặt scene mới dựng làm scene đầu trong Build Settings (cùng helper với builder prototype).
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
 2. **Hệ thống hư hỏng cơ quan (BIS)** theo `BIOLOGICAL_INTEGRITY.md` mục H: mắt, chân, giáp; vùng trúng đòn; Integrity; blueprint; tái tạo tại tổ. Chơi một người cũng làm được. Công thức còn là đề xuất, cần hỏi chủ dự án trước.
 3. Quay lại phản hồi gần nhất của chủ dự án để chỉnh: độ sáng quanh nhân vật (`blindLightIntensity` 8), tầm quét, độ khó kẻ săn mồi và hoang mạc.
 4. Các mục còn lại: Thiên Phú, Khiếm Khuyết, màn hình tạo nhân vật, Dị Năng theo danh sách v2.0, lưu/tải, tổ, boss; cập nhật `README.md`.
+
+## 8. Danh sách kiểm tra thủ công 0.5a (cho chủ dự án)
+
+1. Unity mở project, chờ biên dịch xong: Console không có lỗi đỏ.
+2. Menu Evolve → Build Underroot Lake → (nếu hỏi) "Dựng lại". Scene `Underroot_Lake` mở ra, có trong File → Build Profiles/Build Settings.
+3. Kiểm tra asset: `ScriptableObjects/Species_D_Mudmite`, `Species_C_Rootcrawler`, `Species_B_Hunter` có số liệu đúng; `Prefabs/Prey.prefab` có VibrationEmitter strength 0.4, `Predator.prefab` strength 1; có `Prey_C.prefab` (to hơn).
+4. Play: Console không lỗi đỏ.
+5. Đi về phía đông (Bãi Mùn Rễ) → D xuất hiện quanh tổ; sang tây (Vườn Bào Tử) → C xuất hiện. Đi xa > 60 m khỏi mọi tổ và tâm hồ → chúng biến mất; quay lại → số lượng đúng.
+6. Giết hết D quanh một tổ → chỉ quay lại chậm theo thời gian. Tắt GameObject `Den D (Mudmite) 1` và `2` (hoặc GodMenu nếu có) → D không sinh thêm.
+7. Đứng ở Vũng Sinh Mệnh: không thấy B. Chờ ~4 phút → thấy vòng rung tím ở rìa trước khi thấy B.
+8. Hạ B → xác đổi màu qua 3 giai đoạn trong ~12 phút.
+9. Thử lăn vào hốc sâu (tây bắc và nam-đông nam): bị chặn, không rơi xuống. Tường bao và đá chặn khe bắc/nam không cho ra ngoài.
+10. Vào Chân Rễ Cổ Thụ (bắc) thấy nhiệt độ lạnh, Bãi Mùn Rễ (đông) ấm (HUD).
+11. Evolve → Build Prototype Scene vẫn chạy như cũ (slime, camera, HUD, con mồi, hoang mạc, kẻ săn).
+12. Co-op F2: host + client vào được scene Underroot_Lake (mỗi người thế giới riêng như 0.4a), không lỗi "không tìm thấy PreySpawner/PredatorSpawner".
