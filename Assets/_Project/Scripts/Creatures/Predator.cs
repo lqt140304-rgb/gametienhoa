@@ -278,6 +278,9 @@ namespace Evolve.Creatures
             }
             Debug.Log($"{name} bị hạ gục");
             Killed?.Invoke(this);
+            bool hasEc = TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec);
+            if (hasEc) ec.NotifyKilled();
+            Evolve.Ecology.Carcass.Spawn(new Vector3(transform.position.x, 0.2f, transform.position.z), 1.5f, hasEc ? ec.Region : null);
             Destroy(gameObject);
         }
     }
