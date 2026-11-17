@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Evolve.Abilities
 {
     /// <summary>
-    /// Skill of the Toxic Spikes (tier B): fires a fan of spikes toward the crosshair (aim mode, Alt) or the way
-    /// the camera faces (mouse mode). Lv3 adds 2 spikes and 50% damage. Proposed numbers, tune in the asset.
+    /// Skill of the Toxic Spikes (tier B): fires a fan of spikes toward the crosshair (aim mode, Alt) or the mouse
+    /// cursor (mouse mode). Lv3 adds 2 spikes and 50% damage. Proposed numbers, tune in the asset.
     /// </summary>
     [CreateAssetMenu(menuName = "Evolve/Abilities/Spike Burst", fileName = "SpikeBurstSO")]
     public class SpikeBurstAbility : AbilitySO
@@ -27,7 +27,8 @@ namespace Evolve.Abilities
         public override bool Activate(GameObject user, int level)
         {
             user.TryGetComponent(out SurvivalStats stats);
-            Vector3 origin = user.transform.position + Vector3.up * 0.3f;
+            // From the centre of the body, so a level shot hits creatures standing on the ground.
+            Vector3 origin = user.transform.position;
             Vector3 aim = AimController.AimDirection(user, origin, out _);
 
             int count = Mathf.Max(1, SpikeCount) + (level >= 3 ? 2 : 0);

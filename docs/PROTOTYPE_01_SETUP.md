@@ -85,7 +85,9 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
 | C | Quét rung: sóng lan 25 m, ánh sáng lan ra soi địa hình trong chốc lát, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (tốn 10 năng lượng, hồi 5 giây) |
 | 1–5 | Dùng kỹ năng gắn cơ quan trong ô tương ứng (cơ quan bậc B, mở ở Lv2; Lv3 mạnh hơn, hồi nhanh hơn). Đổi ô trong bảng Cơ thể (G) |
-| Alt | Đổi chế độ chuột ⇄ chế độ ngắm: có **hồng tâm** giữa màn hình, chuột xoay camera luôn (không cần giữ chuột phải); kỹ năng và lao (Q, 1–5) đi về phía hồng tâm. Mở bảng G hoặc F1 thì con trỏ tự hiện lại |
+| Chuột | Ở chế độ chuột, kỹ năng bắn/lao (Q, 1–5) đi **theo hướng con trỏ** |
+| Alt | Chế độ ngắm: **hồng tâm** giữa màn hình, chuột xoay camera luôn (không cần giữ chuột phải), camera lệch qua vai; kỹ năng đi theo hồng tâm. Mở bảng G hoặc F1 thì con trỏ tự hiện lại |
+| F5 | Góc nhìn thứ nhất: camera ở mắt nhân vật, ẩn thân, có hồng tâm; bấm lại để về góc ngoài |
 | X | Bỏ qua cơ quan |
 | F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |
 | G | Mở/đóng bảng cơ quan bên phải: đổ EXP, đặt ưu tiên, tháo, gán kỹ năng vào ô 1–5 |

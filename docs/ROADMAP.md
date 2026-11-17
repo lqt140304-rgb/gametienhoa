@@ -46,5 +46,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Chế độ ngắm (Alt): hồng tâm, chuột xoay camera; Xả Gai thành chùm gai bắn về phía hồng tâm
 - [x] Chơi thử chế độ ngắm: Alt hoạt động
 - [x] HUD/UI mới của Codex trên `main` (kho kỹ năng K, bảng cơ quan G, thanh Q · 1–5 · C, HUD cố định hoặc đi theo nhân vật)
-- [ ] Chơi thử HUD mới (độ phân giải khác nhau, Play Mode) và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
+- [x] Chơi thử chế độ ngắm: hồng tâm quá gần nhân vật; đạn ở chế độ chuột không theo con trỏ
+- [x] Camera lệch qua vai khi ngắm; đạn và lao theo con trỏ ở chế độ chuột; góc nhìn thứ nhất (F5)
+- [ ] Chơi thử camera vai, góc nhìn thứ nhất và HUD mới (độ phân giải khác nhau, Play Mode) và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
