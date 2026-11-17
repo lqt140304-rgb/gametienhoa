@@ -28,6 +28,7 @@ namespace Evolve.EditorTools
             var normal = RippleNormalMap();
             var clean = WaterMaterial("Lake_WaterClean", new Color(0.25f, 0.84f, 0.82f, 0.5f), normal, 0.3f, new Color(0.02f, 0.10f, 0.10f));
             var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.38f, 0.44f, 0.24f, 0.78f), normal, 0.18f, Color.black);
+            var life = WaterMaterial("Lake_WaterLife", new Color(0.50f, 0.48f, 0.24f, 0.66f), normal, 0.16f, new Color(0.03f, 0.03f, 0.0f));   // the Life Shallows: warm, olive, murky
             var deep = WaterMaterial("Lake_WaterDeep", new Color(0.04f, 0.22f, 0.34f, 0.88f), normal, 0.22f, new Color(0.0f, 0.03f, 0.05f));
 
             foamMaterial = FoamMaterial();
@@ -86,7 +87,7 @@ namespace Evolve.EditorTools
                 var r = pool.GetComponent<Renderer>();
                 if (r != null) r.enabled = false;
                 MakeSurface(pool.transform.parent != null ? pool.transform.parent : pool.transform,
-                    new Vector3(pool.transform.position.x, 0.05f, pool.transform.position.z), WaterShape.Disc, new Vector2(radius, 0f), clean, 0.03f);
+                    new Vector3(pool.transform.position.x, 0.05f, pool.transform.position.z), WaterShape.Disc, new Vector2(radius, 0f), life, 0.03f);
                 made++;
             }
 
@@ -137,7 +138,7 @@ namespace Evolve.EditorTools
                 {
                     if (pond == null || (pond.transform.parent != null && pond.transform.parent.name.StartsWith("Deep Pocket"))) continue;
                     var material = pond.GetComponent<MeshRenderer>().sharedMaterial;
-                    float hollow = material != null && material.name == "Lake_WaterDirty" ? 0.25f : pond.Shape == WaterShape.Stream ? 0.5f : 0.65f;
+                    float hollow = material != null && material.name == "Lake_WaterDirty" ? 0.2f : pond.Shape == WaterShape.Stream ? 0.4f : 0.5f;   // about half a slime body deep
                     CarveHollow(terrain, pond, hollow);
                 }
                 AssetDatabase.SaveAssets();
@@ -203,7 +204,7 @@ namespace Evolve.EditorTools
             int w = x1 - x0 + 1, h = z1 - z0 + 1;
             if (w < 2 || h < 2) return;
             var heights = data.GetHeights(x0, z0, w, h);
-            const float shelf = 3f;
+            const float shelf = 5f;
             for (int j = 0; j < h; j++)
                 for (int i = 0; i < w; i++)
                 {
@@ -267,7 +268,7 @@ namespace Evolve.EditorTools
             mat.SetFloat("_Blend", 0f);
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_ZWrite", 1f);   // the water hides whatever is below its surface (a wading slime shows only above it)
             mat.SetFloat("_Smoothness", 0.75f);
             mat.SetFloat("_Metallic", 0f);
             mat.SetTexture("_BumpMap", normal);

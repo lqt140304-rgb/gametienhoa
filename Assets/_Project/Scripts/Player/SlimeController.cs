@@ -15,6 +15,8 @@ namespace Evolve.Player
     public class SlimeController : MonoBehaviour
     {
         [SerializeField] float crawlSpeed = 1f;
+        /// <summary>Speed multiplier set by other systems (wading through water slows the slime down).</summary>
+        [System.NonSerialized] public float SpeedScale = 1f;
         [Tooltip("Speed multiplier while holding Shift (burns extra food)")]
         [SerializeField] float sprintMultiplier = 1.5f;
         [SerializeField] float acceleration = 12f;
@@ -123,7 +125,7 @@ namespace Evolve.Player
 
             Vector3 v = rb.linearVelocity;
             float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
-            Vector3 target = dir * crawlSpeed * organSpeed * (IsSprinting ? sprintMultiplier : 1f);
+            Vector3 target = dir * crawlSpeed * organSpeed * SpeedScale * (IsSprinting ? sprintMultiplier : 1f);
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
             rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
         }

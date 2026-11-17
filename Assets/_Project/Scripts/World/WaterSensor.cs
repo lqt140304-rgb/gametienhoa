@@ -31,9 +31,14 @@ namespace Evolve.World
 
         void Awake() => stats = GetComponent<SurvivalStats>();
 
+        Evolve.Player.SlimeController controller;
+
         void Update()
         {
             if (stats.IsRemote) return;
+            // Wading: water slows the slime down (it pushes through it).
+            if (controller == null) controller = GetComponent<Evolve.Player.SlimeController>();
+            if (controller != null) controller.SpeedScale = zones.Count > 0 ? 0.65f : 1f;
             zones.Prune(ZoneSet.IsAliveUnityObject);
             stats.State.ThirstEnabled = WaterZone.AnyInScene;
             if (zones.Count > 0 && !stats.State.IsDead)

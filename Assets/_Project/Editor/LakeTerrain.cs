@@ -27,23 +27,24 @@ namespace Evolve.EditorTools
             PrototypeSceneBuilder.EnsureFolder(Root + "/Terrain");
             WaterSurface.Refresh();
 
-            var mud = Tiling(Root + "/Models/LakeMud.png", 128, (u, v) =>
+            var mud = Tiling(Root + "/Models/LakeMud_v2.png", 128, (u, v) =>
             {
                 float big = LakeWater.TileableNoise(u * 5f, v * 5f, 5, 5);
                 float mid = LakeWater.TileableNoise(u * 13f, v * 13f, 13, 13);
                 float fine = LakeWater.TileableNoise(u * 40f, v * 40f, 40, 40);
                 float tone = 0.65f + 0.25f * big + 0.2f * mid * (0.6f + 0.4f * fine);
-                var c = new Color(0.30f, 0.24f, 0.20f) * tone;
+                var c = new Color(0.40f, 0.29f, 0.20f) * tone;   // warm brown mud
+                if (LakeWater.TileableNoise(u * 48f, v * 48f, 48, 48) > 0.9f) c = Color.Lerp(c, new Color(0.62f, 0.34f, 0.12f), 0.6f);   // fallen-leaf specks
                 // a few lighter pebbles
                 if (LakeWater.TileableNoise(u * 64f, v * 64f, 64, 64) > 0.93f) c = Color.Lerp(c, new Color(0.55f, 0.53f, 0.50f), 0.7f);
                 c.a = 1f;
                 return c;
             });
-            var moss = Tiling(Root + "/Models/LakeGroundMoss.png", 128, (u, v) =>
+            var moss = Tiling(Root + "/Models/LakeGroundMoss_v2.png", 128, (u, v) =>
             {
                 float big = LakeWater.TileableNoise(u * 6f, v * 6f, 6, 6);
                 float fine = LakeWater.TileableNoise(u * 36f, v * 36f, 36, 36);
-                var c = Color.Lerp(new Color(0.14f, 0.28f, 0.10f), new Color(0.34f, 0.52f, 0.20f), 0.25f + 0.55f * big * (0.7f + 0.3f * fine));
+                var c = Color.Lerp(new Color(0.18f, 0.26f, 0.09f), new Color(0.40f, 0.50f, 0.19f), 0.25f + 0.55f * big * (0.7f + 0.3f * fine));
                 c.a = 1f;
                 return c;
             });

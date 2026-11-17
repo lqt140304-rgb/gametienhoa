@@ -258,7 +258,7 @@ namespace Evolve.EditorTools
             main.startLifetime = 9f;
             main.startSpeed = 0.12f;
             main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.09f);
-            main.startColor = new Color(0.7f, 1f, 0.88f, 0.45f);
+            main.startColor = new Color(1f, 0.94f, 0.68f, 0.45f);
             main.maxParticles = 120;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             var emission = ps.emission;

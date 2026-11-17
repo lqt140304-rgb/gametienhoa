@@ -120,7 +120,7 @@ namespace Evolve.EditorTools
             }
             foreach (var p in LakeLayout.Scatter(260, rnd))
                 PlaceTuft(p);
-            var grassColors = new[] { new Color(0.32f, 0.58f, 0.22f), new Color(0.42f, 0.68f, 0.26f), new Color(0.26f, 0.48f, 0.24f) };
+            var grassColors = new[] { new Color(0.36f, 0.50f, 0.20f), new Color(0.46f, 0.58f, 0.24f), new Color(0.30f, 0.42f, 0.18f) };
             for (int g = 0; g < 3; g++)
             {
                 var buckets = new Dictionary<(int, int), List<Vector3>>();
@@ -137,6 +137,64 @@ namespace Evolve.EditorTools
                     AddMesh(holder, $"Grass {g} {bucket.Key.Item1},{bucket.Key.Item2}", GroundMeshes.Tufts(bucket.Value, 900 + g, 0.45f), grassMaterial);
             }
 
+            // ---- fallen leaves: flat orange-brown specks over the ground ----
+            var leafPositions = new List<Vector3>[] { new List<Vector3>(), new List<Vector3>(), new List<Vector3>() };
+            foreach (var lp in LakeLayout.Scatter(320, rnd))
+            {
+                if (Wet(ponds, lp)) continue;
+                leafPositions[rnd.Next(3)].Add(new Vector3(lp.x, GroundY(lp.x, lp.y) + 0.03f, lp.y));
+            }
+            var leafColours = new[] { new Color(0.52f, 0.30f, 0.12f), new Color(0.64f, 0.42f, 0.17f), new Color(0.40f, 0.24f, 0.10f) };
+            for (int g = 0; g < 3; g++)
+            {
+                var leafBuckets = new Dictionary<(int, int), List<Vector3>>();
+                foreach (var t in leafPositions[g])
+                {
+                    var key = Cell(t);
+                    if (!leafBuckets.TryGetValue(key, out var list)) leafBuckets[key] = list = new List<Vector3>();
+                    list.Add(t);
+                }
+                var holder = new GameObject("Leaves " + g).transform;
+                holder.SetParent(root, false);
+                var leafMaterial = OpaqueMaterial("Lake_Leaf" + g, leafColours[g], 0.1f, true);
+                foreach (var bucket in leafBuckets)
+                    AddMesh(holder, $"Leaves {g} {bucket.Key.Item1},{bucket.Key.Item2}", GroundMeshes.FallenLeaves(bucket.Value, 4000 + g, 0.28f), leafMaterial);
+            }
+
+            // ---- gel nurseries on the shore of the Life Pool: translucent domes with a glowing amber core ----
+            var domes = new List<CombineInstance>();
+            var cores = new List<CombineInstance>();
+            var coreBlob = FloraMeshes.Blob();
+            var poolObject = GameObject.Find("Pool Water");
+            foreach (var pond in ponds)
+            {
+                if (pond == null || poolObject == null || pond.transform.parent != poolObject.transform.parent || pond.Shape != WaterShape.Disc) continue;
+                var outline = pond.WorldOutline;
+                for (int k = 0; k < outline.Length; k += 7)
+                {
+                    if (rnd.NextDouble() > 0.55) continue;
+                    Vector2 anchor = outline[k] + Outward(outline, k) * (0.4f + (float)rnd.NextDouble() * 1.4f);
+                    int count = 1 + rnd.Next(3);
+                    for (int i = 0; i < count; i++)
+                    {
+                        Vector2 np = anchor + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * 1.8f;
+                        if (Wet(ponds, np)) continue;
+                        float radius = (i == 0 ? 0.45f : 0.25f) + (float)rnd.NextDouble() * 0.25f;
+                        float y = GroundY(np.x, np.y);
+                        var profile = new List<Vector2>
+                        {
+                            new Vector2(0f, radius * 0.62f), new Vector2(0.55f * radius, radius * 0.56f), new Vector2(0.85f * radius, radius * 0.34f),
+                            new Vector2(1.0f * radius, radius * 0.12f), new Vector2(1.06f * radius, 0f)
+                        };
+                        var dome = FloraMeshes.Lathe(profile, 14, radius * 0.3f, 6000 + domes.Count, 0.06f);
+                        domes.Add(new CombineInstance { mesh = dome, transform = Matrix4x4.TRS(new Vector3(np.x, y - 0.02f, np.y), Quaternion.identity, Vector3.one) });
+                        cores.Add(new CombineInstance { mesh = coreBlob, transform = Matrix4x4.TRS(new Vector3(np.x, y + radius * 0.22f, np.y), Quaternion.identity, new Vector3(radius * 0.5f, radius * 0.4f, radius * 0.5f)) });
+                    }
+                }
+            }
+            AddCombined(root, "Gel Nursery", domes, LakeWater.TranslucentMaterial("Lake_GelDome", null, new Color(0.72f, 0.86f, 0.50f, 0.5f), Color.black, 0.92f, (int)RenderQueue.Transparent + 1));
+            AddCombined(root, "Gel Nursery Cores", cores, OpaqueMaterial("Lake_GelCoreSpot", new Color(0.95f, 0.62f, 0.18f), 0.4f, false, new Color(0.9f, 0.5f, 0.12f)));
+
             // ---- mud paths from the pool to the other areas ----
             var ribbons = new List<CombineInstance>();
             int pathSeed = 7;
@@ -148,7 +206,7 @@ namespace Evolve.EditorTools
                 void Flush()
                 {
                     if (run.Count >= 3)
-                        ribbons.Add(new CombineInstance { mesh = GroundMeshes.Ribbon(run, 0.9f, ++pathSeed, GroundY, 0.015f), transform = Matrix4x4.identity });
+                        ribbons.Add(new CombineInstance { mesh = GroundMeshes.Ribbon(run, 1.6f, ++pathSeed, GroundY, 0.015f), transform = Matrix4x4.identity });
                     run = new List<Vector2>();
                 }
                 foreach (var p in line)
@@ -296,10 +354,10 @@ namespace Evolve.EditorTools
 
         static Material MossMaterial()
         {
-            var tex = LakeWater.PaintedTexture(Root + "/Models/MossPatch.png", 64, 64, (u, v) =>
+            var tex = LakeWater.PaintedTexture(Root + "/Models/MossPatch_v2.png", 64, 64, (u, v) =>
             {
                 float n = LakeWater.TileableNoise(u * 8f, v * 8f, 8, 8);
-                var colour = Color.Lerp(new Color(0.16f, 0.34f, 0.12f), new Color(0.46f, 0.72f, 0.26f), n);
+                var colour = Color.Lerp(new Color(0.18f, 0.26f, 0.09f), new Color(0.42f, 0.52f, 0.20f), n);
                 float d = new Vector2(u - 0.5f, v - 0.5f).magnitude * 2f;      // 0 centre .. 1 edge
                 colour.a = Mathf.SmoothStep(1f, 0.45f, d) * (0.75f + 0.25f * n);
                 return colour;
@@ -328,7 +386,7 @@ namespace Evolve.EditorTools
                 float mottled = 0.7f + 0.3f * LakeWater.TileableNoise(u * 9f, v * 3f, 9, 3);
                 return new Color(1f, 1f, 1f, across * mottled);
             });
-            return LakeWater.TranslucentMaterial("Lake_MudPath", tex, new Color(0.24f, 0.17f, 0.12f, 0.95f), Color.black, 0.05f, (int)RenderQueue.Transparent - 18);
+            return LakeWater.TranslucentMaterial("Lake_MudPath", tex, new Color(0.36f, 0.26f, 0.17f, 0.95f), Color.black, 0.05f, (int)RenderQueue.Transparent - 18);
         }
 
         internal static Material OpaqueMaterial(string name, Color color, float smoothness, bool doubleSided, Color emission = default)
