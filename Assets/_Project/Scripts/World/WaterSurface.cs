@@ -203,6 +203,10 @@ namespace Evolve.World
             mesh.hideFlags = HideFlags.HideAndDontSave; // never saved into the scene: it is rebuilt every time
             mesh.MarkDynamic();
             GetComponent<MeshFilter>().sharedMesh = mesh;
+            // Water neither casts nor receives shadows: shadows of the roots and pillars would show up as black patches on it.
+            var surfaceRenderer = GetComponent<MeshRenderer>();
+            surfaceRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            surfaceRenderer.receiveShadows = false;
             basePos = mesh.vertices;
             work = new Vector3[basePos.Length];
             var b = mesh.bounds;
@@ -236,6 +240,7 @@ namespace Evolve.World
                 go.AddComponent<MeshFilter>();
                 var mr = go.AddComponent<MeshRenderer>();
                 mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                mr.receiveShadows = false;
                 child = go.transform;
             }
             child.gameObject.SetActive(true);
