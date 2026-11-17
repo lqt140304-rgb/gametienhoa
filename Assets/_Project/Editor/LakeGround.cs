@@ -110,13 +110,11 @@ namespace Evolve.EditorTools
 
             // ---- mud paths from the pool to the other areas ----
             var ribbons = new List<CombineInstance>();
-            var targets = new[] { new Vector2(40f, 0f), new Vector2(0f, 50f), new Vector2(-40f, 0f) };
             int pathSeed = 7;
-            foreach (var target in targets)
+            foreach (var trail in TrailLines())
             {
-                Vector2 dir = target.normalized;
-                Vector2 a = dir * 17f, b = target - dir * 8f;
-                var line = GroundMeshes.WindingLine(a, b, ++pathSeed, 3.5f, 1.5f);
+                Vector2 a = trail[0], b = trail[trail.Length - 1];
+                var line = GroundMeshes.WindingLine(a, b, ++pathSeed, Mathf.Min(3.5f, Vector2.Distance(a, b) * 0.06f), 1.5f);
                 var run = new List<Vector2>();
                 void Flush()
                 {
@@ -137,9 +135,51 @@ namespace Evolve.EditorTools
             Debug.Log("Đã trang trí mặt đất (rêu, đá, cỏ, đường mòn). Bấm Ctrl+S để lưu scene. Chạy lại menu này sẽ làm lại từ đầu.");
         }
 
+        /// <summary>
+        /// The trails to draw, as (start, end) points on the ground. They follow the zone layout when the project has one
+        /// (World/ZoneLayout.Paths, read by name so this tool compiles with or without it). Without it, trails run from the
+        /// pool to the biomes found in the scene by name (by their objects' position), or to the old default spots.
+        /// </summary>
+        static List<Vector2[]> TrailLines()
+        {
+            var lines = new List<Vector2[]>();
+            var layout = System.Type.GetType("Evolve.World.ZoneLayout, Evolve");
+            var field = layout != null ? layout.GetField("Paths") : null;
+            if (field != null && field.GetValue(null) is Vector2[][] paths && paths.Length > 0)
+            {
+                foreach (var path in paths) if (path != null && path.Length >= 2) lines.Add(path);
+                if (lines.Count > 0) return lines;
+            }
+
+            // Fallback: from the edge of the pool to each biome found by its object's name.
+            var anchors = new[]
+            {
+                Anchor("Bai Mun Re (Humus Bed)", new Vector2(40f, 0f)),
+                Anchor("Chan Re Co Thu (Ancient Roots)", new Vector2(0f, 50f)),
+                Anchor("Vuon Bao Tu (Spore Garden)", new Vector2(-40f, 0f)),
+            };
+            foreach (var target in anchors)
+            {
+                Vector2 dir = target.normalized;
+                lines.Add(new[] { dir * 17f, target - dir * 8f });
+            }
+            return lines;
+        }
+
+        // The middle of a named object's renderers; a default if the object is not in the scene.
+        static Vector2 Anchor(string objectName, Vector2 fallback)
+        {
+            var go = GameObject.Find(objectName);
+            if (go == null) return fallback;
+            Bounds b = default; bool any = false;
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            { if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds); }
+            return any ? new Vector2(b.center.x, b.center.z) : fallback;
+        }
+
         // ---------------------------------------------------------------- placing helpers
 
-        static bool OnWater(List<WaterSurface> ponds, Vector2 p)
+        internal static bool OnWater(List<WaterSurface> ponds, Vector2 p)
         {
             foreach (var pond in ponds) if (pond != null && pond.ContainsWorld(p)) return true;
             return false;
@@ -149,7 +189,7 @@ namespace Evolve.EditorTools
             new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * size * 2f;
 
         // The direction pointing away from the pond at outline point k.
-        static Vector2 Outward(Vector2[] outline, int k)
+        internal static Vector2 Outward(Vector2[] outline, int k)
         {
             int n = outline.Length;
             Vector2 t = (outline[(k + 1) % n] - outline[(k - 1 + n) % n]).normalized;
@@ -162,7 +202,7 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>Height of the ground at (x, z): the terrain or the ground plane, found by ray (0 if none).</summary>
-        static float GroundY(float x, float z)
+        internal static float GroundY(float x, float z)
         {
             foreach (var hit in Physics.RaycastAll(new Vector3(x, 200f, z), Vector3.down, 400f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                 if (hit.collider is TerrainCollider || hit.collider.gameObject.name.StartsWith("Ground"))
@@ -177,7 +217,7 @@ namespace Evolve.EditorTools
             list.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.TRS(new Vector3(p.x, GroundY(p.x, p.y) + 0.03f, p.y), Quaternion.identity, Vector3.one) });
         }
 
-        static void AddCombined(Transform parent, string name, List<CombineInstance> parts, Material material)
+        internal static void AddCombined(Transform parent, string name, List<CombineInstance> parts, Material material)
         {
             if (parts.Count == 0) return;
             var mesh = new Mesh { name = name };
@@ -189,7 +229,7 @@ namespace Evolve.EditorTools
             AddMesh(parent, name, mesh, material);
         }
 
-        static void AddMesh(Transform parent, string name, Mesh mesh, Material material)
+        internal static void AddMesh(Transform parent, string name, Mesh mesh, Material material)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -226,7 +266,7 @@ namespace Evolve.EditorTools
             return LakeWater.TranslucentMaterial("Lake_MudPath", tex, new Color(0.24f, 0.17f, 0.12f, 0.95f), Color.black, 0.05f, (int)RenderQueue.Transparent - 18);
         }
 
-        static Material OpaqueMaterial(string name, Color color, float smoothness, bool doubleSided)
+        internal static Material OpaqueMaterial(string name, Color color, float smoothness, bool doubleSided, Color emission = default)
         {
             string path = $"{Root}/Materials/{name}.mat";
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -239,6 +279,8 @@ namespace Evolve.EditorTools
             mat.SetFloat("_Smoothness", smoothness);
             mat.SetFloat("_Metallic", 0f);
             mat.SetFloat("_Cull", doubleSided ? 0f : 2f);
+            if (emission.maxColorComponent > 0.001f) { mat.EnableKeyword("_EMISSION"); mat.SetColor("_EmissionColor", emission); }
+            else mat.DisableKeyword("_EMISSION");
             EditorUtility.SetDirty(mat);
             return mat;
         }
