@@ -18,7 +18,7 @@ Thay các hộp xám xanh phẳng đang đóng vai nước bằng **mặt nướ
 - Mực nước y = 0,04–0,06 m, đúng vùng lõi phẳng của 0.6a (y = 0).
 
 ## Hạn chế đã biết
-- Mặt nước nằm ngang; chưa có bọt bờ và chưa mờ dần ở mép (cần shader tùy chỉnh hoặc mesh viền, để bước sau).
+- Mặt nước nằm ngang. **Bọt bờ** (đã làm): một vòng viền trắng mờ dần hai phía (mesh vòng `WaterMeshes.DiscRing/RectRing`, vật liệu `Lake_Foam`) che đường cắt cứng giữa nước và đất. Mặt nước tự nó vẫn không mờ dần ở mép (cần shader tùy chỉnh).
 - Nước chỉ chuyển động khi Play (trong Editor là mặt tĩnh).
 
 ## Kiểm tra

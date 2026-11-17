@@ -38,6 +38,22 @@ namespace Evolve.Tests.EditMode
             }
         }
 
+        [Test] public void RingsFaceUpAndSpanTheEdge()
+        {
+            var disc = WaterMeshes.DiscRing(10f, 1f, 0.5f, 32);
+            Assert.AreEqual(11f, disc.bounds.extents.x, 0.05f);
+            var rect = WaterMeshes.RectRing(20f, 8f, 1f, 0.5f, 1.25f);
+            Assert.AreEqual(11f, rect.bounds.extents.x, 0.05f);
+            Assert.AreEqual(5f, rect.bounds.extents.z, 0.05f);
+            foreach (var mesh in new[] { disc, rect })
+            {
+                var v = mesh.vertices; var t = mesh.triangles;
+                for (int i = 0; i < t.Length; i += 3)
+                    Assert.Greater(Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]).y, 0f);
+                foreach (var uv in mesh.uv) Assert.That(uv.y, Is.InRange(0f, 1f));
+            }
+        }
+
         [Test] public void UvsStayInZeroToOne()
         {
             foreach (var uv in WaterMeshes.Disc(8f, 1f).uv) { Assert.That(uv.x, Is.InRange(0f, 1f)); Assert.That(uv.y, Is.InRange(0f, 1f)); }
