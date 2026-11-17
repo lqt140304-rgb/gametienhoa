@@ -72,6 +72,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Player/BodyFeedback` | | **0.5b.** Thân slime thể hiện chỉ số: xám khô khi khát, nhạt khi đói, run khi căng thẳng |
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
 | `World/` (khu lớn) | `WorldScale`, `TerrainShape`, `DomeMesh` | **0.6a, chưa biên dịch.** Hằng số quy mô (khu 480 m, lõi phẳng 130 m), hàm độ cao địa hình (lõi phẳng đúng y = 0, đồi, vách rìa), mesh mái vòm quay vào trong. `UnderrootLakeBuilder` dùng chúng để dựng Terrain, mái, rễ, cột mốc, đèn, ranh giới; asset sinh ra nằm ở `Assets/_Project/Terrain/` |
+| `World/` (bố cục khu) | `GroundHeight`, `ZoneLayout` | **0.6b, chưa biên dịch.** `GroundHeight` đọc độ cao Terrain để con mồi, kẻ săn, cơ quan rơi và xác bám mặt đất (không có Terrain thì giữ độ cao cũ). `ZoneLayout` giữ dữ liệu bệ vi sinh cảnh, suối, đường mòn; `TerrainShape` dùng nó để làm phẳng bệ và suối (y = 0) |
 | `Editor/` | `PrototypeSceneBuilder`, `UnderrootLakeBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; menu **Evolve → Build Underroot Lake** dựng scene `Scenes/Underroot_Lake` (tạo species asset D/C/B, prefab `Prey_C`, gắn `VibrationEmitter`, tag `ShallowWater`; dùng chung `CreateSharedAssets`/`CreatePlayer` của builder prototype); `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
 **Lưu ý về công cụ dựng scene:**
@@ -168,6 +169,19 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Trên cấu hình **Mobile** (Forward, 4 đèn mỗi vật), terrain và mái chỉ nhận 4 trong 25 đèn nên phần lớn khu tối; PC dùng Forward+ nên ổn. Nếu terrain hiện màu hồng, gán vật liệu URP TerrainLit vào `materialTemplate`.
 - Mái vòm bán kính 360 m, cao 85 m, không có collider; 28 rễ buông và 4 cột mốc (Bắc, Đông, Nam, Tây, cách tâm 190 m).
 
+## 6.5. Bản 0.6b (vi sinh cảnh trên khu 480 m): trạng thái và giới hạn
+
+**Code 0.6b chưa từng được biên dịch hay chạy.** Kiểm tra theo mục 11.
+
+- Bốn bệ phẳng bán kính 50 m: Chân Rễ (bắc, 0 170), Bãi Mùn Rễ (đông, 170 0), Vườn Bào Tử (tây, -170 0), Rìa Săn Mồi (đông nam, 170 -170); suối Khe Thủy Mạch dài xuống tận z = -170. Nội dung hồ chỉ dời x, z, **không đổi độ cao** (vì bệ phẳng y = 0).
+- Ba `Region` thay cho một: Bãi Mùn Rễ [D], Vườn Bào Tử [D, C], Rìa Săn Mồi [D, C, B]; mỗi vùng có đủ mồi cho kẻ săn và tổ D để C sinh sản (C chỉ sinh khi có D trong vùng). Rìa Săn Mồi có `deactivateRadius` 140 để kẻ săn không biến mất giữa lúc đang đuổi. Số mặc định mới khi tạo asset loài: D 18/32, C 10/16 (sinh 0,35, ăn D 0,05/con/phút), B 2/3 (ăn C 0,15/con/phút); tốc độ ăn giảm so với 0.5a để quần thể không tuyệt chủng trong vài phút khi vùng không có người. **Asset loài đã tồn tại thì giữ số cũ**; muốn dùng số mới thì xóa `ScriptableObjects/Species_*.asset` rồi dựng lại.
+- Kẻ săn B hiện thân ở cửa vào của Rìa Săn Mồi và tuần tra góc đông nam (nhà tại (110, -110), bán kính 90). Các thiết lập `homeRadius` chỉnh được ở `Predator Incursion`.
+- **Cột mốc:** một cột 30 m ngoài tâm mỗi bệ và một cột ở cuối suối (thay cho 4 cột la bàn của 0.6a).
+- Đường mòn là lớp đất sáng vẽ lên terrain (không làm phẳng, vẫn leo dốc được). Giới hạn dốc nới tới 0,75 (khoảng 37°).
+- **Vẫn chưa làm:** nơi trú chặn kẻ săn B, sinh vật D bỏ chạy khi B tới, nước ở điểm xuất hiện, thảm thực vật dọc đường (0.6c). Các khu khác chưa có.
+- **Công cụ `LakeGround.cs` của phiên trang trí** vẽ đường đất tới các vị trí **cũ** của vi sinh cảnh ((40,0), (0,50), (-40,0)); sau 0.6b nó trỏ vào đất trống, cần phiên đó cập nhật.
+- **Phiên trang trí hồ** ("Dress Lake", `Editor/LakeWater.cs`, `LakeGround.cs`) đọc scene theo tên và theo `WaterZone`: sau khi dựng lại scene, **chạy lại các menu "Dress Lake"** để nước bờ và đất trang trí được dựng lên chỗ mới.
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
@@ -217,3 +231,18 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 7. Mở **Stats** trong cửa sổ Game và ghi lại FPS đứng giữa khu và ở rìa.
 8. Co-op F2: vào phòng không lỗi.
 9. `Prototype_01` dựng lại vẫn chạy như cũ.
+
+## 11. Danh sách kiểm tra thủ công 0.6b (cho chủ dự án)
+
+1. Console không lỗi đỏ; **Test Runner → EditMode → Run All** xanh toàn bộ (thêm `GroundHeightTests`, `ZoneLayoutTests`, test bệ phẳng trong `TerrainShapeTests`).
+2. (Nếu muốn dùng số quần thể mới) xóa `ScriptableObjects/Species_*.asset`. Chạy lại **Evolve → Build Underroot Lake**, rồi chạy lại các menu "Dress Lake" của phiên trang trí.
+3. Đi từ tâm theo đường mòn sáng màu tới từng bệ (bắc, đông, tây, đông nam) và dọc suối xuống nam. Ở mỗi bệ nước, nơi trú, tổ, thức ăn đứng đúng mặt đất, không lún hay lơ lửng; đường mòn leo được, không có chỗ dốc kẹt.
+4. Tới gần mỗi bệ khoảng 70 m: sinh vật hiện ra; đi xa hơn 90 m thì biến mất; quay lại thấy đúng số lượng. Sinh vật đi lại trên đồi ở rìa bệ **không lơ lửng cũng không lún**.
+5. Nhìn thấy cột mốc ở mỗi bệ và cuối suối khi tới gần.
+6. Kẻ săn B không bao giờ hiện thân trong 40 m quanh bạn; B xuất hiện ở Rìa Săn Mồi rồi tuần tra góc đông nam; bấm **C** khi lại gần để thấy vết rung tím trước khi thấy B. Đường vòng nam → Rìa Săn Mồi dùng được.
+7. Hạ một con thú trên đồi: cơ quan rơi và xác nằm đúng mặt đất.
+8. Ghi lại FPS (mở Stats) ở bệ đông sinh vật và ở giữa khu.
+9. Co-op F2: người vào phòng thấy sinh vật đứng đúng mặt đất; không lỗi.
+10. `Prototype_01` dựng lại vẫn chạy như cũ (sinh vật giữ độ cao như trước).
+11. Ghi nhận khi chơi: kẻ săn B chỉ vào được khi bạn đứng cách tổ B khoảng 40 đến 70 m (hai cửa vào cách tâm 25 m, luật 40 m quanh người chơi); để quần thể chạy vài phút rồi xem số C và D có còn không (cân bằng sinh/ăn còn là số đặt tạm).
+12. `GroundHeightTests` bị bỏ qua (không lỗi) nếu đang mở scene có Terrain; muốn chạy nó, mở `Prototype_01` rồi chạy lại Test Runner.

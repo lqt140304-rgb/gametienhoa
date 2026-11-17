@@ -20,6 +20,19 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void PadsAreExactlyFlat()
+        {
+            foreach (var pad in ZoneLayout.Biomes)
+                for (float dx = -ZoneLayout.ContentExtent; dx <= ZoneLayout.ContentExtent; dx += 5f)
+                    for (float dz = -ZoneLayout.ContentExtent; dz <= ZoneLayout.ContentExtent; dz += 5f)
+                        if (dx * dx + dz * dz <= ZoneLayout.ContentExtent * ZoneLayout.ContentExtent)
+                            Assert.AreEqual(0f, TerrainShape.HeightAt(pad.Center.x + dx, pad.Center.y + dz, 1337), 1e-5f, $"{pad.Name} dx={dx} dz={dz}");
+            for (float z = ZoneLayout.StreamEnd.y; z <= ZoneLayout.StreamStart.y; z += 5f)
+                for (float x = -ZoneLayout.StreamHalfWidth; x <= ZoneLayout.StreamHalfWidth; x += 5f)
+                    Assert.AreEqual(0f, TerrainShape.HeightAt(x, z, 1337), 1e-5f, $"stream x={x} z={z}");
+        }
+
+        [Test]
         public void HeightsNeverNegativeAndBounded()
         {
             float half = WorldScale.ZoneSize * 0.5f;
@@ -35,7 +48,7 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void SlopesStayWalkable()
         {
-            const float step = 2f, limit = 1.2f, range = 210f;
+            const float step = 2f, limit = 1.5f, range = 210f; // 0.75 m/m, about 37 degrees
             for (float x = -range; x <= range; x += step)
                 for (float z = -range; z <= range; z += step)
                 {

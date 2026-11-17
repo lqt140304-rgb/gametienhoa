@@ -9,6 +9,8 @@ namespace Evolve.Ecology
     {
         [SerializeField] Region region;
         [SerializeField] Transform home;
+        [Tooltip("Roaming radius around Home (the hunter patrols a whole quadrant of the zone)")]
+        [SerializeField] float homeRadius = 90f;
         [SerializeField] SpeciesSO predator;
         [SerializeField] Transform[] entries;
         [SerializeField] int preyThreshold = 4;
@@ -71,7 +73,7 @@ namespace Evolve.Ecology
             int pick = IncursionRule.PickEntry(entryPositions, playerPositions, noSpawnRadius);
             if (pick < 0) return;
 
-            var ec = region.TryEmbodyAt(predator, entryPositions[pick], home != null ? home.position : region.transform.position);
+            var ec = region.TryEmbodyAt(predator, entryPositions[pick], home != null ? home.position : region.transform.position, homeRadius);
             if (ec == null) return;
             current = ec;
             minutesSinceLastHunt = 0f;

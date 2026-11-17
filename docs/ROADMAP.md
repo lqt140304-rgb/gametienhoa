@@ -71,4 +71,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Biên dịch và chạy thử 0.5b theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 9
 - [x] Code 0.6a: **đã code, chưa biên dịch/chạy thử**: `World/WorldScale`, `TerrainShape`, `DomeMesh`, builder dựng Terrain 480 m, mái vòm, rễ, cột mốc, đèn, ranh giới (spec mục 6.9, plan `docs/superpowers/plans/2026-11-17-0.6a-big-zone-terrain.md`)
 - [ ] Biên dịch và chạy thử 0.6a theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 10
+- [x] Code 0.6b: **đã code, chưa biên dịch/chạy thử**: `World/GroundHeight` (sinh vật bám đất), `ZoneLayout` (bệ vi sinh cảnh phẳng, suối, đường mòn, đường vòng), một `Region` cho mỗi vi sinh cảnh, kẻ săn B ở Rìa Săn Mồi xa (plan `docs/superpowers/plans/2026-11-17-0.6b-biomes-and-regions.md`)
+- [ ] Biên dịch và chạy thử 0.6b theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 11
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

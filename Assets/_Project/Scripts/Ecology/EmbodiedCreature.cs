@@ -25,12 +25,15 @@ namespace Evolve.Ecology
         }
 
         /// <summary>Anchor the creature's wandering area (Prey/Predator) to the den.</summary>
-        public void SetHome(Vector3 center)
+        public void SetHome(Vector3 center) => SetHome(center, HomeRadius);
+
+        /// <summary>Home with an explicit roaming radius (the tier-B hunter patrols a whole quadrant).</summary>
+        public void SetHome(Vector3 center, float radius)
         {
             var prey = GetComponent<Prey>();
-            if (prey != null) { prey.HomeCenter = center; prey.HomeRadius = HomeRadius; }
+            if (prey != null) { prey.HomeCenter = center; prey.HomeRadius = radius; }
             var predator = GetComponent<Predator>();
-            if (predator != null) { predator.HomeCenter = center; predator.HomeRadius = HomeRadius; }
+            if (predator != null) { predator.HomeCenter = center; predator.HomeRadius = radius; }
         }
 
         /// <summary>The creature was killed in the scene: the population loses one head.</summary>
