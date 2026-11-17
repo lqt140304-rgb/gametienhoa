@@ -38,26 +38,34 @@ namespace Evolve.World
     /// </summary>
     public static class ZoneLayout
     {
-        public static readonly Pad LifeShallows = new Pad("Vũng Sinh Mệnh", new Vector2(-8f, -120f), new Vector2(80f, 70f));
-        public static readonly Pad RootFoot = new Pad("Chân Rễ Cổ Thụ", new Vector2(-150f, -18f), new Vector2(70f, 60f));
-        public static readonly Pad Humus = new Pad("Bãi Mùn Rễ", new Vector2(-125f, 118f), new Vector2(80f, 70f));
-        public static readonly Pad Spore = new Pad("Vườn Bào Tử", new Vector2(137f, 110f), new Vector2(70f, 70f));
-        public static readonly Pad WaterVein = new Pad("Khe Thủy Mạch", new Vector2(173f, -8f), new Vector2(90f, 40f));
-        public static readonly Pad HuntEdge = new Pad("Rìa Săn Mồi", new Vector2(13f, 153f), new Vector2(80f, 55f));
+        public static readonly Pad LifeShallows = new Pad("Vũng Sinh Mệnh", new Vector2(-8f, -135f), new Vector2(80f, 70f));
+        public static readonly Pad RootFoot = new Pad("Chân Rễ Cổ Thụ", new Vector2(-165f, -15f), new Vector2(70f, 60f));
+        public static readonly Pad Humus = new Pad("Bãi Mùn Rễ", new Vector2(-140f, 135f), new Vector2(80f, 70f));
+        public static readonly Pad Spore = new Pad("Vườn Bào Tử", new Vector2(150f, 125f), new Vector2(70f, 70f));
+        public static readonly Pad WaterVein = new Pad("Khe Thủy Mạch", new Vector2(173f, -12f), new Vector2(90f, 40f));
+        public static readonly Pad HuntEdge = new Pad("Rìa Săn Mồi", new Vector2(10f, 168f), new Vector2(80f, 55f));
 
         /// <summary>All six areas: 01 Life Shallows, 02 Root Foot, 03 Humus, 04 Spore, 05 Water Vein, 06 Hunt Edge.</summary>
         public static readonly Pad[] Zones = { LifeShallows, RootFoot, Humus, Spore, WaterVein, HuntEdge };
         /// <summary>The land biomes that hold creature populations.</summary>
         public static readonly Pad[] Biomes = { RootFoot, Humus, Spore, HuntEdge };
 
+        /// <summary>
+        /// Ground level of each area's core, in Zones order (m above the lake): 01 at the lake, 02 the cave floor (a little
+        /// sunk), 03 a sinkhole, 04 a plateau, 05 the rim of the gorge (the stream runs at the lake level at its bottom), 06 a ridge.
+        /// </summary>
+        public static readonly float[] ZoneLevels = { 0f, -1f, -6f, 10f, 8f, 6f };
+        /// <summary>Areas whose edge is a steep wall (only their trails ramp gently up): the plateau and the gorge.</summary>
+        public static readonly bool[] SteepEdges = { false, false, false, true, true, false };
+
         /// <summary>Height of every water surface (m).</summary>
         public const float WaterLevel = 0.06f;
         /// <summary>How far (m) an area's influence reaches past its core before it fades out.</summary>
-        public const float InfluenceReach = 60f;
+        public const float InfluenceReach = 40f;
 
         // ---- the lake ----
         public static readonly Vector2 LakeCenter = new Vector2(-8f, -42f);
-        public static readonly Vector2 LakeRadii = new Vector2(110f, 80f);
+        public static readonly Vector2 LakeRadii = new Vector2(100f, 72f);
         /// <summary>The Life Shallows bay: the lake is at most 0.4 m deep this close to this point.</summary>
         public static readonly Vector2 BayCenter = new Vector2(-8f, -112f);
         public const float BayRadius = 50f;
@@ -66,7 +74,7 @@ namespace Evolve.World
         // ---- Khe Thủy Mạch ----
         static readonly Vector2[] StreamKeys =
         {
-            new Vector2(213f, 10f), new Vector2(187f, -7f), new Vector2(158f, -17f), new Vector2(133f, -25f), new Vector2(103f, -37f), new Vector2(90f, -40f)
+            new Vector2(213f, 10f), new Vector2(187f, -7f), new Vector2(158f, -17f), new Vector2(133f, -25f), new Vector2(103f, -37f), new Vector2(85f, -40f)
         };
         /// <summary>The stream's centre line from its spring (first point) to the lake, densely sampled and gently winding.</summary>
         public static readonly Vector2[] StreamLine = BuildStream();
@@ -76,25 +84,25 @@ namespace Evolve.World
         public const float PoolDepth = 2f;
 
         // ---- the stagnant puddle of the humus bed (dirty water) ----
-        public static readonly Vector2 PuddleCenter = new Vector2(-120f, 103f);
+        public static readonly Vector2 PuddleCenter = new Vector2(-125f, 122f);
         public const float PuddleRadius = 6f;
         public const float PuddleDepth = 0.3f;
 
         /// <summary>Where creature B comes in from outside: a gap through the north rim.</summary>
-        public static readonly Vector2 NorthEntry = new Vector2(17f, 233f);
+        public static readonly Vector2 NorthEntry = new Vector2(10f, 235f);
         public const float NorthEntryHalfWidth = 10f;
         public const float PathWidth = 5f;
 
         /// <summary>Trails round the lake from area to area, plus the hunter's way in from the north.</summary>
         public static readonly Vector2[][] Paths =
         {
-            new[] { new Vector2(-20f, -150f), new Vector2(-95f, -128f), new Vector2(-140f, -75f), new Vector2(-150f, -18f) },   // 01 -> 02
-            new[] { new Vector2(-150f, -18f), new Vector2(-142f, 50f), new Vector2(-125f, 118f) },                              // 02 -> 03
-            new[] { new Vector2(-125f, 118f), new Vector2(-67f, 142f), new Vector2(13f, 153f) },                                // 03 -> 06
-            new[] { new Vector2(13f, 153f), new Vector2(75f, 142f), new Vector2(137f, 110f) },                                  // 06 -> 04
-            new[] { new Vector2(137f, 110f), new Vector2(167f, 58f), new Vector2(173f, 8f) },                                   // 04 -> 05 (ends inside Khe Thủy Mạch)
-            new[] { new Vector2(150f, -45f), new Vector2(110f, -110f), new Vector2(40f, -148f), new Vector2(-20f, -150f) },    // 05 -> 01
-            new[] { NorthEntry, new Vector2(13f, 153f) },                                                                       // the hunter's way in
+            new[] { new Vector2(-20f, -165f), new Vector2(-95f, -150f), new Vector2(-160f, -105f), new Vector2(-190f, -55f), new Vector2(-165f, -15f) }, // 01 -> 02
+            new[] { new Vector2(-165f, -15f), new Vector2(-170f, 60f), new Vector2(-140f, 135f) },                  // 02 -> 03 (down into the sinkhole)
+            new[] { new Vector2(-140f, 135f), new Vector2(-70f, 165f), new Vector2(10f, 168f) },                    // 03 -> 06 (up onto the ridge)
+            new[] { new Vector2(10f, 168f), new Vector2(80f, 160f), new Vector2(150f, 125f) },                      // 06 -> 04 (the ramp onto the plateau)
+            new[] { new Vector2(150f, 125f), new Vector2(175f, 70f), new Vector2(173f, 8f) },                       // 04 -> 05 (to the gorge rim)
+            new[] { new Vector2(150f, -50f), new Vector2(110f, -120f), new Vector2(40f, -160f), new Vector2(-20f, -165f) }, // 05 -> 01
+            new[] { NorthEntry, new Vector2(10f, 168f) },                                                           // the hunter's way in
         };
 
         // ================================================================== depth
@@ -153,7 +161,8 @@ namespace Evolve.World
             float ellipse = 1f / Mathf.Sqrt(c * c / (LakeRadii.x * LakeRadii.x) + s * s / (LakeRadii.y * LakeRadii.y));
             float n = Noise(c * 1.6f + 20f, s * 1.6f + 20f) - 0.5f;          // big bays and points
             float m = Noise(c * 4.5f + 50f, s * 4.5f + 50f) - 0.5f;          // smaller coves
-            return ellipse * (1f + 0.36f * n + 0.12f * m);
+            float k = Noise(c * 9f + 80f, s * 9f + 80f) - 0.5f;              // ragged little notches
+            return ellipse * (1f + 0.6f * n + 0.3f * m + 0.12f * k);
         }
 
         static float PoolRadiusAt(int pool, float angle)
@@ -253,7 +262,7 @@ namespace Evolve.World
             float nx = (x - pad.Center.x) / hx, nz = (z - pad.Center.y) / hz;
             float e = Mathf.Sqrt(nx * nx + nz * nz);                          // 1 on the core's (oval) edge
             float outside = Mathf.Max(0f, e - 1f) * (hx + hz) * 0.5f;
-            float warp = 22f * (Noise(x / 40f + zone * 31f, z / 40f + 7f) - 0.5f) * Smooth01(e);
+            float warp = 16f * (Noise(x / 40f + zone * 31f, z / 40f + 7f) - 0.5f) * Smooth01(e);
             return 1f - Smooth01((outside + warp) / InfluenceReach);
         }
 
@@ -275,19 +284,51 @@ namespace Evolve.World
         }
 
         /// <summary>
+        /// Ground level (m) the areas give to (x, z) before small bumps: each area's level weighted by its influence, the
+        /// wild in between at 0. The plateau and the gorge rise as steep walls except along their trails; the gorge's stream
+        /// corridor stays at the lake level; nothing sinks below the water right beside the lake or the stream.
+        /// </summary>
+        public static float LevelAt(float x, float z)
+        {
+            var p = new Vector2(x, z);
+            float total = 0f, weights = 0f, trail = -1f;
+            for (int k = 0; k < Zones.Length; k++)
+            {
+                float w = Influence(k, x, z);
+                if (w <= 0f) continue;
+                if (SteepEdges[k])
+                {
+                    if (trail < 0f) trail = DistanceToPath(x, z);
+                    float steep = Smooth01((w - 0.4f) / 0.15f);
+                    w = Mathf.Lerp(w, steep, Smooth01((trail - 6f) / 8f));   // gentle on the trail, a wall elsewhere
+                }
+                if (k == 4)
+                {
+                    float ds = DistanceToLine(p, StreamLine, out float t) - StreamHalfWidthAt(t);
+                    for (int i = 0; i < PoolCenters.Length; i++) ds = Mathf.Min(ds, Vector2.Distance(p, PoolCenters[i]) - 12f);
+                    w *= Smooth01((ds - 4f) / 5f);
+                }
+                total += w * ZoneLevels[k];
+                weights += w;
+            }
+            float level = total / Mathf.Max(1f, weights);
+            if (level < 0f) level *= Smooth01(DistanceToWater(x, z) / 15f);
+            return level;
+        }
+
+        /// <summary>
         /// Rough distance from a dry point to the nearest water's edge (0 in water); only accurate near the water, which is
         /// what the terrain needs to lay the banks down gently.
         /// </summary>
         public static float DistanceToWater(float x, float z)
         {
             var p = new Vector2(x, z);
-            if (DepthAt(x, z) > 0f) return 0f;
+            if (CleanDepthAt(x, z) > 0f) return 0f;
             Vector2 d = p - LakeCenter;
             float best = d.magnitude - LakeRadiusAt(Mathf.Atan2(d.y, d.x));
             float ds = DistanceToLine(p, StreamLine, out float t) - StreamHalfWidthAt(t);
             best = Mathf.Min(best, ds);
             for (int i = 0; i < PoolCenters.Length; i++) best = Mathf.Min(best, Vector2.Distance(p, PoolCenters[i]) - PoolRadius * 1.15f);
-            best = Mathf.Min(best, Vector2.Distance(p, PuddleCenter) - PuddleRadius);
             return Mathf.Max(0f, best);
         }
 

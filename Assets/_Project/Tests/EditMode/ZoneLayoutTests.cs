@@ -16,12 +16,40 @@ namespace Evolve.Tests.EditMode
         public void ZonesMatchTheDesign()
         {
             Assert.AreEqual(500f, WorldScale.ZoneSize);
-            AssertZone(ZoneLayout.LifeShallows, -8f, -120f, 80f, 70f);
-            AssertZone(ZoneLayout.RootFoot, -150f, -18f, 70f, 60f);
-            AssertZone(ZoneLayout.Humus, -125f, 118f, 80f, 70f);
-            AssertZone(ZoneLayout.Spore, 137f, 110f, 70f, 70f);
-            AssertZone(ZoneLayout.WaterVein, 173f, -8f, 90f, 40f);
-            AssertZone(ZoneLayout.HuntEdge, 13f, 153f, 80f, 55f);
+            AssertZone(ZoneLayout.LifeShallows, -8f, -135f, 80f, 70f);
+            AssertZone(ZoneLayout.RootFoot, -165f, -15f, 70f, 60f);
+            AssertZone(ZoneLayout.Humus, -140f, 135f, 80f, 70f);
+            AssertZone(ZoneLayout.Spore, 150f, 125f, 70f, 70f);
+            AssertZone(ZoneLayout.WaterVein, 173f, -12f, 90f, 40f);
+            AssertZone(ZoneLayout.HuntEdge, 10f, 168f, 80f, 55f);
+        }
+
+        [Test]
+        public void NeighbouringAreasAreWellApart()
+        {
+            var z = ZoneLayout.Zones;
+            for (int i = 0; i < z.Length; i++)
+                for (int j = i + 1; j < z.Length; j++)
+                {
+                    float dx = Mathf.Max(0f, Mathf.Abs(z[i].Center.x - z[j].Center.x) - (z[i].Size.x + z[j].Size.x) * 0.5f);
+                    float dz = Mathf.Max(0f, Mathf.Abs(z[i].Center.y - z[j].Center.y) - (z[i].Size.y + z[j].Size.y) * 0.5f);
+                    Assert.GreaterOrEqual(Mathf.Sqrt(dx * dx + dz * dz), 65f, z[i].Name + " / " + z[j].Name);
+                }
+        }
+
+        [Test]
+        public void AreaLevelsMatchTheDesign()
+        {
+            float[] expected = { 0f, -1f, -6f, 10f, 8f, 6f };   // lake, cave, sinkhole, plateau, gorge rim, ridge
+            CollectionAssert.AreEqual(expected, ZoneLayout.ZoneLevels);
+            for (int i = 0; i < ZoneLayout.Zones.Length; i++)
+            {
+                if (i == 4) continue;   // the gorge's centre is its stream, at the lake level
+                var c = ZoneLayout.Zones[i].Center;
+                Assert.AreEqual(expected[i], ZoneLayout.LevelAt(c.x, c.y), 0.05f, ZoneLayout.Zones[i].Name);
+            }
+            var s = ZoneLayout.StreamLine[ZoneLayout.StreamLine.Length / 4];
+            Assert.AreEqual(0f, ZoneLayout.LevelAt(s.x, s.y), 0.05f, "the stream runs at the bottom of the gorge");
         }
 
         [Test]
@@ -79,7 +107,7 @@ namespace Evolve.Tests.EditMode
                 float ratio = ZoneLayout.LakeRadiusAt(a) / ellipse;
                 min = Mathf.Min(min, ratio); max = Mathf.Max(max, ratio);
             }
-            Assert.GreaterOrEqual(max / min, 1.15f);
+            Assert.GreaterOrEqual(max / min, 1.4f);   // bays and points, not an oval
         }
 
         [Test]

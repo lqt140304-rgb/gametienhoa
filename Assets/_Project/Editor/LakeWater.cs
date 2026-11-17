@@ -47,7 +47,8 @@ namespace Evolve.EditorTools
             made += Shoreline(root, StreamName, ZoneLayout.StreamShore(), clean);
             for (int i = 0; i < ZoneLayout.PoolCenters.Length; i++)
                 made += Shoreline(root, "Deep Pool " + (i + 1), ZoneLayout.PoolShore(i, 64), clean);
-            var puddle = MakeSurface(root, new Vector3(ZoneLayout.PuddleCenter.x, ZoneLayout.WaterLevel, ZoneLayout.PuddleCenter.y),
+            float puddleLevel = TerrainShape.HeightAt(ZoneLayout.PuddleCenter.x, ZoneLayout.PuddleCenter.y, 1337) + ZoneLayout.PuddleDepth + ZoneLayout.WaterLevel;   // down in the sinkhole
+            var puddle = MakeSurface(root, new Vector3(ZoneLayout.PuddleCenter.x, puddleLevel, ZoneLayout.PuddleCenter.y),
                 WaterShape.Disc, new Vector2(ZoneLayout.PuddleRadius, 0f), dirty, 0.01f);
             puddle.name = "Vung Nuoc Dong";
             made++;

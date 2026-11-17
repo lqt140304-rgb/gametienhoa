@@ -153,7 +153,7 @@ namespace Evolve.EditorTools
             MakeDen("Den D (Mudmite) 1", humusRoot, H + new Vector3(-3f, 0f, 8f), d, humusRegion, denMat);
             MakeDen("Den D (Mudmite) 2", humusRoot, H + new Vector3(4f, 0f, -8f), d, humusRegion, denMat);
             // Stagnant puddle (dirty): quenches thirst, disease risk comes in 0.5d. x 164..172 keeps clear of den 2.
-            Water(ShallowBox("Vung Nuoc Dong (Dirty Puddle)", humusRoot, new Vector3(ZoneLayout.PuddleCenter.x, 0f, ZoneLayout.PuddleCenter.y), new Vector2(9f, 9f), dirtyWater), false, "Vũng nước đọng (Bãi Mùn Rễ)");
+            Water(ShallowBox("Vung Nuoc Dong (Dirty Puddle)", humusRoot, G(new Vector3(ZoneLayout.PuddleCenter.x, 0f, ZoneLayout.PuddleCenter.y)), new Vector2(9f, 9f), dirtyWater), false, "Vũng nước đọng (Bãi Mùn Rễ)");
 
             // ---- Vườn Bào Tử (west): mushroom clusters, 2 C dens ----
             var garden = new GameObject("Vuon Bao Tu (Spore Garden)").transform;
@@ -661,8 +661,13 @@ namespace Evolve.EditorTools
             w.DisplayName = displayName;
         }
 
-        /// <summary>The same point lifted onto the terrain (never below the water level).</summary>
-        static Vector3 G(Vector3 p) => new Vector3(p.x, p.y + Mathf.Max(0f, TerrainShape.HeightAt(p.x, p.z, TerrainSeed)), p.z);
+        /// <summary>The same point lifted (or lowered) onto the terrain; on open water it sits at the water level.</summary>
+        static Vector3 G(Vector3 p)
+        {
+            float h = TerrainShape.HeightAt(p.x, p.z, TerrainSeed);
+            if (ZoneLayout.CleanDepthAt(p.x, p.z) > 0f) h = Mathf.Max(h, 0f);   // on the water, not on the lake bed
+            return new Vector3(p.x, p.y + h, p.z);
+        }
 
         static void DeepPocket(string name, Vector3 center, Material mat)
         {
