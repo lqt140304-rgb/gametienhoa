@@ -91,7 +91,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 
 ## 5. Đã làm được (đã merge vào `main`, chủ dự án đã chơi thử và nói ổn)
 
-- **Slime:** trườn 1, nước rút ×1.5 (chủ dự án chỉnh). Đói chỉ giảm khi di chuyển (0.5/giây), nước rút tốn thêm 1.5/giây. Nảy tốn 8 năng lượng. Đứng yên hồi năng lượng, kẻ săn mồi khó phát hiện.
+- **Slime:** trườn 1, nước rút ×1.5 (chủ dự án chỉnh). Đói chỉ giảm khi di chuyển (0.5/giây), nước rút tốn thêm 1.5/giây. Nảy tốn 8 năng lượng. Năng lượng hồi 10/giây khi đứng yên và **3/giây khi đang di chuyển** (`SurvivalConfig.EnergyRegenMovingPerSec`, chủ dự án yêu cầu 2026-11-17; đói bằng 0 thì không hồi), kẻ săn mồi khó phát hiện.
 - **Thị giác:** chưa có mắt thì đen trắng, thế giới tối, chỉ có một đèn quanh nhân vật soi bán kính 6 m (`MonochromeVision.blindSightRadius`, vùng nhìn tính quanh nhân vật, không theo camera). Mắt lớn dần thì màu, ánh sáng ngày và tầm nhìn xa trở lại. Quét rung (C) thả thêm một luồng sáng lan rộng trong chốc lát. Không còn chấm sáng tự động.
 - **Con mồi:** bỏ chạy 1.8, phát hiện 6 m, chạy 5 giây thì mệt. Bắt được thì +15 thức ăn và rơi cơ quan theo `DropTable_Prey` (60% có rơi, trọng số bậc C/B/A/S 70/22/7/1).
 - **Cơ quan:** 6 loại (bảng dưới). EXP tiến hóa: ăn 0.2 EXP mỗi đơn vị thức ăn, hấp thụ cơ quan C/B/A/S = 15/30/60/120. Chi phí mầm → Lv1 = `GrowthExpRequired` (C 30, B 45, A 70), Lv1 → Lv2 = 1×, Lv2 → Lv3 = 2×. Mỗi cấp trên 1 tăng hiệu ứng +25%.
