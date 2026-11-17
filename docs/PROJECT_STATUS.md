@@ -320,3 +320,16 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 7. Thân slime ngả xanh vàng khi có bệnh và trở lại bình thường khi hết.
 8. Hồi sinh sau khi chết: hết bệnh. `Prototype_01` chạy như cũ.
 9. **Co-op F2 (hai bản):** người B thấy dòng bệnh của A khi A bệnh; đứng cạnh người bệnh Thối Gel (dưới 3 m) một lúc thì có thể bị lây; chỉ Thối Gel lây.
+
+
+## 15. Danh sách kiểm tra thủ công 0.5e (cho chủ dự án)
+
+Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các test `OrganBlueprintTests`.
+
+1. Hấp thụ một cơ quan rơi (F) rồi mở menu G: mục "Bản mẫu đã học" hiện nút của nó.
+2. Ngoài nơi trú (Hồ Khởi Sinh): bấm E lên cơ quan rơi hoặc "Tháo cơ quan" thì có thông báo "Chỉ đổi cơ thể được khi ở nơi trú", không mất gì.
+3. Trong nơi trú: gắn, thay, tháo và "Mô phỏng lại" đều chạy; mô phỏng lại trừ đúng EXP; thiếu EXP thì báo và không trừ.
+4. Cơ quan tan vì thiếu chất: bản mẫu vẫn còn trong danh sách.
+5. Chết hết mạng, chơi lại: bản mẫu còn; cơ quan đã rơi theo luật 50%.
+6. Cơ quan đói chất co nhỏ dần.
+7. `Prototype_01` (không có nơi trú): gắn và tháo ở đâu cũng được như cũ.

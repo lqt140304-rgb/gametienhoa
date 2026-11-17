@@ -8,6 +8,9 @@ namespace Evolve.Organs
     /// <summary>Result of asking whether an organ can be attached.</summary>
     public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom, LackNutrient }
 
+    /// <summary>Result of simulating a known blueprint again.</summary>
+    public enum ResimulateResult { Ok, Unknown, NoExp, Blocked }
+
     /// <summary>
     /// Holds the organs a creature has evolved and grows them with evolution EXP.
     /// A new organ is a bud (Lv0). Spending GrowthExpRequired EXP grows it to Lv1 (full organ);
@@ -89,6 +92,37 @@ namespace Evolve.Organs
         void OnEnable() { if (stats != null) stats.State.FoodFilter = TakeFood; }
         void OnDisable() { if (stats != null && stats.State.FoodFilter == TakeFood) stats.State.FoodFilter = null; }
 
+        readonly BlueprintBook blueprints = new BlueprintBook();
+        /// <summary>Blueprints learned so far; they survive losing the organ and dying.</summary>
+        public BlueprintBook Blueprints => blueprints;
+        public bool Knows(OrganSO organ) => organ != null && blueprints.Knows(organ.name);
+        readonly List<OrganSO> known = new List<OrganSO>();
+        /// <summary>Learned blueprints that are not currently attached (what the body menu offers to simulate again).</summary>
+        public void GetSpareBlueprints(List<OrganSO> into)
+        {
+            into.Clear();
+            foreach (var o in known) if (!Has(o)) into.Add(o);
+        }
+        public void Learn(OrganSO organ)
+        {
+            if (organ != null && blueprints.Learn(organ.name)) known.Add(organ);
+        }
+
+        /// <summary>Grow a known blueprint into a bud again, paying EXP. Only into an empty slot, and only where the body may be reshaped.</summary>
+        public ResimulateResult TryResimulate(OrganSO organ, bool inShelter)
+        {
+            if (!Knows(organ)) return ResimulateResult.Unknown;
+            var st = stats != null ? stats : GetComponent<SurvivalStats>();
+            bool dead = st != null && st.State.IsDead;
+            if (!OrganRules.CanReshape(Evolve.World.ShelterZone.AnyActive, inShelter, dead)) return ResimulateResult.Blocked;
+            if (Check(organ) != AttachCheck.Ok) return ResimulateResult.Blocked;
+            float cost = OrganRules.ResimulateCost(organ.Tier);
+            if (st == null || st.State.EvolutionExp < cost) return ResimulateResult.NoExp;
+            if (!TryAttach(organ)) return ResimulateResult.Blocked;
+            st.State.EvolutionExp -= cost;
+            return ResimulateResult.Ok;
+        }
+
         public bool Has(OrganSO organ) => organ != null && organs.TryGetValue(organ.Slot, out var e) && e.Organ == organ;
 
         /// <summary>The organ currently in a slot, or null.</summary>
@@ -147,6 +181,7 @@ namespace Evolve.Organs
             }
             organs[organ.Slot] = entry;
             order.Add(entry);
+            Learn(organ);
 
             if (organ.GrowthExpRequired <= 0f) LevelUp(entry);
             ApplyVisual(entry);
@@ -313,7 +348,7 @@ namespace Evolve.Organs
             if (e.Visual == null) return;
             // Buds grow to full size; each extra level makes the organ a bit bigger.
             float levelScale = 1f + 0.1f * Mathf.Max(0, e.Level - 1);
-            e.Visual.transform.localScale = e.VisualScale * Mathf.Lerp(0.15f, 1f, e.Shown) * levelScale;
+            e.Visual.transform.localScale = e.VisualScale * Mathf.Lerp(0.15f, 1f, e.Shown) * levelScale * (1f - 0.3f * e.Decay); // a starving organ visibly shrinks
         }
 
         /// <summary>Effect strength of an organ: growth × level bonus.</summary>
