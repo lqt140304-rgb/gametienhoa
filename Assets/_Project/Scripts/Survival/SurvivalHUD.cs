@@ -14,12 +14,14 @@ namespace Evolve.Survival
 
         const string Controls =
             "WASD  Trườn\n" +
+            "Shift  Chạy nhanh (tốn năng lượng)\n" +
             "Space  Nảy (tốn năng lượng)\n" +
             "Q  Dùng Dị Năng\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
             "V  Bật/tắt mắt (thử nghiệm)\n" +
-            "H  Ẩn/hiện hướng dẫn";
+            "H  Ẩn/hiện hướng dẫn\n\n" +
+            "Chấm xanh nhấp nháy = thức ăn ở gần\n(giác quan rung, thay cho mắt)";
 
         void Start()
         {
@@ -44,7 +46,7 @@ namespace Evolve.Survival
 
             if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 290, 20, 270, 175), Controls, box);
+                GUI.Box(new Rect(Screen.width - 300, 20, 280, 250), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }

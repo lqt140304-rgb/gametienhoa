@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e099814ad07b344392e14742930b1dc, type: 3}
   m_Name: SurvivalConfigSO
   m_EditorClassIdentifier: Evolve::Evolve.Survival.SurvivalConfig
-  HungerDecayPerSec: 0.8
+  HungerDecayPerSec: 0.5
   EnergyRegenPerSec: 10
   StarveDamagePerSec: 4
   HealHungerThreshold: 0.7
