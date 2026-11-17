@@ -611,6 +611,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Evolve::Evolve.Survival.SurvivalHUD
   stats: {fileID: 765212667}
+  showControls: 1
 --- !u!4 &446396201
 Transform:
   m_ObjectHideFlags: 0
@@ -834,7 +835,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67d0470d8de949d419124f348e6fb9ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Evolve::Evolve.Player.SlimeController
-  crawlSpeed: 1.3
+  crawlSpeed: 1
+  sprintMultiplier: 1.5
   acceleration: 12
   hopForce: 5
   hopForward: 3
