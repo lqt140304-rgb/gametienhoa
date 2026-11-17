@@ -32,6 +32,7 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(DressedName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(DressedName).transform;
+            root.gameObject.AddComponent<DetailCulling>();   // only what is near the camera is drawn and lit
             var rnd = new System.Random(4242);
             var ponds = new List<WaterSurface>(WaterSurface.All);
             int seed = 1000;
@@ -188,7 +189,7 @@ namespace Evolve.EditorTools
             var slant = new Vector3(5f, 0f, 3f);
             foreach (var target in targets)
             {
-                if (shafts >= 12) break;
+                if (shafts >= 8) break;
                 var bottomPoint = new Vector3(target.x + (float)(rnd.NextDouble() - 0.5) * 8f, 0f, target.y + (float)(rnd.NextDouble() - 0.5) * 8f);
                 bottomPoint.y = LakeGround.GroundY(bottomPoint.x, bottomPoint.z);
                 float roofY = LakeLayout.CeilingY(bottomPoint.x - slant.x, bottomPoint.z - slant.z);   // the real roof above the spot
@@ -256,12 +257,12 @@ namespace Evolve.EditorTools
             main.prewarm = true;
             main.startLifetime = 9f;
             main.startSpeed = 0.12f;
-            main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.14f);
-            main.startColor = new Color(0.7f, 1f, 0.88f, 0.8f);
-            main.maxParticles = 220;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.09f);
+            main.startColor = new Color(0.7f, 1f, 0.88f, 0.45f);
+            main.maxParticles = 120;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             var emission = ps.emission;
-            emission.rateOverTime = 30f;
+            emission.rateOverTime = 12f;
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(radius * 1.6f, 6f, radius * 1.6f);

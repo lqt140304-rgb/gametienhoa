@@ -7,7 +7,7 @@ namespace Evolve.EditorTools
 {
     /// <summary>
     /// One menu to rebuild the whole lake, in the right order: Evolve -> Rebuild Lake (all steps).
-    /// Build Underroot Lake, then Water, Ground, Mushrooms and Vines, Roots and Light, then saves the scene.
+    /// Build Underroot Lake, then Water, Terrain, Ground, Mushrooms and Vines, Roots and Light, then saves the scene.
     /// (Each step is also available alone in the Evolve menu.) If a step fails the others are not run and the
     /// message says which step it was.
     /// </summary>
@@ -18,11 +18,12 @@ namespace Evolve.EditorTools
         {
             var steps = new (string name, Action run)[]
             {
-                ("1/5 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
-                ("2/5 Nước (Dress Lake: Water)", LakeWater.Dress),
-                ("3/5 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
-                ("4/5 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
-                ("5/5 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
+                ("1/6 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
+                ("2/6 Nước (Dress Lake: Water)", LakeWater.Dress),
+                ("3/6 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
+                ("4/6 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
+                ("5/6 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
+                ("6/6 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
             };
             try
             {

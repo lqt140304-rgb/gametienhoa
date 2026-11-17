@@ -31,6 +31,7 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(DressedName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(DressedName).transform;
+            root.gameObject.AddComponent<DetailCulling>();   // only what is near the camera is drawn
 
             var rnd = new System.Random(2024);
             var ponds = new List<WaterSurface>(WaterSurface.All);
@@ -105,7 +106,20 @@ namespace Evolve.EditorTools
                 PlaceTuft(p);
             var grassColors = new[] { new Color(0.32f, 0.58f, 0.22f), new Color(0.42f, 0.68f, 0.26f), new Color(0.26f, 0.48f, 0.24f) };
             for (int g = 0; g < 3; g++)
-                AddMesh(root, "Grass " + g, GroundMeshes.Tufts(tufts[g], 900 + g, 0.45f), OpaqueMaterial("Lake_Grass" + g, grassColors[g], 0.1f, true));
+            {
+                var buckets = new Dictionary<(int, int), List<Vector3>>();
+                foreach (var t in tufts[g])
+                {
+                    var key = Cell(t);
+                    if (!buckets.TryGetValue(key, out var list)) buckets[key] = list = new List<Vector3>();
+                    list.Add(t);
+                }
+                var holder = new GameObject("Grass " + g).transform;
+                holder.SetParent(root, false);
+                var grassMaterial = OpaqueMaterial("Lake_Grass" + g, grassColors[g], 0.1f, true);
+                foreach (var bucket in buckets)
+                    AddMesh(holder, $"Grass {g} {bucket.Key.Item1},{bucket.Key.Item2}", GroundMeshes.Tufts(bucket.Value, 900 + g, 0.45f), grassMaterial);
+            }
 
             // ---- mud paths from the pool to the other areas ----
             var ribbons = new List<CombineInstance>();
@@ -218,16 +232,34 @@ namespace Evolve.EditorTools
             list.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.TRS(new Vector3(p.x, GroundY(p.x, p.y) + 0.03f, p.y), Quaternion.identity, Vector3.one) });
         }
 
+        /// <summary>Size of one decoration chunk (m). Each chunk is its own mesh, so the camera can skip what it does not see.</summary>
+        internal const float ChunkSize = 64f;
+
+        internal static (int, int) Cell(Vector3 p) => (Mathf.FloorToInt(p.x / ChunkSize), Mathf.FloorToInt(p.z / ChunkSize));
+
+        /// <summary>Combines the parts into one mesh PER CHUNK (a square of ChunkSize metres), under a holder named `name`.</summary>
         internal static void AddCombined(Transform parent, string name, List<CombineInstance> parts, Material material)
         {
             if (parts.Count == 0) return;
-            var mesh = new Mesh { name = name };
-            int total = 0;
-            foreach (var part in parts) total += part.mesh.vertexCount;
-            if (total > 65000) mesh.indexFormat = IndexFormat.UInt32;
-            mesh.CombineMeshes(parts.ToArray(), true, true);
-            mesh.RecalculateBounds();
-            AddMesh(parent, name, mesh, material);
+            var groups = new Dictionary<(int, int), List<CombineInstance>>();
+            foreach (var part in parts)
+            {
+                var key = Cell(part.transform.MultiplyPoint3x4(part.mesh.bounds.center));
+                if (!groups.TryGetValue(key, out var list)) groups[key] = list = new List<CombineInstance>();
+                list.Add(part);
+            }
+            var holder = new GameObject(name).transform;
+            holder.SetParent(parent, false);
+            foreach (var group in groups)
+            {
+                var mesh = new Mesh { name = name };
+                int total = 0;
+                foreach (var part in group.Value) total += part.mesh.vertexCount;
+                if (total > 65000) mesh.indexFormat = IndexFormat.UInt32;
+                mesh.CombineMeshes(group.Value.ToArray(), true, true);
+                mesh.RecalculateBounds();
+                AddMesh(holder, $"{name} {group.Key.Item1},{group.Key.Item2}", mesh, material);
+            }
         }
 
         internal static void AddMesh(Transform parent, string name, Mesh mesh, Material material)
@@ -237,7 +269,7 @@ namespace Evolve.EditorTools
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = go.AddComponent<MeshRenderer>();
             mr.sharedMaterial = material;
-            mr.shadowCastingMode = name.StartsWith("Rock") ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            mr.shadowCastingMode = ShadowCastingMode.Off; // decoration casts no shadows: cheaper, and the cave is dark anyway
             go.isStatic = true;
         }
 
