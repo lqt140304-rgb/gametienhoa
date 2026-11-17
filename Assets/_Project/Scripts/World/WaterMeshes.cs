@@ -64,79 +64,86 @@ namespace Evolve.World
         }
 
         /// <summary>
-        /// A ring around a disc of `radius`: from `outer` metres outside the edge (v = 0) to `inner` metres inside it
-        /// (v = 1). u runs once around, scaled so the pattern repeats about every 2 m.
+        /// A surface filling an outline (star-shaped around the origin): rings of vertices shrink from the shore to the
+        /// centre, spaced about `cell` metres apart. UVs follow the outline's bounding box.
         /// </summary>
-        public static Mesh DiscRing(float radius, float outer, float inner, int sectors)
+        public static Mesh Organic(Vector2[] outline, float cell)
         {
-            sectors = Mathf.Max(12, sectors);
-            var verts = new List<Vector3>();
-            var uvs = new List<Vector2>();
-            float circumference = 2f * Mathf.PI * radius;
-            for (int s = 0; s <= sectors; s++)
+            int n = outline.Length;
+            float extent = 0f;
+            Vector2 min = outline[0], max = outline[0];
+            foreach (var p in outline)
             {
-                float a = s / (float)sectors * Mathf.PI * 2f;
-                var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
-                float u = s / (float)sectors * circumference / 2f;
-                verts.Add(dir * (radius + outer)); uvs.Add(new Vector2(u, 0f));
-                verts.Add(dir * Mathf.Max(0.05f, radius - inner)); uvs.Add(new Vector2(u, 1f));
+                extent = Mathf.Max(extent, p.magnitude);
+                min = Vector2.Min(min, p); max = Vector2.Max(max, p);
             }
-            var tris = new List<int>();
-            for (int s = 0; s < sectors; s++)
-            {
-                int o0 = s * 2, i0 = o0 + 1, o1 = o0 + 2, i1 = o0 + 3;
-                AddUp(tris, verts, o0, i0, o1);
-                AddUp(tris, verts, o1, i0, i1);
-            }
-            return Make("WaterDiscRing", verts, uvs, tris);
-        }
+            int rings = Mathf.Max(2, Mathf.RoundToInt(extent / Mathf.Max(0.1f, cell)));
+            Vector2 size = new Vector2(Mathf.Max(1e-3f, max.x - min.x), Mathf.Max(1e-3f, max.y - min.y));
 
-        /// <summary>The same kind of ring around a rectangle (outer rectangle v = 0, inner rectangle v = 1).</summary>
-        public static Mesh RectRing(float width, float depth, float outer, float inner, float cell)
-        {
-            float hw = width * 0.5f, hd = depth * 0.5f;
-            var corners = new[]
+            var verts = new List<Vector3> { Vector3.zero };
+            var uvs = new List<Vector2> { new Vector2((0f - min.x) / size.x, (0f - min.y) / size.y) };
+            for (int r = 1; r <= rings; r++)
             {
-                new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(1f, 1f), new Vector2(-1f, 1f)
-            };
-            var verts = new List<Vector3>();
-            var uvs = new List<Vector2>();
-            float travelled = 0f;
-            Vector3 lastOuter = Vector3.zero;
-            bool first = true;
-            for (int e = 0; e < 4; e++)
-            {
-                Vector2 c0 = corners[e], c1 = corners[(e + 1) % 4];
-                float edgeLength = e % 2 == 0 ? width : depth;
-                int n = Mathf.Max(1, Mathf.RoundToInt(edgeLength / Mathf.Max(0.1f, cell)));
+                float t = r / (float)rings;
                 for (int k = 0; k < n; k++)
                 {
-                    Vector2 c = Vector2.Lerp(c0, c1, k / (float)n);
-                    var o = new Vector3(c.x * (hw + outer), 0f, c.y * (hd + outer));
-                    var i = new Vector3(c.x * Mathf.Max(0.05f, hw - inner), 0f, c.y * Mathf.Max(0.05f, hd - inner));
-                    // The ring's points on the straight parts: move along the edge, not along the diagonal.
-                    float t = k / (float)n;
-                    var along = new Vector2(Mathf.Lerp(c0.x, c1.x, t), Mathf.Lerp(c0.y, c1.y, t));
-                    if (e % 2 == 0) { o.x = along.x * (hw + outer); i.x = along.x * Mathf.Max(0.05f, hw - inner); }
-                    else { o.z = along.y * (hd + outer); i.z = along.y * Mathf.Max(0.05f, hd - inner); }
-                    if (!first) travelled += Vector3.Distance(o, lastOuter);
-                    lastOuter = o; first = false;
-                    verts.Add(o); uvs.Add(new Vector2(travelled / 2f, 0f));
-                    verts.Add(i); uvs.Add(new Vector2(travelled / 2f, 1f));
+                    Vector2 p = outline[k] * t;
+                    verts.Add(new Vector3(p.x, 0f, p.y));
+                    uvs.Add(new Vector2((p.x - min.x) / size.x, (p.y - min.y) / size.y));
                 }
             }
-            // close the loop
-            verts.Add(verts[0]); uvs.Add(new Vector2((travelled + Vector3.Distance(lastOuter, verts[0])) / 2f, 0f));
-            verts.Add(verts[1]); uvs.Add(new Vector2((travelled + Vector3.Distance(lastOuter, verts[0])) / 2f, 1f));
             var tris = new List<int>();
-            int pairs = verts.Count / 2;
-            for (int s = 0; s < pairs - 1; s++)
+            for (int k = 0; k < n; k++) AddUp(tris, verts, 0, 1 + k, 1 + (k + 1) % n);
+            for (int r = 1; r < rings; r++)
+                for (int k = 0; k < n; k++)
+                {
+                    int k2 = (k + 1) % n;
+                    int a = 1 + (r - 1) * n + k, b = 1 + (r - 1) * n + k2;
+                    int c = 1 + r * n + k, d = 1 + r * n + k2;
+                    AddUp(tris, verts, a, c, b);
+                    AddUp(tris, verts, b, c, d);
+                }
+            return Make("WaterOrganic", verts, uvs, tris);
+        }
+
+        /// <summary>
+        /// A band along an outline: `outer` metres outside the shore (v = 0) to `inner` metres inside it (v = 1).
+        /// The band's width wanders a little (seeded), so it never looks like a ruled line. u runs along the shore,
+        /// repeating about every 2 m and closing exactly.
+        /// </summary>
+        public static Mesh Band(Vector2[] outline, float outer, float inner, int seed)
+        {
+            int n = outline.Length;
+            var rnd = new System.Random(seed);
+            float p1 = (float)rnd.NextDouble() * Mathf.PI * 2f, p2 = (float)rnd.NextDouble() * Mathf.PI * 2f;
+
+            float perimeter = 0f;
+            for (int k = 0; k < n; k++) perimeter += Vector2.Distance(outline[k], outline[(k + 1) % n]);
+            float repeats = Mathf.Max(1f, Mathf.Round(perimeter / 2f));
+
+            var verts = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            for (int k = 0; k <= n; k++)
             {
-                int o0 = s * 2, i0 = o0 + 1, o1 = o0 + 2, i1 = o0 + 3;
+                int i = k % n;
+                Vector2 tangent = (outline[(i + 1) % n] - outline[(i - 1 + n) % n]).normalized;
+                Vector2 normal = new Vector2(tangent.y, -tangent.x);
+                if (Vector2.Dot(normal, outline[i]) < 0f) normal = -normal; // always pointing away from the pond
+                float u = k / (float)n;
+                float wobble = 0.75f + 0.25f * Mathf.Sin(u * Mathf.PI * 2f * 7f + p1) + 0.15f * Mathf.Sin(u * Mathf.PI * 2f * 13f + p2);
+                Vector2 o = outline[i] + normal * (outer * wobble);
+                Vector2 inn = outline[i] - normal * inner;
+                verts.Add(new Vector3(o.x, 0f, o.y)); uvs.Add(new Vector2(u * repeats, 0f));
+                verts.Add(new Vector3(inn.x, 0f, inn.y)); uvs.Add(new Vector2(u * repeats, 1f));
+            }
+            var tris = new List<int>();
+            for (int k = 0; k < n; k++)
+            {
+                int o0 = k * 2, i0 = o0 + 1, o1 = o0 + 2, i1 = o0 + 3;
                 AddUp(tris, verts, o0, i0, o1);
                 AddUp(tris, verts, o1, i0, i1);
             }
-            return Make("WaterRectRing", verts, uvs, tris);
+            return Make("WaterBand", verts, uvs, tris);
         }
 
         // Adds a triangle facing up (Unity front faces are clockwise: normal = cross(b - a, c - a)).

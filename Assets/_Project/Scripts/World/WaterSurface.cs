@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Evolve.World
@@ -5,10 +6,12 @@ namespace Evolve.World
     public enum WaterShape { Rect, Disc }
 
     /// <summary>
-    /// A calm, gently moving water surface: a flat mesh built in code whose vertices rise and fall in slow waves,
-    /// while the ripple (normal) texture drifts slowly across it. Visual only; it has no collider, so it never
-    /// changes how the slime moves (the invisible WaterZone triggers still do that).
-    /// The mesh is built when the object wakes up (also in the editor, so the water shows without playing).
+    /// A calm, gently moving pond: a mesh built in code that fills a winding shoreline (WaterOutline), whose vertices
+    /// rise and fall in slow waves while the ripple (normal) pattern drifts across it. Around the shore there is a
+    /// band of wet bank and a band of foam, so the edge reads as a real bank and not a cut. Visual only: no collider,
+    /// it never changes how the slime moves (the invisible WaterZone triggers still do that).
+    /// Everything is built when the object wakes up (also in the editor, so the water shows without playing); the
+    /// meshes are never saved into the scene.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -21,16 +24,27 @@ namespace Evolve.World
         public float Cell = 1.25f;
         public float WaveHeight = 0.03f;
         public float WaveSpeed = 1f;
+
+        [Header("Shore")]
+        [Tooltip("Different values give different winding shores")]
+        public int Seed = 1;
+        [Tooltip("How far the shore wanders in and out, in metres")]
+        public float Wobble = 0.8f;
+        public Material BankMaterial;
+        public Material FoamMaterial;
+        [Tooltip("Metres of wet bank outside the water's edge / inside it")]
+        public float BankOutside = 2.4f, BankInside = 0.3f;
+        [Tooltip("Metres of foam outside the water's edge / inside it")]
+        public float FoamOutside = 1.0f, FoamInside = 0.45f;
+
+        [Header("Ripples")]
         [Tooltip("Size of one ripple pattern repeat in metres (the pattern keeps the same size on big and small ponds)")]
         public float MetersPerRepeat = 9f;
-        [Header("Shore foam")]
-        public Material FoamMaterial;
-        [Tooltip("Metres of foam outside the water's edge / inside it")]
-        public float FoamOutside = 0.9f, FoamInside = 0.35f;
         [Tooltip("How fast the ripple texture drifts (texture repeats per second)")]
         public Vector2 Drift = new Vector2(0.012f, 0.007f);
 
-        Mesh mesh, foamMesh;
+        Mesh mesh;
+        readonly List<Mesh> extraMeshes = new List<Mesh>();
         Vector3[] basePos, work;
         MaterialPropertyBlock block;
         Vector2 offset;
@@ -56,24 +70,37 @@ namespace Evolve.World
 
         void Release()
         {
-            if (foamMesh != null)
+            foreach (var m in extraMeshes) Kill(m);
+            extraMeshes.Clear();
+            foreach (var name in new[] { "Bank", "Foam" })
             {
-                var foam = transform.Find("Foam");
-                if (foam != null) { var ff = foam.GetComponent<MeshFilter>(); if (ff != null && ff.sharedMesh == foamMesh) ff.sharedMesh = null; }
-                if (Application.isPlaying) Destroy(foamMesh); else DestroyImmediate(foamMesh);
-                foamMesh = null;
+                var child = transform.Find(name);
+                if (child == null) continue;
+                var f = child.GetComponent<MeshFilter>();
+                if (f != null) f.sharedMesh = null;
             }
             if (mesh == null) return;
             var filter = GetComponent<MeshFilter>();
             if (filter != null && filter.sharedMesh == mesh) filter.sharedMesh = null;
-            if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh);
+            Kill(mesh);
             mesh = null;
+        }
+
+        static void Kill(Mesh m)
+        {
+            if (m == null) return;
+            if (Application.isPlaying) Destroy(m); else DestroyImmediate(m);
         }
 
         void Build()
         {
             Release();
-            mesh = Shape == WaterShape.Rect ? WaterMeshes.Rect(Size.x, Size.y, Cell) : WaterMeshes.Disc(Size.x, Cell);
+            bool disc = Shape == WaterShape.Disc;
+            float width = disc ? Size.x * 2f : Size.x, depth = disc ? Size.x * 2f : Size.y;
+            int samples = Mathf.Clamp(Mathf.RoundToInt(WaterOutline.PerimeterEstimate(width, depth, disc) / Mathf.Max(0.3f, Cell)), 24, 220);
+            var outline = WaterOutline.Make(width, depth, disc, Seed, Wobble, samples);
+
+            mesh = WaterMeshes.Organic(outline, Cell);
             mesh.hideFlags = HideFlags.HideAndDontSave; // never saved into the scene: it is rebuilt every time
             mesh.MarkDynamic();
             GetComponent<MeshFilter>().sharedMesh = mesh;
@@ -83,35 +110,36 @@ namespace Evolve.World
             b.Expand(new Vector3(0f, 0.5f, 0f));
             mesh.bounds = b;
             ApplyRipples();
-            BuildFoam();
+
+            // Wet bank (dark, fading outward) and foam (white, broken up), both following the same shore.
+            Band("Bank", BankMaterial, WaterMeshes.Band(outline, BankOutside, BankInside, Seed * 31 + 1), 0.025f);
+            Band("Foam", FoamMaterial, WaterMeshes.Band(outline, FoamOutside, FoamInside, Seed * 31 + 2), 0.05f);
         }
 
-        // A thin ring of foam around the edge: it hides the hard cut between water and ground.
-        void BuildFoam()
+        void Band(string name, Material material, Mesh bandMesh, float height)
         {
-            var foam = transform.Find("Foam");
-            if (FoamMaterial == null)
+            var child = transform.Find(name);
+            if (material == null)
             {
-                if (foam != null) foam.gameObject.SetActive(false);
+                if (child != null) child.gameObject.SetActive(false);
+                Kill(bandMesh);
                 return;
             }
-            if (foam == null)
+            if (child == null)
             {
-                var go = new GameObject("Foam");
+                var go = new GameObject(name);
                 go.transform.SetParent(transform, false);
                 go.AddComponent<MeshFilter>();
                 var mr = go.AddComponent<MeshRenderer>();
                 mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                foam = go.transform;
+                child = go.transform;
             }
-            foam.gameObject.SetActive(true);
-            foam.localPosition = new Vector3(0f, 0.05f, 0f);
-            foam.GetComponent<MeshRenderer>().sharedMaterial = FoamMaterial;
-            foamMesh = Shape == WaterShape.Rect
-                ? WaterMeshes.RectRing(Size.x, Size.y, FoamOutside, FoamInside, Cell)
-                : WaterMeshes.DiscRing(Size.x, FoamOutside, FoamInside, Mathf.Max(24, Mathf.RoundToInt(2f * Mathf.PI * Size.x / Cell)));
-            foamMesh.hideFlags = HideFlags.HideAndDontSave;
-            foam.GetComponent<MeshFilter>().sharedMesh = foamMesh;
+            child.gameObject.SetActive(true);
+            child.localPosition = new Vector3(0f, height, 0f);
+            child.GetComponent<MeshRenderer>().sharedMaterial = material;
+            bandMesh.hideFlags = HideFlags.HideAndDontSave;
+            child.GetComponent<MeshFilter>().sharedMesh = bandMesh;
+            extraMeshes.Add(bandMesh);
         }
 
         // Tiling and drift of the ripple pattern go through a property block: no material copies, works in the editor too.
