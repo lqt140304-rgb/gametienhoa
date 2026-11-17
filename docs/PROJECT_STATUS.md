@@ -73,6 +73,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
 | `World/` (khu lớn) | `WorldScale`, `TerrainShape`, `DomeMesh` | **0.6a, chưa biên dịch.** Hằng số quy mô (khu 480 m, lõi phẳng 130 m), hàm độ cao địa hình (lõi phẳng đúng y = 0, đồi, vách rìa), mesh mái vòm quay vào trong. `UnderrootLakeBuilder` dùng chúng để dựng Terrain, mái, rễ, cột mốc, đèn, ranh giới; asset sinh ra nằm ở `Assets/_Project/Terrain/` |
 | `World/` (bố cục khu) | `GroundHeight`, `ZoneLayout` | **0.6b, chưa biên dịch.** `GroundHeight` đọc độ cao Terrain để con mồi, kẻ săn, cơ quan rơi và xác bám mặt đất (không có Terrain thì giữ độ cao cũ). `ZoneLayout` giữ dữ liệu bệ vi sinh cảnh, suối, đường mòn; `TerrainShape` dùng nó để làm phẳng bệ và suối (y = 0) |
+| `World/` (thực vật) | `VegetationScatter`, `GlowPulse` | **0.6c, chưa biên dịch.** `VegetationScatter` chọn vị trí và loại cây phát quang (mật độ theo vùng, cách nhau ≥ 6 m, trần 380); `GlowPulse` làm cây Bọc Bào Tử nhấp nháy khi camera ở gần (trong 80 m). `UnderrootLakeBuilder` đặt chúng thành `Nutrient` (12 dinh dưỡng, mọc lại 180 giây) |
 | `Editor/` | `PrototypeSceneBuilder`, `UnderrootLakeBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; menu **Evolve → Build Underroot Lake** dựng scene `Scenes/Underroot_Lake` (tạo species asset D/C/B, prefab `Prey_C`, gắn `VibrationEmitter`, tag `ShallowWater`; dùng chung `CreateSharedAssets`/`CreatePlayer` của builder prototype); `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
 **Lưu ý về công cụ dựng scene:**
@@ -182,6 +183,16 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - **Công cụ `LakeGround.cs` của phiên trang trí** vẽ đường đất tới các vị trí **cũ** của vi sinh cảnh ((40,0), (0,50), (-40,0)); sau 0.6b nó trỏ vào đất trống, cần phiên đó cập nhật.
 - **Phiên trang trí hồ** ("Dress Lake", `Editor/LakeWater.cs`, `LakeGround.cs`) đọc scene theo tên và theo `WaterZone`: sau khi dựng lại scene, **chạy lại các menu "Dress Lake"** để nước bờ và đất trang trí được dựng lên chỗ mới.
 
+## 6.6. Bản 0.6c (thực vật phát quang): trạng thái và giới hạn
+
+**Code 0.6c chưa từng được biên dịch hay chạy.** Kiểm tra theo mục 12.
+
+- Năm loại cây (chỉ khác màu, độ sáng, kích thước; vẫn là `Nutrient`): Rêu Lân Quang (xanh ngọc), Nụ Hổ Phách (hổ phách), Bọc Bào Tử Tím (tím, nhấp nháy), Giọt Sương Rễ (xanh nhạt), Quả Than Hồng (đỏ cam). Mỗi loại có vật liệu phát sáng riêng (`Veg_*.mat`). Mô hình riêng chưa có.
+- Trần **380 cây** vì `WorldSync` chỉ đồng bộ tối đa 400 cục thức ăn mỗi scene (đã có 6 cục ở Bãi Mùn Rễ). Builder cảnh báo trong Console nếu tổng vượt 400.
+- Mọi con số (mật độ, 12 dinh dưỡng, 180 giây, ngưỡng nhấp nháy) là số đặt tạm để chỉnh khi chơi thử. Cây chưa có chất dinh dưỡng riêng (đó là 0.5c).
+- Hiệu ứng phát sáng trông đẹp nhất khi có Bloom trong hậu kỳ; chưa kiểm tra có sẵn hay không.
+- **Công cụ "Dress Lake"** của phiên khác vẫn dựng cây cỏ trang trí không ăn được; hai bên độc lập, chạy lại cả hai sau khi dựng lại scene.
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
@@ -246,3 +257,16 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 10. `Prototype_01` dựng lại vẫn chạy như cũ (sinh vật giữ độ cao như trước).
 11. Ghi nhận khi chơi: kẻ săn B chỉ vào được khi bạn đứng cách tổ B khoảng 40 đến 70 m (hai cửa vào cách tâm 25 m, luật 40 m quanh người chơi); để quần thể chạy vài phút rồi xem số C và D có còn không (cân bằng sinh/ăn còn là số đặt tạm).
 12. `GroundHeightTests` bị bỏ qua (không lỗi) nếu đang mở scene có Terrain; muốn chạy nó, mở `Prototype_01` rồi chạy lại Test Runner.
+
+## 12. Danh sách kiểm tra thủ công 0.6c (cho chủ dự án)
+
+1. Console không lỗi đỏ; **Test Runner → EditMode → Run All** xanh (thêm `VegetationScatterTests`, `GlowPulseTests`).
+2. Chạy lại **Evolve → Build Underroot Lake** (rồi các menu "Dress Lake"). Console in "Thực vật phát quang: N cây, tổng M cục thức ăn": N ≤ 380, M ≤ 400, không có cảnh báo vượt giới hạn.
+3. Đi dọc đường mòn: cây Rêu Lân Quang xanh ngọc phát sáng dày dọc đường; đứng lên cây thì độ no tăng.
+4. Bãi Mùn Rễ nhiều Nụ Hổ Phách; Vườn Bào Tử có Bọc Bào Tử Tím nhấp nháy khi lại gần; Chân Rễ chỉ lác đác Giọt Sương Rễ; Rìa Săn Mồi rất thưa Quả Than Hồng; vùng hoang thưa.
+5. Không có cây nào trên nước, hốc sâu, nơi trú, tổ hay trong vòng điểm xuất hiện; cây không lún cũng không lơ lửng trên đồi.
+6. Ăn hết một cây thì sau khoảng 3 phút mọc lại.
+7. Đi xa đường mòn một lúc: có đoạn thiếu thức ăn (độ no tụt); ghi nhận để chỉnh mật độ.
+8. FPS ổn khi đứng giữa vùng nhiều cây (mở Stats); ghi lại con số.
+9. Co-op F2: người vào phòng thấy cùng cây, không có cảnh báo "số cục thức ăn khác nhau".
+10. `Prototype_01` dựng lại vẫn chạy như cũ.
