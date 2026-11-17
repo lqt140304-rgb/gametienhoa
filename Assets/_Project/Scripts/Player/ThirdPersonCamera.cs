@@ -67,7 +67,7 @@ namespace Evolve.Player
             if (firstPerson)
             {
                 HideBody(true);
-                transform.SetPositionAndRotation(target.position + Vector3.up * eyeHeight, rot);
+                transform.SetPositionAndRotation(Shaken(target.position + Vector3.up * eyeHeight), rot);
                 focus = target.position + targetOffset; // so leaving first person does not jump
                 return;
             }
@@ -87,7 +87,20 @@ namespace Evolve.Player
                 && !hit.transform.IsChildOf(target))
                 d = hit.distance;
 
-            transform.SetPositionAndRotation(anchor + dir * d, rot);
+            transform.SetPositionAndRotation(Shaken(anchor + dir * d), rot);
+        }
+
+        Evolve.Survival.SurvivalStats shakeStats;
+        Transform shakeStatsFor;
+
+        /// <summary>Stress shake: a final offset on the finished position (never fed back into focus), local slime only.</summary>
+        Vector3 Shaken(Vector3 pos)
+        {
+            if (Override != null || target == null) return pos; // spectating: not our body
+            if (shakeStatsFor != target) { shakeStatsFor = target; shakeStats = target.GetComponent<Evolve.Survival.SurvivalStats>(); }
+            if (shakeStats == null || shakeStats.Config == null || shakeStats.State.IsDead) return pos;
+            float amp = Evolve.Survival.StressEffects.CameraShake(shakeStats.State.Stress, shakeStats.Config);
+            return amp > 0f ? pos + Random.insideUnitSphere * amp : pos;
         }
 
         /// <summary>In first person the body (and organs, which can grow while we play) must not block the view.</summary>

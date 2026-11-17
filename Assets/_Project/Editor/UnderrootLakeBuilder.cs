@@ -23,6 +23,11 @@ namespace Evolve.EditorTools
         const string Lit = "Universal Render Pipeline/Lit";
         const float Half = 60f; // 120 x 120 area
 
+        /// <summary>Largest body scale that fits a Root Shelter (BodySize.ScaleFor(5) = 1.3; 6 organs = 1.36 does not fit).</summary>
+        const float ShelterMaxScale = 1.3f;
+        /// <summary>Shelter entrance/interior width: real slime base diameter × max scale + 5 cm = 1.0 × 1.3 + 0.05 = 1.35 m.</summary>
+        static readonly float ShelterGap = P.SlimeRadius * 2f * ShelterMaxScale + 0.05f;
+
         [MenuItem("Evolve/Build Underroot Lake")]
         public static void Build()
         {
@@ -71,6 +76,7 @@ namespace Evolve.EditorTools
             var mud = P.Mat("Lake_Mud", new Color(0.24f, 0.2f, 0.15f), Lit);
             var water = P.Mat("Lake_Water", new Color(0.2f, 0.38f, 0.45f), Lit);
             var shallow = P.Mat("Lake_Shallow", new Color(0.3f, 0.48f, 0.5f), Lit);
+            var dirtyWater = P.Mat("Lake_DirtyWater", new Color(0.2f, 0.2f, 0.11f), Lit);
             var dark = P.Mat("Lake_DeepPocket", new Color(0.02f, 0.02f, 0.03f), Lit);
             var root = P.Mat("Lake_Root", new Color(0.32f, 0.22f, 0.14f), Lit);
             var humus = P.Mat("Lake_Humus", new Color(0.18f, 0.12f, 0.08f), Lit);
@@ -129,17 +135,18 @@ namespace Evolve.EditorTools
                 if (i == 0) firstSpawn = sp.transform.position;
             }
 
-            // ---- Shallow water (trigger boxes; SlimeController has no speed hook yet → tag only, 0.5b uses it) ----
+            // ---- Shallow water: trigger boxes y 0..1 (overlap the slime body, r 0.5 resting at y 0.5) + WaterZone ----
+            // SlimeController has no speed hook yet → the ShallowWater tag is only a marker.
             var shallows = new GameObject("Shallow Water").transform;
-            ShallowBox("Shallows North", shallows, new Vector3(0f, 0f, 20f), new Vector2(24f, 8f), shallow);
-            ShallowBox("Shallows West", shallows, new Vector3(-20f, 0f, 0f), new Vector2(8f, 24f), shallow);
-            ShallowBox("Khe Thuy Mach (South Channel)", shallows, new Vector3(0f, 0f, -37.5f), new Vector2(6f, 45f), shallow);
+            Water(ShallowBox("Shallows North", shallows, new Vector3(0f, 0f, 20f), new Vector2(24f, 8f), shallow), true, "Vũng Sinh Mệnh");
+            Water(ShallowBox("Shallows West", shallows, new Vector3(-20f, 0f, 0f), new Vector2(8f, 24f), shallow), true, "Vũng Sinh Mệnh");
+            Water(ShallowBox("Khe Thuy Mach (South Channel)", shallows, new Vector3(0f, 0f, -37.5f), new Vector2(6f, 45f), shallow), true, "Khe Thủy Mạch");
 
             // ---- Deep pockets: black disc + solid blocker so slimes cannot fall in ----
             DeepPocket("Deep Pocket West", new Vector3(-30f, 0f, 25f), dark);
             DeepPocket("Deep Pocket South", new Vector3(25f, 0f, -35f), dark);
 
-            // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters, gap 1.6 m, cool 18°C ----
+            // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters (gap 1.35 m, ShelterZone inside), cool 18°C ----
             var roots = new GameObject("Chan Re Co Thu (Ancient Roots)").transform;
             Zone(roots, new Vector3(0f, 3f, 50f), new Vector3(50f, 6f, 16f), 18f, "Chân Rễ Cổ Thụ");
             for (int i = 0; i < 3; i++) Shelter(roots, new Vector3(-16f + i * 16f, 0f, 50f), root);
@@ -155,6 +162,8 @@ namespace Evolve.EditorTools
             }
             MakeDen("Den D (Mudmite) 1", humusRoot, new Vector3(37f, 0f, 8f), d, region, denMat);
             MakeDen("Den D (Mudmite) 2", humusRoot, new Vector3(44f, 0f, -8f), d, region, denMat);
+            // Stagnant puddle (dirty): quenches thirst, disease risk comes in 0.5d. x 34..42 keeps clear of den 2.
+            Water(ShallowBox("Vung Nuoc Dong (Dirty Puddle)", humusRoot, new Vector3(38f, 0f, -8f), new Vector2(8f, 8f), dirtyWater), false, "Vũng nước đọng (Bãi Mùn Rễ)");
 
             // ---- Vườn Bào Tử (west): mushroom clusters, 2 C dens ----
             var garden = new GameObject("Vuon Bao Tu (Spore Garden)").transform;
@@ -288,7 +297,7 @@ namespace Evolve.EditorTools
             return go;
         }
 
-        static void ShallowBox(string name, Transform parent, Vector3 center, Vector2 size, Material mat)
+        static GameObject ShallowBox(string name, Transform parent, Vector3 center, Vector2 size, Material mat)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -299,6 +308,15 @@ namespace Evolve.EditorTools
             box.size = new Vector3(size.x, 1f, size.y);
             var surface = P.Part(PrimitiveType.Cube, "Surface", go.transform, new Vector3(0f, -0.48f, 0f), new Vector3(size.x, 0.02f, size.y), mat);
             surface.isStatic = true;
+            return go;
+        }
+
+        /// <summary>Make a shallow-water trigger drinkable.</summary>
+        static void Water(GameObject go, bool clean, string displayName)
+        {
+            var w = go.AddComponent<WaterZone>();
+            w.Clean = clean;
+            w.DisplayName = displayName;
         }
 
         static void DeepPocket(string name, Vector3 center, Material mat)
@@ -329,18 +347,34 @@ namespace Evolve.EditorTools
             z.DisplayName = displayName;
         }
 
-        /// <summary>U-shaped root block opening south (towards the lake), inner gap 1.6 m.</summary>
+        /// <summary>
+        /// U-shaped root block opening south (towards the lake). Inner width = ShelterGap (1.35 m): a slime up to
+        /// BodyScale 1.3 fits, a bigger one is stopped by the walls. A ShelterZone trigger fills the covered interior.
+        /// </summary>
         static void Shelter(Transform parent, Vector3 center, Material mat)
         {
             var go = new GameObject("Root Shelter").transform;
             go.SetParent(parent, false);
             go.position = center;
-            const float gap = 1.6f, thick = 1f, depth = 3f, h = 2f;
+            float gap = ShelterGap;
+            const float thick = 1f, depth = 3f, h = 2f;
             float side = gap * 0.5f + thick * 0.5f;
             Solid(PrimitiveType.Cube, "Root L", go, center + new Vector3(-side, h * 0.5f, 0f), new Vector3(thick, h, depth), mat);
             Solid(PrimitiveType.Cube, "Root R", go, center + new Vector3(side, h * 0.5f, 0f), new Vector3(thick, h, depth), mat);
             Solid(PrimitiveType.Cube, "Root Back", go, center + new Vector3(0f, h * 0.5f, depth * 0.5f + thick * 0.5f), new Vector3(gap + 2f * thick, h, thick), mat);
             Solid(PrimitiveType.Cube, "Root Top", go, center + new Vector3(0f, h + 0.25f, 0.5f), new Vector3(gap + 2f * thick, 0.5f, depth + thick), mat);
+
+            // Interior trigger: starts `inset` behind the mouth so a too-big slime pressing its sphere into the
+            // opening (it bulges in ≤ its radius, max 0.75 m at scale 1.5) never touches it. Height h ≥ 2 m.
+            const float inset = 0.8f;
+            float zoneDepth = depth - inset;
+            var zoneGo = new GameObject("Shelter Zone");
+            zoneGo.transform.SetParent(go, false);
+            zoneGo.transform.position = center + new Vector3(0f, h * 0.5f, depth * 0.5f - zoneDepth * 0.5f);
+            var col = zoneGo.AddComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.size = new Vector3(gap, h, zoneDepth);
+            zoneGo.AddComponent<ShelterZone>().MaxBodyScale = ShelterMaxScale;
         }
 
         static Den MakeDen(string name, Transform parent, Vector3 pos, SpeciesSO species, Region region, Material mat)
