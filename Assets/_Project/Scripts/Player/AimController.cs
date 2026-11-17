@@ -62,7 +62,7 @@ namespace Evolve.Player
             if (KeyPressed.Alt()) wantAim = !wantAim;
             if (KeyPressed.F5()) FirstPerson = !FirstPerson;
 
-            bool menuOpen = MouseUiOpen || (interactor != null && interactor.BodyMenuOpen)
+            bool menuOpen = MouseUiOpen || Evolve.Visuals.SlimeColorMenu.IsOpen || (interactor != null && interactor.BodyMenuOpen)
                 || (stats != null && SurvivalHUD.BlocksInput(stats.gameObject));
             bool dead = stats != null && stats.State.IsDead;
             bool should = (wantAim || FirstPerson) && !menuOpen && !dead;

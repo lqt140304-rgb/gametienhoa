@@ -18,6 +18,8 @@ namespace Evolve.Net
         public byte Lives;
         public bool Dead;
         public bool Lost; // corpse gone for good
+        /// <summary>The colours of the slime parts (3 bytes each, in SlimePart order), set by the sender.</summary>
+        public byte[] PartColors;
         public string[] OrganNames;
         public byte[] OrganLevels;
 
@@ -33,6 +35,7 @@ namespace Evolve.Net
             w.WriteValueSafe(Lives);
             w.WriteValueSafe(Dead);
             w.WriteValueSafe(Lost);
+            for (int i = 0; i < 18; i++) w.WriteValueSafe(PartColors != null && i < PartColors.Length ? PartColors[i] : (byte)200);
 
             int n = OrganNames == null ? 0 : Mathf.Min(OrganNames.Length, MaxOrgans);
             w.WriteValueSafe((byte)n);
@@ -56,6 +59,8 @@ namespace Evolve.Net
             r.ReadValueSafe(out byte lives);
             r.ReadValueSafe(out bool dead);
             r.ReadValueSafe(out bool lost);
+            var partColors = new byte[18];
+            for (int i = 0; i < 18; i++) r.ReadValueSafe(out partColors[i]);
             r.ReadValueSafe(out byte count);
 
             s.Name = name;
@@ -66,6 +71,7 @@ namespace Evolve.Net
             s.Lives = lives;
             s.Dead = dead;
             s.Lost = lost;
+            s.PartColors = partColors;
             s.OrganNames = new string[count];
             s.OrganLevels = new byte[count];
             for (int i = 0; i < count; i++)

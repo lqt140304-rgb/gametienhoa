@@ -32,7 +32,8 @@ namespace Evolve.Player
         SurvivalStats stats;
         OrganHost organs;
         Vector3 baseScale = Vector3.one;
-        float squash;
+        float squash, squashTarget, wobbleAmp, airK, airTime, scaleK = 1f, fallSpeed;
+        Evolve.Visuals.SlimeGelAnimator jellyAnimator;
         Vector3 spawnPoint;
         Collider col;
         SphereCollider sphere;
@@ -74,7 +75,7 @@ namespace Evolve.Player
             {
                 Vector3 dir = GetMoveDirection();
                 rb.AddForce(Vector3.up * hopForce + dir * hopForward, ForceMode.VelocityChange);
-                squash = 1f;
+                squashTarget = 1f; // eased in (see AnimateVisual), never an instant jump
             }
             AnimateVisual();
         }
@@ -173,15 +174,38 @@ namespace Evolve.Player
         void AnimateVisual()
         {
             if (visual == null) return;
-            // Landing: spread out flat (negative squash), then settle. In the air: stretch with vertical speed.
-            bool grounded = IsGrounded();
-            if (wasAirborne && grounded) squash = -0.9f;
+            float dt = Time.deltaTime;
+
+            // "Grounded" with a short grace period, so a flickering ground check never makes the body pop.
+            if (IsGrounded()) airTime = 0f; else airTime += dt;
+            bool grounded = airTime < 0.12f;
+
+            // Landing: spread out flat (negative squash), then settle.
+            if (!grounded) fallSpeed = Mathf.Min(fallSpeed, rb.linearVelocity.y);
+            if (wasAirborne && grounded)
+            {
+                squashTarget = -0.4f; // the body mesh does most of the splat (SlimeGelAnimator.Land)
+                var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
+                // Only a real fall splats; the small lift of a dash or a step off a bump does not.
+                if (jelly != null && fallSpeed < -2.5f) jelly.Land(Mathf.Clamp(-fallSpeed / 7f, 0.3f, 1.2f));
+                fallSpeed = 0f;
+            }
             wasAirborne = !grounded;
-            squash = Mathf.MoveTowards(squash, 0f, Time.deltaTime * 3f);
-            float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.02f : 0f;
+
+            // Every part of the body scale is eased: the target decays, the body follows the target.
+            squashTarget = Mathf.Lerp(squashTarget, 0f, 1f - Mathf.Exp(-7f * dt));
+            squash = Mathf.Lerp(squash, squashTarget, 1f - Mathf.Exp(-22f * dt));
+            wobbleAmp = Mathf.Lerp(wobbleAmp, stats.IsMoving ? 1f : 0f, 1f - Mathf.Exp(-8f * dt));
+            float wobble = Mathf.Sin(Time.time * 10f) * 0.02f * wobbleAmp;
+            float airTarget = grounded ? 0f : Mathf.Clamp(Mathf.Abs(rb.linearVelocity.y) * 0.03f, 0f, 0.2f);
+            airK = Mathf.Lerp(airK, airTarget, 1f - Mathf.Exp(-16f * dt));
+
             float bs = BodyScale;
-            float airStretch = grounded ? 0f : Mathf.Clamp(Mathf.Abs(rb.linearVelocity.y) * 0.03f, 0f, 0.2f);
-            float y = 1f + squash * 0.35f + wobble + airStretch;
+            // One animation at a time: while a skill / attack / absorb plays, the hop squash and wobble step aside.
+            if (jellyAnimator == null) jellyAnimator = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
+            bool action = jellyAnimator != null && jellyAnimator.ActionPlaying;
+            scaleK = Mathf.Lerp(scaleK, action ? 0f : 1f, 1f - Mathf.Exp(-14f * dt));
+            float y = 1f + (squash * 0.35f + wobble + airK) * scaleK;
             float xz = 1f / Mathf.Sqrt(y); // preserve volume
             visual.localScale = Vector3.Scale(baseScale * bs, new Vector3(xz, y, xz));
 

@@ -17,7 +17,7 @@ namespace Evolve.Abilities
             dir.y = 0f;
             if (dir.sqrMagnitude < 0.01f) { dir = rb.linearVelocity; dir.y = 0f; }
             if (dir.sqrMagnitude < 0.01f) dir = user.transform.forward;
-            rb.AddForce(dir.normalized * Force + Vector3.up * 1.5f, ForceMode.VelocityChange);
+            rb.AddForce(dir.normalized * Force + Vector3.up * 0.4f, ForceMode.VelocityChange);
             return true;
         }
     }

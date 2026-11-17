@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Evolve.Visuals
 {
     /// <summary>Motions the gel body can play on top of its constant breathing and crawling.</summary>
-    public enum GelMotion { Absorb, Attack, Release, Dash }
+    public enum GelMotion { Absorb, Gulp, Attack, Release, Dash }
 
     /// <summary>
     /// Soft-body animation of the slime, done by bending the body mesh in code (no skeleton):
@@ -15,7 +15,19 @@ namespace Evolve.Visuals
     /// </summary>
     public class SlimeGelAnimator : MonoBehaviour
     {
-        const float AbsorbTime = 0.9f, AttackTime = 0.45f, ReleaseTime = 0.8f, DashTime = 0.6f;
+        const float AbsorbTime = 1.3f, GulpTime = 0.5f, AttackTime = 0.5f, ReleaseTime = 0.65f, DashTime = 0.5f;
+        const float ReleaseWind = 0.3f;   // seconds of charging before a skill is released
+        const float DashWind = 0.15f;     // pull-back before a dash lunges (0.3 of DashTime)
+
+        /// <summary>Seconds the body needs to wind up before a skill of this motion should leave.</summary>
+        public static float WindUp(GelMotion motion) => motion == GelMotion.Release ? ReleaseWind : motion == GelMotion.Dash ? DashWind : 0f;
+
+        /// <summary>Time spent bending meshes since the last read (for the F4 performance overlay).</summary>
+        public static long CostTicks;
+
+        /// <summary>Test switch (F4, third press): all body animation off, to see whether a stutter comes from it.</summary>
+        public static bool Paused;
+        bool wasPaused;
 
         MeshFilter filter;
         Mesh original, mesh;
@@ -29,11 +41,17 @@ namespace Evolve.Visuals
             public MeshFilter Filter;
             public Mesh Mesh;
             public Vector3[] Base, Work;
+            public bool Legs;
         }
         readonly Dictionary<MeshFilter, Follower> followers = new Dictionary<MeshFilter, Follower>();
         readonly List<MeshFilter> dead_ = new List<MeshFilter>();
 
         Vector3 lastPosition;
+        Rigidbody body;
+        Evolve.Organs.OrganHost host;
+
+        void OnOrganEvent(Evolve.Organs.OrganSO organ) => nextFollowerScan = 0f;
+        void OnOrganChanged() => nextFollowerScan = 0f;
         float speed;
         Vector3 moveDir;           // in the body's local space (xz)
 
@@ -41,6 +59,13 @@ namespace Evolve.Visuals
         float activeTime = -1f;    // seconds since the motion started, <0 = none
 
         float nextFollowerScan;
+        float gaitPhase;
+        // Inertia: the body lags behind when speeding up, stopping or turning (a damped spring, so it overshoots a little).
+        Vector3 prevVelocity, accelSmooth, leanPos, leanVel;
+        // Landing splat: -1 = none
+        float landT = -1f, landStrength, fLand;
+        float jig, jigV;       // damped wobble after landings and after a motion ends
+        bool hasLegs;
         float dead;                // 0..1 how collapsed the body is (stats are looked up lazily)
         Survival.SurvivalStats stats;
 
@@ -52,16 +77,33 @@ namespace Evolve.Visuals
             if (animator != null) animator.Play(motion);
         }
 
+        /// <summary>A jelly wobble: the body keeps bouncing a little and settles (call after landing, hits, ...).</summary>
+        /// <summary>True while an action (skill, attack, absorb) plays; everyday movement animation steps aside then.</summary>
+        public bool ActionPlaying => !Paused && ( (activeTime >= 0f && active != GelMotion.Gulp) || (landT >= 0f && landT < LandRest));
+
+        /// <summary>After a real landing the body rests this long (landing splat plays alone) before moving animation resumes.</summary>
+        const float LandRest = 0.5f;
+
+        /// <summary>The body splats flat when it lands (strength about 0.3 soft .. 1.2 hard) and rebounds.</summary>
+        public void Land(float strength)
+        {
+            landT = 0f;
+            landStrength = Mathf.Clamp(strength, 0.2f, 1.3f);
+        }
+
+        public void Jiggle(float strength) => jigV += strength;
+
         public void Play(GelMotion motion)
         {
-            // The same motion is not restarted until it is mostly done (contact damage fires every frame).
-            if (activeTime >= 0f && active == motion && activeTime < Duration(motion) * 0.6f) return;
+            // A motion is never restarted while it plays (contact damage and eating fire every frame), and a small
+            // gulp never interrupts a bigger motion.
+            if (activeTime >= 0f && (active == motion || motion == GelMotion.Gulp)) return;
             active = motion;
             activeTime = 0f;
         }
 
-        static float Duration(GelMotion m) => m == GelMotion.Absorb ? AbsorbTime : m == GelMotion.Attack ? AttackTime
-            : m == GelMotion.Release ? ReleaseTime : DashTime;
+        static float Duration(GelMotion m) => m == GelMotion.Absorb ? AbsorbTime : m == GelMotion.Gulp ? GulpTime
+            : m == GelMotion.Attack ? AttackTime : m == GelMotion.Release ? ReleaseTime : DashTime;
 
         void Awake()
         {
@@ -76,23 +118,44 @@ namespace Evolve.Visuals
             baseVertices = mesh.vertices;
             work = new Vector3[baseVertices.Length];
             lastPosition = transform.position;
+            body = GetComponentInParent<Rigidbody>();
+            // A newly equipped organ must start bending (and be coloured) the very frame it appears,
+            // not up to 0.4 s later: that delay was a visible pop.
+            host = GetComponentInParent<Evolve.Organs.OrganHost>();
+            if (host != null) { host.Attached += OnOrganEvent; host.Removed += OnOrganEvent; host.Changed += OnOrganChanged; }
+        }
+
+        // Back to the undeformed shapes (body and organs).
+        void RestShapes()
+        {
+            if (mesh != null) { mesh.SetVertices(baseVertices); mesh.RecalculateNormals(); mesh.RecalculateBounds(); }
+            foreach (var f in followers.Values) if (f.Mesh != null) { f.Mesh.SetVertices(f.Base); f.Mesh.RecalculateBounds(); }
         }
 
         void OnDestroy()
         {
+            if (host != null) { host.Attached -= OnOrganEvent; host.Removed -= OnOrganEvent; host.Changed -= OnOrganChanged; }
             if (mesh != null) Destroy(mesh);
             foreach (var f in followers.Values) if (f.Mesh != null) Destroy(f.Mesh);
         }
 
         void LateUpdate()
         {
+            if (Paused)
+            {
+                if (!wasPaused) { wasPaused = true; RestShapes(); }
+                return;
+            }
+            wasPaused = false;
             float dt = Mathf.Max(Time.deltaTime, 1e-4f);
 
             // Movement as it really happens in the world (flat), expressed in the body's own directions.
-            Vector3 delta = transform.position - lastPosition;
+            // The local player's physics velocity is smooth; others (remote avatars) are measured from how they move.
+            Vector3 velocity;
+            if (body != null) velocity = body.linearVelocity;
+            else velocity = (transform.position - lastPosition) / dt;
             lastPosition = transform.position;
-            delta.y = 0f;
-            Vector3 velocity = delta / dt;
+            velocity.y = 0f;
             speed = Mathf.Lerp(speed, Mathf.Min(velocity.magnitude, 12f), 1f - Mathf.Exp(-10f * dt));
             if (velocity.sqrMagnitude > 0.04f)
             {
@@ -101,19 +164,38 @@ namespace Evolve.Visuals
                 if (local.sqrMagnitude > 1e-4f) moveDir = Vector3.Slerp(moveDir.sqrMagnitude < 1e-4f ? local.normalized : moveDir, local.normalized, 1f - Mathf.Exp(-12f * dt));
             }
 
+            // Inertia from the acceleration (sprinting off, stopping, changing direction).
+            Vector3 accel = (velocity - prevVelocity) / dt;
+            prevVelocity = velocity;
+            accelSmooth = Vector3.Lerp(accelSmooth, accel, 1f - Mathf.Exp(-12f * dt));
+            Vector3 accelLocal = transform.InverseTransformDirection(accelSmooth);
+            accelLocal.y = 0f;
+            Vector3 leanTarget = Vector3.ClampMagnitude(-accelLocal * 0.005f, 0.05f);
+            leanVel += ((leanTarget - leanPos) * 55f - leanVel * 11f) * dt;
+            leanPos += leanVel * dt;
+
+            if (landT >= 0f) { landT += dt; if (landT > 0.6f) landT = -1f; }
+
+            if (speed > 0.3f) gaitPhase += dt * (5f + speed * 1.6f);
+
             if (activeTime >= 0f)
             {
                 activeTime += dt;
-                if (activeTime >= Duration(active)) activeTime = -1f;
+                if (activeTime >= Duration(active)) { activeTime = -1f; if (active != GelMotion.Gulp) jigV += 1f; }
             }
+            // Damped spring: the wobble swings back and forth and dies out.
+            jigV += (-90f * jig - 7f * jigV) * dt;
+            jig += jigV * dt;
 
             if (stats == null) stats = GetComponentInParent<Survival.SurvivalStats>();
             float deadTarget = stats != null && stats.State.IsDead ? 1f : 0f;
             dead = Mathf.MoveTowards(dead, deadTarget, dt * 2.5f);
 
-            if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ScanFollowers(); }
+            if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ScanFollowers(); UpdateHasLegs(); }
 
+            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             Deform();
+            CostTicks += System.Diagnostics.Stopwatch.GetTimestamp() - t0;
             if (core != null) core.Boost = CoreBoost();
         }
 
@@ -129,7 +211,8 @@ namespace Evolve.Visuals
                 followers.Remove(key);
             }
 
-            foreach (var socket in GetComponentsInChildren<Evolve.Organs.OrganSocket>(true))
+            GetComponentsInChildren(true, sockets);
+            foreach (var socket in sockets)
             {
                 socket.GetComponentsInChildren(true, scratch);
                 foreach (var f in scratch)
@@ -140,9 +223,15 @@ namespace Evolve.Visuals
                     copy.MarkDynamic();
                     f.sharedMesh = copy;
                     var verts = copy.vertices;
-                    followers[f] = new Follower { Filter = f, Mesh = copy, Base = verts, Work = new Vector3[verts.Length] };
+                    followers[f] = new Follower { Filter = f, Mesh = copy, Base = verts, Work = new Vector3[verts.Length], Legs = socket.Slot == Evolve.Organs.OrganSlot.Legs };
                 }
             }
+        }
+
+        void UpdateHasLegs()
+        {
+            hasLegs = false;
+            foreach (var f in followers.Values) if (f.Legs && f.Filter != null) { hasLegs = true; break; }
         }
 
         float CoreBoost()
@@ -151,47 +240,93 @@ namespace Evolve.Visuals
             float p = activeTime / Duration(active);
             switch (active)
             {
-                case GelMotion.Absorb: return Mathf.Sin(p * Mathf.PI);
-                case GelMotion.Release: return p < 0.45f ? p / 0.45f : Mathf.Max(0f, 1f - (p - 0.45f) / 0.4f);
+                case GelMotion.Absorb: return 0.6f * Mathf.Sin(p * Mathf.PI);
+                case GelMotion.Gulp: return 0.25f * Mathf.Sin(p * Mathf.PI);
+                case GelMotion.Release: { float f = ReleaseWind / ReleaseTime; return p < f ? p / f : Mathf.Max(0f, 1f - (p - f) / 0.4f); }
                 case GelMotion.Attack: return 0.4f * Mathf.Sin(p * Mathf.PI);
                 default: return 0.6f * Mathf.Sin(p * Mathf.PI);
             }
         }
 
         // per-frame motion parameters shared by the body and the organs
+        float fBreath, fBreath2, fWaveTime;
+        int frameCount;
+        readonly List<Evolve.Organs.OrganSocket> sockets = new List<Evolve.Organs.OrganSocket>();
         float fTime, fMove, fAbsorb, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
         Vector3 fDir;
 
+        float locoK = 1f;  // 1 = everyday movement animation fully on, 0 = off (an action or a jump has the floor)
+        float crawlK = 1f; // 1 = body crawls, 0.25 = legs do the walking (eased, so attaching legs does not pop)
+
+        /// <summary>
+        /// Works out the motion parameters for this frame. They are only TARGETS: every value is eased toward its
+        /// target, so switching state (idle, moving, absorbing, attacking, charging...) never makes a sudden jump.
+        /// </summary>
         void PrepareFrame()
         {
+            float dt = Time.deltaTime;
+            float soft = 1f - Mathf.Exp(-14f * dt);   // everyday easing (about 70 ms)
+            float quick = 1f - Mathf.Exp(-32f * dt);  // for the sharp moments (release, lunge)
+
             fTime = Time.time;
-            fMove = Mathf.Clamp01(speed / 4f);
-            fDir = moveDir;
-            fAbsorb = fKick = fStretch = fCharge = fBurst = 0f;
+            fBreath = Mathf.Sin(fTime * 2.1f);
+            fBreath2 = Mathf.Sin(fTime * 2.1f + 1f);
+            fWaveTime = fTime * (9f + speed * 1.5f);
+            fLand = landT >= 0f
+                ? Mathf.SmoothStep(0f, 1f, landT / 0.04f) * Mathf.Exp(-6f * landT) * Mathf.Cos(landT * 16f) * landStrength
+                : 0f;
+            fDir = Vector3.forward; // the body turns to face where it goes: waves and steps always run along its own axis (no flips on turns)
+            fMove = Mathf.Lerp(fMove, Mathf.Clamp01(speed / 4f), 1f - Mathf.Exp(-9f * dt));
+            // One animation at a time: while an action plays or the slime is in the air, the everyday movement
+            // animation (breathing, crawl, steps) fades out, so animations never fight each other.
+            bool airborne = body != null && Mathf.Abs(body.linearVelocity.y) > 1.6f; // small bumps (a dash's little lift) do not count
+            bool locoOff = ActionPlaying || airborne;
+            // Off quickly, back on gently (so the resume after an action or a landing is smooth, not a snap).
+            locoK = Mathf.Lerp(locoK, locoOff ? 0f : 1f, 1f - Mathf.Exp(-(locoOff ? 14f : 5f) * dt));
+            crawlK = Mathf.Lerp(crawlK, hasLegs ? 0.25f : 1f, 1f - Mathf.Exp(-6f * dt));
+
+            float tPulse = 0f, tKick = 0f, tStretch = 0f, tCharge = 0f, tBurst = 0f;
             float p = activeTime >= 0f ? activeTime / Duration(active) : -1f;
             if (p >= 0f)
             {
                 switch (active)
                 {
-                    case GelMotion.Absorb: fAbsorb = p; break;
-                    case GelMotion.Attack: Lunge(p, 1f, out fKick, out fStretch); break;
-                    case GelMotion.Dash: Lunge(p, 1.6f, out fKick, out fStretch); break;
+                    case GelMotion.Absorb: fAbsorb = p; tPulse = Mathf.Sin(p * Mathf.PI); break;
+                    case GelMotion.Gulp: fAbsorb = p; tPulse = Mathf.Sin(p * Mathf.PI) * 0.35f; break;
+                    case GelMotion.Attack: Lunge(p, 1f, out tKick, out tStretch); break;
+                    case GelMotion.Dash: Lunge(p, 1.6f, out tKick, out tStretch); break;
                     case GelMotion.Release:
-                        fCharge = p < 0.45f ? Mathf.SmoothStep(0f, 1f, p / 0.45f) : 0f;
-                        fBurst = p < 0.45f ? 0f : Mathf.Sin((p - 0.45f) / 0.55f * Mathf.PI) * (1f - (p - 0.45f) / 0.55f * 0.3f);
+                        float f = ReleaseWind / ReleaseTime;
+                        tCharge = p < f ? Mathf.SmoothStep(0f, 1f, p / f) : 0f;
+                        if (p >= f)
+                        {
+                            // The burst peaks right at the moment the skill leaves, then relaxes.
+                            float q = (p - f) / (1f - f);
+                            tBurst = Mathf.Min(1f, q / 0.12f) * (1f - q) * (1f - q);
+                        }
                         break;
                 }
             }
-            fAbsorbPulse = fAbsorb > 0f ? Mathf.Sin(fAbsorb * Mathf.PI) : 0f;
+            fAbsorbPulse = Mathf.Lerp(fAbsorbPulse, tPulse, soft);
+            fKick = Mathf.Lerp(fKick, tKick, quick);
+            fStretch = Mathf.Lerp(fStretch, tStretch, quick);
+            fCharge = Mathf.Lerp(fCharge, tCharge, soft);
+            fBurst = Mathf.Lerp(fBurst, tBurst, quick);
         }
 
         void Deform()
         {
             PrepareFrame();
+            frameCount++;
+
+            // Standing still (only breathing): every second frame is plenty.
+            bool still = fMove * locoK < 0.02f && activeTime < 0f && Mathf.Abs(fLand) < 0.002f
+                && Mathf.Abs(jig) < 0.002f && leanPos.sqrMagnitude < 4e-6f && dead < 0.01f;
+            if (still && (frameCount & 1) == 0) return;
 
             for (int i = 0; i < baseVertices.Length; i++) work[i] = baseVertices[i] + Offset(baseVertices[i]);
-            mesh.vertices = work;
-            mesh.RecalculateNormals();
+            mesh.SetVertices(work);
+            if ((frameCount & 1) == 0) mesh.RecalculateNormals(); // lighting a frame late is not visible
             mesh.RecalculateBounds();
 
             // Organs: the same displacement field, evaluated where each organ vertex sits relative to the body.
@@ -204,10 +339,11 @@ namespace Evolve.Visuals
                 for (int i = 0; i < f.Base.Length; i++)
                 {
                     Vector3 bodyPoint = toBody.MultiplyPoint3x4(f.Base[i]);
-                    f.Work[i] = f.Base[i] + toLocal.MultiplyVector(Offset(bodyPoint));
+                    Vector3 off = Offset(bodyPoint);
+                    if (f.Legs) off += Gait(bodyPoint);
+                    f.Work[i] = f.Base[i] + toLocal.MultiplyVector(off);
                 }
-                f.Mesh.vertices = f.Work;
-                f.Mesh.RecalculateNormals();
+                f.Mesh.SetVertices(f.Work);
                 f.Mesh.RecalculateBounds();
             }
         }
@@ -224,49 +360,75 @@ namespace Evolve.Visuals
             Vector3 o = Vector3.zero;
 
             // Breathing: the hump rises and sinks slightly.
-            o.y += 0.012f * Mathf.Sin(t * 2.1f) * h;
-            o += outward * 0.006f * Mathf.Sin(t * 2.1f + 1f) * low;
+            o.y += 0.02f * locoK * fBreath * h;
+            o += outward * 0.01f * locoK * fBreath2 * low;
 
             // Crawling: a wave runs along the body, the hump leans where it is going.
-            if (fMove > 0.01f && fDir.sqrMagnitude > 1e-4f)
+            if (fMove * locoK > 0.01f && fDir.sqrMagnitude > 1e-4f)
             {
                 float along = b.x * fDir.x + b.z * fDir.z;
-                float wave = Mathf.Sin(along * 13f - t * 9f);
-                o.y += fMove * 0.025f * wave * (0.3f + 0.7f * h);
-                o += outward * fMove * 0.022f * wave * low;
-                o += fDir * (fMove * 0.07f * h * h);
+                float crawl = crawlK * locoK;                   // with legs the legs do the moving, the body only sways
+                float fast = 1f + Mathf.Min(speed, 6f) * 0.1f;        // faster = bigger, quicker ripples
+                float wave = Mathf.Sin(along * 11f - fWaveTime);
+                o.y += fMove * 0.07f * fast * crawl * wave * (0.3f + 0.7f * h);
+                o += outward * fMove * 0.06f * fast * crawl * wave * low;
+                o += fDir * (fMove * locoK * 0.16f * fast * h * h);
+                if (hasLegs) o.y += fMove * locoK * 0.035f * Mathf.Sin(gaitPhase * 2f) * h;   // body bobs with each step
             }
 
             // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
-            if (fAbsorb > 0f)
+            if (fAbsorbPulse > 0.001f)
             {
-                float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - fAbsorb), 2f) / 0.06f) * fAbsorbPulse;
+                float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - fAbsorb), 2f) / 0.1f) * fAbsorbPulse;
                 o.y -= 0.05f * ring;
-                o -= outward * 0.05f * ring;
+                o -= outward * 0.045f * ring;
                 o -= outward * 0.03f * fAbsorbPulse * rn;
                 o.y += 0.03f * fAbsorbPulse * h;
             }
 
             // Attacking / dashing: pull back, then the front lunges forward.
-            if (fKick != 0f || fStretch != 0f)
+            if (Mathf.Abs(fKick) > 0.001f || Mathf.Abs(fStretch) > 0.001f)
             {
                 float front = 0.5f + 0.5f * Mathf.Clamp(b.z / 0.55f, -1f, 1f);
-                o.z += fKick * (0.35f + 0.65f * h) * 0.28f;
-                o.z += fStretch * front * 0.16f;
-                o.y -= Mathf.Abs(fKick) * 0.1f * h;
+                o.z += fKick * (0.35f + 0.65f * h) * 0.5f;
+                o.z += fStretch * front * 0.3f;
+                o.y -= Mathf.Abs(fKick) * 0.2f * h;
             }
 
             // Skill: tighten and tremble while charging, then a bristling burst outward.
-            if (fCharge > 0f)
+            if (fCharge > 0.001f)
             {
-                o -= outward * 0.05f * fCharge * rn;
-                o.y += 0.06f * fCharge * h;
-                o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.004f * fCharge;
+                o -= outward * 0.1f * fCharge * rn;
+                o.y += 0.12f * fCharge * h;
+                o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.008f * fCharge;
             }
-            if (fBurst > 0f)
+            if (fBurst > 0.001f)
             {
-                o += outward * 0.09f * fBurst * (0.4f + 0.6f * low);
-                o.y -= 0.05f * fBurst * h;
+                o += outward * 0.17f * fBurst * (0.4f + 0.6f * low);
+                o.y -= 0.1f * fBurst * h;
+            }
+
+            // Jelly wobble: taller and thinner, then wider and flatter, and back.
+            if (Mathf.Abs(jig) > 1e-4f)
+            {
+                o.y += jig * 0.06f * h;
+                o -= outward * jig * 0.04f * rn;
+            }
+
+            // Landing: flat and wide on impact, then a rebound (taller and thinner) that dies out.
+            if (Mathf.Abs(fLand) > 0.001f)
+            {
+                o.y -= (b.y - SlimeMeshBuilder.Bottom) * 0.3f * fLand;
+                o += outward * 0.08f * fLand * (0.3f + low);
+            }
+
+            // Inertia lean: the upper body lags behind the base when speeding up, stopping or turning.
+            if (locoK > 0.01f)
+            {
+                float lag = h * h * locoK;
+                o.x += leanPos.x * lag;
+                o.z += leanPos.z * lag;
+                o.y -= new Vector2(leanPos.x, leanPos.z).magnitude * 0.25f * lag;
             }
 
             // Dead: the body slumps into a flat puddle.
@@ -275,6 +437,22 @@ namespace Evolve.Visuals
                 o.y -= (b.y - SlimeMeshBuilder.Bottom) * 0.6f * dead;
                 o += outward * 0.07f * dead * rn;
             }
+            return o;
+        }
+
+        /// <summary>
+        /// Walking with legs: diagonal pairs of legs alternate. The foot (far from the body centre) swings along the
+        /// direction of travel and lifts while it swings; near the shoulder almost nothing moves.
+        /// </summary>
+        Vector3 Gait(Vector3 b)
+        {
+            if (fMove * locoK < 0.01f) return Vector3.zero;
+            float sx = b.x >= 0f ? 1f : -1f, sz = b.z >= 0f ? 1f : -1f;
+            float phase = gaitPhase + (sx * sz > 0f ? 0f : Mathf.PI);
+            float reach = Mathf.Clamp01((Mathf.Sqrt(b.x * b.x + b.z * b.z) - 0.1f) / 0.22f);
+            float lift = Mathf.Max(0f, Mathf.Cos(phase));
+            Vector3 o = fDir * (Mathf.Sin(phase) * 0.16f * fMove * locoK * reach);
+            o.y += lift * 0.13f * fMove * locoK * reach;
             return o;
         }
 
