@@ -8,7 +8,7 @@ Ngày: 2026-11-17. Nhánh: `codex/hud-ui`.
 - Nút **Giao diện**: chọn cố định (mặc định) hoặc đi theo nhân vật. Lựa chọn được lưu bằng PlayerPrefs.
 - Khi đi theo: hai thanh máu/năng lượng gọn dưới nhân vật, độ no hiện khi còn ≤25%; nhiệt độ và mạng hiển thị nhỏ. Nếu nhân vật ở ngoài màn hình/sau camera hoặc thiếu camera, quay về HUD cố định.
 - **K** mở vòng quanh nhân vật: Dị Năng Q riêng, 5 ô kỹ năng cơ quan 1–5 và cảm nhận rung C. Bấm ô để xem mô tả/chi phí/trạng thái, không tự thi triển.
-- HUD góc phải vẫn thể hiện hồi chiêu các ô cơ quan đang gắn khi đóng vòng.
+- Thanh kỹ năng Q · 1–5 · C nằm giữa phía dưới, hiện hồi chiêu/trạng thái thiếu năng lượng; ô trống hiển thị mờ. Góc phải giữ EXP và lối mở menu.
 - **G** mở bảng cơ quan bên phải; cuộn khi dài. Giữ đầu tư EXP, ưu tiên, tháo và gán kỹ năng vào ô 1–5.
 - **Esc** đóng menu; **H** mở trợ giúp. Chỉ một menu mở. Khi mở menu, đầu vào di chuyển/nảy/thi triển/nhặt cơ quan và điều khiển camera của người chơi đó bị chặn; thế giới vẫn tiếp tục chạy.
 - Scene cũ được bổ sung SkillBar trong bộ nhớ nếu thiếu; không lưu hoặc dựng lại scene.

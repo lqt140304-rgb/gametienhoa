@@ -107,30 +107,37 @@ namespace Evolve.Survival
             var right = new Rect(canvas.x - 254, canvas.y - 130, 230, 110);
             GUI.Label(new Rect(right.x, right.y, right.width, 25), $"{s.EvolutionExp:0} EXP", text);
             var sense = stats.GetComponent<VibrationSense>();
-            string q = caster != null && caster.Ability != null ? Ready(caster.CooldownRemaining, caster.Ability.EnergyCost) : "chưa có";
-            string c = sense != null ? Ready(sense.CooldownRemaining, sense.EnergyCost) : "chưa có";
-            GUI.Label(new Rect(right.x, right.y + 25, right.width, 23), $"Q  {q}    C  {c}", small);
-            if (skills != null)
+            float skillX = canvas.x / 2 - 187;
+            float skillY = canvas.y - 86;
+            var active = caster != null ? caster.Ability : null;
+            DrawSkillChip(new Rect(skillX, skillY, 50, 58), "Q", active != null ? active.DisplayName : null,
+                caster != null ? caster.CooldownRemaining : 0, active != null ? active.EnergyCost : 0);
+            for (int slot = 0; slot < SkillBar.SlotCount; slot++)
             {
-                for (int slot = 0; slot < SkillBar.SlotCount; slot++)
-                {
-                    var organ = skills.GetSlot(slot);
-                    if (organ == null) continue;
-                    var chip = new Rect(right.x + slot * 46, right.y - 55, 42, 48);
-                    Paint(chip, surface);
-                    float cd = skills.CooldownRemaining(slot);
-                    GUI.Label(new Rect(chip.x + 4, chip.y, 38, 20), $"{slot + 1}", text);
-                    var clipped = new GUIStyle(small) { wordWrap = false, clipping = TextClipping.Clip };
-                    GUI.Label(new Rect(chip.x + 4, chip.y + 23, 34, 22),
-                        new GUIContent(cd > 0 ? $"{cd:0.0}s" : s.Energy < organ.GrantedAbility.EnergyCost ? "NL!" : "Sẵn", organ.GrantedAbility.DisplayName), clipped);
-                }
+                var organ = skills != null ? skills.GetSlot(slot) : null;
+                var ability = organ != null ? organ.GrantedAbility : null;
+                DrawSkillChip(new Rect(skillX + (slot + 1) * 54, skillY, 50, 58), (slot + 1).ToString(),
+                    ability != null ? ability.DisplayName : null, skills != null ? skills.CooldownRemaining(slot) : 0,
+                    ability != null ? ability.EnergyCost : 0);
             }
+            DrawSkillChip(new Rect(skillX + 324, skillY, 50, 58), "C", sense != null ? "Cảm nhận rung" : null,
+                sense != null ? sense.CooldownRemaining : 0, sense != null ? sense.EnergyCost : 0);
             if (GUI.Button(new Rect(right.x, right.y + 55, 108, 32), "K · Kỹ năng", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Skills));
             if (GUI.Button(new Rect(right.x + 116, right.y + 55, 114, 32), "G · Cơ quan", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Organs));
             if (GUI.Button(new Rect(canvas.x - 136, 18, 112, 28), "Giao diện", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Settings));
             if (!string.IsNullOrEmpty(GUI.tooltip))
-                GUI.Label(new Rect(canvas.x - 360, canvas.y - 214, 336, 24), GUI.tooltip, small);
+                GUI.Label(new Rect(canvas.x / 2 - 187, skillY - 28, 374, 24), GUI.tooltip, small);
             GUI.matrix = old;
+        }
+
+        void DrawSkillChip(Rect chip, string key, string name, float cooldown, float cost)
+        {
+            Paint(chip, name != null ? surface : new Color(.055f, .12f, .095f, .3f));
+            var centered = new GUIStyle(name != null ? text : small) { alignment = TextAnchor.MiddleCenter };
+            GUI.Label(new Rect(chip.x, chip.y + 3, chip.width, 24), new GUIContent(key, name ?? "Ô trống"), centered);
+            var status = new GUIStyle(small) { alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Clip };
+            GUI.Label(new Rect(chip.x + 2, chip.y + 29, chip.width - 4, 22),
+                new GUIContent(name == null ? "—" : cooldown > 0 ? $"{cooldown:0.0}s" : stats.State.Energy < cost ? "NL!" : "Sẵn", name ?? "Ô trống"), status);
         }
 
         string Ready(float cooldown, float cost) => cooldown > 0 ? $"{cooldown:0.0}s" : stats.State.Energy < cost ? "thiếu NL" : "sẵn sàng";
