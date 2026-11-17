@@ -67,6 +67,20 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 - Cơ quan đã có chỉ còn **0.8** trọng số so với cơ quan chưa có cùng bậc (chỉnh được trong Inspector). Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường.
 - "Đã có" tính theo cơ quan **đang gắn trên người**; tháo ra thì tính là chưa có, tỉ lệ rơi trở lại bình thường.
 
+## 4.4. EXP tiến hóa và cấp cơ quan [ĐÃ CHỐT, thông số ĐỀ XUẤT]
+
+**[ĐÃ CHỐT]** (chủ dự án, 2026-11-17)
+- Thanh **EXP tiến hóa** là nguồn để nuôi và nâng cơ quan. **Ăn** cho **ít** EXP; **hấp thụ cơ quan** cho **nhiều** EXP (bậc càng cao càng nhiều).
+- Cách chi: **chủ động + tự động**. Người chơi tự đổ EXP vào cơ quan muốn (bảng Cơ thể), hoặc đánh dấu **1 cơ quan ưu tiên** để EXP mới nhận tự chảy vào.
+- Cơ quan mới là **mầm**; đủ EXP thành cơ quan hoàn chỉnh (**cấp 1**), nâng tiếp được đến **cấp 3**. Cấp không đổi bậc C/B/A/S.
+
+**[ĐỀ XUẤT]** (đang dùng trong prototype, chỉnh được)
+- Ăn: 0.2 EXP mỗi đơn vị thức ăn (`OrganHost.foodExpRate`); toàn bộ thức ăn vẫn vào thanh đói.
+- Hấp thụ cơ quan (phím F, luôn chọn được): C 15, B 30, A 60, S 120 EXP.
+- Chi phí: mầm → Lv1 = `GrowthExpRequired` (C 30, B 45, A 70); Lv1 → Lv2 = 1×; Lv2 → Lv3 = 2×.
+- Mỗi cấp trên 1 tăng hiệu ứng +25% (`levelBonus`). Mắt cấp 2–3 nhìn xa hơn.
+- EXP chưa chi được **giữ khi chết**; cơ quan rơi ra thì mất cấp và tiến độ.
+
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
 **[ĐÃ CHỐT]** Máu; thanh đói; thanh năng lượng; thanh kinh nghiệm tiến hóa; thanh nhiệt độ.

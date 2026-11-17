@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Evolve.Organs
 {
@@ -23,8 +24,9 @@ namespace Evolve.Organs
         public GameObject VisualPrefab;
 
         [Header("Growth")]
-        [Tooltip("Food that must be eaten to grow from bud to full organ (0 = instant)")]
-        public float GrowthFoodRequired = 30f;
+        [Tooltip("Evolution EXP needed to grow from bud to full organ (Lv1). Lv2 costs the same again, Lv3 twice as much. 0 = instant.")]
+        [FormerlySerializedAs("GrowthFoodRequired")]
+        public float GrowthExpRequired = 30f;
 
         [Header("Effects (at full growth)")]
         [Tooltip("Gives colour vision and long view range")]

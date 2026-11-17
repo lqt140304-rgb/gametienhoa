@@ -30,7 +30,8 @@ namespace Evolve.Survival
             "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
             "Chấm xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi (giác quan rung)\n\n" +
             "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; chết thì cơ quan\nrơi tại chỗ, mỗi cái 50% bị mất)\n\n" +
-            "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E chọn, X bỏ qua.\nG  Bảng cơ thể (tháo cơ quan bằng 1, 2…)\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
+            "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E lắp, F hấp thụ, X bỏ qua.\n\n" +
+            "EXP tiến hóa: ăn được ít, hấp thụ cơ quan được\nnhiều. G  Bảng cơ thể: đổ EXP cho cơ quan\n(mầm → Lv1 → Lv3), chọn ưu tiên, tháo.";
 
         void Start()
         {
@@ -40,7 +41,8 @@ namespace Evolve.Survival
             interactor = stats.GetComponent<OrganInteractor>();
             if (organs != null)
             {
-                organs.Attached += o => Toast($"Mầm {o.DisplayName}: ăn thêm {o.GrowthFoodRequired:0} thức ăn để phát triển");
+                organs.Attached += o => Toast($"Mầm {o.DisplayName}: cần {o.GrowthExpRequired:0} EXP tiến hóa\n(G để đổ EXP hoặc đặt ưu tiên)");
+                organs.LeveledUp += (o, lv) => Toast($"{OrganTiers.Tag(o.Tier)} {o.DisplayName} lên cấp {lv}!");
                 organs.Completed += o => Toast($"Tiến hóa: {OrganTiers.Tag(o.Tier)} {o.DisplayName}!\n{o.Description}");
                 organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(rơi ra đất, nhặt lại phải nuôi từ đầu)");
                 if (interactor != null) interactor.DroppedOnDeath += (kept, lost) =>
@@ -72,6 +74,9 @@ namespace Evolve.Survival
             float y = 132;
             GUI.Label(new Rect(20, y, 400, 22), $"Mạng: {s.Lives}/{s.MaxLives}");
             y += 24;
+            string prio = organs != null && organs.Priority != null ? $"  → tự vào {organs.Priority.DisplayName}" : "";
+            GUI.Label(new Rect(20, y, 500, 22), $"EXP tiến hóa: {s.EvolutionExp:0}{prio}   (G: bảng cơ thể)");
+            y += 24;
             if (caster != null && caster.Ability != null)
             {
                 var a = caster.Ability;
@@ -84,15 +89,16 @@ namespace Evolve.Survival
                 DrawBar(new Rect(20, y, 200, 20), caster.CooldownProgress, c, status);
                 y += 28;
             }
-            // Organs: finished ones as text, growing ones as food progress bars.
+            // Organs: full ones as text with level, buds as EXP progress bars.
             var all = organs != null ? organs.Organs.ToList() : new System.Collections.Generic.List<OrganSO>();
-            var done = all.Where(x => organs.GetGrowth(x) >= 1f).Select(x => x.DisplayName).ToList();
+            var done = all.Where(x => organs.GetLevel(x) >= 1).Select(x => $"{x.DisplayName} Lv{organs.GetLevel(x)}").ToList();
             GUI.Label(new Rect(20, y, 500, 22), $"Cơ quan: {(done.Count > 0 ? string.Join(", ", done) : "chưa có")}");
             y += 24;
-            foreach (var o in all.Where(x => organs.GetGrowth(x) < 1f))
+            foreach (var o in all.Where(x => organs.GetLevel(x) == 0))
             {
+                organs.GetProgress(o, out float prog, out float cost);
                 DrawBar(new Rect(20, y, 200, 20), organs.GetGrowth(o), new Color(0.75f, 0.5f, 1f),
-                    $"{o.DisplayName}: {organs.GetFed(o):0}/{o.GrowthFoodRequired:0} thức ăn");
+                    $"Mầm {o.DisplayName}: {prog:0}/{cost:0} EXP");
                 y += 28;
             }
             if (s.IsDead)
@@ -131,7 +137,7 @@ namespace Evolve.Survival
             DrawBodyMenu();
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 520), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 540), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }
@@ -150,23 +156,41 @@ namespace Evolve.Survival
             DrawBar(new Rect(20, 104, 200, 20), Mathf.InverseLerp(-10f, 60f, s.Temperature), c, label);
         }
 
+        /// <summary>Body menu (G): spend EXP, choose the priority organ, detach. Uses the mouse.</summary>
         void DrawBodyMenu()
         {
             if (interactor == null || !interactor.BodyMenuOpen) return;
             var list = organs.OrganList;
-            string text = "<b><size=18>Cơ thể</size></b>\n\n";
-            if (list.Count == 0) text += "Chưa có cơ quan nào.\n";
-            for (int i = 0; i < list.Count; i++)
+            var rich = new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14, wordWrap = true };
+            float h = 120 + 58 * Mathf.Max(1, list.Count);
+            var r = new Rect(Screen.width / 2f - 280, 80, 560, h);
+            GUI.Box(r, GUIContent.none, box);
+            GUILayout.BeginArea(new Rect(r.x + 12, r.y + 8, r.width - 24, r.height - 16));
+            GUILayout.Label($"<b><size=18>Cơ thể</size></b>    EXP tiến hóa: <b>{stats.State.EvolutionExp:0}</b>", rich);
+            GUILayout.Label("Đổ EXP: nuôi mầm thành cơ quan (Lv1), rồi nâng lên Lv2, Lv3. Ưu tiên: EXP mới nhận tự chảy vào cơ quan đó.", rich);
+            if (list.Count == 0) GUILayout.Label("Chưa có cơ quan nào.", rich);
+            foreach (var o in list)
             {
-                var o = list[i];
-                float g = organs.GetGrowth(o);
-                string state = g >= 1f ? "hoàn chỉnh" : $"{organs.GetFed(o):0}/{o.GrowthFoodRequired:0} thức ăn";
-                text += $"[{i + 1}] Tháo {OrganTiers.Tag(o.Tier)} {o.DisplayName}  ({OrganInteractor.SlotName(o.Slot)}, {state})\n";
+                int lv = organs.GetLevel(o);
+                organs.GetProgress(o, out float prog, out float cost);
+                string state = lv == 0 ? $"mầm, {prog:0}/{cost:0} EXP"
+                    : organs.IsMaxed(o) ? $"Lv{lv} (tối đa)"
+                    : $"Lv{lv}, {prog:0}/{cost:0} EXP lên Lv{lv + 1}";
+                GUILayout.Label($"{OrganTiers.Tag(o.Tier)} <b>{o.DisplayName}</b> ({OrganInteractor.SlotName(o.Slot)}): {state}", rich);
+                GUILayout.BeginHorizontal();
+                GUI.enabled = !organs.IsMaxed(o) && stats.State.EvolutionExp > 0f;
+                if (GUILayout.Button(lv == 0 ? "Đổ EXP (nuôi lớn)" : "Đổ EXP (lên cấp)", GUILayout.Width(170))) organs.Invest(o);
+                GUI.enabled = !organs.IsMaxed(o);
+                bool isPrio = organs.Priority == o;
+                if (GUILayout.Button(isPrio ? "Đang ưu tiên (bỏ)" : "Đặt ưu tiên", GUILayout.Width(150)))
+                    organs.Priority = isPrio ? null : o;
+                GUI.enabled = true;
+                if (GUILayout.Button("Tháo (rơi ra đất)", GUILayout.Width(150))) interactor.Drop(o);
+                GUILayout.EndHorizontal();
             }
-            if (organs.MaxOrgans > 0) text += $"\nSức chứa: {list.Count}/{organs.MaxOrgans}";
-            text += "\n[G] Đóng";
-            var style = new GUIStyle(box) { alignment = TextAnchor.UpperLeft, fontSize = 15, wordWrap = true, richText = true };
-            GUI.Box(new Rect(Screen.width / 2f - 230, 80, 460, 70 + 24 * Mathf.Max(1, list.Count) + 40), text, style);
+            if (organs.MaxOrgans > 0) GUILayout.Label($"Sức chứa: {list.Count}/{organs.MaxOrgans}", rich);
+            if (GUILayout.Button("Đóng (G)")) interactor.CloseBodyMenu();
+            GUILayout.EndArea();
         }
 
         void DrawOrganPrompt()
@@ -176,7 +200,8 @@ namespace Evolve.Survival
             var r = new Rect(Screen.width / 2f - 230, Screen.height - 230, 460, 190);
             var style = new GUIStyle(box) { alignment = TextAnchor.UpperCenter, fontSize = 15, wordWrap = true, richText = true };
             GUI.Box(r, $"<b><size=18>{title}</size></b>\n\n{body}", style);
-            string keys = accept != null ? $"[E] {accept}     [X] Bỏ qua" : "[X] Bỏ qua";
+            string absorb = $"[F] Hấp thụ (+{interactor.CurrentAbsorbExp:0} EXP)";
+            string keys = accept != null ? $"[E] {accept}    {absorb}    [X] Bỏ qua" : $"{absorb}    [X] Bỏ qua";
             var keyStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 16, fontStyle = FontStyle.Bold };
             GUI.Label(new Rect(r.x, r.yMax - 34, r.width, 26), keys, keyStyle);
         }

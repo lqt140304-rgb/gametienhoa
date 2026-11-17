@@ -118,7 +118,12 @@ namespace Evolve.DevTools
             if (s.IsDead && GUILayout.Button("Hồi sinh ngay (giữ mạng)")) { s.Lives = Mathf.Max(1, s.Lives); controller.Respawn(); }
 
             Header("Cơ quan");
-            growInstantly = GUILayout.Toggle(growInstantly, " Cho lớn đầy ngay khi nhận");
+            growInstantly = GUILayout.Toggle(growInstantly, " Cho lớn đầy ngay khi nhận (Lv1)");
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"EXP tiến hóa: {s.EvolutionExp:0}", GUILayout.Width(140));
+            if (GUILayout.Button("+50 EXP")) s.AddExp(50f);
+            if (GUILayout.Button("+500 EXP")) s.AddExp(500f);
+            GUILayout.EndHorizontal();
             foreach (var o in AllOrgans())
             {
                 bool has = host != null && host.Has(o);
@@ -135,7 +140,7 @@ namespace Evolve.DevTools
                 GUILayout.EndHorizontal();
             }
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Lớn đầy tất cả") && host != null) host.DebugGrowAll();
+            if (GUILayout.Button("Lớn đầy tất cả (Lv1)") && host != null) host.DebugGrowAll();
             if (GUILayout.Button("Tháo hết (biến mất)") && host != null)
                 foreach (var o in host.OrganList) host.Detach(o.Slot);
             GUILayout.EndHorizontal();

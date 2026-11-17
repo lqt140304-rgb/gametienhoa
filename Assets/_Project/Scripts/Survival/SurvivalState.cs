@@ -17,6 +17,9 @@ namespace Evolve.Survival
         public float Hunger;   // 100 = full, 0 = starving
         public float Energy;
 
+        /// <summary>Evolution EXP waiting to be spent on organs (kept on death).</summary>
+        public float EvolutionExp;
+
         /// <summary>Body temperature, °C.</summary>
         public float Temperature = 22f;
         /// <summary>Air temperature around the body (set by ClimateSensor).</summary>
@@ -92,6 +95,13 @@ namespace Evolve.Survival
 
         /// <summary>Highest body temperature tolerated with current organs.</summary>
         public float HeatLimit(SurvivalConfig cfg) => cfg.ComfortMax + HeatResistance;
+
+        public void AddExp(float amount)
+        {
+            if (amount <= 0f) return;
+            EvolutionExp += amount;
+            Changed?.Invoke();
+        }
 
         public bool TrySpendEnergy(float amount)
         {
