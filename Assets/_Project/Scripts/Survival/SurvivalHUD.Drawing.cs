@@ -479,7 +479,7 @@ namespace Evolve.Survival
             WithEnabled(organPage>0,()=>{if(Button(new Rect(25,530,40,30),"←"))organPage--;});
             Label(new Rect(74,534,90,25),$"{organPage+1}/{HudCatalog.PageCount(list.Count,4)}",small);
             WithEnabled(organPage+1<HudCatalog.PageCount(list.Count,4),()=>{if(Button(new Rect(160,530,40,30),"→"))organPage++;});
-            if(chosenOrgan==null){Label(new Rect(260,220,750,70),"Chưa có cơ quan. Tìm hoặc săn sinh vật để tiến hóa.");return;}
+            if(chosenOrgan==null){Label(new Rect(260,220,750,70),"Chưa có cơ quan. Tìm hoặc săn sinh vật để tiến hóa.");DrawBlueprints(260,300,600);return;}
             float diagramWidth=full?230:450;
             Paint(new Rect(225,146,diagramWidth,418),new Color(.07f,.14f,.23f,.5f));
             Paint(new Rect(240,275,diagramWidth-30,137),new Color(.50f,.57f,.79f,.6f),disc);
@@ -518,6 +518,26 @@ namespace Evolve.Survival
                 if(Button(new Rect(x+w*.67f,actionY+47,w*.33f,33),"Hủy"))pendingDrop=null;
             }
             else if(Button(new Rect(x,actionY+47,w,33),"Tháo cơ quan"))pendingDrop=organ;
+            DrawBlueprints(x,actionY+86,w);
+        }
+        readonly List<OrganSO> spareBlueprints=new List<OrganSO>();
+        string blueprintNotice="";
+        /// <summary>Learned blueprints without an organ: simulate again for EXP, only where the body may be reshaped.</summary>
+        void DrawBlueprints(float x,float y,float w)
+        {
+            if(!string.IsNullOrEmpty(interactor.Notice)){blueprintNotice=interactor.Notice;interactor.Notice="";}
+            organs.GetSpareBlueprints(spareBlueprints);
+            if(spareBlueprints.Count==0){if(blueprintNotice.Length>0)Label(new Rect(x,y,w,28),blueprintNotice,small);return;}
+            Label(new Rect(x,y,w,22),blueprintNotice.Length>0?blueprintNotice:$"Bản mẫu đã học ({spareBlueprints.Count}) · mô phỏng lại tốn EXP",small);
+            for(int i=0;i<spareBlueprints.Count&&i<2;i++)
+            {
+                var bp=spareBlueprints[i];float bw=w/2f-4;
+                if(Button(new Rect(x+i*(bw+8),y+24,bw,34),$"{bp.DisplayName} · {OrganRules.ResimulateCost(bp.Tier):0} EXP"))
+                {
+                    var result=organs.TryResimulate(bp,interactor.CanReshapeNow);
+                    blueprintNotice=result==ResimulateResult.Ok?"":result==ResimulateResult.NoExp?"Chưa đủ EXP tiến hóa.":interactor.CanReshapeNow?"Không mô phỏng được (ô đã có cơ quan hoặc thiếu chất).":OrganRules.ReshapeBlockedMessage;
+                }
+            }
         }
         void DrawBodyDossier(Rect r)
         {
