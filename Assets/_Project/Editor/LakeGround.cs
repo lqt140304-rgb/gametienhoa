@@ -110,13 +110,11 @@ namespace Evolve.EditorTools
 
             // ---- mud paths from the pool to the other areas ----
             var ribbons = new List<CombineInstance>();
-            var targets = new[] { new Vector2(40f, 0f), new Vector2(0f, 50f), new Vector2(-40f, 0f) };
             int pathSeed = 7;
-            foreach (var target in targets)
+            foreach (var trail in TrailLines())
             {
-                Vector2 dir = target.normalized;
-                Vector2 a = dir * 17f, b = target - dir * 8f;
-                var line = GroundMeshes.WindingLine(a, b, ++pathSeed, 3.5f, 1.5f);
+                Vector2 a = trail[0], b = trail[trail.Length - 1];
+                var line = GroundMeshes.WindingLine(a, b, ++pathSeed, Mathf.Min(3.5f, Vector2.Distance(a, b) * 0.06f), 1.5f);
                 var run = new List<Vector2>();
                 void Flush()
                 {
@@ -135,6 +133,48 @@ namespace Evolve.EditorTools
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
             Debug.Log("Đã trang trí mặt đất (rêu, đá, cỏ, đường mòn). Bấm Ctrl+S để lưu scene. Chạy lại menu này sẽ làm lại từ đầu.");
+        }
+
+        /// <summary>
+        /// The trails to draw, as (start, end) points on the ground. They follow the zone layout when the project has one
+        /// (World/ZoneLayout.Paths, read by name so this tool compiles with or without it). Without it, trails run from the
+        /// pool to the biomes found in the scene by name (by their objects' position), or to the old default spots.
+        /// </summary>
+        static List<Vector2[]> TrailLines()
+        {
+            var lines = new List<Vector2[]>();
+            var layout = System.Type.GetType("Evolve.World.ZoneLayout, Evolve");
+            var field = layout != null ? layout.GetField("Paths") : null;
+            if (field != null && field.GetValue(null) is Vector2[][] paths && paths.Length > 0)
+            {
+                foreach (var path in paths) if (path != null && path.Length >= 2) lines.Add(path);
+                if (lines.Count > 0) return lines;
+            }
+
+            // Fallback: from the edge of the pool to each biome found by its object's name.
+            var anchors = new[]
+            {
+                Anchor("Bai Mun Re (Humus Bed)", new Vector2(40f, 0f)),
+                Anchor("Chan Re Co Thu (Ancient Roots)", new Vector2(0f, 50f)),
+                Anchor("Vuon Bao Tu (Spore Garden)", new Vector2(-40f, 0f)),
+            };
+            foreach (var target in anchors)
+            {
+                Vector2 dir = target.normalized;
+                lines.Add(new[] { dir * 17f, target - dir * 8f });
+            }
+            return lines;
+        }
+
+        // The middle of a named object's renderers; a default if the object is not in the scene.
+        static Vector2 Anchor(string objectName, Vector2 fallback)
+        {
+            var go = GameObject.Find(objectName);
+            if (go == null) return fallback;
+            Bounds b = default; bool any = false;
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            { if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds); }
+            return any ? new Vector2(b.center.x, b.center.z) : fallback;
         }
 
         // ---------------------------------------------------------------- placing helpers
