@@ -88,14 +88,19 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 **Cơ quan và kỹ năng**
 - **12 vị trí cơ quan**, mỗi vị trí **1 cơ quan** (kể cả Tuyến). Số vị trí dùng được cùng lúc tùy kích thước slime: nhỏ khoảng 4, lớn tối đa khoảng 8, nên không ai lắp đủ 12. Quy tắc kích thước → số khe: **[MỞ]**.
 - Cơ quan khi lên cấp mở thêm **kỹ năng chủ động**, không chỉ hiệu ứng bị động. Người chơi có **5 ô kỹ năng**, bấm phím **1–5**, tự chọn kỹ năng đặt vào ô nào. Dị Năng khởi đầu (phím Q) là **ô riêng**, không chiếm trong 5 ô này.
-- **Cơ quan bậc C không có kỹ năng chủ động**, chỉ có hiệu ứng bị động; kỹ năng chủ động bắt đầu từ **bậc B**. Bốn kỹ năng gắn cơ quan C (Hút ẩm xung quanh, Rụng đuôi thoát thân, Phun bào tử, Rụt mai) đã nâng lên "bậc từ B". **[MỞ]** Nhảy vọt, Lặn cát, Pheromone báo động cần nâng tương tự; khi có hơn 5 kỹ năng thì chọn vào ô ở đâu (bảng Cơ thể G?).
+- **Cơ quan bậc C không có kỹ năng chủ động**, chỉ có hiệu ứng bị động; kỹ năng chủ động bắt đầu từ **bậc B**. Bốn kỹ năng gắn cơ quan C (Hút ẩm xung quanh, Rụng đuôi thoát thân, Phun bào tử, Rụt mai) đã nâng lên "bậc từ B". **[MỞ]** Nhảy vọt, Lặn cát, Pheromone báo động cần nâng tương tự; khi có hơn 5 kỹ năng thì chọn vào ô ở đâu (prototype tạm dùng bảng Cơ thể G, xem bên dưới).
 - **[ĐỀ XUẤT]** Lv1 chỉ bị động; Lv2 mở kỹ năng; Lv3 nâng cấp kỹ năng (tầm, thời gian, hồi chiêu) cùng +25% bị động.
+- **Triển khai prototype [ĐỀ XUẤT]** (các số chỉnh được trong asset):
+  - Kỹ năng mở ở Lv2 (`AbilityUnlockLevel`), tự vào ô trống đầu tiên; đổi ô bằng bảng Cơ thể (G). Mất cơ quan thì mất kỹ năng.
+  - Hồi chiêu tính theo từng cơ quan, nên đổi ô không làm mới hồi chiêu. Lv3: hồi chiêu ngắn hơn 25%, hiệu lực mạnh hơn 50%.
+  - Chân giả cơ bắp (B) → **Xung Phong Húc**: lao tới lực 9, 20 năng lượng, hồi 6 giây, đủ nhanh để húc kẻ săn mồi.
+  - Gai độc (B) → **Xả Gai**: gây 12 sát thương kẻ săn mồi trong 3 m, 20 năng lượng, hồi 8 giây.
 
 **Quái vật**
 - **Boss là bậc riêng**, tách khỏi S. S là sinh vật sống trong hệ sinh thái; Boss là trận đánh có giai đoạn, hang ổ riêng.
 - Giữ đủ **6 cấp trong bậc**: Thường, Con non, Đầu đàn (Alpha), Tinh anh, Biến dị, Chúa. Quái **Biến dị** chỉ mang cơ quan của vùng mà bầy đã từng đến.
 - Bảng trọng số rơi theo bậc quái (Bestiary mục 3.2) được **giữ làm mốc chơi thử**, chỉnh theo dữ liệu chơi thật.
-- **Bỏ Chân chạy (A) khỏi bảng rơi của con mồi C**; nguồn đúng là đầu đàn Hươu Sừng Rung. Đã sửa trong `DropTable_Prey` và công cụ dựng scene. **[MỞ]** Có siết bảng rơi của kẻ săn mồi cho khớp mục 3.2 không (code đang 30/40/25/5, còn bảng B trong Bestiary là 45/48/7/0).
+- **Bỏ Chân chạy (A) khỏi bảng rơi của con mồi C**; nguồn đúng là đầu đàn Hươu Sừng Rung. Đã sửa trong `DropTable_Prey` và công cụ dựng scene. **[ĐÃ CHỐT]** (2026-11-17) Bảng rơi của kẻ săn mồi (Sói Gai) **siết theo mục 3.2**: bậc C/B/A/S = **45/48/7/0**, luôn rơi (trước đây 30/40/25/5).
 - Hai loài đang có trong code có tên chính thức: con mồi = **Bọ Nhảy Cỏ**, kẻ săn mồi = **Sói Gai**. Sói Gai hiện là đơn độc lãnh thổ; "bầy săn 3–5 con" mới là đề xuất.
 - Tuyến chỉ gắn 1 cơ quan như mọi vị trí; "build hóa học" là vai trò được chia trong bầy.
 

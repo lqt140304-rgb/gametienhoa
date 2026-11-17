@@ -78,6 +78,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 |---|---|
 | WASD / Shift / Space | Trườn / nước rút (tốn thức ăn) / nảy (tốn năng lượng) |
 | Q | Dị Năng (hiện chỉ có "Bộc Phá Màng") |
+| 1–5 | 5 ô kỹ năng gắn cơ quan (từ cơ quan bậc B ở Lv2, Lv3 nâng cấp); đổi ô trong bảng Cơ thể (G) |
 | C | **Quét rung**: sóng lan 25 m, ánh sáng lan ra soi địa hình, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (10 năng lượng, hồi 5 giây) |
 | E / F / X | Khi chạm cơ quan rơi: lắp hoặc thay / hấp thụ lấy EXP / bỏ qua |
 | G | Bảng Cơ thể (chuột): đổ EXP, đặt ưu tiên, tháo cơ quan |
@@ -91,7 +92,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 - **Thị giác:** chưa có mắt thì đen trắng, thế giới tối, chỉ có một đèn quanh nhân vật soi bán kính 6 m (`MonochromeVision.blindSightRadius`, vùng nhìn tính quanh nhân vật, không theo camera). Mắt lớn dần thì màu, ánh sáng ngày và tầm nhìn xa trở lại. Quét rung (C) thả thêm một luồng sáng lan rộng trong chốc lát. Không còn chấm sáng tự động.
 - **Con mồi:** bỏ chạy 1.8, phát hiện 6 m, chạy 5 giây thì mệt. Bắt được thì +15 thức ăn và rơi cơ quan theo `DropTable_Prey` (60% có rơi, trọng số bậc C/B/A/S 70/22/7/1).
 - **Cơ quan:** 6 loại (bảng dưới). EXP tiến hóa: ăn 0.2 EXP mỗi đơn vị thức ăn, hấp thụ cơ quan C/B/A/S = 15/30/60/120. Chi phí mầm → Lv1 = `GrowthExpRequired` (C 30, B 45, A 70), Lv1 → Lv2 = 1×, Lv2 → Lv3 = 2×. Mỗi cấp trên 1 tăng hiệu ứng +25%.
-- **Kẻ săn mồi:** phát hiện 7 m (×0.4 nếu đứng yên), đuổi 1.4, mệt sau 6 giây, cắn 15 máu kèm hất văng, 40 máu. Bị Gai độc phản hoặc bị lao vào (vận tốc ≥ 4) thì mất máu. Hạ được: +35 thức ăn, chắc chắn rơi cơ quan theo `DropTable_Predator` (30/40/25/5).
+- **Kẻ săn mồi:** phát hiện 7 m (×0.4 nếu đứng yên), đuổi 1.4, mệt sau 6 giây, cắn 15 máu kèm hất văng, 40 máu. Bị Gai độc phản hoặc bị lao vào (vận tốc ≥ 4) thì mất máu. Hạ được: +35 thức ăn, chắc chắn rơi cơ quan theo `DropTable_Predator` (C/B/A/S = 45/48/7/0, siết theo Bestiary mục 3.2).
 - **Nhiệt độ:** thân nhiệt dần theo không khí. Ngoài 5–35°C (cộng chịu nóng từ cơ quan) thì mất 0.2 máu/giây cho mỗi độ vượt. Hoang mạc ở phía đông (x 25–50), 50°C, nhiều thức ăn, 2 kẻ săn mồi; đồng bằng có 1 kẻ săn mồi.
 - **Mạng và chết:** 3 mạng; chết thì cơ quan rơi tại chỗ chết, mỗi cái 50% mất; hết mạng thành xác (cứu đồng đội chưa làm).
 - **Menu God (F1):** bất tử, vô hạn thức ăn/năng lượng, bỏ hồi chiêu, nhận cơ quan, +EXP, tạo/hạ sinh vật, hòa bình, đóng băng, dịch chuyển, tốc độ game, bốc thử 1000 lần trên bảng rơi.
@@ -100,10 +101,10 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 |---|---|---|---|---|
 | Mắt sơ khai | C | Mắt | Có màu, nhìn xa | 30 EXP |
 | Chân giả | C | Chân | ×1.4 tốc độ | 30 EXP |
-| Chân giả cơ bắp | B | Chân | ×1.7 tốc độ | 45 EXP |
+| Chân giả cơ bắp | B | Chân | ×1.7 tốc độ; kỹ năng Xung Phong Húc (Lv2) | 45 EXP |
 | Chân chạy | A | Chân | ×2.0 tốc độ | 70 EXP |
 | Màng chịu nhiệt | C | Da | Chịu nóng thêm 20°C | 30 EXP |
-| Gai độc | B | Lưng | Phản 15 sát thương khi bị cắn | 45 EXP |
+| Gai độc | B | Lưng | Phản 15 sát thương khi bị cắn; kỹ năng Xả Gai (Lv2) | 45 EXP |
 
 ## 6. Khác biệt giữa prototype và thiết kế
 
@@ -120,11 +121,11 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho code (chưa làm):
 
 - **Đã làm:** bỏ Chân chạy (A) khỏi `DropTable_Prey` (nguồn đúng là đầu đàn Hươu Sừng Rung); công cụ dựng scene cũng không thêm nó vào bảng con mồi nữa. Bảng con mồi giờ chỉ còn 5 cơ quan (Mắt sơ khai, Chân giả, Chân giả cơ bắp, Màng chịu nhiệt, Gai độc); trọng số bậc A (7) không còn tác dụng vì bảng không có cơ quan A. Chân chạy vẫn rơi từ bảng kẻ săn mồi (`DropTable_Predator`).
-- **5 ô kỹ năng** gắn cơ quan (phím 1–5, `KeyPressed.Digit` có sẵn nhưng chưa dùng), tách khỏi Dị Năng Q (`AbilityCaster` giữ đúng 1). Cơ quan bậc C không có kỹ năng; từ B trở lên mới có `AbilitySO` được cấp. Cần thêm trường vào `OrganSO` (ví dụ `AbilitySO GrantedAbility`).
+- **5 ô kỹ năng đã có bản đầu** (`SkillBar`, phím 1–5), tách khỏi Dị Năng Q (`AbilityCaster` giữ đúng 1). `OrganSO.GrantedAbility` + `AbilityUnlockLevel` (2); `AbilitySO.Activate(user, level)` và `CooldownFor(level)` cho Lv3; hồi chiêu tính theo cơ quan. Hai kỹ năng mẫu cho cơ quan bậc B: `ChargeAbility` (Xung Phong Húc) và `SpikeBurstAbility` (Xả Gai), con số là đề xuất. Menu God có "Mọi cơ quan Lv2/Lv3" để thử nhanh. **Cần dựng lại scene** (scene cũ chưa có `SkillBar`).
 - **HP quái theo số người** (A, S, Boss): `HP = gốc × (0.6 + 0.2 × số người trong vùng)`; chỉ cần khi làm co-op.
 - **Ăn xác** (~5 giây mất 1 cơ quan) cần xác người chơi chết hẳn, cũng thuộc co-op.
 - **Gợi ý thứ tự của Bestiary mục 8** (chủ dự án chưa duyệt, và chưa chọn giữa co-op và BIS): trước co-op nên gộp `Prey`/`Predator` thành một `Creature` đọc `CreatureSO` (giữ đúng thông số hiện tại), rồi thêm bầy Sói Gai (Alpha, hú gọi) và vài loài hoang mạc; sau đó 5 ô kỹ năng, BIS cho mắt/chân/giáp, và boss đầu tiên (Mẹ Bầy Ngàn Chân). Lý do: Netcode chỉ phải đồng bộ một lớp quái.
-- **Còn mở (cần hỏi chủ dự án):** quy tắc kích thước → số khe cơ quan; chọn kỹ năng vào ô khi có hơn 5; siết bảng rơi kẻ săn mồi theo mục 3.2; nâng Nhảy vọt, Lặn cát, Pheromone lên bậc B.
+- **Còn mở (cần hỏi chủ dự án):** quy tắc kích thước → số khe cơ quan; cách chọn ô khi có hơn 5 kỹ năng (đang dùng bảng Cơ thể G, tạm); nâng Nhảy vọt, Lặn cát, Pheromone lên bậc B.
 
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 

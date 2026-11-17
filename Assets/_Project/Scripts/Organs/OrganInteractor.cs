@@ -94,6 +94,8 @@ namespace Evolve.Organs
             var o = Current.Organ;
             title = $"Tìm thấy: {OrganTiers.Tag(o.Tier)} {o.DisplayName}";
             string effect = $"{o.Description}\nCần {o.GrowthExpRequired:0} EXP tiến hóa để phát triển (đang có {host.Exp:0}).";
+            if (o.GrantedAbility != null)
+                effect += $"\nKỹ năng: {o.GrantedAbility.DisplayName} (mở ở Lv{o.AbilityUnlockLevel}).";
             switch (CurrentCheck)
             {
                 case AttachCheck.Ok:
