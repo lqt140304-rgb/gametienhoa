@@ -6,6 +6,8 @@ namespace Evolve.Creatures
     public class PreySpawner : MonoBehaviour
     {
         [SerializeField] Prey prefab;
+        /// <summary>The prey this spawner makes (clients copy it to show replicas).</summary>
+        public Prey Prefab => prefab;
         [SerializeField] int count = 6;
         [SerializeField] float radius = 20f;
         [SerializeField] float minDistanceFromCenter = 6f;
