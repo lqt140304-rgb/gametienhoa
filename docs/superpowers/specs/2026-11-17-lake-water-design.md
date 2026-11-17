@@ -52,3 +52,9 @@ Các công cụ Dress dùng chung `Editor/LakeLayout.cs`: đọc `World/ZoneLayo
 - **Dây leo** treo từ đầu dưới của các "Hanging Roots" của scene (hoặc rễ trần cũ); tối đa dài 24 m nên ở hang cao (mái 85 m) chúng lơ lửng cách đất, không chạm đất. Công cụ rễ **không thêm rễ buông** nếu scene đã có "Hanging Roots" riêng.
 - **Tia sáng** bắt đầu từ mái thật (`Dome`, tính độ cao theo vòm) và cường độ đèn rọi tỉ lệ theo bình phương chiều dài tia để độ sáng ở mặt đất không đổi.
 - **Bụi bào tử** có một hệ cho vùng lõi và một hệ cho mỗi bệ.
+
+## Các vùng của 0.6b đã có trong `main`
+`ZoneLayout` đã vào `main` (PR #68, #70), nên các công cụ Dress đọc được bệ thật của bốn vùng. Thêm:
+- **Mushrooms and Vines**: mỗi bệ (ngoài Vườn Bào Tử, đã có cụm lớn) có một cụm nấm riêng: Bãi Mùn Rễ và Rìa Săn Mồi nghiêng về mũ san hô, Chân Rễ về xanh ngọc; Rìa Săn Mồi thưa hơn.
+- **Roots and Light**: mỗi bệ khác có 5 vòm rễ và 9 rễ bò thấp; thêm 2 tia sáng cho mỗi bệ (tổng tối đa 12).
+Dựng lại: Build Underroot Lake, rồi Dress Lake: Water, Ground, Mushrooms and Vines, Roots and Light.
