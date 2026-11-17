@@ -23,7 +23,7 @@ Từ bản 0.2, scene có thêm **con mồi** (màu hồng, tạo bởi `Prey Sp
 
 ### Kỹ năng gắn cơ quan (bản 5 ô kỹ năng)
 
-Cần **dựng lại scene** (Evolve → Build Prototype Scene → Dựng lại) để slime có `Skill Bar` và hai cơ quan bậc B nhận kỹ năng. Cách thử nhanh: bấm F1 (Menu God), nhận *Chân giả cơ bắp* và *Gai độc*, bấm **Mọi cơ quan Lv2**; ở dưới màn hình sẽ hiện 5 ô kỹ năng, bấm phím **1** và **2**. Bấm **Mọi cơ quan Lv3** để xem bản nâng cấp. Kỹ năng và con số nằm trong `ChargeSO.asset`, `SpikeBurstSO.asset` (`Assets/_Project/ScriptableObjects`). **Xả Gai bắn chùm gai về phía hồng tâm**: bấm **Alt** để vào chế độ ngắm, rê hồng tâm vào kẻ săn mồi rồi bấm phím kỹ năng. Chế độ ngắm không cần dựng lại scene.
+Cần **dựng lại scene** (Evolve → Build Prototype Scene → Dựng lại) để slime có `Skill Bar` và hai cơ quan bậc B nhận kỹ năng. Cách thử nhanh: bấm F1 (Menu God), nhận *Chân giả cơ bắp* và *Gai độc*, bấm **Mọi cơ quan Lv2**; ở dưới màn hình sẽ hiện 5 ô kỹ năng, bấm phím **1** và **2**. Bấm **Mọi cơ quan Lv3** để xem bản nâng cấp. Kỹ năng và con số nằm trong `ChargeSO.asset`, `SpikeBurstSO.asset` (`Assets/_Project/ScriptableObjects`). **Xả Gai bắn chùm gai về phía hồng tâm**: bấm **Alt** để vào chế độ ngắm, rê hồng tâm vào kẻ săn mồi rồi bấm phím kỹ năng. Chế độ ngắm không cần dựng lại scene. Nếu bấm phím 1–5 mà không có gì xảy ra, dòng chữ **"Không dùng được: …"** phía trên thanh kỹ năng nói rõ lý do (hết năng lượng, đang hồi chiêu, ô trống, đang mở menu, đang chết).
 
 ### Bậc cơ quan và tỉ lệ rơi
 

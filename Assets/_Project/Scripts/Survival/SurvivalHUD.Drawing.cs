@@ -120,6 +120,9 @@ namespace Evolve.Survival
             if (GUI.Button(new Rect(canvas.x - 136, 18, 112, 28), "Giao diện", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Settings));
             if (!string.IsNullOrEmpty(GUI.tooltip))
                 GUI.Label(new Rect(canvas.x / 2 - 187, skillY - 28, 374, 24), GUI.tooltip, small);
+            // A skill key that did nothing says why (it used to fail silently).
+            if (skills != null && !string.IsNullOrEmpty(skills.FailureReason) && Time.time - skills.FailureTime < 2.5f)
+                GUI.Label(new Rect(canvas.x / 2 - 187, skillY - 54, 374, 24), "Không dùng được: " + skills.FailureReason, small);
             GUI.matrix = old;
         }
 
