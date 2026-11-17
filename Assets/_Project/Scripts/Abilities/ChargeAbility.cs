@@ -17,14 +17,10 @@ namespace Evolve.Abilities
         public override bool Activate(GameObject user, int level)
         {
             if (!user.TryGetComponent(out Rigidbody rb)) return false;
-            Vector3 dir;
-            if (AimController.Aiming)
-            {
-                // Charge toward the crosshair (flat).
-                dir = AimController.AimDirection(user, user.transform.position, out _);
-                dir.y = 0f;
-            }
-            else
+            // Charge toward the crosshair (aim mode) or the mouse cursor (mouse mode), level.
+            Vector3 dir = AimController.AimDirection(user, user.transform.position, out _);
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f)
             {
                 dir = rb.linearVelocity; dir.y = 0f;
             }

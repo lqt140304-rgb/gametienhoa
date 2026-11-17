@@ -25,7 +25,7 @@ namespace Evolve.Survival
             "Space  Nảy (tốn năng lượng)\n" +
             "Q  Dùng Dị Năng\n" +
             "1–5  Kỹ năng gắn cơ quan (cơ quan bậc B, Lv2)\n" +
-            "Alt  Đổi chuột ⇄ hồng tâm (ngắm): kỹ năng\n    bắn/lao về phía hồng tâm\n" +
+            "Chuột: kỹ năng bắn/lao theo hướng con trỏ\nAlt  Chế độ ngắm: hồng tâm giữa màn hình,\n    camera lệch qua vai, kỹ năng theo hồng tâm\nF5  Góc nhìn thứ nhất (có hồng tâm)\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
             "C  Quét rung: ánh sáng lan ra, thấy thức ăn\n    và sinh vật xung quanh trong chốc lát\nV  Bật/tắt mắt (thử nghiệm)\n" +
@@ -116,7 +116,9 @@ namespace Evolve.Survival
         {
             var label = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 12 };
             GUI.Label(new Rect(Screen.width / 2f - 150, 22, 300, 20),
-                AimController.Aiming ? "Chế độ ngắm (Alt: về chuột)" : "Chế độ chuột (Alt: ngắm)", label);
+                AimController.FirstPerson ? "Góc nhìn thứ nhất (F5: góc ngoài)"
+                : AimController.Aiming ? "Chế độ ngắm (Alt: về chuột, F5: góc nhìn thứ nhất)"
+                : "Chế độ chuột (Alt: ngắm, F5: góc nhìn thứ nhất)", label);
             if (!AimController.Aiming) return;
 
             float cx = Screen.width / 2f, cy = Screen.height / 2f;

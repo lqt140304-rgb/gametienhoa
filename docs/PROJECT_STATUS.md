@@ -78,7 +78,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 |---|---|
 | WASD / Shift / Space | Trườn / nước rút (tốn thức ăn) / nảy (tốn năng lượng) |
 | Q | Dị Năng (hiện chỉ có "Bộc Phá Màng") |
-| Alt | Đổi **chế độ chuột** ⇄ **chế độ ngắm** (hồng tâm giữa màn hình, chuột xoay camera trực tiếp, kỹ năng bắn/lao về phía hồng tâm) |
+| Chuột / Alt / F5 | Kỹ năng bắn/lao **theo hướng con trỏ** ở chế độ chuột. **Alt**: chế độ ngắm (hồng tâm giữa màn hình, chuột xoay camera trực tiếp, camera lệch qua vai, kỹ năng theo hồng tâm). **F5**: góc nhìn thứ nhất (camera ở mắt, ẩn thân, có hồng tâm). `AimController.Aiming` / `FirstPerson` / `AimDirection()`; menu mở thì con trỏ tự hiện |
 | 1–5 | 5 ô kỹ năng gắn cơ quan (từ cơ quan bậc B ở Lv2, Lv3 nâng cấp); đổi ô trong bảng Cơ thể (G) |
 | C | **Quét rung**: sóng lan 25 m, ánh sáng lan ra soi địa hình, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (10 năng lượng, hồi 5 giây) |
 | E / F / X | Khi chạm cơ quan rơi: lắp hoặc thay / hấp thụ lấy EXP / bỏ qua |
