@@ -23,7 +23,7 @@ Từ bản 0.2, scene có thêm **con mồi** (màu hồng, tạo bởi `Prey Sp
 
 ### Kỹ năng gắn cơ quan (bản 5 ô kỹ năng)
 
-Cần **dựng lại scene** (Evolve → Build Prototype Scene → Dựng lại) để slime có `Skill Bar` và hai cơ quan bậc B nhận kỹ năng. Cách thử nhanh: bấm F1 (Menu God), nhận *Chân giả cơ bắp* và *Gai độc*, bấm **Mọi cơ quan Lv2**; ở dưới màn hình sẽ hiện 5 ô kỹ năng, bấm phím **1** và **2**. Bấm **Mọi cơ quan Lv3** để xem bản nâng cấp. Kỹ năng và con số nằm trong `ChargeSO.asset`, `SpikeBurstSO.asset` (`Assets/_Project/ScriptableObjects`).
+Cần **dựng lại scene** (Evolve → Build Prototype Scene → Dựng lại) để slime có `Skill Bar` và hai cơ quan bậc B nhận kỹ năng. Cách thử nhanh: bấm F1 (Menu God), nhận *Chân giả cơ bắp* và *Gai độc*, bấm **Mọi cơ quan Lv2**; ở dưới màn hình sẽ hiện 5 ô kỹ năng, bấm phím **1** và **2**. Bấm **Mọi cơ quan Lv3** để xem bản nâng cấp. Kỹ năng và con số nằm trong `ChargeSO.asset`, `SpikeBurstSO.asset` (`Assets/_Project/ScriptableObjects`). **Xả Gai bắn chùm gai về phía hồng tâm**: bấm **Alt** để vào chế độ ngắm, rê hồng tâm vào kẻ săn mồi rồi bấm phím kỹ năng. Chế độ ngắm không cần dựng lại scene.
 
 ### Bậc cơ quan và tỉ lệ rơi
 
@@ -85,6 +85,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
 | C | Quét rung: sóng lan 25 m, ánh sáng lan ra soi địa hình trong chốc lát, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (tốn 10 năng lượng, hồi 5 giây) |
 | 1–5 | Dùng kỹ năng gắn cơ quan trong ô tương ứng (cơ quan bậc B, mở ở Lv2; Lv3 mạnh hơn, hồi nhanh hơn). Đổi ô trong bảng Cơ thể (G) |
+| Alt | Đổi chế độ chuột ⇄ chế độ ngắm: có **hồng tâm** giữa màn hình, chuột xoay camera luôn (không cần giữ chuột phải); kỹ năng và lao (Q, 1–5) đi về phía hồng tâm. Mở bảng G hoặc F1 thì con trỏ tự hiện lại |
 | X | Bỏ qua cơ quan |
 | F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |
 | G | Mở/đóng bảng Cơ thể (dùng chuột): đổ EXP, đặt ưu tiên, tháo cơ quan |

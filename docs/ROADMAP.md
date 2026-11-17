@@ -42,5 +42,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Gộp `Prey`/`Predator` vào `Creature` + `CreatureSO` (Bestiary mục 8), trước khi làm co-op
 - [x] Siết bảng rơi kẻ săn mồi theo Bestiary mục 3.2 (45/48/7/0)
 - [x] 5 ô kỹ năng gắn cơ quan (phím 1–5), mở ở Lv2, Lv3 nâng cấp; 2 kỹ năng mẫu (Xung Phong Húc, Xả Gai)
-- [ ] Chơi thử 5 ô kỹ năng và chỉnh số
+- [x] Chơi thử 5 ô kỹ năng: Xả Gai tỏa quanh người nên không biết bắn đi đâu
+- [x] Chế độ ngắm (Alt): hồng tâm, chuột xoay camera; Xả Gai thành chùm gai bắn về phía hồng tâm
+- [ ] Chơi thử chế độ ngắm và chỉnh số
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
