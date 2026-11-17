@@ -6,9 +6,9 @@ using UnityEngine;
 namespace Evolve.Survival
 {
     /// <summary>
-    /// Hit feedback drawn over the screen: a health bar above every damaged predator, floating damage numbers
-    /// (the spikes of one volley are added up into one number) and a small × at the crosshair in aim mode.
-    /// It reacts at once to the local player's hits, so a client does not have to wait for the host to confirm.
+    /// Hit feedback drawn over the screen: a health bar above every damaged creature (predator or prey), floating
+    /// damage numbers (the spikes of one volley are added up into one number) and a small × at the crosshair in
+    /// aim mode. It reacts at once to the local player's hits, so a client does not have to wait for the host.
     /// Added to the scene automatically when entering Play mode.
     /// </summary>
     public class CombatFeedback : MonoBehaviour
@@ -18,7 +18,7 @@ namespace Evolve.Survival
 
         class Number
         {
-            public Predator Target;
+            public Transform Target;
             public Vector3 Position;
             public float Amount;
             public float Born;
@@ -37,21 +37,21 @@ namespace Evolve.Survival
             go.AddComponent<CombatFeedback>();
         }
 
-        void OnEnable() => Predator.AnyDamaged += OnDamaged;
-        void OnDisable() => Predator.AnyDamaged -= OnDamaged;
+        void OnEnable() => CombatEvents.Damaged += OnDamaged;
+        void OnDisable() => CombatEvents.Damaged -= OnDamaged;
 
-        void OnDamaged(Predator predator, float amount)
+        void OnDamaged(Transform target, float amount)
         {
-            if (predator == null) return;
+            if (target == null) return;
             float now = Time.unscaledTime;
             hitMarkerUntil = now + 0.2f;
             foreach (var n in numbers)
             {
-                if (n.Target != predator || now - n.Born >= MergeWindow) continue;
+                if (n.Target != target || now - n.Born >= MergeWindow) continue;
                 n.Amount += amount;
                 return;
             }
-            numbers.Add(new Number { Target = predator, Position = predator.transform.position, Amount = amount, Born = now });
+            numbers.Add(new Number { Target = target, Position = target.position, Amount = amount, Born = now });
         }
 
         void Update()
@@ -68,23 +68,18 @@ namespace Evolve.Survival
             EnsureStyles();
             float now = Time.unscaledTime;
 
-            // Health bars above damaged predators.
+            // Health bars above damaged creatures.
             foreach (var p in Predator.Active)
-            {
-                if (p == null) continue;
-                float fraction = p.HealthFraction;
-                if (fraction >= 0.999f) continue;
-                Vector3 sp = cam.WorldToScreenPoint(p.transform.position + Vector3.up * 1.1f);
-                if (sp.z <= 0f) continue;
-                DrawBar(sp.x, Screen.height - sp.y, fraction);
-            }
+                if (p != null) DrawBarOver(cam, p.transform, p.HealthFraction, 1.1f);
+            foreach (var p in Prey.Active)
+                if (p != null) DrawBarOver(cam, p.transform, p.HealthFraction, 0.8f);
 
             // Damage numbers float up and fade.
             var prev = GUI.color;
             foreach (var n in numbers)
             {
                 float age = now - n.Born;
-                Vector3 world = (n.Target != null ? n.Target.transform.position : n.Position) + Vector3.up * (1.5f + age * 0.9f);
+                Vector3 world = (n.Target != null ? n.Target.position : n.Position) + Vector3.up * (1.3f + age * 0.9f);
                 Vector3 sp = cam.WorldToScreenPoint(world);
                 if (sp.z <= 0f) continue;
                 GUI.color = new Color(1f, 1f, 1f, 1f - age / NumberLife);
@@ -98,8 +93,13 @@ namespace Evolve.Survival
                 GUI.Label(new Rect(Screen.width / 2f - 20f, Screen.height / 2f - 20f, 40f, 40f), "×", markerStyle);
         }
 
-        static void DrawBar(float x, float y, float fraction)
+        static void DrawBarOver(Camera cam, Transform target, float fraction, float height)
         {
+            if (fraction >= 0.999f) return;
+            Vector3 sp = cam.WorldToScreenPoint(target.position + Vector3.up * height);
+            if (sp.z <= 0f) return;
+
+            float x = sp.x, y = Screen.height - sp.y;
             var back = new Rect(x - 26f, y - 4f, 52f, 6f);
             var prev = GUI.color;
             GUI.color = new Color(0f, 0f, 0f, 0.75f);

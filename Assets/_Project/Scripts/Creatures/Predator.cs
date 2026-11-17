@@ -59,9 +59,6 @@ namespace Evolve.Creatures
         public bool IsTired => Time.time < tiredUntil;
         public float MaxHealth => maxHealth;
 
-        /// <summary>Raised for every hit any predator takes (the amount); the screen feedback listens to it.</summary>
-        public static event Action<Predator, float> AnyDamaged;
-
         float netFraction = 1f, predictedFraction = 1f, predictedUntil;
 
         /// <summary>
@@ -83,7 +80,7 @@ namespace Evolve.Creatures
         void ShowHit(float amount)
         {
             HitFlash.Play(gameObject);
-            AnyDamaged?.Invoke(this, amount);
+            CombatEvents.Raise(transform, amount);
         }
 
         /// <summary>Id shared with other machines (the host hands it out).</summary>
@@ -261,7 +258,7 @@ namespace Evolve.Creatures
                     predictedFraction = Mathf.Max(0f, HealthFraction - amount / Mathf.Max(1f, maxHealth));
                     predictedUntil = Time.time + 1f;
                     ShowHit(amount);
-                    NetWorld.ReportPredatorHit?.Invoke(NetId, amount);
+                    NetWorld.ReportCreatureHit?.Invoke(NetId, amount);
                 }
                 return;
             }

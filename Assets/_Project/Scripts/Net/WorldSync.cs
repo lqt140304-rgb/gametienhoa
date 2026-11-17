@@ -43,6 +43,7 @@ namespace Evolve.Net
             public GameObject Go;
             public ReplicaMotion Motion;
             public Predator Predator; // null for prey
+            public Prey Prey;         // null for predators
         }
 
         CoopManager coop;
@@ -66,7 +67,7 @@ namespace Evolve.Net
         {
             coop = GetComponent<CoopManager>();
             NetWorld.IsClient = false;
-            NetWorld.ReportPredatorHit = ReportPredatorHit;
+            NetWorld.ReportCreatureHit = ReportCreatureHit;
             NetWorld.ReportPickupTaken = ReportPickupTaken;
             NetWorld.RequestPickupSpawn = RequestPickupSpawn;
             NetWorld.BiteRemote = BiteRemote;
@@ -76,7 +77,7 @@ namespace Evolve.Net
         void OnDestroy()
         {
             ExitClientMode();
-            NetWorld.ReportPredatorHit = null;
+            NetWorld.ReportCreatureHit = null;
             NetWorld.ReportPickupTaken = null;
             NetWorld.RequestPickupSpawn = null;
             NetWorld.BiteRemote = null;
@@ -141,7 +142,8 @@ namespace Evolve.Net
             var list = new List<(int id, byte kind, Vector3 pos, float yaw, byte hp)>();
             foreach (var p in Prey.Active)
                 if (p != null && !p.IsReplica && list.Count < MaxCreatures)
-                    list.Add((p.NetId, KindPrey, p.transform.position, p.transform.eulerAngles.y, (byte)255));
+                    list.Add((p.NetId, KindPrey, p.transform.position, p.transform.eulerAngles.y,
+                        (byte)Mathf.RoundToInt(p.HealthFraction * 255f)));
             foreach (var p in Predator.Active)
                 if (p != null && !p.IsReplica && list.Count < MaxCreatures)
                     list.Add((p.NetId, KindPredator, p.transform.position, p.transform.eulerAngles.y,
@@ -254,7 +256,13 @@ namespace Evolve.Net
                 {
                     if (p == null || p.IsReplica || p.NetId != id) continue;
                     p.TakeDamage(damage, avatar.Stats);
-                    break;
+                    return;
+                }
+                foreach (var p in Prey.Active)
+                {
+                    if (p == null || p.IsReplica || p.NetId != id) continue;
+                    p.TakeDamage(damage, avatar.Stats);
+                    return;
                 }
             }
             catch (Exception e) { Debug.LogException(e); }
@@ -389,12 +397,14 @@ namespace Evolve.Net
             }
             replica.Motion.SetTarget(position, yaw, now);
             if (replica.Predator != null) replica.Predator.SetNetHealth(hp / 255f);
+            if (replica.Prey != null) replica.Prey.SetNetHealth(hp / 255f);
         }
 
         Replica CreateReplica(int id, byte kind, Vector3 position, float yaw)
         {
             GameObject go;
             Predator replicaPredator = null;
+            Prey replicaPrey = null;
             if (kind == KindPrey)
             {
                 if (preyTemplate == null) return null;
@@ -402,6 +412,7 @@ namespace Evolve.Net
                 prey.IsReplica = true;
                 prey.NetId = id;
                 go = prey.gameObject;
+                replicaPrey = prey;
             }
             else
             {
@@ -412,7 +423,7 @@ namespace Evolve.Net
                 go = predator.gameObject;
                 replicaPredator = predator;
             }
-            return new Replica { Go = go, Motion = go.AddComponent<ReplicaMotion>(), Predator = replicaPredator };
+            return new Replica { Go = go, Motion = go.AddComponent<ReplicaMotion>(), Predator = replicaPredator, Prey = replicaPrey };
         }
 
         void RemoveCreature(int id)
@@ -523,7 +534,7 @@ namespace Evolve.Net
         bool CanReportToHost =>
             coop != null && coop.Nm != null && coop.Nm.IsListening && !coop.Nm.IsServer && coop.Nm.IsConnectedClient;
 
-        void ReportPredatorHit(int id, float damage)
+        void ReportCreatureHit(int id, float damage)
         {
             if (!CanReportToHost) return;
             var w = new FastBufferWriter(32, Allocator.Temp);
