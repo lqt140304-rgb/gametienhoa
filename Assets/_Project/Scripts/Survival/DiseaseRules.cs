@@ -69,6 +69,8 @@ namespace Evolve.Survival
 
         public static float ThirstDrainMultiplier(bool stagnant) => stagnant ? 1.6f : 1f;
         public static float HealMultiplier(bool stagnant) => stagnant ? 0.6f : 1f;
+        /// <summary>Thối Gel stops natural healing altogether.</summary>
+        public static float RottenHealMultiplier(bool rotten) => rotten ? 0f : 1f;
         public static float HealthDrainPerSecond(bool rotten) => rotten ? 0.3f : 0f;
         public static float OrganRecoverMultiplier(bool rotten) => rotten ? 0.5f : 1f;
         public static float SenseMultiplier(bool spore) => spore ? 0.6f : 1f;

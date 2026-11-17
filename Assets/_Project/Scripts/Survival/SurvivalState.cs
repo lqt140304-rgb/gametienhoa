@@ -27,6 +27,14 @@ namespace Evolve.Survival
         public float[] Nutrients = { DefaultNutrientStart, DefaultNutrientStart, DefaultNutrientStart, DefaultNutrientStart, DefaultNutrientStart };
         /// <summary>How many equipped organs need each nutrient (written by OrganHost).</summary>
         [NonSerialized] public int[] NutrientLoad = new int[NutrientKinds.Count];
+
+        /// <summary>Seconds left of each disease, indexed by DiseaseKind (above 0 = sick).</summary>
+        public float[] DiseaseTime = new float[DiseaseRules.Count];
+        /// <summary>Set by WaterSensor: standing in clean water (speeds recovery from Nhiễm Nước Đọng).</summary>
+        [NonSerialized] public bool InCleanWater;
+        /// <summary>Dice for infections (0..1); tests replace it with a fixed value.</summary>
+        [NonSerialized] public Func<float> Roll = DefaultRoll;
+        static float DefaultRoll() => UnityEngine.Random.value;
         /// <summary>0 = calm, 100 = panic.</summary>
         public float Stress;
         /// <summary>Thirst only drains where the world turns it on.</summary>
@@ -116,6 +124,8 @@ namespace Evolve.Survival
             Energy = MaxEnergy;
             Thirst = MaxThirst;
             Stress = 0f;
+            EnsureDiseases();
+            for (int k = 0; k < DiseaseTime.Length; k++) DiseaseTime[k] = 0f;
             EnsureNutrients();
             float start = Config != null ? Config.NutrientStart : DefaultNutrientStart;
             for (int k = 0; k < Nutrients.Length; k++) Nutrients[k] = start;
@@ -134,6 +144,7 @@ namespace Evolve.Survival
                 float drain = cfg.ThirstDecayPerSec
                     + (isSprinting ? cfg.ThirstSprintExtraPerSec : 0f)
                     + (Ambient > cfg.ComfortMax - 5f ? cfg.ThirstHotExtraPerSec : 0f);
+                drain *= DiseaseRules.ThirstDrainMultiplier(Has(DiseaseKind.StagnantWater));
                 Thirst = Clamp(Thirst - drain * dt, MaxThirst);
                 if (Thirst <= 0f) ApplyDamage(cfg.DehydrationDamagePerSec * dt);
             }
@@ -145,6 +156,16 @@ namespace Evolve.Survival
                 float load = NutrientLoad != null && k < NutrientLoad.Length ? NutrientLoad[k] : 0f;
                 Nutrients[k] = Clamp(Nutrients[k] - (cfg.NutrientBaseDecayPerSec + load * cfg.NutrientOrganDecayPerSec) * dt, MaxNutrient);
             }
+
+            // Diseases run down by themselves, faster with the right cure; Thối Gel also drains health (never below the floor).
+            EnsureDiseases();
+            float vitaminNow = Nutrients[(int)NutrientKind.Vitamin];
+            for (int k = 0; k < DiseaseTime.Length; k++)
+                if (DiseaseTime[k] > 0f)
+                    DiseaseTime[k] = Clamp(DiseaseTime[k] - DiseaseRules.RecoveryRate((DiseaseKind)k, InShelter, InCleanWater, vitaminNow) * dt, 1000f);
+            if (Has(DiseaseKind.RottenGel) && Health > DiseaseRules.HealthDrainFloor * MaxHealth)
+                ApplyDamage(DiseaseRules.HealthDrainPerSecond(true) * dt);
+            if (IsDead) return;
 
             // Metabolism only burns food while active; resting costs nothing.
             float burn = (isMoving ? cfg.HungerDecayPerSec : 0f) + (isSprinting ? cfg.SprintHungerPerSec : 0f);
@@ -167,7 +188,8 @@ namespace Evolve.Survival
             if (Hunger <= 0f)
                 ApplyDamage(cfg.StarveDamagePerSec * dt);
             else if (Hunger >= MaxHunger * cfg.HealHungerThreshold && thirstOk)
-                Health = Clamp(Health + cfg.HealPerSec * NutrientEffects.HealMultiplier(Nutrients[(int)NutrientKind.Protein]) * dt, healthCap);
+                Health = Clamp(Health + cfg.HealPerSec * NutrientEffects.HealMultiplier(Nutrients[(int)NutrientKind.Protein])
+                    * DiseaseRules.HealMultiplier(Has(DiseaseKind.StagnantWater)) * DiseaseRules.RottenHealMultiplier(Has(DiseaseKind.RottenGel)) * dt, healthCap);
 
             // Body temperature drifts toward the air; outside the comfort range it hurts.
             Temperature = MoveTowards(Temperature, Ambient,
@@ -186,6 +208,7 @@ namespace Evolve.Survival
             if (badTemp) dStress += cfg.StressBadTempPerSec;
             if (calm) dStress -= cfg.StressCalmDecayPerSec;
             if (InShelter) dStress -= cfg.StressShelterDecayPerSec;
+            dStress += DiseaseRules.StressPerSecond(Has(DiseaseKind.SporeBlur));
             Stress = StressClamp(Stress + dStress * dt);
 
             Changed?.Invoke();
@@ -222,7 +245,68 @@ namespace Evolve.Survival
             float gain = (Config != null ? Config.NutrientGainPerFood : 1f) * eaten;
             for (int k = 0; k < Nutrients.Length; k++)
                 Nutrients[k] = Clamp(Nutrients[k] + gain * profile.Of((NutrientKind)k), MaxNutrient);
+            // Food rich in Tinh Chất Sống clears Thối Gel faster.
+            EnsureDiseases();
+            int gel = (int)DiseaseKind.RottenGel;
+            if (DiseaseTime[gel] > 0f)
+                DiseaseTime[gel] = Clamp(DiseaseTime[gel] - DiseaseRules.VitaminCure(DiseaseKind.RottenGel, gain * profile.Vitamin), 1000f);
             Changed?.Invoke();
+        }
+
+        public bool Has(DiseaseKind k) { EnsureDiseases(); return DiseaseTime[(int)k] > 0f; }
+
+        /// <summary>One bit per disease (bit = 1 &lt;&lt; DiseaseKind), sent with the player state.</summary>
+        public byte DiseaseMask
+        {
+            get
+            {
+                EnsureDiseases();
+                int mask = 0;
+                for (int k = 0; k < DiseaseTime.Length; k++) if (DiseaseTime[k] > 0f) mask |= 1 << k;
+                return (byte)mask;
+            }
+        }
+
+        /// <summary>For the ghost of another player: show the diseases the network says they have (the ghost is never ticked).</summary>
+        public void SetDiseaseMask(byte mask)
+        {
+            EnsureDiseases();
+            for (int k = 0; k < DiseaseTime.Length; k++) DiseaseTime[k] = (mask & (1 << k)) != 0 ? 1f : 0f;
+        }
+
+        public void Infect(DiseaseKind kind)
+        {
+            EnsureDiseases();
+            DiseaseTime[(int)kind] = UnityEngine.Mathf.Max(DiseaseTime[(int)kind], DiseaseRules.Duration(kind));
+            Changed?.Invoke();
+        }
+
+        public void Cure(DiseaseKind kind)
+        {
+            EnsureDiseases();
+            DiseaseTime[(int)kind] = 0f;
+            Changed?.Invoke();
+        }
+
+        /// <summary>Roll for an infection; low Tinh Chất Sống makes it likelier. Returns true if the body is now infected.</summary>
+        public bool TryInfect(DiseaseKind kind, float probability)
+        {
+            if (IsDead || probability <= 0f || Has(kind)) return false;
+            float p = probability * DiseaseRules.InfectionMultiplier(Nutrient(NutrientKind.Vitamin));
+            float roll = Roll != null ? Roll() : 1f;
+            if (roll >= p) return false;
+            Infect(kind);
+            return true;
+        }
+
+        void EnsureDiseases()
+        {
+            if (DiseaseTime == null || DiseaseTime.Length != DiseaseRules.Count)
+            {
+                var old = DiseaseTime;
+                DiseaseTime = new float[DiseaseRules.Count];
+                if (old != null) for (int k = 0; k < DiseaseTime.Length && k < old.Length; k++) DiseaseTime[k] = old[k];
+            }
         }
 
         public float Nutrient(NutrientKind k) { EnsureNutrients(); return Nutrients[(int)k]; }
@@ -264,6 +348,7 @@ namespace Evolve.Survival
         {
             if (IsDead || Invulnerable) return;
             if (Config != null && amount > 0f) Stress = StressClamp(Stress + amount * Config.StressPerDamage);
+            if (amount >= DiseaseRules.HitMinDamage) TryInfect(DiseaseKind.RottenGel, DiseaseRules.HitChance); // an infected wound
             ApplyDamage(amount * NutrientEffects.DamageTakenMultiplier(Nutrient(NutrientKind.Calcium))); // brittle bones: hits hurt more
         }
 

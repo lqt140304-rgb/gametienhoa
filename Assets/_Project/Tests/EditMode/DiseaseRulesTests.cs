@@ -74,6 +74,8 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(1f, DiseaseRules.ThirstDrainMultiplier(false));
             Assert.AreEqual(1f, DiseaseRules.HealMultiplier(false));
             Assert.AreEqual(0f, DiseaseRules.HealthDrainPerSecond(false));
+            Assert.AreEqual(1f, DiseaseRules.RottenHealMultiplier(false));
+            Assert.AreEqual(0f, DiseaseRules.RottenHealMultiplier(true));
             Assert.AreEqual(1f, DiseaseRules.OrganRecoverMultiplier(false));
             Assert.AreEqual(1f, DiseaseRules.SenseMultiplier(false));
             Assert.AreEqual(0f, DiseaseRules.StressPerSecond(false));
