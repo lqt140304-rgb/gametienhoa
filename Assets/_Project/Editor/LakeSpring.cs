@@ -35,7 +35,7 @@ namespace Evolve.EditorTools
             var caps = new List<CombineInstance>();
             var variants = new List<Mesh>();
             var variantCaps = new List<Mesh>();
-            for (int v = 0; v < 4; v++) { variants.Add(GroundMeshes.Rock(700 + v, out var cap)); variantCaps.Add(cap); }
+            for (int v = 0; v < 4; v++) { variants.Add(GroundMeshes.Rock(700 + v, out var cap, 0.82f)); variantCaps.Add(cap); }   // moss only on the flattest tops
             var rnd = new System.Random(808);
 
             var waterfallMaterial = WaterfallMaterial();
@@ -44,11 +44,10 @@ namespace Evolve.EditorTools
 
             foreach (var stream in new List<WaterSurface>(WaterSurface.All))
             {
-                if (stream == null || stream.Shape != WaterShape.Stream || stream.StreamPath == null || stream.StreamPath.Length < 2) continue;
-                var origin = new Vector2(stream.transform.position.x, stream.transform.position.z);
-                Vector2 a = stream.StreamPath[0] + origin, b = stream.StreamPath[stream.StreamPath.Length - 1] + origin;
+                if (stream == null || stream.name != LakeWater.StreamName) continue;
+                Vector2 a = ZoneLayout.StreamLine[0], b = ZoneLayout.StreamLine[ZoneLayout.StreamLine.Length - 1];
                 LakeLayout.StreamEnds(a, b, out Vector2 source, out Vector2 flow);
-                float poolRadius = Mathf.Max(4.5f, stream.StreamHalfWidth * 1.9f);
+                float poolRadius = Mathf.Max(4.5f, ZoneLayout.StreamHalfWidthAt(0f) * 1.9f);
                 Vector2 side = new Vector2(-flow.y, flow.x);
                 Vector2 cliffCentre = source - flow * (poolRadius + 2.6f);
 
@@ -60,10 +59,10 @@ namespace Evolve.EditorTools
                     Vector2 p = cliffCentre + side * (k * 3.4f) - flow * (Mathf.Abs(k) * 1.1f) + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f);
                     float ground = LakeGround.GroundY(p.x, p.y);
                     int variant = rnd.Next(variants.Count);
-                    var m = Matrix4x4.TRS(new Vector3(p.x, ground, p.y), Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f), new Vector3(size, size * 1.8f, size));
+                    var m = Matrix4x4.TRS(new Vector3(p.x, ground, p.y), Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f), new Vector3(size * 1.15f, size * 1.5f, size * 1.15f));
                     rocks.Add(new CombineInstance { mesh = variants[variant], transform = m });
                     caps.Add(new CombineInstance { mesh = variantCaps[variant], transform = m });
-                    if (k == 0) { topY = ground + 0.33f * size * 1.8f; fallAt = p; }
+                    if (k == 0) { topY = ground + 0.33f * size * 1.5f; fallAt = p; }
                 }
                 // a few smaller rocks round the pool's edge
                 for (int i = 0; i < 7; i++)
@@ -87,7 +86,7 @@ namespace Evolve.EditorTools
                 fall.transform.position = new Vector3(lipAt.x, lip, lipAt.y);
                 fall.transform.rotation = Quaternion.LookRotation(new Vector3(flow.x, 0f, flow.y), Vector3.up);
                 var wf = fall.AddComponent<Waterfall>();
-                wf.Width = 2.6f;
+                wf.Width = 3.6f;
                 wf.Height = Mathf.Max(1.5f, lip - poolY);
                 fall.GetComponent<MeshRenderer>().sharedMaterial = waterfallMaterial;
 
@@ -105,8 +104,8 @@ namespace Evolve.EditorTools
                 springs++;
             }
 
-            LakeGround.AddCombined(root, "Spring Rocks", rocks, LakeGround.OpaqueMaterial("Lake_Rock", new Color(0.40f, 0.41f, 0.39f), 0.15f, false));
-            LakeGround.AddCombined(root, "Spring Rock Moss", caps, LakeGround.OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
+            LakeGround.AddCombined(root, "Spring Rocks", rocks, LakeGround.OpaqueMaterial("Lake_SpringRock", new Color(0.30f, 0.29f, 0.27f), 0.12f, false));
+            LakeGround.AddCombined(root, "Spring Rock Moss", caps, LakeGround.OpaqueMaterial("Lake_SpringMoss", new Color(0.20f, 0.34f, 0.14f), 0.1f, false));
 
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
@@ -130,7 +129,7 @@ namespace Evolve.EditorTools
                 mat = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "Lake_Waterfall" };
                 AssetDatabase.CreateAsset(mat, path);
             }
-            mat.SetColor("_BaseColor", new Color(0.78f, 0.96f, 1f, 0.5f));
+            mat.SetColor("_BaseColor", new Color(0.82f, 0.97f, 1f, 0.7f));
             mat.SetFloat("_Surface", 1f);
             mat.SetFloat("_Blend", 0f);
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);

@@ -11,7 +11,7 @@ namespace Evolve.World
         /// A rock about 1 m wide: 80 flat-shaded triangles, lumpy, flattened below. `moss` gets a slightly larger copy of
         /// the upward-facing triangles (a cap of moss on top).
         /// </summary>
-        public static Mesh Rock(int seed, out Mesh moss)
+        public static Mesh Rock(int seed, out Mesh moss, float mossMinUp = 0.55f)
         {
             var verts = new List<Vector3>();
             var tris = new List<int>();
@@ -32,7 +32,7 @@ namespace Evolve.World
                 Vector3 a = shaped[tris[i]], b = shaped[tris[i + 1]], c = shaped[tris[i + 2]];
                 rockVerts.Add(a); rockVerts.Add(b); rockVerts.Add(c);
                 Vector3 n = Vector3.Cross(b - a, c - a).normalized;
-                if (n.y > 0.55f)
+                if (n.y > mossMinUp)
                 {
                     var lift = Vector3.up * 0.012f;
                     mossVerts.Add(a * 1.04f + lift); mossVerts.Add(b * 1.04f + lift); mossVerts.Add(c * 1.04f + lift);
@@ -85,6 +85,37 @@ namespace Evolve.World
             mesh.SetVertices(verts);
             mesh.SetNormals(normals);
             mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(idx, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        /// <summary>Fallen leaves lying flat: a pointed oval each, random direction and size. Use a double-sided material.</summary>
+        public static Mesh FallenLeaves(IList<Vector3> positions, int seed, float size)
+        {
+            var rnd = new System.Random(seed);
+            var verts = new List<Vector3>(positions.Count * 4);
+            var normals = new List<Vector3>(positions.Count * 4);
+            var idx = new List<int>(positions.Count * 6);
+            foreach (var p in positions)
+            {
+                float a = (float)rnd.NextDouble() * Mathf.PI * 2f;
+                var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                var side = new Vector3(-dir.z, 0f, dir.x);
+                float len = size * (0.7f + (float)rnd.NextDouble() * 0.7f), width = len * (0.35f + (float)rnd.NextDouble() * 0.15f);
+                int s = verts.Count;
+                verts.Add(p - dir * len * 0.5f);
+                verts.Add(p - side * width * 0.5f + dir * len * 0.1f);
+                verts.Add(p + side * width * 0.5f + dir * len * 0.1f);
+                verts.Add(p + dir * len * 0.5f);
+                for (int k = 0; k < 4; k++) normals.Add(Vector3.up);
+                idx.Add(s); idx.Add(s + 1); idx.Add(s + 2);
+                idx.Add(s + 1); idx.Add(s + 3); idx.Add(s + 2);
+            }
+            var mesh = new Mesh { name = "FallenLeaves" };
+            if (verts.Count > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.SetVertices(verts);
+            mesh.SetNormals(normals);
             mesh.SetTriangles(idx, 0);
             mesh.RecalculateBounds();
             return mesh;

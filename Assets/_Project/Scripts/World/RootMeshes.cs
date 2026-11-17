@@ -27,6 +27,78 @@ namespace Evolve.World
         }
 
         /// <summary>
+        /// A ceiling of interwoven roots over <paramref name="area"/> (x, z = world x, z), hanging about
+        /// <paramref name="height"/> m up: thick roots on a ~16 m grid, sagging between their knots, and (when
+        /// <paramref name="thin"/>) a mat of thin roots on a ~6 m grid filling the gaps. Knots come from the world grid, so
+        /// neighbouring areas join without seams. No root crosses within <paramref name="holeRadius"/> of a hole (where light
+        /// comes through). World-space vertices.
+        /// </summary>
+        public static Mesh Lattice(Rect area, float height, int seed, System.Collections.Generic.IList<Vector2> holes = null, float holeRadius = 7f, bool thin = true)
+        {
+            var parts = new System.Collections.Generic.List<CombineInstance>();
+            AddLattice(parts, area, height, seed, 16f, 5f, 0.6f, 1.4f, 1f, 3f, 0.15f, 5, 8, holes, holeRadius);
+            if (thin) AddLattice(parts, area, height - 0.8f, seed + 7, 6f, 2f, 0.15f, 0.35f, 0.5f, 1.5f, 0.35f, 4, 5, holes, holeRadius);
+            var mesh = new Mesh { name = "RootLattice", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+            if (parts.Count > 0) mesh.CombineMeshes(parts.ToArray(), true, false);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        static void AddLattice(System.Collections.Generic.List<CombineInstance> parts, Rect area, float height, int seed, float spacing,
+            float jitter, float minR, float maxR, float minSag, float maxSag, float skip, int points, int sides,
+            System.Collections.Generic.IList<Vector2> holes, float holeRadius)
+        {
+            int i0 = Mathf.FloorToInt(area.xMin / spacing), i1 = Mathf.CeilToInt(area.xMax / spacing);
+            int j0 = Mathf.FloorToInt(area.yMin / spacing), j1 = Mathf.CeilToInt(area.yMax / spacing);
+            for (int i = i0; i < i1; i++)
+                for (int j = j0; j < j1; j++)
+                {
+                    Vector3 a = Knot(i, j, seed, spacing, jitter, height);
+                    if (!area.Contains(new Vector2(a.x, a.z))) continue;           // every knot belongs to exactly one area
+                    for (int e = 0; e < 2; e++)
+                    {
+                        if (Hash01(i, j, seed * 3 + e) < skip) continue;            // gaps
+                        Vector3 b = e == 0 ? Knot(i + 1, j, seed, spacing, jitter, height) : Knot(i, j + 1, seed, spacing, jitter, height);
+                        Vector2 mid = new Vector2(a.x + b.x, a.z + b.z) * 0.5f;
+                        bool blocked = false;
+                        if (holes != null)
+                            foreach (var h in holes) if (Vector2.Distance(mid, h) < holeRadius) { blocked = true; break; }
+                        if (blocked) continue;
+                        float sag = Mathf.Lerp(minSag, maxSag, Hash01(i, j, seed * 5 + e));
+                        Vector3 side = Vector3.Cross(b - a, Vector3.up).normalized;
+                        float sway = (Hash01(i, j, seed * 7 + e) - 0.5f) * spacing * 0.25f;
+                        var path = new Vector3[points];
+                        for (int k = 0; k < points; k++)
+                        {
+                            float t = k / (float)(points - 1);
+                            path[k] = Vector3.Lerp(a, b, t) + Vector3.down * sag * Mathf.Sin(t * Mathf.PI) + side * sway * Mathf.Sin(t * Mathf.PI);
+                        }
+                        float r = Mathf.Lerp(minR, maxR, Hash01(i, j, seed * 11 + e));
+                        parts.Add(new CombineInstance { mesh = RootTube(path, r, r * 0.8f, seed * 13 + i * 31 + j, 0.15f, sides), transform = Matrix4x4.identity });
+                    }
+                }
+        }
+
+        static Vector3 Knot(int i, int j, int seed, float spacing, float jitter, float height)
+        {
+            float x = (i + 0.5f) * spacing + (Hash01(i, j, seed) - 0.5f) * 2f * jitter;
+            float z = (j + 0.5f) * spacing + (Hash01(i, j, seed + 1) - 0.5f) * 2f * jitter;
+            float y = height + (Hash01(i, j, seed + 2) - 0.5f) * 3f;
+            return new Vector3(x, y, z);
+        }
+
+        static float Hash01(int x, int y, int s)
+        {
+            unchecked
+            {
+                int h = x * 374761393 + y * 668265263 + s * 1274126177;
+                h = (h ^ (h >> 13)) * 1274126177;
+                h ^= h >> 16;
+                return (h & 0xffff) / 65535f;
+            }
+        }
+
+        /// <summary>
         /// An arch from a to b (two points on the ground) rising `height` metres in between, wandering sideways a little.
         /// Both ends are sunk `sink` metres below the given points so they grow out of the ground.
         /// </summary>

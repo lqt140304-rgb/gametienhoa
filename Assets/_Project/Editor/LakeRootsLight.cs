@@ -173,24 +173,12 @@ namespace Evolve.EditorTools
 
             // ---------------------------------------------------------------- light shafts
             var shaftMaterial = ShaftMaterial();
-            var targets = new List<Vector2>();
-            foreach (var pond in ponds)
-            {
-                var o = pond.WorldOutline; Vector2 c = Vector2.zero;
-                foreach (var p in o) c += p;
-                targets.Add(c / o.Length);
-            }
-            for (int i = 0; i < 4; i++) targets.Add(new Vector2(Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble()), Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble())));
-            foreach (var area in LakeLayout.Areas())      // two shafts in every biome pad of the layout
-                if (area.Name != "Core")
-                    for (int i = 0; i < 2; i++)
-                        targets.Add(area.Center + new Vector2(Mathf.Lerp(-area.Radius, area.Radius, (float)rnd.NextDouble()), Mathf.Lerp(-area.Radius, area.Radius, (float)rnd.NextDouble())) * 0.5f);
+            var targets = new List<Vector2>(ZoneLayout.LightShafts);   // the gaps left in the root roof (Dress Lake: Root Canopy)
             int shafts = 0;
             var slant = new Vector3(5f, 0f, 3f);
             foreach (var target in targets)
             {
-                if (shafts >= 8) break;
-                var bottomPoint = new Vector3(target.x + (float)(rnd.NextDouble() - 0.5) * 8f, 0f, target.y + (float)(rnd.NextDouble() - 0.5) * 8f);
+                var bottomPoint = new Vector3(target.x + slant.x, 0f, target.y + slant.z);   // the shaft's top sits in the roof's gap
                 bottomPoint.y = LakeGround.GroundY(bottomPoint.x, bottomPoint.z);
                 float roofY = LakeLayout.CeilingY(bottomPoint.x - slant.x, bottomPoint.z - slant.z);   // the real roof above the spot
                 Vector3 topPoint = bottomPoint - slant + Vector3.up * (roofY + 2f);
@@ -257,12 +245,12 @@ namespace Evolve.EditorTools
             main.prewarm = true;
             main.startLifetime = 9f;
             main.startSpeed = 0.12f;
-            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.09f);
-            main.startColor = new Color(0.7f, 1f, 0.88f, 0.45f);
-            main.maxParticles = 120;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.055f);
+            main.startColor = new Color(1f, 0.94f, 0.68f, 0.22f);
+            main.maxParticles = 70;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             var emission = ps.emission;
-            emission.rateOverTime = 12f;
+            emission.rateOverTime = 6f;
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(radius * 1.6f, 6f, radius * 1.6f);

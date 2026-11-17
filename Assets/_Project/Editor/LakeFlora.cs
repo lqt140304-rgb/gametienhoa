@@ -28,7 +28,7 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(DressedName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(DressedName).transform;
-            root.gameObject.AddComponent<DetailCulling>();   // only what is near the camera is drawn and lit
+            root.gameObject.AddComponent<DetailCulling>().ShowDistance = 250f;   // small shore details; the open ground has its own LOD
             var rnd = new System.Random(77);
             var ponds = new List<WaterSurface>(WaterSurface.All);
 
@@ -73,7 +73,7 @@ namespace Evolve.EditorTools
                     l.range = 12f;
                     l.intensity = 1.3f;
                     l.shadows = LightShadows.None;
-                    l.color = colour == 0 ? new Color(0.75f, 0.55f, 1f) : colour == 1 ? new Color(1f, 0.6f, 0.5f) : new Color(0.4f, 1f, 0.9f);
+                    l.color = new Color(1f, 0.88f, 0.55f);   // warm, like the light in the concept art
                 }
             }
 
@@ -94,20 +94,7 @@ namespace Evolve.EditorTools
                     rnd.NextDouble() < 0.7 ? 0 : rnd.Next(3));
             }
 
-            // 1b) every other biome pad of the layout gets its own cluster, with a colour that suits it
-            foreach (var area in LakeLayout.Areas())
-            {
-                if (area.Name == "Core" || Vector2.Distance(area.Center, garden) < 30f) continue;
-                int favourite = area.Name.Contains("Mùn") ? 1 : area.Name.Contains("Săn") ? 1 : 2;   // coral for the humus bed and the hunting edge, teal elsewhere
-                int count = area.Name.Contains("Săn") ? 7 : 13;                                     // the hunting edge is sparse
-                for (int i = 0; i < count; i++)
-                {
-                    float a = (float)rnd.NextDouble() * Mathf.PI * 2f, d = 4f + (float)rnd.NextDouble() * area.Radius * 0.7f;
-                    Mushroom(area.Center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d,
-                        i < 2 ? 3.2f + (float)rnd.NextDouble() * 1.8f : 0.6f + (float)rnd.NextDouble() * 1.7f,
-                        rnd.NextDouble() < 0.7 ? favourite : rnd.Next(3));
-                }
-            }
+            // (each area's own mushrooms come from the plant communities: Dress Lake: Plant Communities)
 
             // 2) along the shores
             foreach (var pond in ponds)
@@ -121,12 +108,9 @@ namespace Evolve.EditorTools
                 }
             }
 
-            // 3) scattered over the flat ground
-            foreach (var p in LakeLayout.Scatter(18, rnd))   // over the core and every biome pad of the layout
-                Mushroom(p, 0.5f + (float)rnd.NextDouble() * 1.8f, rnd.Next(3));
 
-            var capColours = new[] { new Color(0.62f, 0.42f, 0.82f), new Color(0.92f, 0.46f, 0.44f), new Color(0.28f, 0.72f, 0.68f) };
-            LakeGround.AddCombined(root, "Mushroom Stalks", stalks, LakeGround.OpaqueMaterial("Lake_MushroomStalk", new Color(0.88f, 0.85f, 0.75f), 0.3f, false));
+            var capColours = new[] { new Color(0.94f, 0.89f, 0.74f), new Color(0.88f, 0.70f, 0.42f), new Color(0.80f, 0.72f, 0.58f) };   // cream, honey, pale tan (as in the concept art)
+            LakeGround.AddCombined(root, "Mushroom Stalks", stalks, LakeGround.OpaqueMaterial("Lake_MushroomStalk", new Color(0.93f, 0.89f, 0.78f), 0.3f, false));
             for (int c = 0; c < 3; c++)
                 LakeGround.AddCombined(root, "Mushroom Caps " + c, caps[c], LakeGround.OpaqueMaterial("Lake_MushroomCap" + c, capColours[c], 0.45f, false, capColours[c] * 0.10f));
             LakeGround.AddCombined(root, "Mushroom Spots", spots, LakeGround.OpaqueMaterial("Lake_MushroomSpot", new Color(0.95f, 0.98f, 0.9f), 0.2f, false, new Color(0.7f, 0.85f, 0.7f)));

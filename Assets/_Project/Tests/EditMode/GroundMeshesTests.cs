@@ -25,6 +25,15 @@ namespace Evolve.Tests.EditMode
             Assert.Greater(mesh.bounds.max.y, 0.2f);
         }
 
+        [Test] public void LeavesAreFlatAndFourVerticesEach()
+        {
+            var positions = new List<Vector3> { new Vector3(1f, 0.03f, 2f), new Vector3(5f, 0.03f, -1f) };
+            var mesh = GroundMeshes.FallenLeaves(positions, 3, 0.28f);
+            Assert.AreEqual(8, mesh.vertexCount);
+            Assert.AreEqual(12, mesh.triangles.Length);
+            Assert.Less(mesh.bounds.size.y, 0.01f);
+        }
+
         [Test] public void WindingLineKeepsItsEndsAndWinds()
         {
             var a = new Vector2(0f, 0f); var b = new Vector2(40f, 0f);

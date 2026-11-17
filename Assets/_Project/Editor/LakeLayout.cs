@@ -25,7 +25,7 @@ namespace Evolve.EditorTools
         {
             var areas = new List<Area> { new Area { Name = "Core", Center = Vector2.zero, Radius = CoreRadius } };
             var type = System.Type.GetType("Evolve.World.ZoneLayout, Evolve");
-            var field = type != null ? type.GetField("Biomes") : null;
+            var field = type != null ? (type.GetField("Zones") ?? type.GetField("Biomes")) : null;
             if (field == null || !(field.GetValue(null) is System.Array pads)) return areas;
             foreach (var pad in pads)
             {
@@ -33,6 +33,7 @@ namespace Evolve.EditorTools
                 var centre = t.GetField("Center")?.GetValue(pad);
                 var radius = t.GetField("Radius")?.GetValue(pad);
                 var name = t.GetField("Name")?.GetValue(pad) as string;
+                if (t.GetField("Size")?.GetValue(pad) is Vector2 size) radius = (size.x + size.y) * 0.25f; // a disc about the area's size
                 if (centre is Vector2 c && radius is float r)
                     areas.Add(new Area { Name = name ?? "Pad", Center = c, Radius = Mathf.Max(5f, r - 4f) }); // stay off the very edge
             }

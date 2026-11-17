@@ -102,7 +102,7 @@ namespace Evolve.Visuals
                 mat.SetFloat("_ZWrite", 0f);
                 mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
                 mat.SetOverrideTag("RenderType", "Transparent");
-                mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + 5;
+                mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent - 5;   // before the gel body (which writes depth), so it shows through it
             }
             return mat;
         }
