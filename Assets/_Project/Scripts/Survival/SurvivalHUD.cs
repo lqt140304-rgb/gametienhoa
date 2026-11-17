@@ -26,7 +26,7 @@ namespace Evolve.Survival
             "Q  Dùng Dị Năng\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
-            "C  Quét rung: sương tan ra, thấy thức ăn\n    và sinh vật xung quanh trong chốc lát\nV  Bật/tắt mắt (thử nghiệm)\n" +
+            "C  Quét rung: ánh sáng lan ra, thấy thức ăn\n    và sinh vật xung quanh trong chốc lát\nV  Bật/tắt mắt (thử nghiệm)\n" +
             "H  Ẩn/hiện hướng dẫn\nF1  Menu God (thử nghiệm)\n\n" +
             "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
             "Khi quét: xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi\n\n" +
