@@ -43,8 +43,10 @@ namespace Evolve.World
         public bool IsScanning => scanStart >= 0f;
 
         // Stress narrows the senses; applied at the point of use so the serialized radii stay untouched.
+        // Low Tinh Chất Sống (vitamin) dulls the senses too.
         float SenseMul => stats != null && stats.Config != null
-            ? StressEffects.SenseRadiusMultiplier(stats.State.Stress, stats.Config) : 1f;
+            ? StressEffects.SenseRadiusMultiplier(stats.State.Stress, stats.Config)
+              * NutrientEffects.SenseMultiplier(stats.State.Nutrient(NutrientKind.Vitamin)) : 1f;
 
         void Awake()
         {

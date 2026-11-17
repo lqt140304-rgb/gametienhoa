@@ -95,6 +95,8 @@ namespace Evolve.Survival
             bool showThirst = HudVisibility.ShowThirst(Frac(s.Thirst, s.MaxThirst), thirstOn, full);
             bool showStress = HudVisibility.ShowStress(s.Stress, full);
             int rows = (showHealth ? 1 : 0) + (showEnergy ? 1 : 0) + (showHunger ? 1 : 0) + (showThirst ? 1 : 0) + (showStress ? 1 : 0);
+            for (int k = 0; k < NutrientKinds.Count; k++)
+                if (HudVisibility.ShowNutrient(s.Nutrient((NutrientKind)k), full)) rows++; // only the lacking nutrients (all with Tab)
             float rowStep = floating ? 12 : 39;
             float rowHeight = floating ? 7 : 32;
             float width = floating ? 132 : 230;
@@ -107,6 +109,13 @@ namespace Evolve.Survival
             if (showHunger) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Độ no", s.Hunger, s.MaxHunger, new Color(.84f, .73f, .46f), !floating);
             if (showThirst) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Khát", s.Thirst, s.MaxThirst, new Color(.47f, .7f, .86f), !floating);
             if (showStress) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Căng thẳng", s.Stress, SurvivalState.MaxStress, new Color(.67f, .55f, .82f), !floating);
+            for (int k = 0; k < NutrientKinds.Count; k++)
+            {
+                var kind = (NutrientKind)k;
+                if (!HudVisibility.ShowNutrient(s.Nutrient(kind), full)) continue;
+                string label = NutrientKinds.SlimeName(kind) + (s.IsWarning(kind) ? " !" : "");
+                StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), label, s.Nutrient(kind), SurvivalState.MaxNutrient, NutrientKinds.ColorOf(kind), !floating);
+            }
             GUI.Label(new Rect(x, y + rows * rowStep, width, 28),
                 $"{s.Temperature:0}°C{(unsafeTemp ? " !" : "")}    •    {s.Lives}/{s.MaxLives} mạng", small);
 
@@ -289,6 +298,9 @@ namespace Evolve.Survival
                 organs.GetProgress(o, out float progress, out float cost);
                 GUILayout.Label($"{o.DisplayName} · {o.Tier} · {(lv == 0 ? "Mầm" : $"Lv{lv}")}", text);
                 GUILayout.Label(OrganInteractor.SlotName(o.Slot) + (organs.IsMaxed(o) ? " · Tối đa" : $" · {progress:0}/{cost:0} EXP"), small);
+                float decay = organs.GetDecay(o);
+                var need = o.EffectiveNutrient;
+                GUILayout.Label($"Cần: {NutrientKinds.SlimeName(need)} ({NutrientKinds.RealName(need)})" + (decay > 0.01f ? $" · đang yếu {decay * 100f:0}%" : ""), small);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !organs.IsMaxed(o) && stats.State.EvolutionExp > 0;
                 if (GUILayout.Button(lv == 0 ? "Nuôi mầm" : "Nâng cấp", action)) organs.Invest(o);
