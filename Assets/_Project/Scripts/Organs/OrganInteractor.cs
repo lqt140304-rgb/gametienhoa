@@ -77,6 +77,8 @@ namespace Evolve.Organs
         {
             OrganSlot.Eyes => "Mắt",
             OrganSlot.Legs => "Chân",
+            OrganSlot.Skin => "Da",
+            OrganSlot.Back => "Lưng",
             _ => slot.ToString()
         };
 

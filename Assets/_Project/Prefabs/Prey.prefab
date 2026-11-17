@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Evolve::Evolve.Creatures.Prey
   wanderSpeed: 0.5
-  fleeSpeed: 1.6
+  fleeSpeed: 1.8
   fleeRadius: 6
   stamina: 4
   restTime: 2
