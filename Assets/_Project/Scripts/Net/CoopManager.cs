@@ -238,6 +238,7 @@ namespace Evolve.Net
             s.Lives = (byte)Mathf.Clamp(st.Lives, 0, 255);
             s.Dead = st.IsDead;
             s.Lost = st.Lost;
+            s.Diseases = st.DiseaseMask;
             var resolved = Evolve.Visuals.SlimeColor.Resolved();
             s.PartColors = new byte[18];
             for (int i = 0; i < resolved.Length; i++)

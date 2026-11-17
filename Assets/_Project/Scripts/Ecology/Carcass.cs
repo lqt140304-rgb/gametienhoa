@@ -86,6 +86,7 @@ namespace Evolve.Ecology
             nextBite = Time.time + BiteCooldown;
             bool rotten = Decay.Stage == CarcassStage.Rotten; // decided before eating; humus is not edible at all
             NetWorld.Feed(stats, Decay.Eat(BiteAmount), FoodProfiles.Carcass(rotten));
+            if (rotten) stats.State.TryInfect(DiseaseKind.RottenGel, DiseaseRules.RottenBiteChance); // rotten meat can give Thối Gel
             if (Decay.FoodLeft <= 0.01f) Destroy(gameObject); // eaten up
         }
     }

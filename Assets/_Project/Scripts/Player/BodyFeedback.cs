@@ -22,6 +22,15 @@ namespace Evolve.Player
         Vector3 basePosition;
         bool ready, trembling;
 
+        /// <summary>Pure: a sickly yellow-green cast while the body has any disease.</summary>
+        public static Color SickTint(Color current, byte diseaseMask)
+        {
+            if (diseaseMask == 0) return current;
+            var c = Color.Lerp(current, new Color(0.55f, 0.65f, 0.2f, current.a), 0.3f);
+            c.a = current.a;
+            return c;
+        }
+
         /// <summary>Pure: pull the body colour toward the colour of a lacking nutrient, up to half way at severity 1.</summary>
         public static Color DeficiencyTint(Color current, NutrientKind kind, float severity)
         {
@@ -79,6 +88,7 @@ namespace Evolve.Player
                 c = DeficiencyTint(c, worst, 1f - value / Mathf.Max(1f, warn));
                 c.a = alpha;
             }
+            c = SickTint(c, s.DiseaseMask);
             bodyRenderer.GetPropertyBlock(block);
             block.SetColor(BaseColorId, c);
             block.SetColor(ColorId, c);

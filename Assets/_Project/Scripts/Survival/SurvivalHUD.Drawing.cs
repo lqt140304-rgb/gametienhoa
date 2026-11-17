@@ -240,6 +240,7 @@ namespace Evolve.Survival
                 if(HudVisibility.ShowNutrient(s.Nutrient(worst)))
                     Label(new Rect(x,y-26,width+120,22),(s.IsWarning(worst)?NutrientWarnLabels:NutrientLackLabels)[(int)worst],small);
             }
+            if(s.DiseaseMask!=0) Label(new Rect(x,y-52,width+160,22),DiseaseLine(s),small);
             if(full)
             {
                 Vital(new Rect(x,top,cellWidth,68),s.ThirstEnabled?"◈ Nước":"◈ Nước · nghỉ",s.Thirst,s.MaxThirst,new Color32(130,205,239,255),VitalNote(3,s,stats.Config));
@@ -283,6 +284,15 @@ namespace Evolve.Survival
             "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Vitamin) + " ! cơ quan sắp yếu"
         };
         GUIStyle nutrientName, nutrientNumber;
+        byte diseaseShownMask; string diseaseLine = "";
+
+        /// <summary>The HUD line about diseases; rebuilt only when the set of diseases changes (no string per frame).</summary>
+        string DiseaseLine(SurvivalState s)
+        {
+            byte mask = s.DiseaseMask;
+            if (mask != diseaseShownMask || diseaseLine.Length == 0) { diseaseShownMask = mask; diseaseLine = DiseaseRules.Describe(mask); }
+            return diseaseLine;
+        }
 
         /// <summary>One of the five nutrient cells (Tab panel): colour of the nutrient, bright edge when it is low.</summary>
         void NutrientCell(Rect r,NutrientKind kind)

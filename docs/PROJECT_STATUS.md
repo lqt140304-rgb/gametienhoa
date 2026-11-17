@@ -75,6 +75,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `World/` (bố cục khu) | `GroundHeight`, `ZoneLayout` | **0.6b, chưa biên dịch.** `GroundHeight` đọc độ cao Terrain để con mồi, kẻ săn, cơ quan rơi và xác bám mặt đất (không có Terrain thì giữ độ cao cũ). `ZoneLayout` giữ dữ liệu bệ vi sinh cảnh, suối, đường mòn; `TerrainShape` dùng nó để làm phẳng bệ và suối (y = 0) |
 | `World/` (thực vật) | `VegetationScatter`, `GlowPulse` | **0.6c, chưa biên dịch.** `VegetationScatter` chọn vị trí và loại cây phát quang (mật độ theo vùng, cách nhau ≥ 6 m, trần 380); `GlowPulse` làm cây Bọc Bào Tử nhấp nháy khi camera ở gần (trong 80 m). `UnderrootLakeBuilder` đặt chúng thành `Nutrient` (12 dinh dưỡng, mọc lại 180 giây) |
 | `Survival/` (dinh dưỡng) | `NutrientKind`, `FoodProfile`, `NutrientEffects`; `Organs/OrganNutrient`, `OrganDecay` | **0.5c, chưa biên dịch.** Năm kho trong `SurvivalState.Nutrients` (hao theo thời gian và theo `NutrientLoad` cơ quan), hệ số suy yếu khi thiếu; mỗi nguồn thức ăn đưa kèm `FoodProfile` (`NetWorld.Feed(stats, amount, profile)`); `OrganHost` chặn trang bị khi thiếu chất, cho cơ quan yếu dần rồi tan (`Dissolved`) |
+| `Survival/` (bệnh tật), `World/` | `DiseaseKind`, `DiseaseRules`; `SporeZone`, `SporeSensor`, `ContagionSensor` | **0.5d, chưa biên dịch.** `SurvivalState.DiseaseTime` (giây còn lại của từng bệnh), `TryInfect`/`Infect`/`Cure`, triệu chứng trong `Tick`; nguồn lây ở `WaterSensor` (nước bẩn), `Carcass` (xác thối), `Damage` (vết thương), `SporeSensor` (bào tử), `ContagionSensor` (người bệnh gần); `PlayerNetState.Diseases` (một byte) gửi bệnh qua mạng |
 | `Editor/` | `PrototypeSceneBuilder`, `UnderrootLakeBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; menu **Evolve → Build Underroot Lake** dựng scene `Scenes/Underroot_Lake` (tạo species asset D/C/B, prefab `Prey_C`, gắn `VibrationEmitter`, tag `ShallowWater`; dùng chung `CreateSharedAssets`/`CreatePlayer` của builder prototype); `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
 **Lưu ý về công cụ dựng scene:**
@@ -204,6 +205,17 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Huyết Thiết chưa có cơ quan nào dùng; bệnh tật (0.5d) chưa có. `OrganSO.NutrientNeed` đặt `Auto` cho mọi asset cũ (theo vị trí gắn); muốn đổi cho từng cơ quan, chỉnh trong Inspector.
 - Scene cũ chưa gán loại thức ăn cho cây: dựng lại bằng **Evolve → Build Underroot Lake** để cây có loại (Rêu Lân Quang cho Tinh Chất Sống, ...); thức ăn thường của scene khác dùng hồ sơ hỗn hợp.
 
+## 6.8. Bản 0.5d (bệnh tật): trạng thái và giới hạn
+
+**Code 0.5d chưa từng được biên dịch hay chạy.** Kiểm tra theo mục 14.
+
+- Mọi con số (thời lượng 180/240/150 giây, xác suất nhiễm, tốc độ hồi, hệ số triệu chứng) là hằng số đặt tạm trong `DiseaseRules`, không nằm trong `SurvivalConfig`.
+- **Lây trong co-op phi tập trung:** mỗi máy tự quyết cho người chơi của mình theo vị trí và byte bệnh của bóng người khác (spec ghi chủ phòng quyết, bản này làm đơn giản hơn). `PlayerNetState` có thêm **một byte** ở cuối (`Write`/`Read` cùng thứ tự): hai bản chơi phải cùng phiên bản code. Phần gửi nhận không có test tự động, cần kiểm tay bằng hai bản.
+- Chỉ **Thối Gel** lây. `Revive` (được cứu) giữ nguyên bệnh; hồi sinh (`Reset`) xóa hết bệnh. Không có thuốc ngoài các cách chữa ghi trong HUD.
+- Thối Gel **chặn hồi máu tự nhiên** (nếu không, hồi 1,5 mỗi giây sẽ che mất việc mất máu 0,3 mỗi giây); máu dừng giảm ở 10% tối đa.
+- Chưa có hiệu ứng hạt hoặc âm thanh cho bệnh. Đám bào tử (`SporeZone`) là hộp vô hình ở cụm nấm Vườn Bào Tử; hình ảnh bào tử do phiên trang trí lo.
+- Scene cũ chưa có `SporeSensor`/`ContagionSensor`/`SporeZone`: dựng lại bằng **Build Underroot Lake** và **Build Prototype Scene**.
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
@@ -296,3 +308,15 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 7. Có cơ quan đang gắn, đặt chất nó cần = 5 và đợi: bảng Cơ quan (phím G) hiện "đang yếu X%"; sau khoảng 5 phút cơ quan tan và rơi ra đất. Ăn đủ lại: cơ quan còn yếu thì hồi dần.
 8. Hồi sinh: 5 kho đầy lại (80). `Prototype_01` vẫn chạy như cũ.
 9. Co-op F2: vào phòng không lỗi (người vào phòng nhận hồ sơ hỗn hợp cho phần ăn do Host điều khiển).
+
+## 14. Danh sách kiểm tra thủ công 0.5d (cho chủ dự án)
+
+1. Console không lỗi đỏ; **Test Runner → EditMode → Run All** xanh (thêm `DiseaseRulesTests`, `SurvivalDiseaseTests`, `DiseaseSourcesTests` và hai test mới trong `HudVisibilityTests`).
+2. Dựng lại **Build Underroot Lake** (và Prototype). Ban đầu không có bệnh, HUD không có dòng "Bệnh:".
+3. **Nhiễm Nước Đọng:** uống ở vũng nước đọng bẩn (Bãi Mùn Rễ) vài lần: có lúc HUD hiện "Bệnh: Nhiễm Nước Đọng — nghỉ ở nơi trú và uống nước sạch"; khát nhanh hơn, hồi máu chậm. Vào nơi trú hoặc đứng trong nước sạch: bệnh hết nhanh hơn.
+4. **Thối Gel:** ăn xác thối (bấm vào xác ở giai đoạn thối) hoặc bị cắn nặng: có thể bị bệnh; máu không tự hồi và tụt chậm tới khoảng 10% rồi dừng (không chết); ăn Rêu Lân Quang (Tinh Chất Sống) thì bệnh hết nhanh hơn; cơ quan đang yếu hồi chậm hơn.
+5. **Mờ Bào Tử:** đứng trong cụm nấm Vườn Bào Tử một lúc: bị bệnh, vòng quét rung (phím C) co lại, căng thẳng tăng; tự khỏi sau khoảng 2,5 phút, nhanh hơn khi đủ Tinh Chất Sống.
+6. Đặt Tinh Chất Sống = 0 (Inspector): các lần nhiễm xảy ra dễ hơn rõ rệt.
+7. Thân slime ngả xanh vàng khi có bệnh và trở lại bình thường khi hết.
+8. Hồi sinh sau khi chết: hết bệnh. `Prototype_01` chạy như cũ.
+9. **Co-op F2 (hai bản):** người B thấy dòng bệnh của A khi A bệnh; đứng cạnh người bệnh Thối Gel (dưới 3 m) một lúc thì có thể bị lây; chỉ Thối Gel lây.
