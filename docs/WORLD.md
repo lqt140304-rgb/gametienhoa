@@ -9,7 +9,6 @@
 - Lần sinh ra đầu tiên, mỗi người chơi xuất hiện ở **một hồ nước trong hang động**, vị trí **ngẫu nhiên** trên map, khác nhau giữa các ván.
 - Sau đó người chơi có thể **lưu điểm hồi sinh** tại một **địa điểm đặc biệt**. Có điểm đã lưu thì chết sẽ hồi sinh ở đó, **không còn ngẫu nhiên**.
 - Chưa lưu điểm nào mà chết thì **quay lại hồ hang lúc mới sinh** (hồ này là điểm hồi sinh mặc định cho đến khi lưu điểm mới).
-
 - Cả bầy khi **bắt đầu vào map** sinh ra **gần nhau** (cùng khu hồ hang). Hồ khởi đầu của mỗi người chính là điểm hồi sinh mặc định của người đó.
 
 **[ĐỀ XUẤT]**
@@ -17,9 +16,19 @@
 
 **[MỞ]**
 - Gần nhau là cùng một hồ hay các hồ liền kề; người vào giữa ván thì sinh ở đâu?
-- **Cơ chế "cược khi chết":** máu về 0 thì chọn chết như thường, hoặc đánh một trận với quái mạnh hơn để sống tiếp với 1 máu (thắng) hoặc chết (thua). Đang hỏi: thắng thì giữ được mạng và cơ quan không, có giới hạn số lần cược không. Đề xuất: thắng thì không mất mạng, không rơi cơ quan; thua thì chết như luật thường; mỗi mạng chỉ cược một lần.
 - Map có tạo ngẫu nhiên mỗi ván không, hay là map cố định có nhiều hồ hang?
 - Địa điểm lưu điểm cụ thể là gì, tốn gì để dựng?
+
+### 1.1 Đối đầu Thần Chết
+
+**[ĐÃ CHỐT]**
+- Khi chết, người chơi được **chọn đánh một trận với Thần Chết**, một **boss cố định** (luôn là cùng một boss).
+- **Thắng** thì Thần Chết cho **sống tiếp** (với 1 máu), nhưng **lấy đi 1 mạng**.
+- Không chọn đánh, hoặc thua, thì chết.
+
+**[MỞ]**
+- **Thần Chết, thua thì sao?** Thắng thì sống tiếp nhưng trừ 1 mạng. Nếu thua cũng chỉ là chết thường (cũng trừ 1 mạng) thì cược không tốn thêm gì; cần quyết thua mất thêm gì, và thắng thì cơ quan có rơi không.
+- Thần Chết là boss riêng hay đứng ngoài bậc Boss của Bestiary? Chỉnh độ khó theo số người/cấp người chơi không?
 
 ## 2. Hệ quả cho các tài liệu khác
 
