@@ -23,19 +23,30 @@ namespace Evolve.Visuals
         {
             stats = GetComponentInParent<SurvivalStats>();
             block = new MaterialPropertyBlock();
-            var amber = EmissiveMaterial(Amber, 2.2f);
+            var amber = EmissiveMaterial(Amber, 3f);
             var green = EmissiveMaterial(Vein, 0.9f);
 
-            core = MakePart(PrimitiveType.Sphere, "Core", transform, new Vector3(0f, -0.12f, 0f), Vector3.one * 0.24f, amber).transform;
+            core = MakePart(PrimitiveType.Sphere, "Core", transform, new Vector3(0f, -0.12f, 0f), Vector3.one * 0.3f, amber).transform;
             coreRenderer = core.GetComponent<Renderer>();
 
-            const int veins = 6;
+            // A few small bubbles drifting inside the gel.
+            var bubbleMat = EmissiveMaterial(new Color(0.85f, 1f, 0.8f), 0.25f);
+            var rnd = new System.Random(11);
+            for (int i = 0; i < 7; i++)
+            {
+                float a = (float)rnd.NextDouble() * Mathf.PI * 2f, r = 0.12f + (float)rnd.NextDouble() * 0.22f;
+                MakePart(PrimitiveType.Sphere, "Bubble", transform,
+                    new Vector3(Mathf.Cos(a) * r, -0.2f + (float)rnd.NextDouble() * 0.38f, Mathf.Sin(a) * r),
+                    Vector3.one * (0.025f + (float)rnd.NextDouble() * 0.03f), bubbleMat);
+            }
+
+            const int veins = 8;
             for (int i = 0; i < veins; i++)
             {
                 float a = i / (float)veins * Mathf.PI * 2f;
                 var dir = new Vector3(Mathf.Cos(a), 0.45f, Mathf.Sin(a)).normalized;
-                var vein = MakePart(PrimitiveType.Capsule, "Vein", transform, new Vector3(0f, -0.12f, 0f) + dir * 0.2f,
-                    new Vector3(0.018f, 0.2f, 0.018f), green);
+                var vein = MakePart(PrimitiveType.Capsule, "Vein", transform, new Vector3(0f, -0.12f, 0f) + dir * 0.24f,
+                    new Vector3(0.022f, 0.24f, 0.022f), green);
                 vein.transform.localRotation = Quaternion.FromToRotation(Vector3.up, dir);
             }
         }
@@ -49,7 +60,7 @@ namespace Evolve.Visuals
             float rate = Mathf.Lerp(7f, 2.2f, health);
             phase += Time.deltaTime * rate;
             float beat = 0.5f + 0.5f * Mathf.Sin(phase);
-            core.localScale = Vector3.one * (0.24f * (1f + 0.12f * beat));
+            core.localScale = Vector3.one * (0.3f * (1f + 0.12f * beat));
 
             float glow = Mathf.Lerp(0.5f, 2.4f, health) * (0.75f + 0.25f * beat);
             coreRenderer.GetPropertyBlock(block);
