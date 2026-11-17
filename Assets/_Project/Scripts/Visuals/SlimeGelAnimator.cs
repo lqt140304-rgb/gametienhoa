@@ -52,6 +52,10 @@ namespace Evolve.Visuals
 
         float nextFollowerScan;
         float gaitPhase;
+        // Inertia: the body lags behind when speeding up, stopping or turning (a damped spring, so it overshoots a little).
+        Vector3 prevVelocity, accelSmooth, leanPos, leanVel;
+        // Landing splat: -1 = none
+        float landT = -1f, landStrength, fLand;
         float jig, jigV;       // damped wobble after landings and after a motion ends
         bool hasLegs;
         float dead;                // 0..1 how collapsed the body is (stats are looked up lazily)
@@ -68,6 +72,13 @@ namespace Evolve.Visuals
         /// <summary>A jelly wobble: the body keeps bouncing a little and settles (call after landing, hits, ...).</summary>
         /// <summary>True while an action (skill, attack, absorb) plays; everyday movement animation steps aside then.</summary>
         public bool ActionPlaying => activeTime >= 0f && active != GelMotion.Gulp;
+
+        /// <summary>The body splats flat when it lands (strength about 0.3 soft .. 1.2 hard) and rebounds.</summary>
+        public void Land(float strength)
+        {
+            landT = 0f;
+            landStrength = Mathf.Clamp(strength, 0.2f, 1.3f);
+        }
 
         public void Jiggle(float strength) => jigV += strength;
 
@@ -123,6 +134,18 @@ namespace Evolve.Visuals
                 local.y = 0f;
                 if (local.sqrMagnitude > 1e-4f) moveDir = Vector3.Slerp(moveDir.sqrMagnitude < 1e-4f ? local.normalized : moveDir, local.normalized, 1f - Mathf.Exp(-12f * dt));
             }
+
+            // Inertia from the acceleration (sprinting off, stopping, changing direction).
+            Vector3 accel = (velocity - prevVelocity) / dt;
+            prevVelocity = velocity;
+            accelSmooth = Vector3.Lerp(accelSmooth, accel, 1f - Mathf.Exp(-12f * dt));
+            Vector3 accelLocal = transform.InverseTransformDirection(accelSmooth);
+            accelLocal.y = 0f;
+            Vector3 leanTarget = Vector3.ClampMagnitude(-accelLocal * 0.012f, 0.14f);
+            leanVel += ((leanTarget - leanPos) * 120f - leanVel * 12f) * dt;
+            leanPos += leanVel * dt;
+
+            if (landT >= 0f) { landT += dt; if (landT > 0.6f) landT = -1f; }
 
             if (speed > 0.3f) gaitPhase += dt * (5f + speed * 1.6f);
 
@@ -213,6 +236,9 @@ namespace Evolve.Visuals
             float quick = 1f - Mathf.Exp(-32f * dt);  // for the sharp moments (release, lunge)
 
             fTime = Time.time;
+            fLand = landT >= 0f
+                ? Mathf.SmoothStep(0f, 1f, landT / 0.04f) * Mathf.Exp(-6f * landT) * Mathf.Cos(landT * 16f) * landStrength
+                : 0f;
             fDir = moveDir;
             fMove = Mathf.Lerp(fMove, Mathf.Clamp01(speed / 4f), 1f - Mathf.Exp(-9f * dt));
             // One animation at a time: while an action plays or the slime is in the air, the everyday movement
@@ -343,6 +369,22 @@ namespace Evolve.Visuals
             {
                 o.y += jig * 0.06f * h;
                 o -= outward * jig * 0.04f * rn;
+            }
+
+            // Landing: flat and wide on impact, then a rebound (taller and thinner) that dies out.
+            if (Mathf.Abs(fLand) > 0.001f)
+            {
+                o.y -= (b.y - SlimeMeshBuilder.Bottom) * 0.3f * fLand;
+                o += outward * 0.08f * fLand * (0.3f + low);
+            }
+
+            // Inertia lean: the upper body lags behind the base when speeding up, stopping or turning.
+            if (locoK > 0.01f)
+            {
+                float lag = h * h * locoK;
+                o.x += leanPos.x * lag;
+                o.z += leanPos.z * lag;
+                o.y -= new Vector2(leanPos.x, leanPos.z).magnitude * 0.25f * lag;
             }
 
             // Dead: the body slumps into a flat puddle.
