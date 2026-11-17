@@ -6,7 +6,8 @@ namespace Evolve.Survival
     public class SurvivalConfig : ScriptableObject
     {
         [Tooltip("Hunger lost per second while moving (none while still)")] public float HungerDecayPerSec = 0.5f;
-        [Tooltip("Energy regained per second while resting")] public float EnergyRegenPerSec = 10f;
+        [Tooltip("Energy regained per second while standing still")] public float EnergyRegenPerSec = 10f;
+        [Tooltip("Energy regained per second while moving (slower than resting)")] public float EnergyRegenMovingPerSec = 3f;
         [Tooltip("Health lost per second at 0 hunger")] public float StarveDamagePerSec = 4f;
         [Tooltip("Regenerate health when hunger >= this fraction")] [Range(0, 1)] public float HealHungerThreshold = 0.7f;
         public float HealPerSec = 1.5f;

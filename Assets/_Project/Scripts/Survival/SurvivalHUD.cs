@@ -30,7 +30,7 @@ namespace Evolve.Survival
             "Lăn chuột  Phóng to/thu nhỏ\n" +
             "C  Quét rung: ánh sáng lan ra, thấy thức ăn\n    và sinh vật xung quanh trong chốc lát\nV  Bật/tắt mắt (thử nghiệm)\n" +
             "H  Ẩn/hiện hướng dẫn\nF1  Menu God (thử nghiệm)\n\n" +
-            "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
+            "Đứng yên: không đói, hồi năng lượng nhanh,\nkẻ săn mồi khó phát hiện. Đi vẫn hồi chậm.\n" +
             "Khi quét: xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi\n\n" +
             "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; chết thì cơ quan\nrơi tại chỗ, mỗi cái 50% bị mất)\n\n" +
             "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E lắp, F hấp thụ, X bỏ qua.\n\n" +
