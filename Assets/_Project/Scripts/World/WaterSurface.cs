@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Evolve.World
 {
-    public enum WaterShape { Rect, Disc, Stream }
+    public enum WaterShape { Rect, Disc, Stream, Outline }
 
     /// <summary>
     /// A calm, gently moving pond: a mesh built in code that fills a winding shoreline (WaterOutline), whose vertices
@@ -28,6 +28,9 @@ namespace Evolve.World
         public float StreamHalfWidth = 3f;
         [Tooltip("How much the stream's width wanders (0 = constant)")]
         public float StreamWobble = 0.25f;
+        [Header("Outline (Shape = Outline)")]
+        [Tooltip("The shoreline itself, in this object's own space (x, z), counter-clockwise or clockwise")]
+        public Vector2[] OutlinePoints;
         public float WaveHeight = 0.03f;
         public float WaveSpeed = 1f;
 
@@ -95,6 +98,14 @@ namespace Evolve.World
             {
                 WaterStream.Edges(StreamPath, StreamHalfWidth, Seed, StreamWobble, out streamLeft, out streamRight);
                 localOutline = WaterStream.Polygon(streamLeft, streamRight);
+                worldOutline = new Vector2[localOutline.Length];
+                var o = new Vector2(transform.position.x, transform.position.z);
+                for (int i = 0; i < localOutline.Length; i++) worldOutline[i] = localOutline[i] + o;
+                return;
+            }
+            if (Shape == WaterShape.Outline && OutlinePoints != null && OutlinePoints.Length >= 3)
+            {
+                localOutline = (Vector2[])OutlinePoints.Clone();
                 worldOutline = new Vector2[localOutline.Length];
                 var o = new Vector2(transform.position.x, transform.position.z);
                 for (int i = 0; i < localOutline.Length; i++) worldOutline[i] = localOutline[i] + o;

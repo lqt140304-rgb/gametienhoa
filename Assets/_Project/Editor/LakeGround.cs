@@ -165,10 +165,9 @@ namespace Evolve.EditorTools
             var domes = new List<CombineInstance>();
             var cores = new List<CombineInstance>();
             var coreBlob = FloraMeshes.Blob();
-            var poolObject = GameObject.Find("Pool Water");
             foreach (var pond in ponds)
             {
-                if (pond == null || poolObject == null || pond.transform.parent != poolObject.transform.parent || pond.Shape != WaterShape.Disc) continue;
+                if (pond == null || pond.name != LakeWater.LifeShallowsName) continue;
                 var outline = pond.WorldOutline;
                 for (int k = 0; k < outline.Length; k += 7)
                 {

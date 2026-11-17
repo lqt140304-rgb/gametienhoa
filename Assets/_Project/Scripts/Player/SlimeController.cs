@@ -15,8 +15,12 @@ namespace Evolve.Player
     public class SlimeController : MonoBehaviour
     {
         [SerializeField] float crawlSpeed = 1f;
-        /// <summary>Speed multiplier set by other systems (wading through water slows the slime down).</summary>
+        /// <summary>Speed multiplier set by other systems (1 = normal).</summary>
         [System.NonSerialized] public float SpeedScale = 1f;
+        /// <summary>In water at least SwimLogic.SwimDepth deep: no gravity, Space rises, Ctrl dives.</summary>
+        public bool IsSwimming { get; private set; }
+        /// <summary>In shallower water: walks, but slower.</summary>
+        public bool IsWading { get; private set; }
         [Tooltip("Speed multiplier while holding Shift (burns extra food)")]
         [SerializeField] float sprintMultiplier = 1.5f;
         [SerializeField] float acceleration = 12f;
@@ -41,6 +45,8 @@ namespace Evolve.Player
         SphereCollider sphere;
         CapsuleCollider capsule;
         float baseRadius, baseHeight;
+        bool layoutWater;                       // the scene is built from World/ZoneLayout (it has its water depths)
+        Evolve.World.WaterSensor waterSensor;
 
         /// <summary>Current body scale (smoothed toward BodySize.ScaleFor(organ count)). Applied to collider and visual.</summary>
         public float BodyScale { get; private set; } = 1f;
@@ -62,6 +68,8 @@ namespace Evolve.Player
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
             if (visual != null) baseScale = visual.localScale;
             spawnPoint = transform.position;
+            waterSensor = GetComponent<Evolve.World.WaterSensor>();
+            layoutWater = GameObject.Find("Water Zones") != null; // made by the Underroot Lake builder
         }
 
         void Update()
@@ -73,7 +81,7 @@ namespace Evolve.Player
                 else if (stats.State.IsCorpse && !NetWorld.CoopActive && KeyPressed.Y()) NewRun();
                 return;
             }
-            if (ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
+            if (!IsSwimming && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
                 rb.AddForce(Vector3.up * hopForce + dir * hopForward, ForceMode.VelocityChange);
@@ -125,9 +133,40 @@ namespace Evolve.Player
 
             Vector3 v = rb.linearVelocity;
             float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
-            Vector3 target = dir * crawlSpeed * organSpeed * SpeedScale * (IsSprinting ? sprintMultiplier : 1f);
+            UpdateWater();
+            float speed = crawlSpeed * organSpeed * SpeedScale * (IsSprinting ? sprintMultiplier : 1f)
+                * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f);
+            if (IsSwimming)
+            {
+                Vector3 swim = SwimLogic.Velocity(dir, ReadVertical(), speed);
+                // float with the body's middle at the surface: never rise above it
+                if (rb.position.y >= Evolve.World.ZoneLayout.WaterLevel - 0.05f && swim.y > 0f) swim.y = 0f;
+                rb.linearVelocity = Vector3.MoveTowards(v, swim, acceleration * Time.fixedDeltaTime);
+                return;
+            }
+            Vector3 target = dir * speed;
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
             rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
+        }
+
+        /// <summary>Swim in deep layout water, wade in shallow water (any scene: inside a WaterZone).</summary>
+        void UpdateWater()
+        {
+            bool wasSwimming = IsSwimming;
+            if (layoutWater)
+            {
+                Vector3 p = rb.position;
+                float depth = Evolve.World.ZoneLayout.DepthAt(p.x, p.z);
+                // swim only while below the surface (a hop out of the water lands normally)
+                IsSwimming = SwimLogic.IsSwimming(depth) && p.y < Evolve.World.ZoneLayout.WaterLevel + 0.3f;
+                IsWading = !IsSwimming && depth > 0.05f;
+            }
+            else
+            {
+                IsSwimming = false;
+                IsWading = waterSensor != null && waterSensor.InWater;
+            }
+            if (IsSwimming != wasSwimming) rb.useGravity = !IsSwimming;
         }
 
         static float MaxAbs(Vector3 v) => Mathf.Max(Mathf.Abs(v.x), Mathf.Max(Mathf.Abs(v.y), Mathf.Abs(v.z)));
@@ -179,7 +218,7 @@ namespace Evolve.Player
             float dt = Time.deltaTime;
 
             // "Grounded" with a short grace period, so a flickering ground check never makes the body pop.
-            if (IsGrounded()) airTime = 0f; else airTime += dt;
+            if (IsGrounded() || IsSwimming) airTime = 0f; else airTime += dt;
             bool grounded = airTime < 0.12f;
 
             // Landing: spread out flat (negative squash), then settle.
@@ -242,6 +281,21 @@ namespace Evolve.Player
 #else
             return Input.GetKey(KeyCode.LeftShift);
 #endif
+        }
+
+        /// <summary>+1 rise (Space / gamepad south), -1 dive (Ctrl / gamepad east), 0 neither.</summary>
+        static float ReadVertical()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var k = Keyboard.current;
+            var g = Gamepad.current;
+            bool up = (k != null && k.spaceKey.isPressed) || (g != null && g.buttonSouth.isPressed);
+            bool down = (k != null && k.leftCtrlKey.isPressed) || (g != null && g.buttonEast.isPressed);
+#else
+            bool up = Input.GetKey(KeyCode.Space);
+            bool down = Input.GetKey(KeyCode.LeftControl);
+#endif
+            return (up ? 1f : 0f) - (down ? 1f : 0f);
         }
 
         static bool ReadHop()

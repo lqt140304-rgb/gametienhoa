@@ -48,7 +48,7 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void RespectsBlockedPredicate()
         {
-            var centre = new Vector2(170f, 0f);
+            var centre = ZoneLayout.Humus.Center;
             var pts = VegetationScatter.Points(1, (x, z) => Vector2.Distance(new Vector2(x, z), centre) < 30f);
             foreach (var p in pts) Assert.GreaterOrEqual(Vector2.Distance(p.Position, centre), 30f);
         }
@@ -92,20 +92,20 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void KindsFollowZones()
         {
-            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(0f, 90f));   // on the north trail
-            Assert.AreEqual(VegetationKind.AmberBud, VegetationScatter.KindAt(170f, 30f)); // Humus Bed, off the trails
-            Assert.AreEqual(VegetationKind.SporePod, VegetationScatter.KindAt(-170f, 30f));
-            Assert.AreEqual(VegetationKind.RootDew, VegetationScatter.KindAt(40f, 170f));
-            Assert.AreEqual(VegetationKind.EmberBerry, VegetationScatter.KindAt(190f, -190f));
-            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(-100f, -150f)); // the wild
+            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(60f, 80f));      // on the 06 -> 04 trail
+            Assert.AreEqual(VegetationKind.AmberBud, VegetationScatter.KindAt(-80f, 80f));     // Humus Bed, off the trails
+            Assert.AreEqual(VegetationKind.SporePod, VegetationScatter.KindAt(112f, 80f));
+            Assert.AreEqual(VegetationKind.RootDew, VegetationScatter.KindAt(-97f, -25f));
+            Assert.AreEqual(VegetationKind.EmberBerry, VegetationScatter.KindAt(36f, 102f));
+            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(-125f, -110f)); // the wild
         }
 
         [Test]
-        public void DensityIsZeroOutsideReach()
+        public void DensityIsZeroOutsideReachAndInWater()
         {
-            Assert.AreEqual(0f, VegetationScatter.DensityAt(210f, 0f));
-            Assert.AreEqual(0.4f, VegetationScatter.DensityAt(0f, 0f), 1e-5f);
-            Assert.AreEqual(1f, VegetationScatter.DensityAt(0f, 90f), 1e-5f);
+            Assert.AreEqual(0f, VegetationScatter.DensityAt(140f, 0f));
+            Assert.AreEqual(0f, VegetationScatter.DensityAt(ZoneLayout.LakeCenter.x, ZoneLayout.LakeCenter.y));
+            Assert.AreEqual(1f, VegetationScatter.DensityAt(60f, 80f), 1e-5f);
         }
     }
 }
