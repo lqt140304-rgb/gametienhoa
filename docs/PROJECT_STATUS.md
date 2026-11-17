@@ -165,6 +165,7 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Vùng lõi 130 × 130 m **phẳng tuyệt đối ở y = 0**, nên nước nông, tổ, nơi trú, điểm xuất hiện vẫn đứng đúng chỗ cũ. Ngoài lõi là đồi (cao tới 14 m) rồi vách dốc ở rìa (tới 45 m); 4 hộp ranh giới vô hình chặn cứng ở mép khu.
 - **Cảnh báo cho 0.6b:** `Prey`/`Predator` giữ độ cao cố định theo prefab, nên ngoài vùng lõi phẳng chúng sẽ lơ lửng hoặc lún. Hiện mọi sinh vật vẫn ở trong lõi nên chưa lộ ra; 0.6b phải cho sinh vật bám theo mặt đất trước khi đặt tổ ra ngoài lõi.
 - Nội dung (nước, tổ, nơi trú, cửa vào của B) vẫn nằm trong lõi; các vi sinh cảnh chưa được dời ra xa (0.6b). Không có hang chồng tầng (Terrain là mặt đồi).
+- Trên cấu hình **Mobile** (Forward, 4 đèn mỗi vật), terrain và mái chỉ nhận 4 trong 25 đèn nên phần lớn khu tối; PC dùng Forward+ nên ổn. Nếu terrain hiện màu hồng, gán vật liệu URP TerrainLit vào `materialTemplate`.
 - Mái vòm bán kính 360 m, cao 85 m, không có collider; 28 rễ buông và 4 cột mốc (Bắc, Đông, Nam, Tây, cách tâm 190 m).
 
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)

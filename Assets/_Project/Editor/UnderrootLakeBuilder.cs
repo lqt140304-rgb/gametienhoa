@@ -101,6 +101,11 @@ namespace Evolve.EditorTools
             BuildLights();
             BuildBoundary();
 
+            // Layout random for the nutrients and mushrooms below. The old ceiling loop used to draw 28 values
+            // from this seed first; skipping them keeps every nutrient and mushroom exactly where it was.
+            var rng = new System.Random(50501);
+            for (int i = 0; i < 28; i++) rng.NextDouble();
+
             // ---- Region (whole area) ----
             var regionGo = new GameObject("Region (Underroot Lake)");
             var region = regionGo.AddComponent<Region>();
@@ -256,7 +261,9 @@ namespace Evolve.EditorTools
             AssetDatabase.CreateAsset(mesh, meshPath);
             var go = new GameObject("Dome");
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
-            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+            var dome = go.AddComponent<MeshRenderer>();
+            dome.sharedMaterial = mat;
+            dome.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; // keep the sun lighting the lake as before
             go.isStatic = true; // visual only: no collider
         }
 
@@ -274,6 +281,7 @@ namespace Evolve.EditorTools
                 var r = Visual(PrimitiveType.Cylinder, "Hanging Root " + i, parent,
                     new Vector3(Mathf.Cos(ang) * dist, topY - len * 0.5f, Mathf.Sin(ang) * dist),
                     new Vector3(width, len * 0.5f, width), root); // Unity's cylinder is 2 m tall
+                r.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 r.transform.rotation = Quaternion.Euler(Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()), ang * Mathf.Rad2Deg,
                     Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()));
             }
@@ -288,8 +296,9 @@ namespace Evolve.EditorTools
             {
                 float x = dx * distance, z = dz * distance;
                 float ground = TerrainShape.HeightAt(x, z, TerrainSeed);
-                float len = DomeY(distance) - ground;
-                Solid(PrimitiveType.Cylinder, "Landmark " + name, parent, new Vector3(x, ground + len * 0.5f, z),
+                const float sink = 3f; // bury the foot so the downhill side of the 7 m pillar doesn't float
+                float len = DomeY(distance) - ground + sink;
+                Solid(PrimitiveType.Cylinder, "Landmark " + name, parent, new Vector3(x, ground - sink + len * 0.5f, z),
                     new Vector3(7f, len * 0.5f, 7f), root);
             }
         }
