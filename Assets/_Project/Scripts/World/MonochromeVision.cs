@@ -28,6 +28,13 @@ namespace Evolve.World
             Apply();
         }
 
+        public bool HasEyes => hasEyes;
+
+        void Update()
+        {
+            if (Evolve.Survival.KeyPressed.V()) SetHasEyes(!hasEyes);
+        }
+
         public void SetHasEyes(bool value) { hasEyes = value; Apply(); }
 
         void Apply()

@@ -1,3 +1,4 @@
+using Evolve.Abilities;
 using UnityEngine;
 
 namespace Evolve.Survival
@@ -6,6 +7,29 @@ namespace Evolve.Survival
     public class SurvivalHUD : MonoBehaviour
     {
         [SerializeField] SurvivalStats stats;
+        [SerializeField] bool showControls = true;
+
+        AbilityCaster caster;
+        GUIStyle box;
+
+        const string Controls =
+            "WASD  Trườn\n" +
+            "Space  Nảy (tốn năng lượng)\n" +
+            "Q  Dùng Dị Năng\n" +
+            "Giữ chuột phải  Xoay camera\n" +
+            "Lăn chuột  Phóng to/thu nhỏ\n" +
+            "V  Bật/tắt mắt (thử nghiệm)\n" +
+            "H  Ẩn/hiện hướng dẫn";
+
+        void Start()
+        {
+            if (stats != null) caster = stats.GetComponent<AbilityCaster>();
+        }
+
+        void Update()
+        {
+            if (KeyPressed.H()) showControls = !showControls;
+        }
 
         void OnGUI()
         {
@@ -14,7 +38,15 @@ namespace Evolve.Survival
             Bar(0, "Máu", s.Health, s.MaxHealth, Color.red);
             Bar(1, "Đói", s.Hunger, s.MaxHunger, new Color(1f, 0.6f, 0.1f));
             Bar(2, "Năng lượng", s.Energy, s.MaxEnergy, Color.cyan);
-            if (s.IsDead) GUI.Label(new Rect(20, 110, 300, 30), "Đã chết");
+            if (caster != null && caster.Ability != null)
+                GUI.Label(new Rect(20, 104, 400, 22), $"Dị Năng: {caster.Ability.DisplayName} (bậc {caster.Ability.Tier})");
+            if (s.IsDead) GUI.Label(new Rect(20, 128, 300, 22), "Đã chết");
+
+            if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };
+            if (showControls)
+                GUI.Box(new Rect(Screen.width - 290, 20, 270, 175), Controls, box);
+            else
+                GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }
 
         static void Bar(int row, string label, float value, float max, Color c)
