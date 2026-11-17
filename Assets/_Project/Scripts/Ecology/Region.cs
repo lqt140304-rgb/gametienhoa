@@ -158,14 +158,34 @@ namespace Evolve.Ecology
                     var den = candidates[Random.Range(0, candidates.Count)];
                     Vector2 off = Random.insideUnitCircle * SpawnOffset;
                     Vector3 denPos = den.transform.position;
-                    var go = Instantiate(so.Prefab, denPos + new Vector3(off.x, 0f, off.y), Quaternion.identity);
-                    var ec = go.GetComponent<EmbodiedCreature>();
-                    if (ec == null) ec = go.AddComponent<EmbodiedCreature>();
-                    ec.Init(this, pop);
-                    ec.SetHome(denPos);
-                    embodied.Add(ec);
+                    Spawn(so, pop, denPos + new Vector3(off.x, 0f, off.y), denPos);
                 }
             }
+        }
+
+        EmbodiedCreature Spawn(SpeciesSO so, SpeciesPopulation pop, Vector3 position, Vector3 home)
+        {
+            var go = Instantiate(so.Prefab, position, Quaternion.identity);
+            var ec = go.GetComponent<EmbodiedCreature>();
+            if (ec == null) ec = go.AddComponent<EmbodiedCreature>();
+            ec.Init(this, pop);
+            ec.SetHome(home);
+            embodied.Add(ec);
+            return ec;
+        }
+
+        /// <summary>
+        /// Embody one head of <paramref name="so"/> at <paramref name="position"/> (used by tier-B incursions).
+        /// The creature is tracked by this region, so StoreAll stores it when the region goes inactive.
+        /// Returns null when no head is available or the global cap is full.
+        /// </summary>
+        public EmbodiedCreature TryEmbodyAt(SpeciesSO so, Vector3 position, Vector3 home)
+        {
+            if (Population == null || so == null || so.Prefab == null) return null;
+            var pop = Population.Get(so.Id);
+            if (pop == null || !pop.TryEmbody()) return null;
+            if (!PopulationCap.TryReserve()) { pop.Store(); return null; }
+            return Spawn(so, pop, position, home);
         }
 
         void StoreAll()
