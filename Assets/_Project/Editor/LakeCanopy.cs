@@ -58,6 +58,29 @@ namespace Evolve.EditorTools
                     chunks++;
                 }
 
+            // ---- the earth above the roots: a lumpy ceiling of soil and root mat, so no bare grey shows through the gaps ----
+            var earth = CeilingMaterial();
+            var ceiling = new GameObject("Ceiling Earth").transform;
+            ceiling.SetParent(root, false);
+            for (float x = -half; x < half; x += Chunk)
+                for (float z = -half; z < half; z += Chunk)
+                {
+                    var area = new Rect(x, z, Chunk, Chunk);
+                    float h = Mathf.Min(RoofHeight, LakeLayout.CeilingY(area.center.x, area.center.y, RoofHeight + 3f) - 3f);
+                    if (h < 8f) continue;
+                    var mesh = CeilingMesh(area, h + 3.5f);
+                    if (mesh.vertexCount > 0) Part(ceiling, $"Earth {x:0},{z:0}", mesh, earth);
+                }
+            // the dome behind it all: dark earth, not grey
+            var dome = GameObject.Find("Dome");
+            var domeRenderer = dome != null ? dome.GetComponent<Renderer>() : null;
+            if (domeRenderer != null && domeRenderer.sharedMaterial != null)
+            {
+                domeRenderer.sharedMaterial.SetColor("_BaseColor", new Color(0.06f, 0.045f, 0.03f));
+                domeRenderer.sharedMaterial.SetFloat("_Smoothness", 0f);
+                EditorUtility.SetDirty(domeRenderer.sharedMaterial);
+            }
+
             // ---- great roots climbing the rim ----
             var rim = new List<CombineInstance>();
             var rnd = new System.Random(77);
@@ -93,6 +116,74 @@ namespace Evolve.EditorTools
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
             Debug.Log($"Đã dựng mái lưới rễ ({chunks} ô) và {rim.Count} rễ lớn quanh vách. Bấm Ctrl+S để lưu scene.");
+        }
+
+        /// <summary>
+        /// A lumpy sheet of earth over <paramref name="area"/> at about <paramref name="height"/> m, sagging into knobs (root
+        /// clumps), with holes where the light shafts come through. World-space vertices, facing down, UVs tile every 8 m.
+        /// </summary>
+        static Mesh CeilingMesh(Rect area, float height)
+        {
+            const float cell = 4f;
+            int n = Mathf.RoundToInt(area.width / cell);
+            var verts = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var tris = new List<int>();
+            for (int j = 0; j <= n; j++)
+                for (int i = 0; i <= n; i++)
+                {
+                    float x = area.xMin + i * cell, z = area.yMin + j * cell;
+                    float lumps = 3f * (ZoneLayout.Noise(x / 14f + 900f, z / 14f + 900f) - 0.5f);
+                    float knobs = 2.5f * Mathf.Max(0f, ZoneLayout.Noise(x / 5f + 950f, z / 5f + 950f) - 0.6f) / 0.4f;   // root clumps hang down
+                    verts.Add(new Vector3(x, height + lumps - knobs, z));
+                    uvs.Add(new Vector2(x / 8f, z / 8f));
+                }
+            for (int j = 0; j < n; j++)
+                for (int i = 0; i < n; i++)
+                {
+                    Vector2 c = new Vector2(area.xMin + (i + 0.5f) * cell, area.yMin + (j + 0.5f) * cell);
+                    bool hole = false;
+                    foreach (var shaft in ZoneLayout.LightShafts) if (Vector2.Distance(c, shaft) < 7f) { hole = true; break; }
+                    if (hole) continue;
+                    int a = j * (n + 1) + i, b = a + 1, d = a + n + 1, e = d + 1;
+                    tris.Add(a); tris.Add(b); tris.Add(d);   // clockwise seen from below: faces down
+                    tris.Add(b); tris.Add(e); tris.Add(d);
+                }
+            var mesh = new Mesh { name = "CeilingEarth" };
+            mesh.SetVertices(verts);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        static Material CeilingMaterial()
+        {
+            const string path = Root + "/Models/LakeCeilingEarth.png";
+            var tex = LakeWater.PaintedTexture(path, 128, 128, (u, v) =>
+            {
+                float big = LakeWater.TileableNoise(u * 4f, v * 4f, 4, 4);
+                float fine = LakeWater.TileableNoise(u * 32f, v * 32f, 32, 32);
+                var c = new Color(0.20f, 0.14f, 0.09f) * (0.7f + 0.35f * big + 0.15f * fine);
+                // thin root strands woven through the earth
+                float strands = Mathf.Abs(Mathf.Sin((u * 6f + 0.6f * LakeWater.TileableNoise(u * 5f, v * 5f, 5, 5)) * Mathf.PI * 2f));
+                if (strands > 0.93f) c = Color.Lerp(c, new Color(0.34f, 0.24f, 0.15f), 0.7f);
+                c.a = 1f;
+                return c;
+            });
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            if (importer != null && importer.wrapModeV != TextureWrapMode.Repeat)
+            {
+                importer.wrapModeU = TextureWrapMode.Repeat;
+                importer.wrapModeV = TextureWrapMode.Repeat;
+                importer.SaveAndReimport();
+                tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            }
+            var mat = LakeGround.OpaqueMaterial("Lake_CeilingEarth", new Color(0.85f, 0.85f, 0.85f), 0.03f, true);
+            mat.SetTexture("_BaseMap", tex);
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         static Renderer Part(Transform parent, string name, Mesh mesh, Material material)
