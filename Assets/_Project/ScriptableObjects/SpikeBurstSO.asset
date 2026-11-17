@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 487636a5ab86598498a52635a60d9642, type: 3}
+  m_Name: SpikeBurstSO
+  m_EditorClassIdentifier: Evolve::Evolve.Abilities.SpikeBurstAbility
+  DisplayName: "X\u1EA3 Gai"
+  Description: "B\u1EAFn m\u1ED9t ch\xF9m gai v\u1EC1 ph\xEDa h\u1ED3ng t\xE2m, g\xE2y s\xE1t th\u01B0\u01A1ng k\u1EBB s\u0103n m\u1ED3i tr\xFAng \u0111\xF2n."
+  Tier: 1
+  EnergyCost: 20
+  Cooldown: 8
+  SpikeCount: 5
+  SpikeDamage: 6
+  SpreadAngle: 14
+  Range: 14
+  Speed: 24

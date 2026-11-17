@@ -18,7 +18,9 @@ MonoBehaviour:
   Tier: 1
   DropWeight: 1
   VisualPrefab: {fileID: 7318046172149333433, guid: d615a46dcab950043bcd0b4d6189a528, type: 3}
-  GrowthFoodRequired: 45
+  GrowthExpRequired: 45
+  GrantedAbility: {fileID: 11400000, guid: eacbdfa241477bd4bbff442933abd1b7, type: 2}
+  AbilityUnlockLevel: 2
   GrantsSight: 0
   SpeedMultiplier: 1
   HeatResistance: 0
