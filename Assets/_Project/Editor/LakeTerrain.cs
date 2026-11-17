@@ -80,9 +80,9 @@ namespace Evolve.EditorTools
                 {
                     float fx = x / (float)(res - 1), fz = z / (float)(res - 1);
                     float wx = origin.x + fx * size.x, wz = origin.z + fz * size.z;
-                    float patches = Mathf.SmoothStep(0.45f, 0.72f, Mathf.PerlinNoise(wx * 0.035f + 11f, wz * 0.035f + 5f));
+                    float patches = Mathf.SmoothStep(0.55f, 0.80f, Mathf.PerlinNoise(wx * 0.035f + 11f, wz * 0.035f + 5f));
                     float edge = Sample(nearWater, fx, fz, near);
-                    float w = Mathf.Clamp01(patches * 0.8f + edge * 0.55f);
+                    float w = Mathf.Clamp01(patches * 0.7f + edge * 0.45f);   // mud shows between the moss patches
                     maps[z, x, 0] = 1f - w;
                     maps[z, x, 1] = w;
                 }

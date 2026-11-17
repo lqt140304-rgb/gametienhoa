@@ -73,6 +73,18 @@ namespace Evolve.EditorTools
             return b.min.y + b.size.y * Mathf.Sqrt(Mathf.Max(0f, 1f - d * d));
         }
 
+        /// <summary>
+        /// Where each winding stream starts (its upstream end): the end farther from the middle of the zone, and the
+        /// direction the water flows from there (toward the other end). Used by the water tool (spring pool) and the spring tool.
+        /// </summary>
+        internal static void StreamEnds(Vector2 a, Vector2 b, out Vector2 source, out Vector2 flow)
+        {
+            bool aIsSource = a.sqrMagnitude >= b.sqrMagnitude;
+            source = aIsSource ? a : b;
+            Vector2 other = aIsSource ? b : a;
+            flow = (other - source).sqrMagnitude > 1e-4f ? (other - source).normalized : Vector2.up;
+        }
+
         /// <summary>True if the scene has its own hanging roots (a big cave) so the tools should not add more.</summary>
         internal static bool HasHangingRoots() => GameObject.Find("Hanging Roots") != null;
 

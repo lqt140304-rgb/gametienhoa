@@ -19,7 +19,7 @@ namespace Evolve.Survival
         public static float SpikeTotal(float damage, int count, int level)
             => damage * (level >= 3 ? 1.5f : 1f) * (Math.Max(1, count) + (level >= 3 ? 2 : 0));
         public static float MenuScale(float width,float height,float hudScale)
-            => Math.Max(.1f,Math.Min(1f,Math.Min((width-32)/1240f,(height-68-196*hudScale)/650f)));
+            => Math.Max(.1f,Math.Min(1f,Math.Min((width-32)/1240f,(height-68-272*hudScale)/650f)));
     }
     public enum HudMenu { None, Skills, Organs, Settings, Help }
 

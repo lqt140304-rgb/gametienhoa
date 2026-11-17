@@ -56,6 +56,22 @@ namespace Evolve.EditorTools
             }
             AddCombined(root, "Moss", mossInstances, MossMaterial());
 
+            // The humus bed's flat dark rectangle becomes a soft, uneven patch of dark mud (no straight edges).
+            var humusBed = GameObject.Find("Humus Ground");
+            if (humusBed != null)
+            {
+                var flat = humusBed.GetComponent<Renderer>();
+                if (flat != null) flat.enabled = false;
+                Vector3 c = humusBed.transform.position, extent = humusBed.transform.lossyScale;
+                var outline = WaterOutline.Make(extent.x, extent.z, false, 5150, 2.2f, 64);
+                var patch = WaterMeshes.Organic(outline, 2f);
+                var parts = new List<CombineInstance>
+                {
+                    new CombineInstance { mesh = patch, transform = Matrix4x4.TRS(new Vector3(c.x, GroundY(c.x, c.z) + 0.025f, c.z), Quaternion.identity, new Vector3(1.25f, 1f, 1.25f)) }
+                };
+                AddCombined(root, "Humus Mud", parts, MudPatchMaterial());
+            }
+
             // ---- rocks (with moss caps) ----
             var rocks = new List<Mesh>();
             var caps = new List<Mesh>();
@@ -286,6 +302,19 @@ namespace Evolve.EditorTools
                 return colour;
             });
             return LakeWater.TranslucentMaterial("Lake_Moss", tex, Color.white, Color.black, 0.05f, (int)RenderQueue.Transparent - 20);
+        }
+
+        static Material MudPatchMaterial()
+        {
+            var tex = LakeWater.PaintedTexture(Root + "/Models/MudPatch.png", 64, 64, (u, v) =>
+            {
+                float n = LakeWater.TileableNoise(u * 7f, v * 7f, 7, 7);
+                var colour = Color.Lerp(new Color(0.20f, 0.14f, 0.10f), new Color(0.38f, 0.28f, 0.20f), n);
+                float d = new Vector2(u - 0.5f, v - 0.5f).magnitude * 2f;
+                colour.a = Mathf.SmoothStep(1f, 0.55f, d) * (0.8f + 0.2f * n);
+                return colour;
+            });
+            return LakeWater.TranslucentMaterial("Lake_MudPatch", tex, Color.white, Color.black, 0.05f, (int)RenderQueue.Transparent - 19);
         }
 
         static Material PathMaterial()

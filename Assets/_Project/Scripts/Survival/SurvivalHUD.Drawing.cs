@@ -218,20 +218,34 @@ namespace Evolve.Survival
             canvas=new Vector2(Screen.width/scale,Screen.height/scale);
             var s=stats.State; bool full=KeyPressed.TabHeld();
             var anchor=PlayerAnchor(scale); bool floating=followPlayer && anchor.HasValue && !MenuOpen;
-            float width=floating?204:Screen.width>=1550?380:Screen.width>=1150?350:285, height=full?166:72;
+            float width=floating?204:Screen.width>=1550?380:Screen.width>=1150?350:285, height=full?(floating?166:242):72;
+            bool nutrients=full&&!floating; // the five nutrient cells need room: not in the small floating HUD
             float x=floating?HudLayout.ClampCenter(anchor.Value.x,width,canvas.x)-width/2:22;
             float y=floating?HudLayout.ClampCenter(anchor.Value.y+75,height,canvas.y)-height/2:canvas.y-height-23;
-            float primaryY=y+(full?94:0);
+            float top=y+(nutrients?76:0); // the nutrient strip sits above the water/stress row
+            float primaryY=top+(full?94:0);
             float cellWidth=(width-12)/3;
             Vital(new Rect(x,primaryY,cellWidth,72),"♥ Máu",s.Health,s.MaxHealth*NutrientEffects.MaxHealthMultiplier(s.Nutrients[(int)NutrientKind.Iron]),coral,VitalNote(0,s,stats.Config));
             Vital(new Rect(x+cellWidth+6,primaryY,cellWidth,72),"ϟ Năng lượng",s.Energy,s.MaxEnergy,cyan,VitalNote(1,s,stats.Config));
             Vital(new Rect(x+(cellWidth+6)*2,primaryY,cellWidth,72),"♧ Độ no",s.Hunger,s.MaxHunger,new Color32(176,220,178,255),VitalNote(2,s,stats.Config));
+            if(nutrients)
+            {
+                float nw=(width-24)/5f;
+                for(int k=0;k<NutrientKinds.Count;k++) NutrientCell(new Rect(x+k*(nw+6),y,nw,70),(NutrientKind)k);
+            }
+            else if(!full)
+            {
+                // Without Tab: only a hint when the body lacks a nutrient (the five cells show with Tab).
+                var worst=s.LowestNutrient();
+                if(HudVisibility.ShowNutrient(s.Nutrient(worst)))
+                    Label(new Rect(x,y-26,width+120,22),(s.IsWarning(worst)?NutrientWarnLabels:NutrientLackLabels)[(int)worst],small);
+            }
             if(full)
             {
-                Vital(new Rect(x,y,cellWidth,68),"◈ Nước",s.Thirst,s.MaxThirst,new Color32(130,205,239,255),VitalNote(3,s,stats.Config));
-                Vital(new Rect(x+cellWidth+6,y,cellWidth,68),"◎ Căng thẳng",s.Stress,SurvivalState.MaxStress,new Color32(196,179,231,255),VitalNote(4,s,stats.Config));
-                Vital(new Rect(x+(cellWidth+6)*2,y,cellWidth,68),"♨ Thân nhiệt",s.Temperature,0,new Color32(239,194,158,255),VitalNote(5,s,stats.Config),"°C");
-                Label(new Rect(x,y+71,width+160,23),$"{s.Lives}/{s.MaxLives} mạng  ·  Không khí {s.Ambient:0}°C  ·  {(s.InShelter?"Trong tổ":"Ngoài tổ")}",small);
+                Vital(new Rect(x,top,cellWidth,68),s.ThirstEnabled?"◈ Nước":"◈ Nước · nghỉ",s.Thirst,s.MaxThirst,new Color32(130,205,239,255),VitalNote(3,s,stats.Config));
+                Vital(new Rect(x+cellWidth+6,top,cellWidth,68),"◎ Căng thẳng",s.Stress,SurvivalState.MaxStress,new Color32(196,179,231,255),VitalNote(4,s,stats.Config));
+                Vital(new Rect(x+(cellWidth+6)*2,top,cellWidth,68),"♨ Thân nhiệt",s.Temperature,0,new Color32(239,194,158,255),VitalNote(5,s,stats.Config),"°C");
+                Label(new Rect(x,top+71,width+160,23),$"{s.Lives}/{s.MaxLives} mạng  ·  Không khí {s.Ambient:0}°C  ·  {(s.InShelter?"Trong tổ":"Ngoài tổ")}",small);
             }
             float chipWidth=Screen.width>=1550?63:55,chipHeight=Screen.width>=1550?65:60;
             float chipStep=chipWidth+8,totalWidth=chipWidth*7+48;
@@ -256,6 +270,34 @@ namespace Evolve.Survival
                 Label(new Rect(sx-35,sy-62,460,28),skills.FailureReason,small);
             GUI.matrix=old;
         }
+        static readonly string[] NutrientLackLabels =
+        {
+            "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Protein) + " · giữ Tab xem thêm", "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Calcium) + " · giữ Tab xem thêm",
+            "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Iron) + " · giữ Tab xem thêm", "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Fat) + " · giữ Tab xem thêm",
+            "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Vitamin) + " · giữ Tab xem thêm"
+        };
+        static readonly string[] NutrientWarnLabels =
+        {
+            "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Protein) + " ! cơ quan sắp yếu", "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Calcium) + " ! cơ quan sắp yếu",
+            "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Iron) + " ! cơ quan sắp yếu", "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Fat) + " ! cơ quan sắp yếu",
+            "Thiếu " + NutrientKinds.SlimeName(NutrientKind.Vitamin) + " ! cơ quan sắp yếu"
+        };
+        GUIStyle nutrientName, nutrientNumber;
+
+        /// <summary>One of the five nutrient cells (Tab panel): colour of the nutrient, bright edge when it is low.</summary>
+        void NutrientCell(Rect r,NutrientKind kind)
+        {
+            var s=stats.State; float value=s.Nutrient(kind); var color=NutrientKinds.ColorOf(kind);
+            var edge=color; edge.a=s.IsWarning(kind)?.95f:.4f;
+            Frame(r,new Color32(18,43,67,221),edge,22);
+            if(nutrientName==null) nutrientName=new GUIStyle(small){fontSize=10,alignment=TextAnchor.UpperCenter};
+            if(nutrientNumber==null) nutrientNumber=new GUIStyle(center){fontSize=17};
+            nutrientNumber.normal.textColor=color;
+            Label(new Rect(r.x+2,r.y+4,r.width-4,30),NutrientKinds.SlimeName(kind),nutrientName);
+            Label(new Rect(r.x,r.y+34,r.width,24),$"{value:0}",nutrientNumber);
+            Paint(new Rect(r.x+7,r.yMax-8,(r.width-14)*Frac(value,SurvivalState.MaxNutrient),3),color,Texture2D.whiteTexture);
+        }
+
         void Vital(Rect r,string name,float value,float max,Color color,string note,string unit=null)
         {
             Gel(r,color,unit==null?Frac(value,max):0,false,r.x*.03f);
@@ -447,6 +489,8 @@ namespace Evolve.Survival
             Label(new Rect(x,245,w,25),organs.IsMaxed(organ)?$"Cấp {lv} · Tối đa":$"{(lv==0?"Mầm":$"Cấp {lv}")} · {progress:0}/{cost:0} EXP",text);
             Paint(new Rect(x,281,w,5),new Color(.15f,.24f,.32f),Texture2D.whiteTexture);
             Paint(new Rect(x,281,w*(organs.IsMaxed(organ)?1:Frac(progress,cost)),5),cyan,Texture2D.whiteTexture);
+            var need=organ.EffectiveNutrient; float decay=organs.GetDecay(organ);
+            Label(new Rect(x,288,w,20),$"Cần: {NutrientKinds.SlimeName(need)} ({NutrientKinds.RealName(need)})"+(decay>0.01f?$" · đang yếu {decay*100f:0}%":""),small);
             if(full)
             {
                 Label(new Rect(x,306,w,87),organ.Description,small);
