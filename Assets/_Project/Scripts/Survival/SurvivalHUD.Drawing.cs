@@ -86,15 +86,28 @@ namespace Evolve.Survival
             var s = stats.State;
             var anchor = PlayerAnchor(scale);
             bool floating = followPlayer && anchor.HasValue;
-            float width = floating ? 132 : 230;
-            float x = floating ? HudLayout.ClampCenter(anchor.Value.x, width, canvas.x) - width / 2 : 24;
-            float y = floating ? HudLayout.ClampCenter(anchor.Value.y + 55, 92, canvas.y) - 46 : canvas.y - 162;
-            StatLine(new Rect(x, y, width, floating ? 7 : 32), "Máu", s.Health, s.MaxHealth, new Color(.85f, .56f, .47f), !floating);
-            StatLine(new Rect(x, y + (floating ? 12 : 39), width, floating ? 7 : 32), "Năng lượng", s.Energy, s.MaxEnergy, new Color(.69f, .83f, .61f), !floating);
-            if (!floating || s.Hunger <= s.MaxHunger * .25f)
-                StatLine(new Rect(x, y + (floating ? 24 : 78), width, floating ? 7 : 32), "Độ no", s.Hunger, s.MaxHunger, new Color(.84f, .73f, .46f), !floating);
+            bool full = KeyPressed.TabHeld();
+            bool thirstOn = stats.State.ThirstEnabled;
             bool unsafeTemp = s.Temperature > s.HeatLimit(stats.Config) || s.Temperature < stats.Config.ComfortMin;
-            GUI.Label(new Rect(x, y + (floating ? 35 : 117), width, 28),
+            bool showHealth = HudVisibility.ShowHealth(Frac(s.Health, s.MaxHealth), full);
+            bool showEnergy = HudVisibility.ShowEnergy(Frac(s.Energy, s.MaxEnergy), full);
+            bool showHunger = HudVisibility.ShowHunger(Frac(s.Hunger, s.MaxHunger), full);
+            bool showThirst = HudVisibility.ShowThirst(Frac(s.Thirst, s.MaxThirst), thirstOn, full);
+            bool showStress = HudVisibility.ShowStress(s.Stress, full);
+            int rows = (showHealth ? 1 : 0) + (showEnergy ? 1 : 0) + (showHunger ? 1 : 0) + (showThirst ? 1 : 0) + (showStress ? 1 : 0);
+            float rowStep = floating ? 12 : 39;
+            float rowHeight = floating ? 7 : 32;
+            float width = floating ? 132 : 230;
+            float blockHeight = rows * rowStep + (floating ? 28 : 40);
+            float x = floating ? HudLayout.ClampCenter(anchor.Value.x, width, canvas.x) - width / 2 : 24;
+            float y = floating ? HudLayout.ClampCenter(anchor.Value.y + 55, blockHeight, canvas.y) - blockHeight / 2 : canvas.y - 45 - rows * rowStep;
+            float row = 0;
+            if (showHealth) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Máu", s.Health, s.MaxHealth, new Color(.85f, .56f, .47f), !floating);
+            if (showEnergy) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Năng lượng", s.Energy, s.MaxEnergy, new Color(.69f, .83f, .61f), !floating);
+            if (showHunger) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Độ no", s.Hunger, s.MaxHunger, new Color(.84f, .73f, .46f), !floating);
+            if (showThirst) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Khát", s.Thirst, s.MaxThirst, new Color(.47f, .7f, .86f), !floating);
+            if (showStress) StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), "Căng thẳng", s.Stress, SurvivalState.MaxStress, new Color(.67f, .55f, .82f), !floating);
+            GUI.Label(new Rect(x, y + rows * rowStep, width, 28),
                 $"{s.Temperature:0}°C{(unsafeTemp ? " !" : "")}    •    {s.Lives}/{s.MaxLives} mạng", small);
 
             var right = new Rect(canvas.x - 254, canvas.y - 130, 230, 110);
@@ -125,6 +138,8 @@ namespace Evolve.Survival
                 GUI.Label(new Rect(canvas.x / 2 - 187, skillY - 54, 374, 24), "Không dùng được: " + skills.FailureReason, small);
             GUI.matrix = old;
         }
+
+        static float Frac(float value, float max) => max > 0 ? value / max : 1f;
 
         void DrawSkillChip(Rect chip, string key, string name, float cooldown, float cost)
         {

@@ -266,6 +266,7 @@ namespace Evolve.EditorTools
             slime.AddComponent<ClimateSensor>();
             slime.AddComponent<SkillBar>();
             var controller = slime.AddComponent<SlimeController>();
+            slime.AddComponent<BodyFeedback>();
             Set(controller, "visual", visual.transform);
             var caster = slime.AddComponent<AbilityCaster>();
             SetArray(caster, "randomPool", new Object[] { shared.Dash });
