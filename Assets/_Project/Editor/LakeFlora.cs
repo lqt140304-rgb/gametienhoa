@@ -93,6 +93,21 @@ namespace Evolve.EditorTools
                     rnd.NextDouble() < 0.7 ? 0 : rnd.Next(3));
             }
 
+            // 1b) every other biome pad of the layout gets its own cluster, with a colour that suits it
+            foreach (var area in LakeLayout.Areas())
+            {
+                if (area.Name == "Core" || Vector2.Distance(area.Center, garden) < 30f) continue;
+                int favourite = area.Name.Contains("Mùn") ? 1 : area.Name.Contains("Săn") ? 1 : 2;   // coral for the humus bed and the hunting edge, teal elsewhere
+                int count = area.Name.Contains("Săn") ? 7 : 13;                                     // the hunting edge is sparse
+                for (int i = 0; i < count; i++)
+                {
+                    float a = (float)rnd.NextDouble() * Mathf.PI * 2f, d = 4f + (float)rnd.NextDouble() * area.Radius * 0.7f;
+                    Mushroom(area.Center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d,
+                        i < 2 ? 3.2f + (float)rnd.NextDouble() * 1.8f : 0.6f + (float)rnd.NextDouble() * 1.7f,
+                        rnd.NextDouble() < 0.7 ? favourite : rnd.Next(3));
+                }
+            }
+
             // 2) along the shores
             foreach (var pond in ponds)
             {

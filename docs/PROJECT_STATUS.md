@@ -270,3 +270,6 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 8. FPS ổn khi đứng giữa vùng nhiều cây (mở Stats); ghi lại con số.
 9. Co-op F2: người vào phòng thấy cùng cây, không có cảnh báo "số cục thức ăn khác nhau".
 10. `Prototype_01` dựng lại vẫn chạy như cũ.
+
+## Công cụ xem map (ghost và góc nhìn rộng)
+`Dev/GhostMode.cs` (chỉ Editor và bản dev, tự thêm khi Play): **F6** bật/tắt chế độ ghost (slime bay xuyên mọi thứ theo hướng nhìn: WASD, Space lên, Ctrl xuống, Shift nhanh); **F7** mở bảng nhỏ (ghost, tốc độ bay, góc nhìn); **Page Up / Page Down** tăng/giảm góc nhìn bất cứ lúc nào, **Home** về mặc định. Slime vẫn sống (đói, sinh vật tấn công) khi là ghost; trong co-op người khác thấy nó bay.
