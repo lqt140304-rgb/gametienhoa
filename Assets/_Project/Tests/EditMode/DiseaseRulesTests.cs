@@ -69,6 +69,18 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void DescribeMentionsEachDisease()
+        {
+            Assert.AreEqual("", DiseaseRules.Describe(0));
+            string both = DiseaseRules.Describe(5); // stagnant water + spore blur
+            StringAssert.Contains("Nhiễm Nước Đọng", both);
+            StringAssert.Contains("Mờ Bào Tử", both);
+            StringAssert.DoesNotContain("Thối Gel", both);
+            StringAssert.Contains(DiseaseRules.Cure(DiseaseKind.StagnantWater), both); // the cure of the first one
+            StringAssert.Contains("Thối Gel", DiseaseRules.Describe(2));
+        }
+
+        [Test]
         public void SymptomMultipliersAreNeutralWhenHealthy()
         {
             Assert.AreEqual(1f, DiseaseRules.ThirstDrainMultiplier(false));

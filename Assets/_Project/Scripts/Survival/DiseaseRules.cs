@@ -47,6 +47,25 @@ namespace Evolve.Survival
 
         public static bool Contagious(DiseaseKind k) => k == DiseaseKind.RottenGel;
 
+        /// <summary>One line for the HUD: "Bệnh: A · B — how to cure the first one". Empty when healthy.</summary>
+        public static string Describe(byte mask)
+        {
+            if (mask == 0) return "";
+            var sb = new System.Text.StringBuilder("Bệnh: ");
+            int first = -1, count = 0;
+            for (int k = 0; k < Count; k++)
+            {
+                if ((mask & (1 << k)) == 0) continue;
+                if (count > 0) sb.Append(" · ");
+                sb.Append(Name((DiseaseKind)k));
+                if (first < 0) first = k;
+                count++;
+            }
+            if (first < 0) return "";
+            sb.Append(" — ").Append(Cure((DiseaseKind)first));
+            return sb.ToString();
+        }
+
         /// <summary>Low Tinh Chất Sống (vitamin) makes every infection likelier: 1 from 40 up, 3 at 0.</summary>
         public static float InfectionMultiplier(float vitamin)
         {
