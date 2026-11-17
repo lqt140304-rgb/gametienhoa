@@ -42,6 +42,7 @@ namespace Evolve.Net
         {
             public GameObject Go;
             public ReplicaMotion Motion;
+            public Predator Predator; // null for prey
         }
 
         CoopManager coop;
@@ -372,13 +373,13 @@ namespace Evolve.Net
                     reader.ReadValueSafe(out float z);
                     reader.ReadValueSafe(out float yaw);
                     reader.ReadValueSafe(out byte hp);
-                    if (clientMode) ApplyCreature(id, kind, new Vector3(x, y, z), yaw, now);
+                    if (clientMode) ApplyCreature(id, kind, new Vector3(x, y, z), yaw, hp, now);
                 }
             }
             catch (Exception e) { Debug.LogException(e); }
         }
 
-        void ApplyCreature(int id, byte kind, Vector3 position, float yaw, float now)
+        void ApplyCreature(int id, byte kind, Vector3 position, float yaw, byte hp, float now)
         {
             if (!creatures.TryGetValue(id, out var replica) || replica.Go == null)
             {
@@ -387,11 +388,13 @@ namespace Evolve.Net
                 creatures[id] = replica;
             }
             replica.Motion.SetTarget(position, yaw, now);
+            if (replica.Predator != null) replica.Predator.SetNetHealth(hp / 255f);
         }
 
         Replica CreateReplica(int id, byte kind, Vector3 position, float yaw)
         {
             GameObject go;
+            Predator replicaPredator = null;
             if (kind == KindPrey)
             {
                 if (preyTemplate == null) return null;
@@ -407,8 +410,9 @@ namespace Evolve.Net
                 predator.IsReplica = true;
                 predator.NetId = id;
                 go = predator.gameObject;
+                replicaPredator = predator;
             }
-            return new Replica { Go = go, Motion = go.AddComponent<ReplicaMotion>() };
+            return new Replica { Go = go, Motion = go.AddComponent<ReplicaMotion>(), Predator = replicaPredator };
         }
 
         void RemoveCreature(int id)

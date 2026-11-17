@@ -64,6 +64,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Creatures/` | `Prey`, `PreySpawner`, `Predator`, `PredatorSpawner` | Con mồi bỏ chạy và mệt; kẻ săn mồi tuần tra, đuổi, cắn |
 | `World/` | `Nutrient`, `MonochromeVision`, `VibrationSense`, `TemperatureZone`, `ClimateSensor` | Thức ăn; thị giác (đen trắng, ánh sáng quanh nhân vật); quét rung; vùng nhiệt độ |
 | `Net/` | `CoopManager`, `CoopMenu`, `RemoteAvatar`, `PlayerNetState`, `WorldSync` | **Co-op 0.4a** (Netcode for GameObjects, host + IP). Assembly riêng `Evolve.Net`, chỉ biên dịch khi đã cài gói `com.unity.netcode.gameobjects` (`defineConstraints` + `versionDefines`). Tự thêm khi Play, phím F2. Xem `docs/COOP_SETUP.md` |
+| `Survival/CombatFeedback` | | Phản hồi trúng đòn: thanh máu trên kẻ săn mồi bị thương, số sát thương bay lên (gộp các gai cùng một loạt), dấu × ở hồng tâm; `Predator.AnyDamaged`, `HealthFraction`, `HitFlash`. Người vào phòng thấy ngay khi bắn trúng (dự đoán 1 giây, sau đó theo số của Host) |
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
 | `Editor/` | `PrototypeSceneBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
