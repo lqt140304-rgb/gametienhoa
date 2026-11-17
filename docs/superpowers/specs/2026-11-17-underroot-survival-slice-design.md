@@ -102,7 +102,7 @@ Tooltip ghi chất thật tương ứng. Thiếu chất thì gel đổi màu/ch�
 - **Khát**: thanh mới trong `SurvivalState`, giảm theo thời gian (nhanh hơn khi nóng/nước rút). Uống ở vùng nước.
 - **Nước sạch / bẩn** [ĐỀ XUẤT]: nước chảy (Khe Thủy Mạch) sạch; nước đọng gần xác/bùn thối là bẩn — giải khát nhưng có xác suất mắc bệnh (dùng ở 0.5d; trước đó chỉ đánh dấu).
 - **Nơi trú ẩn**: vùng trigger (hốc rễ, khe hẹp). Ở trong: hồi năng lượng nhanh hơn, giảm Căng thẳng, kẻ săn B không theo vào được nếu khe hẹp hơn kích thước nó.
-- **Căng thẳng** (0–100): tăng khi bị tấn công, khi đói/khát lâu, khi có cơ quan hư hỏng nặng (BIS). Giảm khi ở nơi trú, ở gần đồng đội, khi no đủ.
+- **Căng thẳng** (0–100): tăng khi bị tấn công, khi đói/khát lâu, khi có cơ quan hư hỏng nặng (BIS). Giảm khi ở nơi trú, khi no đủ.
 - **[ĐÃ CHỐT] Không có hậu quả nặng ở 100**: chỉ hiệu ứng tăng dần, giới hạn ở mức cao nhất.
 - Hiệu ứng tăng dần [ĐỀ XUẤT]: >40 camera rung nhẹ; >60 tầm cảm nhận/rung thu hẹp; >80 hồi năng lượng chậm. Ngưỡng [BUILDER] trong `SurvivalConfig`.
 
@@ -134,6 +134,16 @@ Tooltip ghi chất thật tương ứng. Thiếu chất thì gel đổi màu/ch�
 
 - Chỉ số của mỗi slime (khát, căng thẳng, 5 chất, bệnh) tính trên máy người sở hữu slime đó và gửi trạng thái tóm tắt lên mạng theo cách `PlayerNetState` 0.4a đang làm. Game co-op, không chống gian lận.
 - Thế giới (quần thể, tổ, xác, thức ăn, lây bệnh) do **host** quyết định.
+
+## 6.7. Bổ sung đã chốt (2026-11-17) [ĐÃ CHỐT]
+
+1. **Vết rung dấu chân** (0.5a): kẻ săn B di chuyển tạo rung động, càng gần càng rõ trên `VibrationSense`; sinh vật D bỏ chạy cũng tạo rung. Đây là tín hiệu báo trước chính của B.
+2. **Xác chết thành nguồn sống** (0.5a tạo xác, 0.5c–0.5d nối chất/bệnh): xác nằm lại, qua 3 giai đoạn — **Tươi** (nhiều Sợi Nhầy, Huyết Thiết) → **Thối** (ăn dễ mắc Thối Gel; làm nước gần đó thành bẩn) → **Mùn** (tăng thức ăn/Tinh Chất Sống cho vùng). Xác do host quản lý; vùng không người chơi tính ở L2.
+3. **Mỗi vi sinh cảnh có một thứ thiếu** (0.5c): không vùng nào đủ cả 5 chất + nước sạch + nơi trú. Ví dụ [ĐỀ XUẤT]: Vũng Sinh Mệnh thiếu Tinh Vôi; Bãi Mùn Rễ thiếu nước sạch; Chân Rễ thiếu thức ăn nhưng trú tốt.
+4. **Kích thước slime và nơi trú** (0.5b, nối với 0.5e): mỗi cơ quan đang trang bị tăng kích thước slime; khe trú có kích thước giới hạn, slime quá to không chui lọt. Tháo bớt cơ quan để nhỏ lại.
+5. **HUD tối giản** (0.5b trở đi): chỉ hiện thanh đang có vấn đề; còn lại thể hiện trên thân slime (gel nhạt, nứt, rung, đổi màu). Giữ một phím [BUILDER chọn phím] để xem bảng đầy đủ.
+
+**Hoãn:** truyền chất giữa đồng đội và nghỉ chung giảm Căng thẳng nhanh hơn — xem xét sau 0.5e.
 
 ## 7. Hiệu năng
 
