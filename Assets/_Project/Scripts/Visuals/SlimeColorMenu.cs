@@ -16,7 +16,7 @@ namespace Evolve.Visuals
             new Color(0.55f, 0.92f, 0.88f), new Color(0.95f, 0.55f, 0.55f), new Color(0.80f, 0.82f, 0.85f)
         };
 
-        Rect window = new Rect(20, 120, 280, 230);
+        Rect window = new Rect(20, 120, 280, 290);
         float h, s, v;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -68,6 +68,13 @@ namespace Evolve.Visuals
                 h = nh; s = ns; v = nv;
                 SlimeColor.Set(Color.HSVToRGB(h, s, v));
             }
+
+            GUILayout.Space(6);
+            var old2 = GUI.backgroundColor;
+            GUI.backgroundColor = SlimeColor.Current;
+            GUILayout.Box("Màu của bạn", GUILayout.Height(28));
+            GUI.backgroundColor = old2;
+            GUILayout.Label("Lưu ý: khi slime chưa có thị giác (mắt) thế giới là đen trắng, màu chỉ hiện đầy đủ khi đã có mắt.", GUILayout.Width(260));
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
 

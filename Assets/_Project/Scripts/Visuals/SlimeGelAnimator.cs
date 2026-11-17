@@ -22,6 +22,9 @@ namespace Evolve.Visuals
         /// <summary>Seconds the body needs to wind up before a skill of this motion should leave.</summary>
         public static float WindUp(GelMotion motion) => motion == GelMotion.Release ? ReleaseWind : motion == GelMotion.Dash ? DashWind : 0f;
 
+        /// <summary>Time spent bending meshes since the last read (for the F4 performance overlay).</summary>
+        public static long CostTicks;
+
         MeshFilter filter;
         Mesh original, mesh;
         Vector3[] baseVertices, work;
@@ -135,7 +138,9 @@ namespace Evolve.Visuals
 
             if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ScanFollowers(); UpdateHasLegs(); }
 
+            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             Deform();
+            CostTicks += System.Diagnostics.Stopwatch.GetTimestamp() - t0;
             if (core != null) core.Boost = CoreBoost();
         }
 
