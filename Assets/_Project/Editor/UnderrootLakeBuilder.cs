@@ -21,7 +21,12 @@ namespace Evolve.EditorTools
         const string SO = Root + "/ScriptableObjects/";
         const string ShallowTag = "ShallowWater";
         const string Lit = "Universal Render Pipeline/Lit";
-        const float Half = 60f; // 120 x 120 area
+        const string TerrainFolder = Root + "/Terrain";
+        const int TerrainSeed = 1337;
+        const int HeightmapResolution = 513;
+        /// <summary>Dome wide enough to cover the zone corners (radial distance up to ~340 m).</summary>
+        static readonly float DomeRadius = WorldScale.ZoneSize * 0.75f;
+        const float DomeHeight = 85f;
 
         /// <summary>Largest body scale that fits a Root Shelter (BodySize.ScaleFor(5) = 1.3; 6 organs = 1.36 does not fit).</summary>
         const float ShelterMaxScale = 1.3f;
@@ -39,7 +44,7 @@ namespace Evolve.EditorTools
 
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
-            foreach (var f in new[] { "Scenes", "Prefabs", "ScriptableObjects", "Materials", "Settings" })
+            foreach (var f in new[] { "Scenes", "Prefabs", "ScriptableObjects", "Materials", "Settings", "Terrain" })
                 P.EnsureFolder(Root + "/" + f);
             EnsureTag(ShallowTag);
 
@@ -84,38 +89,17 @@ namespace Evolve.EditorTools
             var fungus = P.Mat("Lake_Fungus", new Color(0.7f, 0.6f, 0.85f), Lit);
             var denMat = P.Mat("Lake_Den", new Color(0.45f, 0.32f, 0.2f), Lit);
 
-            // ---- Ground + root ceiling ----
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            ground.name = "Ground (Mud)";
-            ground.transform.localScale = new Vector3(12f, 1f, 12f);
-            ground.GetComponent<Renderer>().sharedMaterial = mud;
-
+            // ---- Zone (480 m): terrain, dome roof, hanging roots, landmarks, lights, boundary ----
             foreach (var sun in Object.FindObjectsByType<Light>())
                 if (sun.type == LightType.Directional) sun.intensity = 0.35f;
 
-            var ceiling = new GameObject("Root Ceiling").transform;
-            var rng = new System.Random(50501);
-            for (int i = 0; i < 7; i++)
-            {
-                float ang = i * Mathf.PI * 2f / 7f + (float)rng.NextDouble() * 0.4f;
-                float dist = Mathf.Lerp(10f, 45f, (float)rng.NextDouble());
-                float y = Mathf.Lerp(18f, 25f, (float)rng.NextDouble());
-                var r = Visual(PrimitiveType.Cylinder, "Ceiling Root " + i, ceiling,
-                    new Vector3(Mathf.Cos(ang) * dist, y, Mathf.Sin(ang) * dist),
-                    new Vector3(2.5f, 18f, 2.5f), root);
-                r.transform.rotation = Quaternion.Euler(Mathf.Lerp(50f, 80f, (float)rng.NextDouble()), ang * Mathf.Rad2Deg, 0f);
-            }
-            foreach (var lp in new[] { new Vector3(0f, 16f, 0f), new Vector3(35f, 16f, 30f), new Vector3(-35f, 16f, -30f) })
-            {
-                var lightGo = new GameObject("Root Glow");
-                lightGo.transform.SetParent(ceiling, false);
-                lightGo.transform.position = lp;
-                var l = lightGo.AddComponent<Light>();
-                l.type = LightType.Point;
-                l.range = 40f;
-                l.intensity = 0.6f;
-                l.color = new Color(0.65f, 0.8f, 0.7f);
-            }
+            var domeMat = P.Mat("Lake_Dome", new Color(0.05f, 0.05f, 0.06f), Lit);
+            BuildTerrain();
+            BuildDome(domeMat);
+            BuildRoots(root);
+            BuildLandmarks(root);
+            BuildLights();
+            BuildBoundary();
 
             // ---- Region (whole area) ----
             var regionGo = new GameObject("Region (Underroot Lake)");
@@ -193,20 +177,6 @@ namespace Evolve.EditorTools
             P.Set(incursion, "predator", b);
             P.SetArray(incursion, "entries", new Object[] { e1, e2 });
 
-            // ---- Low boundary wall with north/south gaps closed by rocks ----
-            var walls = new GameObject("Boundary").transform;
-            const float gap = 8f, wallH = 1.5f;
-            float seg = (2f * Half - gap) * 0.5f; // two segments on N and S
-            foreach (float z in new[] { Half, -Half })
-            {
-                Solid(PrimitiveType.Cube, "Wall", walls, new Vector3(-Half + seg * 0.5f, wallH * 0.5f, z), new Vector3(seg, wallH, 1f), rock);
-                Solid(PrimitiveType.Cube, "Wall", walls, new Vector3(Half - seg * 0.5f, wallH * 0.5f, z), new Vector3(seg, wallH, 1f), rock);
-                Solid(PrimitiveType.Cube, z > 0 ? "Exit Rock (North)" : "Exit Rock (South)", walls,
-                    new Vector3(0f, 1.5f, z), new Vector3(gap + 1f, 3f, 2.5f), rock);
-            }
-            foreach (float x in new[] { Half, -Half })
-                Solid(PrimitiveType.Cube, "Wall", walls, new Vector3(x, wallH * 0.5f, 0f), new Vector3(1f, wallH, 2f * Half), rock);
-
             // ---- Co-op templates: WorldSync (client) reads .Prefab from these; count 0 → spawn nothing ----
             var preyTemplate = new GameObject("Net Template (Prey)").AddComponent<PreySpawner>();
             P.Set(preyTemplate, "prefab", preyPrefab.GetComponent<Prey>());
@@ -217,12 +187,151 @@ namespace Evolve.EditorTools
 
             // ---- Player, camera, vision, HUD ----
             var slime = P.CreatePlayer(shared, firstSpawn);
+            if (Camera.main != null) Camera.main.farClipPlane = 800f; // the zone is 480 m across
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             P.AddToBuildSettings(ScenePath);
             AssetDatabase.SaveAssets();
             Selection.activeGameObject = slime;
             Debug.Log("Đã dựng " + ScenePath + ". Bãi Mùn Rễ (tổ D) ở phía đông, Vườn Bào Tử (tổ C) phía tây, Rìa Săn Mồi (B) đông nam.");
+        }
+
+        /// <summary>Roof height (m above the core surface) at a horizontal distance from the zone centre.</summary>
+        static float DomeY(float distance)
+        {
+            float t = distance / DomeRadius;
+            return DomeHeight * Mathf.Sqrt(Mathf.Max(0f, 1f - t * t));
+        }
+
+        static void BuildTerrain()
+        {
+            string texPath = TerrainFolder + "/Underroot_Mud.asset";
+            string layerPath = TerrainFolder + "/Underroot_Zone1_Layer.terrainlayer";
+            string dataPath = TerrainFolder + "/Underroot_Zone1.asset";
+
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+            if (tex == null)
+            {
+                tex = new Texture2D(4, 4, TextureFormat.RGBA32, true);
+                var px = new Color[16];
+                for (int i = 0; i < px.Length; i++)
+                {
+                    float v = 0.9f + 0.1f * ((i * 7) % 5) / 4f;
+                    px[i] = new Color(0.24f * v, 0.2f * v, 0.15f * v, 1f);
+                }
+                tex.SetPixels(px);
+                tex.Apply();
+                AssetDatabase.CreateAsset(tex, texPath);
+            }
+            var layer = AssetDatabase.LoadAssetAtPath<TerrainLayer>(layerPath);
+            if (layer == null)
+            {
+                layer = new TerrainLayer { diffuseTexture = tex, tileSize = new Vector2(8f, 8f) };
+                AssetDatabase.CreateAsset(layer, layerPath);
+            }
+
+            AssetDatabase.DeleteAsset(dataPath); // heights are deterministic: always rebuild
+            var data = new TerrainData { heightmapResolution = HeightmapResolution };
+            data.size = new Vector3(WorldScale.ZoneSize, TerrainShape.TerrainHeight, WorldScale.ZoneSize);
+            data.SetHeights(0, 0, TerrainShape.Heights(HeightmapResolution, TerrainSeed));
+            data.terrainLayers = new[] { layer };
+            data.alphamapResolution = 64;
+            var alpha = new float[64, 64, 1];
+            for (int z = 0; z < 64; z++)
+                for (int x = 0; x < 64; x++) alpha[z, x, 0] = 1f; // the single layer covers everything
+            data.SetAlphamaps(0, 0, alpha);
+            AssetDatabase.CreateAsset(data, dataPath); // must be an asset, or the scene loses its hills when reopened
+
+            var go = Terrain.CreateTerrainGameObject(data);
+            go.name = "Zone Terrain";
+            float half = WorldScale.ZoneSize * 0.5f;
+            go.transform.position = new Vector3(-half, -TerrainShape.BaseOffset, -half);
+        }
+
+        static void BuildDome(Material mat)
+        {
+            string meshPath = TerrainFolder + "/Underroot_Dome.asset";
+            AssetDatabase.DeleteAsset(meshPath);
+            var mesh = DomeMesh.Build(DomeRadius, DomeHeight, 48, 16);
+            AssetDatabase.CreateAsset(mesh, meshPath);
+            var go = new GameObject("Dome");
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+            go.isStatic = true; // visual only: no collider
+        }
+
+        static void BuildRoots(Material root)
+        {
+            var parent = new GameObject("Hanging Roots").transform;
+            var rng = new System.Random(50501);
+            for (int i = 0; i < 28; i++)
+            {
+                float ang = (float)(rng.NextDouble() * Mathf.PI * 2.0);
+                float dist = Mathf.Lerp(30f, 220f, (float)rng.NextDouble());
+                float len = Mathf.Lerp(25f, 45f, (float)rng.NextDouble());
+                float width = Mathf.Lerp(2f, 4f, (float)rng.NextDouble());
+                float topY = DomeY(dist);
+                var r = Visual(PrimitiveType.Cylinder, "Hanging Root " + i, parent,
+                    new Vector3(Mathf.Cos(ang) * dist, topY - len * 0.5f, Mathf.Sin(ang) * dist),
+                    new Vector3(width, len * 0.5f, width), root); // Unity's cylinder is 2 m tall
+                r.transform.rotation = Quaternion.Euler(Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()), ang * Mathf.Rad2Deg,
+                    Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()));
+            }
+        }
+
+        /// <summary>Four huge root pillars from the ground to the roof, one per compass direction, to find your way by.</summary>
+        static void BuildLandmarks(Material root)
+        {
+            var parent = new GameObject("Landmarks").transform;
+            const float distance = 190f;
+            foreach (var (name, dx, dz) in new[] { ("North", 0f, 1f), ("East", 1f, 0f), ("South", 0f, -1f), ("West", -1f, 0f) })
+            {
+                float x = dx * distance, z = dz * distance;
+                float ground = TerrainShape.HeightAt(x, z, TerrainSeed);
+                float len = DomeY(distance) - ground;
+                Solid(PrimitiveType.Cylinder, "Landmark " + name, parent, new Vector3(x, ground + len * 0.5f, z),
+                    new Vector3(7f, len * 0.5f, 7f), root);
+            }
+        }
+
+        static void BuildLights()
+        {
+            var parent = new GameObject("Root Glow Lights").transform;
+            for (int ix = -2; ix <= 2; ix++)
+                for (int iz = -2; iz <= 2; iz++)
+                {
+                    float x = ix * 100f, z = iz * 100f;
+                    float y = Mathf.Min(60f, Mathf.Max(15f, DomeY(Mathf.Sqrt(x * x + z * z)) - 6f));
+                    var lightGo = new GameObject("Root Glow");
+                    lightGo.transform.SetParent(parent, false);
+                    lightGo.transform.position = new Vector3(x, y, z);
+                    var l = lightGo.AddComponent<Light>();
+                    l.type = LightType.Point;
+                    l.range = 130f;
+                    l.intensity = 0.5f;
+                    l.color = new Color(0.65f, 0.8f, 0.7f);
+                }
+        }
+
+        /// <summary>Invisible walls at the zone rim, so nothing can leave the zone.</summary>
+        static void BuildBoundary()
+        {
+            var parent = new GameObject("Zone Boundary").transform;
+            float edge = WorldScale.ZoneSize * 0.5f - 1f;
+            foreach (float side in new[] { 1f, -1f })
+            {
+                AddWall("Boundary Z", parent, new Vector3(0f, 60f, side * edge), new Vector3(WorldScale.ZoneSize, 120f, 2f));
+                AddWall("Boundary X", parent, new Vector3(side * edge, 60f, 0f), new Vector3(2f, 120f, WorldScale.ZoneSize));
+            }
+        }
+
+        static void AddWall(string name, Transform parent, Vector3 center, Vector3 size)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = center;
+            go.AddComponent<BoxCollider>().size = size;
+            go.isStatic = true;
         }
 
         /// <summary>Add a VibrationEmitter to a prefab asset if it has none (keeps tuned values on existing ones).</summary>
