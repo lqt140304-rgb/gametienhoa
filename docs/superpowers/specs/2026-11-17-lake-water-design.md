@@ -42,3 +42,6 @@ Menu **Evolve → Dress Lake: Roots and Light** (`Editor/LakeRootsLight.cs`, ch�
 - **Rễ**: vòm rễ già nhiều mấu (cao 2–5 m, có rễ phụ xuống đất và mảng rêu trên lưng) quanh Chân Rễ Cổ Thụ, tránh cửa các hốc trú; rễ bò thấp, chôn nửa, quanh các ao; rễ lớn buông từ trần hang có nhánh.
 - **Ánh sáng**: tối đa 5 **tia sáng** nghiêng từ trần xuống (hình nón mờ dần, có sọc, nhìn được từ trong lẫn ngoài), mỗi tia có một **đèn rọi** mềm không đổ bóng chiếu xuống nước hoặc đất; **bụi bào tử** phát sáng trôi chậm trong không khí (một hệ hạt, tối đa 260 hạt).
 Không collider; chạy lại được.
+
+## Đường mòn theo bố cục khu (đổi sau 0.6b)
+`Dress Lake: Ground` không còn vẽ đường tới các toạ độ cũ cố định. Nó đọc `World/ZoneLayout.Paths` **bằng tên** (reflection, nên công cụ vẫn biên dịch khi chưa có `ZoneLayout` trong `main`) và vẽ dải bùn dọc đúng các đường mòn của bố cục mới. Chưa có `ZoneLayout` thì đi từ vũng sinh mệnh tới các vùng tìm theo tên đối tượng trong scene (vị trí thật của chúng), và cuối cùng mới tới toạ độ mặc định cũ. Ghi chú: các công cụ Dress khác (nấm, rễ) cũng tìm vùng theo tên đối tượng nên theo bố cục mới; việc rải đá/cỏ/rêu/nấm ngẫu nhiên hiện chỉ phủ vùng lõi 120 m, cần mở rộng ra các bệ sinh cảnh sau khi 0.6b vào `main`.
