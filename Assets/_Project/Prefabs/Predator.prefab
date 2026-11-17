@@ -464,6 +464,7 @@ GameObject:
   - component: {fileID: 3302823511302279344}
   - component: {fileID: 2851471690352452814}
   - component: {fileID: 341796932820836552}
+  - component: {fileID: 7286785040567881997}
   m_Layer: 0
   m_Name: Predator
   m_TagString: Untagged
@@ -567,3 +568,18 @@ MonoBehaviour:
   ramSpeed: 4
   nutrition: 35
   drops: {fileID: 11400000, guid: 9cb1af94750b13c4887aebade869a859, type: 2}
+--- !u!114 &7286785040567881997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8680699726363953166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0d5f9201ddfefd44a8935efec4d47cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Evolve::Evolve.World.VibrationEmitter
+  footsteps: 1
+  strength: 1
+  interval: 1.2

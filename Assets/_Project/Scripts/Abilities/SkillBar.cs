@@ -19,6 +19,7 @@ namespace Evolve.Abilities
 
         readonly OrganSO[] slots = new OrganSO[SlotCount];
         readonly Dictionary<OrganSO, float> readyAt = new Dictionary<OrganSO, float>();
+        readonly HashSet<OrganSO> unequipped = new HashSet<OrganSO>();
         SurvivalStats stats;
         OrganHost host;
 
@@ -59,6 +60,7 @@ namespace Evolve.Abilities
         {
             if (slot < 0 || slot >= SlotCount || !IsUnlocked(organ)) return;
             int old = SlotOf(organ);
+            unequipped.Remove(organ);
             if (old == slot) return;
             if (old >= 0) slots[old] = slots[slot];
             slots[slot] = organ;
@@ -66,7 +68,11 @@ namespace Evolve.Abilities
 
         public void Clear(int slot)
         {
-            if (slot >= 0 && slot < SlotCount) slots[slot] = null;
+            if (slot >= 0 && slot < SlotCount)
+            {
+                if (slots[slot] != null) unequipped.Add(slots[slot]);
+                slots[slot] = null;
+            }
         }
 
         public float CooldownRemaining(int slot)
@@ -104,12 +110,13 @@ namespace Evolve.Abilities
         /// <summary>Drop skills whose organ is gone and put newly unlocked ones in the first free slot.</summary>
         void Sync()
         {
+            unequipped.RemoveWhere(o => !IsUnlocked(o));
             for (int i = 0; i < SlotCount; i++)
                 if (slots[i] != null && !IsUnlocked(slots[i])) slots[i] = null;
 
             foreach (var organ in host.OrganList)
             {
-                if (!IsUnlocked(organ) || SlotOf(organ) >= 0) continue;
+                if (!IsUnlocked(organ) || SlotOf(organ) >= 0 || unequipped.Contains(organ)) continue;
                 int free = Array.IndexOf(slots, null);
                 if (free < 0) return; // all slots full: the player assigns it in the body menu
                 slots[free] = organ;
