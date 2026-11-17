@@ -75,8 +75,11 @@ namespace Evolve.Creatures
         Evolve.World.VibrationEmitter emitter;
         float nextFleePulse;
 
+        float groundOffset;
+
         void Awake()
         {
+            groundOffset = Evolve.World.GroundHeight.OffsetOf(transform.position);
             rb = GetComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -127,7 +130,7 @@ namespace Evolve.Creatures
 
             if (dir.sqrMagnitude > 0.001f)
             {
-                rb.MovePosition(pos + dir * speed * Time.fixedDeltaTime);
+                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Time.fixedDeltaTime, groundOffset));
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.2f));
             }
 
@@ -213,7 +216,7 @@ namespace Evolve.Creatures
             Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Gulp);
             var host = stats.GetComponent<OrganHost>();
             var drop = PickDrop(host);
-            if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));
+            if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.25f, transform.position.z));
 
             Caught?.Invoke(this);
             if (TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec)) ec.NotifyKilled();

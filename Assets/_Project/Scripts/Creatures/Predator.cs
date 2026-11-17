@@ -98,8 +98,11 @@ namespace Evolve.Creatures
         float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite;
         bool dead;
 
+        float groundOffset;
+
         void Awake()
         {
+            groundOffset = Evolve.World.GroundHeight.OffsetOf(transform.position);
             rb = GetComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -151,7 +154,7 @@ namespace Evolve.Creatures
 
             if (dir.sqrMagnitude > 0.001f && speed > 0f)
             {
-                rb.MovePosition(pos + dir * speed * Time.fixedDeltaTime);
+                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Time.fixedDeltaTime, groundOffset));
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
             }
 
@@ -275,13 +278,13 @@ namespace Evolve.Creatures
                 NetWorld.Feed(by, nutrition);
                 var host = by.GetComponent<OrganHost>();
                 var drop = drops != null ? drops.Roll(o => host != null && host.Has(o)) : null;
-                if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));
+                if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.25f, transform.position.z));
             }
             Debug.Log($"{name} bị hạ gục");
             Killed?.Invoke(this);
             bool hasEc = TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec);
             if (hasEc) ec.NotifyKilled();
-            Evolve.Ecology.Carcass.Spawn(new Vector3(transform.position.x, 0.2f, transform.position.z), 1.5f, hasEc ? ec.Region : null);
+            Evolve.Ecology.Carcass.Spawn(new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.2f, transform.position.z), 1.5f, hasEc ? ec.Region : null);
             Destroy(gameObject);
         }
     }

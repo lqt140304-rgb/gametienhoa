@@ -165,7 +165,7 @@ namespace Evolve.Ecology
 
         EmbodiedCreature Spawn(SpeciesSO so, SpeciesPopulation pop, Vector3 position, Vector3 home)
         {
-            float baseY = home.y + so.Prefab.transform.position.y;
+            float baseY = Evolve.World.GroundHeight.At(position.x, position.z, home.y) + so.Prefab.transform.position.y;
             position.y = Mathf.Max(position.y, baseY);
             var go = Instantiate(so.Prefab, position, Quaternion.identity);
             var ec = go.GetComponent<EmbodiedCreature>();
