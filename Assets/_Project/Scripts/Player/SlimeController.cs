@@ -178,7 +178,7 @@ namespace Evolve.Player
 
             // "Grounded" with a short grace period, so a flickering ground check never makes the body pop.
             if (IsGrounded()) airTime = 0f; else airTime += dt;
-            bool grounded = airTime < 0.08f;
+            bool grounded = airTime < 0.12f;
 
             // Landing: spread out flat (negative squash), then settle.
             if (!grounded) fallSpeed = Mathf.Min(fallSpeed, rb.linearVelocity.y);
@@ -186,7 +186,8 @@ namespace Evolve.Player
             {
                 squashTarget = -0.4f; // the body mesh does most of the splat (SlimeGelAnimator.Land)
                 var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
-                if (jelly != null) jelly.Land(Mathf.Clamp(-fallSpeed / 7f, 0.3f, 1.2f));
+                // Only a real fall splats; the small lift of a dash or a step off a bump does not.
+                if (jelly != null && fallSpeed < -2.5f) jelly.Land(Mathf.Clamp(-fallSpeed / 7f, 0.3f, 1.2f));
                 fallSpeed = 0f;
             }
             wasAirborne = !grounded;
