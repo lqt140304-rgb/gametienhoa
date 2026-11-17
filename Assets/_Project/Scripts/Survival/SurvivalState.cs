@@ -163,9 +163,9 @@ namespace Evolve.Survival
             for (int k = 0; k < DiseaseTime.Length; k++)
                 if (DiseaseTime[k] > 0f)
                     DiseaseTime[k] = Clamp(DiseaseTime[k] - DiseaseRules.RecoveryRate((DiseaseKind)k, InShelter, InCleanWater, vitaminNow) * dt, 1000f);
-            if (Has(DiseaseKind.RottenGel) && Health > DiseaseRules.HealthDrainFloor * MaxHealth)
-                ApplyDamage(DiseaseRules.HealthDrainPerSecond(true) * dt);
-            if (IsDead) return;
+            float gelFloor = DiseaseRules.HealthDrainFloor * MaxHealth;
+            if (Has(DiseaseKind.RottenGel) && Health > gelFloor && !Invulnerable)
+                Health = UnityEngine.Mathf.Max(gelFloor, Health - DiseaseRules.HealthDrainPerSecond(true) * dt); // never drains below the floor
 
             // Metabolism only burns food while active; resting costs nothing.
             float burn = (isMoving ? cfg.HungerDecayPerSec : 0f) + (isSprinting ? cfg.SprintHungerPerSec : 0f);
@@ -293,7 +293,7 @@ namespace Evolve.Survival
         {
             if (IsDead || probability <= 0f || Has(kind)) return false;
             float p = probability * DiseaseRules.InfectionMultiplier(Nutrient(NutrientKind.Vitamin));
-            float roll = Roll != null ? Roll() : 1f;
+            float roll = Roll != null ? Roll() : UnityEngine.Random.value;
             if (roll >= p) return false;
             Infect(kind);
             return true;

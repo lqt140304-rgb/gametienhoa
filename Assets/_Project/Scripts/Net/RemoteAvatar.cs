@@ -103,7 +103,7 @@ namespace Evolve.Net
             {
                 var colors = new Color[Evolve.Visuals.SlimeColor.PartCount];
                 for (int i = 0; i < colors.Length; i++)
-                    colors[i] = new Color32(s.PartColors[i * 3], s.PartColors[i * 3 + 1], s.PartColors[i * 3 + 2], 255);
+                    colors[i] = BodyFeedback.SickTint(new Color32(s.PartColors[i * 3], s.PartColors[i * 3 + 1], s.PartColors[i * 3 + 2], 255), s.Diseases); // a sick player looks sick
                 tint.SetColors(colors);
             }
             Lost = s.Lost;
