@@ -287,7 +287,7 @@ namespace Evolve.Organs
             {
                 float value = stats.State.Nutrient(e.Organ.EffectiveNutrient);
                 float next = OrganDecay.Step(e.Decay, value, cfg.NutrientEquipThreshold, cfg.NutrientWarnThreshold,
-                    cfg.OrganDissolveSeconds, cfg.OrganRecoverSeconds, Time.deltaTime);
+                    cfg.OrganDissolveSeconds, cfg.OrganRecoverSeconds / DiseaseRules.OrganRecoverMultiplier(stats.State.Has(DiseaseKind.RottenGel)), Time.deltaTime);
                 if (!Mathf.Approximately(next, e.Decay))
                 {
                     if ((int)(next * 50f) != (int)(e.Decay * 50f)) decayChanged = true; // recalculate only per 2% step, not every frame

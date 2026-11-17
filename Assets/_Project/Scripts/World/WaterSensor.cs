@@ -36,8 +36,12 @@ namespace Evolve.World
             if (stats.IsRemote) return;
             zones.Prune(ZoneSet.IsAliveUnityObject);
             stats.State.ThirstEnabled = WaterZone.AnyInScene;
+            stats.State.InCleanWater = zones.Count > 0 && !InDirtyWater; // clean water helps against Nhiễm Nước Đọng
             if (zones.Count > 0 && !stats.State.IsDead)
+            {
                 stats.State.Drink(stats.Config.DrinkPerSec * Time.deltaTime);
+                if (InDirtyWater) stats.State.TryInfect(DiseaseKind.StagnantWater, DiseaseRules.DirtyWaterPerSecond * Time.deltaTime);
+            }
         }
 
         void OnTriggerEnter(Collider other)

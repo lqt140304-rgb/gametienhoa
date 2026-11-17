@@ -46,7 +46,8 @@ namespace Evolve.World
         // Low Tinh Chất Sống (vitamin) dulls the senses too.
         float SenseMul => stats != null && stats.Config != null
             ? StressEffects.SenseRadiusMultiplier(stats.State.Stress, stats.Config)
-              * NutrientEffects.SenseMultiplier(stats.State.Nutrient(NutrientKind.Vitamin)) : 1f;
+              * NutrientEffects.SenseMultiplier(stats.State.Nutrient(NutrientKind.Vitamin))
+              * DiseaseRules.SenseMultiplier(stats.State.Has(DiseaseKind.SporeBlur)) : 1f;
 
         void Awake()
         {
