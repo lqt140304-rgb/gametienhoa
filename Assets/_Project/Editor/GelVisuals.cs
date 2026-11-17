@@ -82,16 +82,17 @@ namespace Evolve.EditorTools
 
             // One material for every organ, matched to the body's average tone (the body's veins texture is not used).
             var gel = GelMaterial("SlimeGelOrgan", new Color(GelColor.r * 0.8f, GelColor.g * 0.8f, GelColor.b * 0.8f, GelColor.a));
-            var heat = GelMaterial("GelHeatLayer", new Color(0.85f, 0.72f, 0.42f, 0.45f));
+            var heat = GelMaterial("GelHeatLayer", new Color(0.9f, 0.75f, 0.4f, 0.22f));
             var eye = gel; // the eye bulb is the same gel as everything else
             var black = PrototypeSceneBuilder.Mat("Pupil", new Color(0.05f, 0.05f, 0.05f), "Universal Render Pipeline/Lit");
 
-            Save(EyeStalks(gel, eye, black), "Organ_Eyes");
-            Save(Pseudopods("Organ_Pseudopods", gel, 1f), "Organ_Pseudopods");
-            Save(Pseudopods("Organ_MuscularPseudopods", gel, 1.3f), "Organ_MuscularPseudopods");
-            Save(Pseudopods("Organ_RunnerLegs", gel, 1.6f), "Organ_RunnerLegs");
-            Save(HeatLayer(heat), "Organ_HeatMembrane");
-            Save(Horns(gel), "Organ_ToxicSpikes");
+            // Overall organ size relative to the body (kept small so the body stays the star).
+            Save(EyeStalks(gel, eye, black), "Organ_Eyes", 0.75f);
+            Save(Pseudopods("Organ_Pseudopods", gel, 1f), "Organ_Pseudopods", 0.8f);
+            Save(Pseudopods("Organ_MuscularPseudopods", gel, 1.3f), "Organ_MuscularPseudopods", 0.8f);
+            Save(Pseudopods("Organ_RunnerLegs", gel, 1.6f), "Organ_RunnerLegs", 0.8f);
+            Save(HeatLayer(heat), "Organ_HeatMembrane", 1f);
+            Save(Horns(gel), "Organ_ToxicSpikes", 0.75f);
             AssetDatabase.SaveAssets();
         }
 
@@ -154,14 +155,14 @@ namespace Evolve.EditorTools
             return root;
         }
 
-        /// <summary>The heat insulation is a thick layer over the whole body (a slightly larger shell), not rings.</summary>
+        /// <summary>The heat insulation is an ultra-thin film over the whole body (a barely larger shell), not rings.</summary>
         static GameObject HeatLayer(Material heat)
         {
             var root = new GameObject("Organ_HeatMembrane");
             var shell = new GameObject("Layer");
             shell.transform.SetParent(root.transform, false);
-            shell.transform.localPosition = new Vector3(0f, 0.012f, 0f);
-            shell.transform.localScale = new Vector3(1.09f, 1.14f, 1.09f);
+            shell.transform.localPosition = new Vector3(0f, 0.004f, 0f);
+            shell.transform.localScale = new Vector3(1.02f, 1.03f, 1.02f); // an almost invisible thin film
             shell.AddComponent<MeshFilter>().sharedMesh = BodyMesh();
             shell.AddComponent<MeshRenderer>().sharedMaterial = heat;
             return root;
@@ -221,8 +222,9 @@ namespace Evolve.EditorTools
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;
         }
 
-        static void Save(GameObject go, string name)
+        static void Save(GameObject go, string name, float scale)
         {
+            go.transform.localScale = Vector3.one * scale;
             PrefabUtility.SaveAsPrefabAsset(go, $"{Root}/Prefabs/{name}.prefab");
             Object.DestroyImmediate(go);
         }

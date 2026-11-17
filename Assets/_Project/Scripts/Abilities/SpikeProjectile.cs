@@ -10,7 +10,8 @@ namespace Evolve.Abilities
     /// </summary>
     public class SpikeProjectile : MonoBehaviour
     {
-        const float Radius = 0.3f; // generous, so small creatures are not missed
+        const float Radius = 0.12f;      // for the world (ground, walls): small, or it scrapes the ground
+        const float CreatureRadius = 0.4f; // generous, so small creatures are not missed
 
         Vector3 direction;
         float speed, maxDistance, damage, travelled;
@@ -51,6 +52,17 @@ namespace Evolve.Abilities
         void Update()
         {
             float step = speed * Time.deltaTime;
+
+            // Creatures first, with a generous radius so small ones are not missed.
+            foreach (var c in Physics.OverlapSphere(transform.position, CreatureRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (ownerRoot != null && c.transform.IsChildOf(ownerRoot)) continue;
+                var predatorHit = c.GetComponentInParent<Predator>();
+                if (predatorHit != null) { predatorHit.TakeDamage(damage, owner); Destroy(gameObject); return; }
+                var preyHit = c.GetComponentInParent<Prey>();
+                if (preyHit != null) { preyHit.TakeDamage(damage, owner); Destroy(gameObject); return; }
+            }
+
             if (Physics.SphereCast(transform.position, Radius, direction, out RaycastHit hit, step + 0.05f,
                     Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
                 && !(ownerRoot != null && hit.transform.IsChildOf(ownerRoot)))
