@@ -67,3 +67,10 @@ Mỗi bước là một PR riêng, để nếu có lỗi thì chỉ cần sửa 
 2. Mục 5–12 do phiên nào làm (phiên này hay phiên bên kia)?
 3. Vũng nước đọng ở khu 03: nhuốm hơi vàng lục (đề xuất), hay xanh ngọc như các nước khác?
 4. Bơi bản đầu: không chết đuối, tốn năng lượng nhẹ (đề xuất), hay có ngạt?
+
+## 5. Quyết định đã chốt (2026-11-17)
+
+1. Kích thước khu: **nhân 1,5 lần** so với bảng concept.
+2. Mục 5–12 (mái lưới rễ, nền, thực vật, điểm nhấn): **phiên Claude bên kia** làm. Phiên này làm bước A (mục 1–4), plan: `docs/superpowers/plans/2026-11-17-0.6d-map300-water.md`.
+3. Vũng nước đọng khu 03: **vàng lục**.
+4. Bơi bản đầu: theo đề xuất (không chết đuối, tốn năng lượng nhẹ).
