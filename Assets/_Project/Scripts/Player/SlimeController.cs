@@ -79,6 +79,9 @@ namespace Evolve.Player
         /// <summary>Prototype only: restart with all lives. Real design: only a teammate can revive a corpse.</summary>
         void NewRun()
         {
+            // The corpse is lost for good: its organs fall off where it lay.
+            var interactor = GetComponent<OrganInteractor>();
+            if (interactor != null) interactor.DropAllOnDeath();
             stats.State.ResetLives();
             Respawn();
         }
