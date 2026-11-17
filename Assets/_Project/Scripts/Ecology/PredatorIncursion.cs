@@ -17,6 +17,7 @@ namespace Evolve.Ecology
 
         readonly List<Vector3> playerPositions = new List<Vector3>();
         readonly List<Vector3> entryPositions = new List<Vector3>();
+        readonly List<int> entryIndices = new List<int>();
         EmbodiedCreature current;
         float timer;
         float minutesSinceLastHunt;
@@ -24,7 +25,7 @@ namespace Evolve.Ecology
         void Update()
         {
             if (NetWorld.IsClient || region == null || predator == null || entries == null) return;
-            minutesSinceLastHunt += Time.deltaTime / 60f;
+            if (region.IsActive && current == null) minutesSinceLastHunt += Time.deltaTime / 60f;
             timer += Time.deltaTime;
             if (timer < checkSeconds) return;
             timer -= checkSeconds;
@@ -61,13 +62,18 @@ namespace Evolve.Ecology
                 playerPositions.Add(p.transform.position);
             }
             entryPositions.Clear();
+            entryIndices.Clear();
             for (int i = 0; i < entries.Length; i++)
-                entryPositions.Add(entries[i] != null ? entries[i].position : new Vector3(float.MaxValue, 0f, float.MaxValue));
+            {
+                if (entries[i] == null) continue;
+                entryPositions.Add(entries[i].position);
+                entryIndices.Add(i);
+            }
 
-            int idx = IncursionRule.PickEntry(entryPositions, playerPositions, noSpawnRadius);
-            if (idx < 0 || entries[idx] == null) return;
+            int pick = IncursionRule.PickEntry(entryPositions, playerPositions, noSpawnRadius);
+            if (pick < 0) return;
 
-            var ec = region.TryEmbodyAt(predator, entries[idx].position, region.transform.position);
+            var ec = region.TryEmbodyAt(predator, entryPositions[pick], region.transform.position);
             if (ec == null) return;
             current = ec;
             minutesSinceLastHunt = 0f;
