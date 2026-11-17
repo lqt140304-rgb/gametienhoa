@@ -26,9 +26,10 @@
 - **Thắng** thì sống tiếp tại chỗ với **1 máu**, **không mất mạng** và **giữ đầy đủ cơ quan** (không rơi, không mất 50%).
 - **Thua** thì chết thường: **mất 1 mạng** và cơ quan rơi theo luật 50/50 như `GAME_DESIGN.md` mục 6.1.
 - Không chọn đánh thì chết thường, giống thua.
+- **[ĐÃ CHỐT]** Mỗi mạng chỉ được cược Thần Chết **một lần**.
 
 **[MỞ]**
-- **Thắng không mất gì**, nên người chơi luôn chọn đánh: cần quyết giới hạn (mỗi mạng một lần, hồi chiêu, hay chỉ độ khó của Thần Chết là rào chắn).
+- Thắng thì vẫn giữ mạng đó, nên bộ đếm "đã cược" gắn với mạng hiện tại và chỉ reset khi mất mạng (thua hoặc chết thật). Xác nhận cách hiểu này.
 - Thần Chết là boss riêng hay đứng ngoài bậc Boss của Bestiary? Chỉnh độ khó theo số người/cấp người chơi không?
 
 ## 2. Hệ quả cho các tài liệu khác
