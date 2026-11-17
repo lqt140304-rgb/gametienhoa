@@ -17,7 +17,6 @@ namespace Evolve.Ecology
 
         readonly List<Vector3> playerPositions = new List<Vector3>();
         readonly List<Vector3> entryPositions = new List<Vector3>();
-        readonly List<int> entryIndices = new List<int>();
         EmbodiedCreature current;
         float timer;
         float minutesSinceLastHunt;
@@ -62,12 +61,10 @@ namespace Evolve.Ecology
                 playerPositions.Add(p.transform.position);
             }
             entryPositions.Clear();
-            entryIndices.Clear();
             for (int i = 0; i < entries.Length; i++)
             {
                 if (entries[i] == null) continue;
                 entryPositions.Add(entries[i].position);
-                entryIndices.Add(i);
             }
 
             int pick = IncursionRule.PickEntry(entryPositions, playerPositions, noSpawnRadius);
