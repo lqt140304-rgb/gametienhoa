@@ -58,3 +58,6 @@ Các công cụ Dress dùng chung `Editor/LakeLayout.cs`: đọc `World/ZoneLayo
 - **Mushrooms and Vines**: mỗi bệ (ngoài Vườn Bào Tử, đã có cụm lớn) có một cụm nấm riêng: Bãi Mùn Rễ và Rìa Săn Mồi nghiêng về mũ san hô, Chân Rễ về xanh ngọc; Rìa Săn Mồi thưa hơn.
 - **Roots and Light**: mỗi bệ khác có 5 vòm rễ và 9 rễ bò thấp; thêm 2 tia sáng cho mỗi bệ (tổng tối đa 12).
 Dựng lại: Build Underroot Lake, rồi Dress Lake: Water, Ground, Mushrooms and Vines, Roots and Light.
+
+## Dựng lại cả hồ bằng một menu
+**Evolve → Rebuild Lake (all steps)** (`Editor/LakeRebuildAll.cs`) chạy đúng thứ tự: Build Underroot Lake → Dress Lake: Water → Ground → Mushrooms and Vines → Roots and Light, rồi lưu scene. Dừng và báo bước nào lỗi nếu có. Từng bước vẫn dùng riêng được.
