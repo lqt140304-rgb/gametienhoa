@@ -93,6 +93,19 @@ namespace Evolve.World
         public const float NorthEntryHalfWidth = 10f;
         public const float PathWidth = 5f;
 
+        /// <summary>The ancient root cave of Chân Rễ Cổ Thụ: an oval dome over the area's centre.</summary>
+        public static readonly Vector2 CaveRadii = new Vector2(19f, 15f);
+        public const float CaveHeight = 12f;
+        /// <summary>The root tunnel from the cave's side of the map down into the sinkhole (along the 02 -> 03 trail).</summary>
+        public static readonly Vector2[] TunnelLine = { new Vector2(-167f, 67.5f), new Vector2(-144.5f, 123.75f) };
+
+        /// <summary>True under the cave's dome (with <paramref name="margin"/> m to spare).</summary>
+        public static bool InsideCave(float x, float z, float margin = 0f)
+        {
+            float nx = (x - RootFoot.Center.x) / (CaveRadii.x + margin), nz = (z - RootFoot.Center.y) / (CaveRadii.y + margin);
+            return nx * nx + nz * nz < 1f;
+        }
+
         /// <summary>Where light falls through gaps in the root roof (9 shafts): over the lake and in most areas.</summary>
         public static readonly Vector2[] LightShafts =
         {

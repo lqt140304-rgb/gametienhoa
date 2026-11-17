@@ -57,6 +57,8 @@ namespace Evolve.EditorTools
                     float trail = ZoneLayout.DistanceToPath(px, pz);
                     if (!flat && trail < ZoneLayout.PathWidth) continue;                    // trails stay clear
                     if (!flat && Near(keepOut, px, pz, 6f)) continue;                       // dens, shelters, the spawn
+                    if (!flat && (ZoneLayout.InsideCave(px, pz, 2f) || ZoneLayout.DistanceToLine(new Vector2(px, pz), ZoneLayout.TunnelLine) < 4f
+                        || Vector2.Distance(new Vector2(px, pz), LandmarkLayout.LogCenter) < 6f || Vector2.Distance(new Vector2(px, pz), LandmarkLayout.GiantMushrooms) < 10f)) continue;   // the landmarks stand clear   // the cave and the tunnel stay clear
                     float y = LakeGround.GroundY(px, pz);
                     if (kit.Add(items, plant.Value, new Vector3(px, y, pz), yaw, size)) placed++;
                 }
