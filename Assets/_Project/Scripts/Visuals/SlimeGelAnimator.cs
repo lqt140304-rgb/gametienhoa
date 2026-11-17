@@ -141,8 +141,8 @@ namespace Evolve.Visuals
             accelSmooth = Vector3.Lerp(accelSmooth, accel, 1f - Mathf.Exp(-12f * dt));
             Vector3 accelLocal = transform.InverseTransformDirection(accelSmooth);
             accelLocal.y = 0f;
-            Vector3 leanTarget = Vector3.ClampMagnitude(-accelLocal * 0.012f, 0.14f);
-            leanVel += ((leanTarget - leanPos) * 120f - leanVel * 12f) * dt;
+            Vector3 leanTarget = Vector3.ClampMagnitude(-accelLocal * 0.005f, 0.05f);
+            leanVel += ((leanTarget - leanPos) * 55f - leanVel * 11f) * dt;
             leanPos += leanVel * dt;
 
             if (landT >= 0f) { landT += dt; if (landT > 0.6f) landT = -1f; }
@@ -239,11 +239,11 @@ namespace Evolve.Visuals
             fLand = landT >= 0f
                 ? Mathf.SmoothStep(0f, 1f, landT / 0.04f) * Mathf.Exp(-6f * landT) * Mathf.Cos(landT * 16f) * landStrength
                 : 0f;
-            fDir = moveDir;
+            fDir = Vector3.forward; // the body turns to face where it goes: waves and steps always run along its own axis (no flips on turns)
             fMove = Mathf.Lerp(fMove, Mathf.Clamp01(speed / 4f), 1f - Mathf.Exp(-9f * dt));
             // One animation at a time: while an action plays or the slime is in the air, the everyday movement
             // animation (breathing, crawl, steps) fades out, so animations never fight each other.
-            bool airborne = body != null && Mathf.Abs(body.linearVelocity.y) > 0.8f;
+            bool airborne = body != null && Mathf.Abs(body.linearVelocity.y) > 1.6f; // small bumps (a dash's little lift) do not count
             locoK = Mathf.Lerp(locoK, ActionPlaying || airborne ? 0f : 1f, 1f - Mathf.Exp(-14f * dt));
             crawlK = Mathf.Lerp(crawlK, hasLegs ? 0.25f : 1f, 1f - Mathf.Exp(-6f * dt));
 
@@ -324,7 +324,7 @@ namespace Evolve.Visuals
             {
                 float along = b.x * fDir.x + b.z * fDir.z;
                 float crawl = crawlK * locoK;                   // with legs the legs do the moving, the body only sways
-                float fast = 1f + speed * 0.15f;        // faster = bigger, quicker ripples
+                float fast = 1f + Mathf.Min(speed, 6f) * 0.1f;        // faster = bigger, quicker ripples
                 float wave = Mathf.Sin(along * 11f - t * (9f + speed * 1.5f));
                 o.y += fMove * 0.07f * fast * crawl * wave * (0.3f + 0.7f * h);
                 o += outward * fMove * 0.06f * fast * crawl * wave * low;
