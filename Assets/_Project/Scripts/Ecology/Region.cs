@@ -158,12 +158,12 @@ namespace Evolve.Ecology
                     var den = candidates[Random.Range(0, candidates.Count)];
                     Vector2 off = Random.insideUnitCircle * SpawnOffset;
                     Vector3 denPos = den.transform.position;
-                    Spawn(so, pop, denPos + new Vector3(off.x, so.Prefab.transform.position.y, off.y), denPos);
+                    Spawn(so, pop, denPos + new Vector3(off.x, so.Prefab.transform.position.y, off.y), denPos, 0f);
                 }
             }
         }
 
-        EmbodiedCreature Spawn(SpeciesSO so, SpeciesPopulation pop, Vector3 position, Vector3 home)
+        EmbodiedCreature Spawn(SpeciesSO so, SpeciesPopulation pop, Vector3 position, Vector3 home, float homeRadius)
         {
             float baseY = Evolve.World.GroundHeight.At(position.x, position.z, home.y) + so.Prefab.transform.position.y;
             position.y = Mathf.Max(position.y, baseY);
@@ -171,7 +171,7 @@ namespace Evolve.Ecology
             var ec = go.GetComponent<EmbodiedCreature>();
             if (ec == null) ec = go.AddComponent<EmbodiedCreature>();
             ec.Init(this, pop);
-            ec.SetHome(home);
+            if (homeRadius > 0f) ec.SetHome(home, homeRadius); else ec.SetHome(home);
             embodied.Add(ec);
             return ec;
         }
@@ -181,13 +181,13 @@ namespace Evolve.Ecology
         /// The creature is tracked by this region, so StoreAll stores it when the region goes inactive.
         /// Returns null when no head is available or the global cap is full.
         /// </summary>
-        public EmbodiedCreature TryEmbodyAt(SpeciesSO so, Vector3 position, Vector3 home)
+        public EmbodiedCreature TryEmbodyAt(SpeciesSO so, Vector3 position, Vector3 home, float homeRadius = 0f)
         {
             if (Population == null || so == null || so.Prefab == null) return null;
             var pop = Population.Get(so.Id);
             if (pop == null || !pop.TryEmbody()) return null;
             if (!PopulationCap.TryReserve()) { pop.Store(); return null; }
-            return Spawn(so, pop, position, home);
+            return Spawn(so, pop, position, home, homeRadius);
         }
 
         void StoreAll()
