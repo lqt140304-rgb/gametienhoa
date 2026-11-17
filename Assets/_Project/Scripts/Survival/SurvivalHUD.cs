@@ -13,6 +13,7 @@ namespace Evolve.Survival
 
         AbilityCaster caster;
         OrganHost organs;
+        OrganInteractor interactor;
         string toast;
         float toastUntil;
         GUIStyle box;
@@ -28,13 +29,14 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\n\n" +
             "Đứng yên: không đói, hồi năng lượng\n" +
             "Chấm xanh = thức ăn, chấm đỏ = con mồi\n(giác quan rung, thay cho mắt)\n\n" +
-            "Bắt con mồi (chạm vào) để nhận cơ quan.\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
+            "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E chọn, X bỏ qua.\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
 
         void Start()
         {
             if (stats == null) return;
             caster = stats.GetComponent<AbilityCaster>();
             organs = stats.GetComponent<OrganHost>();
+            interactor = stats.GetComponent<OrganInteractor>();
             if (organs != null)
             {
                 organs.Attached += o => Toast($"Mầm {o.DisplayName}: ăn thêm {o.GrowthFoodRequired:0} thức ăn để phát triển");
@@ -93,10 +95,24 @@ namespace Evolve.Survival
                 GUI.Box(new Rect(Screen.width / 2f - 220, Screen.height * 0.2f, 440, 90), toast, big);
             }
 
+            DrawOrganPrompt();
+
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 380), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 400), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
+        }
+
+        void DrawOrganPrompt()
+        {
+            if (interactor == null || interactor.Current == null) return;
+            interactor.GetPrompt(out string title, out string body, out string accept);
+            var r = new Rect(Screen.width / 2f - 230, Screen.height - 230, 460, 190);
+            var style = new GUIStyle(box) { alignment = TextAnchor.UpperCenter, fontSize = 15, wordWrap = true, richText = true };
+            GUI.Box(r, $"<b><size=18>{title}</size></b>\n\n{body}", style);
+            string keys = accept != null ? $"[E] {accept}     [X] Bỏ qua" : "[X] Bỏ qua";
+            var keyStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 16, fontStyle = FontStyle.Bold };
+            GUI.Label(new Rect(r.x, r.yMax - 34, r.width, 26), keys, keyStyle);
         }
 
         static void Bar(int row, string label, float value, float max, Color c)

@@ -2,7 +2,10 @@ using UnityEngine;
 
 namespace Evolve.Organs
 {
-    /// <summary>A dropped organ lying on the ground. Touch it to evolve.</summary>
+    /// <summary>
+    /// A dropped organ lying on the ground. Touching it offers it to the player's
+    /// OrganInteractor, which asks before attaching. Without an interactor it attaches directly.
+    /// </summary>
     public class OrganPickup : MonoBehaviour
     {
         [SerializeField] OrganSO organ;
@@ -40,8 +43,17 @@ namespace Evolve.Organs
 
         void OnTriggerEnter(Collider other)
         {
+            var interactor = other.GetComponentInParent<OrganInteractor>();
+            if (interactor != null) { interactor.Offer(this); return; }
+
             var host = other.GetComponentInParent<OrganHost>();
             if (host != null && host.TryAttach(organ)) Destroy(gameObject);
+        }
+
+        void OnTriggerExit(Collider other)
+        {
+            var interactor = other.GetComponentInParent<OrganInteractor>();
+            if (interactor != null) interactor.Withdraw(this);
         }
     }
 }

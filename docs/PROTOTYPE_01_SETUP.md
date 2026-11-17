@@ -60,6 +60,8 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | Lăn chuột | Phóng to/thu nhỏ |
 | V | Bật/tắt mắt (thử nghiệm: xem màu, nhìn xa) |
 | H | Ẩn/hiện bảng hướng dẫn |
+| E | Chọn khi chạm vào cơ quan: lắp / thay thế / hấp thụ |
+| X | Bỏ qua cơ quan |
 
 ## Cần kiểm thử
 - Đói chỉ giảm khi di chuyển (nhanh hơn khi chạy nước rút), đứng yên không giảm; khi đói = 0 thì mất máu; khi no thì hồi máu.
