@@ -168,13 +168,20 @@ namespace Evolve.Player
             return Physics.Raycast(transform.position, Vector3.down, extent + groundCheckDistance, groundMask, QueryTriggerInteraction.Ignore);
         }
 
+        bool wasAirborne;
+
         void AnimateVisual()
         {
             if (visual == null) return;
+            // Landing: spread out flat (negative squash), then settle. In the air: stretch with vertical speed.
+            bool grounded = IsGrounded();
+            if (wasAirborne && grounded) squash = -0.9f;
+            wasAirborne = !grounded;
             squash = Mathf.MoveTowards(squash, 0f, Time.deltaTime * 3f);
             float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.05f : 0f;
             float bs = BodyScale;
-            float y = 1f + squash * 0.35f + wobble;
+            float airStretch = grounded ? 0f : Mathf.Clamp(Mathf.Abs(rb.linearVelocity.y) * 0.03f, 0f, 0.2f);
+            float y = 1f + squash * 0.35f + wobble + airStretch;
             float xz = 1f / Mathf.Sqrt(y); // preserve volume
             visual.localScale = Vector3.Scale(baseScale * bs, new Vector3(xz, y, xz));
 

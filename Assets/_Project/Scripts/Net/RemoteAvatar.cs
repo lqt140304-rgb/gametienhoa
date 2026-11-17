@@ -53,6 +53,8 @@ namespace Evolve.Net
             var visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             visual.name = "Visual";
             DestroyImmediate(visual.GetComponent<Collider>());
+            visual.GetComponent<MeshFilter>().sharedMesh = Evolve.Visuals.SlimeMeshBuilder.Build();
+            visual.AddComponent<Evolve.Visuals.SlimeGelCore>();
             visual.transform.SetParent(transform, false);
             body = visual.transform;
 
@@ -60,7 +62,8 @@ namespace Evolve.Net
             var renderer = visual.GetComponent<Renderer>();
             var shared = FindSlimeMaterial();
             var mat = shared != null ? new Material(shared) : renderer.material;
-            Color tint = Color.HSVToRGB((clientId * 0.37f) % 1f, 0.55f, 0.95f);
+            Color tint = Color.HSVToRGB((clientId * 0.37f) % 1f, 0.45f, 0.95f);
+            tint.a = 0.8f; // gel stays translucent
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", tint); else mat.color = tint;
             renderer.sharedMaterial = mat;
 

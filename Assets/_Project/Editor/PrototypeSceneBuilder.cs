@@ -230,6 +230,8 @@ namespace Evolve.EditorTools
             var nutrientPrefab = NutrientPrefab(foodMat);
             var pulsePrefab = PulsePrefab(pulseMat);
 
+            GelVisuals.RebuildOrganPrefabs();
+
             return new SharedAssets
             {
                 GroundMat = groundMat, SlimeMat = slimeMat, Config = config, Dash = dash,
@@ -257,6 +259,7 @@ namespace Evolve.EditorTools
             Object.DestroyImmediate(visual.GetComponent<Collider>());
             visual.transform.SetParent(slime.transform, false);
             visual.GetComponent<Renderer>().sharedMaterial = shared.SlimeMat;
+            GelVisuals.StyleBody(visual);
             Socket(visual.transform, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
             Socket(visual.transform, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
             Socket(visual.transform, OrganSlot.Skin, Vector3.zero);
