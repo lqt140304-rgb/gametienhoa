@@ -22,8 +22,8 @@ namespace Evolve.Abilities
         [Tooltip("Spike speed, metres per second")]
         public float Speed = 24f;
 
-        [Tooltip("How far below the body centre the spikes start, so they reach small creatures on the ground")]
-        public float SpawnDrop = 0.2f;
+        [Tooltip("How far below the body centre the spikes start (small, or they scrape the ground)")]
+        public float SpawnDrop = 0.1f;
         [Tooltip("Aim assist: a creature within this angle (degrees) of where you aim is targeted, including its height")]
         public float AssistAngle = 12f;
 
