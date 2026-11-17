@@ -5,7 +5,7 @@ namespace Evolve.World
 {
     /// <summary>
     /// Substitute sense for the eyeless stage: periodically emits a particle burst
-    /// at every nearby Nutrient (cyan) and Prey (red) so the player can "feel" them through the fog.
+    /// at every nearby Nutrient (cyan), Prey (red) and Predator (purple) so the player can "feel" them through the fog.
     /// Assign a ParticleSystem prefab (short burst, not looping).
     /// </summary>
     public class VibrationSense : MonoBehaviour
@@ -15,6 +15,7 @@ namespace Evolve.World
         [SerializeField] ParticleSystem pulsePrefab;
         [SerializeField] Color foodColor = new Color(0.5f, 0.9f, 1f);
         [SerializeField] Color preyColor = new Color(1f, 0.4f, 0.35f);
+        [SerializeField] Color predatorColor = new Color(0.75f, 0.35f, 1f);
 
         float next;
 
@@ -24,6 +25,7 @@ namespace Evolve.World
             next = Time.time + interval;
             foreach (var n in Nutrient.Active) Pulse(n.transform.position, foodColor);
             foreach (var p in Prey.Active) Pulse(p.transform.position, preyColor);
+            foreach (var p in Predator.Active) Pulse(p.transform.position + Vector3.up * 0.5f, predatorColor);
         }
 
         void Pulse(Vector3 at, Color c)

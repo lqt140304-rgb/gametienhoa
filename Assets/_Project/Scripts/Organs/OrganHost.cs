@@ -43,6 +43,9 @@ namespace Evolve.Organs
         /// <summary>0 = blind, 1 = fully developed eyes.</summary>
         public float Sight { get; private set; }
         public bool HasSight => Sight >= 1f;
+        /// <summary>Damage dealt back to attackers (spikes).</summary>
+        public float ContactDamage { get; private set; }
+        public float HeatResistance { get; private set; }
         public IEnumerable<OrganSO> Organs { get { foreach (var e in order) yield return e.Organ; } }
 
         /// <summary>Raised when an organ is attached and starts growing.</summary>
@@ -181,14 +184,19 @@ namespace Evolve.Organs
 
         void Recalculate()
         {
-            float speed = 1f, sight = 0f;
+            float speed = 1f, sight = 0f, contact = 0f, heat = 0f;
             foreach (var e in order)
             {
                 speed *= Mathf.Lerp(1f, e.Organ.SpeedMultiplier, e.Shown);
                 if (e.Organ.GrantsSight) sight = Mathf.Max(sight, e.Shown);
+                contact += e.Organ.ContactDamage * e.Shown;
+                heat += e.Organ.HeatResistance * e.Shown;
             }
             SpeedMultiplier = speed;
             Sight = sight;
+            ContactDamage = contact;
+            HeatResistance = heat;
+            if (stats != null) stats.State.HeatResistance = heat;
             Changed?.Invoke();
         }
     }

@@ -30,5 +30,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Bảng chọn khi chạm cơ quan: lắp, thay thế, hấp thụ, bỏ qua; cơ quan bị thay rơi ra đất; bảng Cơ thể (G) để tự tháo
 - [x] Chơi thử bảng chọn cơ quan
 - [x] Bậc cơ quan C/B/A/S và bảng rơi đồ (DropTable) có tỉ lệ theo bậc; thêm Chân giả cơ bắp (B), Chân chạy (A)
-- [ ] Chơi thử tỉ lệ rơi
+- [x] Chơi thử tỉ lệ rơi
+- [x] Code 0.3: kẻ săn mồi (tuần tra, đuổi, cắn, mệt; khó phát hiện khi đứng yên), nhiệt độ cơ thể, vùng hoang mạc 50°C, Màng chịu nhiệt (C), Gai độc (B), bảng rơi riêng của kẻ săn mồi, hồi sinh bằng R
+- [ ] Chơi thử 0.3
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

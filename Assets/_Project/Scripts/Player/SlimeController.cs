@@ -33,6 +33,7 @@ namespace Evolve.Player
         OrganHost organs;
         Vector3 baseScale = Vector3.one;
         float squash;
+        Vector3 spawnPoint;
         Collider col;
 
         void Awake()
@@ -44,10 +45,16 @@ namespace Evolve.Player
             col = GetComponent<Collider>();
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
             if (visual != null) baseScale = visual.localScale;
+            spawnPoint = transform.position;
         }
 
         void Update()
         {
+            if (stats.State.IsDead)
+            {
+                if (KeyPressed.R()) Respawn();
+                return;
+            }
             if (ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
@@ -55,6 +62,16 @@ namespace Evolve.Player
                 squash = 1f;
             }
             AnimateVisual();
+        }
+
+        /// <summary>Return to the spawn point with full stats. Organs are kept (placeholder rule).</summary>
+        public void Respawn()
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.position = spawnPoint;
+            transform.position = spawnPoint;
+            stats.State.Ambient = stats.Config.DefaultAmbient;
+            stats.State.Reset();
         }
 
         void FixedUpdate()

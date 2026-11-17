@@ -27,8 +27,9 @@ namespace Evolve.Survival
             "Lăn chuột  Phóng to/thu nhỏ\n" +
             "V  Bật/tắt mắt (thử nghiệm)\n" +
             "H  Ẩn/hiện hướng dẫn\n\n" +
-            "Đứng yên: không đói, hồi năng lượng\n" +
-            "Chấm xanh = thức ăn, chấm đỏ = con mồi\n(giác quan rung, thay cho mắt)\n\n" +
+            "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
+            "Chấm xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi (giác quan rung)\n\n" +
+            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết\n\n" +
             "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E chọn, X bỏ qua.\nG  Bảng cơ thể (tháo cơ quan bằng 1, 2…)\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
 
         void Start()
@@ -63,7 +64,8 @@ namespace Evolve.Survival
             Bar(0, "Máu", s.Health, s.MaxHealth, Color.red);
             Bar(1, "Đói", s.Hunger, s.MaxHunger, new Color(1f, 0.6f, 0.1f));
             Bar(2, "Năng lượng", s.Energy, s.MaxEnergy, Color.cyan);
-            float y = 104;
+            DrawTemperature(s);
+            float y = 132;
             if (caster != null && caster.Ability != null)
             {
                 var a = caster.Ability;
@@ -87,7 +89,13 @@ namespace Evolve.Survival
                     $"{o.DisplayName}: {organs.GetFed(o):0}/{o.GrowthFoodRequired:0} thức ăn");
                 y += 28;
             }
-            if (s.IsDead) GUI.Label(new Rect(20, y, 300, 22), "Đã chết");
+            if (s.IsDead)
+            {
+                var dead = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 28, fontStyle = FontStyle.Bold };
+                GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Đã chết", dead);
+                dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
+                GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Bấm R để hồi sinh (giữ nguyên cơ quan)", dead);
+            }
 
             if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };
             if (Time.time < toastUntil)
@@ -100,9 +108,23 @@ namespace Evolve.Survival
             DrawBodyMenu();
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 420), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 500), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
+        }
+
+        void DrawTemperature(SurvivalState s)
+        {
+            float limit = s.HeatLimit(stats.Config);
+            bool hot = s.Temperature > limit;
+            bool cold = s.Temperature < stats.Config.ComfortMin;
+            Color c = hot ? new Color(1f, 0.25f, 0.15f)
+                : Color.Lerp(new Color(0.4f, 0.6f, 1f), new Color(1f, 0.6f, 0.2f), Mathf.InverseLerp(0f, 50f, s.Temperature));
+            string label = $"Nhiệt độ: {s.Temperature:0}°C (chịu nóng đến {limit:0}°C)";
+            if (hot) label += "  QUÁ NÓNG!";
+            else if (cold) label += "  QUÁ LẠNH!";
+            else if (s.Ambient > limit) label += "  đang nóng lên";
+            DrawBar(new Rect(20, 104, 200, 20), Mathf.InverseLerp(-10f, 60f, s.Temperature), c, label);
         }
 
         void DrawBodyMenu()

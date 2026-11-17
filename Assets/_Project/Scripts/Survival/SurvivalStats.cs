@@ -21,6 +21,7 @@ namespace Evolve.Survival
         void Awake()
         {
             if (config == null) config = ScriptableObject.CreateInstance<SurvivalConfig>();
+            state.Ambient = config.DefaultAmbient;
             state.Reset();
             state.Died += () => Debug.Log($"{name} died");
         }

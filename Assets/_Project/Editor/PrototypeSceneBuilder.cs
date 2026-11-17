@@ -98,7 +98,38 @@ namespace Evolve.EditorTools
             {
                 t.Organs.AddRange(new[] { eyes, legs, legsB, legsA });
             });
+            var membrane = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_HeatMembrane.asset", o =>
+            {
+                o.DisplayName = "Màng chịu nhiệt";
+                o.Description = "Lớp màng dày phản xạ nhiệt: chịu nóng thêm 20°C.";
+                o.Slot = OrganSlot.Skin;
+                o.Tier = OrganTier.C;
+                o.HeatResistance = 20f;
+                o.VisualPrefab = MembranePrefab(Mat("HeatMembrane", new Color(0.95f, 0.55f, 0.2f), "Universal Render Pipeline/Lit"));
+            });
+            var spikes = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_ToxicSpikes.asset", o =>
+            {
+                o.DisplayName = "Gai độc";
+                o.Description = "Gai nhọn trên lưng: kẻ nào cắn bạn sẽ bị đâm lại 15 sát thương.";
+                o.Slot = OrganSlot.Back;
+                o.Tier = OrganTier.B;
+                o.ContactDamage = 15f;
+                o.GrowthFoodRequired = 45f;
+                o.VisualPrefab = SpikesPrefab(Mat("Spike", new Color(0.45f, 0.2f, 0.55f), "Universal Render Pipeline/Lit"));
+            });
+            EnsureOrgans(preyDrops, membrane, spikes);
+            var predatorDrops = Asset<DropTableSO>(Root + "/ScriptableObjects/DropTable_Predator.asset", t =>
+            {
+                t.DropChance = 1f;
+                t.WeightC = 30f; t.WeightB = 40f; t.WeightA = 25f; t.WeightS = 5f;
+            });
+            EnsureOrgans(predatorDrops, eyes, legs, legsB, legsA, membrane, spikes);
+
             var preyPrefab = PreyPrefab(preyMat, preyDrops);
+            var predatorPrefab = PredatorPrefab(
+                Mat("Predator", new Color(0.35f, 0.15f, 0.3f), "Universal Render Pipeline/Lit"),
+                Mat("PredatorEye", new Color(1f, 0.15f, 0.1f), "Universal Render Pipeline/Lit"),
+                predatorDrops);
             var nutrientPrefab = NutrientPrefab(foodMat);
             var pulsePrefab = PulsePrefab(pulseMat);
 
@@ -123,11 +154,14 @@ namespace Evolve.EditorTools
             visual.GetComponent<Renderer>().sharedMaterial = slimeMat;
             Socket(visual.transform, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
             Socket(visual.transform, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
+            Socket(visual.transform, OrganSlot.Skin, Vector3.zero);
+            Socket(visual.transform, OrganSlot.Back, BackSocket);
 
             var host = slime.AddComponent<OrganHost>();
             slime.AddComponent<OrganInteractor>();
             var stats = slime.AddComponent<SurvivalStats>();
             Set(stats, "config", config);
+            slime.AddComponent<ClimateSensor>();
             var controller = slime.AddComponent<SlimeController>();
             Set(controller, "visual", visual.transform);
             var caster = slime.AddComponent<AbilityCaster>();
@@ -172,11 +206,121 @@ namespace Evolve.EditorTools
             var spawner = new GameObject("Prey Spawner").AddComponent<PreySpawner>();
             Set(spawner, "prefab", preyPrefab.GetComponent<Prey>());
 
+            // Desert: hot strip on the east edge with richer food and more predators
+            var desert = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            desert.name = "Desert";
+            Object.DestroyImmediate(desert.GetComponent<Collider>());
+            desert.transform.position = new Vector3(37.5f, 0.01f, 0f);
+            desert.transform.localScale = new Vector3(2.5f, 1f, 5f);
+            desert.GetComponent<Renderer>().sharedMaterial = Mat("Sand", new Color(0.85f, 0.72f, 0.45f), "Universal Render Pipeline/Lit");
+
+            var zoneGo = new GameObject("Desert Zone (50°C)");
+            zoneGo.transform.position = new Vector3(37.5f, 3f, 0f);
+            var zoneCol = zoneGo.AddComponent<BoxCollider>();
+            zoneCol.isTrigger = true;
+            zoneCol.size = new Vector3(25f, 6f, 50f);
+            var zone = zoneGo.AddComponent<TemperatureZone>();
+            zone.Ambient = 50f;
+            zone.DisplayName = "Hoang mạc";
+
+            var desertFood = new GameObject("Nutrients (Desert)").transform;
+            for (int i = 0; i < 12; i++)
+            {
+                var n = (GameObject)PrefabUtility.InstantiatePrefab(nutrientPrefab, desertFood);
+                n.transform.position = new Vector3(Mathf.Lerp(28f, 48f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-22f, 22f, (float)rng.NextDouble()));
+            }
+
+            // Predators: two in the desert, one roaming the far side of the plains
+            PredatorSpawnerAt("Predator Spawner (Desert)", new Vector3(38f, 0f, 0f), 2, 10f, predatorPrefab);
+            PredatorSpawnerAt("Predator Spawner (Plains)", new Vector3(-25f, 0f, 25f), 1, 10f, predatorPrefab);
+
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddToBuildSettings(ScenePath);
             AssetDatabase.SaveAssets();
             Selection.activeGameObject = slime;
-            Debug.Log("Đã dựng " + ScenePath + ". Bấm Play: WASD trườn, Space nảy, Q Dị Năng, giữ chuột phải xoay camera.");
+            Debug.Log("Đã dựng " + ScenePath + ". Bấm Play: WASD trườn, Space nảy, Q Dị Năng, giữ chuột phải xoay camera. Hoang mạc ở phía đông (x > 25).");
+        }
+
+        static readonly Vector3 BackSocket = new Vector3(0f, 0.3f, -0.25f);
+
+        static void PredatorSpawnerAt(string name, Vector3 pos, int count, float radius, GameObject prefab)
+        {
+            var go = new GameObject(name);
+            go.transform.position = pos;
+            var sp = go.AddComponent<PredatorSpawner>();
+            Set(sp, "prefab", prefab.GetComponent<Predator>());
+            var so = new SerializedObject(sp);
+            so.FindProperty("count").intValue = count;
+            so.FindProperty("radius").floatValue = radius;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>Add organs missing from a drop table (keeps the user's weights and existing entries).</summary>
+        static void EnsureOrgans(DropTableSO table, params OrganSO[] organs)
+        {
+            bool changed = false;
+            foreach (var o in organs)
+                if (o != null && !table.Organs.Contains(o)) { table.Organs.Add(o); changed = true; }
+            if (changed) EditorUtility.SetDirty(table);
+        }
+
+        static GameObject MembranePrefab(Material mat)
+        {
+            const string path = Root + "/Prefabs/Organ_HeatMembrane.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+
+            var root = new GameObject("Organ_HeatMembrane");
+            Part(PrimitiveType.Cylinder, "Band", root.transform, Vector3.zero, new Vector3(1.06f, 0.04f, 1.06f), mat);
+            Part(PrimitiveType.Cylinder, "BandTop", root.transform, new Vector3(0f, 0.22f, 0f), new Vector3(0.92f, 0.03f, 0.92f), mat);
+            Part(PrimitiveType.Cylinder, "BandLow", root.transform, new Vector3(0f, -0.22f, 0f), new Vector3(0.92f, 0.03f, 0.92f), mat);
+            return SavePrefab(root, path);
+        }
+
+        static GameObject SpikesPrefab(Material mat)
+        {
+            const string path = Root + "/Prefabs/Organ_ToxicSpikes.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+
+            var root = new GameObject("Organ_ToxicSpikes");
+            var offsets = new[]
+            {
+                new Vector3(0f, 0.08f, 0.05f), new Vector3(0.15f, 0f, 0.02f), new Vector3(-0.15f, 0f, 0.02f),
+                new Vector3(0.1f, -0.06f, -0.12f), new Vector3(-0.1f, -0.06f, -0.12f), new Vector3(0f, 0.02f, -0.1f)
+            };
+            foreach (var off in offsets)
+            {
+                var spike = Part(PrimitiveType.Capsule, "Spike", root.transform, off, new Vector3(0.05f, 0.12f, 0.05f), mat);
+                Vector3 outward = (BackSocket + off).normalized; // point away from body centre
+                spike.transform.localRotation = Quaternion.FromToRotation(Vector3.up, outward);
+            }
+            return SavePrefab(root, path);
+        }
+
+        static GameObject PredatorPrefab(Material body, Material eye, DropTableSO drops)
+        {
+            const string path = Root + "/Prefabs/Predator.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+
+            var root = new GameObject("Predator");
+            root.transform.position = new Vector3(0f, 0.35f, 0f);
+            var col = root.AddComponent<CapsuleCollider>();
+            col.direction = 2;
+            col.radius = 0.35f;
+            col.height = 1.3f;
+            col.center = new Vector3(0f, 0f, 0.1f);
+            root.AddComponent<Rigidbody>().isKinematic = true;
+            var predator = root.AddComponent<Predator>();
+            Set(predator, "drops", drops);
+
+            Part(PrimitiveType.Sphere, "Body", root.transform, Vector3.zero, new Vector3(0.7f, 0.55f, 1.1f), body);
+            var head = Part(PrimitiveType.Sphere, "Head", root.transform, new Vector3(0f, 0.1f, 0.6f), Vector3.one * 0.45f, body);
+            Part(PrimitiveType.Sphere, "Jaw", root.transform, new Vector3(0f, -0.05f, 0.8f), new Vector3(0.3f, 0.12f, 0.25f), body);
+            foreach (float x in new[] { -0.12f, 0.12f })
+                Part(PrimitiveType.Sphere, "Eye", head.transform, new Vector3(x / 0.45f, 0.35f, 0.35f), Vector3.one * 0.22f, eye);
+            return SavePrefab(root, path);
         }
 
         static void Socket(Transform parent, OrganSlot slot, Vector3 localPos)

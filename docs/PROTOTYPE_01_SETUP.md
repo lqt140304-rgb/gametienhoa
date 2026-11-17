@@ -15,6 +15,12 @@ Dựng xong, commit các file mới (scene, prefab, material, `.meta`) lên Git.
 
 Từ bản 0.2, scene có thêm **con mồi** (màu hồng, tạo bởi `Prey Spawner`). Bắt được con mồi thì nó rơi ra một cơ quan; chạm vào cơ quan để gắn mầm lên slime. Mầm lớn bằng thức ăn: mỗi cơ quan cần `Growth Food Required` (mặc định 30), một nửa mỗi bữa ăn nuôi cơ quan.
 
+### Bản 0.3: kẻ săn mồi, nhiệt độ, hoang mạc
+
+- **Kẻ săn mồi** (màu tím sẫm, mắt đỏ): 2 con trong hoang mạc, 1 con ở góc tây bắc đồng bằng. Phát hiện trong 7 m (chỉ 2.8 m nếu bạn đứng yên), đuổi tốc độ 1.4, mệt sau 6 giây. Cắn 15 máu và hất văng. Có 40 máu; bị **Gai độc** đâm lại hoặc bị **lao vào** nhanh (Dị Năng Q, nảy) thì mất máu. Hạ được: +35 thức ăn và chắc chắn rơi cơ quan theo `DropTable_Predator` (bậc cao dễ ra hơn).
+- **Nhiệt độ**: thân nhiệt dần theo nhiệt độ không khí. Đồng bằng 22°C, hoang mạc 50°C (vùng `Desert Zone`, phía đông, x > 25). Quá 35°C (+ khả năng chịu nóng của cơ quan) thì mất máu theo số độ vượt. Chỉnh trong `SurvivalConfigSO` (mục Temperature).
+- **Cơ quan mới**: Màng chịu nhiệt (C, Da, +20°C chịu nóng), Gai độc (B, Lưng, phản 15 sát thương).
+
 ### Bậc cơ quan và tỉ lệ rơi
 
 Cơ quan có bậc **C / B / A / S** (ô `Tier`), phát sáng theo màu bậc khi rơi ra. Con mồi rơi đồ theo `DropTable_Prey` trong `Assets/_Project/ScriptableObjects`:
@@ -71,6 +77,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | V | Bật/tắt mắt (thử nghiệm: xem màu, nhìn xa) |
 | H | Ẩn/hiện bảng hướng dẫn |
 | E | Chọn khi chạm vào cơ quan: lắp / thay thế / hấp thụ |
+| R | Hồi sinh khi chết (giữ nguyên cơ quan) |
 | X | Bỏ qua cơ quan |
 | G | Mở/đóng bảng Cơ thể; trong bảng bấm 1, 2… để tháo cơ quan (rơi ra đất) |
 

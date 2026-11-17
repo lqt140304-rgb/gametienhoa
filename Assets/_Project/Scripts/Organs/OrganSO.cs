@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Evolve.Organs
 {
     /// <summary>Where on the body an organ grows. One organ per slot.</summary>
-    public enum OrganSlot { Eyes, Legs }
+    public enum OrganSlot { Eyes, Legs, Skin, Back }
 
     /// <summary>
     /// Data for one evolvable organ. Effects are plain fields so new organs can be
@@ -31,5 +31,9 @@ namespace Evolve.Organs
         public bool GrantsSight;
         [Tooltip("Multiplies movement speed")]
         public float SpeedMultiplier = 1f;
+        [Tooltip("Extra °C of heat the body tolerates")]
+        public float HeatResistance;
+        [Tooltip("Damage dealt back to a creature that bites this body")]
+        public float ContactDamage;
     }
 }
