@@ -49,11 +49,13 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void ShelterZone_AnyActiveTracksEnabledZones()
         {
-            var go = new GameObject("shelter", typeof(BoxCollider), typeof(ShelterZone));
-            Assert.IsTrue(ShelterZone.AnyActive);
-            go.SetActive(false);
             Assert.IsFalse(ShelterZone.AnyActive);
-            Object.DestroyImmediate(go);
+            ShelterZone.Track(true);
+            Assert.IsTrue(ShelterZone.AnyActive);
+            ShelterZone.Track(false);
+            Assert.IsFalse(ShelterZone.AnyActive);
+            ShelterZone.Track(false); // double exit stays at zero
+            Assert.IsFalse(ShelterZone.AnyActive);
         }
 
         static (GameObject go, OrganHost host, Evolve.Survival.SurvivalStats stats, OrganSO organ) Body()
@@ -114,12 +116,12 @@ namespace Evolve.Tests.EditMode
         public void Resimulate_BlockedOutsideShelterWhenWorldHasShelter()
         {
             var (go, host, stats, organ) = Body();
-            var shelter = new GameObject("shelter", typeof(BoxCollider), typeof(ShelterZone));
+            ShelterZone.Track(true);
             host.Learn(organ);
             stats.State.EvolutionExp = 999f;
             Assert.AreEqual(ResimulateResult.Blocked, host.TryResimulate(organ, false));
             Assert.AreEqual(999f, stats.State.EvolutionExp);
-            Object.DestroyImmediate(shelter); Object.DestroyImmediate(go); Object.DestroyImmediate(organ);
+            ShelterZone.Track(false); Object.DestroyImmediate(go); Object.DestroyImmediate(organ);
         }
     }
 }

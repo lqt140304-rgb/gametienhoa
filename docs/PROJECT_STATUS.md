@@ -322,6 +322,13 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 9. **Co-op F2 (hai bản):** người B thấy dòng bệnh của A khi A bệnh; đứng cạnh người bệnh Thối Gel (dưới 3 m) một lúc thì có thể bị lây; chỉ Thối Gel lây.
 
 
+## 6.9. Bản 0.5e (bản mẫu và đổi cơ thể ở nơi trú): trạng thái và giới hạn
+
+- Gắn hoặc hấp thụ cơ quan là học bản mẫu; bản mẫu giữ khi cơ quan tan, bị tháo hoặc khi chết (trong phiên chơi, chưa lưu file; không đồng bộ co-op).
+- Menu G có mục "Bản mẫu đã học": mô phỏng lại tốn EXP bằng EXP hấp thụ cùng bậc (số đề xuất); ô đã có cơ quan thì cơ quan cũ bị thay (mất).
+- Gắn, thay, tháo chỉ ở trong nơi trú khi scene có `ShelterZone`; `Prototype_01` không đổi.
+- Chưa làm: vật liệu gel riêng cho cơ quan (hiện dùng `SlimeGelTint` sẵn có, thiếu chất chỉ co nhỏ tới 70%), vỏ riêng cho bản sao rơi, hành động bậc B, hình gel khác biệt từng loại (0.5f).
+
 ## 15. Danh sách kiểm tra thủ công 0.5e (cho chủ dự án)
 
 Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các test `OrganBlueprintTests`.
@@ -331,5 +338,5 @@ Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các 
 3. Trong nơi trú: gắn, thay, tháo và "Mô phỏng lại" đều chạy; mô phỏng lại trừ đúng EXP; thiếu EXP thì báo và không trừ.
 4. Cơ quan tan vì thiếu chất: bản mẫu vẫn còn trong danh sách.
 5. Chết hết mạng, chơi lại: bản mẫu còn; cơ quan đã rơi theo luật 50%.
-6. Cơ quan đói chất co nhỏ dần.
+6. Cơ quan đói chất co nhỏ dần (vật liệu gel riêng chưa làm).
 7. `Prototype_01` (không có nơi trú): gắn và tháo ở đâu cũng được như cũ.

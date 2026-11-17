@@ -15,8 +15,11 @@ namespace Evolve.World
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => active = 0;
 
-        void OnEnable() => active++;
-        void OnDisable() => active = Mathf.Max(0, active - 1);
+        void OnEnable() => Track(true);
+        void OnDisable() => Track(false);
+
+        /// <summary>Counts a shelter as present or gone (called by OnEnable/OnDisable; tests call it directly because EditMode never enables components).</summary>
+        public static void Track(bool on) => active = on ? active + 1 : Mathf.Max(0, active - 1);
 
         void Reset() => GetComponent<Collider>().isTrigger = true;
         void Awake() => GetComponent<Collider>().isTrigger = true;

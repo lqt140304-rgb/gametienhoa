@@ -115,7 +115,8 @@ namespace Evolve.Organs
             var st = stats != null ? stats : GetComponent<SurvivalStats>();
             bool dead = st != null && st.State.IsDead;
             if (!OrganRules.CanReshape(Evolve.World.ShelterZone.AnyActive, inShelter, dead)) return ResimulateResult.Blocked;
-            if (Check(organ) != AttachCheck.Ok) return ResimulateResult.Blocked;
+            var check = Check(organ);
+            if (check != AttachCheck.Ok && check != AttachCheck.SlotOccupied) return ResimulateResult.Blocked; // an occupied slot is replaced
             float cost = OrganRules.ResimulateCost(organ.Tier);
             if (st == null || st.State.EvolutionExp < cost) return ResimulateResult.NoExp;
             if (!TryAttach(organ)) return ResimulateResult.Blocked;
