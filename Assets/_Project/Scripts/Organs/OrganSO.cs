@@ -24,6 +24,11 @@ namespace Evolve.Organs
         [Tooltip("Model spawned on the slime's socket for this slot")]
         public GameObject VisualPrefab;
 
+        [Header("Nutrition")]
+        [Tooltip("Nutrient the body needs to equip this organ and keep it healthy. Auto = by slot: Eyes→Tinh Chất Sống, Legs→Sợi Nhầy, Skin→Mỡ Nhờn, Back→Tinh Vôi")]
+        public OrganNutrient NutrientNeed = OrganNutrient.Auto;
+        public Evolve.Survival.NutrientKind EffectiveNutrient => OrganNutrients.Resolve(NutrientNeed, Slot);
+
         [Header("Growth")]
         [Tooltip("Evolution EXP needed to grow from bud to full organ (Lv1). Lv2 costs the same again, Lv3 twice as much. 0 = instant.")]
         [FormerlySerializedAs("GrowthFoodRequired")]
