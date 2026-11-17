@@ -11,7 +11,7 @@ namespace Evolve.World
         /// A rock about 1 m wide: 80 flat-shaded triangles, lumpy, flattened below. `moss` gets a slightly larger copy of
         /// the upward-facing triangles (a cap of moss on top).
         /// </summary>
-        public static Mesh Rock(int seed, out Mesh moss)
+        public static Mesh Rock(int seed, out Mesh moss, float mossMinUp = 0.55f)
         {
             var verts = new List<Vector3>();
             var tris = new List<int>();
@@ -32,7 +32,7 @@ namespace Evolve.World
                 Vector3 a = shaped[tris[i]], b = shaped[tris[i + 1]], c = shaped[tris[i + 2]];
                 rockVerts.Add(a); rockVerts.Add(b); rockVerts.Add(c);
                 Vector3 n = Vector3.Cross(b - a, c - a).normalized;
-                if (n.y > 0.55f)
+                if (n.y > mossMinUp)
                 {
                     var lift = Vector3.up * 0.012f;
                     mossVerts.Add(a * 1.04f + lift); mossVerts.Add(b * 1.04f + lift); mossVerts.Add(c * 1.04f + lift);

@@ -93,3 +93,8 @@ Hình chữ nhật đen phẳng của Bãi Mùn Rễ ("Humus Ground") được �
 - **Nước nông là lòng chảo**: dưới mọi ao (trừ hốc sâu, đã có lòng chảo riêng) địa hình đào 0,65 m (nước đọng 0,25 m, suối 0,5 m), thoải dần lên bờ trong ~3 m, nên slime lội trong nước. Đào luôn tính từ mặt đất phẳng (lấy mức thấp hơn) nên chạy lại không đào sâu thêm.
 - **Không đặt gì trong chỗ trũng** (`LakeGround.Wet`): rêu, đá, cỏ, nấm, rễ, đường mòn và đá của suối nguồn.
 - **Mù thì tắt đồ phát sáng**: `DetailCulling` đọc `MonochromeVision.Sight`; đèn, vật liệu phát sáng, tia sáng và hạt mờ dần theo thị lực, tắt hẳn khi chưa có mắt.
+
+## Sửa gờ trong hồ, đốm sáng khi mù, đá suối nguồn (17/11)
+- **Gờ nổi giữa hồ**: các mặt nước chồng lên nhau (ao nguồn + suối, hố sâu) ở độ cao hơi khác nhau và sóng tính theo toạ độ riêng của từng mặt nên không khớp. Giờ mọi mặt nước dùng **một mực nước (y = 0,06) và một biên độ sóng (0,025)**, và sóng tính theo **toạ độ thế giới**, nên chỗ chồng lên nhau lên xuống cùng nhau.
+- **Mù thì ẩn hẳn đốm nấm** (màu gốc của chúng vẫn thấy được trong bóng tối); bụi bào tử nhỏ và mờ hơn (6 hạt/giây, tối đa 70, alpha 0,22).
+- **Đá suối nguồn** xám hơn, rêu chỉ phủ các mặt trên phẳng (`Rock(..., mossMinUp)`), rộng hơn cao; thác nước rộng 3,6 m và đậm hơn.

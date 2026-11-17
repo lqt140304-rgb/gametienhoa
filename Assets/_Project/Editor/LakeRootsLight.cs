@@ -257,12 +257,12 @@ namespace Evolve.EditorTools
             main.prewarm = true;
             main.startLifetime = 9f;
             main.startSpeed = 0.12f;
-            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.09f);
-            main.startColor = new Color(1f, 0.94f, 0.68f, 0.45f);
-            main.maxParticles = 120;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.055f);
+            main.startColor = new Color(1f, 0.94f, 0.68f, 0.22f);
+            main.maxParticles = 70;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             var emission = ps.emission;
-            emission.rateOverTime = 12f;
+            emission.rateOverTime = 6f;
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(radius * 1.6f, 6f, radius * 1.6f);

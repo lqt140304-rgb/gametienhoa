@@ -61,7 +61,7 @@ namespace Evolve.EditorTools
                     var local = new Vector2[world.Length];
                     for (int i = 0; i < world.Length; i++) local[i] = world[i] - centre;
                     var go = MakeSurface(zone.transform, new Vector3(b.center.x, 0.06f, b.center.z), WaterShape.Stream,
-                        new Vector2(longSide, halfWidth * 2f), zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
+                        new Vector2(longSide, halfWidth * 2f), zone.Clean ? clean : dirty, 0.025f);
                     var s = go.GetComponent<WaterSurface>();
                     s.StreamPath = local;
                     s.StreamHalfWidth = halfWidth;
@@ -70,12 +70,12 @@ namespace Evolve.EditorTools
                     LakeLayout.StreamEnds(a, e, out Vector2 source, out Vector2 flow);
                     float poolRadius = Mathf.Max(4.5f, halfWidth * 1.9f);
                     MakeSurface(zone.transform, new Vector3(source.x, 0.06f, source.y), WaterShape.Disc, new Vector2(poolRadius, 0f),
-                        zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
+                        zone.Clean ? clean : dirty, 0.025f);
                     made++;
                     continue;
                 }
                 MakeSurface(zone.transform, new Vector3(b.center.x, 0.06f, b.center.z), WaterShape.Rect,
-                    new Vector2(b.size.x, b.size.z), zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
+                    new Vector2(b.size.x, b.size.z), zone.Clean ? clean : dirty, 0.025f);
                 made++;
             }
 
@@ -87,7 +87,7 @@ namespace Evolve.EditorTools
                 var r = pool.GetComponent<Renderer>();
                 if (r != null) r.enabled = false;
                 MakeSurface(pool.transform.parent != null ? pool.transform.parent : pool.transform,
-                    new Vector3(pool.transform.position.x, 0.05f, pool.transform.position.z), WaterShape.Disc, new Vector2(radius, 0f), life, 0.03f);
+                    new Vector3(pool.transform.position.x, 0.06f, pool.transform.position.z), WaterShape.Disc, new Vector2(radius, 0f), life, 0.025f);
                 made++;
             }
 
@@ -104,7 +104,7 @@ namespace Evolve.EditorTools
                     var r = darkness.GetComponent<Renderer>();
                     if (r != null) r.enabled = false;
                 }
-                MakeSurface(t, new Vector3(t.position.x, 0.04f, t.position.z), WaterShape.Disc, new Vector2(radius, 0f), deep, 0.02f);
+                MakeSurface(t, new Vector3(t.position.x, 0.06f, t.position.z), WaterShape.Disc, new Vector2(radius, 0f), deep, 0.025f);
                 made++;
                 deepPockets.Add((new Vector2(t.position.x, t.position.z), radius, t));
             }

@@ -320,10 +320,14 @@ namespace Evolve.World
             if (Time.time < nextUpdate) return;
             nextUpdate = Time.time + 0.05f;
             float t = clock;
+            var origin = new Vector2(transform.position.x, transform.position.z);
             for (int i = 0; i < basePos.Length; i++)
             {
                 Vector3 p = basePos[i];
-                float y = Mathf.Sin(p.x * 0.9f + t * 1.3f) + 0.6f * Mathf.Sin(p.z * 1.3f - t * 1.1f + 1.7f) + 0.4f * Mathf.Sin((p.x + p.z) * 0.6f + t * 0.7f);
+                // Waves depend on the WORLD position, so two ponds that overlap rise and fall exactly together
+                // (no ridge where they meet).
+                float wx = p.x + origin.x, wz = p.z + origin.y;
+                float y = Mathf.Sin(wx * 0.9f + t * 1.3f) + 0.6f * Mathf.Sin(wz * 1.3f - t * 1.1f + 1.7f) + 0.4f * Mathf.Sin((wx + wz) * 0.6f + t * 0.7f);
                 p.y = y * WaveHeight;
                 work[i] = p;
             }
