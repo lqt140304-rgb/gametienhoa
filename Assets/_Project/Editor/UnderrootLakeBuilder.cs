@@ -109,7 +109,7 @@ namespace Evolve.EditorTools
             // ---- Regions: one per populated biome (population numbers live per region) ----
             var humusRegion = MakeRegion("Region (Bai Mun Re)", ZoneLayout.Humus, 90f, d);
             var sporeRegion = MakeRegion("Region (Vuon Bao Tu)", ZoneLayout.Spore, 90f, d, c);
-            var edgeRegion = MakeRegion("Region (Ria San Moi)", ZoneLayout.HuntEdge, 140f, d, c, b) // wide deactivate radius so the hunter does not vanish while chasing;
+            var edgeRegion = MakeRegion("Region (Ria San Moi)", ZoneLayout.HuntEdge, 140f, d, c, b); // wide deactivate radius so the hunter does not vanish while chasing
 
             // ---- Vũng Sinh Mệnh (life pool) ----
             var pool = new GameObject("Vung Sinh Menh (Life Pool)").transform;

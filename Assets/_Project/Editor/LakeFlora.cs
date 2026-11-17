@@ -106,9 +106,8 @@ namespace Evolve.EditorTools
             }
 
             // 3) scattered over the flat ground
-            for (int i = 0; i < 18; i++)
-                Mushroom(new Vector2(Mathf.Lerp(-58f, 58f, (float)rnd.NextDouble()), Mathf.Lerp(-58f, 58f, (float)rnd.NextDouble())),
-                    0.5f + (float)rnd.NextDouble() * 1.8f, rnd.Next(3));
+            foreach (var p in LakeLayout.Scatter(18, rnd))   // over the core and every biome pad of the layout
+                Mushroom(p, 0.5f + (float)rnd.NextDouble() * 1.8f, rnd.Next(3));
 
             var capColours = new[] { new Color(0.62f, 0.42f, 0.82f), new Color(0.92f, 0.46f, 0.44f), new Color(0.28f, 0.72f, 0.68f) };
             LakeGround.AddCombined(root, "Mushroom Stalks", stalks, LakeGround.OpaqueMaterial("Lake_MushroomStalk", new Color(0.88f, 0.85f, 0.75f), 0.3f, false));
@@ -117,11 +116,8 @@ namespace Evolve.EditorTools
             LakeGround.AddCombined(root, "Mushroom Spots", spots, LakeGround.OpaqueMaterial("Lake_MushroomSpot", new Color(0.95f, 0.98f, 0.9f), 0.2f, false, new Color(0.7f, 0.85f, 0.7f)));
 
             // ---------------------------------------------------------------- hanging vines
-            var tops = new List<Vector3>();
-            var ceiling = GameObject.Find("Root Ceiling");
-            if (ceiling != null) foreach (Transform t in ceiling.transform) tops.Add(t.position);
-            if (tops.Count == 0)
-                for (int i = 0; i < 8; i++) tops.Add(new Vector3(Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble()), 20f, Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble())));
+            // Vines hang from the lower end of the hanging roots of the scene (or the old ceiling roots).
+            var tops = LakeLayout.HangingPoints(rnd);
 
             var vines = new List<CombineInstance>();
             var leaves = new List<CombineInstance>();
@@ -134,7 +130,7 @@ namespace Evolve.EditorTools
                 {
                     var start = top + new Vector3(((float)rnd.NextDouble() - 0.5f) * 5f, -0.5f, ((float)rnd.NextDouble() - 0.5f) * 5f);
                     float bottom = 1.5f + (float)rnd.NextDouble() * 6f;
-                    float length = Mathf.Max(3f, start.y - bottom);
+                    float length = Mathf.Clamp(start.y - bottom, 3f, 24f); // long vines stop short of the ground in a tall cave
                     var path = FloraMeshes.VinePath(start, length, ++seed, 1.1f, 14);
                     var radii = new float[path.Length];
                     for (int i = 0; i < radii.Length; i++) radii[i] = Mathf.Lerp(0.07f, 0.025f, i / (float)(radii.Length - 1));

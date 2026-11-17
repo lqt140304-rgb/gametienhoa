@@ -48,9 +48,8 @@ namespace Evolve.EditorTools
                     AddMoss(mossInstances, p, 1.4f + (float)rnd.NextDouble() * 2.2f, ++seed);
                 }
             }
-            for (int i = 0; i < 14; i++)
+            foreach (var p in LakeLayout.Scatter(14, rnd))    // over the core and every biome pad of the layout
             {
-                var p = new Vector2(Mathf.Lerp(-58f, 58f, (float)rnd.NextDouble()), Mathf.Lerp(-58f, 58f, (float)rnd.NextDouble()));
                 if (OnWater(ponds, p)) continue;
                 AddMoss(mossInstances, p, 3f + (float)rnd.NextDouble() * 3f, ++seed);
             }
@@ -83,8 +82,8 @@ namespace Evolve.EditorTools
                     if (rnd.NextDouble() < 0.4) PlaceRock(p + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * 1.6f, 0.2f + (float)rnd.NextDouble() * 0.35f);
                 }
             }
-            for (int i = 0; i < 26; i++)
-                PlaceRock(new Vector2(Mathf.Lerp(-58f, 58f, (float)rnd.NextDouble()), Mathf.Lerp(-58f, 58f, (float)rnd.NextDouble())), 0.4f + (float)rnd.NextDouble() * 1.1f);
+            foreach (var p in LakeLayout.Scatter(26, rnd))
+                PlaceRock(p, 0.4f + (float)rnd.NextDouble() * 1.1f);
             AddCombined(root, "Rocks", rockInstances, OpaqueMaterial("Lake_Rock", new Color(0.40f, 0.41f, 0.39f), 0.15f, false));
             AddCombined(root, "Rock Moss", capInstances, OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
 
@@ -102,8 +101,8 @@ namespace Evolve.EditorTools
                     for (int j = 0; j < 2; j++)
                         PlaceTuft(outline[k] + Outward(outline, k) * (0.9f + (float)rnd.NextDouble() * 4.5f) + RandomOffset(rnd, 0.8f));
             }
-            for (int i = 0; i < 260; i++)
-                PlaceTuft(new Vector2(Mathf.Lerp(-60f, 60f, (float)rnd.NextDouble()), Mathf.Lerp(-60f, 60f, (float)rnd.NextDouble())));
+            foreach (var p in LakeLayout.Scatter(260, rnd))
+                PlaceTuft(p);
             var grassColors = new[] { new Color(0.32f, 0.58f, 0.22f), new Color(0.42f, 0.68f, 0.26f), new Color(0.26f, 0.48f, 0.24f) };
             for (int g = 0; g < 3; g++)
                 AddMesh(root, "Grass " + g, GroundMeshes.Tufts(tufts[g], 900 + g, 0.45f), OpaqueMaterial("Lake_Grass" + g, grassColors[g], 0.1f, true));
