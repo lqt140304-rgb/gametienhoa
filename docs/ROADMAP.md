@@ -28,5 +28,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Con mồi nhanh hơn (1.6); cơ quan lớn bằng thức ăn: mỗi cơ quan cần 30 thức ăn, một nửa mỗi bữa ăn nuôi cơ quan (cả bữa nếu đã no)
 - [x] Chơi thử lại 0.2: con mồi tăng lên 1.8
 - [x] Bảng chọn khi chạm cơ quan: lắp, thay thế, hấp thụ, bỏ qua; cơ quan bị thay rơi ra đất; bảng Cơ thể (G) để tự tháo
-- [ ] Chơi thử bảng chọn cơ quan
+- [x] Chơi thử bảng chọn cơ quan
+- [x] Bậc cơ quan C/B/A/S và bảng rơi đồ (DropTable) có tỉ lệ theo bậc; thêm Chân giả cơ bắp (B), Chân chạy (A)
+- [ ] Chơi thử tỉ lệ rơi
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

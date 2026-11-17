@@ -25,6 +25,9 @@ namespace Evolve.Creatures
         [Tooltip("Seconds it must rest when tired")]
         [SerializeField] float restTime = 1.5f;
         [SerializeField] float nutrition = 15f;
+        [Tooltip("What this creature drops when caught")]
+        [SerializeField] DropTableSO drops;
+        [Tooltip("Legacy list (used only if Drops is empty): uniform random, always drops")]
         [SerializeField] OrganSO[] dropTable;
 
         /// <summary>Area it stays inside (set by the spawner).</summary>
@@ -119,9 +122,10 @@ namespace Evolve.Creatures
             Destroy(gameObject);
         }
 
-        /// <summary>Random organ from the table that the catcher does not own yet.</summary>
+        /// <summary>Roll the drop table, skipping organs the catcher already owns.</summary>
         OrganSO PickDrop(OrganHost host)
         {
+            if (drops != null) return drops.Roll(o => host == null || !host.Has(o));
             if (dropTable == null) return null;
             var options = new List<OrganSO>();
             foreach (var o in dropTable)

@@ -28,6 +28,12 @@ namespace Evolve.Organs
                 var v = Instantiate(organ.VisualPrefab, go.transform, false);
                 v.transform.localScale *= 1.5f;
             }
+            // Glow in the tier colour so rare drops stand out.
+            var light = go.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = OrganTiers.Color(organ.Tier);
+            light.range = 2.5f;
+            light.intensity = 1.5f + (int)organ.Tier;
             return pickup;
         }
 
