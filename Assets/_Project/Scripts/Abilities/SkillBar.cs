@@ -22,6 +22,16 @@ namespace Evolve.Abilities
         SurvivalStats stats;
         OrganHost host;
 
+        /// <summary>Why the last skill key press did nothing (empty after a success). The HUD shows it for a moment.</summary>
+        public string FailureReason { get; private set; } = "";
+        public float FailureTime { get; private set; } = -10f;
+
+        void Fail(string reason)
+        {
+            FailureReason = reason;
+            FailureTime = Time.time;
+        }
+
         /// <summary>Raised when a skill unlocks and is put in a slot (organ, slot index).</summary>
         public event Action<OrganSO, int> SkillUnlocked;
 
@@ -81,9 +91,14 @@ namespace Evolve.Abilities
         void Update()
         {
             Sync();
-            if (stats.State.IsDead || SurvivalHUD.BlocksInput(gameObject)) return;
+            int pressed = -1;
             for (int i = 0; i < SlotCount; i++)
-                if (KeyPressed.Digit(i + 1)) { Use(i); break; }
+                if (KeyPressed.Digit(i + 1)) { pressed = i; break; }
+            if (pressed < 0) return;
+
+            if (stats.State.IsDead) { Fail("đang chết"); return; }
+            if (SurvivalHUD.BlocksInput(gameObject)) { Fail("đang mở một menu (bấm Esc để đóng)"); return; }
+            Use(pressed);
         }
 
         /// <summary>Drop skills whose organ is gone and put newly unlocked ones in the first free slot.</summary>
@@ -105,16 +120,25 @@ namespace Evolve.Abilities
         void Use(int slot)
         {
             var organ = slots[slot];
-            if (organ == null) return;
+            if (organ == null) { Fail($"ô {slot + 1} trống (cần cơ quan bậc B lên Lv2)"); return; }
             var ability = organ.GrantedAbility;
             int level = host.GetLevel(organ);
 
-            if (readyAt.TryGetValue(organ, out float t) && Time.time < t) return;
-            if (stats.State.Energy < ability.EnergyCost) return;
-            if (!ability.Activate(gameObject, level)) return;
+            if (readyAt.TryGetValue(organ, out float t) && Time.time < t)
+            {
+                Fail($"{ability.DisplayName} đang hồi chiêu ({t - Time.time:0.0}s)");
+                return;
+            }
+            if (stats.State.Energy < ability.EnergyCost)
+            {
+                Fail($"thiếu năng lượng cho {ability.DisplayName} ({stats.State.Energy:0}/{ability.EnergyCost:0})");
+                return;
+            }
+            if (!ability.Activate(gameObject, level)) { Fail($"{ability.DisplayName} không dùng được lúc này"); return; }
 
             stats.State.TrySpendEnergy(ability.EnergyCost);
             readyAt[organ] = Time.time + ability.CooldownFor(level);
+            FailureReason = "";
         }
     }
 }
