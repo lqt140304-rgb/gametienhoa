@@ -11,8 +11,13 @@ namespace Evolve.Organs
     /// received its GrowthFoodRequired. Visual size and effects scale with growth.
     /// Sockets are found among children automatically.
     /// </summary>
+    /// <summary>Result of asking whether an organ can be attached.</summary>
+    public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom }
+
     public class OrganHost : MonoBehaviour
     {
+        [Tooltip("Max number of organs the body can hold (0 = unlimited, one per slot)")]
+        [SerializeField] int maxOrgans = 0;
         [Tooltip("Share of each meal that feeds growing organs (the rest fills hunger). When hunger is full, everything goes to organs.")]
         [Range(0, 1)] [SerializeField] float growthShare = 0.5f;
         [Tooltip("How fast the visual catches up with real growth (per second)")]
@@ -44,6 +49,8 @@ namespace Evolve.Organs
         public event Action<OrganSO> Attached;
         /// <summary>Raised when an organ finishes growing.</summary>
         public event Action<OrganSO> Completed;
+        /// <summary>Raised when an organ is detached (removed or replaced).</summary>
+        public event Action<OrganSO> Removed;
         /// <summary>Raised whenever the combined effects change.</summary>
         public event Action Changed;
 
@@ -59,6 +66,23 @@ namespace Evolve.Organs
 
         public bool Has(OrganSO organ) => organ != null && organs.TryGetValue(organ.Slot, out var e) && e.Organ == organ;
 
+        /// <summary>The organ currently in a slot, or null.</summary>
+        public OrganSO GetInSlot(OrganSlot slot) => organs.TryGetValue(slot, out var e) ? e.Organ : null;
+
+        public int Count => organs.Count;
+        /// <summary>Owned organs in the order they were attached.</summary>
+        public List<OrganSO> OrganList => order.ConvertAll(e => e.Organ);
+        public int MaxOrgans => maxOrgans;
+
+        /// <summary>What would happen if this organ were attached.</summary>
+        public AttachCheck Check(OrganSO organ)
+        {
+            if (Has(organ)) return AttachCheck.AlreadyOwned;
+            if (organs.ContainsKey(organ.Slot)) return AttachCheck.SlotOccupied;
+            if (maxOrgans > 0 && organs.Count >= maxOrgans) return AttachCheck.NoRoom;
+            return AttachCheck.Ok;
+        }
+
         /// <summary>Growth 0..1 of the organ, or -1 if not owned.</summary>
         public float GetGrowth(OrganSO organ) => Has(organ) ? organs[organ.Slot].Growth : -1f;
 
@@ -68,13 +92,11 @@ namespace Evolve.Organs
         /// <summary>Attach (or replace) the organ in its slot as a bud. Returns false if already owned.</summary>
         public bool TryAttach(OrganSO organ)
         {
-            if (organ == null || Has(organ)) return false;
+            if (organ == null) return false;
+            var check = Check(organ);
+            if (check == AttachCheck.AlreadyOwned || check == AttachCheck.NoRoom) return false;
 
-            if (organs.TryGetValue(organ.Slot, out var old))
-            {
-                if (old.Visual != null) Destroy(old.Visual);
-                order.Remove(old);
-            }
+            if (organs.ContainsKey(organ.Slot)) Detach(organ.Slot);
 
             var entry = new Entry { Organ = organ };
             if (organ.VisualPrefab != null)
@@ -91,6 +113,18 @@ namespace Evolve.Organs
             Attached?.Invoke(organ);
             CheckDone(entry);
             return true;
+        }
+
+        /// <summary>Remove the organ in a slot (its growth is lost). Returns it, or null if empty.</summary>
+        public OrganSO Detach(OrganSlot slot)
+        {
+            if (!organs.TryGetValue(slot, out var e)) return null;
+            if (e.Visual != null) Destroy(e.Visual);
+            organs.Remove(slot);
+            order.Remove(e);
+            Recalculate();
+            Removed?.Invoke(e.Organ);
+            return e.Organ;
         }
 
         /// <summary>FoodFilter: split a meal between growing organs and hunger.</summary>
