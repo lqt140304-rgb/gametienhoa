@@ -81,6 +81,30 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 - Mỗi cấp trên 1 tăng hiệu ứng +25% (`levelBonus`). Mắt cấp 2–3 nhìn xa hơn.
 - EXP chưa chi được **giữ khi chết**; cơ quan rơi ra thì mất cấp và tiến độ.
 
+## 4.5. Quyết định từ Bestiary (2026-11-17) [ĐÃ CHỐT]
+
+Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năng quái, 29 loài) nằm trong `docs/BESTIARY.md` (đang ở nhánh `docs/bestiary`, chưa vào `main`). Đây là các điểm chủ dự án **đã chốt** ở đó; phần còn lại của Bestiary vẫn là đề xuất. Hiện chỉ làm phần **cơ chế**; phần **thế giới** (bestiary theo vùng, sinh thái) giữ là nháp.
+
+**Cơ quan và kỹ năng**
+- **12 vị trí cơ quan**, mỗi vị trí **1 cơ quan** (kể cả Tuyến). Số vị trí dùng được cùng lúc tùy kích thước slime: nhỏ khoảng 4, lớn tối đa khoảng 8, nên không ai lắp đủ 12. Quy tắc kích thước → số khe: **[MỞ]**.
+- Cơ quan khi lên cấp mở thêm **kỹ năng chủ động**, không chỉ hiệu ứng bị động. Người chơi có **5 ô kỹ năng**, bấm phím **1–5**, tự chọn kỹ năng đặt vào ô nào. Dị Năng khởi đầu (phím Q) là **ô riêng**, không chiếm trong 5 ô này.
+- **Cơ quan bậc C không có kỹ năng chủ động**, chỉ có hiệu ứng bị động; kỹ năng chủ động bắt đầu từ **bậc B**. Bốn kỹ năng gắn cơ quan C (Hút ẩm xung quanh, Rụng đuôi thoát thân, Phun bào tử, Rụt mai) đã nâng lên "bậc từ B". **[MỞ]** Nhảy vọt, Lặn cát, Pheromone báo động cần nâng tương tự; khi có hơn 5 kỹ năng thì chọn vào ô ở đâu (bảng Cơ thể G?).
+- **[ĐỀ XUẤT]** Lv1 chỉ bị động; Lv2 mở kỹ năng; Lv3 nâng cấp kỹ năng (tầm, thời gian, hồi chiêu) cùng +25% bị động.
+
+**Quái vật**
+- **Boss là bậc riêng**, tách khỏi S. S là sinh vật sống trong hệ sinh thái; Boss là trận đánh có giai đoạn, hang ổ riêng.
+- Giữ đủ **6 cấp trong bậc**: Thường, Con non, Đầu đàn (Alpha), Tinh anh, Biến dị, Chúa. Quái **Biến dị** chỉ mang cơ quan của vùng mà bầy đã từng đến.
+- Bảng trọng số rơi theo bậc quái (Bestiary mục 3.2) được **giữ làm mốc chơi thử**, chỉnh theo dữ liệu chơi thật.
+- **Bỏ Chân chạy (A) khỏi bảng rơi của con mồi C**; nguồn đúng là đầu đàn Hươu Sừng Rung. Code phải sửa (xem `PROJECT_STATUS.md`). **[MỞ]** Có siết bảng rơi của kẻ săn mồi cho khớp mục 3.2 không (code đang 30/40/25/5, còn bảng B trong Bestiary là 45/48/7/0).
+- Hai loài đang có trong code có tên chính thức: con mồi = **Bọ Nhảy Cỏ**, kẻ săn mồi = **Sói Gai**. Sói Gai hiện là đơn độc lãnh thổ; "bầy săn 3–5 con" mới là đề xuất.
+- Tuyến chỉ gắn 1 cơ quan như mọi vị trí; "build hóa học" là vai trò được chia trong bầy.
+
+**Co-op**
+- Máu quái **A, S và Boss** nhân theo số người trong vùng: `HP = HP gốc × (0.6 + 0.2 × số người)` (4 người ×1.4, 8 người ×2.2). Quái C/B không nhân vì chúng là thức ăn.
+- **Ăn xác người chơi:** loài ăn xác tìm tới xác người chơi đã **chết hẳn** (hết 120 giây cứu, mục 6.1; trong 120 giây đó đồ vẫn nằm trên xác), ăn dần, mỗi **~5 giây mất 1 cơ quan** (cộng với luật 50% mất). Đồng đội cần đuổi loài ăn xác đi trước khi nhặt đồ.
+
+**Còn hoãn (thuộc phần thế giới):** quái thích nghi theo loại sát thương người chơi dùng, bật từ đầu hay để sau; đặt tên riêng cho từng loài hay giữ tên mô tả sinh học.
+
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
 **[ĐÃ CHỐT]** Máu; thanh đói; thanh năng lượng; thanh kinh nghiệm tiến hóa; thanh nhiệt độ.

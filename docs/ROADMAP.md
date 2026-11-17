@@ -32,5 +32,13 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Bậc cơ quan C/B/A/S và bảng rơi đồ (DropTable) có tỉ lệ theo bậc; thêm Chân giả cơ bắp (B), Chân chạy (A)
 - [x] Chơi thử tỉ lệ rơi
 - [x] Code 0.3: kẻ săn mồi (tuần tra, đuổi, cắn, mệt; khó phát hiện khi đứng yên), nhiệt độ cơ thể, vùng hoang mạc 50°C, Màng chịu nhiệt (C), Gai độc (B), bảng rơi riêng của kẻ săn mồi, hồi sinh bằng R
-- [ ] Chơi thử 0.3
+- [x] Chơi thử 0.3
+- [x] Mạng sống (3 mạng); chết thì cơ quan rơi tại chỗ, mỗi cái 50% mất
+- [x] Menu God (F1) để thử nghiệm
+- [x] EXP tiến hóa (ăn ít, hấp thụ cơ quan nhiều), cấp cơ quan đến Lv3, chi EXP chủ động và ưu tiên tự động
+- [x] Nút quét rung (C) thay cho chấm sáng tự động; vùng nhìn quanh nhân vật khi chưa có mắt
+- [x] Bestiary v0.1 (nhánh `docs/bestiary`): chốt cơ chế kỹ năng cơ quan, 12 vị trí, bậc quái, HP theo số người (xem `GAME_DESIGN.md` mục 4.5)
+- [ ] Sửa bảng rơi con mồi: bỏ Chân chạy (A) (đã chốt trong Bestiary)
+- [ ] Gộp `Prey`/`Predator` vào `Creature` + `CreatureSO` (Bestiary mục 8), trước khi làm co-op
+- [ ] 5 ô kỹ năng gắn cơ quan (phím 1–5), kỹ năng chủ động từ cơ quan bậc B
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

@@ -23,7 +23,7 @@ Game **sinh tồn tiến hóa 3D low poly, co-op 4–8 người**, làm bằng *
 | `docs/GDD.md` | Bản thiết kế cũ | Cũ hơn `GAME_DESIGN.md` |
 | `docs/ROADMAP.md` | Lộ trình 0.1 → 0.5 và checklist | |
 | `docs/PROTOTYPE_01_SETUP.md` | Cách dựng scene, bảng phím, cách chỉnh thông số | |
-| `docs/BESTIARY.md` | Danh sách sinh vật | Nằm ở nhánh `docs/bestiary`, do phiên khác soạn |
+| `docs/BESTIARY.md` | Bestiary: 12 vị trí, 54 cơ quan, tier quái, kiểu xã hội, kỹ năng quái, 29 loài theo vùng, ánh xạ vào code | Nằm ở nhánh `docs/bestiary` (chưa vào `main`), do chủ dự án và một phiên khác soạn. **Điểm đã chốt đã được chép vào `GAME_DESIGN.md` mục 4.5**; phần còn lại là đề xuất |
 
 **Quyết định thiết kế đã chốt** (chi tiết trong `GAME_DESIGN.md`):
 - Tạo nhân vật: rút ngẫu nhiên 1 Dị Năng chủ động; chọn 1 Thiên Phú trong 3; chọn 1 Khiếm Khuyết trong 3 (vĩnh viễn).
@@ -114,6 +114,17 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 - `README.md` vẫn ghi "chưa có project Unity", cần cập nhật (kèm dòng phiên bản `6000.6.9f1`).
 - HUD là IMGUI tạm, sau này thay bằng UI Toolkit.
 - Chủ dự án có thể chưa commit bản scene mới nhất sau khi dựng lại; nếu thấy scene lệch với code, bảo họ dựng lại.
+
+## 6.1. Từ Bestiary: các việc code đã được chốt hoặc gợi ý
+
+Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho code (chưa làm):
+
+- **Sửa nhỏ, đã chốt:** bỏ Chân chạy (A) khỏi `DropTable_Prey` (nguồn đúng là đầu đàn Hươu Sừng Rung). Là asset chủ dự án có thể đã chỉnh, nên sửa file YAML sau khi `pull`, hoặc dùng Menu God/Inspector.
+- **5 ô kỹ năng** gắn cơ quan (phím 1–5, `KeyPressed.Digit` có sẵn nhưng chưa dùng), tách khỏi Dị Năng Q (`AbilityCaster` giữ đúng 1). Cơ quan bậc C không có kỹ năng; từ B trở lên mới có `AbilitySO` được cấp. Cần thêm trường vào `OrganSO` (ví dụ `AbilitySO GrantedAbility`).
+- **HP quái theo số người** (A, S, Boss): `HP = gốc × (0.6 + 0.2 × số người trong vùng)`; chỉ cần khi làm co-op.
+- **Ăn xác** (~5 giây mất 1 cơ quan) cần xác người chơi chết hẳn, cũng thuộc co-op.
+- **Gợi ý thứ tự của Bestiary mục 8** (chủ dự án chưa duyệt, và chưa chọn giữa co-op và BIS): trước co-op nên gộp `Prey`/`Predator` thành một `Creature` đọc `CreatureSO` (giữ đúng thông số hiện tại), rồi thêm bầy Sói Gai (Alpha, hú gọi) và vài loài hoang mạc; sau đó 5 ô kỹ năng, BIS cho mắt/chân/giáp, và boss đầu tiên (Mẹ Bầy Ngàn Chân). Lý do: Netcode chỉ phải đồng bộ một lớp quái.
+- **Còn mở (cần hỏi chủ dự án):** quy tắc kích thước → số khe cơ quan; chọn kỹ năng vào ô khi có hơn 5; siết bảng rơi kẻ săn mồi theo mục 3.2; nâng Nhảy vọt, Lặn cát, Pheromone lên bậc B.
 
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
