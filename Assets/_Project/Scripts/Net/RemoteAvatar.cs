@@ -63,7 +63,7 @@ namespace Evolve.Net
             var shared = FindSlimeMaterial();
             var mat = shared != null ? new Material(shared) : renderer.material;
             Color tint = Color.HSVToRGB((clientId * 0.37f) % 1f, 0.45f, 0.95f);
-            tint.a = 0.5f; // gel stays translucent
+            tint.a = 0.8f; // gel stays translucent
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", tint); else mat.color = tint;
             renderer.sharedMaterial = mat;
 

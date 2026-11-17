@@ -12,7 +12,7 @@ namespace Evolve.Visuals
         public const float Bottom = -0.45f;
         public const float Top = 0.28f;
 
-        /// <summary>Flat-shaded, slightly irregular dome with a soft skirt (80 triangles).</summary>
+        /// <summary>Flat-shaded, irregular dome with a lobed, spreading skirt (320 triangles).</summary>
         public static Mesh Build(int seed = 7)
         {
             var verts = new List<Vector3>();
@@ -28,7 +28,11 @@ namespace Evolve.Visuals
             {
                 Vector3 v = verts[i];
                 float skirt = v.y < 0f ? 1.1f : 1f;
-                float radial = 0.5f * skirt * (1f + 0.07f * bump[i]);
+                // Lobes near the ground: the gel pools out unevenly, like a spreading puddle.
+                float low = Mathf.Clamp01(1f - v.y * 2.2f);
+                float a = Mathf.Atan2(v.z, v.x);
+                float lobes = low * (0.07f * Mathf.Sin(3f * a + seed) + 0.045f * Mathf.Sin(5f * a + 1.7f));
+                float radial = 0.5f * skirt * (1f + lobes + 0.05f * bump[i]);
                 float y = v.y >= 0f ? Bottom + v.y * (Top - Bottom) : Bottom;
                 shaped[i] = new Vector3(v.x * radial, y, v.z * radial);
             }
@@ -85,14 +89,21 @@ namespace Evolve.Visuals
                 3,9,4, 3,4,2, 3,2,6, 3,6,8, 3,8,9, 4,9,5, 2,4,11, 6,2,10, 8,6,7, 9,8,1
             };
 
-            // One subdivision step: 20 -> 80 triangles. Winding is kept (outward facing).
-            var cache = new Dictionary<long, int>();
-            for (int f = 0; f < faces.Length; f += 3)
+            // Two subdivision steps: 20 -> 80 -> 320 triangles.
+            var current = new List<int>(faces);
+            for (int step = 0; step < 2; step++)
             {
-                int a = faces[f], b = faces[f + 1], c = faces[f + 2];
-                int ab = Mid(verts, cache, a, b), bc = Mid(verts, cache, b, c), ca = Mid(verts, cache, c, a);
-                tris.AddRange(new[] { a, ab, ca, b, bc, ab, c, ca, bc, ab, bc, ca });
+                var cache = new Dictionary<long, int>();
+                var next = new List<int>(current.Count * 4);
+                for (int f = 0; f < current.Count; f += 3)
+                {
+                    int a = current[f], b = current[f + 1], c = current[f + 2];
+                    int ab = Mid(verts, cache, a, b), bc = Mid(verts, cache, b, c), ca = Mid(verts, cache, c, a);
+                    next.AddRange(new[] { a, ab, ca, b, bc, ab, c, ca, bc, ab, bc, ca });
+                }
+                current = next;
             }
+            tris.AddRange(current);
 
             // Make every triangle face outward (Unity front faces are clockwise: normal = cross(b - a, c - a)).
             for (int i = 0; i < tris.Count; i += 3)

@@ -6,10 +6,10 @@ namespace Evolve.Tests.EditMode
 {
     public class SlimeMeshBuilderTests
     {
-        [Test] public void BodyHas80Triangles()
+        [Test] public void BodyHas320Triangles()
         {
             var mesh = SlimeMeshBuilder.Build();
-            Assert.AreEqual(80, mesh.triangles.Length / 3);
+            Assert.AreEqual(320, mesh.triangles.Length / 3);
         }
 
         [Test] public void BodyIsFlatShaded()
@@ -23,7 +23,7 @@ namespace Evolve.Tests.EditMode
             var b = SlimeMeshBuilder.Build().bounds;
             Assert.AreEqual(SlimeMeshBuilder.Bottom, b.min.y, 0.001f);
             Assert.That(b.max.y, Is.InRange(0.2f, 0.35f));
-            Assert.That(b.extents.x, Is.InRange(0.4f, 0.65f));
+            Assert.That(b.extents.x, Is.InRange(0.4f, 0.8f));
         }
 
         [Test] public void SameSeedSameMesh()
