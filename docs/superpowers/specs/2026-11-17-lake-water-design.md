@@ -40,5 +40,5 @@ Menu **Evolve → Dress Lake: Mushrooms and Vines** (`Editor/LakeFlora.cs`, ch�
 ## Rễ và ánh sáng (bước 4)
 Menu **Evolve → Dress Lake: Roots and Light** (`Editor/LakeRootsLight.cs`, chạy sau Water và Ground):
 - **Rễ**: vòm rễ già nhiều mấu (cao 2–5 m, có rễ phụ xuống đất và mảng rêu trên lưng) quanh Chân Rễ Cổ Thụ, tránh cửa các hốc trú; rễ bò thấp, chôn nửa, quanh các ao; rễ lớn buông từ trần hang có nhánh.
-- **Ánh sáng**: tối đa 9 **tia sáng** nghiêng từ trần xuống (hình nón mờ dần, có sọc, nhìn được từ trong lẫn ngoài), mỗi tia có một **đèn rọi** mềm không đổ bóng chiếu xuống nước hoặc đất; **bụi bào tử** phát sáng trôi chậm trong không khí (một hệ hạt, tối đa 260 hạt).
+- **Ánh sáng**: tối đa 5 **tia sáng** nghiêng từ trần xuống (hình nón mờ dần, có sọc, nhìn được từ trong lẫn ngoài), mỗi tia có một **đèn rọi** mềm không đổ bóng chiếu xuống nước hoặc đất; **bụi bào tử** phát sáng trôi chậm trong không khí (một hệ hạt, tối đa 260 hạt).
 Không collider; chạy lại được.

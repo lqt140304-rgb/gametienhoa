@@ -158,7 +158,7 @@ namespace Evolve.EditorTools
             var slant = new Vector3(5f, 0f, 3f);
             foreach (var target in targets)
             {
-                if (shafts >= 9) break;
+                if (shafts >= 5) break;
                 var bottomPoint = new Vector3(target.x + (float)(rnd.NextDouble() - 0.5) * 8f, 0f, target.y + (float)(rnd.NextDouble() - 0.5) * 8f);
                 bottomPoint.y = LakeGround.GroundY(bottomPoint.x, bottomPoint.z);
                 Vector3 topPoint = bottomPoint - slant + Vector3.up * (ceilingY + 2f);
@@ -180,10 +180,10 @@ namespace Evolve.EditorTools
                 lightGo.transform.SetParent(go.transform, false);
                 var l = lightGo.AddComponent<Light>();
                 l.type = LightType.Spot;
-                l.range = height * 1.15f;
+                l.range = height * 1.05f;
                 l.spotAngle = Mathf.Clamp(2f * Mathf.Atan((bottomR + 1.5f) / height) * Mathf.Rad2Deg, 15f, 90f);
                 l.color = new Color(1f, 0.96f, 0.82f);
-                l.intensity = 3f;
+                l.intensity = 0.6f; // gentle: the water is glossy and a strong light makes it glare white
                 l.shadows = LightShadows.None;
                 lightGo.transform.localRotation = Quaternion.FromToRotation(Vector3.forward, Vector3.down);
                 shafts++;
@@ -207,7 +207,7 @@ namespace Evolve.EditorTools
                 float soft = Mathf.Clamp01(v * 8f);                                            // no hard edge at the very top
                 return new Color(1f, 1f, 1f, vertical * streaks * soft);
             });
-            var mat = LakeWater.TranslucentMaterial("Lake_LightShaft", tex, new Color(1f, 0.97f, 0.82f, 0.22f), new Color(0.35f, 0.33f, 0.25f), 0f, (int)RenderQueue.Transparent + 20);
+            var mat = LakeWater.TranslucentMaterial("Lake_LightShaft", tex, new Color(1f, 0.97f, 0.82f, 0.075f), new Color(0.10f, 0.095f, 0.07f), 0f, (int)RenderQueue.Transparent + 20);
             mat.SetFloat("_Cull", 0f); // visible from inside the beam too
             mat.SetFloat("_ReceiveShadows", 0f);
             EditorUtility.SetDirty(mat);
