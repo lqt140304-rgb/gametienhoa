@@ -54,6 +54,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Organs/` | `OrganSO`, `OrganTier`, `OrganSocket`, `OrganHost`, `OrganInteractor`, `OrganPickup`, `DropTableSO` | Cơ quan, bậc, điểm gắn, nuôi lớn bằng thức ăn, bảng hỏi lắp/thay/hấp thụ, tháo bằng G, bảng rơi đồ có trọng số |
 | `Creatures/` | `Prey`, `PreySpawner`, `Predator`, `PredatorSpawner` | Con mồi bỏ chạy và mệt; kẻ săn mồi tuần tra, đuổi, cắn, bị gai và cú lao làm mất máu |
 | `World/` | `Nutrient`, `MonochromeVision`, `VibrationSense`, `TemperatureZone`, `ClimateSensor` | Thức ăn, thị giác đen trắng tăng dần theo mắt, giác quan rung, vùng nhiệt độ |
+| `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
 | `Editor/` | `PrototypeSceneBuilder` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01` |
 
 **Lưu ý quan trọng về công cụ dựng scene:**

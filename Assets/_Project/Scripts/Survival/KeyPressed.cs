@@ -16,6 +16,7 @@ namespace Evolve.Survival
         public static bool G() => Keyboard.current != null && Keyboard.current.gKey.wasPressedThisFrame;
         public static bool R() => Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame;
         public static bool Y() => Keyboard.current != null && Keyboard.current.yKey.wasPressedThisFrame;
+        public static bool F1() => Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame;
         /// <summary>Number key 1..9 on the top row.</summary>
         public static bool Digit(int n) => Keyboard.current != null && n >= 1 && n <= 9
             && Keyboard.current[Key.Digit1 + (n - 1)].wasPressedThisFrame;
@@ -27,6 +28,7 @@ namespace Evolve.Survival
         public static bool G() => Input.GetKeyDown(KeyCode.G);
         public static bool R() => Input.GetKeyDown(KeyCode.R);
         public static bool Y() => Input.GetKeyDown(KeyCode.Y);
+        public static bool F1() => Input.GetKeyDown(KeyCode.F1);
         public static bool Digit(int n) => n >= 1 && n <= 9 && Input.GetKeyDown(KeyCode.Alpha1 + (n - 1));
 #endif
     }

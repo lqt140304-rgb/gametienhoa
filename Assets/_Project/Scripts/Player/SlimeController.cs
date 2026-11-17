@@ -76,6 +76,16 @@ namespace Evolve.Player
             stats.State.Reset();
         }
 
+        /// <summary>Move instantly (debug teleport).</summary>
+        public void Teleport(Vector3 position)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.position = position;
+            transform.position = position;
+        }
+
+        public Vector3 SpawnPoint => spawnPoint;
+
         /// <summary>Prototype only: restart with all lives. Real design: only a teammate can revive a corpse.</summary>
         void NewRun()
         {
