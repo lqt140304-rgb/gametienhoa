@@ -1,3 +1,4 @@
+using Evolve.Organs;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -6,13 +7,15 @@ namespace Evolve.World
 {
     /// <summary>
     /// "No eyes" vision: desaturates the URP volume and uses dense fog for short
-    /// view range. Call SetHasEyes(true) when the player evolves eyes.
+    /// view range. Follows the player's OrganHost: evolving eyes restores colour.
     /// Put on a GameObject with a global Volume whose profile has Color Adjustments.
     /// </summary>
     [RequireComponent(typeof(Volume))]
     public class MonochromeVision : MonoBehaviour
     {
         [SerializeField] bool hasEyes;
+        [Tooltip("Player whose organs decide the vision")]
+        [SerializeField] OrganHost host;
         [SerializeField] float blindFogEnd = 12f;
         [SerializeField] float eyesFogEnd = 120f;
         [SerializeField] Color fogColor = new Color(0.08f, 0.08f, 0.08f);
@@ -26,7 +29,15 @@ namespace Evolve.World
                 color = volume.profile.Add<ColorAdjustments>(true);
             color.saturation.overrideState = true;
             Apply();
+            if (host != null) host.Changed += OnOrgansChanged;
         }
+
+        void OnDestroy()
+        {
+            if (host != null) host.Changed -= OnOrgansChanged;
+        }
+
+        void OnOrgansChanged() => SetHasEyes(host.HasSight);
 
         public bool HasEyes => hasEyes;
 

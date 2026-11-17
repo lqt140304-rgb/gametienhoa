@@ -13,6 +13,8 @@ Chạy lại menu này bất cứ lúc nào để dựng lại scene từ đầu
 
 Dựng xong, commit các file mới (scene, prefab, material, `.meta`) lên Git.
 
+Từ bản 0.2, scene có thêm **con mồi** (màu hồng, tạo bởi `Prey Spawner`). Bắt được con mồi thì nó rơi ra một cơ quan; chạm vào cơ quan để gắn lên slime. Cơ quan là các file `Organ_*.asset` trong `Assets/_Project/ScriptableObjects`, chỉnh hiệu ứng ngay trong Inspector.
+
 ## Cách thủ công
 
 Chỉ cần nếu muốn hiểu scene được ghép thế nào.
