@@ -23,6 +23,16 @@ namespace Evolve.Visuals
         SlimeGelCore core;
         readonly List<MeshFilter> scratch = new List<MeshFilter>();
 
+        /// <summary>An organ mesh that bends with the body: its own copy of the mesh plus the original vertices.</summary>
+        sealed class Follower
+        {
+            public MeshFilter Filter;
+            public Mesh Mesh;
+            public Vector3[] Base, Work;
+        }
+        readonly Dictionary<MeshFilter, Follower> followers = new Dictionary<MeshFilter, Follower>();
+        readonly List<MeshFilter> dead_ = new List<MeshFilter>();
+
         Vector3 lastPosition;
         float speed;
         Vector3 moveDir;           // in the body's local space (xz)
@@ -71,6 +81,7 @@ namespace Evolve.Visuals
         void OnDestroy()
         {
             if (mesh != null) Destroy(mesh);
+            foreach (var f in followers.Values) if (f.Mesh != null) Destroy(f.Mesh);
         }
 
         void LateUpdate()
@@ -100,18 +111,38 @@ namespace Evolve.Visuals
             float deadTarget = stats != null && stats.State.IsDead ? 1f : 0f;
             dead = Mathf.MoveTowards(dead, deadTarget, dt * 2.5f);
 
-            if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ShareMeshWithShells(); }
+            if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ScanFollowers(); }
 
             Deform();
             if (core != null) core.Boost = CoreBoost();
         }
 
-        // Organs that wear the body's shape (the heat layer shell) must bend together with it.
-        void ShareMeshWithShells()
+        // Every mesh on an organ (they all sit under an OrganSocket) bends with the body, so nothing stays stiff.
+        void ScanFollowers()
         {
-            GetComponentsInChildren(true, scratch);
-            foreach (var f in scratch)
-                if (f != filter && f.sharedMesh == original) f.sharedMesh = mesh;
+            dead_.Clear();
+            foreach (var kv in followers)
+                if (kv.Key == null) dead_.Add(kv.Key);
+            foreach (var key in dead_)
+            {
+                if (followers[key].Mesh != null) Destroy(followers[key].Mesh);
+                followers.Remove(key);
+            }
+
+            foreach (var socket in GetComponentsInChildren<Evolve.Organs.OrganSocket>(true))
+            {
+                socket.GetComponentsInChildren(true, scratch);
+                foreach (var f in scratch)
+                {
+                    if (f == null || f.sharedMesh == null || followers.ContainsKey(f)) continue;
+                    var copy = Instantiate(f.sharedMesh);
+                    copy.name = f.sharedMesh.name + " (animated)";
+                    copy.MarkDynamic();
+                    f.sharedMesh = copy;
+                    var verts = copy.vertices;
+                    followers[f] = new Follower { Filter = f, Mesh = copy, Base = verts, Work = new Vector3[verts.Length] };
+                }
+            }
         }
 
         float CoreBoost()
@@ -127,98 +158,124 @@ namespace Evolve.Visuals
             }
         }
 
-        void Deform()
-        {
-            float t = Time.time;
-            float move = Mathf.Clamp01(speed / 4f);
-            Vector3 dir = moveDir;
+        // per-frame motion parameters shared by the body and the organs
+        float fTime, fMove, fAbsorb, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
+        Vector3 fDir;
 
-            float absorb = 0f, attackKick = 0f, attackStretch = 0f, charge = 0f, burst = 0f;
+        void PrepareFrame()
+        {
+            fTime = Time.time;
+            fMove = Mathf.Clamp01(speed / 4f);
+            fDir = moveDir;
+            fAbsorb = fKick = fStretch = fCharge = fBurst = 0f;
             float p = activeTime >= 0f ? activeTime / Duration(active) : -1f;
             if (p >= 0f)
             {
                 switch (active)
                 {
-                    case GelMotion.Absorb: absorb = p; break;
-                    case GelMotion.Attack: Lunge(p, 1f, out attackKick, out attackStretch); break;
-                    case GelMotion.Dash: Lunge(p, 1.6f, out attackKick, out attackStretch); break;
+                    case GelMotion.Absorb: fAbsorb = p; break;
+                    case GelMotion.Attack: Lunge(p, 1f, out fKick, out fStretch); break;
+                    case GelMotion.Dash: Lunge(p, 1.6f, out fKick, out fStretch); break;
                     case GelMotion.Release:
-                        charge = p < 0.45f ? Mathf.SmoothStep(0f, 1f, p / 0.45f) : 0f;
-                        burst = p < 0.45f ? 0f : Mathf.Sin((p - 0.45f) / 0.55f * Mathf.PI) * (1f - (p - 0.45f) / 0.55f * 0.3f);
+                        fCharge = p < 0.45f ? Mathf.SmoothStep(0f, 1f, p / 0.45f) : 0f;
+                        fBurst = p < 0.45f ? 0f : Mathf.Sin((p - 0.45f) / 0.55f * Mathf.PI) * (1f - (p - 0.45f) / 0.55f * 0.3f);
                         break;
                 }
             }
-            float absorbPulse = absorb > 0f ? Mathf.Sin(absorb * Mathf.PI) : 0f;
+            fAbsorbPulse = fAbsorb > 0f ? Mathf.Sin(fAbsorb * Mathf.PI) : 0f;
+        }
 
-            for (int i = 0; i < baseVertices.Length; i++)
-            {
-                Vector3 b = baseVertices[i];
-                float h = Mathf.Clamp01((b.y - SlimeMeshBuilder.Bottom) / (SlimeMeshBuilder.Top - SlimeMeshBuilder.Bottom));
-                float rx = Mathf.Sqrt(b.x * b.x + b.z * b.z);
-                float rn = Mathf.Clamp01(rx / 0.65f);
-                Vector3 outward = rx > 1e-4f ? new Vector3(b.x / rx, 0f, b.z / rx) : Vector3.zero;
-                float low = 1f - h;
-                Vector3 o = Vector3.zero;
+        void Deform()
+        {
+            PrepareFrame();
 
-                // Breathing: the hump rises and sinks slightly.
-                o.y += 0.012f * Mathf.Sin(t * 2.1f) * h;
-                o += outward * 0.006f * Mathf.Sin(t * 2.1f + 1f) * low;
-
-                // Crawling: a wave runs along the body, the hump leans where it is going.
-                if (move > 0.01f && dir.sqrMagnitude > 1e-4f)
-                {
-                    float along = b.x * dir.x + b.z * dir.z;
-                    float wave = Mathf.Sin(along * 13f - t * 9f);
-                    o.y += move * 0.025f * wave * (0.3f + 0.7f * h);
-                    o += outward * move * 0.022f * wave * low;
-                    o += dir * (move * 0.07f * h * h);
-                }
-
-                // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
-                if (absorb > 0f)
-                {
-                    float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - absorb), 2f) / 0.06f) * absorbPulse;
-                    o.y -= 0.05f * ring;
-                    o -= outward * 0.05f * ring;
-                    o -= outward * 0.03f * absorbPulse * rn;
-                    o.y += 0.03f * absorbPulse * h;
-                }
-
-                // Attacking / dashing: pull back, then the front lunges forward.
-                if (attackKick != 0f || attackStretch != 0f)
-                {
-                    float front = 0.5f + 0.5f * Mathf.Clamp(b.z / 0.55f, -1f, 1f);
-                    o.z += attackKick * (0.35f + 0.65f * h) * 0.28f;
-                    o.z += attackStretch * front * 0.16f;
-                    o.y -= Mathf.Abs(attackKick) * 0.1f * h;
-                }
-
-                // Skill: tighten and tremble while charging, then a bristling burst outward.
-                if (charge > 0f)
-                {
-                    o -= outward * 0.05f * charge * rn;
-                    o.y += 0.06f * charge * h;
-                    o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.004f * charge;
-                }
-                if (burst > 0f)
-                {
-                    o += outward * 0.09f * burst * (0.4f + 0.6f * low);
-                    o.y -= 0.05f * burst * h;
-                }
-
-                // Dead: the body slumps into a flat puddle.
-                if (dead > 0f)
-                {
-                    o.y -= (b.y - SlimeMeshBuilder.Bottom) * 0.6f * dead;
-                    o += outward * 0.07f * dead * rn;
-                }
-
-                work[i] = b + o;
-            }
-
+            for (int i = 0; i < baseVertices.Length; i++) work[i] = baseVertices[i] + Offset(baseVertices[i]);
             mesh.vertices = work;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
+
+            // Organs: the same displacement field, evaluated where each organ vertex sits relative to the body.
+            Matrix4x4 worldToBody = transform.worldToLocalMatrix;
+            foreach (var f in followers.Values)
+            {
+                if (f.Filter == null) continue;
+                Matrix4x4 toBody = worldToBody * f.Filter.transform.localToWorldMatrix;
+                Matrix4x4 toLocal = toBody.inverse;
+                for (int i = 0; i < f.Base.Length; i++)
+                {
+                    Vector3 bodyPoint = toBody.MultiplyPoint3x4(f.Base[i]);
+                    f.Work[i] = f.Base[i] + toLocal.MultiplyVector(Offset(bodyPoint));
+                }
+                f.Mesh.vertices = f.Work;
+                f.Mesh.RecalculateNormals();
+                f.Mesh.RecalculateBounds();
+            }
+        }
+
+        /// <summary>How far a point of the body (or of an organ, in the body's local space) is pushed by the current motion.</summary>
+        Vector3 Offset(Vector3 b)
+        {
+            float t = fTime;
+            float h = Mathf.Clamp01((b.y - SlimeMeshBuilder.Bottom) / (SlimeMeshBuilder.Top - SlimeMeshBuilder.Bottom));
+            float rx = Mathf.Sqrt(b.x * b.x + b.z * b.z);
+            float rn = Mathf.Clamp01(rx / 0.65f);
+            Vector3 outward = rx > 1e-4f ? new Vector3(b.x / rx, 0f, b.z / rx) : Vector3.zero;
+            float low = 1f - h;
+            Vector3 o = Vector3.zero;
+
+            // Breathing: the hump rises and sinks slightly.
+            o.y += 0.012f * Mathf.Sin(t * 2.1f) * h;
+            o += outward * 0.006f * Mathf.Sin(t * 2.1f + 1f) * low;
+
+            // Crawling: a wave runs along the body, the hump leans where it is going.
+            if (fMove > 0.01f && fDir.sqrMagnitude > 1e-4f)
+            {
+                float along = b.x * fDir.x + b.z * fDir.z;
+                float wave = Mathf.Sin(along * 13f - t * 9f);
+                o.y += fMove * 0.025f * wave * (0.3f + 0.7f * h);
+                o += outward * fMove * 0.022f * wave * low;
+                o += fDir * (fMove * 0.07f * h * h);
+            }
+
+            // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
+            if (fAbsorb > 0f)
+            {
+                float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - fAbsorb), 2f) / 0.06f) * fAbsorbPulse;
+                o.y -= 0.05f * ring;
+                o -= outward * 0.05f * ring;
+                o -= outward * 0.03f * fAbsorbPulse * rn;
+                o.y += 0.03f * fAbsorbPulse * h;
+            }
+
+            // Attacking / dashing: pull back, then the front lunges forward.
+            if (fKick != 0f || fStretch != 0f)
+            {
+                float front = 0.5f + 0.5f * Mathf.Clamp(b.z / 0.55f, -1f, 1f);
+                o.z += fKick * (0.35f + 0.65f * h) * 0.28f;
+                o.z += fStretch * front * 0.16f;
+                o.y -= Mathf.Abs(fKick) * 0.1f * h;
+            }
+
+            // Skill: tighten and tremble while charging, then a bristling burst outward.
+            if (fCharge > 0f)
+            {
+                o -= outward * 0.05f * fCharge * rn;
+                o.y += 0.06f * fCharge * h;
+                o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.004f * fCharge;
+            }
+            if (fBurst > 0f)
+            {
+                o += outward * 0.09f * fBurst * (0.4f + 0.6f * low);
+                o.y -= 0.05f * fBurst * h;
+            }
+
+            // Dead: the body slumps into a flat puddle.
+            if (dead > 0f)
+            {
+                o.y -= (b.y - SlimeMeshBuilder.Bottom) * 0.6f * dead;
+                o += outward * 0.07f * dead * rn;
+            }
+            return o;
         }
 
         /// <summary>Kick curve of a lunge: pulls back first (negative), then shoots forward, then settles.</summary>
