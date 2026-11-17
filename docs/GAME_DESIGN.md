@@ -104,7 +104,7 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
   - Kỹ năng mở ở Lv2 (`AbilityUnlockLevel`), tự vào ô trống đầu tiên; đổi ô bằng bảng Cơ thể (G). Mất cơ quan thì mất kỹ năng.
   - Hồi chiêu tính theo từng cơ quan, nên đổi ô không làm mới hồi chiêu. Lv3: hồi chiêu ngắn hơn 25%, hiệu lực mạnh hơn 50%.
   - Chân giả cơ bắp (B) → **Xung Phong Húc**: lao tới lực 9, 20 năng lượng, hồi 6 giây, đủ nhanh để húc kẻ săn mồi.
-  - Gai độc (B) → **Xả Gai**: bắn một chùm 5 gai (Lv3: 7 gai, mạnh hơn 50%) bay thẳng về phía hồng tâm, mỗi gai 6 sát thương kẻ săn mồi trúng đòn, tầm 14 m, 20 năng lượng, hồi 8 giây.
+  - Gai độc (B) → **Xả Gai**: bắn một chùm 5 gai (Lv3: 7 gai, mạnh hơn 50%) bay thẳng về phía hồng tâm, mỗi gai 6 sát thương cho kẻ săn mồi **và con mồi** trúng đòn (con mồi có 12 máu: một loạt gai hạ được, thưởng giống như bắt), tầm 14 m, 20 năng lượng, hồi 8 giây.
   - **Chế độ ngắm** [chủ dự án yêu cầu 2026-11-17]: **Chế độ chuột** (mặc định): con trỏ tự do, giữ chuột phải để xoay camera, kỹ năng bắn/lao **theo hướng con trỏ**. **Alt** vào **chế độ ngắm**: hồng tâm giữa màn hình, chuột xoay camera trực tiếp, camera lệch qua vai (để hồng tâm không đè lên nhân vật), kỹ năng đi theo hồng tâm. **F5** đổi **góc nhìn thứ nhất** (camera ở mắt, ẩn thân, luôn có hồng tâm). Điểm ngắm là vật đầu tiên tia từ camera chạm; nếu là mặt đất hoặc không chạm gì thì bắn ngang theo hướng đó. Bảng cơ quan, menu HUD và Menu God tự trả con trỏ.
 
 **Quái vật**

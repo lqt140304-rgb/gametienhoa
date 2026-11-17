@@ -19,7 +19,8 @@ namespace Evolve.Survival
         public static bool IsClient;
 
         // client -> host
-        public static Action<int, float> ReportPredatorHit;
+        /// <summary>A hit on a creature (predator or prey) that lives on the host: its id and the damage.</summary>
+        public static Action<int, float> ReportCreatureHit;
         public static Action<int> ReportPickupTaken;
         public static Action<string, Vector3> RequestPickupSpawn;
 
