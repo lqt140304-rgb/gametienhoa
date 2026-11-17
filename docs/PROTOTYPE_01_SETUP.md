@@ -79,7 +79,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | Giữ chuột phải + kéo | Xoay camera |
 | Lăn chuột | Phóng to/thu nhỏ |
 | V | Bật/tắt mắt (thử nghiệm: xem màu, nhìn xa) |
-| H | Ẩn/hiện bảng hướng dẫn |
+| H | Mở trợ giúp |
 | E | Khi chạm vào cơ quan: lắp / thay thế |
 | F | Khi chạm vào cơ quan: hấp thụ để lấy EXP tiến hóa |
 | R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
@@ -88,7 +88,9 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | Alt | Đổi chế độ chuột ⇄ chế độ ngắm: có **hồng tâm** giữa màn hình, chuột xoay camera luôn (không cần giữ chuột phải); kỹ năng và lao (Q, 1–5) đi về phía hồng tâm. Mở bảng G hoặc F1 thì con trỏ tự hiện lại |
 | X | Bỏ qua cơ quan |
 | F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |
-| G | Mở/đóng bảng Cơ thể (dùng chuột): đổ EXP, đặt ưu tiên, tháo cơ quan |
+| G | Mở/đóng bảng cơ quan bên phải: đổ EXP, đặt ưu tiên, tháo, gán kỹ năng vào ô 1–5 |
+| K | Mở/đóng kho kỹ năng: gán kỹ năng đã mở vào ô 1–5 |
+| Esc | Đóng menu đang mở. Khi mở menu, nhân vật vẫn đi được nhưng kỹ năng, nhặt cơ quan và xoay camera bị chặn |
 
 ## Cần kiểm thử
 - Đói chỉ giảm khi di chuyển (nhanh hơn khi chạy nước rút), đứng yên không giảm; khi đói = 0 thì mất máu; khi no thì hồi máu.

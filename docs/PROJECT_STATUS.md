@@ -1,6 +1,6 @@
 # PROJECT EVOLVE: Tình hình dự án (bàn giao)
 
-> Cập nhật: 2026-11-17, sau pull request #22. Dành cho một phiên làm việc mới: nắm nhanh dự án đang ở đâu, cách làm việc với chủ dự án, và việc tiếp theo.
+> Cập nhật: 2026-11-17, sau pull request #27 và HUD mới của Codex (commit `bdccede`). Dành cho một phiên làm việc mới: nắm nhanh dự án đang ở đâu, cách làm việc với chủ dự án, và việc tiếp theo.
 > Repo: `lqt140304-rgb/gametienhoa`, nhánh chính `main`.
 
 ## 0. Việc đầu tiên khi bắt đầu phiên mới
@@ -57,14 +57,14 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 
 | Thư mục | Lớp chính | Vai trò |
 |---|---|---|
-| `Survival/` | `SurvivalState` (dữ liệu thuần, không phải MonoBehaviour), `SurvivalStats`, `SurvivalConfig` (SO), `SurvivalHUD`, `KeyPressed` | Máu, đói, năng lượng, nhiệt độ, EXP tiến hóa, mạng; `SurvivalStats.All` là danh sách người chơi cho AI |
+| `Survival/` | `SurvivalState` (dữ liệu thuần, không phải MonoBehaviour), `SurvivalStats`, `SurvivalConfig` (SO), `SurvivalHUD` (IMGUI, chia `partial` thành `SurvivalHUD.cs` và `SurvivalHUD.Drawing.cs`), `HudLayout` (quy tắc bố cục và chuyển menu), `KeyPressed` | Máu, đói, năng lượng, nhiệt độ, EXP tiến hóa, mạng; `SurvivalStats.All` là danh sách người chơi cho AI |
 | `Player/` | `SlimeController`, `ThirdPersonCamera` | Trườn, nước rút, nảy, quay mặt theo hướng đi, hồi sinh (R), chơi lại từ đầu khi hết mạng (Y, tạm); camera quỹ đạo |
 | `Abilities/` | `AbilitySO`, `AbilityCaster`, `BurstDashAbility` | Dị Năng: rút ngẫu nhiên, phím Q, hồi chiêu, tốn năng lượng |
 | `Organs/` | `OrganSO`, `OrganTier`, `OrganSocket`, `OrganHost`, `OrganInteractor`, `OrganPickup`, `DropTableSO` | Cơ quan, bậc, điểm gắn, EXP và cấp (`Invest`, `Priority`), bảng hỏi lắp/thay/hấp thụ, bảng Cơ thể, rơi khi chết, bảng rơi đồ hai bước |
 | `Creatures/` | `Prey`, `PreySpawner`, `Predator`, `PredatorSpawner` | Con mồi bỏ chạy và mệt; kẻ săn mồi tuần tra, đuổi, cắn |
 | `World/` | `Nutrient`, `MonochromeVision`, `VibrationSense`, `TemperatureZone`, `ClimateSensor` | Thức ăn; thị giác (đen trắng, ánh sáng quanh nhân vật); quét rung; vùng nhiệt độ |
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
-| `Editor/` | `PrototypeSceneBuilder` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01` |
+| `Editor/` | `PrototypeSceneBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
 **Lưu ý về công cụ dựng scene:**
 - Nó **tạo lại scene** từ đầu nhưng **dùng lại** material, prefab và ScriptableObject đã có. Đổi giá trị mặc định trong code **không ảnh hưởng** prefab hay asset cũ.
@@ -82,10 +82,12 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | 1–5 | 5 ô kỹ năng gắn cơ quan (từ cơ quan bậc B ở Lv2, Lv3 nâng cấp); đổi ô trong bảng Cơ thể (G) |
 | C | **Quét rung**: sóng lan 25 m, ánh sáng lan ra soi địa hình, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (10 năng lượng, hồi 5 giây) |
 | E / F / X | Khi chạm cơ quan rơi: lắp hoặc thay / hấp thụ lấy EXP / bỏ qua |
-| G | Bảng Cơ thể (chuột): đổ EXP, đặt ưu tiên, tháo cơ quan |
+| G | Bảng **cơ quan** bên phải (cuộn được): đổ EXP, đặt ưu tiên, tháo, gán kỹ năng vào ô 1–5 |
+| K | **Kho kỹ năng**: kỹ năng đã mở từ cơ quan đang gắn, mô tả/chi phí, nút gán vào ô 1–5 (tối đa 5; Q và C không chiếm ô) |
+| Esc | Đóng menu đang mở (chỉ mở được một menu) |
 | R / Y | Hồi sinh khi còn mạng / chơi lại từ đầu khi hết mạng |
 | V | Bật/tắt mắt (thử nghiệm) |
-| H / F1 | Ẩn hiện hướng dẫn / Menu God |
+| H / F1 | Mở trợ giúp / Menu God |
 
 ## 5. Đã làm được (đã merge vào `main`, chủ dự án đã chơi thử và nói ổn)
 
@@ -114,7 +116,9 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 - Luật chết mới làm phần 3 mạng và rơi cơ quan. **Cứu đồng đội, chuyền máu, chế độ quan sát** cần multiplayer.
 - Dị Năng duy nhất là "Bộc Phá Màng", **không nằm** trong danh sách Dị Năng v2.0 của GDD.
 - `README.md` vẫn ghi "chưa có project Unity", cần cập nhật (kèm dòng phiên bản `6000.6.9f1`).
-- HUD là IMGUI tạm, sau này thay bằng UI Toolkit.
+- HUD là IMGUI, sau này có thể thay bằng UI Toolkit.
+- **HUD mới do Codex làm** (commit `f07fc46`…`bdccede`, đã đẩy thẳng lên `main`, chi tiết ở `docs/HUD_UI_QA.md`): HUD tối giản hai góc dưới; thanh kỹ năng **Q · 1–5 · C** giữa dưới màn hình có hồi chiêu; nút **Giao diện** chọn HUD cố định hoặc đi theo nhân vật (lưu bằng PlayerPrefs); khi mở menu nhân vật vẫn di chuyển được nhưng kỹ năng, nhặt cơ quan và xoay camera bị chặn (`SurvivalHUD.BlocksInput`); con trỏ tự hiện khi mở menu. Slime không có `SkillBar` thì HUD tự thêm trong bộ nhớ. Codex báo đã biên dịch được bằng Roslyn với assembly Unity và chạy `tools/check-hud.ps1` (6 kiểm tra đạt), **chưa chạy thử trực quan trong Play Mode**. `HUD_UI_QA.md` vẫn ghi nhánh `codex/hud-ui` (nhánh đó chưa từng được đẩy lên GitHub).
+- Có **nhiều công cụ cùng làm trên một thư mục** (Claude, Codex): chủ dự án từng bị đứng nhầm nhánh (`docs/bestiary`, `codex/hud-ui`). Dặn chạy `git branch --show-current` trước khi `pull`; thư mục chứa project Unity nên ở `main`.
 - Chủ dự án có thể chưa commit bản scene mới nhất sau khi dựng lại; nếu thấy scene lệch với code, bảo họ dựng lại.
 
 ## 6.1. Từ Bestiary: các việc code đã được chốt hoặc gợi ý
