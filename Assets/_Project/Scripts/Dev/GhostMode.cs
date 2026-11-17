@@ -161,7 +161,7 @@ namespace Evolve.DevTools
             if (Active)
             {
                 var style = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.UpperLeft, fontSize = 12, richText = true };
-                GUI.Label(new Rect(12, Screen.height - 46, 700, 40),
+                GUI.Label(new Rect(12, 12, 700, 40), // top-left: the bottom is taken by the HUD
                     "<b>GHOST</b>  WASD bay · Space lên · Ctrl xuống · Shift nhanh · PgUp/PgDn góc nhìn (Home: về lại) · F6 thoát · F7 bảng", style);
             }
             if (PanelOpen) window = GUILayout.Window(WindowId, window, DrawPanel, "Xem map (F7 để đóng)");
