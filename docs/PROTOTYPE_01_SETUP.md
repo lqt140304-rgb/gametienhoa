@@ -76,11 +76,12 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | Lăn chuột | Phóng to/thu nhỏ |
 | V | Bật/tắt mắt (thử nghiệm: xem màu, nhìn xa) |
 | H | Ẩn/hiện bảng hướng dẫn |
-| E | Chọn khi chạm vào cơ quan: lắp / thay thế / hấp thụ |
+| E | Khi chạm vào cơ quan: lắp / thay thế |
+| F | Khi chạm vào cơ quan: hấp thụ để lấy EXP tiến hóa |
 | R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
 | X | Bỏ qua cơ quan |
 | F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |
-| G | Mở/đóng bảng Cơ thể; trong bảng bấm 1, 2… để tháo cơ quan (rơi ra đất) |
+| G | Mở/đóng bảng Cơ thể (dùng chuột): đổ EXP, đặt ưu tiên, tháo cơ quan |
 
 ## Cần kiểm thử
 - Đói chỉ giảm khi di chuyển (nhanh hơn khi chạy nước rút), đứng yên không giảm; khi đói = 0 thì mất máu; khi no thì hồi máu.

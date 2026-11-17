@@ -88,6 +88,11 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | Màng chịu nhiệt | C | Da | Chịu nóng thêm 20°C |
 | Gai độc | B | Lưng | Phản 15 sát thương khi bị cắn |
 
+**EXP tiến hóa và cấp cơ quan** (theo `GAME_DESIGN.md` mục 4.4)
+- Cơ quan lớn bằng **EXP tiến hóa** (`SurvivalState.EvolutionExp`), không còn bằng thức ăn trực tiếp. Ăn: 0.2 EXP mỗi đơn vị thức ăn. Hấp thụ cơ quan (F): C/B/A/S = 15/30/60/120 EXP.
+- Bảng Cơ thể (G, dùng chuột): đổ EXP, đặt cơ quan ưu tiên (tự nhận EXP), tháo. Cơ quan: mầm → Lv1 → Lv3; mỗi cấp trên 1 tăng hiệu ứng +25%.
+- `OrganSO.GrowthExpRequired` (đổi tên từ `GrowthFoodRequired`, có `FormerlySerializedAs` nên asset cũ giữ giá trị).
+
 **0.3: Thế giới phản kháng** (pull request #12, đã merge, chủ dự án đã chơi thử)
 - Kẻ săn mồi:
   - Phát hiện trong 7 m (×0.4 nếu người chơi đứng yên). Đuổi 1.4, mệt sau 6 giây.

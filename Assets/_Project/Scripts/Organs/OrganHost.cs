@@ -5,21 +5,27 @@ using UnityEngine;
 
 namespace Evolve.Organs
 {
-    /// <summary>
-    /// Holds the organs a creature has evolved. A new organ starts as a small bud and
-    /// grows by being fed: part of every meal goes into growing organs until each has
-    /// received its GrowthFoodRequired. Visual size and effects scale with growth.
-    /// Sockets are found among children automatically.
-    /// </summary>
     /// <summary>Result of asking whether an organ can be attached.</summary>
     public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom }
 
+    /// <summary>
+    /// Holds the organs a creature has evolved and grows them with evolution EXP.
+    /// A new organ is a bud (Lv0). Spending GrowthExpRequired EXP grows it to Lv1 (full organ);
+    /// Lv2 costs the same again and Lv3 twice as much; each level adds LevelBonus to its effects.
+    /// EXP comes from eating (a little) and absorbing organs (a lot), into SurvivalState.EvolutionExp.
+    /// The player spends it by hand (body menu) or marks one organ as priority to receive it automatically.
+    /// Sockets are found among children automatically.
+    /// </summary>
     public class OrganHost : MonoBehaviour
     {
+        public const int MaxLevel = 3;
+
         [Tooltip("Max number of organs the body can hold (0 = unlimited, one per slot)")]
         [SerializeField] int maxOrgans = 0;
-        [Tooltip("Share of each meal that feeds growing organs (the rest fills hunger). When hunger is full, everything goes to organs.")]
-        [Range(0, 1)] [SerializeField] float growthShare = 0.5f;
+        [Tooltip("Evolution EXP gained per unit of food eaten")]
+        [SerializeField] float foodExpRate = 0.2f;
+        [Tooltip("Extra effect per level above 1 (0.25 = Lv2 +25%, Lv3 +50%)")]
+        [SerializeField] float levelBonus = 0.25f;
         [Tooltip("How fast the visual catches up with real growth (per second)")]
         [SerializeField] float visualCatchUp = 0.5f;
 
@@ -28,30 +34,43 @@ namespace Evolve.Organs
             public OrganSO Organ;
             public GameObject Visual;
             public Vector3 VisualScale;
-            public float Fed;    // food received so far
-            public float Shown;  // smoothed 0..1 used for visuals and effects
-            public bool Done;
-            public float Growth => Organ.GrowthFoodRequired <= 0f ? 1f : Mathf.Clamp01(Fed / Organ.GrowthFoodRequired);
+            public int Level;        // 0 = bud, 1..MaxLevel
+            public float Progress;   // EXP invested toward the next level
+            public float Shown;      // smoothed 0..1 growth for visuals and effects
+            public float Growth => Level >= 1 ? 1f : (Organ.GrowthExpRequired <= 0f ? 1f : Mathf.Clamp01(Progress / Organ.GrowthExpRequired));
+            public float NextCost => Level == 0 ? Organ.GrowthExpRequired : Level < MaxLevel ? Organ.GrowthExpRequired * Level : 0f;
+            public bool Maxed => Level >= MaxLevel;
         }
 
         readonly List<Entry> order = new List<Entry>();
         readonly Dictionary<OrganSlot, Entry> organs = new Dictionary<OrganSlot, Entry>();
         readonly Dictionary<OrganSlot, Transform> sockets = new Dictionary<OrganSlot, Transform>();
         SurvivalStats stats;
+        OrganSO priority;
 
         public float SpeedMultiplier { get; private set; } = 1f;
-        /// <summary>0 = blind, 1 = fully developed eyes.</summary>
+        /// <summary>0 = blind, 1 = fully developed eyes, above 1 = levelled eyes (longer view).</summary>
         public float Sight { get; private set; }
         public bool HasSight => Sight >= 1f;
         /// <summary>Damage dealt back to attackers (spikes).</summary>
         public float ContactDamage { get; private set; }
         public float HeatResistance { get; private set; }
         public IEnumerable<OrganSO> Organs { get { foreach (var e in order) yield return e.Organ; } }
+        public float Exp => stats != null ? stats.State.EvolutionExp : 0f;
 
-        /// <summary>Raised when an organ is attached and starts growing.</summary>
+        /// <summary>Organ that automatically receives EXP (null = spend by hand only).</summary>
+        public OrganSO Priority
+        {
+            get => priority;
+            set => priority = value != null && Has(value) && !organs[value.Slot].Maxed ? value : null;
+        }
+
+        /// <summary>Raised when an organ is attached as a bud.</summary>
         public event Action<OrganSO> Attached;
-        /// <summary>Raised when an organ finishes growing.</summary>
+        /// <summary>Raised when a bud becomes a full organ (Lv1).</summary>
         public event Action<OrganSO> Completed;
+        /// <summary>Raised when an organ reaches Lv2 or Lv3.</summary>
+        public event Action<OrganSO, int> LeveledUp;
         /// <summary>Raised when an organ is detached (removed or replaced).</summary>
         public event Action<OrganSO> Removed;
         /// <summary>Raised whenever the combined effects change.</summary>
@@ -86,11 +105,23 @@ namespace Evolve.Organs
             return AttachCheck.Ok;
         }
 
-        /// <summary>Growth 0..1 of the organ, or -1 if not owned.</summary>
+        /// <summary>Growth 0..1 from bud to full organ, or -1 if not owned.</summary>
         public float GetGrowth(OrganSO organ) => Has(organ) ? organs[organ.Slot].Growth : -1f;
 
-        /// <summary>Food received so far by the organ (0 if not owned).</summary>
-        public float GetFed(OrganSO organ) => Has(organ) ? organs[organ.Slot].Fed : 0f;
+        /// <summary>Level of the organ: 0 = bud, 1..MaxLevel; -1 if not owned.</summary>
+        public int GetLevel(OrganSO organ) => Has(organ) ? organs[organ.Slot].Level : -1;
+
+        /// <summary>EXP invested toward the next level and that level's cost (0 cost = max level).</summary>
+        public void GetProgress(OrganSO organ, out float progress, out float cost)
+        {
+            progress = cost = 0f;
+            if (!Has(organ)) return;
+            var e = organs[organ.Slot];
+            progress = e.Progress;
+            cost = e.NextCost;
+        }
+
+        public bool IsMaxed(OrganSO organ) => Has(organ) && organs[organ.Slot].Maxed;
 
         /// <summary>Attach (or replace) the organ in its slot as a bud. Returns false if already owned.</summary>
         public bool TryAttach(OrganSO organ)
@@ -111,72 +142,91 @@ namespace Evolve.Organs
             organs[organ.Slot] = entry;
             order.Add(entry);
 
+            if (organ.GrowthExpRequired <= 0f) LevelUp(entry);
             ApplyVisual(entry);
             Recalculate();
             Attached?.Invoke(organ);
-            CheckDone(entry);
             return true;
         }
 
-        /// <summary>Remove the organ in a slot (its growth is lost). Returns it, or null if empty.</summary>
+        /// <summary>Remove the organ in a slot (its growth and levels are lost). Returns it, or null if empty.</summary>
         public OrganSO Detach(OrganSlot slot)
         {
             if (!organs.TryGetValue(slot, out var e)) return null;
             if (e.Visual != null) Destroy(e.Visual);
             organs.Remove(slot);
             order.Remove(e);
+            if (priority == e.Organ) priority = null;
             Recalculate();
             Removed?.Invoke(e.Organ);
             return e.Organ;
         }
 
-        /// <summary>Debug: finish growing every organ immediately.</summary>
+        /// <summary>
+        /// Spend pooled EXP on an organ, up to its next level (or <paramref name="untilMax"/> all the way).
+        /// Returns the EXP spent.
+        /// </summary>
+        public float Invest(OrganSO organ, bool untilMax = false)
+        {
+            if (!Has(organ) || stats == null) return 0f;
+            var e = organs[organ.Slot];
+            var st = stats.State;
+            float spent = 0f;
+            while (!e.Maxed && st.EvolutionExp > 0f)
+            {
+                float give = Mathf.Min(e.NextCost - e.Progress, st.EvolutionExp);
+                e.Progress += give;
+                st.EvolutionExp -= give;
+                spent += give;
+                if (e.Progress < e.NextCost - 0.0001f) break;
+                LevelUp(e);
+                if (!untilMax) break;
+            }
+            if (e.Maxed && priority == organ) priority = null;
+            if (spent > 0f) Recalculate();
+            return spent;
+        }
+
+        void LevelUp(Entry e)
+        {
+            e.Progress = 0f;
+            e.Level++;
+            if (e.Level == 1)
+            {
+                Debug.Log($"{name} tiến hóa xong: {e.Organ.DisplayName}");
+                Completed?.Invoke(e.Organ);
+            }
+            else
+            {
+                Debug.Log($"{name}: {e.Organ.DisplayName} lên cấp {e.Level}");
+                LeveledUp?.Invoke(e.Organ, e.Level);
+            }
+        }
+
+        /// <summary>Debug: make every bud a full organ (Lv1) immediately.</summary>
         public void DebugGrowAll()
         {
             foreach (var e in order)
             {
-                e.Fed = e.Organ.GrowthFoodRequired;
+                if (e.Level == 0) LevelUp(e);
                 e.Shown = 1f;
                 ApplyVisual(e);
-                CheckDone(e);
             }
             Recalculate();
         }
 
-        /// <summary>FoodFilter: split a meal between growing organs and hunger.</summary>
+        /// <summary>FoodFilter: all food fills hunger; a little of it also becomes evolution EXP.</summary>
         float TakeFood(float amount)
         {
-            var growing = order.FindAll(e => e.Growth < 1f);
-            if (growing.Count == 0 || amount <= 0f) return amount;
-
-            var st = stats.State;
-            float share = st.Hunger >= st.MaxHunger ? 1f : growthShare;
-            float forOrgans = amount * share;
-            float used = 0f;
-
-            // Feed organs in the order they were attached; leftovers roll to the next.
-            foreach (var e in growing)
-            {
-                float need = e.Organ.GrowthFoodRequired - e.Fed;
-                float give = Mathf.Min(need, forOrgans - used);
-                if (give <= 0f) break;
-                e.Fed += give;
-                used += give;
-                CheckDone(e);
-            }
-            return amount - used;
-        }
-
-        void CheckDone(Entry e)
-        {
-            if (e.Done || e.Growth < 1f) return;
-            e.Done = true;
-            Debug.Log($"{name} tiến hóa xong: {e.Organ.DisplayName}");
-            Completed?.Invoke(e.Organ);
+            if (amount > 0f && stats != null) stats.State.AddExp(amount * foodExpRate);
+            return amount;
         }
 
         void Update()
         {
+            // Priority organ soaks up EXP automatically.
+            if (priority != null && Exp > 0f) Invest(priority, true);
+
             bool changed = false;
             foreach (var e in order)
             {
@@ -189,21 +239,28 @@ namespace Evolve.Organs
             if (changed) Recalculate();
         }
 
-        static void ApplyVisual(Entry e)
+        void ApplyVisual(Entry e)
         {
-            if (e.Visual != null)
-                e.Visual.transform.localScale = e.VisualScale * Mathf.Lerp(0.15f, 1f, e.Shown);
+            if (e.Visual == null) return;
+            // Buds grow to full size; each extra level makes the organ a bit bigger.
+            float levelScale = 1f + 0.1f * Mathf.Max(0, e.Level - 1);
+            e.Visual.transform.localScale = e.VisualScale * Mathf.Lerp(0.15f, 1f, e.Shown) * levelScale;
         }
+
+        /// <summary>Effect strength of an organ: growth × level bonus.</summary>
+        float Strength(Entry e) => e.Shown * (1f + levelBonus * Mathf.Max(0, e.Level - 1));
 
         void Recalculate()
         {
             float speed = 1f, sight = 0f, contact = 0f, heat = 0f;
             foreach (var e in order)
             {
-                speed *= Mathf.Lerp(1f, e.Organ.SpeedMultiplier, e.Shown);
-                if (e.Organ.GrantsSight) sight = Mathf.Max(sight, e.Shown);
-                contact += e.Organ.ContactDamage * e.Shown;
-                heat += e.Organ.HeatResistance * e.Shown;
+                ApplyVisual(e);
+                float k = Strength(e);
+                speed *= 1f + (e.Organ.SpeedMultiplier - 1f) * k;
+                if (e.Organ.GrantsSight) sight = Mathf.Max(sight, k);
+                contact += e.Organ.ContactDamage * k;
+                heat += e.Organ.HeatResistance * k;
             }
             SpeedMultiplier = speed;
             Sight = sight;
