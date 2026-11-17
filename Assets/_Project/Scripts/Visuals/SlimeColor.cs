@@ -3,30 +3,101 @@ using UnityEngine;
 
 namespace Evolve.Visuals
 {
-    /// <summary>The player's chosen slime colour (kept between sessions). Menu: F3 (SlimeColorMenu).</summary>
+    /// <summary>The parts of the slime that can have their own colour.</summary>
+    public enum SlimePart { Body = 0, Eyes = 1, Legs = 2, Back = 3, Skin = 4, Core = 5 }
+
+    /// <summary>
+    /// The player's chosen slime colours (kept between sessions). Menu: F3 (SlimeColorMenu).
+    /// While "linked" (default) the eye stalks, legs and back organs follow the body colour; the skin film and
+    /// the core always have their own colour.
+    /// </summary>
     public static class SlimeColor
     {
+        public const int PartCount = 6;
         public static readonly Color Default = new Color(0.68f, 0.88f, 0.68f);
         /// <summary>The gel stays a little translucent whatever the colour.</summary>
         public const float Alpha = 0.85f;
-        const string Key = "evolve.slimeColor";
+        public const float SkinAlpha = 0.22f;
 
-        static Color current;
+        static readonly Color[] Defaults =
+        {
+            new Color(0.68f, 0.88f, 0.68f), new Color(0.68f, 0.88f, 0.68f), new Color(0.68f, 0.88f, 0.68f),
+            new Color(0.68f, 0.88f, 0.68f), new Color(0.90f, 0.75f, 0.40f), new Color(1.00f, 0.62f, 0.15f)
+        };
+        const string ColorsKey = "evolve.slimeColors";
+        const string LinkedKey = "evolve.slimeLinked";
+
+        static Color[] colors;
+        static bool linked = true;
         static bool loaded;
 
         public static event Action Changed;
 
-        public static Color Current
+        public static bool Linked
         {
-            get { Load(); return current; }
+            get { Load(); return linked; }
         }
 
-        public static void Set(Color color)
+        /// <summary>True for the parts that follow the body colour while linked.</summary>
+        public static bool Follows(SlimePart part) => part == SlimePart.Eyes || part == SlimePart.Legs || part == SlimePart.Back;
+
+        /// <summary>The body colour.</summary>
+        public static Color Current => Get(SlimePart.Body);
+
+        /// <summary>The colour a part really shows (linked parts show the body colour).</summary>
+        public static Color Get(SlimePart part)
+        {
+            Load();
+            return linked && Follows(part) ? colors[(int)SlimePart.Body] : colors[(int)part];
+        }
+
+        /// <summary>The stored colour of a part, ignoring linking (for the menu).</summary>
+        public static Color GetRaw(SlimePart part) { Load(); return colors[(int)part]; }
+
+        public static Color[] Resolved()
+        {
+            var all = new Color[PartCount];
+            for (int i = 0; i < PartCount; i++) all[i] = Get((SlimePart)i);
+            return all;
+        }
+
+        public static void Set(SlimePart part, Color color)
         {
             Load();
             color.a = 1f;
-            current = color;
-            try { PlayerPrefs.SetString(Key, ColorUtility.ToHtmlStringRGB(color)); } catch (Exception) { /* not saved, still applied */ }
+            colors[(int)part] = color;
+            Save();
+        }
+
+        public static void SetLinked(bool value)
+        {
+            Load();
+            if (linked == value) return;
+            linked = value;
+            if (!value) // unlinking keeps what you see: the parts keep the body colour they had
+                for (int i = 0; i < PartCount; i++) if (Follows((SlimePart)i)) colors[i] = colors[(int)SlimePart.Body];
+            Save();
+        }
+
+        /// <summary>Back to the starting colours.</summary>
+        public static void Reset()
+        {
+            Load();
+            for (int i = 0; i < PartCount; i++) colors[i] = Defaults[i];
+            linked = true;
+            Save();
+        }
+
+        static void Save()
+        {
+            try
+            {
+                var parts = new string[PartCount];
+                for (int i = 0; i < PartCount; i++) parts[i] = ColorUtility.ToHtmlStringRGB(colors[i]);
+                PlayerPrefs.SetString(ColorsKey, string.Join(",", parts));
+                PlayerPrefs.SetInt(LinkedKey, linked ? 1 : 0);
+            }
+            catch (Exception) { /* not saved, still applied */ }
             Changed?.Invoke();
         }
 
@@ -34,13 +105,17 @@ namespace Evolve.Visuals
         {
             if (loaded) return;
             loaded = true;
-            current = Default;
+            colors = (Color[])Defaults.Clone();
             try
             {
-                string saved = PlayerPrefs.GetString(Key, "");
-                if (saved.Length > 0 && ColorUtility.TryParseHtmlString("#" + saved, out Color c)) current = c;
+                string saved = PlayerPrefs.GetString(ColorsKey, "");
+                var parts = saved.Split(',');
+                if (parts.Length == PartCount)
+                    for (int i = 0; i < PartCount; i++)
+                        if (ColorUtility.TryParseHtmlString("#" + parts[i], out Color c)) colors[i] = c;
+                linked = PlayerPrefs.GetInt(LinkedKey, 1) != 0;
             }
-            catch (Exception) { /* keep the default */ }
+            catch (Exception) { /* keep the defaults */ }
         }
     }
 }

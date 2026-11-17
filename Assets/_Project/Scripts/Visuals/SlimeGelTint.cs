@@ -5,15 +5,16 @@ using UnityEngine;
 namespace Evolve.Visuals
 {
     /// <summary>
-    /// Colours the gel of the body and of every organ with the slime's colour, per renderer (own material instances):
-    /// only renderers whose material is the gel ("SlimeGel...") are touched, so eyes and the heat film keep their look.
-    /// The local player uses the chosen colour (SlimeColor); remote players get theirs from the network.
+    /// Colours the gel of the body and of every organ, per part, using per-renderer material instances:
+    /// the body, and the organs by their slot (eyes, legs, back, skin film). Only renderers whose material is gel
+    /// ("SlimeGel...") or the skin film ("GelHeatLayer") are touched, so eye beads stay black.
+    /// The local player uses the chosen colours (SlimeColor); remote players get theirs from the network.
     /// Sits on the slime's "Visual" object (added by SlimeGelCore).
     /// </summary>
     public class SlimeGelTint : MonoBehaviour
     {
         public bool UseLocalColor = true;
-        public Color Custom = SlimeColor.Default;
+        Color[] custom;
 
         readonly List<Renderer> scratch = new List<Renderer>();
         float nextScan;
@@ -23,14 +24,25 @@ namespace Evolve.Visuals
 
         void Refresh() => nextScan = 0f;
 
-        /// <summary>Use this colour instead of the local player's choice (remote players).</summary>
-        public void SetColor(Color color)
+        /// <summary>The colour of the core (for SlimeGelCore).</summary>
+        public Color CoreColor => Colors()[(int)SlimePart.Core];
+
+        /// <summary>Use these colours (one per SlimePart) instead of the local player's choice (remote players).</summary>
+        public void SetColors(Color[] colors)
         {
-            if (!UseLocalColor && Custom == color) return;
+            if (colors == null || colors.Length != SlimeColor.PartCount) return;
+            if (!UseLocalColor && custom != null)
+            {
+                bool same = true;
+                for (int i = 0; i < colors.Length && same; i++) same = custom[i] == colors[i];
+                if (same) return;
+            }
             UseLocalColor = false;
-            Custom = color;
+            custom = (Color[])colors.Clone();
             nextScan = 0f;
         }
+
+        Color[] Colors() => UseLocalColor || custom == null ? SlimeColor.Resolved() : custom;
 
         void LateUpdate()
         {
@@ -41,20 +53,34 @@ namespace Evolve.Visuals
 
         void Apply()
         {
-            Color c = UseLocalColor ? SlimeColor.Current : Custom;
-            c.a = SlimeColor.Alpha;
-
-            Tint(GetComponent<Renderer>(), c);
+            var colors = Colors();
+            Tint(GetComponent<Renderer>(), colors[(int)SlimePart.Body]);
             foreach (var socket in GetComponentsInChildren<OrganSocket>(true))
             {
+                Color c = colors[(int)PartOf(socket.Slot)];
                 socket.GetComponentsInChildren(true, scratch);
                 foreach (var r in scratch) Tint(r, c);
             }
         }
 
-        void Tint(Renderer r, Color c)
+        static SlimePart PartOf(OrganSlot slot)
         {
-            if (r == null || r.sharedMaterial == null || !r.sharedMaterial.name.StartsWith("SlimeGel")) return;
+            switch (slot)
+            {
+                case OrganSlot.Eyes: return SlimePart.Eyes;
+                case OrganSlot.Legs: return SlimePart.Legs;
+                case OrganSlot.Back: return SlimePart.Back;
+                default: return SlimePart.Skin;
+            }
+        }
+
+        static void Tint(Renderer r, Color c)
+        {
+            if (r == null || r.sharedMaterial == null) return;
+            string name = r.sharedMaterial.name;
+            if (name.StartsWith("SlimeGel")) c.a = SlimeColor.Alpha;
+            else if (name.StartsWith("GelHeatLayer")) c.a = SlimeColor.SkinAlpha;
+            else return;
             // A per-renderer material instance (created once, then reused): the most reliable way to colour one slime.
             var mat = r.material;
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c); else mat.color = c;
