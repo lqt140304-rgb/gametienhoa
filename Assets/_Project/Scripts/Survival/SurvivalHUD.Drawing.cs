@@ -23,7 +23,9 @@ namespace Evolve.Survival
 
         public bool MenuOpen => menu != HudMenu.None;
         public static bool HasFor(GameObject owner) => owner != null && owners.TryGetValue(owner, out var hud) && hud != null && hud.isActiveAndEnabled;
-        public static bool BlocksInput(GameObject owner) => HasFor(owner) && owners[owner].MenuOpen;
+        /// <summary>Set by tools outside the HUD (such as the co-op menu) while they are open: they behave like a HUD menu.</summary>
+        public static bool ExternalMenuOpen;
+        public static bool BlocksInput(GameObject owner) => ExternalMenuOpen || (HasFor(owner) && owners[owner].MenuOpen);
 
         void RegisterHud()
         {
