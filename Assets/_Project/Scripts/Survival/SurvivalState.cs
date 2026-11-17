@@ -58,6 +58,14 @@ namespace Evolve.Survival
             return true;
         }
 
+        /// <summary>Spend stored food (e.g. on growing organs).</summary>
+        public void ConsumeFood(float amount)
+        {
+            if (IsDead || amount <= 0f) return;
+            Hunger = Clamp(Hunger - amount, MaxHunger);
+            Changed?.Invoke();
+        }
+
         public void Feed(float nutrition)
         {
             if (IsDead) return;

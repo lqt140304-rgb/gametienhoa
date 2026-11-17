@@ -28,18 +28,24 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\n\n" +
             "Đứng yên: không đói, hồi năng lượng\n" +
             "Chấm xanh = thức ăn, chấm đỏ = con mồi\n(giác quan rung, thay cho mắt)\n\n" +
-            "Bắt con mồi (chạm vào) để nhận cơ quan.\nCon mồi chạy mệt sẽ phải dừng nghỉ.";
+            "Bắt con mồi (chạm vào) để nhận cơ quan.\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn dần, tốn thức ăn.";
 
         void Start()
         {
             if (stats == null) return;
             caster = stats.GetComponent<AbilityCaster>();
             organs = stats.GetComponent<OrganHost>();
-            if (organs != null) organs.Attached += o =>
+            if (organs != null)
             {
-                toast = $"Tiến hóa: {o.DisplayName}!\n{o.Description}";
-                toastUntil = Time.time + 4f;
-            };
+                organs.Attached += o => Toast($"Mầm {o.DisplayName} bắt đầu phát triển\n(tốn thức ăn, cần đói > 20)");
+                organs.Completed += o => Toast($"Tiến hóa: {o.DisplayName}!\n{o.Description}");
+            }
+        }
+
+        void Toast(string text)
+        {
+            toast = text;
+            toastUntil = Time.time + 4f;
         }
 
         void Update()
@@ -68,7 +74,12 @@ namespace Evolve.Survival
                 y += 28;
             }
             string organList = organs != null && organs.Organs.Any()
-                ? string.Join(", ", organs.Organs.Select(o => o.DisplayName)) : "chưa có";
+                ? string.Join(", ", organs.Organs.Select(o =>
+                {
+                    float g = organs.GetGrowth(o);
+                    return g < 1f ? $"{o.DisplayName} ({g * 100f:0}%)" : o.DisplayName;
+                })) : "chưa có";
+            if (organs != null && organs.GrowthStarved) organList += "  [đói quá, ngừng phát triển]";
             GUI.Label(new Rect(20, y, 500, 22), $"Cơ quan: {organList}");
             if (s.IsDead) GUI.Label(new Rect(20, y + 24, 300, 22), "Đã chết");
 
@@ -80,7 +91,7 @@ namespace Evolve.Survival
             }
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 340), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 360), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }

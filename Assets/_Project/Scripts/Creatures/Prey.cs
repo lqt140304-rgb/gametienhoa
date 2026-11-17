@@ -18,12 +18,12 @@ namespace Evolve.Creatures
         public static IReadOnlyList<Prey> Active => active;
 
         [SerializeField] float wanderSpeed = 0.5f;
-        [SerializeField] float fleeSpeed = 1.25f;
-        [SerializeField] float fleeRadius = 5f;
+        [SerializeField] float fleeSpeed = 1.6f;
+        [SerializeField] float fleeRadius = 6f;
         [Tooltip("Seconds it can flee before getting tired")]
-        [SerializeField] float stamina = 4f;
+        [SerializeField] float stamina = 5f;
         [Tooltip("Seconds it must rest when tired")]
-        [SerializeField] float restTime = 2f;
+        [SerializeField] float restTime = 1.5f;
         [SerializeField] float nutrition = 15f;
         [SerializeField] OrganSO[] dropTable;
 

@@ -18,7 +18,13 @@ namespace Evolve.Organs
         [Tooltip("Model spawned on the slime's socket for this slot")]
         public GameObject VisualPrefab;
 
-        [Header("Effects")]
+        [Header("Growth")]
+        [Tooltip("Seconds to grow from bud to full organ (0 = instant)")]
+        public float GrowthSeconds = 20f;
+        [Tooltip("Total food (hunger) consumed while growing")]
+        public float GrowthFoodCost = 10f;
+
+        [Header("Effects (at full growth)")]
         [Tooltip("Gives colour vision and long view range")]
         public bool GrantsSight;
         [Tooltip("Multiplies movement speed")]
