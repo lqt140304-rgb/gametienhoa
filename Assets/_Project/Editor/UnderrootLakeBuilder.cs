@@ -59,20 +59,20 @@ namespace Evolve.EditorTools
             var d = P.Asset<SpeciesSO>(SO + "Species_D_Mudmite.asset", s =>
             {
                 s.Id = "D_Mudmite"; s.Prefab = preyPrefab; s.Tier = OrganTier.D;
-                s.StartCount = 14; s.Capacity = 24; s.BirthsPerMinute = 0.6f;
+                s.StartCount = 18; s.Capacity = 32; s.BirthsPerMinute = 0.6f;
                 s.FoodPerHeadPerMinute = 0.2f; s.Prey = null; s.KillsPerHeadPerMinute = 0f;
             });
             var c = P.Asset<SpeciesSO>(SO + "Species_C_Rootcrawler.asset", s =>
             {
                 s.Id = "C_Rootcrawler"; s.Prefab = preyCPrefab; s.Tier = OrganTier.C;
-                s.StartCount = 6; s.Capacity = 10; s.BirthsPerMinute = 0.2f;
-                s.Prey = d; s.KillsPerHeadPerMinute = 0.3f;
+                s.StartCount = 10; s.Capacity = 16; s.BirthsPerMinute = 0.35f;
+                s.Prey = d; s.KillsPerHeadPerMinute = 0.05f;
             });
             var b = P.Asset<SpeciesSO>(SO + "Species_B_Hunter.asset", s =>
             {
                 s.Id = "B_Hunter"; s.Prefab = predatorPrefab; s.Tier = OrganTier.B;
                 s.StartCount = 2; s.Capacity = 3; s.BirthsPerMinute = 0.02f;
-                s.Prey = c; s.KillsPerHeadPerMinute = 0.5f;
+                s.Prey = c; s.KillsPerHeadPerMinute = 0.15f;
             });
             FillMissing(d, preyPrefab, null);
             FillMissing(c, preyCPrefab, d);
@@ -97,7 +97,7 @@ namespace Evolve.EditorTools
             BuildTerrain();
             BuildDome(domeMat);
             BuildRoots(root);
-            BuildLandmarks(root);
+            BuildLandmarks();
             BuildLights();
             BuildBoundary();
 
@@ -106,10 +106,10 @@ namespace Evolve.EditorTools
             var rng = new System.Random(50501);
             for (int i = 0; i < 28; i++) rng.NextDouble();
 
-            // ---- Region (whole area) ----
-            var regionGo = new GameObject("Region (Underroot Lake)");
-            var region = regionGo.AddComponent<Region>();
-            P.SetArray(region, "species", new Object[] { d, c, b });
+            // ---- Regions: one per populated biome (population numbers live per region) ----
+            var humusRegion = MakeRegion("Region (Bai Mun Re)", ZoneLayout.Humus, 90f, d);
+            var sporeRegion = MakeRegion("Region (Vuon Bao Tu)", ZoneLayout.Spore, 90f, d, c);
+            var edgeRegion = MakeRegion("Region (Ria San Moi)", ZoneLayout.HuntEdge, 140f, d, c, b) // wide deactivate radius so the hunter does not vanish while chasing;
 
             // ---- Vũng Sinh Mệnh (life pool) ----
             var pool = new GameObject("Vung Sinh Menh (Life Pool)").transform;
@@ -129,7 +129,10 @@ namespace Evolve.EditorTools
             var shallows = new GameObject("Shallow Water").transform;
             Water(ShallowBox("Shallows North", shallows, new Vector3(0f, 0f, 20f), new Vector2(24f, 8f), shallow), true, "Vũng Sinh Mệnh");
             Water(ShallowBox("Shallows West", shallows, new Vector3(-20f, 0f, 0f), new Vector2(8f, 24f), shallow), true, "Vũng Sinh Mệnh");
-            Water(ShallowBox("Khe Thuy Mach (South Channel)", shallows, new Vector3(0f, 0f, -37.5f), new Vector2(6f, 45f), shallow), true, "Khe Thủy Mạch");
+            const float streamTop = -15f;
+            float streamBottom = ZoneLayout.StreamEnd.y;
+            Water(ShallowBox("Khe Thuy Mach (South Channel)", shallows, new Vector3(0f, 0f, (streamTop + streamBottom) * 0.5f),
+                new Vector2(6f, streamTop - streamBottom), shallow), true, "Khe Thủy Mạch");
 
             // ---- Deep pockets: black disc + solid blocker so slimes cannot fall in ----
             DeepPocket("Deep Pocket West", new Vector3(-30f, 0f, 25f), dark);
@@ -137,48 +140,55 @@ namespace Evolve.EditorTools
 
             // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters (gap 1.35 m, ShelterZone inside), cool 18°C ----
             var roots = new GameObject("Chan Re Co Thu (Ancient Roots)").transform;
-            Zone(roots, new Vector3(0f, 3f, 50f), new Vector3(50f, 6f, 16f), 18f, "Chân Rễ Cổ Thụ");
-            for (int i = 0; i < 3; i++) Shelter(roots, new Vector3(-16f + i * 16f, 0f, 50f), root);
+            Zone(roots, new Vector3(0f, 3f, ZoneLayout.RootFoot.Center.y), new Vector3(50f, 6f, 16f), 18f, "Chân Rễ Cổ Thụ");
+            for (int i = 0; i < 3; i++) Shelter(roots, new Vector3(-16f + i * 16f, 0f, ZoneLayout.RootFoot.Center.y), root);
 
             // ---- Bãi Mùn Rễ (east): warm 26°C, 6 nutrients, 2 D dens ----
             var humusRoot = new GameObject("Bai Mun Re (Humus Bed)").transform;
-            Visual(PrimitiveType.Cube, "Humus Ground", humusRoot, new Vector3(40f, 0.01f, 0f), new Vector3(20f, 0.02f, 30f), humus);
-            Zone(humusRoot, new Vector3(40f, 3f, 0f), new Vector3(20f, 6f, 30f), 26f, "Bãi Mùn Rễ");
+            Visual(PrimitiveType.Cube, "Humus Ground", humusRoot, new Vector3(ZoneLayout.Humus.Center.x, 0.01f, 0f), new Vector3(20f, 0.02f, 30f), humus);
+            Zone(humusRoot, new Vector3(ZoneLayout.Humus.Center.x, 3f, 0f), new Vector3(20f, 6f, 30f), 26f, "Bãi Mùn Rễ");
             for (int i = 0; i < 6; i++)
             {
                 var n = (GameObject)PrefabUtility.InstantiatePrefab(shared.NutrientPrefab, humusRoot);
-                n.transform.position = new Vector3(Mathf.Lerp(33f, 47f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()));
+                n.transform.position = new Vector3(Mathf.Lerp(163f, 177f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()));
             }
-            MakeDen("Den D (Mudmite) 1", humusRoot, new Vector3(37f, 0f, 8f), d, region, denMat);
-            MakeDen("Den D (Mudmite) 2", humusRoot, new Vector3(44f, 0f, -8f), d, region, denMat);
-            // Stagnant puddle (dirty): quenches thirst, disease risk comes in 0.5d. x 34..42 keeps clear of den 2.
-            Water(ShallowBox("Vung Nuoc Dong (Dirty Puddle)", humusRoot, new Vector3(38f, 0f, -8f), new Vector2(8f, 8f), dirtyWater), false, "Vũng nước đọng (Bãi Mùn Rễ)");
+            MakeDen("Den D (Mudmite) 1", humusRoot, new Vector3(167f, 0f, 8f), d, humusRegion, denMat);
+            MakeDen("Den D (Mudmite) 2", humusRoot, new Vector3(174f, 0f, -8f), d, humusRegion, denMat);
+            // Stagnant puddle (dirty): quenches thirst, disease risk comes in 0.5d. x 164..172 keeps clear of den 2.
+            Water(ShallowBox("Vung Nuoc Dong (Dirty Puddle)", humusRoot, new Vector3(168f, 0f, -8f), new Vector2(8f, 8f), dirtyWater), false, "Vũng nước đọng (Bãi Mùn Rễ)");
 
             // ---- Vườn Bào Tử (west): mushroom clusters, 2 C dens ----
             var garden = new GameObject("Vuon Bao Tu (Spore Garden)").transform;
             for (int i = 0; i < 9; i++)
             {
-                var pos = new Vector3(Mathf.Lerp(-48f, -32f, (float)rng.NextDouble()), 0f, Mathf.Lerp(-15f, 15f, (float)rng.NextDouble()));
+                var pos = new Vector3(Mathf.Lerp(-178f, -162f, (float)rng.NextDouble()), 0f, Mathf.Lerp(-15f, 15f, (float)rng.NextDouble()));
                 float h = Mathf.Lerp(0.8f, 2.2f, (float)rng.NextDouble());
                 Visual(PrimitiveType.Cylinder, "Stalk", garden, pos + new Vector3(0f, h * 0.5f, 0f), new Vector3(0.25f, h * 0.5f, 0.25f), root);
                 Visual(PrimitiveType.Sphere, "Cap", garden, pos + new Vector3(0f, h, 0f), new Vector3(h, h * 0.4f, h), fungus);
             }
-            MakeDen("Den C (Rootcrawler) 1", garden, new Vector3(-38f, 0f, 9f), c, region, denMat);
-            MakeDen("Den C (Rootcrawler) 2", garden, new Vector3(-43f, 0f, -9f), c, region, denMat);
+            MakeDen("Den C (Rootcrawler) 1", garden, new Vector3(-168f, 0f, 9f), c, sporeRegion, denMat);
+            MakeDen("Den C (Rootcrawler) 2", garden, new Vector3(-173f, 0f, -9f), c, sporeRegion, denMat);
+            MakeDen("Den D (Mudmite) 3", garden, new Vector3(-158f, 0f, -20f), d, sporeRegion, denMat); // prey for the C of this region
+            MakeDen("Den D (Mudmite) 5", garden, new Vector3(-176f, 0f, 22f), d, sporeRegion, denMat);
 
             // ---- Rìa Săn Mồi (south-east): B den at the edge + 2 incursion entries ----
             var hunt = new GameObject("Ria San Moi (Hunting Edge)").transform;
-            MakeDen("Den B (Hunter)", hunt, new Vector3(55f, 0f, -55f), b, region, denMat);
+            MakeDen("Den B (Hunter)", hunt, new Vector3(170f, 0f, -170f), b, edgeRegion, denMat);
+            MakeDen("Den C (Rootcrawler) 3", hunt, new Vector3(180f, 0f, -160f), c, edgeRegion, denMat); // prey for the hunter
+            MakeDen("Den D (Mudmite) 4", hunt, new Vector3(160f, 0f, -180f), d, edgeRegion, denMat); // so the C of this region can breed
             var e1 = new GameObject("Incursion Entry East").transform;
-            e1.SetParent(hunt, false); e1.position = new Vector3(56f, 0.35f, -30f);
+            e1.SetParent(hunt, false); e1.position = new Vector3(171f, 0.35f, -145f);
             var e2 = new GameObject("Incursion Entry South").transform;
-            e2.SetParent(hunt, false); e2.position = new Vector3(30f, 0.35f, -56f);
+            e2.SetParent(hunt, false); e2.position = new Vector3(145f, 0.35f, -171f);
             var incursion = new GameObject("Predator Incursion").AddComponent<PredatorIncursion>();
             incursion.transform.SetParent(hunt, false);
             var bHome = new GameObject("B Hunting Ground").transform;
-            bHome.SetParent(hunt, false); bHome.position = new Vector3(-40f, 0f, 0f);
+            bHome.SetParent(hunt, false); bHome.position = new Vector3(110f, 0f, -110f); // between the core and the edge: the hunter patrols the south-east quadrant
             P.Set(incursion, "home", bHome);
-            P.Set(incursion, "region", region);
+            P.Set(incursion, "region", edgeRegion);
+            var iso = new SerializedObject(incursion);
+            iso.FindProperty("homeRadius").floatValue = 90f;
+            iso.ApplyModifiedPropertiesWithoutUndo();
             P.Set(incursion, "predator", b);
             P.SetArray(incursion, "entries", new Object[] { e1, e2 });
 
@@ -198,7 +208,21 @@ namespace Evolve.EditorTools
             P.AddToBuildSettings(ScenePath);
             AssetDatabase.SaveAssets();
             Selection.activeGameObject = slime;
-            Debug.Log("Đã dựng " + ScenePath + ". Bãi Mùn Rễ (tổ D) ở phía đông, Vườn Bào Tử (tổ C) phía tây, Rìa Săn Mồi (B) đông nam.");
+            Debug.Log("Đã dựng " + ScenePath + ". Chân Rễ phía bắc, Bãi Mùn Rễ (tổ D) phía đông, Vườn Bào Tử (tổ C) phía tây, Khe Thủy Mạch xuống nam, Rìa Săn Mồi (B) đông nam; đường mòn nối các nơi.");
+        }
+
+        static Region MakeRegion(string name, Pad pad, float deactivateRadius, params SpeciesSO[] species)
+        {
+            var go = new GameObject(name);
+            go.transform.position = new Vector3(pad.Center.x, 0f, pad.Center.y);
+            var region = go.AddComponent<Region>();
+            var so = new SerializedObject(region);
+            so.FindProperty("size").vector3Value = new Vector3(pad.Radius * 2f, 40f, pad.Radius * 2f);
+            so.FindProperty("activateRadius").floatValue = 70f;
+            so.FindProperty("deactivateRadius").floatValue = deactivateRadius;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            P.SetArray(region, "species", species);
+            return region;
         }
 
         /// <summary>Roof height (m above the core surface) at a horizontal distance from the zone centre.</summary>
@@ -235,15 +259,49 @@ namespace Evolve.EditorTools
                 AssetDatabase.CreateAsset(layer, layerPath);
             }
 
+            // Second layer: packed earth along the trails (lighter than the mud)
+            string trailTexPath = TerrainFolder + "/Underroot_Trail.asset";
+            string trailLayerPath = TerrainFolder + "/Underroot_Zone1_TrailLayer.terrainlayer";
+            var trailTex = AssetDatabase.LoadAssetAtPath<Texture2D>(trailTexPath);
+            if (trailTex == null)
+            {
+                trailTex = new Texture2D(4, 4, TextureFormat.RGBA32, true);
+                var tp = new Color[16];
+                for (int i = 0; i < tp.Length; i++)
+                {
+                    float v = 0.9f + 0.1f * ((i * 5) % 7) / 6f;
+                    tp[i] = new Color(0.52f * v, 0.45f * v, 0.34f * v, 1f);
+                }
+                trailTex.SetPixels(tp);
+                trailTex.Apply();
+                AssetDatabase.CreateAsset(trailTex, trailTexPath);
+            }
+            var trailLayer = AssetDatabase.LoadAssetAtPath<TerrainLayer>(trailLayerPath);
+            if (trailLayer == null)
+            {
+                trailLayer = new TerrainLayer { diffuseTexture = trailTex, tileSize = new Vector2(8f, 8f) };
+                AssetDatabase.CreateAsset(trailLayer, trailLayerPath);
+            }
+
             AssetDatabase.DeleteAsset(dataPath); // heights are deterministic: always rebuild
             var data = new TerrainData { heightmapResolution = HeightmapResolution };
             data.size = new Vector3(WorldScale.ZoneSize, TerrainShape.TerrainHeight, WorldScale.ZoneSize);
             data.SetHeights(0, 0, TerrainShape.Heights(HeightmapResolution, TerrainSeed));
-            data.terrainLayers = new[] { layer };
-            data.alphamapResolution = 64;
-            var alpha = new float[64, 64, 1];
-            for (int z = 0; z < 64; z++)
-                for (int x = 0; x < 64; x++) alpha[z, x, 0] = 1f; // the single layer covers everything
+            data.terrainLayers = new[] { layer, trailLayer };
+            const int alphaRes = 512;
+            data.alphamapResolution = alphaRes;
+            var alpha = new float[alphaRes, alphaRes, 2];
+            float cell = WorldScale.ZoneSize / alphaRes;
+            float halfWidth = ZoneLayout.PathWidth * 0.5f;
+            for (int zi = 0; zi < alphaRes; zi++)
+                for (int xi = 0; xi < alphaRes; xi++)
+                {
+                    float wx = -WorldScale.ZoneSize * 0.5f + (xi + 0.5f) * cell;
+                    float wz = -WorldScale.ZoneSize * 0.5f + (zi + 0.5f) * cell;
+                    float trail = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(halfWidth, halfWidth + 2f, ZoneLayout.DistanceToPath(wx, wz)));
+                    alpha[zi, xi, 0] = 1f - trail;  // mud
+                    alpha[zi, xi, 1] = trail;       // trail
+                }
             data.SetAlphamaps(0, 0, alpha);
             AssetDatabase.CreateAsset(data, dataPath); // must be an asset, or the scene loses its hills when reopened
 
@@ -287,20 +345,28 @@ namespace Evolve.EditorTools
             }
         }
 
-        /// <summary>Four huge root pillars from the ground to the roof, one per compass direction, to find your way by.</summary>
-        static void BuildLandmarks(Material root)
+        /// <summary>Huge root pillars from the ground to the roof to find your way by: one beside each biome and one at the stream end.</summary>
+        static void BuildLandmarks()
         {
             var parent = new GameObject("Landmarks").transform;
-            const float distance = 190f;
-            foreach (var (name, dx, dz) in new[] { ("North", 0f, 1f), ("East", 1f, 0f), ("South", 0f, -1f), ("West", -1f, 0f) })
-            {
-                float x = dx * distance, z = dz * distance;
-                float ground = TerrainShape.HeightAt(x, z, TerrainSeed);
-                const float sink = 3f; // bury the foot so the downhill side of the 7 m pillar doesn't float
-                float len = DomeY(distance) - ground + sink;
-                Solid(PrimitiveType.Cylinder, "Landmark " + name, parent, new Vector3(x, ground - sink + len * 0.5f, z),
-                    new Vector3(7f, len * 0.5f, 7f), root);
-            }
+            AddLandmark(parent, "RootFoot", Outward(ZoneLayout.RootFoot), new Color(0.32f, 0.22f, 0.14f));
+            AddLandmark(parent, "Humus", Outward(ZoneLayout.Humus), new Color(0.3f, 0.2f, 0.08f));
+            AddLandmark(parent, "Spore", Outward(ZoneLayout.Spore), new Color(0.45f, 0.3f, 0.55f));
+            AddLandmark(parent, "HuntEdge", Outward(ZoneLayout.HuntEdge), new Color(0.5f, 0.15f, 0.12f));
+            AddLandmark(parent, "South", new Vector2(0f, ZoneLayout.StreamEnd.y - 20f), new Color(0.2f, 0.35f, 0.4f));
+        }
+
+        /// <summary>A point 30 m outward (away from the zone centre) from a pad's centre.</summary>
+        static Vector2 Outward(Pad pad) => pad.Center + pad.Center.normalized * 30f;
+
+        static void AddLandmark(Transform parent, string name, Vector2 xz, Color color)
+        {
+            float ground = TerrainShape.HeightAt(xz.x, xz.y, TerrainSeed);
+            const float sink = 3f; // bury the foot so the downhill side of the 7 m pillar doesn't float
+            float len = DomeY(xz.magnitude) - ground + sink;
+            var mat = P.Mat("Lake_Landmark_" + name, color, Lit);
+            Solid(PrimitiveType.Cylinder, "Landmark " + name, parent, new Vector3(xz.x, ground - sink + len * 0.5f, xz.y),
+                new Vector3(7f, len * 0.5f, 7f), mat);
         }
 
         static void BuildLights()
