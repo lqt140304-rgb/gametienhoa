@@ -20,6 +20,13 @@ namespace Evolve.Survival
         public float MaxThirst = 100f;
         public float Thirst;   // 100 = quenched, 0 = dehydrated
         public const float MaxStress = 100f;
+
+        public const float MaxNutrient = 100f;
+        public const float DefaultNutrientStart = 80f;
+        /// <summary>The five stores (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống), indexed by NutrientKind.</summary>
+        public float[] Nutrients = { DefaultNutrientStart, DefaultNutrientStart, DefaultNutrientStart, DefaultNutrientStart, DefaultNutrientStart };
+        /// <summary>How many equipped organs need each nutrient (written by OrganHost).</summary>
+        [NonSerialized] public int[] NutrientLoad = new int[NutrientKinds.Count];
         /// <summary>0 = calm, 100 = panic.</summary>
         public float Stress;
         /// <summary>Thirst only drains where the world turns it on.</summary>
@@ -65,6 +72,8 @@ namespace Evolve.Survival
             Lives = 1;
             Health = Clamp(health, MaxHealth);
             Thirst = UnityEngine.Mathf.Max(Thirst, MaxThirst * 0.5f);
+            EnsureNutrients();
+            for (int k = 0; k < Nutrients.Length; k++) Nutrients[k] = UnityEngine.Mathf.Max(Nutrients[k], 50f);
             Stress = UnityEngine.Mathf.Min(Stress, 50f);
             Changed?.Invoke();
         }
@@ -107,6 +116,9 @@ namespace Evolve.Survival
             Energy = MaxEnergy;
             Thirst = MaxThirst;
             Stress = 0f;
+            EnsureNutrients();
+            float start = Config != null ? Config.NutrientStart : DefaultNutrientStart;
+            for (int k = 0; k < Nutrients.Length; k++) Nutrients[k] = start;
             Temperature = Ambient;
             Changed?.Invoke();
         }
@@ -126,6 +138,14 @@ namespace Evolve.Survival
                 if (Thirst <= 0f) ApplyDamage(cfg.DehydrationDamagePerSec * dt);
             }
 
+            // Nutrient stores slowly run down; each equipped organ that needs one makes it run down faster.
+            EnsureNutrients();
+            for (int k = 0; k < Nutrients.Length; k++)
+            {
+                float load = NutrientLoad != null && k < NutrientLoad.Length ? NutrientLoad[k] : 0f;
+                Nutrients[k] = Clamp(Nutrients[k] - (cfg.NutrientBaseDecayPerSec + load * cfg.NutrientOrganDecayPerSec) * dt, MaxNutrient);
+            }
+
             // Metabolism only burns food while active; resting costs nothing.
             float burn = (isMoving ? cfg.HungerDecayPerSec : 0f) + (isSprinting ? cfg.SprintHungerPerSec : 0f);
             Hunger = Clamp(Hunger - burn * dt, MaxHunger);
@@ -136,17 +156,22 @@ namespace Evolve.Survival
                 float regen = isMoving ? cfg.EnergyRegenMovingPerSec : cfg.EnergyRegenPerSec;
                 if (InShelter) regen *= cfg.ShelterEnergyRegenMultiplier;
                 regen *= StressEffects.EnergyRegenMultiplier(Stress, cfg);
+                regen *= NutrientEffects.EnergyRegenMultiplier(Nutrients[(int)NutrientKind.Iron]);
                 Energy = Clamp(Energy + regen * dt, MaxEnergy);
             }
 
+            // Anaemia (low Huyết Thiết) lowers the maximum health; low Sợi Nhầy slows healing.
+            float healthCap = MaxHealth * NutrientEffects.MaxHealthMultiplier(Nutrients[(int)NutrientKind.Iron]);
+            if (Health > healthCap) Health = healthCap;
             bool thirstOk = !ThirstEnabled || Thirst >= MaxThirst * cfg.HealThirstThreshold;
             if (Hunger <= 0f)
                 ApplyDamage(cfg.StarveDamagePerSec * dt);
             else if (Hunger >= MaxHunger * cfg.HealHungerThreshold && thirstOk)
-                Health = Clamp(Health + cfg.HealPerSec * dt, MaxHealth);
+                Health = Clamp(Health + cfg.HealPerSec * NutrientEffects.HealMultiplier(Nutrients[(int)NutrientKind.Protein]) * dt, healthCap);
 
             // Body temperature drifts toward the air; outside the comfort range it hurts.
-            Temperature = MoveTowards(Temperature, Ambient, cfg.TemperatureChangePerSec * dt);
+            Temperature = MoveTowards(Temperature, Ambient,
+                cfg.TemperatureChangePerSec * NutrientEffects.TemperatureDriftMultiplier(Nutrients[(int)NutrientKind.Fat]) * dt);
             float over = Temperature - (cfg.ComfortMax + HeatResistance);
             float under = cfg.ComfortMin - Temperature;
             if (over > 0f) ApplyDamage(over * cfg.DamagePerDegreePerSec * dt);
@@ -184,12 +209,46 @@ namespace Evolve.Survival
             return true;
         }
 
-        public void Feed(float nutrition)
+        public void Feed(float nutrition) => Feed(nutrition, FoodProfiles.Mixed);
+
+        /// <summary>Eat: fills hunger, and adds nutrient points following the food's profile.</summary>
+        public void Feed(float nutrition, FoodProfile profile)
         {
             if (IsDead) return;
+            float eaten = nutrition;
             if (FoodFilter != null) nutrition = FoodFilter(nutrition);
             Hunger = Clamp(Hunger + nutrition, MaxHunger);
+            EnsureNutrients();
+            float gain = (Config != null ? Config.NutrientGainPerFood : 1f) * eaten;
+            for (int k = 0; k < Nutrients.Length; k++)
+                Nutrients[k] = Clamp(Nutrients[k] + gain * profile.Of((NutrientKind)k), MaxNutrient);
             Changed?.Invoke();
+        }
+
+        public float Nutrient(NutrientKind k) { EnsureNutrients(); return Nutrients[(int)k]; }
+
+        /// <summary>Below the equip threshold: new organs needing this nutrient cannot be equipped.</summary>
+        public bool IsLacking(NutrientKind k) => Nutrient(k) < (Config != null ? Config.NutrientEquipThreshold : NutrientEffects.Threshold);
+
+        /// <summary>Below the warning threshold: organs needing this nutrient are weakening.</summary>
+        public bool IsWarning(NutrientKind k) => Nutrient(k) < (Config != null ? Config.NutrientWarnThreshold : 25f);
+
+        public NutrientKind LowestNutrient()
+        {
+            EnsureNutrients();
+            int best = 0;
+            for (int k = 1; k < Nutrients.Length; k++) if (Nutrients[k] < Nutrients[best]) best = k;
+            return (NutrientKind)best;
+        }
+
+        void EnsureNutrients()
+        {
+            if (Nutrients == null || Nutrients.Length != NutrientKinds.Count)
+            {
+                var old = Nutrients;
+                Nutrients = new float[NutrientKinds.Count];
+                for (int k = 0; k < Nutrients.Length; k++) Nutrients[k] = old != null && k < old.Length ? old[k] : DefaultNutrientStart;
+            }
         }
 
         /// <summary>Quench thirst.</summary>
@@ -205,7 +264,7 @@ namespace Evolve.Survival
         {
             if (IsDead || Invulnerable) return;
             if (Config != null && amount > 0f) Stress = StressClamp(Stress + amount * Config.StressPerDamage);
-            ApplyDamage(amount);
+            ApplyDamage(amount * NutrientEffects.DamageTakenMultiplier(Nutrient(NutrientKind.Calcium))); // brittle bones: hits hurt more
         }
 
         void ApplyDamage(float amount)
