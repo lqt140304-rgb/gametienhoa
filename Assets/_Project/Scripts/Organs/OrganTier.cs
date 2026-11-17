@@ -3,12 +3,13 @@ using UnityEngine;
 namespace Evolve.Organs
 {
     /// <summary>Rarity tier of an organ (same letters as Dị Năng tiers). Higher = rarer and stronger.</summary>
-    public enum OrganTier { C, B, A, S }
+    public enum OrganTier { D = -1, C = 0, B = 1, A = 2, S = 3 }
 
     public static class OrganTiers
     {
         public static Color Color(OrganTier t) => t switch
         {
+            OrganTier.D => new Color(0.45f, 0.45f, 0.45f),
             OrganTier.B => new Color(0.35f, 0.9f, 0.4f),
             OrganTier.A => new Color(0.35f, 0.6f, 1f),
             OrganTier.S => new Color(1f, 0.8f, 0.2f),
@@ -18,6 +19,7 @@ namespace Evolve.Organs
         /// <summary>Evolution EXP gained by absorbing an organ of this tier.</summary>
         public static float AbsorbExp(OrganTier t) => t switch
         {
+            OrganTier.D => 8f,
             OrganTier.B => 30f,
             OrganTier.A => 60f,
             OrganTier.S => 120f,
