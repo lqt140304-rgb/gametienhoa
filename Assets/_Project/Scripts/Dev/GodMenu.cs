@@ -51,6 +51,7 @@ namespace Evolve.DevTools
         void Update()
         {
             if (KeyPressed.F1()) open = !open;
+            AimController.MouseUiOpen = open; // free the cursor while the menu is open
             FindPlayer();
             if (player == null) return;
 

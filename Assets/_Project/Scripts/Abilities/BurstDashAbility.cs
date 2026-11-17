@@ -1,3 +1,4 @@
+using Evolve.Player;
 using UnityEngine;
 
 namespace Evolve.Abilities
@@ -11,7 +12,17 @@ namespace Evolve.Abilities
         public override bool Activate(GameObject user)
         {
             if (!user.TryGetComponent(out Rigidbody rb)) return false;
-            Vector3 dir = rb.linearVelocity; dir.y = 0;
+            Vector3 dir;
+            if (AimController.Aiming)
+            {
+                // Dash toward the crosshair (flat).
+                dir = AimController.AimDirection(user, user.transform.position, out _);
+                dir.y = 0f;
+            }
+            else
+            {
+                dir = rb.linearVelocity; dir.y = 0;
+            }
             if (dir.sqrMagnitude < 0.01f) dir = user.transform.forward;
             rb.AddForce(dir.normalized * Force + Vector3.up * 1.5f, ForceMode.VelocityChange);
             return true;

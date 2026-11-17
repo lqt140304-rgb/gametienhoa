@@ -78,6 +78,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 |---|---|
 | WASD / Shift / Space | Trườn / nước rút (tốn thức ăn) / nảy (tốn năng lượng) |
 | Q | Dị Năng (hiện chỉ có "Bộc Phá Màng") |
+| Alt | Đổi **chế độ chuột** ⇄ **chế độ ngắm** (hồng tâm giữa màn hình, chuột xoay camera trực tiếp, kỹ năng bắn/lao về phía hồng tâm) |
 | 1–5 | 5 ô kỹ năng gắn cơ quan (từ cơ quan bậc B ở Lv2, Lv3 nâng cấp); đổi ô trong bảng Cơ thể (G) |
 | C | **Quét rung**: sóng lan 25 m, ánh sáng lan ra soi địa hình, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (10 năng lượng, hồi 5 giây) |
 | E / F / X | Khi chạm cơ quan rơi: lắp hoặc thay / hấp thụ lấy EXP / bỏ qua |
@@ -121,7 +122,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho code (chưa làm):
 
 - **Đã làm:** bỏ Chân chạy (A) khỏi `DropTable_Prey` (nguồn đúng là đầu đàn Hươu Sừng Rung); công cụ dựng scene cũng không thêm nó vào bảng con mồi nữa. Bảng con mồi giờ chỉ còn 5 cơ quan (Mắt sơ khai, Chân giả, Chân giả cơ bắp, Màng chịu nhiệt, Gai độc); trọng số bậc A (7) không còn tác dụng vì bảng không có cơ quan A. Chân chạy vẫn rơi từ bảng kẻ săn mồi (`DropTable_Predator`).
-- **5 ô kỹ năng đã có bản đầu** (`SkillBar`, phím 1–5), tách khỏi Dị Năng Q (`AbilityCaster` giữ đúng 1). `OrganSO.GrantedAbility` + `AbilityUnlockLevel` (2); `AbilitySO.Activate(user, level)` và `CooldownFor(level)` cho Lv3; hồi chiêu tính theo cơ quan. Hai kỹ năng mẫu cho cơ quan bậc B: `ChargeAbility` (Xung Phong Húc) và `SpikeBurstAbility` (Xả Gai), con số là đề xuất. Menu God có "Mọi cơ quan Lv2/Lv3" để thử nhanh. **Cần dựng lại scene** (scene cũ chưa có `SkillBar`).
+- **5 ô kỹ năng đã có bản đầu** (`SkillBar`, phím 1–5), tách khỏi Dị Năng Q (`AbilityCaster` giữ đúng 1). `OrganSO.GrantedAbility` + `AbilityUnlockLevel` (2); `AbilitySO.Activate(user, level)` và `CooldownFor(level)` cho Lv3; hồi chiêu tính theo cơ quan. Hai kỹ năng mẫu cho cơ quan bậc B: `ChargeAbility` (Xung Phong Húc) và `SpikeBurstAbility` (Xả Gai: chùm 5 gai bắn về phía hồng tâm, đạn là `SpikeProjectile` tạo lúc chạy), con số là đề xuất. **Chế độ ngắm (Alt)** do `AimController` (tự thêm khi Play, `AimController.Aiming`, `AimDirection()`); bảng Cơ thể (G) và Menu God tự trả con trỏ. Menu God có "Mọi cơ quan Lv2/Lv3" để thử nhanh. **Cần dựng lại scene** (scene cũ chưa có `SkillBar`); chế độ ngắm không cần dựng lại.
 - **HP quái theo số người** (A, S, Boss): `HP = gốc × (0.6 + 0.2 × số người trong vùng)`; chỉ cần khi làm co-op.
 - **Ăn xác** (~5 giây mất 1 cơ quan) cần xác người chơi chết hẳn, cũng thuộc co-op.
 - **Gợi ý thứ tự của Bestiary mục 8** (chủ dự án chưa duyệt, và chưa chọn giữa co-op và BIS): trước co-op nên gộp `Prey`/`Predator` thành một `Creature` đọc `CreatureSO` (giữ đúng thông số hiện tại), rồi thêm bầy Sói Gai (Alpha, hú gọi) và vài loài hoang mạc; sau đó 5 ô kỹ năng, BIS cho mắt/chân/giáp, và boss đầu tiên (Mẹ Bầy Ngàn Chân). Lý do: Netcode chỉ phải đồng bộ một lớp quái.

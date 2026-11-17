@@ -53,12 +53,12 @@ namespace Evolve.Player
             var m = Mouse.current;
             if (m != null)
             {
-                if (m.rightButton.isPressed) look = m.delta.ReadValue();
+                if (AimController.Aiming || m.rightButton.isPressed) look = m.delta.ReadValue();
                 zoom = m.scroll.ReadValue().y * 0.01f;
             }
             if (Gamepad.current != null) look += Gamepad.current.rightStick.ReadValue() * 10f;
 #else
-            look = Input.GetMouseButton(1) ? new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * 10f : Vector2.zero;
+            look = (AimController.Aiming || Input.GetMouseButton(1)) ? new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * 10f : Vector2.zero;
             zoom = Input.mouseScrollDelta.y;
 #endif
         }

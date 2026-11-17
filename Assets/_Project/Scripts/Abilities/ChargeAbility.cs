@@ -1,3 +1,4 @@
+using Evolve.Player;
 using UnityEngine;
 
 namespace Evolve.Abilities
@@ -16,7 +17,17 @@ namespace Evolve.Abilities
         public override bool Activate(GameObject user, int level)
         {
             if (!user.TryGetComponent(out Rigidbody rb)) return false;
-            Vector3 dir = rb.linearVelocity; dir.y = 0f;
+            Vector3 dir;
+            if (AimController.Aiming)
+            {
+                // Charge toward the crosshair (flat).
+                dir = AimController.AimDirection(user, user.transform.position, out _);
+                dir.y = 0f;
+            }
+            else
+            {
+                dir = rb.linearVelocity; dir.y = 0f;
+            }
             if (dir.sqrMagnitude < 0.01f)
             {
                 // Standing still: charge where the camera looks.
