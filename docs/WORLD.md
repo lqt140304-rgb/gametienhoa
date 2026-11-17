@@ -10,11 +10,14 @@
 - Sau đó người chơi có thể **lưu điểm hồi sinh** tại một **địa điểm đặc biệt**. Có điểm đã lưu thì chết sẽ hồi sinh ở đó, **không còn ngẫu nhiên**.
 - Chưa lưu điểm nào mà chết thì **quay lại hồ hang lúc mới sinh** (hồ này là điểm hồi sinh mặc định cho đến khi lưu điểm mới).
 
+- Cả bầy khi **bắt đầu vào map** sinh ra **gần nhau** (cùng khu hồ hang). Hồ khởi đầu của mỗi người chính là điểm hồi sinh mặc định của người đó.
+
 **[ĐỀ XUẤT]**
 - Địa điểm đặc biệt để lưu điểm hồi sinh chính là **tổ** của bầy (đã chốt có xây tổ ở `GAME_DESIGN.md` mục 6), hoặc một công trình nhỏ đặt ở các vùng. Cả bầy lưu cùng một nơi thì hồi sinh gần nhau, không tách bầy.
 
 **[MỞ]**
-- Cả bầy 4–8 người sinh ra cùng một hồ hay mỗi người một hồ?
+- Gần nhau là cùng một hồ hay các hồ liền kề; người vào giữa ván thì sinh ở đâu?
+- **Cơ chế "cược khi chết":** máu về 0 thì chọn chết như thường, hoặc đánh một trận với quái mạnh hơn để sống tiếp với 1 máu (thắng) hoặc chết (thua). Đang hỏi: thắng thì giữ được mạng và cơ quan không, có giới hạn số lần cược không. Đề xuất: thắng thì không mất mạng, không rơi cơ quan; thua thì chết như luật thường; mỗi mạng chỉ cược một lần.
 - Map có tạo ngẫu nhiên mỗi ván không, hay là map cố định có nhiều hồ hang?
 - Địa điểm lưu điểm cụ thể là gì, tốn gì để dựng?
 
