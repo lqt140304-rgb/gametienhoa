@@ -130,6 +130,19 @@ namespace Evolve.Organs
             return e.Organ;
         }
 
+        /// <summary>Debug: finish growing every organ immediately.</summary>
+        public void DebugGrowAll()
+        {
+            foreach (var e in order)
+            {
+                e.Fed = e.Organ.GrowthFoodRequired;
+                e.Shown = 1f;
+                ApplyVisual(e);
+                CheckDone(e);
+            }
+            Recalculate();
+        }
+
         /// <summary>FoodFilter: split a meal between growing organs and hunger.</summary>
         float TakeFood(float amount)
         {

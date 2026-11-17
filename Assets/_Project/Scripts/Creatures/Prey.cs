@@ -16,6 +16,8 @@ namespace Evolve.Creatures
     {
         static readonly List<Prey> active = new List<Prey>();
         public static IReadOnlyList<Prey> Active => active;
+        /// <summary>Debug: prey stop moving.</summary>
+        public static bool Frozen;
 
         [SerializeField] float wanderSpeed = 0.5f;
         [SerializeField] float fleeSpeed = 1.8f;
@@ -54,6 +56,7 @@ namespace Evolve.Creatures
 
         void FixedUpdate()
         {
+            if (Frozen) return;
             Vector3 pos = rb.position;
             Vector3 dir;
             float speed;

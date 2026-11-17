@@ -29,6 +29,17 @@ namespace Evolve.Creatures
             if (prefab != null && alive < count && Time.time >= nextSpawn) SpawnOne();
         }
 
+        /// <summary>Debug: spawn one extra predator at a position; its territory is centred there.</summary>
+        public void SpawnAt(Vector3 position)
+        {
+            if (prefab == null) return;
+            var p = Instantiate(prefab, new Vector3(position.x, prefab.transform.position.y, position.z), Quaternion.identity, transform);
+            p.HomeCenter = p.transform.position;
+            p.HomeRadius = radius;
+            p.Killed += _ => { alive--; nextSpawn = Time.time + respawnSeconds; };
+            alive++;
+        }
+
         void SpawnOne()
         {
             Vector2 c = Random.insideUnitCircle * radius * 0.6f;

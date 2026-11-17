@@ -20,6 +20,9 @@ namespace Evolve.Abilities
         float readyAt;
 
         public AbilitySO Ability => ability;
+
+        /// <summary>Debug: make the ability ready immediately.</summary>
+        public void ResetCooldown() => readyAt = 0f;
         /// <summary>Seconds until the ability can be used again (0 = ready).</summary>
         public float CooldownRemaining => Mathf.Max(0f, readyAt - Time.time);
         /// <summary>0 = just used, 1 = ready.</summary>

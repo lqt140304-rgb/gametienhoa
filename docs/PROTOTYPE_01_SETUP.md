@@ -79,6 +79,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | E | Chọn khi chạm vào cơ quan: lắp / thay thế / hấp thụ |
 | R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
 | X | Bỏ qua cơ quan |
+| F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |
 | G | Mở/đóng bảng Cơ thể; trong bảng bấm 1, 2… để tháo cơ quan (rơi ra đất) |
 
 ## Cần kiểm thử

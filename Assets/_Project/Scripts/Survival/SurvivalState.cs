@@ -29,6 +29,9 @@ namespace Evolve.Survival
         /// <summary>Lives left, counting the one in use. 0 = out of lives.</summary>
         [NonSerialized] public int Lives = 3;
 
+        /// <summary>Debug: ignore all damage (God menu).</summary>
+        [NonSerialized] public bool Invulnerable;
+
         public bool IsDead => Health <= 0f;
         /// <summary>Dead and can respawn by themselves (still has lives).</summary>
         public bool CanRespawn => IsDead && Lives > 0;
@@ -108,7 +111,7 @@ namespace Evolve.Survival
 
         public void Damage(float amount)
         {
-            if (IsDead) return;
+            if (IsDead || Invulnerable) return;
             Health = Clamp(Health - amount, MaxHealth);
             Changed?.Invoke();
             if (IsDead)
