@@ -13,7 +13,17 @@ Chạy lại menu này bất cứ lúc nào để dựng lại scene từ đầu
 
 Dựng xong, commit các file mới (scene, prefab, material, `.meta`) lên Git.
 
-Từ bản 0.2, scene có thêm **con mồi** (màu hồng, tạo bởi `Prey Spawner`). Bắt được con mồi thì nó rơi ra một cơ quan; chạm vào cơ quan để gắn mầm lên slime. Mầm lớn bằng thức ăn: mỗi cơ quan cần `Growth Food Required` (mặc định 30), một nửa mỗi bữa ăn nuôi cơ quan. Cơ quan là các file `Organ_*.asset` trong `Assets/_Project/ScriptableObjects`, chỉnh hiệu ứng ngay trong Inspector.
+Từ bản 0.2, scene có thêm **con mồi** (màu hồng, tạo bởi `Prey Spawner`). Bắt được con mồi thì nó rơi ra một cơ quan; chạm vào cơ quan để gắn mầm lên slime. Mầm lớn bằng thức ăn: mỗi cơ quan cần `Growth Food Required` (mặc định 30), một nửa mỗi bữa ăn nuôi cơ quan.
+
+### Bậc cơ quan và tỉ lệ rơi
+
+Cơ quan có bậc **C / B / A / S** (ô `Tier`), phát sáng theo màu bậc khi rơi ra. Con mồi rơi đồ theo `DropTable_Prey` trong `Assets/_Project/ScriptableObjects`:
+
+- `Drop Chance`: tỉ lệ có rơi đồ (mặc định 60%).
+- `Weight C/B/A/S`: trọng số từng bậc (mặc định 70 / 22 / 7 / 1).
+- `Organs`: danh sách cơ quan có thể rơi. Mỗi cơ quan có thêm `Drop Weight` (hệ số hiếm riêng trong bậc).
+
+Cơ quan bạn đã có sẽ không rơi lại. Xem phần trăm thực tế: chọn `DropTable_Prey`, bấm ⋮ góc phải Inspector → **Print drop rates**, kết quả hiện ở Console. Cơ quan là các file `Organ_*.asset` trong `Assets/_Project/ScriptableObjects`, chỉnh hiệu ứng ngay trong Inspector.
 
 ## Cách thủ công
 

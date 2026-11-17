@@ -72,9 +72,33 @@ namespace Evolve.EditorTools
                 o.Description = "Những xúc tu ngắn giúp trườn nhanh hơn.";
                 o.Slot = OrganSlot.Legs;
                 o.SpeedMultiplier = 1.4f;
-                o.VisualPrefab = LegsPrefab(legMat);
+                o.VisualPrefab = LegsPrefab(legMat, "Organ_Pseudopods", 1f);
             });
-            var preyPrefab = PreyPrefab(preyMat, new[] { eyes, legs });
+            var legsB = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_MuscularPseudopods.asset", o =>
+            {
+                o.DisplayName = "Chân giả cơ bắp";
+                o.Description = "Xúc tu dày, co bóp mạnh: trườn nhanh hơn hẳn.";
+                o.Slot = OrganSlot.Legs;
+                o.Tier = OrganTier.B;
+                o.SpeedMultiplier = 1.7f;
+                o.GrowthFoodRequired = 45f;
+                o.VisualPrefab = LegsPrefab(Mat("Pseudopod_B", new Color(0.3f, 0.8f, 0.35f), "Universal Render Pipeline/Lit"), "Organ_MuscularPseudopods", 1.3f);
+            });
+            var legsA = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_RunnerLegs.asset", o =>
+            {
+                o.DisplayName = "Chân chạy";
+                o.Description = "Chân có khớp đầu tiên: tốc độ gấp đôi.";
+                o.Slot = OrganSlot.Legs;
+                o.Tier = OrganTier.A;
+                o.SpeedMultiplier = 2f;
+                o.GrowthFoodRequired = 70f;
+                o.VisualPrefab = LegsPrefab(Mat("Pseudopod_A", new Color(0.3f, 0.5f, 0.9f), "Universal Render Pipeline/Lit"), "Organ_RunnerLegs", 1.6f);
+            });
+            var preyDrops = Asset<DropTableSO>(Root + "/ScriptableObjects/DropTable_Prey.asset", t =>
+            {
+                t.Organs.AddRange(new[] { eyes, legs, legsB, legsA });
+            });
+            var preyPrefab = PreyPrefab(preyMat, preyDrops);
             var nutrientPrefab = NutrientPrefab(foodMat);
             var pulsePrefab = PulsePrefab(pulseMat);
 
@@ -197,26 +221,36 @@ namespace Evolve.EditorTools
             return SavePrefab(root, path);
         }
 
-        static GameObject LegsPrefab(Material mat)
+        static GameObject LegsPrefab(Material mat, string name, float size)
         {
-            const string path = Root + "/Prefabs/Organ_Pseudopods.prefab";
+            string path = $"{Root}/Prefabs/{name}.prefab";
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (existing != null) return existing;
 
-            var root = new GameObject("Organ_Pseudopods");
+            var root = new GameObject(name);
             foreach (var p in new[] { new Vector3(-0.25f, 0f, 0.2f), new Vector3(0.25f, 0f, 0.2f), new Vector3(-0.25f, 0f, -0.2f), new Vector3(0.25f, 0f, -0.2f) })
             {
-                var leg = Part(PrimitiveType.Capsule, "Pseudopod", root.transform, p, new Vector3(0.12f, 0.1f, 0.12f), mat);
+                var leg = Part(PrimitiveType.Capsule, "Pseudopod", root.transform, p, new Vector3(0.12f, 0.1f, 0.12f) * size, mat);
                 leg.transform.localRotation = Quaternion.Euler(p.z * 60f, 0f, -p.x * 60f);
             }
             return SavePrefab(root, path);
         }
 
-        static GameObject PreyPrefab(Material mat, OrganSO[] drops)
+        static GameObject PreyPrefab(Material mat, DropTableSO drops)
         {
             const string path = Root + "/Prefabs/Prey.prefab";
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (existing != null) return existing;
+            if (existing != null)
+            {
+                // Upgrade prefabs made before drop tables existed (keeps tuned values).
+                var old = existing.GetComponent<Prey>();
+                if (old != null && new SerializedObject(old).FindProperty("drops").objectReferenceValue == null)
+                {
+                    Set(old, "drops", drops);
+                    EditorUtility.SetDirty(existing);
+                }
+                return existing;
+            }
 
             var root = new GameObject("Prey");
             root.transform.position = new Vector3(0f, 0.2f, 0f);
@@ -226,7 +260,7 @@ namespace Evolve.EditorTools
             col.height = 0.55f;
             root.AddComponent<Rigidbody>().isKinematic = true;
             var prey = root.AddComponent<Prey>();
-            SetArray(prey, "dropTable", drops);
+            Set(prey, "drops", drops);
 
             Part(PrimitiveType.Sphere, "Body", root.transform, Vector3.zero, new Vector3(0.35f, 0.3f, 0.55f), mat);
             Part(PrimitiveType.Sphere, "Head", root.transform, new Vector3(0f, 0.05f, 0.28f), Vector3.one * 0.22f, mat);
