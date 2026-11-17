@@ -20,11 +20,11 @@ namespace Evolve.Survival
         string skillQuery = "";
         int skillPage, organPage;
         OrganSO chosenSkill, chosenOrgan, pendingDrop;
-        readonly Color ink = new Color(.87f, .94f, .98f);
-        readonly Color muted = new Color(.59f, .73f, .82f);
-        readonly Color surface = new Color(.045f, .075f, .13f, .97f);
-        readonly Color cyan = new Color(.48f, .84f, .91f);
-        readonly Color coral = new Color(.96f, .70f, .63f);
+        readonly Color ink = new Color32(234,245,250,255);
+        readonly Color muted = new Color32(143,174,194,255);
+        readonly Color surface = new Color32(17,31,50,247);
+        readonly Color cyan = new Color32(128,230,238,255);
+        readonly Color coral = new Color32(255,177,167,255);
 
         public bool MenuOpen => menu != HudMenu.None;
         public static bool HasFor(GameObject owner) => owner != null && owners.TryGetValue(owner, out var hud) && hud != null && hud.isActiveAndEnabled;
@@ -99,23 +99,42 @@ namespace Evolve.Survival
             var texture = new Texture2D(size,size,TextureFormat.RGBA32,false) { name = "Cellular HUD", hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Bilinear };
             texture.SetPixels(pixels); texture.Apply(false,true); return texture;
         }
-        float UiScale => Mathf.Max(.1f, Mathf.Min(1.4f, Mathf.Min(Screen.width/1280f,Screen.height/800f)));
+        float UiScale => Mathf.Max(.1f, Mathf.Min(1f, Mathf.Min(Screen.width/960f,Screen.height/600f)));
         static float Frac(float value,float max) => max > 0 ? Mathf.Clamp01(value/max) : 0;
         void Paint(Rect r, Color color, Texture texture = null)
         {
-            var old = GUI.color; GUI.color = color;
-            if (texture != null) GUI.DrawTexture(r,texture);
-            else panelSkin.Draw(r,GUIContent.none,false,false,false,false);
+            if (Event.current.type != EventType.Repaint) return;
+            var old = GUI.color;
+            GUI.color = Color.white;
+            if (texture != null)
+            {
+                GUI.color = color;
+                GUI.DrawTexture(r,texture);
+            }
+            else GUI.DrawTexture(r,Texture2D.whiteTexture,ScaleMode.StretchToFill,true,0,color,0,Mathf.Min(28,r.height*.38f));
             GUI.color = old;
         }
         void Line(float x,float y,float width) => Paint(new Rect(x,y,width,1),new Color(.45f,.69f,.84f,.18f),Texture2D.whiteTexture);
+        void Frame(Rect r,Color fill,Color border,float radius)
+        {
+            if(Event.current.type!=EventType.Repaint)return;
+            var previous=GUI.color;GUI.color=Color.white;
+            GUI.DrawTexture(r,Texture2D.whiteTexture,ScaleMode.StretchToFill,true,0,fill,0,radius);
+            GUI.DrawTexture(r,Texture2D.whiteTexture,ScaleMode.StretchToFill,true,0,border,1,radius);
+            GUI.color=previous;
+        }
         void Label(Rect r,string value,GUIStyle style = null) => GUI.Label(r,value ?? "",style ?? text);
         bool Button(Rect r,string value,bool selected = false)
         {
-            var previous=GUI.backgroundColor;
-            GUI.backgroundColor=selected?new Color(.30f,.20f,.20f):new Color(.10f,.20f,.30f);
-            bool pressed=GUI.Button(r,value,selected?selectedAction:action);
-            GUI.backgroundColor=previous;return pressed;
+            bool hover=GUI.enabled&&r.Contains(Event.current.mousePosition);
+            var fill=selected?new Color32(55,37,43,235):new Color32(16,33,52,224);
+            if(hover)fill=Color.Lerp(fill,new Color32(52,81,105,240),.35f);
+            var edge=selected?new Color32(255,177,167,140):new Color32(158,214,237,70);
+            Frame(r,fill,edge,r.height>48?12:9);
+            bool pressed=GUI.Button(r,GUIContent.none,GUIStyle.none);
+            var label=new GUIStyle(center){fontSize=13,padding=new RectOffset(7,7,4,4)};
+            label.normal.textColor=selected?coral:ink;
+            GUI.Label(r,value,label);return pressed;
         }
         void WithEnabled(bool enabled, System.Action draw)
         {
@@ -129,14 +148,14 @@ namespace Evolve.Survival
             canvas=new Vector2(Screen.width/scale,Screen.height/scale);
             var s=stats.State; bool full=KeyPressed.TabHeld();
             var anchor=PlayerAnchor(scale); bool floating=followPlayer && anchor.HasValue && !MenuOpen;
-            float width=floating?204:282, height=full?174:80;
+            float width=floating?204:Screen.width>=1550?380:Screen.width>=1150?350:285, height=full?166:72;
             float x=floating?HudLayout.ClampCenter(anchor.Value.x,width,canvas.x)-width/2:22;
-            float y=floating?HudLayout.ClampCenter(anchor.Value.y+75,height,canvas.y)-height/2:canvas.y-height-22;
+            float y=floating?HudLayout.ClampCenter(anchor.Value.y+75,height,canvas.y)-height/2:canvas.y-height-23;
             float primaryY=y+(full?94:0);
             float cellWidth=(width-12)/3;
-            Vital(new Rect(x,primaryY,cellWidth,70),"Máu",s.Health,s.MaxHealth,coral);
-            Vital(new Rect(x+cellWidth+6,primaryY,cellWidth,70),"Năng lượng",s.Energy,s.MaxEnergy,cyan);
-            Vital(new Rect(x+(cellWidth+6)*2,primaryY,cellWidth,70),"Độ no",s.Hunger,s.MaxHunger,new Color(.65f,.85f,.67f));
+            Vital(new Rect(x,primaryY,cellWidth,72),"Máu",s.Health,s.MaxHealth,coral);
+            Vital(new Rect(x+cellWidth+6,primaryY,cellWidth,72),"Năng lượng",s.Energy,s.MaxEnergy,cyan);
+            Vital(new Rect(x+(cellWidth+6)*2,primaryY,cellWidth,72),"Độ no",s.Hunger,s.MaxHunger,new Color32(188,230,210,255));
             if(full)
             {
                 Vital(new Rect(x,y,cellWidth,68),s.ThirstEnabled?"Nước":"Nước · nghỉ",s.Thirst,s.MaxThirst,cyan);
@@ -146,16 +165,19 @@ namespace Evolve.Survival
                 Label(new Rect(x+(cellWidth+6)*2,y+25,cellWidth,30),$"{s.Temperature:0}°C",center);
                 Label(new Rect(x,y+71,width+160,23),$"{s.Lives}/{s.MaxLives} mạng  ·  Không khí {s.Ambient:0}°C  ·  {(s.InShelter?"Trong tổ":"Ngoài tổ")}",small);
             }
-            float sx=canvas.x/2-187,sy=canvas.y-84;
+            float chipWidth=Screen.width>=1550?63:55,chipHeight=Screen.width>=1550?65:60;
+            float chipStep=chipWidth+8,totalWidth=chipWidth*7+48;
+            float skillCenter=Screen.width>=1550?canvas.x*.52f:canvas.x*.5f+70;
+            float sx=skillCenter-totalWidth/2,sy=canvas.y-35-chipHeight;
             var active=caster!=null?caster.Ability:null;
-            DrawSkillChip(new Rect(sx,sy,50,58),"Q",active!=null?active.DisplayName:null,caster!=null?caster.CooldownRemaining:0,active!=null?active.EnergyCost:0);
+            DrawSkillChip(new Rect(sx,sy,chipWidth,chipHeight),"Q",active!=null?active.DisplayName:null,caster!=null?caster.CooldownRemaining:0,active!=null?active.EnergyCost:0);
             for(int slot=0;slot<SkillBar.SlotCount;slot++)
             {
                 var o=skills!=null?skills.GetSlot(slot):null; var a=o!=null?o.GrantedAbility:null;
-                DrawSkillChip(new Rect(sx+(slot+1)*54,sy,50,58),(slot+1).ToString(),a!=null?a.DisplayName:null,skills!=null?skills.CooldownRemaining(slot):0,a!=null?a.EnergyCost:0);
+                DrawSkillChip(new Rect(sx+(slot+1)*chipStep,sy,chipWidth,chipHeight),(slot+1).ToString(),a!=null?a.DisplayName:null,skills!=null?skills.CooldownRemaining(slot):0,a!=null?a.EnergyCost:0);
             }
             var sense=stats.GetComponent<VibrationSense>();
-            DrawSkillChip(new Rect(sx+324,sy,50,58),"C",sense!=null?"Cảm nhận rung":null,sense!=null?sense.CooldownRemaining:0,sense!=null?sense.EnergyCost:0);
+            DrawSkillChip(new Rect(sx+6*chipStep,sy,chipWidth,chipHeight),"C",sense!=null?"Cảm nhận rung":null,sense!=null?sense.CooldownRemaining:0,sense!=null?sense.EnergyCost:0);
             float right=canvas.x-180;
             Label(new Rect(right,canvas.y-112,170,22),"Giữ Tab · Xem thêm",small);
             if(Button(new Rect(right,canvas.y-85,156,29),"K · Kỹ năng")) SetMenu(HudLayout.Toggle(menu,HudMenu.Skills));
@@ -168,16 +190,21 @@ namespace Evolve.Survival
         }
         void Vital(Rect r,string name,float value,float max,Color color)
         {
-            Paint(r,surface); Label(new Rect(r.x+7,r.y+5,r.width-14,20),name,small);
+            var edge=color;edge.a=.55f;
+            Frame(r,new Color32(18,43,67,221),edge,26);
+            Label(new Rect(r.x+7,r.y+5,r.width-14,20),name,small);
             var number=new GUIStyle(center) { fontSize=22 }; number.normal.textColor=color;
             Label(new Rect(r.x,r.y+24,r.width,28),$"{value:0}",number);
             Paint(new Rect(r.x+9,r.yMax-9,(r.width-18)*Frac(value,max),3),color,Texture2D.whiteTexture);
         }
         void DrawSkillChip(Rect r,string key,string name,float cooldown,float cost)
         {
-            Paint(r,name!=null?surface:new Color(.04f,.08f,.14f,.4f));
-            GUI.Label(new Rect(r.x,r.y+3,r.width,23),new GUIContent(key,name??"Ô trống"),center);
-            Label(new Rect(r.x+2,r.y+29,r.width-4,23),name==null?"—":cooldown>0?$"{cooldown:0.0}s":stats.State.Energy<cost?"NL!":"Sẵn",new GUIStyle(small){alignment=TextAnchor.MiddleCenter});
+            Frame(r,new Color32(10,23,44,(byte)(name!=null?221:110)),new Color32(163,213,235,(byte)(name!=null?119:45)),23);
+            GUI.Label(new Rect(r.x,r.y-24,r.width,22),new GUIContent(key,name??"Ô trống"),center);
+            string icon=name==null?"·":key=="C"?"◎":name.ToLowerInvariant().Contains("gai")?"✦":"↗";
+            Label(new Rect(r.x,r.y+7,r.width,r.height-14),icon,new GUIStyle(center){fontSize=29});
+            if(name!=null&&(cooldown>0||stats.State.Energy<cost))
+                Label(new Rect(r.x+2,r.yMax-23,r.width-4,20),cooldown>0?$"{cooldown:0.0}s":"NL!",new GUIStyle(small){alignment=TextAnchor.MiddleCenter});
         }
         Vector2? PlayerAnchor(float scale)
         {
@@ -193,8 +220,8 @@ namespace Evolve.Survival
             if(menu==HudMenu.Skills||menu==HudMenu.Organs)
             {
                 float scale=HudCatalog.MenuScale(Screen.width,Screen.height,UiScale);
-                GUI.matrix=Matrix4x4.TRS(new Vector3((Screen.width-1240*scale)/2,32,0),Quaternion.identity,Vector3.one*scale);
-                Paint(new Rect(0,0,1240,650),surface);
+                GUI.matrix=Matrix4x4.TRS(new Vector3((Screen.width-1240*scale)/2,52,0),Quaternion.identity,Vector3.one*scale);
+                Frame(new Rect(0,0,1240,650),surface,new Color32(138,200,220,85),28);
                 Label(new Rect(25,16,950,42),menu==HudMenu.Skills?"KỸ NĂNG":"CƠ THỂ",title);
                 if(Button(new Rect(1185,17,32,32),"×")) SetMenu(HudMenu.None);
                 if(Button(new Rect(23,67,140,34),"G · Cơ quan",menu==HudMenu.Organs)) SetMenu(HudMenu.Organs);

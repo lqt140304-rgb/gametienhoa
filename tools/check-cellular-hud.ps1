@@ -14,9 +14,9 @@ Equal ([Evolve.Survival.HudCatalog]::SpikeTotal(8,4,3)) 72 'Real asset values'
 Write-Output 'PASS: 9 catalog and damage checks'
 foreach($viewport in @(@(1280,800),@(1366,768),@(1920,1080),@(800,600))) {
     $width=$viewport[0];$height=$viewport[1]
-    $hudScale=[Math]::Max(.1,[Math]::Min(1.4,[Math]::Min($width/1280,$height/800)))
+    $hudScale=[Math]::Max(.1,[Math]::Min(1,[Math]::Min($width/960,$height/600)))
     $menuScale=[Evolve.Survival.HudCatalog]::MenuScale($width,$height,$hudScale)
-    $menuBottom=32+650*$menuScale
+    $menuBottom=52+650*$menuScale
     $secondaryTop=$height-196*$hudScale
     if($menuBottom -gt $secondaryTop-12) {throw "Menu covers HUD at $width x $height"}
 }

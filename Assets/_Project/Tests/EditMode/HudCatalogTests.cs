@@ -28,8 +28,8 @@ namespace Evolve.Tests.EditMode
         [TestCase(800,600)]
         public void MenuLeavesExpandedHudVisible(float width,float height)
         {
-            float hud=System.Math.Max(.1f,System.Math.Min(1.4f,System.Math.Min(width/1280,height/800)));
-            Assert.LessOrEqual(32+650*HudCatalog.MenuScale(width,height,hud),height-196*hud-12);
+            float hud=System.Math.Max(.1f,System.Math.Min(1f,System.Math.Min(width/960,height/600)));
+            Assert.LessOrEqual(52+650*HudCatalog.MenuScale(width,height,hud),height-196*hud-12);
         }
     }
 }
