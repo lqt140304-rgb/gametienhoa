@@ -40,6 +40,7 @@ namespace Evolve.Visuals
         readonly List<MeshFilter> dead_ = new List<MeshFilter>();
 
         Vector3 lastPosition;
+        Rigidbody body;
         float speed;
         Vector3 moveDir;           // in the body's local space (xz)
 
@@ -66,8 +67,9 @@ namespace Evolve.Visuals
 
         public void Play(GelMotion motion)
         {
-            // The same motion is not restarted until it is mostly done (contact damage fires every frame).
-            if (activeTime >= 0f && active == motion && activeTime < Duration(motion) * 0.6f) return;
+            // A motion is never restarted while it plays (contact damage and eating fire every frame), and a small
+            // gulp never interrupts a bigger motion.
+            if (activeTime >= 0f && (active == motion || motion == GelMotion.Gulp)) return;
             active = motion;
             activeTime = 0f;
         }
@@ -88,6 +90,7 @@ namespace Evolve.Visuals
             baseVertices = mesh.vertices;
             work = new Vector3[baseVertices.Length];
             lastPosition = transform.position;
+            body = GetComponentInParent<Rigidbody>();
         }
 
         void OnDestroy()
@@ -101,10 +104,12 @@ namespace Evolve.Visuals
             float dt = Mathf.Max(Time.deltaTime, 1e-4f);
 
             // Movement as it really happens in the world (flat), expressed in the body's own directions.
-            Vector3 delta = transform.position - lastPosition;
+            // The local player's physics velocity is smooth; others (remote avatars) are measured from how they move.
+            Vector3 velocity;
+            if (body != null) velocity = body.linearVelocity;
+            else velocity = (transform.position - lastPosition) / dt;
             lastPosition = transform.position;
-            delta.y = 0f;
-            Vector3 velocity = delta / dt;
+            velocity.y = 0f;
             speed = Mathf.Lerp(speed, Mathf.Min(velocity.magnitude, 12f), 1f - Mathf.Exp(-10f * dt));
             if (velocity.sqrMagnitude > 0.04f)
             {
@@ -118,7 +123,7 @@ namespace Evolve.Visuals
             if (activeTime >= 0f)
             {
                 activeTime += dt;
-                if (activeTime >= Duration(active)) { activeTime = -1f; if (active != GelMotion.Gulp) jigV += 2.2f; }
+                if (activeTime >= Duration(active)) { activeTime = -1f; if (active != GelMotion.Gulp) jigV += 1f; }
             }
             // Damped spring: the wobble swings back and forth and dies out.
             jigV += (-90f * jig - 7f * jigV) * dt;
