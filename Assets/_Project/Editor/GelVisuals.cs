@@ -100,24 +100,24 @@ namespace Evolve.EditorTools
             foreach (float s in new[] { -1f, 1f })
             {
                 var p0 = new Vector3(0.11f * s, -0.05f, 0f);
-                var path = Curve(p0, new Vector3(0.14f * s, 0.07f, 0.03f), new Vector3(0.2f * s, 0.17f, 0.06f), new Vector3(0.24f * s, 0.27f, 0.08f), 9);
+                var path = Curve(p0, new Vector3(0.13f * s, 0.06f, 0.03f), new Vector3(0.18f * s, 0.14f, 0.05f), new Vector3(0.22f * s, 0.22f, 0.07f), 9);
                 var radii = new float[path.Length];
-                for (int i = 0; i < radii.Length; i++) radii[i] = Mathf.Lerp(0.055f, 0.03f, Mathf.SmoothStep(0f, 1f, i / (float)(radii.Length - 1)));
+                for (int i = 0; i < radii.Length; i++) radii[i] = Mathf.Lerp(0.038f, 0.021f, Mathf.SmoothStep(0f, 1f, i / (float)(radii.Length - 1)));
                 AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 10), gel, Vector3.zero, Quaternion.identity);
 
                 // Teardrop bulb at the tip, a bit translucent, with a dark pupil inside.
                 Vector3 tip = path[path.Length - 1];
                 Vector3 dir = (tip - path[path.Length - 2]).normalized;
-                var bulbOffsets = new[] { 0f, 0.025f, 0.055f, 0.085f, 0.115f, 0.14f };
-                var bulbRadii = new[] { 0.03f, 0.056f, 0.074f, 0.076f, 0.054f, 0f };
+                var bulbOffsets = new[] { 0f, 0.018f, 0.04f, 0.062f, 0.084f, 0.102f };
+                var bulbRadii = new[] { 0.021f, 0.04f, 0.053f, 0.055f, 0.039f, 0f };
                 var bulb = new Vector3[bulbOffsets.Length];
                 for (int i = 0; i < bulb.Length; i++) bulb[i] = tip + dir * bulbOffsets[i];
                 AddMesh(root, SlimeMeshBuilder.Tube(bulb, bulbRadii, 12), eye, Vector3.zero, Quaternion.identity);
-                var pupil = PrototypeSceneBuilder.Part(PrimitiveType.Sphere, "Pupil", root.transform, tip + dir * 0.085f + new Vector3(0f, 0f, 0.05f), Vector3.one * 0.045f, black);
+                var pupil = PrototypeSceneBuilder.Part(PrimitiveType.Sphere, "Pupil", root.transform, tip + dir * 0.062f + new Vector3(0f, 0f, 0.036f), Vector3.one * 0.032f, black);
                 pupil.name = "Pupil";
 
                 // Soft fillet that spreads over the body where the stalk leaves it.
-                AddMesh(root, SlimeMeshBuilder.Flare(0.15f, 0.06f, 0.1f), gel, new Vector3(0.11f * s, -0.1f, 0f), Quaternion.identity);
+                AddMesh(root, SlimeMeshBuilder.Flare(0.1f, 0.04f, 0.08f), gel, new Vector3(0.11f * s, -0.09f, 0f), Quaternion.identity);
             }
             return root;
         }
@@ -125,7 +125,7 @@ namespace Evolve.EditorTools
         static GameObject Pseudopods(string name, Material gel, float size)
         {
             var root = new GameObject(name);
-            float reach = 0.3f + 0.1f * size, thick = Mathf.Sqrt(size);
+            float reach = 0.28f + 0.08f * size, thick = Mathf.Sqrt(size);
             foreach (float sx in new[] { -1f, 1f })
                 foreach (float sz in new[] { -1f, 1f })
                 {
@@ -139,16 +139,16 @@ namespace Evolve.EditorTools
                     for (int i = 0; i < curve.Length; i++)
                     {
                         path[i] = curve[i];
-                        radii[i] = Mathf.Lerp(0.12f, 0.07f, Mathf.SmoothStep(0f, 1f, i / (float)(curve.Length - 1))) * thick;
+                        radii[i] = Mathf.Lerp(0.08f, 0.048f, Mathf.SmoothStep(0f, 1f, i / (float)(curve.Length - 1))) * thick;
                     }
                     Vector3 foot = curve[curve.Length - 1];
-                    path[curve.Length] = foot + new Vector3(sx * 0.02f, -0.012f, sz * 0.02f); radii[curve.Length] = 0.085f * thick; // rounded pad
-                    path[curve.Length + 1] = foot + new Vector3(sx * 0.035f, -0.02f, sz * 0.035f); radii[curve.Length + 1] = 0.05f * thick;
+                    path[curve.Length] = foot + new Vector3(sx * 0.02f, -0.012f, sz * 0.02f); radii[curve.Length] = 0.058f * thick; // rounded pad
+                    path[curve.Length + 1] = foot + new Vector3(sx * 0.035f, -0.02f, sz * 0.035f); radii[curve.Length + 1] = 0.034f * thick;
                     path[curve.Length + 2] = foot + new Vector3(sx * 0.04f, -0.024f, sz * 0.04f); radii[curve.Length + 2] = 0f;
                     AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 12), gel, Vector3.zero, Quaternion.identity);
 
                     // Wide soft shoulder so the leg grows out of the body.
-                    AddMesh(root, SlimeMeshBuilder.Flare(0.2f * thick, 0.11f * thick, 0.1f), gel, new Vector3(shoulder.x, shoulder.y - 0.08f, shoulder.z), Quaternion.identity);
+                    AddMesh(root, SlimeMeshBuilder.Flare(0.13f * thick, 0.075f * thick, 0.08f), gel, new Vector3(shoulder.x, shoulder.y - 0.08f, shoulder.z), Quaternion.identity);
                 }
             return root;
         }
@@ -183,15 +183,15 @@ namespace Evolve.EditorTools
             {
                 Vector3 dir = ((pos - centre).normalized + Vector3.up * 0.3f).normalized;
                 var path = new Vector3[5];
-                var radii = new[] { 0.055f, 0.042f, 0.03f, 0.016f, 0f };
+                var radii = new[] { 0.04f, 0.03f, 0.021f, 0.011f, 0f };
                 for (int i = 0; i < path.Length; i++)
                 {
                     float t = i / 4f;
-                    path[i] = pos + dir * length * t + Vector3.back * 0.04f * t * t; // slight curve toward the back
+                    path[i] = pos + dir * length * 0.75f * t + Vector3.back * 0.03f * t * t; // slight curve toward the back
                 }
                 AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 8), gel, Vector3.zero, Quaternion.identity);
                 // Flared base lying along the horn's axis, sunk a little into the body.
-                AddMesh(root, SlimeMeshBuilder.Flare(0.11f, 0.05f, 0.06f), gel, pos - dir * 0.03f, Quaternion.FromToRotation(Vector3.up, dir));
+                AddMesh(root, SlimeMeshBuilder.Flare(0.075f, 0.035f, 0.05f), gel, pos - dir * 0.025f, Quaternion.FromToRotation(Vector3.up, dir));
             }
             return root;
         }
