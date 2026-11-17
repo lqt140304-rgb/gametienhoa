@@ -11,14 +11,12 @@
 - Chưa lưu điểm nào mà chết thì **quay lại hồ hang lúc mới sinh** (hồ này là điểm hồi sinh mặc định cho đến khi lưu điểm mới).
 - Cả bầy khi **bắt đầu vào map** sinh ra **gần nhau** (cùng khu hồ hang). Hồ khởi đầu của mỗi người chính là điểm hồi sinh mặc định của người đó.
 - **Làm map theo hai giai đoạn:** (1) **map cố định** để chơi thử cơ chế, có sẵn nhiều hồ hang và bốc ngẫu nhiên hồ khởi đầu; (2) về sau mới làm **map ngẫu nhiên** hoàn toàn mỗi ván. Dữ liệu vùng/hồ nên tách khỏi cảnh để chuyển sang bước 2 không phải viết lại.
-
-**[ĐỀ XUẤT]**
-- Địa điểm đặc biệt để lưu điểm hồi sinh chính là **tổ** của bầy (đã chốt có xây tổ ở `GAME_DESIGN.md` mục 6), hoặc một công trình nhỏ đặt ở các vùng. Cả bầy lưu cùng một nơi thì hồi sinh gần nhau, không tách bầy.
+- **Địa điểm lưu điểm hồi sinh là tổ của bầy** (tổ đã chốt có xây ở `GAME_DESIGN.md` mục 6). Cả bầy lưu cùng một nơi nên hồi sinh gần nhau, không tách bầy.
 
 **[MỞ]**
 - Gần nhau là cùng một hồ hay các hồ liền kề; người vào giữa ván thì sinh ở đâu?
 - Map ngẫu nhiên hoàn toàn: sinh ra những gì, đảm bảo luôn có đủ bốn vùng, hồ hang, nguồn cơ quan "vé vào vùng" và đường đi hợp lý (làm sau).
-- Địa điểm lưu điểm cụ thể là gì, tốn gì để dựng?
+- Tổ tốn gì để dựng; mỗi người lưu điểm riêng tại tổ hay cả bầy dùng chung một điểm; tổ bị phá thì điểm hồi sinh về đâu.
 
 ### 1.1 Đối đầu Thần Chết
 
