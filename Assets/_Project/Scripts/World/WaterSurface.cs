@@ -22,9 +22,9 @@ namespace Evolve.World
         public float WaveHeight = 0.03f;
         public float WaveSpeed = 1f;
         [Tooltip("Size of one ripple pattern repeat in metres (the pattern keeps the same size on big and small ponds)")]
-        public float MetersPerRepeat = 5f;
+        public float MetersPerRepeat = 9f;
         [Tooltip("How fast the ripple texture drifts (texture repeats per second)")]
-        public Vector2 Drift = new Vector2(0.02f, 0.012f);
+        public Vector2 Drift = new Vector2(0.012f, 0.007f);
 
         Mesh mesh;
         Vector3[] basePos, work;
