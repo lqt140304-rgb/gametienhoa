@@ -1,6 +1,6 @@
 # Thiết kế: Lát cắt dọc Hồ Khởi Sinh + sinh tồn sâu (0.5a → 0.5e)
 
-> Ngày: 2026-11-17 · Trạng thái: **chờ chủ dự án duyệt**
+> Ngày: 2026-11-17 · Trạng thái: **chờ chủ dự án duyệt lần cuối**
 > Nguồn: thảo luận với chủ dự án + [`docs/world/UNDERROOT_WORLD_DESIGN.md`](../../world/UNDERROOT_WORLD_DESIGN.md) (bàn giao v1.2).
 > Nhãn: **[ĐÃ CHỐT]** = chủ dự án quyết; **[ĐỀ XUẤT]** = Claude đề xuất, chủ dự án có thể sửa; **[BUILDER]** = để người làm tự quyết khi code.
 
@@ -56,7 +56,7 @@ Chủ dự án muốn game **thiên về sinh tồn hơn**: người chơi phả
 
 1. **[ĐÃ CHỐT] Bậc D**: sinh vật gần như vô hại, cuối chuỗi thức ăn. `OrganTier` thành **D, C, B, A, S**. Khu ngầm chỉ có D/C/B.
 2. **[ĐÃ CHỐT] Cơ quan bằng gel**: giết quái → tỉ lệ rơi cơ quan → slime **hấp thụ** (học) → khi trang bị, slime **dùng gel trên thân mô phỏng hình dạng** cơ quan, không gắn nguyên khối. Logic ổ gắn, EXP, cấp giữ nguyên; đổi cách thể hiện (mô hình nhuộm màu/chất liệu gel, liền thân).
-3. **[ĐÃ CHỐT] Khi chết rơi bản mẫu (blueprint)** thay cho rơi cơ quan. (Xem câu hỏi mở 9.1.)
+3. **[ĐÃ CHỐT] Khi chết**: người chết **giữ bản mẫu** đã học nhưng **mọi cơ quan gel đang mô phỏng tan ra**; muốn mô phỏng lại phải đủ chất và EXP. Tại chỗ chết rơi **bản sao bản mẫu** để người khác nhặt và học.
 4. **[ĐÃ CHỐT] Spawner → quần thể theo vùng** (mục 6.2).
 5. **[ĐÃ CHỐT] Nỗi sợ sinh tồn**: đầu game là **đói, khát, kẻ thù, nơi trú ẩn, nhiệt độ**; về lâu dài là **dinh dưỡng**; thêm chỉ số **Căng thẳng**.
 6. **[ĐÃ CHỐT] Dinh dưỡng là điều kiện cơ quan**, thiếu kéo dài thì cơ quan đang có **yếu dần, cuối cùng tiêu biến**, có cảnh báo (phương án b).
@@ -103,6 +103,7 @@ Tooltip ghi chất thật tương ứng. Thiếu chất thì gel đổi màu/ch�
 - **Nước sạch / bẩn** [ĐỀ XUẤT]: nước chảy (Khe Thủy Mạch) sạch; nước đọng gần xác/bùn thối là bẩn — giải khát nhưng có xác suất mắc bệnh (dùng ở 0.5d; trước đó chỉ đánh dấu).
 - **Nơi trú ẩn**: vùng trigger (hốc rễ, khe hẹp). Ở trong: hồi năng lượng nhanh hơn, giảm Căng thẳng, kẻ săn B không theo vào được nếu khe hẹp hơn kích thước nó.
 - **Căng thẳng** (0–100): tăng khi bị tấn công, khi đói/khát lâu, khi có cơ quan hư hỏng nặng (BIS). Giảm khi ở nơi trú, ở gần đồng đội, khi no đủ.
+- **[ĐÃ CHỐT] Không có hậu quả nặng ở 100**: chỉ hiệu ứng tăng dần, giới hạn ở mức cao nhất.
 - Hiệu ứng tăng dần [ĐỀ XUẤT]: >40 camera rung nhẹ; >60 tầm cảm nhận/rung thu hẹp; >80 hồi năng lượng chậm. Ngưỡng [BUILDER] trong `SurvivalConfig`.
 
 ### 6.3. Bản 0.5c — Dinh dưỡng
@@ -127,7 +128,7 @@ Tooltip ghi chất thật tương ứng. Thiếu chất thì gel đổi màu/ch�
 
 - Mô hình cơ quan khi trang bị dùng material gel của slime (màu theo slime, trong mờ), gắn liền thân; có hiệu ứng "chảy thành hình" khi trang bị [BUILDER mức độ].
 - Trạng thái thiếu chất/hư hỏng phản ánh lên material gel.
-- **Khi chết**: rơi **bản mẫu** thay vì cơ quan. Quy tắc còn lại (50% mất, ai cũng nhặt, cứu hộ 120 s) giữ như `GAME_DESIGN.md` 6.1, chỉ đổi đối tượng rơi.
+- **Khi chết**: người chết giữ bản mẫu, cơ quan gel tan ra. Rơi **bản sao bản mẫu** tại chỗ chết; ai cũng nhặt được để học (người đã có bản mẫu đó nhặt thì [ĐỀ XUẤT] hấp thụ lấy EXP). Áp dụng 50% mất cho mỗi bản sao rơi và luật cứu hộ 120 s như `GAME_DESIGN.md` 6.1 (cứu kịp thì không tan, không rơi). Organ được biểu diễn là "bản mẫu đã học + trạng thái gel" thay vì vật phẩm cơ quan.
 
 ## 6.6. Đồng bộ co-op [quyết định của Claude]
 
@@ -149,6 +150,5 @@ Tooltip ghi chất thật tương ứng. Thiếu chất thì gel đổi màu/ch�
 
 ## 9. Câu hỏi mở
 
-1. **Rơi bản mẫu và "bản mẫu giữ vĩnh viễn"**: `GAME_DESIGN.md` 4.2 nói blueprint giữ vĩnh viễn. Khi chết rơi bản mẫu thì người chết có **mất** bản mẫu đó không, hay rơi ra một *bản sao* cho người khác nhặt?
-2. Tên chính thức các vi sinh cảnh và số hốc sâu.
-3. Thông số cân bằng (tốc độ khát, ngưỡng thiếu chất, xác suất bệnh) — để chơi thử rồi chỉnh.
+1. Tên chính thức các vi sinh cảnh và số hốc sâu.
+2. Thông số cân bằng (tốc độ khát, ngưỡng thiếu chất, xác suất bệnh) — để chơi thử rồi chỉnh.
