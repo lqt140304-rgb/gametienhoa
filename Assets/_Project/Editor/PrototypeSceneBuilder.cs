@@ -101,6 +101,7 @@ namespace Evolve.EditorTools
             Socket(visual.transform, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
 
             var host = slime.AddComponent<OrganHost>();
+            slime.AddComponent<OrganInteractor>();
             var stats = slime.AddComponent<SurvivalStats>();
             Set(stats, "config", config);
             var controller = slime.AddComponent<SlimeController>();
