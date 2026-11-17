@@ -113,6 +113,7 @@ namespace Evolve.Net
             st.MaxHealth = MaxHealth;
             st.Health = Dead ? 0f : Mathf.Max(0.01f, Health);
             st.Lives = Lives;
+            st.SetDiseaseMask(s.Diseases); // the ghost shows (and can pass on) the other player's diseases
             if (hasPrevious && now - lastApplyTime > 0.01f)
                 Stats.IsMoving = (s.Position - previousPosition).magnitude / (now - lastApplyTime) > 0.3f;
             previousPosition = s.Position;

@@ -22,6 +22,8 @@ namespace Evolve.Net
         public byte[] PartColors;
         public string[] OrganNames;
         public byte[] OrganLevels;
+        /// <summary>Diseases the player has, one bit per DiseaseKind (the last thing written and read).</summary>
+        public byte Diseases;
 
         public void Write(ref FastBufferWriter w)
         {
@@ -44,6 +46,7 @@ namespace Evolve.Net
                 w.WriteValueSafe(OrganNames[i] ?? "");
                 w.WriteValueSafe(OrganLevels[i]);
             }
+            w.WriteValueSafe(Diseases);
         }
 
         public static PlayerNetState Read(ref FastBufferReader r)
@@ -81,6 +84,8 @@ namespace Evolve.Net
                 s.OrganNames[i] = organ;
                 s.OrganLevels[i] = level;
             }
+            r.ReadValueSafe(out byte diseases);
+            s.Diseases = diseases;
             return s;
         }
     }
