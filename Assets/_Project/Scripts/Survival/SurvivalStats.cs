@@ -23,7 +23,8 @@ namespace Evolve.Survival
             if (config == null) config = ScriptableObject.CreateInstance<SurvivalConfig>();
             state.Ambient = config.DefaultAmbient;
             state.Reset();
-            state.Died += () => Debug.Log($"{name} died");
+            state.ResetLives();
+            state.Died += () => Debug.Log(state.IsCorpse ? $"{name} died (out of lives)" : $"{name} died ({state.Lives} lives left)");
         }
 
         void OnEnable() => all.Add(this);

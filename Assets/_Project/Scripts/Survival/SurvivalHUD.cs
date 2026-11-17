@@ -29,7 +29,7 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\n\n" +
             "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
             "Chấm xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi (giác quan rung)\n\n" +
-            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết\n\n" +
+            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (mỗi người có 3 mạng)\n\n" +
             "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E chọn, X bỏ qua.\nG  Bảng cơ thể (tháo cơ quan bằng 1, 2…)\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
 
         void Start()
@@ -66,6 +66,8 @@ namespace Evolve.Survival
             Bar(2, "Năng lượng", s.Energy, s.MaxEnergy, Color.cyan);
             DrawTemperature(s);
             float y = 132;
+            GUI.Label(new Rect(20, y, 400, 22), $"Mạng: {s.Lives}/{s.MaxLives}");
+            y += 24;
             if (caster != null && caster.Ability != null)
             {
                 var a = caster.Ability;
@@ -92,9 +94,22 @@ namespace Evolve.Survival
             if (s.IsDead)
             {
                 var dead = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 28, fontStyle = FontStyle.Bold };
-                GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Đã chết", dead);
                 dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
-                GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Bấm R để hồi sinh (giữ nguyên cơ quan)", dead);
+                if (s.IsCorpse)
+                {
+                    dead.fontSize = 28; dead.fontStyle = FontStyle.Bold;
+                    GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Hết mạng", dead);
+                    dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
+                    GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Thân xác nằm lại, chỉ đồng đội mới cứu được (chưa có trong bản thử)", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Y  Chơi lại từ đầu (tạm thời)", dead);
+                }
+                else
+                {
+                    dead.fontSize = 28; dead.fontStyle = FontStyle.Bold;
+                    GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Đã chết", dead);
+                    dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
+                    GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), $"Bấm R để hồi sinh (còn {s.Lives} mạng, giữ nguyên cơ quan)", dead);
+                }
             }
 
             if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };

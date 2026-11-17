@@ -24,7 +24,16 @@ namespace Evolve.Survival
         /// <summary>Extra degrees of heat tolerated (from organs).</summary>
         [NonSerialized] public float HeatResistance;
 
+        [UnityEngine.Tooltip("Lives per player. Each death costs one; at 0 the player can no longer respawn on their own.")]
+        public int MaxLives = 3;
+        /// <summary>Lives left, counting the one in use. 0 = out of lives.</summary>
+        [NonSerialized] public int Lives = 3;
+
         public bool IsDead => Health <= 0f;
+        /// <summary>Dead and can respawn by themselves (still has lives).</summary>
+        public bool CanRespawn => IsDead && Lives > 0;
+        /// <summary>Dead with no lives left: a corpse that only teammates can rescue.</summary>
+        public bool IsCorpse => IsDead && Lives <= 0;
 
         public event Action Changed;
 
@@ -34,6 +43,13 @@ namespace Evolve.Survival
         /// </summary>
         public Func<float, float> FoodFilter;
         public event Action Died;
+
+        /// <summary>Give back all lives (start of a run).</summary>
+        public void ResetLives()
+        {
+            Lives = MaxLives;
+            Changed?.Invoke();
+        }
 
         public void Reset()
         {
@@ -95,7 +111,11 @@ namespace Evolve.Survival
             if (IsDead) return;
             Health = Clamp(Health - amount, MaxHealth);
             Changed?.Invoke();
-            if (IsDead) Died?.Invoke();
+            if (IsDead)
+            {
+                if (Lives > 0) Lives--;
+                Died?.Invoke();
+            }
         }
 
         static float MoveTowards(float v, float target, float step) =>
