@@ -20,7 +20,7 @@ namespace Evolve.EditorTools
     {
         const string Root = "Assets/_Project";
         const string OrganMeshes = Root + "/Models/Organs";
-        static readonly Color GelColor = new Color(0.62f, 0.80f, 0.52f, 0.88f);
+        static readonly Color GelColor = new Color(0.68f, 0.88f, 0.68f, 0.85f); // default; the player's colour is applied per renderer (SlimeGelTint)
 
         [MenuItem("Evolve/Rebuild Slime Visuals")]
         public static void RebuildAll()
@@ -56,7 +56,7 @@ namespace Evolve.EditorTools
         static Material BodyGel()
         {
             var mat = GelMaterial("SlimeGel", GelColor);
-            mat.SetTexture("_BaseMap", SlimeVeinTexture.GetOrCreate());
+            mat.SetTexture("_BaseMap", null); // clean glossy gel (no vein texture)
             EditorUtility.SetDirty(mat);
             return mat;
         }
@@ -80,14 +80,13 @@ namespace Evolve.EditorTools
             if (AssetDatabase.IsValidFolder(OrganMeshes)) AssetDatabase.DeleteAsset(OrganMeshes);
             PrototypeSceneBuilder.EnsureFolder(OrganMeshes);
 
-            // One material for every organ, matched to the body's average tone (the body's veins texture is not used).
-            var gel = GelMaterial("SlimeGelOrgan", new Color(GelColor.r * 0.8f, GelColor.g * 0.8f, GelColor.b * 0.8f, GelColor.a));
+            // One gel material for the body and every organ (tinted per player by SlimeGelTint).
+            var gel = BodyGel();
             var heat = GelMaterial("GelHeatLayer", new Color(0.9f, 0.75f, 0.4f, 0.22f));
-            var eye = gel; // the eye bulb is the same gel as everything else
             var black = PrototypeSceneBuilder.Mat("Pupil", new Color(0.05f, 0.05f, 0.05f), "Universal Render Pipeline/Lit");
 
             // Overall organ size relative to the body (kept small so the body stays the star).
-            Save(EyeStalks(gel, eye, black), "Organ_Eyes", 0.75f);
+            Save(EyeStalks(gel, black), "Organ_Eyes", 0.75f);
             Save(Pseudopods("Organ_Pseudopods", gel, 1f), "Organ_Pseudopods", 0.8f);
             Save(Pseudopods("Organ_MuscularPseudopods", gel, 1.3f), "Organ_MuscularPseudopods", 0.8f);
             Save(Pseudopods("Organ_RunnerLegs", gel, 1.6f), "Organ_RunnerLegs", 0.8f);
@@ -96,7 +95,7 @@ namespace Evolve.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        static GameObject EyeStalks(Material gel, Material eye, Material black)
+        static GameObject EyeStalks(Material gel, Material black)
         {
             var root = new GameObject("Organ_Eyes");
             foreach (float s in new[] { -1f, 1f })
@@ -107,16 +106,13 @@ namespace Evolve.EditorTools
                 for (int i = 0; i < radii.Length; i++) radii[i] = Mathf.Lerp(0.038f, 0.021f, Mathf.SmoothStep(0f, 1f, i / (float)(radii.Length - 1)));
                 AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 10), gel, Vector3.zero, Quaternion.identity);
 
-                // Teardrop bulb at the tip, a bit translucent, with a dark pupil inside.
+                // A glossy black bead of an eye on the tip of the stalk, with a small white highlight.
                 Vector3 tip = path[path.Length - 1];
                 Vector3 dir = (tip - path[path.Length - 2]).normalized;
-                var bulbOffsets = new[] { 0f, 0.018f, 0.04f, 0.062f, 0.084f, 0.102f };
-                var bulbRadii = new[] { 0.021f, 0.04f, 0.053f, 0.055f, 0.039f, 0f };
-                var bulb = new Vector3[bulbOffsets.Length];
-                for (int i = 0; i < bulb.Length; i++) bulb[i] = tip + dir * bulbOffsets[i];
-                AddMesh(root, SlimeMeshBuilder.Tube(bulb, bulbRadii, 12), eye, Vector3.zero, Quaternion.identity);
-                var pupil = PrototypeSceneBuilder.Part(PrimitiveType.Sphere, "Pupil", root.transform, tip + dir * 0.062f + new Vector3(0f, 0f, 0.036f), Vector3.one * 0.032f, black);
-                pupil.name = "Pupil";
+                var bead = PrototypeSceneBuilder.Part(PrimitiveType.Sphere, "Eye", root.transform, tip + dir * 0.03f, Vector3.one * 0.1f, black);
+                var white = PrototypeSceneBuilder.Mat("Eye", new Color(0.95f, 0.95f, 0.95f), "Universal Render Pipeline/Lit");
+                PrototypeSceneBuilder.Part(PrimitiveType.Sphere, "Highlight", root.transform, tip + dir * 0.045f + new Vector3(0.018f * s, 0.02f, 0.03f), Vector3.one * 0.026f, white);
+                bead.name = "Eye";
 
                 // Soft fillet that spreads over the body where the stalk leaves it.
                 AddMesh(root, SlimeMeshBuilder.Flare(0.1f, 0.04f, 0.08f), gel, new Vector3(0.11f * s, -0.09f, 0f), Quaternion.identity);
@@ -127,7 +123,7 @@ namespace Evolve.EditorTools
         static GameObject Pseudopods(string name, Material gel, float size)
         {
             var root = new GameObject(name);
-            float reach = 0.28f + 0.08f * size, thick = Mathf.Sqrt(size);
+            float reach = 0.24f + 0.07f * size, thick = Mathf.Sqrt(size);
             foreach (float sx in new[] { -1f, 1f })
                 foreach (float sz in new[] { -1f, 1f })
                 {
@@ -141,11 +137,11 @@ namespace Evolve.EditorTools
                     for (int i = 0; i < curve.Length; i++)
                     {
                         path[i] = curve[i];
-                        radii[i] = Mathf.Lerp(0.08f, 0.048f, Mathf.SmoothStep(0f, 1f, i / (float)(curve.Length - 1))) * thick;
+                        radii[i] = Mathf.Lerp(0.1f, 0.062f, Mathf.SmoothStep(0f, 1f, i / (float)(curve.Length - 1))) * thick;
                     }
                     Vector3 foot = curve[curve.Length - 1];
-                    path[curve.Length] = foot + new Vector3(sx * 0.02f, -0.012f, sz * 0.02f); radii[curve.Length] = 0.058f * thick; // rounded pad
-                    path[curve.Length + 1] = foot + new Vector3(sx * 0.035f, -0.02f, sz * 0.035f); radii[curve.Length + 1] = 0.034f * thick;
+                    path[curve.Length] = foot + new Vector3(sx * 0.02f, -0.012f, sz * 0.02f); radii[curve.Length] = 0.07f * thick; // rounded pad
+                    path[curve.Length + 1] = foot + new Vector3(sx * 0.035f, -0.02f, sz * 0.035f); radii[curve.Length + 1] = 0.04f * thick;
                     path[curve.Length + 2] = foot + new Vector3(sx * 0.04f, -0.024f, sz * 0.04f); radii[curve.Length + 2] = 0f;
                     AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 12), gel, Vector3.zero, Quaternion.identity);
 
@@ -251,7 +247,7 @@ namespace Evolve.EditorTools
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_ZWrite", 0f);
-            mat.SetFloat("_Smoothness", 0.92f);
+            mat.SetFloat("_Smoothness", 0.97f);
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.SetOverrideTag("RenderType", "Transparent");
             mat.renderQueue = (int)RenderQueue.Transparent;

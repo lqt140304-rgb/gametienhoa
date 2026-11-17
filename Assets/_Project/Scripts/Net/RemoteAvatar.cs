@@ -30,6 +30,7 @@ namespace Evolve.Net
         float lastApplyTime;
         bool hasPrevious;
         Transform body;
+        Evolve.Visuals.SlimeGelTint tint;
         OrganHost organs;
         Vector3 targetPosition;
         float targetYaw;
@@ -57,14 +58,12 @@ namespace Evolve.Net
             visual.transform.SetParent(transform, false);
             body = visual.transform;
 
-            // A copy of the local slime's material, tinted so each player has their own colour.
+            // The same gel material as the local slime; each player's own colour comes from SlimeGelTint.
             var renderer = visual.GetComponent<Renderer>();
             var shared = FindSlimeMaterial();
-            var mat = shared != null ? new Material(shared) : renderer.material;
-            Color tint = Color.HSVToRGB((clientId * 0.37f) % 1f, 0.45f, 0.95f);
-            tint.a = 0.8f; // gel stays translucent
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", tint); else mat.color = tint;
-            renderer.sharedMaterial = mat;
+            if (shared != null) renderer.sharedMaterial = shared;
+            tint = visual.GetComponent<Evolve.Visuals.SlimeGelTint>();
+            if (tint != null) tint.SetColor(Color.HSVToRGB((clientId * 0.37f) % 1f, 0.45f, 0.95f)); // until their colour arrives
 
             // The sockets must exist before OrganHost, which looks for them when it wakes up.
             foreach (OrganSlot slot in System.Enum.GetValues(typeof(OrganSlot)))
@@ -100,6 +99,7 @@ namespace Evolve.Net
             MaxHealth = s.MaxHealth > 0f ? s.MaxHealth : 100f;
             Lives = s.Lives;
             Dead = s.Dead;
+            if (tint != null) tint.SetColor((Color)s.BodyColor);
             Lost = s.Lost;
 
             // Mirror the numbers into the ghost's stats so creatures can react to it.
