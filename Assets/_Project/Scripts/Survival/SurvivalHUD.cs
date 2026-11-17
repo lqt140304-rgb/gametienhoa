@@ -29,7 +29,7 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\n\n" +
             "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
             "Chấm xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi (giác quan rung)\n\n" +
-            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (mỗi người có 3 mạng)\n\n" +
+            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; chết thì cơ quan\nrơi tại chỗ, mỗi cái 50% bị mất)\n\n" +
             "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E chọn, X bỏ qua.\nG  Bảng cơ thể (tháo cơ quan bằng 1, 2…)\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
 
         void Start()
@@ -43,6 +43,10 @@ namespace Evolve.Survival
                 organs.Attached += o => Toast($"Mầm {o.DisplayName}: ăn thêm {o.GrowthFoodRequired:0} thức ăn để phát triển");
                 organs.Completed += o => Toast($"Tiến hóa: {OrganTiers.Tag(o.Tier)} {o.DisplayName}!\n{o.Description}");
                 organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(rơi ra đất, nhặt lại phải nuôi từ đầu)");
+                if (interactor != null) interactor.DroppedOnDeath += (kept, lost) =>
+                {
+                    if (kept + lost > 0) Toast($"Cơ quan rơi tại chỗ chết: còn {kept}, mất {lost}");
+                };
             }
         }
 
@@ -101,14 +105,18 @@ namespace Evolve.Survival
                     GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Hết mạng", dead);
                     dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
                     GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Thân xác nằm lại, chỉ đồng đội mới cứu được (chưa có trong bản thử)", dead);
-                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Y  Chơi lại từ đầu (tạm thời)", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Cơ quan vẫn nằm trên xác. Chơi lại thì chúng rơi ra tại xác, mỗi cái 50% bị mất.", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f + 56, Screen.width, 30), "Y  Chơi lại từ đầu (tạm thời)", dead);
                 }
                 else
                 {
                     dead.fontSize = 28; dead.fontStyle = FontStyle.Bold;
                     GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Đã chết", dead);
                     dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
-                    GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), $"Bấm R để hồi sinh (còn {s.Lives} mạng, giữ nguyên cơ quan)", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), $"Bấm R để hồi sinh (còn {s.Lives} mạng)", dead);
+                    if (interactor != null && interactor.LastDeathKept + interactor.LastDeathLost > 0)
+                        GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30),
+                            $"Cơ quan rơi tại chỗ chết: còn {interactor.LastDeathKept} trên đất, mất {interactor.LastDeathLost}. Quay lại để nhặt.", dead);
                 }
             }
 
@@ -123,7 +131,7 @@ namespace Evolve.Survival
             DrawBodyMenu();
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 500), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 520), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }

@@ -17,17 +17,59 @@ namespace Evolve.Organs
         [SerializeField] float absorbNutrition = 10f;
         [Tooltip("How far from the body detached organs are dropped")]
         [SerializeField] float dropDistance = 1.5f;
+        [Tooltip("On death every organ falls off where you died; each one is lost with this chance")]
+        [Range(0, 1)] [SerializeField] float deathLossChance = 0.5f;
 
         OrganHost host;
         SurvivalStats stats;
 
         public OrganPickup Current { get; private set; }
         public bool BodyMenuOpen { get; private set; }
+        /// <summary>Result of the last death drop: organs left on the ground / destroyed.</summary>
+        public int LastDeathKept { get; private set; }
+        public int LastDeathLost { get; private set; }
+
+        /// <summary>Raised after organs fell off on death (kept, lost).</summary>
+        public event System.Action<int, int> DroppedOnDeath;
 
         void Awake()
         {
             host = GetComponent<OrganHost>();
             stats = GetComponent<SurvivalStats>();
+        }
+
+        void OnEnable() { if (stats != null) stats.State.Died += OnDied; }
+        void OnDisable() { if (stats != null) stats.State.Died -= OnDied; }
+
+        // Death with lives left: organs fall off right away.
+        // Out of lives (corpse): organs stay on the body awaiting rescue; DropAllOnDeath is
+        // called later when the corpse is finally lost (prototype: when starting a new run).
+        void OnDied()
+        {
+            Current = null;
+            BodyMenuOpen = false;
+            if (!stats.State.IsCorpse) DropAllOnDeath();
+        }
+
+        /// <summary>Every organ falls off where the body is; each is lost with deathLossChance.</summary>
+        public void DropAllOnDeath()
+        {
+            int kept = 0, lost = 0;
+            var list = host.OrganList;
+            for (int i = 0; i < list.Count; i++)
+            {
+                host.Detach(list[i].Slot);
+                if (Random.value < deathLossChance) { lost++; continue; }
+                kept++;
+                // Spread them in a small ring so pickups don't overlap.
+                float a = (i + Random.value * 0.5f) / Mathf.Max(1, list.Count) * Mathf.PI * 2f;
+                Vector3 p = transform.position + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * dropDistance;
+                p.y = 0.25f;
+                OrganPickup.Spawn(list[i], p);
+            }
+            LastDeathKept = kept;
+            LastDeathLost = lost;
+            DroppedOnDeath?.Invoke(kept, lost);
         }
 
         public void Offer(OrganPickup pickup)

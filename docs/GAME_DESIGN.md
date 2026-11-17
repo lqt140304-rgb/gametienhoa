@@ -82,7 +82,7 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 ## 6.1. Mạng, chết và cứu hộ
 
 **[ĐÃ CHỐT]**
-- Mỗi người có **3 mạng** (tính riêng từng người). Còn mạng thì tự hồi sinh chủ động, giữ cơ quan.
+- Mỗi người có **3 mạng** (tính riêng từng người). Còn mạng thì tự hồi sinh chủ động tại điểm xuất phát, nhưng **mất cơ quan**: toàn bộ cơ quan rơi ra **tại chỗ chết**, mỗi cơ quan **50% bị mất** (tính riêng từng cái), phần còn lại nằm trên đất, ai cũng nhặt được, nhặt lại phải nuôi từ mầm. *(Đổi ngày 2026-11-17, trước đây là giữ cơ quan.)*
 - Chết đủ 3 lần thì **không tự hồi sinh được nữa**; người đó thành **xác nằm tại chỗ chết**.
 - Nếu có đồng đội thì có thể **cứu**. Cứu kịp thì người chơi sống lại và đồ vẫn nằm trên người.
 - **Không cứu được thì đồ mới rơi ra.** Khi xác chưa chết hẳn (còn trong thời hạn cứu), đồng đội **không nhặt trực tiếp** được đồ từ xác.
