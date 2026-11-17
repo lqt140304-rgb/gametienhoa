@@ -79,6 +79,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | E | Khi chạm vào cơ quan: lắp / thay thế |
 | F | Khi chạm vào cơ quan: hấp thụ để lấy EXP tiến hóa |
 | R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
+| C | Quét rung: sóng lan 25 m, sương tan ra trong chốc lát, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (tốn 10 năng lượng, hồi 5 giây) |
 | X | Bỏ qua cơ quan |
 | F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |
 | G | Mở/đóng bảng Cơ thể (dùng chuột): đổ EXP, đặt ưu tiên, tháo cơ quan |

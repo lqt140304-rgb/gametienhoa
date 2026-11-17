@@ -1,6 +1,7 @@
 using System.Linq;
 using Evolve.Abilities;
 using Evolve.Organs;
+using Evolve.World;
 using UnityEngine;
 
 namespace Evolve.Survival
@@ -25,10 +26,10 @@ namespace Evolve.Survival
             "Q  Dùng Dị Năng\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
-            "V  Bật/tắt mắt (thử nghiệm)\n" +
+            "C  Quét rung: sương tan ra, thấy thức ăn\n    và sinh vật xung quanh trong chốc lát\nV  Bật/tắt mắt (thử nghiệm)\n" +
             "H  Ẩn/hiện hướng dẫn\nF1  Menu God (thử nghiệm)\n\n" +
             "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
-            "Chấm xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi (giác quan rung)\n\n" +
+            "Khi quét: xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi\n\n" +
             "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; chết thì cơ quan\nrơi tại chỗ, mỗi cái 50% bị mất)\n\n" +
             "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E lắp, F hấp thụ, X bỏ qua.\n\n" +
             "EXP tiến hóa: ăn được ít, hấp thụ cơ quan được\nnhiều. G  Bảng cơ thể: đổ EXP cho cơ quan\n(mầm → Lv1 → Lv3), chọn ưu tiên, tháo.";
@@ -74,6 +75,14 @@ namespace Evolve.Survival
             float y = 132;
             GUI.Label(new Rect(20, y, 400, 22), $"Mạng: {s.Lives}/{s.MaxLives}");
             y += 24;
+            var sense = stats.GetComponent<VibrationSense>();
+            if (sense != null)
+            {
+                string scan = sense.CooldownRemaining > 0f ? $"hồi {sense.CooldownRemaining:0.0}s"
+                    : s.Energy < sense.EnergyCost ? $"thiếu năng lượng ({sense.EnergyCost:0})" : $"sẵn sàng ({sense.EnergyCost:0} năng lượng)";
+                GUI.Label(new Rect(20, y, 500, 22), $"Quét rung [C]: {scan}");
+                y += 24;
+            }
             string prio = organs != null && organs.Priority != null ? $"  → tự vào {organs.Priority.DisplayName}" : "";
             GUI.Label(new Rect(20, y, 500, 22), $"EXP tiến hóa: {s.EvolutionExp:0}{prio}   (G: bảng cơ thể)");
             y += 24;
@@ -137,7 +146,7 @@ namespace Evolve.Survival
             DrawBodyMenu();
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 540), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 580), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }
