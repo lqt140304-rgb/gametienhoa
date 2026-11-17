@@ -16,7 +16,13 @@ namespace Evolve.Creatures
 
         void Start()
         {
+            if (prefab == null)
+            {
+                Debug.LogError("PreySpawner: chưa gán Prefab con mồi. Chạy lại Evolve → Build Prototype Scene.", this);
+                return;
+            }
             for (int i = 0; i < count; i++) SpawnOne();
+            Debug.Log($"PreySpawner: đã thả {count} con mồi.");
         }
 
         void Update()
