@@ -95,7 +95,7 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 - **Boss là bậc riêng**, tách khỏi S. S là sinh vật sống trong hệ sinh thái; Boss là trận đánh có giai đoạn, hang ổ riêng.
 - Giữ đủ **6 cấp trong bậc**: Thường, Con non, Đầu đàn (Alpha), Tinh anh, Biến dị, Chúa. Quái **Biến dị** chỉ mang cơ quan của vùng mà bầy đã từng đến.
 - Bảng trọng số rơi theo bậc quái (Bestiary mục 3.2) được **giữ làm mốc chơi thử**, chỉnh theo dữ liệu chơi thật.
-- **Bỏ Chân chạy (A) khỏi bảng rơi của con mồi C**; nguồn đúng là đầu đàn Hươu Sừng Rung. Code phải sửa (xem `PROJECT_STATUS.md`). **[MỞ]** Có siết bảng rơi của kẻ săn mồi cho khớp mục 3.2 không (code đang 30/40/25/5, còn bảng B trong Bestiary là 45/48/7/0).
+- **Bỏ Chân chạy (A) khỏi bảng rơi của con mồi C**; nguồn đúng là đầu đàn Hươu Sừng Rung. Đã sửa trong `DropTable_Prey` và công cụ dựng scene. **[MỞ]** Có siết bảng rơi của kẻ săn mồi cho khớp mục 3.2 không (code đang 30/40/25/5, còn bảng B trong Bestiary là 45/48/7/0).
 - Hai loài đang có trong code có tên chính thức: con mồi = **Bọ Nhảy Cỏ**, kẻ săn mồi = **Sói Gai**. Sói Gai hiện là đơn độc lãnh thổ; "bầy săn 3–5 con" mới là đề xuất.
 - Tuyến chỉ gắn 1 cơ quan như mọi vị trí; "build hóa học" là vai trò được chia trong bầy.
 

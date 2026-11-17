@@ -96,7 +96,8 @@ namespace Evolve.EditorTools
             });
             var preyDrops = Asset<DropTableSO>(Root + "/ScriptableObjects/DropTable_Prey.asset", t =>
             {
-                t.Organs.AddRange(new[] { eyes, legs, legsB, legsA });
+                // Chân chạy (A) không rơi từ con mồi nhỏ (đã chốt trong Bestiary).
+                t.Organs.AddRange(new[] { eyes, legs, legsB });
             });
             var membrane = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_HeatMembrane.asset", o =>
             {

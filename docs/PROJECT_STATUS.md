@@ -119,7 +119,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 
 Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho code (chưa làm):
 
-- **Sửa nhỏ, đã chốt:** bỏ Chân chạy (A) khỏi `DropTable_Prey` (nguồn đúng là đầu đàn Hươu Sừng Rung). Là asset chủ dự án có thể đã chỉnh, nên sửa file YAML sau khi `pull`, hoặc dùng Menu God/Inspector.
+- **Đã làm:** bỏ Chân chạy (A) khỏi `DropTable_Prey` (nguồn đúng là đầu đàn Hươu Sừng Rung); công cụ dựng scene cũng không thêm nó vào bảng con mồi nữa. Bảng con mồi giờ chỉ còn 5 cơ quan (Mắt sơ khai, Chân giả, Chân giả cơ bắp, Màng chịu nhiệt, Gai độc); trọng số bậc A (7) không còn tác dụng vì bảng không có cơ quan A. Chân chạy vẫn rơi từ bảng kẻ săn mồi (`DropTable_Predator`).
 - **5 ô kỹ năng** gắn cơ quan (phím 1–5, `KeyPressed.Digit` có sẵn nhưng chưa dùng), tách khỏi Dị Năng Q (`AbilityCaster` giữ đúng 1). Cơ quan bậc C không có kỹ năng; từ B trở lên mới có `AbilitySO` được cấp. Cần thêm trường vào `OrganSO` (ví dụ `AbilitySO GrantedAbility`).
 - **HP quái theo số người** (A, S, Boss): `HP = gốc × (0.6 + 0.2 × số người trong vùng)`; chỉ cần khi làm co-op.
 - **Ăn xác** (~5 giây mất 1 cơ quan) cần xác người chơi chết hẳn, cũng thuộc co-op.
