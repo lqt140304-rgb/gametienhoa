@@ -1088,7 +1088,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Evolve::Evolve.World.VibrationSense
   radius: 25
-  interval: 3
   pulsePrefab: {fileID: 6734395283760691054, guid: e465027305c710d41b4b556c41a9ed0b, type: 3}
   foodColor: {r: 0.5, g: 0.9, b: 1, a: 1}
   preyColor: {r: 1, g: 0.4, b: 0.35, a: 1}
@@ -1710,7 +1709,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Evolve::Evolve.World.MonochromeVision
   sight: 0
   host: {fileID: 862123640}
-  blindFogEnd: 12
+  blindFogEnd: 6
   eyesFogEnd: 120
   fogColor: {r: 0.08, g: 0.08, b: 0.08, a: 1}
 --- !u!114 &1316635108
