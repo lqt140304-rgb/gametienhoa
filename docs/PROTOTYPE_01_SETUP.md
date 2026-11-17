@@ -17,9 +17,13 @@ Từ bản 0.2, scene có thêm **con mồi** (màu hồng, tạo bởi `Prey Sp
 
 ### Bản 0.3: kẻ săn mồi, nhiệt độ, hoang mạc
 
-- **Kẻ săn mồi** (màu tím sẫm, mắt đỏ): 2 con trong hoang mạc, 1 con ở góc tây bắc đồng bằng. Phát hiện trong 7 m (chỉ 2.8 m nếu bạn đứng yên), đuổi tốc độ 1.4, mệt sau 6 giây. Cắn 15 máu và hất văng. Có 40 máu; bị **Gai độc** đâm lại hoặc bị **lao vào** nhanh (Dị Năng Q, nảy) thì mất máu. Hạ được: +35 thức ăn và chắc chắn rơi cơ quan theo `DropTable_Predator` (bậc cao dễ ra hơn).
+- **Kẻ săn mồi** (màu tím sẫm, mắt đỏ): 2 con trong hoang mạc, 1 con ở góc tây bắc đồng bằng. Phát hiện trong 7 m (chỉ 2.8 m nếu bạn đứng yên), đuổi tốc độ 1.4, mệt sau 6 giây. Cắn 15 máu và hất văng. Có 40 máu; bị **Gai độc** đâm lại hoặc bị **lao vào** nhanh (Dị Năng Q, nảy) thì mất máu. Hạ được: +35 thức ăn và chắc chắn rơi cơ quan theo `DropTable_Predator` (C/B/A/S = 45/48/7/0).
 - **Nhiệt độ**: thân nhiệt dần theo nhiệt độ không khí. Đồng bằng 22°C, hoang mạc 50°C (vùng `Desert Zone`, phía đông, x > 25). Quá 35°C (+ khả năng chịu nóng của cơ quan) thì mất máu theo số độ vượt. Chỉnh trong `SurvivalConfigSO` (mục Temperature).
 - **Cơ quan mới**: Màng chịu nhiệt (C, Da, +20°C chịu nóng), Gai độc (B, Lưng, phản 15 sát thương).
+
+### Kỹ năng gắn cơ quan (bản 5 ô kỹ năng)
+
+Cần **dựng lại scene** (Evolve → Build Prototype Scene → Dựng lại) để slime có `Skill Bar` và hai cơ quan bậc B nhận kỹ năng. Cách thử nhanh: bấm F1 (Menu God), nhận *Chân giả cơ bắp* và *Gai độc*, bấm **Mọi cơ quan Lv2**; ở dưới màn hình sẽ hiện 5 ô kỹ năng, bấm phím **1** và **2**. Bấm **Mọi cơ quan Lv3** để xem bản nâng cấp. Kỹ năng và con số nằm trong `ChargeSO.asset`, `SpikeBurstSO.asset` (`Assets/_Project/ScriptableObjects`).
 
 ### Bậc cơ quan và tỉ lệ rơi
 
@@ -80,6 +84,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | F | Khi chạm vào cơ quan: hấp thụ để lấy EXP tiến hóa |
 | R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
 | C | Quét rung: sóng lan 25 m, ánh sáng lan ra soi địa hình trong chốc lát, thức ăn/con mồi/kẻ săn mồi lóe lên một lần (tốn 10 năng lượng, hồi 5 giây) |
+| 1–5 | Dùng kỹ năng gắn cơ quan trong ô tương ứng (cơ quan bậc B, mở ở Lv2; Lv3 mạnh hơn, hồi nhanh hơn). Đổi ô trong bảng Cơ thể (G) |
 | X | Bỏ qua cơ quan |
 | F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |
 | G | Mở/đóng bảng Cơ thể (dùng chuột): đổ EXP, đặt ưu tiên, tháo cơ quan |

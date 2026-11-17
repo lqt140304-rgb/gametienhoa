@@ -119,10 +119,34 @@ namespace Evolve.EditorTools
                 o.VisualPrefab = SpikesPrefab(Mat("Spike", new Color(0.45f, 0.2f, 0.55f), "Universal Render Pipeline/Lit"));
             });
             EnsureOrgans(preyDrops, membrane, spikes);
+
+            // Skills granted by tier B organs (Bestiary: tier C has none). Proposed numbers; tune in the assets.
+            var charge = Asset<ChargeAbility>(Root + "/ScriptableObjects/ChargeSO.asset", a =>
+            {
+                a.DisplayName = "Xung Phong Húc";
+                a.Description = "Dồn sức cơ bắp lao thẳng tới, đủ nhanh để húc văng kẻ săn mồi.";
+                a.Tier = AbilityTier.B;
+                a.EnergyCost = 20f;
+                a.Cooldown = 6f;
+                a.Force = 9f;
+            });
+            var spikeBurst = Asset<SpikeBurstAbility>(Root + "/ScriptableObjects/SpikeBurstSO.asset", a =>
+            {
+                a.DisplayName = "Xả Gai";
+                a.Description = "Gai bắn tỏa ra, gây sát thương kẻ săn mồi ở gần.";
+                a.Tier = AbilityTier.B;
+                a.EnergyCost = 20f;
+                a.Cooldown = 8f;
+                a.Radius = 3f;
+                a.Damage = 12f;
+            });
+            GrantAbility(legsB, charge);
+            GrantAbility(spikes, spikeBurst);
             var predatorDrops = Asset<DropTableSO>(Root + "/ScriptableObjects/DropTable_Predator.asset", t =>
             {
                 t.DropChance = 1f;
-                t.WeightC = 30f; t.WeightB = 40f; t.WeightA = 25f; t.WeightS = 5f;
+                // Theo Bestiary mục 3.2, quái bậc B: 45 / 48 / 7 / 0.
+                t.WeightC = 45f; t.WeightB = 48f; t.WeightA = 7f; t.WeightS = 0f;
             });
             EnsureOrgans(predatorDrops, eyes, legs, legsB, legsA, membrane, spikes);
 
@@ -163,6 +187,7 @@ namespace Evolve.EditorTools
             var stats = slime.AddComponent<SurvivalStats>();
             Set(stats, "config", config);
             slime.AddComponent<ClimateSensor>();
+            slime.AddComponent<SkillBar>();
             var controller = slime.AddComponent<SlimeController>();
             Set(controller, "visual", visual.transform);
             var caster = slime.AddComponent<AbilityCaster>();
@@ -257,6 +282,14 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>Add organs missing from a drop table (keeps the user's weights and existing entries).</summary>
+        /// <summary>Give an organ its skill if it has none (keeps skills the project owner already set).</summary>
+        static void GrantAbility(OrganSO organ, AbilitySO ability)
+        {
+            if (organ == null || ability == null || organ.GrantedAbility != null) return;
+            organ.GrantedAbility = ability;
+            EditorUtility.SetDirty(organ);
+        }
+
         static void EnsureOrgans(DropTableSO table, params OrganSO[] organs)
         {
             bool changed = false;

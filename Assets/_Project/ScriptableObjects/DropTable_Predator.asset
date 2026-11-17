@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: DropTable_Predator
   m_EditorClassIdentifier: Evolve::Evolve.Organs.DropTableSO
   DropChance: 1
-  WeightC: 30
-  WeightB: 40
-  WeightA: 25
-  WeightS: 5
+  WeightC: 45
+  WeightB: 48
+  WeightA: 7
+  WeightS: 0
   Organs:
   - {fileID: 11400000, guid: cccd6f84cb211af4ead0f113485bb881, type: 2}
   - {fileID: 11400000, guid: c7d6363254a0c1343819a5ff3a4d4046, type: 2}

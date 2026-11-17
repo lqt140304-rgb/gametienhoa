@@ -1,3 +1,4 @@
+using Evolve.Abilities;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -27,6 +28,12 @@ namespace Evolve.Organs
         [Tooltip("Evolution EXP needed to grow from bud to full organ (Lv1). Lv2 costs the same again, Lv3 twice as much. 0 = instant.")]
         [FormerlySerializedAs("GrowthFoodRequired")]
         public float GrowthExpRequired = 30f;
+
+        [Header("Active skill")]
+        [Tooltip("Active skill this organ grants (empty = passive only). Tier C organs have none; skills start from tier B.")]
+        public AbilitySO GrantedAbility;
+        [Tooltip("Organ level at which the skill unlocks (2 = Lv2); Lv3 upgrades it")]
+        [Min(1)] public int AbilityUnlockLevel = 2;
 
         [Header("Effects (at full growth)")]
         [Tooltip("Gives colour vision and long view range")]
