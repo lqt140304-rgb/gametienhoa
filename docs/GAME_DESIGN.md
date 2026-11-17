@@ -63,7 +63,7 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 - Cơ quan người chơi **đã có** thì **giảm tỉ lệ rơi**, không bị loại khỏi bảng rơi. Bản trùng vẫn có giá trị (hấp thụ lấy thức ăn, hoặc thay bản đang yếu).
 
-**[ĐỀ XUẤT]** Chọn bậc trước theo trọng số bậc (C/B/A/S), rồi chọn cơ quan trong bậc đó. Hệ số giảm cho cơ quan đã có chỉ áp dụng trong nội bộ bậc, để tỉ lệ bậc đúng như bảng. Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường. "Đã có" tính theo cơ quan **đang gắn trên người**. Hệ số mặc định thử nghiệm 0.25, chỉnh được.
+**[ĐỀ XUẤT]** Chọn bậc trước theo trọng số bậc (C/B/A/S), rồi chọn cơ quan trong bậc đó. Cơ quan đã có chỉ còn một phần trọng số (hệ số giảm) so với cơ quan chưa có cùng bậc, để tỉ lệ bậc đúng như bảng. Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường. "Đã có" tính theo cơ quan **đang gắn trên người**. Hệ số mặc định thử nghiệm 0.25, chỉnh được.
 
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
@@ -86,12 +86,13 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 - **Không cứu được thì đồ mới rơi ra.** Khi xác chưa chết hẳn (còn trong thời hạn cứu), đồng đội **không nhặt trực tiếp** được đồ từ xác.
 - Đồ rơi ai cũng nhặt được, kể cả đồng đội. Mỗi cơ quan nhặt có **50% bị mất, tính riêng từng bộ phận**.
 - Việc đồng đội lạm dụng nhau (bỏ mặc để nhặt đồ) được **chấp nhận**: game thiên về chiều sâu và hardcore, không cần quá thân thiện.
+- **Thời hạn cứu: 120 giây.** Hết 120 giây mà chưa cứu được thì xác chết hẳn và đồ rơi ra.
+- **Chi phí cứu kiểu chuyền máu:** 1 máu của người được cứu bằng **3 máu** của người cứu.
+- Người hết mạng vào **chế độ quan sát**, xem từ góc nhìn (POV) của người còn sống.
 
 **[ĐỀ XUẤT]** (chưa duyệt)
-- Thời hạn xác khoảng 2–3 phút; hết hạn thì xác chết hẳn và đồ rơi ra.
-- Cứu có chi phí (thức ăn hoặc máu của người cứu), bị ngắt nếu người cứu bị tấn công, người được cứu sống lại với 1 mạng và máu thấp.
+- Cứu bị ngắt nếu người cứu bị tấn công. Người được cứu sống lại với 1 mạng; lượng máu hồi tùy lượng máu người cứu chuyền.
 - Có thể giới hạn số lần cứu hoặc cho hồi lại mạng khi qua cột mốc (hạ boss, xây tổ). Tình huống không có đồng đội (chơi một mình) hết mạng là thua.
-- Người chơi hết mạng có thể ở chế độ quan sát.
 
 ## 7. Công nghệ
 
