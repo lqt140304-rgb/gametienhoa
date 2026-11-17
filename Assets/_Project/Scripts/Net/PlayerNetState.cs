@@ -18,7 +18,7 @@ namespace Evolve.Net
         public byte Lives;
         public bool Dead;
         public bool Lost; // corpse gone for good
-        public Color32 BodyColor = new Color32(173, 224, 173, 255); // the slime colour chosen by this player
+        public Color32 BodyColor; // the slime colour chosen by this player (set by the sender)
         public string[] OrganNames;
         public byte[] OrganLevels;
 
