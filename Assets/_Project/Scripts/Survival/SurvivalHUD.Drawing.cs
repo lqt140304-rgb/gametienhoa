@@ -15,6 +15,8 @@ namespace Evolve.Survival
         Vector2 organScroll;
         GUIStyle text, small, heading, action, selectedAction, title, center, input;
         Texture2D membrane, disc;
+        sealed class GelSkin { public Texture2D Body, Fill; }
+        readonly Dictionary<string,GelSkin> gelSkins = new Dictionary<string,GelSkin>();
         GUIStyle panelSkin;
         Vector2 canvas;
         string skillQuery = "";
@@ -47,6 +49,8 @@ namespace Evolve.Survival
         {
             if (membrane != null) Destroy(membrane);
             if (disc != null) Destroy(disc);
+            foreach(var skin in gelSkins.Values) { Destroy(skin.Body); Destroy(skin.Fill); }
+            gelSkins.Clear();
         }
         void Update()
         {
@@ -140,6 +144,72 @@ namespace Evolve.Survival
         {
             bool old = GUI.enabled; GUI.enabled = old && enabled; draw(); GUI.enabled = old;
         }
+        void Gel(Rect r,Color tone,float fill,bool skill=false,float phase=0)
+        {
+            if(Event.current.type!=EventType.Repaint)return;
+            int w=Mathf.RoundToInt(r.width),h=Mathf.RoundToInt(r.height);
+            Color32 edge=tone;
+            string key=$"{w}:{h}:{edge.r}:{edge.g}:{edge.b}:{skill}";
+            if(!gelSkins.TryGetValue(key,out var skin))
+            {
+                const int pad=6;int tw=w+pad*2,th=h+pad*2;
+                var body=new Color[tw*th];var mask=new Color[tw*th];
+                for(int iy=0;iy<th;iy++)for(int ix=0;ix<tw;ix++)
+                {
+                    float x=ix-pad,y=th-1-iy-pad;
+                    float radius=skill?(y<h*.5f?(x<w*.5f?w*.42f:w*.49f):(x<w*.5f?w*.46f:w*.39f))
+                        :(y<h*.5f?(x<w*.5f?28:25):(x<w*.5f?20:27));
+                    radius=Mathf.Min(radius,Mathf.Min(w,h)*.49f);
+                    float qx=Mathf.Abs(x-(w-1)*.5f)-(w*.5f-radius),qy=Mathf.Abs(y-(h-1)*.5f)-(h*.5f-radius);
+                    float distance=Mathf.Min(Mathf.Max(qx,qy),0)+new Vector2(Mathf.Max(qx,0),Mathf.Max(qy,0)).magnitude-radius;
+                    float coverage=Mathf.Clamp01(.5f-distance),u=x/w,v=y/h;
+                    float shine=Mathf.Exp(-((u-.24f)*(u-.24f)/.055f+(v-.16f)*(v-.16f)/.018f));
+                    float rim=Mathf.Exp(-Mathf.Abs(distance+1.1f)*.85f);
+                    float inner=Mathf.Exp(-Mathf.Abs(distance+5)*.35f)*.13f;
+                    Color color=Color.Lerp(new Color32(18,43,67,255),new Color32(178,244,255,255),shine*.30f+inner);
+                    color=Color.Lerp(color,Color.Lerp(tone,new Color32(196,240,255,255),.45f),rim*.72f);
+                    color.a=coverage*(.58f+rim*.25f+shine*.12f);
+                    if(distance>0){color=tone;color.a=Mathf.Exp(-distance*.72f)*.09f;}
+                    body[iy*tw+ix]=color;mask[iy*tw+ix]=new Color(1,1,1,coverage);
+                }
+                skin=new GelSkin{Body=new Texture2D(tw,th,TextureFormat.RGBA32,false),Fill=new Texture2D(tw,th,TextureFormat.RGBA32,false)};
+                skin.Body.name="HUD gel surface";skin.Fill.name="HUD gel fill";
+                foreach(var texture in new[]{skin.Body,skin.Fill}){texture.hideFlags=HideFlags.HideAndDontSave;texture.filterMode=FilterMode.Bilinear;texture.wrapMode=TextureWrapMode.Clamp;}
+                skin.Body.SetPixels(body);skin.Body.Apply(false,true);skin.Fill.SetPixels(mask);skin.Fill.Apply(false,true);gelSkins.Add(key,skin);
+            }
+            float wobble=Mathf.Sin(Time.unscaledTime*1.7f+phase)*.55f;
+            var drawn=new Rect(r.x-6-wobble*.5f,r.y-6+wobble*.25f,r.width+12+wobble,r.height+12-wobble*.5f);
+            var previous=GUI.color;GUI.color=Color.white;GUI.DrawTexture(drawn,skin.Body);
+            if(fill>0)
+            {
+                float fraction=Mathf.Clamp01(fill),filled=r.height*fraction;
+                GUI.BeginGroup(new Rect(r.x,r.yMax-filled,r.width,filled));
+                var tint=tone;tint.a=.11f;GUI.color=tint;
+                GUI.DrawTexture(new Rect(drawn.x-r.x,drawn.y-(r.yMax-filled),drawn.width,drawn.height),skin.Fill);
+                GUI.EndGroup();
+            }
+            GUI.color=previous;
+        }
+        static string VitalNote(int kind,SurvivalState s,SurvivalConfig cfg)
+        {
+            if(kind==0)
+            {
+                if(s.IsDead)return "Đã chết";
+                float cap=s.MaxHealth*NutrientEffects.MaxHealthMultiplier(s.Nutrients[(int)NutrientKind.Iron]);
+                bool fed=s.Hunger>=s.MaxHunger*cfg.HealHungerThreshold;
+                bool watered=!s.ThirstEnabled||s.Thirst>=s.MaxThirst*cfg.HealThirstThreshold;
+                float regen=fed&&watered&&s.Hunger>0?cfg.HealPerSec*NutrientEffects.HealMultiplier(s.Nutrients[(int)NutrientKind.Protein]):0;
+                float heat=System.Math.Max(0,System.Math.Max(cfg.ComfortMin-s.Temperature,s.Temperature-s.HeatLimit(cfg)))*cfg.DamagePerDegreePerSec;
+                float loss=s.Invulnerable?0:heat+(s.ThirstEnabled&&s.Thirst<=0?cfg.DehydrationDamagePerSec:0)+(s.Hunger<=0?cfg.StarveDamagePerSec:0);
+                if(s.Health>=cap)return loss>0?"Đang mất máu":cap<s.MaxHealth?"Thiếu Huyết Thiết":"Đầy máu";
+                return regen>loss?"Đang hồi phục":loss>regen?"Đang mất máu":regen>0?"Ổn định":"Chưa hồi phục";
+            }
+            if(kind==1){if(s.Energy>=s.MaxEnergy)return "Đầy năng lượng";return s.Hunger>0?"Hồi khi nghỉ":"Cần thức ăn";}
+            if(kind==2)return s.Hunger<=0?"Đói lả":s.Hunger>=s.MaxHunger*cfg.HealHungerThreshold?"Đủ dinh dưỡng":"Đang đói";
+            if(kind==3)return !s.ThirstEnabled?"Không hao nước":s.Thirst<=0?"Kiệt nước":s.Thirst<s.MaxThirst*.25f?"Thiếu nước":"Đủ nước";
+            if(kind==4)return s.Stress>=cfg.StressEnergyStart?"Hoảng loạn":s.Stress>cfg.StressShakeStart?"Căng thẳng":"Bình tĩnh";
+            return s.Temperature<cfg.ComfortMin?"Quá lạnh":s.Temperature>s.HeatLimit(cfg)?"Quá nóng":"Nhiệt độ ổn định";
+        }
         void DrawGameplayHud()
         {
             EnsureStyles(); var old = GUI.matrix;
@@ -155,9 +225,9 @@ namespace Evolve.Survival
             float top=y+(nutrients?76:0); // the nutrient strip sits above the water/stress row
             float primaryY=top+(full?94:0);
             float cellWidth=(width-12)/3;
-            Vital(new Rect(x,primaryY,cellWidth,72),"Máu",s.Health,s.MaxHealth,coral);
-            Vital(new Rect(x+cellWidth+6,primaryY,cellWidth,72),"Năng lượng",s.Energy,s.MaxEnergy,cyan);
-            Vital(new Rect(x+(cellWidth+6)*2,primaryY,cellWidth,72),"Độ no",s.Hunger,s.MaxHunger,new Color32(188,230,210,255));
+            Vital(new Rect(x,primaryY,cellWidth,72),"♥ Máu",s.Health,s.MaxHealth*NutrientEffects.MaxHealthMultiplier(s.Nutrients[(int)NutrientKind.Iron]),coral,VitalNote(0,s,stats.Config));
+            Vital(new Rect(x+cellWidth+6,primaryY,cellWidth,72),"ϟ Năng lượng",s.Energy,s.MaxEnergy,cyan,VitalNote(1,s,stats.Config));
+            Vital(new Rect(x+(cellWidth+6)*2,primaryY,cellWidth,72),"♧ Độ no",s.Hunger,s.MaxHunger,new Color32(176,220,178,255),VitalNote(2,s,stats.Config));
             if(nutrients)
             {
                 float nw=(width-24)/5f;
@@ -172,11 +242,9 @@ namespace Evolve.Survival
             }
             if(full)
             {
-                Vital(new Rect(x,top,cellWidth,68),s.ThirstEnabled?"Nước":"Nước · nghỉ",s.Thirst,s.MaxThirst,cyan);
-                Vital(new Rect(x+cellWidth+6,top,cellWidth,68),"Căng thẳng",s.Stress,SurvivalState.MaxStress,new Color(.76f,.68f,.91f));
-                Paint(new Rect(x+(cellWidth+6)*2,top,cellWidth,68),surface);
-                Label(new Rect(x+(cellWidth+6)*2+5,top+5,cellWidth-10,20),"Thân nhiệt",small);
-                Label(new Rect(x+(cellWidth+6)*2,top+25,cellWidth,30),$"{s.Temperature:0}°C",center);
+                Vital(new Rect(x,top,cellWidth,68),s.ThirstEnabled?"◈ Nước":"◈ Nước · nghỉ",s.Thirst,s.MaxThirst,new Color32(130,205,239,255),VitalNote(3,s,stats.Config));
+                Vital(new Rect(x+cellWidth+6,top,cellWidth,68),"◎ Căng thẳng",s.Stress,SurvivalState.MaxStress,new Color32(196,179,231,255),VitalNote(4,s,stats.Config));
+                Vital(new Rect(x+(cellWidth+6)*2,top,cellWidth,68),"♨ Thân nhiệt",s.Temperature,0,new Color32(239,194,158,255),VitalNote(5,s,stats.Config),"°C");
                 Label(new Rect(x,top+71,width+160,23),$"{s.Lives}/{s.MaxLives} mạng  ·  Không khí {s.Ambient:0}°C  ·  {(s.InShelter?"Trong tổ":"Ngoài tổ")}",small);
             }
             float chipWidth=Screen.width>=1550?63:55,chipHeight=Screen.width>=1550?65:60;
@@ -184,11 +252,11 @@ namespace Evolve.Survival
             float skillCenter=Screen.width>=1550?canvas.x*.52f:canvas.x*.5f+70;
             float sx=skillCenter-totalWidth/2,sy=canvas.y-35-chipHeight;
             var active=caster!=null?caster.Ability:null;
-            DrawSkillChip(new Rect(sx,sy,chipWidth,chipHeight),"Q",active!=null?active.DisplayName:null,caster!=null?caster.CooldownRemaining:0,active!=null?active.EnergyCost:0);
+            DrawSkillChip(new Rect(sx,sy,chipWidth,chipHeight),"Q",active!=null?active.DisplayName:null,caster!=null?caster.CooldownRemaining:0,active!=null?active.EnergyCost:0,active);
             for(int slot=0;slot<SkillBar.SlotCount;slot++)
             {
                 var o=skills!=null?skills.GetSlot(slot):null; var a=o!=null?o.GrantedAbility:null;
-                DrawSkillChip(new Rect(sx+(slot+1)*chipStep,sy,chipWidth,chipHeight),(slot+1).ToString(),a!=null?a.DisplayName:null,skills!=null?skills.CooldownRemaining(slot):0,a!=null?a.EnergyCost:0);
+                DrawSkillChip(new Rect(sx+(slot+1)*chipStep,sy,chipWidth,chipHeight),(slot+1).ToString(),a!=null?a.DisplayName:null,skills!=null?skills.CooldownRemaining(slot):0,a!=null?a.EnergyCost:0,a);
             }
             var sense=stats.GetComponent<VibrationSense>();
             DrawSkillChip(new Rect(sx+6*chipStep,sy,chipWidth,chipHeight),"C",sense!=null?"Cảm nhận rung":null,sense!=null?sense.CooldownRemaining:0,sense!=null?sense.EnergyCost:0);
@@ -230,20 +298,23 @@ namespace Evolve.Survival
             Paint(new Rect(r.x+7,r.yMax-8,(r.width-14)*Frac(value,SurvivalState.MaxNutrient),3),color,Texture2D.whiteTexture);
         }
 
-        void Vital(Rect r,string name,float value,float max,Color color)
+        void Vital(Rect r,string name,float value,float max,Color color,string note,string unit=null)
         {
-            var edge=color;edge.a=.55f;
-            Frame(r,new Color32(18,43,67,221),edge,26);
-            Label(new Rect(r.x+7,r.y+5,r.width-14,20),name,small);
-            var number=new GUIStyle(center) { fontSize=22 }; number.normal.textColor=color;
-            Label(new Rect(r.x,r.y+24,r.width,28),$"{value:0}",number);
-            Paint(new Rect(r.x+9,r.yMax-9,(r.width-18)*Frac(value,max),3),color,Texture2D.whiteTexture);
+            Gel(r,color,unit==null?Frac(value,max):0,false,r.x*.03f);
+            var caption=new GUIStyle(small){fontSize=10,wordWrap=false,alignment=TextAnchor.MiddleCenter};
+            Label(new Rect(r.x+4,r.y+5,r.width-8,17),name,caption);
+            var number=new GUIStyle(center) { fontSize=21,richText=true,wordWrap=false };number.normal.textColor=color;
+            string suffix=unit??$"/ {max:0}";
+            Label(new Rect(r.x,r.y+21,r.width,28),$"{value:0} <size=10><color=#8fb3cb>{suffix}</color></size>",number);
+            var status=new GUIStyle(caption){fontSize=9};status.normal.textColor=new Color32(163,197,216,255);
+            Label(new Rect(r.x+3,r.yMax-21,r.width-6,17),note,status);
         }
-        void DrawSkillChip(Rect r,string key,string name,float cooldown,float cost)
+        void DrawSkillChip(Rect r,string key,string name,float cooldown,float cost,AbilitySO ability=null)
         {
-            Frame(r,new Color32(10,23,44,(byte)(name!=null?221:110)),new Color32(163,213,235,(byte)(name!=null?119:45)),23);
+            Gel(r,name!=null?new Color32(163,213,235,255):new Color32(80,113,140,255),0,true,r.x*.04f);
             GUI.Label(new Rect(r.x,r.y-24,r.width,22),new GUIContent(key,name??"Ô trống"),center);
-            string icon=name==null?"·":key=="C"?"◎":name.ToLowerInvariant().Contains("gai")?"✦":"↗";
+            string icon=name==null?"·":key=="C"?"◎":AbilityMark(ability);
+            GUI.Label(r,new GUIContent("",name??"Ô trống"),GUIStyle.none);
             Label(new Rect(r.x,r.y+7,r.width,r.height-14),icon,new GUIStyle(center){fontSize=29});
             if(name!=null&&(cooldown>0||stats.State.Energy<cost))
                 Label(new Rect(r.x+2,r.yMax-23,r.width-4,20),cooldown>0?$"{cooldown:0.0}s":"NL!",new GUIStyle(small){alignment=TextAnchor.MiddleCenter});
@@ -350,7 +421,7 @@ namespace Evolve.Survival
             Label(new Rect(947,423,260,50),at<0?"Chưa gắn":$"Đang gắn ở ô {at+1}",small);
             WithEnabled(at>=0,()=>{if(Button(new Rect(947,489,245,35),"Gỡ kỹ năng"))skills.Clear(at);});
         }
-        string AbilityMark(AbilitySO a)=>a is SpikeBurstAbility?"✦":a is ChargeAbility||a is BurstDashAbility?"↗":"◎";
+        string AbilityMark(AbilitySO a)=>a is SpikeBurstAbility?"✦":a is ChargeAbility?"➶":a is BurstDashAbility?"↝":"◇";
         string ReadyFor(OrganSO o)
         {
             int slot=skills.SlotOf(o);
@@ -442,7 +513,7 @@ namespace Evolve.Survival
         {
             var s=stats.State;Label(new Rect(r.x,r.y,r.width,30),"CƠ THỂ & MÔI TRƯỜNG",small);
             string[] names={"Máu","Năng lượng","Độ no","Nước","Căng thẳng","Thân nhiệt","Không khí","Kháng nóng","Số mạng","Trú ẩn","Tốc độ","Phản sát thương"};
-            string[] values={$"{s.Health:0}/{s.MaxHealth:0}",$"{s.Energy:0}/{s.MaxEnergy:0}",$"{s.Hunger:0}/{s.MaxHunger:0}",$"{s.Thirst:0}/{s.MaxThirst:0}",$"{s.Stress:0}",$"{s.Temperature:0}°C",$"{s.Ambient:0}°C",$"+{s.HeatResistance:0.#}°C",$"{s.Lives}/{s.MaxLives}",s.InShelter?"Trong tổ":"Ngoài tổ",$"×{organs.SpeedMultiplier:0.##}",$"{organs.ContactDamage:0.#}"};
+            string[] values={$"{s.Health:0}/{s.MaxHealth*NutrientEffects.MaxHealthMultiplier(s.Nutrients[(int)NutrientKind.Iron]):0}",$"{s.Energy:0}/{s.MaxEnergy:0}",$"{s.Hunger:0}/{s.MaxHunger:0}",$"{s.Thirst:0}/{s.MaxThirst:0}",$"{s.Stress:0}",$"{s.Temperature:0}°C",$"{s.Ambient:0}°C",$"+{s.HeatResistance:0.#}°C",$"{s.Lives}/{s.MaxLives}",s.InShelter?"Trong tổ":"Ngoài tổ",$"×{organs.SpeedMultiplier:0.##}",$"{organs.ContactDamage:0.#}"};
             for(int i=0;i<names.Length;i++)Metric(new Rect(r.x+(i%3)*128,r.y+47+(i/3)*77,120,67),names[i],values[i]);
             Label(new Rect(r.x,r.y+374,r.width,60),$"Vùng nhiệt an toàn: {stats.Config.ComfortMin:0}–{s.HeatLimit(stats.Config):0}°C\n{(s.ThirstEnabled?"Đang tiêu hao nước":"Vùng này không tiêu hao nước")}",small);
         }

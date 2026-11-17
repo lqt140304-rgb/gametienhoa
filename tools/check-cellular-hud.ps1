@@ -17,7 +17,8 @@ foreach($viewport in @(@(1280,800),@(1366,768),@(1920,1080),@(800,600))) {
     $hudScale=[Math]::Max(.1,[Math]::Min(1,[Math]::Min($width/960,$height/600)))
     $menuScale=[Evolve.Survival.HudCatalog]::MenuScale($width,$height,$hudScale)
     $menuBottom=52+650*$menuScale
-    $secondaryTop=$height-196*$hudScale
+    $secondaryTop=$height-272*$hudScale
     if($menuBottom -gt $secondaryTop-12) {throw "Menu covers HUD at $width x $height"}
 }
 Write-Output 'PASS: menu leaves expanded HUD visible at 4 viewport sizes'
+
