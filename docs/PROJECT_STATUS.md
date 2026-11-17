@@ -71,6 +71,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Survival/HudVisibility` | | **0.5b.** Hàm thuần quyết định thanh nào hiện trên HUD tối giản (chỉ thanh có vấn đề; giữ Tab hiện tất cả) |
 | `Player/BodyFeedback` | | **0.5b.** Thân slime thể hiện chỉ số: xám khô khi khát, nhạt khi đói, run khi căng thẳng |
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
+| `World/` (khu lớn) | `WorldScale`, `TerrainShape`, `DomeMesh` | **0.6a, chưa biên dịch.** Hằng số quy mô (khu 480 m, lõi phẳng 130 m), hàm độ cao địa hình (lõi phẳng đúng y = 0, đồi, vách rìa), mesh mái vòm quay vào trong. `UnderrootLakeBuilder` dùng chúng để dựng Terrain, mái, rễ, cột mốc, đèn, ranh giới; asset sinh ra nằm ở `Assets/_Project/Terrain/` |
 | `Editor/` | `PrototypeSceneBuilder`, `UnderrootLakeBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; menu **Evolve → Build Underroot Lake** dựng scene `Scenes/Underroot_Lake` (tạo species asset D/C/B, prefab `Prey_C`, gắn `VibrationEmitter`, tag `ShallowWater`; dùng chung `CreateSharedAssets`/`CreatePlayer` của builder prototype); `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
 **Lưu ý về công cụ dựng scene:**
@@ -157,6 +158,16 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - **Kẻ săn B chưa bị khe trú chặn thật:** collider capsule của nó chỉ rộng 0,7 m và nó là Rigidbody kinematic (đi bằng `MovePosition`, xuyên qua collider tĩnh). Cần xem bằng mắt; muốn chặn thật phải sửa `Predator` (bản sau).
 - Chỉ số mới (khát, căng thẳng) chưa gửi qua mạng: người khác không thấy.
 
+## 6.4. Bản 0.6a (khu 480 m): trạng thái và giới hạn
+
+**Code 0.6a chưa từng được biên dịch hay chạy.** Kiểm tra theo mục 10. Địa hình tạo bằng script chưa ai nhìn thấy: độ dốc, màu và mái vòm có thể cần chỉnh sau lần xem đầu.
+
+- Vùng lõi 130 × 130 m **phẳng tuyệt đối ở y = 0**, nên nước nông, tổ, nơi trú, điểm xuất hiện vẫn đứng đúng chỗ cũ. Ngoài lõi là đồi (cao tới 14 m) rồi vách dốc ở rìa (tới 45 m); 4 hộp ranh giới vô hình chặn cứng ở mép khu.
+- **Cảnh báo cho 0.6b:** `Prey`/`Predator` giữ độ cao cố định theo prefab, nên ngoài vùng lõi phẳng chúng sẽ lơ lửng hoặc lún. Hiện mọi sinh vật vẫn ở trong lõi nên chưa lộ ra; 0.6b phải cho sinh vật bám theo mặt đất trước khi đặt tổ ra ngoài lõi.
+- Nội dung (nước, tổ, nơi trú, cửa vào của B) vẫn nằm trong lõi; các vi sinh cảnh chưa được dời ra xa (0.6b). Không có hang chồng tầng (Terrain là mặt đồi).
+- Trên cấu hình **Mobile** (Forward, 4 đèn mỗi vật), terrain và mái chỉ nhận 4 trong 25 đèn nên phần lớn khu tối; PC dùng Forward+ nên ổn. Nếu terrain hiện màu hồng, gán vật liệu URP TerrainLit vào `materialTemplate`.
+- Mái vòm bán kính 360 m, cao 85 m, không có collider; 28 rễ buông và 4 cột mốc (Bắc, Đông, Nam, Tây, cách tâm 190 m).
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
@@ -194,3 +205,15 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 9. `Prototype_01` chạy như cũ, không bị khát chết.
 10. Co-op F2: vào phòng không lỗi (chỉ số mới chưa hiển thị cho người khác).
 11. Đã biết, vô hại: khi đã chết và đang quan sát, Tab vừa hiện đủ thanh vừa đổi người được quan sát.
+
+## 10. Danh sách kiểm tra thủ công 0.6a (cho chủ dự án)
+
+1. Mở Unity, Console không lỗi đỏ; **Test Runner → EditMode → Run All** xanh toàn bộ (thêm 11 test: `TerrainShapeTests`, `DomeMeshTests`).
+2. Chạy lại **Evolve → Build Underroot Lake**. Kiểm tra thư mục `Assets/_Project/Terrain/` có `Underroot_Zone1.asset`, `Underroot_Dome.asset`, `Underroot_Zone1_Layer.terrainlayer`, `Underroot_Mud.asset`.
+3. **Đóng scene rồi mở lại** `Underroot_Lake`: địa hình và mái vẫn còn (không phẳng, không biến mất).
+4. Vùng lõi trông như trước: nước nông, tổ, nơi trú, điểm xuất hiện không lún hay lơ lửng.
+5. Đi từ tâm ra rìa bắc/đông/nam/tây: có đồi, trườn được mọi chỗ (nếu có dốc quá không leo được, chụp ảnh gửi mình); tới rìa gặp vách dốc và không thể ra ngoài. Bấm giờ: từ tâm tới vách khoảng 4 phút, ngang cả khu khoảng 8 phút.
+6. Ngẩng lên thấy mái vòm và rễ buông; thấy bốn cột mốc lớn ở bốn phương khi tới gần.
+7. Mở **Stats** trong cửa sổ Game và ghi lại FPS đứng giữa khu và ở rìa.
+8. Co-op F2: vào phòng không lỗi.
+9. `Prototype_01` dựng lại vẫn chạy như cũ.

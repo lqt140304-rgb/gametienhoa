@@ -219,7 +219,7 @@ namespace Evolve.EditorTools
             return TranslucentMaterial("Lake_Bank", tex, new Color(0.10f, 0.08f, 0.06f, 0.75f), Color.black, 0.05f, (int)RenderQueue.Transparent - 15);
         }
 
-        static Texture2D PaintedTexture(string path, int w, int h, System.Func<float, float, Color> paint)
+        internal static Texture2D PaintedTexture(string path, int w, int h, System.Func<float, float, Color> paint)
         {
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             if (tex != null) return tex;
@@ -241,7 +241,7 @@ namespace Evolve.EditorTools
         }
 
         // Smooth value noise that repeats along x every `periodX` cells and along y every `periodY` cells.
-        static float TileableNoise(float x, float y, int periodX, int periodY)
+        internal static float TileableNoise(float x, float y, int periodX, int periodY)
         {
             int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
             float fx = x - x0, fy = y - y0;
@@ -263,7 +263,7 @@ namespace Evolve.EditorTools
             }
         }
 
-        static Material TranslucentMaterial(string name, Texture2D tex, Color color, Color emission, float smoothness, int queue)
+        internal static Material TranslucentMaterial(string name, Texture2D tex, Color color, Color emission, float smoothness, int queue)
         {
             string path = $"{Root}/Materials/{name}.mat";
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);

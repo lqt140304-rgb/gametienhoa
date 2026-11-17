@@ -27,3 +27,9 @@ Thay các hộp xám xanh phẳng đang đóng vai nước bằng **mặt nướ
 
 ## Kiểm tra
 Chạy menu → Console không lỗi; Test Runner xanh (có test `WaterMeshesTests`); Play: nước xanh ngọc gợn nhẹ ở Vũng Sinh Mệnh, khe nam và hai bên; nước đọng ở Bãi Mùn Rễ màu bùn; hai hốc sâu sẫm; slime đi qua nước như cũ; FPS không giảm đáng kể.
+
+## Các ao hòa vào nhau (sau phản hồi 17/11, lần 2)
+Viền bọt và bờ đất ướt của từng ao từng bị vẽ đè lên nước của ao bên cạnh, tạo đường chia cắt. Giờ mọi `WaterSurface` biết nhau (danh sách `WaterSurface.All`): phần mặt nước nằm trong ao có ưu tiên thấp hơn bị bỏ (không vẽ nước hai lớp), và phần dải bờ/bọt rơi vào nước của ao khác bị bỏ. Hai ao chạm nhau thành một vùng nước liền.
+
+## Mặt đất (bước 2)
+Menu **Evolve → Dress Lake: Ground** (`Editor/LakeGround.cs`, chạy sau Dress Lake: Water): các mảng rêu mềm dọc bờ và rải trên đất phẳng, đá có mũ rêu (6 dạng), cỏ (3 sắc xanh), đường mòn bùn uốn lượn từ vũng sinh mệnh ra Bãi Mùn Rễ, Chân Rễ, Vườn Bào Tử (đứt đoạn khi gặp nước). Không collider, gộp thành vài mesh dưới một object, đặt theo bề mặt thật bằng tia chiếu xuống, chạy lại được. Bước sau: nấm to, dây leo, rễ, ánh sáng.
