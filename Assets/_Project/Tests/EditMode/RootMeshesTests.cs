@@ -18,6 +18,17 @@ namespace Evolve.Tests.EditMode
             Assert.That(top, Is.InRange(2.5f, 3.2f));
         }
 
+        [Test] public void ArchAndTubeNeverContainNaN()
+        {
+            for (int seed = 1; seed <= 30; seed++)
+            {
+                var path = RootMeshes.ArchPath(new Vector3(0f, 0f, 0f), new Vector3(7f, 0f, 3f), 2.5f, seed, 0.9f, 16);
+                foreach (var p in path) Assert.IsFalse(float.IsNaN(p.x) || float.IsNaN(p.y) || float.IsNaN(p.z), "path point is NaN");
+                var mesh = RootMeshes.RootTube(path, 0.5f, 0.4f, seed, 0.12f);
+                foreach (var v in mesh.vertices) Assert.IsFalse(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z), "mesh vertex is NaN");
+            }
+        }
+
         [Test] public void RootTaperKeepsTheTipThin()
         {
             var path = new[] { Vector3.zero, Vector3.up, Vector3.up * 2f, Vector3.up * 3f, Vector3.up * 4f };
