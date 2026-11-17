@@ -31,11 +31,13 @@ namespace Evolve.Survival
         }
 
         /// <summary>Advance stats by dt seconds.</summary>
-        public void Tick(float dt, SurvivalConfig cfg, bool isMoving)
+        public void Tick(float dt, SurvivalConfig cfg, bool isMoving, bool isSprinting)
         {
             if (IsDead) return;
 
-            Hunger = Clamp(Hunger - cfg.HungerDecayPerSec * dt, MaxHunger);
+            // Metabolism only burns food while active; resting costs nothing.
+            float burn = (isMoving ? cfg.HungerDecayPerSec : 0f) + (isSprinting ? cfg.SprintHungerPerSec : 0f);
+            Hunger = Clamp(Hunger - burn * dt, MaxHunger);
 
             if (Hunger > 0f && !isMoving)
                 Energy = Clamp(Energy + cfg.EnergyRegenPerSec * dt, MaxEnergy);
@@ -52,15 +54,6 @@ namespace Evolve.Survival
         {
             if (Energy < amount) return false;
             Energy -= amount;
-            Changed?.Invoke();
-            return true;
-        }
-
-        /// <summary>Drain energy continuously (clamps at 0). Returns false once empty.</summary>
-        public bool DrainEnergy(float amount)
-        {
-            if (Energy <= 0f) return false;
-            Energy = Clamp(Energy - amount, MaxEnergy);
             Changed?.Invoke();
             return true;
         }

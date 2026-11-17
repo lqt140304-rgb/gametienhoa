@@ -834,7 +834,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67d0470d8de949d419124f348e6fb9ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Evolve::Evolve.Player.SlimeController
-  crawlSpeed: 1.8
+  crawlSpeed: 1.3
   acceleration: 12
   hopForce: 5
   hopForward: 3

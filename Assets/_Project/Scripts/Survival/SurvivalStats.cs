@@ -11,6 +11,7 @@ namespace Evolve.Survival
         public SurvivalState State => state;
         public SurvivalConfig Config => config;
         public bool IsMoving { get; set; }
+        public bool IsSprinting { get; set; }
 
         void Awake()
         {
@@ -19,6 +20,6 @@ namespace Evolve.Survival
             state.Died += () => Debug.Log($"{name} died");
         }
 
-        void Update() => state.Tick(Time.deltaTime, config, IsMoving);
+        void Update() => state.Tick(Time.deltaTime, config, IsMoving, IsSprinting);
     }
 }
