@@ -15,6 +15,7 @@ namespace Evolve.Survival
         AbilityCaster caster;
         OrganHost organs;
         OrganInteractor interactor;
+        SkillBar skills;
         string toast;
         float toastUntil;
         GUIStyle box;
@@ -24,6 +25,7 @@ namespace Evolve.Survival
             "Shift  Chạy nhanh (tốn thức ăn)\n" +
             "Space  Nảy (tốn năng lượng)\n" +
             "Q  Dùng Dị Năng\n" +
+            "1–5  Kỹ năng gắn cơ quan (cơ quan bậc B, Lv2)\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
             "C  Quét rung: ánh sáng lan ra, thấy thức ăn\n    và sinh vật xung quanh trong chốc lát\nV  Bật/tắt mắt (thử nghiệm)\n" +
@@ -40,6 +42,10 @@ namespace Evolve.Survival
             caster = stats.GetComponent<AbilityCaster>();
             organs = stats.GetComponent<OrganHost>();
             interactor = stats.GetComponent<OrganInteractor>();
+            skills = stats.GetComponent<SkillBar>();
+            if (skills != null)
+                skills.SkillUnlocked += (o, slot) =>
+                    Toast($"Mở kỹ năng: {o.GrantedAbility.DisplayName}\n(phím {slot + 1}, từ {o.DisplayName})");
             if (organs != null)
             {
                 organs.Attached += o => Toast($"Mầm {o.DisplayName}: cần {o.GrowthExpRequired:0} EXP tiến hóa\n(G để đổ EXP hoặc đặt ưu tiên)");
@@ -144,9 +150,10 @@ namespace Evolve.Survival
 
             DrawOrganPrompt();
             DrawBodyMenu();
+            DrawSkillBar();
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 580), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 600), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }
@@ -172,6 +179,7 @@ namespace Evolve.Survival
             var list = organs.OrganList;
             var rich = new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14, wordWrap = true };
             float h = 120 + 58 * Mathf.Max(1, list.Count);
+            foreach (var org in list) if (org.GrantedAbility != null) h += 30;
             var r = new Rect(Screen.width / 2f - 280, 80, 560, h);
             GUI.Box(r, GUIContent.none, box);
             GUILayout.BeginArea(new Rect(r.x + 12, r.y + 8, r.width - 24, r.height - 16));
@@ -186,6 +194,24 @@ namespace Evolve.Survival
                     : organs.IsMaxed(o) ? $"Lv{lv} (tối đa)"
                     : $"Lv{lv}, {prog:0}/{cost:0} EXP lên Lv{lv + 1}";
                 GUILayout.Label($"{OrganTiers.Tag(o.Tier)} <b>{o.DisplayName}</b> ({OrganInteractor.SlotName(o.Slot)}): {state}", rich);
+                if (o.GrantedAbility != null)
+                {
+                    if (skills == null || !skills.IsUnlocked(o))
+                        GUILayout.Label($"   Kỹ năng: <b>{o.GrantedAbility.DisplayName}</b> (mở khi Lv{o.AbilityUnlockLevel})", rich);
+                    else
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label($"   Kỹ năng: <b>{o.GrantedAbility.DisplayName}</b>, đặt vào ô:", rich, GUILayout.Width(300));
+                        int current = skills.SlotOf(o);
+                        for (int s = 0; s < SkillBar.SlotCount; s++)
+                        {
+                            bool on = current == s;
+                            if (GUILayout.Toggle(on, (s + 1).ToString(), GUI.skin.button, GUILayout.Width(32)) && !on)
+                                skills.Assign(s, o);
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+                }
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !organs.IsMaxed(o) && stats.State.EvolutionExp > 0f;
                 if (GUILayout.Button(lv == 0 ? "Đổ EXP (nuôi lớn)" : "Đổ EXP (lên cấp)", GUILayout.Width(170))) organs.Invest(o);
@@ -202,11 +228,39 @@ namespace Evolve.Survival
             GUILayout.EndArea();
         }
 
+        /// <summary>The 5 skill slots at the bottom of the screen (keys 1-5).</summary>
+        void DrawSkillBar()
+        {
+            if (skills == null) return;
+            const float w = 130f, h = 54f, gap = 6f;
+            float x0 = Screen.width / 2f - (SkillBar.SlotCount * w + (SkillBar.SlotCount - 1) * gap) / 2f;
+            float y = Screen.height - h - 16f;
+            var small = new GUIStyle(GUI.skin.label) { fontSize = 12, clipping = TextClipping.Clip };
+            for (int i = 0; i < SkillBar.SlotCount; i++)
+            {
+                var r = new Rect(x0 + i * (w + gap), y, w, h);
+                GUI.Box(r, GUIContent.none);
+                var organ = skills.GetSlot(i);
+                GUI.Label(new Rect(r.x + 6, r.y + 2, r.width - 12, 20), organ == null ? $"[{i + 1}] trống" : $"[{i + 1}] {organ.GrantedAbility.DisplayName}", small);
+                if (organ == null) continue;
+
+                float cd = skills.CooldownRemaining(i);
+                bool noEnergy = stats.State.Energy < organ.GrantedAbility.EnergyCost;
+                Color c = cd > 0f ? new Color(0.6f, 0.6f, 0.6f) : noEnergy ? new Color(0.9f, 0.4f, 0.3f) : new Color(0.4f, 0.9f, 0.4f);
+                string status = cd > 0f ? $"{cd:0.0}s" : noEnergy ? "thiếu NL" : "sẵn sàng";
+                var bar = new Rect(r.x + 6, r.y + 28, r.width - 12, 18);
+                var prev = GUI.color; GUI.color = c;
+                GUI.DrawTexture(new Rect(bar.x, bar.y, bar.width * Mathf.Clamp01(skills.CooldownProgress(i)), bar.height), Texture2D.whiteTexture);
+                GUI.color = prev;
+                GUI.Label(bar, status, small);
+            }
+        }
+
         void DrawOrganPrompt()
         {
             if (interactor == null || interactor.Current == null) return;
             interactor.GetPrompt(out string title, out string body, out string accept);
-            var r = new Rect(Screen.width / 2f - 230, Screen.height - 230, 460, 190);
+            var r = new Rect(Screen.width / 2f - 230, Screen.height - 320, 460, 190);
             var style = new GUIStyle(box) { alignment = TextAnchor.UpperCenter, fontSize = 15, wordWrap = true, richText = true };
             GUI.Box(r, $"<b><size=18>{title}</size></b>\n\n{body}", style);
             string absorb = $"[F] Hấp thụ (+{interactor.CurrentAbsorbExp:0} EXP)";

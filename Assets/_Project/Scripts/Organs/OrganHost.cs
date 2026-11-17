@@ -215,6 +215,18 @@ namespace Evolve.Organs
             Recalculate();
         }
 
+        /// <summary>Debug: raise every organ to at least the given level (1..MaxLevel).</summary>
+        public void DebugSetLevel(int level)
+        {
+            level = Mathf.Clamp(level, 1, MaxLevel);
+            foreach (var e in order)
+            {
+                while (e.Level < level) LevelUp(e);
+                e.Shown = 1f;
+            }
+            Recalculate();
+        }
+
         /// <summary>FoodFilter: all food fills hunger; a little of it also becomes evolution EXP.</summary>
         float TakeFood(float amount)
         {

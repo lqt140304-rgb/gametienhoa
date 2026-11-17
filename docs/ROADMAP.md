@@ -40,5 +40,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Bestiary v0.1 (nhánh `docs/bestiary`): chốt cơ chế kỹ năng cơ quan, 12 vị trí, bậc quái, HP theo số người (xem `GAME_DESIGN.md` mục 4.5)
 - [x] Sửa bảng rơi con mồi: bỏ Chân chạy (A) (đã chốt trong Bestiary)
 - [ ] Gộp `Prey`/`Predator` vào `Creature` + `CreatureSO` (Bestiary mục 8), trước khi làm co-op
-- [ ] 5 ô kỹ năng gắn cơ quan (phím 1–5), kỹ năng chủ động từ cơ quan bậc B
+- [x] Siết bảng rơi kẻ săn mồi theo Bestiary mục 3.2 (45/48/7/0)
+- [x] 5 ô kỹ năng gắn cơ quan (phím 1–5), mở ở Lv2, Lv3 nâng cấp; 2 kỹ năng mẫu (Xung Phong Húc, Xả Gai)
+- [ ] Chơi thử 5 ô kỹ năng và chỉnh số
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

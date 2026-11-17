@@ -46,6 +46,7 @@ namespace Evolve.DevTools
         OrganInteractor interactor;
         SlimeController controller;
         AbilityCaster caster;
+        SkillBar skillBar;
 
         void Update()
         {
@@ -60,7 +61,11 @@ namespace Evolve.DevTools
                 if (infiniteFood) s.Hunger = s.MaxHunger;
                 if (infiniteEnergy) s.Energy = s.MaxEnergy;
             }
-            if (noCooldown && caster != null) caster.ResetCooldown();
+            if (noCooldown)
+            {
+                if (caster != null) caster.ResetCooldown();
+                if (skillBar != null) skillBar.ResetCooldowns();
+            }
         }
 
         void FindPlayer()
@@ -75,6 +80,7 @@ namespace Evolve.DevTools
                 host = s.GetComponent<OrganHost>();
                 interactor = s.GetComponent<OrganInteractor>();
                 caster = s.GetComponent<AbilityCaster>();
+                skillBar = s.GetComponent<SkillBar>();
                 break;
             }
         }
@@ -141,6 +147,8 @@ namespace Evolve.DevTools
             }
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Lớn đầy tất cả (Lv1)") && host != null) host.DebugGrowAll();
+            if (GUILayout.Button("Mọi cơ quan Lv2") && host != null) host.DebugSetLevel(2);
+            if (GUILayout.Button("Mọi cơ quan Lv3") && host != null) host.DebugSetLevel(3);
             if (GUILayout.Button("Tháo hết (biến mất)") && host != null)
                 foreach (var o in host.OrganList) host.Detach(o.Slot);
             GUILayout.EndHorizontal();
