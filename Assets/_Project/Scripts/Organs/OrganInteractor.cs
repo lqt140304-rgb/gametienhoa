@@ -49,7 +49,7 @@ namespace Evolve.Organs
             title = body = accept = null;
             if (Current == null) return;
             var o = Current.Organ;
-            title = $"Tìm thấy: {o.DisplayName}";
+            title = $"Tìm thấy: {OrganTiers.Tag(o.Tier)} {o.DisplayName}";
             string effect = $"{o.Description}\nCần {o.GrowthFoodRequired:0} thức ăn để phát triển.";
             switch (CurrentCheck)
             {
@@ -59,7 +59,7 @@ namespace Evolve.Organs
                     break;
                 case AttachCheck.SlotOccupied:
                     var cur = host.GetInSlot(o.Slot);
-                    body = $"Vị trí {SlotName(o.Slot)} đã có {cur.DisplayName}.\nThay bằng {o.DisplayName}? {cur.DisplayName} sẽ rơi ra đất\n(nhặt lại phải nuôi từ đầu).\n{effect}";
+                    body = $"Vị trí {SlotName(o.Slot)} đã có {OrganTiers.Tag(cur.Tier)} {cur.DisplayName}.\nThay bằng {o.DisplayName}? {cur.DisplayName} sẽ rơi ra đất\n(nhặt lại phải nuôi từ đầu).\n{effect}";
                     accept = "Thay thế";
                     break;
                 case AttachCheck.AlreadyOwned:

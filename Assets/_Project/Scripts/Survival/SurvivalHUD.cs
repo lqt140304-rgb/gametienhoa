@@ -40,7 +40,7 @@ namespace Evolve.Survival
             if (organs != null)
             {
                 organs.Attached += o => Toast($"Mầm {o.DisplayName}: ăn thêm {o.GrowthFoodRequired:0} thức ăn để phát triển");
-                organs.Completed += o => Toast($"Tiến hóa: {o.DisplayName}!\n{o.Description}");
+                organs.Completed += o => Toast($"Tiến hóa: {OrganTiers.Tag(o.Tier)} {o.DisplayName}!\n{o.Description}");
                 organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(rơi ra đất, nhặt lại phải nuôi từ đầu)");
             }
         }
@@ -92,7 +92,7 @@ namespace Evolve.Survival
             if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };
             if (Time.time < toastUntil)
             {
-                var big = new GUIStyle(box) { alignment = TextAnchor.MiddleCenter, fontSize = 20, wordWrap = true };
+                var big = new GUIStyle(box) { alignment = TextAnchor.MiddleCenter, fontSize = 20, wordWrap = true, richText = true };
                 GUI.Box(new Rect(Screen.width / 2f - 220, Screen.height * 0.2f, 440, 90), toast, big);
             }
 
@@ -116,7 +116,7 @@ namespace Evolve.Survival
                 var o = list[i];
                 float g = organs.GetGrowth(o);
                 string state = g >= 1f ? "hoàn chỉnh" : $"{organs.GetFed(o):0}/{o.GrowthFoodRequired:0} thức ăn";
-                text += $"[{i + 1}] Tháo {o.DisplayName}  ({OrganInteractor.SlotName(o.Slot)}, {state})\n";
+                text += $"[{i + 1}] Tháo {OrganTiers.Tag(o.Tier)} {o.DisplayName}  ({OrganInteractor.SlotName(o.Slot)}, {state})\n";
             }
             if (organs.MaxOrgans > 0) text += $"\nSức chứa: {list.Count}/{organs.MaxOrgans}";
             text += "\n[G] Đóng";

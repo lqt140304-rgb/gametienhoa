@@ -15,6 +15,10 @@ namespace Evolve.Organs
         public string DisplayName;
         [TextArea] public string Description;
         public OrganSlot Slot;
+        [Tooltip("Rarity: C common … S legendary")]
+        public OrganTier Tier = OrganTier.C;
+        [Tooltip("Extra rarity factor inside its tier (1 = normal, 0.5 = half as likely)")]
+        [Min(0)] public float DropWeight = 1f;
         [Tooltip("Model spawned on the slime's socket for this slot")]
         public GameObject VisualPrefab;
 
