@@ -84,6 +84,9 @@ namespace Evolve.EditorTools
             ground.transform.localScale = new Vector3(12f, 1f, 12f);
             ground.GetComponent<Renderer>().sharedMaterial = mud;
 
+            foreach (var sun in Object.FindObjectsByType<Light>())
+                if (sun.type == LightType.Directional) sun.intensity = 0.35f;
+
             var ceiling = new GameObject("Root Ceiling").transform;
             var rng = new System.Random(50501);
             for (int i = 0; i < 7; i++)
@@ -107,8 +110,6 @@ namespace Evolve.EditorTools
                 l.intensity = 0.6f;
                 l.color = new Color(0.65f, 0.8f, 0.7f);
             }
-            var sun = Object.FindFirstObjectByType<Light>();
-            if (sun != null && sun.type == LightType.Directional) sun.intensity = 0.35f;
 
             // ---- Region (whole area) ----
             var regionGo = new GameObject("Region (Underroot Lake)");
@@ -138,15 +139,15 @@ namespace Evolve.EditorTools
             DeepPocket("Deep Pocket West", new Vector3(-30f, 0f, 25f), dark);
             DeepPocket("Deep Pocket South", new Vector3(25f, 0f, -35f), dark);
 
-            // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters, gap 1.6 m, mildly cold ----
+            // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters, gap 1.6 m, cool 18°C ----
             var roots = new GameObject("Chan Re Co Thu (Ancient Roots)").transform;
-            Zone(roots, new Vector3(0f, 3f, 50f), new Vector3(50f, 6f, 16f), -4f, "Chân Rễ Cổ Thụ");
+            Zone(roots, new Vector3(0f, 3f, 50f), new Vector3(50f, 6f, 16f), 18f, "Chân Rễ Cổ Thụ");
             for (int i = 0; i < 3; i++) Shelter(roots, new Vector3(-16f + i * 16f, 0f, 50f), root);
 
-            // ---- Bãi Mùn Rễ (east): warm, 6 nutrients, 2 D dens ----
+            // ---- Bãi Mùn Rễ (east): warm 26°C, 6 nutrients, 2 D dens ----
             var humusRoot = new GameObject("Bai Mun Re (Humus Bed)").transform;
             Visual(PrimitiveType.Cube, "Humus Ground", humusRoot, new Vector3(40f, 0.01f, 0f), new Vector3(20f, 0.02f, 30f), humus);
-            Zone(humusRoot, new Vector3(40f, 3f, 0f), new Vector3(20f, 6f, 30f), 4f, "Bãi Mùn Rễ");
+            Zone(humusRoot, new Vector3(40f, 3f, 0f), new Vector3(20f, 6f, 30f), 26f, "Bãi Mùn Rễ");
             for (int i = 0; i < 6; i++)
             {
                 var n = (GameObject)PrefabUtility.InstantiatePrefab(shared.NutrientPrefab, humusRoot);
@@ -309,7 +310,7 @@ namespace Evolve.EditorTools
 
         static void Zone(Transform parent, Vector3 center, Vector3 size, float ambient, string displayName)
         {
-            var go = new GameObject($"Temperature Zone ({ambient:+0;-0}°C)");
+            var go = new GameObject($"Temperature Zone ({ambient:0}°C)");
             go.transform.SetParent(parent, false);
             go.transform.position = center;
             var col = go.AddComponent<BoxCollider>();
