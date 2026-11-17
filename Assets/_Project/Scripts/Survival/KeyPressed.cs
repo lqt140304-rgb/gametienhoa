@@ -28,6 +28,8 @@ namespace Evolve.Survival
         public static bool TabHeld() => Keyboard.current != null && Keyboard.current.tabKey.isPressed;
         public static bool F3() => Keyboard.current != null && Keyboard.current.f3Key.wasPressedThisFrame;
         public static bool F4() => Keyboard.current != null && Keyboard.current.f4Key.wasPressedThisFrame;
+        public static bool F6() => Keyboard.current != null && Keyboard.current.f6Key.wasPressedThisFrame;
+        public static bool F7() => Keyboard.current != null && Keyboard.current.f7Key.wasPressedThisFrame;
         public static bool F5() => Keyboard.current != null && Keyboard.current.f5Key.wasPressedThisFrame;
         public static Vector2 MousePosition() => Mouse.current != null ? Mouse.current.position.ReadValue() : (Vector2)new Vector2(Screen.width / 2f, Screen.height / 2f);
         public static bool Alt() => Keyboard.current != null
@@ -54,6 +56,8 @@ namespace Evolve.Survival
         public static bool TabHeld() => Input.GetKey(KeyCode.Tab);
         public static bool F3() => Input.GetKeyDown(KeyCode.F3);
         public static bool F4() => Input.GetKeyDown(KeyCode.F4);
+        public static bool F6() => Input.GetKeyDown(KeyCode.F6);
+        public static bool F7() => Input.GetKeyDown(KeyCode.F7);
         public static bool F5() => Input.GetKeyDown(KeyCode.F5);
         public static Vector2 MousePosition() => Input.mousePosition;
         public static bool Alt() => Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt);
