@@ -25,10 +25,10 @@ namespace Evolve.EditorTools
         const string Lit = "Universal Render Pipeline/Lit";
         const string TerrainFolder = Root + "/Terrain";
         const int TerrainSeed = 1337;
-        const int HeightmapResolution = 513;
+        const int HeightmapResolution = 1025; // about 0.5 m per point over 500 m
         /// <summary>Dome wide enough to cover the zone corners (radial distance up to ~340 m).</summary>
         static readonly float DomeRadius = WorldScale.ZoneSize * 0.75f;
-        const float DomeHeight = 85f;
+        const float DomeHeight = 30f;  // the root roof (the canopy hangs at about 25 m)
 
         /// <summary>Largest body scale that fits a Root Shelter (BodySize.ScaleFor(5) = 1.3; 6 organs = 1.36 does not fit).</summary>
         const float ShelterMaxScale = 1.3f;
@@ -116,12 +116,16 @@ namespace Evolve.EditorTools
             // ---- Vũng Sinh Mệnh (life pool) ----
             var pool = new GameObject("Vung Sinh Menh (Life Pool)").transform;
             Vector3 firstSpawn = Vector3.zero;
+            // The slimes appear on the dry south shore of the Life Shallows bay.
+            var spawnXZ = ZoneLayout.LifeShallows.Center;
+            while (ZoneLayout.DepthAt(spawnXZ.x, spawnXZ.y) > 0f && spawnXZ.y > -200f) spawnXZ.y -= 1f;
+            var spawnShore = new Vector3(spawnXZ.x, 0f, spawnXZ.y - 9f);
             for (int i = 0; i < 8; i++)
             {
                 float ang = i * Mathf.PI * 2f / 8f; // chord 2·5·sin(22.5°) ≈ 3.8 m
                 var sp = new GameObject("Spawn Point " + i);
                 sp.transform.SetParent(pool, false);
-                sp.transform.position = new Vector3(ZoneLayout.ShallowsCenter.x + Mathf.Cos(ang) * 5f, 0.6f, ZoneLayout.ShallowsCenter.y + Mathf.Sin(ang) * 5f);
+                sp.transform.position = G(spawnShore + new Vector3(Mathf.Cos(ang) * 5f, 0.6f, Mathf.Sin(ang) * 5f));
                 if (i == 0) firstSpawn = sp.transform.position;
             }
 
@@ -141,7 +145,7 @@ namespace Evolve.EditorTools
             for (int i = 0; i < 6; i++)
             {
                 var n = (GameObject)PrefabUtility.InstantiatePrefab(shared.NutrientPrefab, humusRoot);
-                n.transform.position = H + new Vector3(Mathf.Lerp(-7f, 7f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()));
+                n.transform.position = G(H + new Vector3(Mathf.Lerp(-7f, 7f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-12f, 12f, (float)rng.NextDouble())));
                 var nso = new SerializedObject(n.GetComponent<Nutrient>());
                 nso.FindProperty("foodKind").enumValueIndex = (int)FoodKind.AmberBud; // the humus bed's own food
                 nso.ApplyModifiedPropertiesWithoutUndo();
@@ -149,14 +153,14 @@ namespace Evolve.EditorTools
             MakeDen("Den D (Mudmite) 1", humusRoot, H + new Vector3(-3f, 0f, 8f), d, humusRegion, denMat);
             MakeDen("Den D (Mudmite) 2", humusRoot, H + new Vector3(4f, 0f, -8f), d, humusRegion, denMat);
             // Stagnant puddle (dirty): quenches thirst, disease risk comes in 0.5d. x 164..172 keeps clear of den 2.
-            Water(ShallowBox("Vung Nuoc Dong (Dirty Puddle)", humusRoot, H + new Vector3(-6f, 0f, -8f), new Vector2(6f, 6f), dirtyWater), false, "Vũng nước đọng (Bãi Mùn Rễ)");
+            Water(ShallowBox("Vung Nuoc Dong (Dirty Puddle)", humusRoot, new Vector3(ZoneLayout.PuddleCenter.x, 0f, ZoneLayout.PuddleCenter.y), new Vector2(9f, 9f), dirtyWater), false, "Vũng nước đọng (Bãi Mùn Rễ)");
 
             // ---- Vườn Bào Tử (west): mushroom clusters, 2 C dens ----
             var garden = new GameObject("Vuon Bao Tu (Spore Garden)").transform;
             var S = new Vector3(ZoneLayout.Spore.Center.x, 0f, ZoneLayout.Spore.Center.y);
             for (int i = 0; i < 9; i++)
             {
-                var pos = S + new Vector3(Mathf.Lerp(-8f, 8f, (float)rng.NextDouble()), 0f, Mathf.Lerp(-15f, 15f, (float)rng.NextDouble()));
+                var pos = G(S + new Vector3(Mathf.Lerp(-8f, 8f, (float)rng.NextDouble()), 0f, Mathf.Lerp(-15f, 15f, (float)rng.NextDouble())));
                 float h = Mathf.Lerp(0.8f, 2.2f, (float)rng.NextDouble());
                 Visual(PrimitiveType.Cylinder, "Stalk", garden, pos + new Vector3(0f, h * 0.5f, 0f), new Vector3(0.25f, h * 0.5f, 0.25f), root);
                 Visual(PrimitiveType.Sphere, "Cap", garden, pos + new Vector3(0f, h, 0f), new Vector3(h, h * 0.4f, h), fungus);
@@ -174,13 +178,13 @@ namespace Evolve.EditorTools
             MakeDen("Den C (Rootcrawler) 3", hunt, E + new Vector3(12f, 0f, 8f), c, edgeRegion, denMat); // prey for the hunter
             MakeDen("Den D (Mudmite) 4", hunt, E + new Vector3(-12f, 0f, -8f), d, edgeRegion, denMat); // so the C of this region can breed
             var e1 = new GameObject("Incursion Entry North").transform;
-            e1.SetParent(hunt, false); e1.position = new Vector3(ZoneLayout.NorthEntry.x, 0.35f, ZoneLayout.NorthEntry.y);
+            e1.SetParent(hunt, false); e1.position = G(new Vector3(ZoneLayout.NorthEntry.x, 0.35f, ZoneLayout.NorthEntry.y));
             var e2 = new GameObject("Incursion Entry North 2").transform;
-            e2.SetParent(hunt, false); e2.position = new Vector3(ZoneLayout.NorthEntry.x + 4f, 0.35f, ZoneLayout.NorthEntry.y - 8f);
+            e2.SetParent(hunt, false); e2.position = G(new Vector3(ZoneLayout.NorthEntry.x + 4f, 0.35f, ZoneLayout.NorthEntry.y - 8f));
             var incursion = new GameObject("Predator Incursion").AddComponent<PredatorIncursion>();
             incursion.transform.SetParent(hunt, false);
             var bHome = new GameObject("B Hunting Ground").transform;
-            bHome.SetParent(hunt, false); bHome.position = new Vector3(ZoneLayout.HuntEdge.Center.x, 0f, 55f); // the hunter patrols the north shore of the lake
+            bHome.SetParent(hunt, false); bHome.position = G(new Vector3(ZoneLayout.HuntEdge.Center.x, 0f, 80f)); // the hunter patrols the north shore of the lake
             P.Set(incursion, "home", bHome);
             P.Set(incursion, "region", edgeRegion);
             var iso = new SerializedObject(incursion);
@@ -202,7 +206,7 @@ namespace Evolve.EditorTools
 
             // ---- Player, camera, vision, HUD ----
             var slime = P.CreatePlayer(shared, firstSpawn);
-            if (Camera.main != null) Camera.main.farClipPlane = 500f; // the zone is 300 m across
+            if (Camera.main != null) Camera.main.farClipPlane = 700f; // the zone is 500 m across
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             P.AddToBuildSettings(ScenePath);
@@ -314,7 +318,7 @@ namespace Evolve.EditorTools
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
-            go.transform.position = center;
+            go.transform.position = G(center);
             var col = go.AddComponent<BoxCollider>();
             col.size = size;
             col.isTrigger = true;
@@ -398,7 +402,7 @@ namespace Evolve.EditorTools
             data.size = new Vector3(WorldScale.ZoneSize, TerrainShape.TerrainHeight, WorldScale.ZoneSize);
             data.SetHeights(0, 0, TerrainShape.Heights(HeightmapResolution, TerrainSeed));
             data.terrainLayers = new[] { layer, trailLayer };
-            const int alphaRes = 512;
+            const int alphaRes = 1024;
             data.alphamapResolution = alphaRes;
             var alpha = new float[alphaRes, alphaRes, 2];
             float cell = WorldScale.ZoneSize / alphaRes;
@@ -442,8 +446,8 @@ namespace Evolve.EditorTools
             for (int i = 0; i < 28; i++)
             {
                 float ang = (float)(rng.NextDouble() * Mathf.PI * 2.0);
-                float dist = Mathf.Lerp(20f, 140f, (float)rng.NextDouble());
-                float len = Mathf.Lerp(25f, 45f, (float)rng.NextDouble());
+                float dist = Mathf.Lerp(30f, 230f, (float)rng.NextDouble());
+                float len = Mathf.Lerp(8f, 18f, (float)rng.NextDouble());
                 float width = Mathf.Lerp(2f, 4f, (float)rng.NextDouble());
                 float topY = DomeY(dist);
                 var r = Visual(PrimitiveType.Cylinder, "Hanging Root " + i, parent,
@@ -484,7 +488,7 @@ namespace Evolve.EditorTools
             for (int ix = -2; ix <= 2; ix++)
                 for (int iz = -2; iz <= 2; iz++)
                 {
-                    float x = ix * 60f, z = iz * 60f;
+                    float x = ix * 95f, z = iz * 95f;
                     float y = Mathf.Min(60f, Mathf.Max(15f, DomeY(Mathf.Sqrt(x * x + z * z)) - 6f));
                     var lightGo = new GameObject("Root Glow");
                     lightGo.transform.SetParent(parent, false);
@@ -645,8 +649,8 @@ namespace Evolve.EditorTools
         static bool WetCell(float x, float z, float cell)
         {
             float h = cell * 0.5f;
-            return ZoneLayout.DepthAt(x, z) > 0f || ZoneLayout.DepthAt(x - h, z - h) > 0f || ZoneLayout.DepthAt(x + h, z - h) > 0f
-                || ZoneLayout.DepthAt(x - h, z + h) > 0f || ZoneLayout.DepthAt(x + h, z + h) > 0f;
+            return ZoneLayout.CleanDepthAt(x, z) > 0f || ZoneLayout.CleanDepthAt(x - h, z - h) > 0f || ZoneLayout.CleanDepthAt(x + h, z - h) > 0f
+                || ZoneLayout.CleanDepthAt(x - h, z + h) > 0f || ZoneLayout.CleanDepthAt(x + h, z + h) > 0f;
         }
 
         /// <summary>Make a shallow-water trigger drinkable.</summary>
@@ -656,6 +660,9 @@ namespace Evolve.EditorTools
             w.Clean = clean;
             w.DisplayName = displayName;
         }
+
+        /// <summary>The same point lifted onto the terrain (never below the water level).</summary>
+        static Vector3 G(Vector3 p) => new Vector3(p.x, p.y + Mathf.Max(0f, TerrainShape.HeightAt(p.x, p.z, TerrainSeed)), p.z);
 
         static void DeepPocket(string name, Vector3 center, Material mat)
         {
@@ -676,7 +683,7 @@ namespace Evolve.EditorTools
         {
             var go = new GameObject($"Temperature Zone ({ambient:0}°C)");
             go.transform.SetParent(parent, false);
-            go.transform.position = center;
+            go.transform.position = G(center);
             var col = go.AddComponent<BoxCollider>();
             col.isTrigger = true;
             col.size = size;
@@ -691,6 +698,7 @@ namespace Evolve.EditorTools
         /// </summary>
         static void Shelter(Transform parent, Vector3 center, Material mat)
         {
+            center = G(center);
             var go = new GameObject("Root Shelter").transform;
             go.SetParent(parent, false);
             go.position = center;
@@ -719,7 +727,7 @@ namespace Evolve.EditorTools
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
-            go.transform.position = pos;
+            go.transform.position = G(pos);
             P.Part(PrimitiveType.Sphere, "Mound", go.transform, new Vector3(0f, 0.2f, 0f), new Vector3(2.2f, 0.8f, 2.2f), mat);
             var den = go.AddComponent<Den>();
             den.Species = species;

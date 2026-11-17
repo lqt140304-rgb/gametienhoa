@@ -92,20 +92,20 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void KindsFollowZones()
         {
-            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(60f, 80f));      // on the 06 -> 04 trail
-            Assert.AreEqual(VegetationKind.AmberBud, VegetationScatter.KindAt(-80f, 80f));     // Humus Bed, off the trails
-            Assert.AreEqual(VegetationKind.SporePod, VegetationScatter.KindAt(112f, 80f));
-            Assert.AreEqual(VegetationKind.RootDew, VegetationScatter.KindAt(-97f, -25f));
-            Assert.AreEqual(VegetationKind.EmberBerry, VegetationScatter.KindAt(36f, 102f));
-            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(-125f, -110f)); // the wild
+            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(75f, 142f));      // on the 06 -> 04 trail
+            Assert.AreEqual(VegetationKind.RootDew, VegetationScatter.KindAt(-180f, -43f));
+            Assert.AreEqual(VegetationKind.AmberBud, VegetationScatter.KindAt(-155f, 93f));     // Humus Bed, off the trails
+            Assert.AreEqual(VegetationKind.SporePod, VegetationScatter.KindAt(107f, 85f));
+            Assert.AreEqual(VegetationKind.EmberBerry, VegetationScatter.KindAt(-17f, 128f));
+            Assert.AreEqual(VegetationKind.GlowMoss, VegetationScatter.KindAt(-200f, -150f));  // the wild
         }
 
         [Test]
         public void DensityIsZeroOutsideReachAndInWater()
         {
-            Assert.AreEqual(0f, VegetationScatter.DensityAt(140f, 0f));
+            Assert.AreEqual(0f, VegetationScatter.DensityAt(240f, 0f));
             Assert.AreEqual(0f, VegetationScatter.DensityAt(ZoneLayout.LakeCenter.x, ZoneLayout.LakeCenter.y));
-            Assert.AreEqual(1f, VegetationScatter.DensityAt(60f, 80f), 1e-5f);
+            Assert.AreEqual(1f, VegetationScatter.DensityAt(75f, 142f), 1e-5f);
         }
     }
 }

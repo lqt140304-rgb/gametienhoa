@@ -13,46 +13,73 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
-        public void ZonesMatchTheConceptMap()
+        public void ZonesMatchTheDesign()
         {
-            AssertZone(ZoneLayout.LifeShallows, 8f, -80f, 45f, 37.5f);   // concept 30 x 25 m, x 1.5
-            AssertZone(ZoneLayout.RootFoot, -85f, -15f, 37.5f, 30f);
-            AssertZone(ZoneLayout.Humus, -70f, 68f, 45f, 37.5f);
-            AssertZone(ZoneLayout.Spore, 98f, 65f, 37.5f, 37.5f);
-            AssertZone(ZoneLayout.WaterVein, 122f, -10f, 22.5f, 52.5f);
-            AssertZone(ZoneLayout.HuntEdge, 20f, 90f, 45f, 30f);
-            Assert.AreEqual(300f, WorldScale.ZoneSize);
+            Assert.AreEqual(500f, WorldScale.ZoneSize);
+            AssertZone(ZoneLayout.LifeShallows, -8f, -120f, 80f, 70f);
+            AssertZone(ZoneLayout.RootFoot, -150f, -18f, 70f, 60f);
+            AssertZone(ZoneLayout.Humus, -125f, 118f, 80f, 70f);
+            AssertZone(ZoneLayout.Spore, 137f, 110f, 70f, 70f);
+            AssertZone(ZoneLayout.WaterVein, 173f, -8f, 90f, 40f);
+            AssertZone(ZoneLayout.HuntEdge, 13f, 153f, 80f, 55f);
         }
 
         [Test]
-        public void ZonesStayInsideTheRim()
+        public void InfluenceIsOneInTheCoreAndFadesOut()
         {
-            foreach (var pad in ZoneLayout.Zones)
+            for (int i = 0; i < ZoneLayout.Zones.Length; i++)
             {
-                Assert.LessOrEqual(Mathf.Abs(pad.Center.x) + pad.Size.x * 0.5f, 150f, pad.Name);
-                Assert.LessOrEqual(Mathf.Abs(pad.Center.y) + pad.Size.y * 0.5f, 150f, pad.Name);
+                var pad = ZoneLayout.Zones[i];
+                Assert.AreEqual(1f, ZoneLayout.Influence(i, pad.Center.x, pad.Center.y), 1e-5f, pad.Name);
+                float far = Mathf.Max(pad.Size.x, pad.Size.y) * 0.5f + 90f;
+                for (int a = 0; a < 16; a++)
+                {
+                    float ang = a * Mathf.PI / 8f;
+                    Assert.Less(ZoneLayout.Influence(i, pad.Center.x + Mathf.Cos(ang) * far, pad.Center.y + Mathf.Sin(ang) * far), 0.05f, pad.Name);
+                }
             }
-        }
-
-        [Test]
-        public void ZoneCentresAreWellApart()
-        {
-            var z = ZoneLayout.Zones;
-            for (int i = 0; i < z.Length; i++)
-                for (int j = i + 1; j < z.Length; j++)
-                    Assert.GreaterOrEqual(Vector2.Distance(z[i].Center, z[j].Center), 60f, z[i].Name + " / " + z[j].Name);
         }
 
         [Test]
         public void DepthsMatchTheDesign()
         {
-            foreach (var pool in ZoneLayout.PoolCenters)
-                Assert.AreEqual(2f, ZoneLayout.DepthAt(pool.x, pool.y), 1e-4f);
-            Assert.AreEqual(0.15f, ZoneLayout.DepthAt(128f, 46f), 1e-4f);       // the stream, between the spring and the first pool
-            Assert.AreEqual(0.4f, ZoneLayout.DepthAt(8f, -75f), 1e-4f);         // the Life Shallows
-            Assert.AreEqual(1.6f, ZoneLayout.DepthAt(25f, -5f), 1e-4f);         // the middle of the lake
-            foreach (var pad in ZoneLayout.Biomes)
-                Assert.AreEqual(0f, ZoneLayout.DepthAt(pad.Center.x, pad.Center.y), pad.Name);
+            float middle = ZoneLayout.DepthAt(ZoneLayout.LakeCenter.x, ZoneLayout.LakeCenter.y);
+            Assert.GreaterOrEqual(middle, 1.2f); Assert.LessOrEqual(middle, 1.8f);        // deep enough to swim
+            foreach (var pool in ZoneLayout.PoolCenters) Assert.AreEqual(2f, ZoneLayout.DepthAt(pool.x, pool.y), 1e-4f);
+            var s = ZoneLayout.StreamLine[ZoneLayout.StreamLine.Length / 4];
+            Assert.AreEqual(0.15f, ZoneLayout.DepthAt(s.x, s.y), 1e-4f);
+            Assert.AreEqual(0.3f, ZoneLayout.DepthAt(ZoneLayout.PuddleCenter.x, ZoneLayout.PuddleCenter.y), 1e-4f);
+            Assert.IsTrue(ZoneLayout.InPuddle(ZoneLayout.PuddleCenter.x, ZoneLayout.PuddleCenter.y));
+            Assert.AreEqual(0f, ZoneLayout.CleanDepthAt(ZoneLayout.PuddleCenter.x, ZoneLayout.PuddleCenter.y));
+            foreach (var pad in ZoneLayout.Biomes) Assert.AreEqual(0f, ZoneLayout.DepthAt(pad.Center.x, pad.Center.y), pad.Name);
+            Assert.LessOrEqual(ZoneLayout.DepthAt(ZoneLayout.LifeShallows.Center.x, ZoneLayout.LifeShallows.Center.y), ZoneLayout.BayDepth + 1e-4f); // the bay is wadeable
+        }
+
+        [Test]
+        public void StreamWidthWanders()
+        {
+            float min = float.MaxValue, max = 0f;
+            for (float t = 0f; t <= 1f; t += 0.01f)
+            {
+                float w = ZoneLayout.StreamHalfWidthAt(t) * 2f;
+                min = Mathf.Min(min, w); max = Mathf.Max(max, w);
+                Assert.GreaterOrEqual(w, 7f - 1e-4f); Assert.LessOrEqual(w, 12f + 1e-4f);
+            }
+            Assert.Greater(max - min, 2f);
+        }
+
+        [Test]
+        public void LakeIsNotAnEllipse()
+        {
+            float min = float.MaxValue, max = 0f;
+            for (int i = 0; i < 64; i++)
+            {
+                float a = i * Mathf.PI * 2f / 64f, c = Mathf.Cos(a), s = Mathf.Sin(a);
+                float ellipse = 1f / Mathf.Sqrt(c * c / (ZoneLayout.LakeRadii.x * ZoneLayout.LakeRadii.x) + s * s / (ZoneLayout.LakeRadii.y * ZoneLayout.LakeRadii.y));
+                float ratio = ZoneLayout.LakeRadiusAt(a) / ellipse;
+                min = Mathf.Min(min, ratio); max = Mathf.Max(max, ratio);
+            }
+            Assert.GreaterOrEqual(max / min, 1.15f);
         }
 
         [Test]
@@ -60,16 +87,15 @@ namespace Evolve.Tests.EditMode
         {
             foreach (var p in ZoneLayout.LakeShore(64))
             {
-                Vector2 inward = (ZoneLayout.LakeCenter - p).normalized;
-                if (p.y > ZoneLayout.LakeCenter.y) // the south shore meets the bay and the stream
-                    Assert.AreEqual(0f, ZoneLayout.DepthAt(p.x - inward.x * 0.5f, p.y - inward.y * 0.5f), 1e-4f, $"just outside {p}");
-                Assert.Greater(ZoneLayout.DepthAt(p.x + inward.x * 3f, p.y + inward.y * 3f), 0f, $"inside {p}");
+                Vector2 outward = (p - ZoneLayout.LakeCenter).normalized;
+                Assert.Greater(ZoneLayout.DepthAt(p.x - outward.x * 3f, p.y - outward.y * 3f), 0f, $"inside {p}");
             }
-            foreach (var p in ZoneLayout.ShallowsShore(64))
-            {
-                Vector2 inward = (ZoneLayout.ShallowsCenter - p).normalized;
-                Assert.Greater(ZoneLayout.DepthAt(p.x + inward.x * 3f, p.y + inward.y * 3f), 0f, $"inside {p}");
-            }
+            for (int i = 0; i < ZoneLayout.PoolCenters.Length; i++)
+                foreach (var p in ZoneLayout.PoolShore(i, 32))
+                {
+                    Vector2 inward = (ZoneLayout.PoolCenters[i] - p).normalized;
+                    Assert.Greater(ZoneLayout.DepthAt(p.x + inward.x * 2f, p.y + inward.y * 2f), 0f, $"pool {i} inside {p}");
+                }
         }
 
         [Test]
@@ -77,10 +103,10 @@ namespace Evolve.Tests.EditMode
         {
             foreach (var path in ZoneLayout.Paths)
                 for (int j = 0; j + 1 < path.Length; j++)
-                    for (float t = 0f; t <= 1f; t += 0.05f)
+                    for (float t = 0f; t <= 1f; t += 0.025f)
                     {
                         var p = Vector2.Lerp(path[j], path[j + 1], t);
-                        Assert.LessOrEqual(ZoneLayout.DepthAt(p.x, p.y), ZoneLayout.StreamDepth + 1e-4f, $"trail point {p}"); // dry, or a ford over the stream
+                        Assert.LessOrEqual(ZoneLayout.DepthAt(p.x, p.y), ZoneLayout.StreamDepth + 1e-4f, $"trail point {p}");
                     }
         }
 
@@ -92,26 +118,21 @@ namespace Evolve.Tests.EditMode
                 bool reached = false;
                 foreach (var path in ZoneLayout.Paths)
                     foreach (var point in path)
-                        if (pad.DistanceOutside(point) <= 12f) reached = true; // the Life Shallows is mostly water: trails stop at its shore
+                        if (pad.DistanceOutside(point) <= 0f) reached = true;
                 Assert.IsTrue(reached, pad.Name);
             }
         }
 
         [Test]
-        public void DistanceToPathZeroOnPath()
+        public void NoiseIsSmoothAndInRange()
         {
-            var a = ZoneLayout.Paths[0][0];
-            var b = ZoneLayout.Paths[0][1];
-            var mid = (a + b) * 0.5f;
-            Assert.AreEqual(0f, ZoneLayout.DistanceToPath(mid.x, mid.y), 1e-4f);
-        }
-
-        [Test]
-        public void FlatMaskIsOneInAreasAndOnWater()
-        {
-            foreach (var pad in ZoneLayout.Zones)
-                Assert.AreEqual(1f, ZoneLayout.FlatMask(pad.Center.x, pad.Center.y), 1e-5f, pad.Name);
-            Assert.AreEqual(1f, ZoneLayout.FlatMask(25f, -5f), 1e-5f);
+            for (float x = -3f; x < 3f; x += 0.37f)
+            {
+                float n = ZoneLayout.Noise(x, 1.3f);
+                Assert.GreaterOrEqual(n, 0f); Assert.LessOrEqual(n, 1f);
+                Assert.Less(Mathf.Abs(ZoneLayout.Noise(x + 0.01f, 1.3f) - n), 0.05f);
+                Assert.AreEqual(n, ZoneLayout.Noise(x, 1.3f));
+            }
         }
     }
 }

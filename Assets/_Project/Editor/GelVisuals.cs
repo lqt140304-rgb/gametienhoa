@@ -231,7 +231,7 @@ namespace Evolve.EditorTools
                 PrototypeSceneBuilder.EnsureFolder($"{Root}/{f}");
         }
 
-        /// <summary>URP Lit set up as translucent gel (alpha blend, glossy, no depth write). Created once, reconfigured each time.</summary>
+        /// <summary>URP Lit set up as translucent gel (alpha blend, glossy, writes depth so water drawn later covers only what is under its surface). Created once, reconfigured each time.</summary>
         static Material GelMaterial(string name, Color color)
         {
             string path = $"{Root}/Materials/{name}.mat";
@@ -246,7 +246,7 @@ namespace Evolve.EditorTools
             mat.SetFloat("_Blend", 0f);         // alpha
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_ZWrite", 1f);
             mat.SetFloat("_Smoothness", 0.97f);
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.SetOverrideTag("RenderType", "Transparent");

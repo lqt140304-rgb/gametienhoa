@@ -167,12 +167,13 @@ namespace Evolve.EditorTools
             var coreBlob = FloraMeshes.Blob();
             foreach (var pond in ponds)
             {
-                if (pond == null || pond.name != LakeWater.LifeShallowsName) continue;
+                if (pond == null || pond.name != LakeWater.LakeName) continue;
                 var outline = pond.WorldOutline;
                 for (int k = 0; k < outline.Length; k += 7)
                 {
                     if (rnd.NextDouble() > 0.55) continue;
                     Vector2 anchor = outline[k] + Outward(outline, k) * (0.4f + (float)rnd.NextDouble() * 1.4f);
+                    if (ZoneLayout.Influence(0, anchor.x, anchor.y) < 0.5f) continue;   // only on the Life Shallows' shore
                     int count = 1 + rnd.Next(3);
                     for (int i = 0; i < count; i++)
                     {

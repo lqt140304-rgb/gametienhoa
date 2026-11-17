@@ -7,9 +7,9 @@ namespace Evolve.Tests.EditMode
     public class TerrainShapeTests
     {
         [Test]
-        public void CrossingTakesAboutFiveMinutes()
+        public void CrossingTakesAboutEightMinutes()
         {
-            Assert.AreEqual(5f, WorldScale.CrossingMinutes(WorldScale.ZoneSize, WorldScale.CrawlSpeed), 0.01f);
+            Assert.AreEqual(8.33f, WorldScale.CrossingMinutes(WorldScale.ZoneSize, WorldScale.CrawlSpeed), 0.01f);
         }
 
         [Test]
@@ -17,51 +17,60 @@ namespace Evolve.Tests.EditMode
         {
             foreach (var pool in ZoneLayout.PoolCenters)
                 Assert.AreEqual(-2f, TerrainShape.HeightAt(pool.x, pool.y, 1337), 1e-4f);
-            Assert.AreEqual(-0.15f, TerrainShape.HeightAt(128f, 46f, 1337), 1e-4f);
-            Assert.AreEqual(-0.4f, TerrainShape.HeightAt(8f, -75f, 1337), 1e-4f);
+            var c = ZoneLayout.LakeCenter;
+            Assert.AreEqual(-ZoneLayout.DepthAt(c.x, c.y), TerrainShape.HeightAt(c.x, c.y, 1337), 1e-4f);
         }
 
         [Test]
-        public void AreaCentresAreFlat()
+        public void AreasAreGentlyBumpyNotFlat()
         {
             foreach (var pad in ZoneLayout.Biomes)
-                for (float dx = -10f; dx <= 10f; dx += 5f)
-                    for (float dz = -10f; dz <= 10f; dz += 5f)
-                        Assert.AreEqual(0f, TerrainShape.HeightAt(pad.Center.x + dx, pad.Center.y + dz, 1337), 1e-4f, $"{pad.Name} dx={dx} dz={dz}");
+            {
+                float sum = 0f, sum2 = 0f; int n = 0;
+                for (float dx = -20f; dx <= 20f; dx += 4f)
+                    for (float dz = -20f; dz <= 20f; dz += 4f)
+                    {
+                        if (dx * dx + dz * dz > 400f) continue;
+                        float h = TerrainShape.HeightAt(pad.Center.x + dx, pad.Center.y + dz, 1337);
+                        Assert.LessOrEqual(Mathf.Abs(h), 2.7f, pad.Name);
+                        sum += h; sum2 += h * h; n++;
+                    }
+                float mean = sum / n;
+                Assert.GreaterOrEqual(Mathf.Sqrt(sum2 / n - mean * mean), 0.25f, pad.Name + " is too flat");
+            }
         }
 
         [Test]
-        public void HeightsBounded()
+        public void HillsRiseBetweenAreas()
         {
-            for (float x = -150f; x <= 150f; x += 5f)
-                for (float z = -150f; z <= 150f; z += 5f)
-                {
-                    float h = TerrainShape.HeightAt(x, z, 1337);
-                    Assert.GreaterOrEqual(h, -ZoneLayout.PoolDepth - 1e-4f, $"x={x} z={z}");
-                    Assert.LessOrEqual(h, TerrainShape.CliffHeight + 1f, $"x={x} z={z}");
-                }
+            float best = 0f;
+            for (float x = -170f; x <= 170f; x += 10f)
+                for (float z = -170f; z <= 170f; z += 10f)
+                    best = Mathf.Max(best, TerrainShape.HeightAt(x, z, 1337));
+            Assert.GreaterOrEqual(best, 4f);
         }
 
         [Test]
-        public void InsideIsSmoothAndWalkable()
+        public void InsideIsWalkable()
         {
-            const float step = 0.6f, limit = 0.5f, range = 125f; // one heightmap cell; the deep pools fall 2 m over 3 m
-            for (float x = -range; x <= range; x += step * 4f)
-                for (float z = -range; z <= range; z += step * 4f)
-                {
-                    float h = TerrainShape.HeightAt(x, z, 1337);
-                    Assert.LessOrEqual(Mathf.Abs(TerrainShape.HeightAt(x + step, z, 1337) - h), limit, $"x={x} z={z} (dx)");
-                    Assert.LessOrEqual(Mathf.Abs(TerrainShape.HeightAt(x, z + step, 1337) - h), limit, $"x={x} z={z} (dz)");
-                }
+            const float step = 0.5f;
+            var rnd = new System.Random(1);
+            for (int i = 0; i < 3000; i++)
+            {
+                float x = (float)rnd.NextDouble() * 340f - 170f, z = (float)rnd.NextDouble() * 340f - 170f;
+                float h = TerrainShape.HeightAt(x, z, 1337);
+                Assert.LessOrEqual(Mathf.Abs(TerrainShape.HeightAt(x + step, z, 1337) - h), 0.4f, $"x={x} z={z}");
+                Assert.LessOrEqual(Mathf.Abs(TerrainShape.HeightAt(x, z + step, 1337) - h), 0.4f, $"x={x} z={z}");
+            }
         }
 
         [Test]
         public void RimRisesExceptAtTheNorthEntry()
         {
-            Assert.GreaterOrEqual(TerrainShape.HeightAt(148f, 0f, 1337), 20f);
-            Assert.GreaterOrEqual(TerrainShape.HeightAt(0f, -148f, 1337), 20f);
-            Assert.GreaterOrEqual(TerrainShape.HeightAt(-148f, 100f, 1337), 20f);
-            Assert.LessOrEqual(TerrainShape.HeightAt(ZoneLayout.NorthEntry.x, 148f, 1337), 3.1f);
+            Assert.GreaterOrEqual(TerrainShape.HeightAt(245f, 0f, 1337), 15f);
+            Assert.GreaterOrEqual(TerrainShape.HeightAt(0f, -245f, 1337), 15f);
+            Assert.GreaterOrEqual(TerrainShape.HeightAt(-245f, 100f, 1337), 15f);
+            Assert.LessOrEqual(TerrainShape.HeightAt(ZoneLayout.NorthEntry.x, ZoneLayout.NorthEntry.y, 1337), 3f);
         }
 
         [Test]

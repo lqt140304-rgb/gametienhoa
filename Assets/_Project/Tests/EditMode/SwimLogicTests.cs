@@ -27,6 +27,19 @@ namespace Evolve.Tests.EditMode
             Assert.LessOrEqual(y, 0.3f);
         }
 
+        [Test] public void FloatsWithOnlyTheBackAboveWater()
+        {
+            Assert.AreEqual(-0.14f, SwimLogic.TargetY(0.06f), 1e-5f);
+        }
+
+        [Test] public void UnderwaterCameraDoesNotFlickerAtTheSurface()
+        {
+            Assert.IsFalse(SwimLogic.IsUnderwater(0.03f, 0.06f, false));   // just below, not yet
+            Assert.IsTrue(SwimLogic.IsUnderwater(0.0f, 0.06f, false));
+            Assert.IsTrue(SwimLogic.IsUnderwater(0.09f, 0.06f, true));     // just above, still under
+            Assert.IsFalse(SwimLogic.IsUnderwater(0.12f, 0.06f, true));
+        }
+
         [Test] public void HorizontalFollowsMoveDirection()
         {
             var v = SwimLogic.Velocity(new Vector3(1f, 0f, 0f), 0f, 0.65f);

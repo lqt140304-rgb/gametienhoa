@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Evolve.World
 {
     /// <summary>
-    /// One area of the zone. <see cref="Size"/> is the full width (x) and depth (z) of its rough rectangle;
+    /// One area of the zone. <see cref="Size"/> is the full width (x) and depth (z) of its core;
     /// <see cref="Radius"/> is a circle that fits inside it (for code that only needs "near the centre").
     /// </summary>
     public readonly struct Pad
@@ -21,7 +21,7 @@ namespace Evolve.World
             Radius = Mathf.Min(size.x, size.y) * 0.5f;
         }
 
-        /// <summary>Distance from p to this area's rectangle (0 inside).</summary>
+        /// <summary>Distance from p to this area's core rectangle (0 inside).</summary>
         public float DistanceOutside(Vector2 p)
         {
             float dx = Mathf.Max(0f, Mathf.Abs(p.x - Center.x) - Size.x * 0.5f);
@@ -31,128 +31,238 @@ namespace Evolve.World
     }
 
     /// <summary>
-    /// Layout of the first zone, Hồ Khởi Sinh / Underroot Lake (spec 2026-11-17-lake-map-300m-design): a 300 x 300 m
-    /// cavern (each area 1.5 x its concept size) with a big lake in the middle and six areas around it, as on the concept zoning map (north = +z).
-    /// Pure data and maths, no scene objects: the terrain, the water, the decoration tools and the tests all read these numbers.
+    /// Layout of the first zone, Hồ Khởi Sinh / Underroot Lake (spec 2026-11-17-lake-map-500m-design): a 500 x 500 m cavern
+    /// with a big lake in the middle and six areas round it, as on the concept zoning map (north = +z).
+    /// Shapes are natural, not geometric: shores, the stream's width and the areas' borders all wander with a seeded noise,
+    /// so the same numbers always give the same map. Pure data and maths, no scene objects.
     /// </summary>
     public static class ZoneLayout
     {
-        public static readonly Pad LifeShallows = new Pad("Vũng Sinh Mệnh", new Vector2(8f, -80f), new Vector2(45f, 37.5f));
-        public static readonly Pad RootFoot = new Pad("Chân Rễ Cổ Thụ", new Vector2(-85f, -15f), new Vector2(37.5f, 30f));
-        public static readonly Pad Humus = new Pad("Bãi Mùn Rễ", new Vector2(-70f, 68f), new Vector2(45f, 37.5f));
-        public static readonly Pad Spore = new Pad("Vườn Bào Tử", new Vector2(98f, 65f), new Vector2(37.5f, 37.5f));
-        public static readonly Pad WaterVein = new Pad("Khe Thủy Mạch", new Vector2(122f, -10f), new Vector2(22.5f, 52.5f));
-        public static readonly Pad HuntEdge = new Pad("Rìa Săn Mồi", new Vector2(20f, 90f), new Vector2(45f, 30f));
+        public static readonly Pad LifeShallows = new Pad("Vũng Sinh Mệnh", new Vector2(-8f, -120f), new Vector2(80f, 70f));
+        public static readonly Pad RootFoot = new Pad("Chân Rễ Cổ Thụ", new Vector2(-150f, -18f), new Vector2(70f, 60f));
+        public static readonly Pad Humus = new Pad("Bãi Mùn Rễ", new Vector2(-125f, 118f), new Vector2(80f, 70f));
+        public static readonly Pad Spore = new Pad("Vườn Bào Tử", new Vector2(137f, 110f), new Vector2(70f, 70f));
+        public static readonly Pad WaterVein = new Pad("Khe Thủy Mạch", new Vector2(173f, -8f), new Vector2(90f, 40f));
+        public static readonly Pad HuntEdge = new Pad("Rìa Săn Mồi", new Vector2(13f, 153f), new Vector2(80f, 55f));
 
-        /// <summary>All six areas, in map order 01..06 except that 06 is last.</summary>
+        /// <summary>All six areas: 01 Life Shallows, 02 Root Foot, 03 Humus, 04 Spore, 05 Water Vein, 06 Hunt Edge.</summary>
         public static readonly Pad[] Zones = { LifeShallows, RootFoot, Humus, Spore, WaterVein, HuntEdge };
         /// <summary>The land biomes that hold creature populations.</summary>
         public static readonly Pad[] Biomes = { RootFoot, Humus, Spore, HuntEdge };
 
         /// <summary>Height of every water surface (m).</summary>
         public const float WaterLevel = 0.06f;
+        /// <summary>How far (m) an area's influence reaches past its core before it fades out.</summary>
+        public const float InfluenceReach = 60f;
 
-        // ---- the lake: a wobbly ellipse in the middle, and the shallow bay of the Life Shallows to its south ----
-        public static readonly Vector2 LakeCenter = new Vector2(25f, -5f);
-        public static readonly Vector2 LakeRadii = new Vector2(60f, 35f);
-        public const float LakeDepth = 1.6f;
-        public static readonly Vector2 ShallowsCenter = new Vector2(8f, -70f);
-        public static readonly Vector2 ShallowsRadii = new Vector2(42f, 30f);
-        public const float ShallowsDepth = 0.4f;
+        // ---- the lake ----
+        public static readonly Vector2 LakeCenter = new Vector2(-8f, -42f);
+        public static readonly Vector2 LakeRadii = new Vector2(110f, 80f);
+        /// <summary>The Life Shallows bay: the lake is at most 0.4 m deep this close to this point.</summary>
+        public static readonly Vector2 BayCenter = new Vector2(-8f, -112f);
+        public const float BayRadius = 50f;
+        public const float BayDepth = 0.4f;
 
-        // ---- Khe Thủy Mạch: a shallow stream from the north-east into the lake, with two deep pools on it ----
-        public static readonly Vector2[] StreamLine =
+        // ---- Khe Thủy Mạch ----
+        static readonly Vector2[] StreamKeys =
         {
-            new Vector2(132f, 62f), new Vector2(124f, 30f), new Vector2(118f, 0f), new Vector2(104f, -28f), new Vector2(84f, -14f)
+            new Vector2(213f, 10f), new Vector2(187f, -7f), new Vector2(158f, -17f), new Vector2(133f, -25f), new Vector2(103f, -37f), new Vector2(90f, -40f)
         };
-        public const float StreamHalfWidth = 4f;
+        /// <summary>The stream's centre line from its spring (first point) to the lake, densely sampled and gently winding.</summary>
+        public static readonly Vector2[] StreamLine = BuildStream();
         public const float StreamDepth = 0.15f;
-        public static readonly Vector2[] PoolCenters = { new Vector2(122f, 18f), new Vector2(110f, -16f) };
-        public const float PoolRadius = 8f;
+        public static readonly Vector2[] PoolCenters = { new Vector2(193f, 0f), new Vector2(157f, -20f) };
+        public const float PoolRadius = 10f;
         public const float PoolDepth = 2f;
 
-        /// <summary>Where creature B comes in from outside: a tunnel through the north rim.</summary>
-        public static readonly Vector2 NorthEntry = new Vector2(20f, 140f);
-        public const float NorthEntryHalfWidth = 8f;
+        // ---- the stagnant puddle of the humus bed (dirty water) ----
+        public static readonly Vector2 PuddleCenter = new Vector2(-120f, 103f);
+        public const float PuddleRadius = 6f;
+        public const float PuddleDepth = 0.3f;
 
+        /// <summary>Where creature B comes in from outside: a gap through the north rim.</summary>
+        public static readonly Vector2 NorthEntry = new Vector2(17f, 233f);
+        public const float NorthEntryHalfWidth = 10f;
         public const float PathWidth = 5f;
 
-        /// <summary>Trails round the lake from area to area, plus the hunter's way in from the north entry.</summary>
+        /// <summary>Trails round the lake from area to area, plus the hunter's way in from the north.</summary>
         public static readonly Vector2[][] Paths =
         {
-            new[] { new Vector2(-40f, -70f), new Vector2(-65f, -40f), new Vector2(-85f, -15f) },   // 01 -> 02
-            new[] { new Vector2(-85f, -15f), new Vector2(-80f, 25f), new Vector2(-70f, 68f) },     // 02 -> 03
-            new[] { new Vector2(-70f, 68f), new Vector2(-25f, 80f), new Vector2(20f, 90f) },       // 03 -> 06
-            new[] { new Vector2(20f, 90f), new Vector2(60f, 80f), new Vector2(98f, 65f) },         // 06 -> 04
-            new[] { new Vector2(98f, 65f), new Vector2(104f, 40f), new Vector2(100f, 10f), new Vector2(92f, -30f) }, // 04 -> 05 (west bank)
-            new[] { new Vector2(92f, -30f), new Vector2(65f, -62f), new Vector2(58f, -82f) },      // 05 -> 01
-            new[] { new Vector2(20f, 90f), NorthEntry },                                           // 06 -> the way out north
+            new[] { new Vector2(-20f, -150f), new Vector2(-95f, -128f), new Vector2(-140f, -75f), new Vector2(-150f, -18f) },   // 01 -> 02
+            new[] { new Vector2(-150f, -18f), new Vector2(-142f, 50f), new Vector2(-125f, 118f) },                              // 02 -> 03
+            new[] { new Vector2(-125f, 118f), new Vector2(-67f, 142f), new Vector2(13f, 153f) },                                // 03 -> 06
+            new[] { new Vector2(13f, 153f), new Vector2(75f, 142f), new Vector2(137f, 110f) },                                  // 06 -> 04
+            new[] { new Vector2(137f, 110f), new Vector2(167f, 58f), new Vector2(173f, 22f) },                                  // 04 -> 05
+            new[] { new Vector2(150f, -45f), new Vector2(110f, -110f), new Vector2(40f, -148f), new Vector2(-20f, -150f) },    // 05 -> 01
+            new[] { NorthEntry, new Vector2(13f, 153f) },                                                                       // the hunter's way in
         };
 
+        // ================================================================== depth
+
         /// <summary>Depth of water below the water level at (x, z); 0 on dry land.</summary>
-        public static float DepthAt(float x, float z)
+        public static float DepthAt(float x, float z) => Mathf.Max(CleanDepthAt(x, z), PuddleDepthAt(x, z));
+
+        /// <summary>Depth of the clean water only (lake, stream, pools).</summary>
+        public static float CleanDepthAt(float x, float z)
         {
             var p = new Vector2(x, z);
-            float depth = 0f;
+            float depth = LakeDepthAt(p);
 
-            float lake = EllipseT(p, LakeCenter, LakeRadii, 0f);
-            if (lake < 1f) depth = Mathf.Max(depth, LakeDepth * Smooth01((1f - lake) / 0.45f));
-            float bay = EllipseT(p, ShallowsCenter, ShallowsRadii, 1.7f);
-            if (bay < 1f) depth = Mathf.Max(depth, ShallowsDepth * Smooth01((1f - bay) / 0.25f));
+            float ds = DistanceToLine(p, StreamLine, out float t);
+            float hw = StreamHalfWidthAt(t);
+            if (ds < hw) depth = Mathf.Max(depth, StreamDepth * Smooth01((hw - ds) / 1.5f));
 
-            float ds = DistanceToLine(p, StreamLine);
-            if (ds < StreamHalfWidth) depth = Mathf.Max(depth, StreamDepth * Smooth01((StreamHalfWidth - ds) / 1.5f));
             for (int i = 0; i < PoolCenters.Length; i++)
             {
-                float dp = Vector2.Distance(p, PoolCenters[i]);
-                if (dp < PoolRadius) depth = Mathf.Max(depth, PoolDepth * Smooth01((PoolRadius - dp) / 4f));
+                Vector2 d = p - PoolCenters[i];
+                float r = PoolRadiusAt(i, Mathf.Atan2(d.y, d.x));
+                float dp = d.magnitude;
+                if (dp < r) depth = Mathf.Max(depth, PoolDepth * Smooth01((r - dp) / 5f));
             }
             return depth;
         }
 
+        /// <summary>True inside the dirty puddle of the humus bed.</summary>
+        public static bool InPuddle(float x, float z) => PuddleDepthAt(x, z) > 0f;
+
+        static float PuddleDepthAt(float x, float z)
+        {
+            float d = Vector2.Distance(new Vector2(x, z), PuddleCenter);
+            return d < PuddleRadius ? PuddleDepth * Smooth01((PuddleRadius - d) / 2f) : 0f;
+        }
+
+        static float LakeDepthAt(Vector2 p)
+        {
+            Vector2 d = p - LakeCenter;
+            float shoreR = LakeRadiusAt(Mathf.Atan2(d.y, d.x));
+            float inside = shoreR - d.magnitude;                   // metres in from the shore
+            if (inside <= 0f) return 0f;
+            float middle = 1.5f + 0.6f * (Noise(p.x / 35f + 11f, p.y / 35f + 3f) - 0.5f);   // 1.2 .. 1.8 m
+            // shoals: a few shallow banks, never in the very middle
+            float shoal = Smooth01((Noise(p.x / 50f + 40f, p.y / 50f + 17f) - 0.66f) / 0.08f) * Smooth01((d.magnitude - 25f) / 15f);
+            float depth = Mathf.Lerp(middle, 0.35f, shoal) * Smooth01(inside / 10f);
+            // the Life Shallows bay stays wadeable
+            float bay = Smooth01((BayRadius - Vector2.Distance(p, BayCenter)) / 20f);
+            return Mathf.Lerp(depth, Mathf.Min(depth, BayDepth), bay);
+        }
+
+        /// <summary>Distance from the lake centre to its shore in the direction <paramref name="angle"/> (radians).</summary>
+        public static float LakeRadiusAt(float angle)
+        {
+            float c = Mathf.Cos(angle), s = Mathf.Sin(angle);
+            float ellipse = 1f / Mathf.Sqrt(c * c / (LakeRadii.x * LakeRadii.x) + s * s / (LakeRadii.y * LakeRadii.y));
+            float n = Noise(c * 1.6f + 20f, s * 1.6f + 20f) - 0.5f;          // big bays and points
+            float m = Noise(c * 4.5f + 50f, s * 4.5f + 50f) - 0.5f;          // smaller coves
+            return ellipse * (1f + 0.36f * n + 0.12f * m);
+        }
+
+        static float PoolRadiusAt(int pool, float angle)
+        {
+            float c = Mathf.Cos(angle), s = Mathf.Sin(angle);
+            return PoolRadius * (1f + 0.3f * (Noise(c * 1.8f + 70f + pool * 9f, s * 1.8f + 70f) - 0.5f));
+        }
+
+        /// <summary>The stream's half width at <paramref name="t"/> (0 = spring, 1 = lake): 3.5 .. 6 m.</summary>
+        public static float StreamHalfWidthAt(float t) => 3.5f + 2.5f * Noise(t * 7f + 90f, 5f);
+
         /// <summary>The lake's shoreline (world x, z), <paramref name="samples"/> points round it.</summary>
-        public static Vector2[] LakeShore(int samples) => Shore(LakeCenter, LakeRadii, 0f, samples);
-
-        /// <summary>The Life Shallows bay's shoreline (world x, z).</summary>
-        public static Vector2[] ShallowsShore(int samples) => Shore(ShallowsCenter, ShallowsRadii, 1.7f, samples);
-
-        static Vector2[] Shore(Vector2 centre, Vector2 radii, float phase, int samples)
+        public static Vector2[] LakeShore(int samples)
         {
             var points = new Vector2[samples];
             for (int i = 0; i < samples; i++)
             {
                 float a = i * Mathf.PI * 2f / samples;
-                float c = Mathf.Cos(a), s = Mathf.Sin(a);
-                float r = Wobble(a, phase) / Mathf.Sqrt(c * c / (radii.x * radii.x) + s * s / (radii.y * radii.y));
-                points[i] = centre + new Vector2(c, s) * r;
+                points[i] = LakeCenter + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * LakeRadiusAt(a);
             }
             return points;
         }
 
-        static float Wobble(float angle, float phase) =>
-            1f + 0.08f * Mathf.Sin(3f * angle + phase) + 0.05f * Mathf.Sin(5f * angle + 1.3f + phase);
-
-        /// <summary>
-        /// Normalised distance from an ellipse centre (1 on its shore); the shore wobbles a little so it is not a perfect oval.
-        /// </summary>
-        static float EllipseT(Vector2 p, Vector2 centre, Vector2 radii, float phase)
+        /// <summary>A deep pool's shoreline (world x, z).</summary>
+        public static Vector2[] PoolShore(int pool, int samples)
         {
-            Vector2 d = p - centre;
-            float a = Mathf.Atan2(d.y, d.x);
-            float wobble = Wobble(a, phase);
-            float nx = d.x / (radii.x * wobble), nz = d.y / (radii.y * wobble);
-            return Mathf.Sqrt(nx * nx + nz * nz);
+            var points = new Vector2[samples];
+            for (int i = 0; i < samples; i++)
+            {
+                float a = i * Mathf.PI * 2f / samples;
+                points[i] = PoolCenters[pool] + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * PoolRadiusAt(pool, a);
+            }
+            return points;
         }
 
-        /// <summary>1 inside an area, on a trail or in/near water (the ground there stays flat); 0 far from all of them.</summary>
-        public static float FlatMask(float x, float z)
+        /// <summary>The stream's banks as one closed outline (left bank down, right bank back up).</summary>
+        public static Vector2[] StreamShore()
         {
-            var p = new Vector2(x, z);
-            float d = DistanceToPath(x, z) - PathWidth;
-            for (int i = 0; i < Zones.Length; i++) d = Mathf.Min(d, Zones[i].DistanceOutside(p));
-            if (DepthAt(x, z) > 0f) d = 0f;
-            d = Mathf.Min(d, EllipseT(p, LakeCenter, LakeRadii, 0f) < 1.25f ? 0f : d);
-            return 1f - Smooth01(d / 25f);
+            int n = StreamLine.Length;
+            var points = new Vector2[n * 2];
+            for (int i = 0; i < n; i++)
+            {
+                Vector2 dir = (StreamLine[Mathf.Min(i + 1, n - 1)] - StreamLine[Mathf.Max(i - 1, 0)]).normalized;
+                Vector2 side = new Vector2(-dir.y, dir.x);
+                float hw = StreamHalfWidthAt(i / (float)(n - 1));
+                points[i] = StreamLine[i] + side * hw;
+                points[2 * n - 1 - i] = StreamLine[i] - side * hw;
+            }
+            return points;
+        }
+
+        static Vector2[] BuildStream()
+        {
+            const int perSegment = 12;
+            int segments = StreamKeys.Length - 1;
+            var line = new Vector2[segments * perSegment + 1];
+            int k = 0;
+            for (int s = 0; s < segments; s++)
+            {
+                Vector2 p0 = StreamKeys[Mathf.Max(s - 1, 0)], p1 = StreamKeys[s], p2 = StreamKeys[s + 1], p3 = StreamKeys[Mathf.Min(s + 2, segments)];
+                for (int i = 0; i < perSegment; i++)
+                {
+                    float t = i / (float)perSegment;
+                    line[k++] = CatmullRom(p0, p1, p2, p3, t);
+                }
+            }
+            line[k] = StreamKeys[segments];
+            // a gentle sideways meander (never at the two ends, which must meet the spring and the lake)
+            var result = new Vector2[line.Length];
+            for (int i = 0; i < line.Length; i++)
+            {
+                Vector2 dir = (line[Mathf.Min(i + 1, line.Length - 1)] - line[Mathf.Max(i - 1, 0)]).normalized;
+                Vector2 side = new Vector2(-dir.y, dir.x);
+                float u = i / (float)(line.Length - 1);
+                float ends = Mathf.Sin(u * Mathf.PI);
+                result[i] = line[i] + side * (8f * (Noise(u * 9f + 130f, 2f) - 0.5f) * ends);
+            }
+            return result;
+        }
+
+        static Vector2 CatmullRom(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t)
+        {
+            float t2 = t * t, t3 = t2 * t;
+            return 0.5f * (2f * p1 + (p2 - p0) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (3f * p1 - p0 - 3f * p2 + p3) * t3);
+        }
+
+        // ================================================================== areas
+
+        /// <summary>
+        /// How strongly area <paramref name="zone"/> (index into <see cref="Zones"/>) shapes the ground at (x, z): 1 in its
+        /// core, fading to 0 over <see cref="InfluenceReach"/> metres outside it, along a wandering (noisy) border.
+        /// </summary>
+        public static float Influence(int zone, float x, float z)
+        {
+            var pad = Zones[zone];
+            float hx = pad.Size.x * 0.5f, hz = pad.Size.y * 0.5f;
+            float nx = (x - pad.Center.x) / hx, nz = (z - pad.Center.y) / hz;
+            float e = Mathf.Sqrt(nx * nx + nz * nz);                          // 1 on the core's (oval) edge
+            float outside = Mathf.Max(0f, e - 1f) * (hx + hz) * 0.5f;
+            float warp = 22f * (Noise(x / 40f + zone * 31f, z / 40f + 7f) - 0.5f) * Smooth01(e);
+            return 1f - Smooth01((outside + warp) / InfluenceReach);
+        }
+
+        /// <summary>The strongest influence of any area at (x, z).</summary>
+        public static float MaxInfluence(float x, float z)
+        {
+            float best = 0f;
+            for (int i = 0; i < Zones.Length; i++) best = Mathf.Max(best, Influence(i, x, z));
+            return best;
         }
 
         /// <summary>Distance from (x, z) to the nearest trail centre line.</summary>
@@ -164,33 +274,63 @@ namespace Evolve.World
             return best;
         }
 
-        /// <summary>The area whose rectangle holds p (the nearest one if several overlap), or null-name pad if none.</summary>
-        public static bool TryZoneAt(Vector2 p, out Pad zone)
+        /// <summary>
+        /// Rough distance from a dry point to the nearest water's edge (0 in water); only accurate near the water, which is
+        /// what the terrain needs to lay the banks down gently.
+        /// </summary>
+        public static float DistanceToWater(float x, float z)
         {
-            zone = default;
-            float best = float.MaxValue;
-            for (int i = 0; i < Zones.Length; i++)
-            {
-                if (Zones[i].DistanceOutside(p) > 0f) continue;
-                float d = Vector2.Distance(p, Zones[i].Center);
-                if (d < best) { best = d; zone = Zones[i]; }
-            }
-            return best < float.MaxValue;
+            var p = new Vector2(x, z);
+            if (DepthAt(x, z) > 0f) return 0f;
+            Vector2 d = p - LakeCenter;
+            float best = d.magnitude - LakeRadiusAt(Mathf.Atan2(d.y, d.x));
+            float ds = DistanceToLine(p, StreamLine, out float t) - StreamHalfWidthAt(t);
+            best = Mathf.Min(best, ds);
+            for (int i = 0; i < PoolCenters.Length; i++) best = Mathf.Min(best, Vector2.Distance(p, PoolCenters[i]) - PoolRadius * 1.15f);
+            best = Mathf.Min(best, Vector2.Distance(p, PuddleCenter) - PuddleRadius);
+            return Mathf.Max(0f, best);
         }
 
-        public static float DistanceToLine(Vector2 p, Vector2[] line)
+        public static float DistanceToLine(Vector2 p, Vector2[] line) => DistanceToLine(p, line, out _);
+
+        /// <summary>Distance to a polyline, and where along it (0 = first point, 1 = last) the nearest point lies.</summary>
+        public static float DistanceToLine(Vector2 p, Vector2[] line, out float along)
         {
             float best = float.MaxValue;
-            for (int j = 0; j + 1 < line.Length; j++) best = Mathf.Min(best, DistanceToSegment(p, line[j], line[j + 1]));
+            along = 0f;
+            int segments = line.Length - 1;
+            for (int j = 0; j < segments; j++)
+            {
+                Vector2 a = line[j], ab = line[j + 1] - a;
+                float len2 = ab.sqrMagnitude;
+                float t = len2 > 1e-6f ? Mathf.Clamp01(Vector2.Dot(p - a, ab) / len2) : 0f;
+                float dist = Vector2.Distance(p, a + ab * t);
+                if (dist < best) { best = dist; along = (j + t) / segments; }
+            }
             return best;
         }
 
-        static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)
+        // ================================================================== noise
+
+        /// <summary>Smooth value noise in 0..1 (own implementation, so tests and tools on any machine get the same map).</summary>
+        public static float Noise(float x, float y)
         {
-            Vector2 ab = b - a;
-            float len2 = ab.sqrMagnitude;
-            float t = len2 > 1e-6f ? Mathf.Clamp01(Vector2.Dot(p - a, ab) / len2) : 0f;
-            return Vector2.Distance(p, a + ab * t);
+            int xi = Mathf.FloorToInt(x), yi = Mathf.FloorToInt(y);
+            float fx = x - xi, fy = y - yi;
+            float u = fx * fx * (3f - 2f * fx), v = fy * fy * (3f - 2f * fy);
+            float a = Hash(xi, yi), b = Hash(xi + 1, yi), c = Hash(xi, yi + 1), d = Hash(xi + 1, yi + 1);
+            return Mathf.Lerp(Mathf.Lerp(a, b, u), Mathf.Lerp(c, d, u), v);
+        }
+
+        static float Hash(int x, int y)
+        {
+            unchecked
+            {
+                int h = x * 374761393 + y * 668265263;
+                h = (h ^ (h >> 13)) * 1274126177;
+                h ^= h >> 16;
+                return (h & 0xffff) / 65535f;
+            }
         }
 
         static float Smooth01(float t)

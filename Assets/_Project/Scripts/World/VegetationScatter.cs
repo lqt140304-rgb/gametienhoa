@@ -29,7 +29,7 @@ namespace Evolve.World
         public const int MaxPoints = 380;
         public const float MinSpacing = 6f;
         /// <summary>Half side of the planted square, by max(|x|, |z|); keeps plants off the rim cliffs.</summary>
-        public const float Reach = 128f;
+        public const float Reach = 220f;
         public const float PathReach = 12f;
         const int Candidates = 6000;
 

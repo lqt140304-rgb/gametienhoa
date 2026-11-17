@@ -44,11 +44,10 @@ namespace Evolve.EditorTools
 
             foreach (var stream in new List<WaterSurface>(WaterSurface.All))
             {
-                if (stream == null || stream.Shape != WaterShape.Stream || stream.StreamPath == null || stream.StreamPath.Length < 2) continue;
-                var origin = new Vector2(stream.transform.position.x, stream.transform.position.z);
-                Vector2 a = stream.StreamPath[0] + origin, b = stream.StreamPath[stream.StreamPath.Length - 1] + origin;
+                if (stream == null || stream.name != LakeWater.StreamName) continue;
+                Vector2 a = ZoneLayout.StreamLine[0], b = ZoneLayout.StreamLine[ZoneLayout.StreamLine.Length - 1];
                 LakeLayout.StreamEnds(a, b, out Vector2 source, out Vector2 flow);
-                float poolRadius = Mathf.Max(4.5f, stream.StreamHalfWidth * 1.9f);
+                float poolRadius = Mathf.Max(4.5f, ZoneLayout.StreamHalfWidthAt(0f) * 1.9f);
                 Vector2 side = new Vector2(-flow.y, flow.x);
                 Vector2 cliffCentre = source - flow * (poolRadius + 2.6f);
 

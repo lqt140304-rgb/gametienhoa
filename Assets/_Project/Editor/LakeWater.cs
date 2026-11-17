@@ -27,7 +27,7 @@ namespace Evolve.EditorTools
             EnsureFolders();
             var normal = RippleNormalMap();
             var clean = WaterMaterial("Lake_WaterClean", new Color(0.25f, 0.84f, 0.82f, 0.5f), normal, 0.3f, new Color(0.02f, 0.10f, 0.10f));
-            var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.38f, 0.44f, 0.24f, 0.78f), normal, 0.18f, Color.black);
+            var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.52f, 0.56f, 0.22f, 0.8f), normal, 0.18f, Color.black);
             foamMaterial = FoamMaterial();
             bankMaterial = BankMaterial();
             seedCounter = 0;
@@ -40,41 +40,20 @@ namespace Evolve.EditorTools
 
             int made = 0;
 
-            // 1) The layout's water (World/ZoneLayout): the lake, the Life Shallows bay, the stream and its two deep pools.
-            //    The terrain is already carved to their depths (TerrainShape), so the surfaces only lie on top.
+            // 1) The layout's water (World/ZoneLayout): the lake (its south bay is the Life Shallows), the winding stream,
+            //    its two deep pools and the humus bed's dirty puddle. The terrain is already carved to their depths.
             var root = new GameObject(LayoutRootName).transform;
-            made += Shoreline(root, "Lake", ZoneLayout.LakeShore(180), clean);
-            made += Shoreline(root, LifeShallowsName, ZoneLayout.ShallowsShore(140), clean);
-            var line = ZoneLayout.StreamLine;
-            var stream = MakeSurface(root, new Vector3(line[0].x, ZoneLayout.WaterLevel, line[0].y), WaterShape.Stream,
-                new Vector2(120f, ZoneLayout.StreamHalfWidth * 2f), clean, 0.02f);
-            stream.name = "Khe Thuy Mach";
-            var streamSurface = stream.GetComponent<WaterSurface>();
-            var local = new Vector2[line.Length];
-            for (int i = 0; i < line.Length; i++) local[i] = line[i] - line[0];
-            streamSurface.StreamPath = local;
-            streamSurface.StreamHalfWidth = ZoneLayout.StreamHalfWidth;
-            streamSurface.StreamWobble = 0f; // follow the carved bed exactly
-            made++;
+            made += Shoreline(root, LakeName, ZoneLayout.LakeShore(220), clean);
+            made += Shoreline(root, StreamName, ZoneLayout.StreamShore(), clean);
             for (int i = 0; i < ZoneLayout.PoolCenters.Length; i++)
-            {
-                var c = ZoneLayout.PoolCenters[i];
-                MakeSurface(root, new Vector3(c.x, ZoneLayout.WaterLevel, c.y), WaterShape.Disc, new Vector2(ZoneLayout.PoolRadius, 0f), clean, 0.02f).name = "Deep Pool " + (i + 1);
-                made++;
-            }
+                made += Shoreline(root, "Deep Pool " + (i + 1), ZoneLayout.PoolShore(i, 64), clean);
+            var puddle = MakeSurface(root, new Vector3(ZoneLayout.PuddleCenter.x, ZoneLayout.WaterLevel, ZoneLayout.PuddleCenter.y),
+                WaterShape.Disc, new Vector2(ZoneLayout.PuddleRadius, 0f), dirty, 0.01f);
+            puddle.name = "Vung Nuoc Dong";
+            made++;
 
-            // 2) Other water zones placed by hand (e.g. the dirty puddle of the humus bed): a surface as big as the box.
-            foreach (var zone in Object.FindObjectsByType<WaterZone>())
-            {
-                if (zone.transform.parent != null && zone.transform.parent.name == "Water Zones") continue; // the layout's own boxes
-                var box = zone.GetComponent<BoxCollider>();
-                if (box == null) continue;
-                Bounds b = box.bounds;
-                HideFlatVisuals(zone.transform);
-                MakeSurface(zone.transform, new Vector3(b.center.x, ZoneLayout.WaterLevel, b.center.z), WaterShape.Rect,
-                    new Vector2(b.size.x, b.size.z), zone.Clean ? clean : dirty, 0.025f);
-                made++;
-            }
+            // 2) The flat stand-in boxes of the water zones stay hidden (the surfaces above replace them).
+            foreach (var zone in Object.FindObjectsByType<WaterZone>()) HideFlatVisuals(zone.transform);
 
             WaterSurface.Refresh(); // the shapes were set after the components woke up
             EditorSceneManager.MarkAllScenesDirty();
@@ -83,8 +62,9 @@ namespace Evolve.EditorTools
         }
 
         const string LayoutRootName = "Lake Water (Dressed)";
-        /// <summary>Name of the Life Shallows surface (the gel nursery is built round it).</summary>
-        internal const string LifeShallowsName = "Vung Sinh Menh";
+        /// <summary>Name of the lake surface (the gel nursery is built on its shore near the Life Shallows).</summary>
+        internal const string LakeName = "Lake";
+        internal const string StreamName = "Khe Thuy Mach";
 
         /// <summary>A pond whose shore is the given world outline.</summary>
         static int Shoreline(Transform parent, string name, Vector2[] world, Material mat)
@@ -145,7 +125,7 @@ namespace Evolve.EditorTools
             mat.SetFloat("_Blend", 0f);
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            mat.SetFloat("_ZWrite", 1f);   // the water hides whatever is below its surface (a wading slime shows only above it)
+            mat.SetFloat("_ZWrite", 0f);
             mat.SetFloat("_Smoothness", 0.75f);
             mat.SetFloat("_Metallic", 0f);
             mat.SetTexture("_BumpMap", normal);
@@ -153,7 +133,7 @@ namespace Evolve.EditorTools
             mat.EnableKeyword("_NORMALMAP");
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.SetOverrideTag("RenderType", "Transparent");
-            mat.renderQueue = (int)RenderQueue.Transparent - 10; // water is drawn before the gel and the glass-like things above it
+            mat.renderQueue = (int)RenderQueue.Transparent + 20; // after the gel: what is under the surface shows through the water, tinted
             if (emission.maxColorComponent > 0.001f)
             {
                 mat.EnableKeyword("_EMISSION");

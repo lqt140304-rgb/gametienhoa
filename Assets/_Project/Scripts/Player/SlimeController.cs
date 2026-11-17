@@ -70,6 +70,12 @@ namespace Evolve.Player
             spawnPoint = transform.position;
             waterSensor = GetComponent<Evolve.World.WaterSensor>();
             layoutWater = GameObject.Find("Water Zones") != null; // made by the Underroot Lake builder
+            if (layoutWater)
+            {
+                if (GetComponent<Evolve.World.SwimRipple>() == null) gameObject.AddComponent<Evolve.World.SwimRipple>();
+                if (cameraTransform != null && cameraTransform.GetComponent<Evolve.World.UnderwaterTint>() == null)
+                    cameraTransform.gameObject.AddComponent<Evolve.World.UnderwaterTint>();
+            }
         }
 
         void Update()
@@ -138,10 +144,14 @@ namespace Evolve.Player
                 * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f);
             if (IsSwimming)
             {
-                Vector3 swim = SwimLogic.Velocity(dir, ReadVertical(), speed);
-                // float with the body's middle at the surface: never rise above it
-                if (rb.position.y >= Evolve.World.ZoneLayout.WaterLevel - 0.05f && swim.y > 0f) swim.y = 0f;
+                float vertical = ReadVertical();
+                Vector3 swim = SwimLogic.Velocity(dir, vertical, speed);
+                // float low, only the back above the surface, bobbing gently; Space never lifts it higher than that
+                float target = SwimLogic.TargetY(Evolve.World.ZoneLayout.WaterLevel) + 0.03f * Mathf.Sin(Time.time * 0.6f * Mathf.PI * 2f);
+                if (vertical >= 0f && rb.position.y >= target - 0.02f) swim.y = Mathf.Clamp((target - rb.position.y) * 3f, -0.4f, 0.4f);
+                else if (vertical == 0f) swim.y = Mathf.Min(swim.y, (target - rb.position.y) * 3f);
                 rb.linearVelocity = Vector3.MoveTowards(v, swim, acceleration * Time.fixedDeltaTime);
+                stats.State.TrySpendEnergy(SwimLogic.EnergyPerSecond * Time.fixedDeltaTime);
                 return;
             }
             Vector3 target = dir * speed;
@@ -158,7 +168,7 @@ namespace Evolve.Player
                 Vector3 p = rb.position;
                 float depth = Evolve.World.ZoneLayout.DepthAt(p.x, p.z);
                 // swim only while below the surface (a hop out of the water lands normally)
-                IsSwimming = SwimLogic.IsSwimming(depth) && p.y < Evolve.World.ZoneLayout.WaterLevel + 0.3f;
+                IsSwimming = SwimLogic.IsSwimming(depth) && p.y < Evolve.World.ZoneLayout.WaterLevel + 0.2f;
                 IsWading = !IsSwimming && depth > 0.05f;
             }
             else
