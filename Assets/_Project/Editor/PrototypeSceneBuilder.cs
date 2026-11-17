@@ -238,13 +238,16 @@ namespace Evolve.EditorTools
             };
         }
 
+        /// <summary>Slime collider radius at BodyScale 1 (base diameter = 2 × this). Shelter gaps are sized from it.</summary>
+        internal const float SlimeRadius = 0.5f;
+
         /// <summary>Slime player + follow camera (Camera.main) + vision volume + HUD. Returns the slime.</summary>
         internal static GameObject CreatePlayer(SharedAssets shared, Vector3 position)
         {
             // Slime
             var slime = new GameObject("Slime");
             slime.transform.position = position;
-            slime.AddComponent<SphereCollider>().radius = 0.5f;
+            slime.AddComponent<SphereCollider>().radius = SlimeRadius;
             var rb = slime.AddComponent<Rigidbody>();
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
@@ -264,6 +267,8 @@ namespace Evolve.EditorTools
             var stats = slime.AddComponent<SurvivalStats>();
             Set(stats, "config", shared.Config);
             slime.AddComponent<ClimateSensor>();
+            slime.AddComponent<WaterSensor>();   // thirst only switches on in scenes with a WaterZone
+            slime.AddComponent<ShelterSensor>();
             slime.AddComponent<SkillBar>();
             var controller = slime.AddComponent<SlimeController>();
             slime.AddComponent<BodyFeedback>();

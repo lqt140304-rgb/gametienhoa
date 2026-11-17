@@ -63,4 +63,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Spec lát cắt Hồ Khởi Sinh + sinh tồn sâu 0.5a–0.5e (`docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md`)
 - [x] Code 0.5a: **đã code, chưa biên dịch/chạy thử** (chưa có Unity để biên dịch): bậc D, `Ecology/` (quần thể, `Region`, `Den`, xác, kẻ săn B đi vào), `VibrationEmitter`, menu **Evolve → Build Underroot Lake**, test EditMode
 - [ ] Biên dịch và chạy thử 0.5a theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 8
+- [x] Code 0.5b: **đã code, chưa biên dịch/chạy thử**: Khát, Căng thẳng, vùng nước sạch/bẩn (`WaterZone`), nơi trú (`ShelterZone`, 3 hốc Chân Rễ khe 1,35 m), kích thước thân theo số cơ quan, HUD tối giản (giữ Tab xem đủ), phản hồi trên thân slime (`BodyFeedback`), test EditMode
+- [ ] Biên dịch và chạy thử 0.5b theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 9
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

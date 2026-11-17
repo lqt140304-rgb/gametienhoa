@@ -66,6 +66,10 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Net/` | `CoopManager`, `CoopMenu`, `RemoteAvatar`, `PlayerNetState`, `WorldSync` | **Co-op 0.4a** (Netcode for GameObjects, host + IP). Assembly riêng `Evolve.Net`, chỉ biên dịch khi đã cài gói `com.unity.netcode.gameobjects` (`defineConstraints` + `versionDefines`). Tự thêm khi Play, phím F2. Xem `docs/COOP_SETUP.md` |
 | `Ecology/` | `Region`, `RegionPopulation`, `SpeciesPopulation`, `SpeciesSO`, `Den`, `PopulationCap`, `EmbodiedCreature`, `PredatorIncursion`, `IncursionRule`, `Carcass`, `CarcassDecay`, `CarcassStage` | **0.5a, chưa biên dịch.** Quần thể theo vùng thay spawner trong khu hồ (L0 hiện thân từ tổ, L2 chạy phép tính), kẻ săn B đi vào từ rìa, xác 3 giai đoạn. Cùng với `World/VibrationEmitter` (rung phát ra từ sinh vật). Spec: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` |
 | `Survival/CombatFeedback` | | Phản hồi trúng đòn: thanh máu trên kẻ săn mồi và con mồi bị thương (`CombatEvents`), số sát thương bay lên (gộp các gai cùng một loạt), dấu × ở hồng tâm; `CombatEvents.Raise`, `HealthFraction` (Predator và Prey), `HitFlash`. Người vào phòng thấy ngay khi bắn trúng (dự đoán 1 giây, sau đó theo số của Host) |
+| `World/` (0.5b) | `WaterZone`, `WaterSensor`, `ShelterZone`, `ShelterSensor`, `ZoneSet` | **0.5b, chưa biên dịch.** Vùng nước (sạch/bẩn, `WaterZone.AnyInScene` bật khát) và nơi trú (trigger); sensor trên slime theo dõi vùng đang đứng trong (`ZoneSet` chống kẹt khi chồng vùng hoặc vùng bị tắt) |
+| `Survival/StressEffects` | | **0.5b.** Hàm thuần: độ rung camera, hệ số bán kính quét, hệ số hồi năng lượng theo Căng thẳng (ngưỡng trong `SurvivalConfig`) |
+| `Survival/HudVisibility` | | **0.5b.** Hàm thuần quyết định thanh nào hiện trên HUD tối giản (chỉ thanh có vấn đề; giữ Tab hiện tất cả) |
+| `Player/BodyFeedback` | | **0.5b.** Thân slime thể hiện chỉ số: xám khô khi khát, nhạt khi đói, run khi căng thẳng |
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
 | `Editor/` | `PrototypeSceneBuilder`, `UnderrootLakeBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; menu **Evolve → Build Underroot Lake** dựng scene `Scenes/Underroot_Lake` (tạo species asset D/C/B, prefab `Prey_C`, gắn `VibrationEmitter`, tag `ShallowWater`; dùng chung `CreateSharedAssets`/`CreatePlayer` của builder prototype); `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
@@ -144,6 +148,15 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Tên loài (Mudmite, Rootcrawler, Hunter) và số liệu là **[ĐỀ XUẤT]**. `TemperatureZone.Ambient` là °C tuyệt đối (hốc rễ 18°C, bãi mùn 26°C).
 - Builder hồ đặt scene mới dựng làm scene đầu trong Build Settings (cùng helper với builder prototype).
 
+## 6.3. Bản 0.5b (Khát, nơi trú, Căng thẳng): trạng thái và giới hạn
+
+**Code 0.5b chưa từng được biên dịch hay chạy.** Kiểm tra theo mục 9.
+
+- Scene hồ: `WaterZone` sạch trên Shallows North/West (Vũng Sinh Mệnh) và Khe Thủy Mạch; một vũng nước đọng **bẩn** (màu tối) ở Bãi Mùn Rễ, quanh (38, 0, -8). 3 Root Shelter ở Chân Rễ có `ShelterZone` (`MaxBodyScale` 1,3), khe = đường kính slime gốc 1,0 m × 1,3 + 0,05 = **1,35 m** (trước là 1,6 m).
+- `WaterSensor` và `ShelterSensor` gắn trong `CreatePlayer`, nên có ở cả hai scene; `Prototype_01` không có `WaterZone` nên khát tự tắt.
+- **Kẻ săn B chưa bị khe trú chặn thật:** collider capsule của nó chỉ rộng 0,7 m và nó là Rigidbody kinematic (đi bằng `MovePosition`, xuyên qua collider tĩnh). Cần xem bằng mắt; muốn chặn thật phải sửa `Predator` (bản sau).
+- Chỉ số mới (khát, căng thẳng) chưa gửi qua mạng: người khác không thấy.
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
@@ -165,3 +178,19 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 10. Vào Chân Rễ Cổ Thụ (bắc) thấy nhiệt độ lạnh, Bãi Mùn Rễ (đông) ấm (HUD).
 11. Evolve → Build Prototype Scene vẫn chạy như cũ (slime, camera, HUD, con mồi, hoang mạc, kẻ săn).
 12. Co-op F2: host + client vào được scene Underroot_Lake (mỗi người thế giới riêng như 0.4a), không lỗi "không tìm thấy PreySpawner/PredatorSpawner".
+
+## 9. Danh sách kiểm tra thủ công 0.5b (cho chủ dự án)
+
+Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `BodyFeedback`. Phải dựng lại: **Evolve → Build Underroot Lake** và **Evolve → Build Prototype Scene**.
+
+1. Console không có lỗi đỏ; Test Runner (EditMode) xanh toàn bộ.
+2. Ở hồ: Khát giảm dần; đứng trong nước thì đầy lại. HUD lúc đầu chỉ hiện số mạng và nhiệt độ; giữ **Tab** thấy đủ các thanh.
+3. Đi xa nước lâu (ví dụ ở Vườn Bào Tử) → thanh Khát hiện trên HUD, thân slime xám khô; Khát về 0 thì mất máu.
+4. Vào một Root Shelter (Chân Rễ, phía bắc): Căng thẳng giảm nhanh, năng lượng hồi gấp đôi. Bị kẻ săn cắn → Căng thẳng tăng.
+5. Căng thẳng > 60 → camera rung và vòng quét (phím C) co lại; ở 100 không có gì tệ hơn (không mất máu, không mất điều khiển).
+6. Nuôi 6 cơ quan → slime to hơn và không chui lọt khe trú; tháo bớt cơ quan thì chui lại được.
+7. Nhìn bằng mắt xem kẻ săn B có đi vào được hốc trú không. Theo code hiện tại **có thể vào được** (B rộng 0,7 m < khe 1,35 m và di chuyển kinematic xuyên collider) — ghi lại để quyết định ở bản sau.
+8. Vũng nước đọng ở Bãi Mùn Rễ trông tối hơn nước sạch, vẫn uống được.
+9. `Prototype_01` chạy như cũ, không bị khát chết.
+10. Co-op F2: vào phòng không lỗi (chỉ số mới chưa hiển thị cho người khác).
+11. Đã biết, vô hại: khi đã chết và đang quan sát, Tab vừa hiện đủ thanh vừa đổi người được quan sát.
