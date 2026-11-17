@@ -43,6 +43,91 @@ namespace Evolve.World
         [Tooltip("How fast the ripple texture drifts (texture repeats per second)")]
         public Vector2 Drift = new Vector2(0.012f, 0.007f);
 
+        // Every pond in the scene knows the others, so where two ponds meet they become ONE sheet of water:
+        // no shore band is drawn across the water of a neighbour, and overlapping water is drawn only once.
+        static readonly List<WaterSurface> all = new List<WaterSurface>();
+        public static IReadOnlyList<WaterSurface> All => all;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetAll() => all.Clear();
+
+        Vector2[] worldOutline;
+        bool dirty;
+
+        /// <summary>The shoreline in world coordinates (x, z).</summary>
+        public Vector2[] WorldOutline
+        {
+            get
+            {
+                if (worldOutline == null) ComputeOutline();
+                return worldOutline;
+            }
+        }
+
+        /// <summary>True if this world point lies on this pond's water.</summary>
+        public bool ContainsWorld(Vector2 p) => PointInPolygon(WorldOutline, p);
+
+        static bool PointInPolygon(Vector2[] poly, Vector2 p)
+        {
+            bool inside = false;
+            for (int i = 0, j = poly.Length - 1; i < poly.Length; j = i++)
+            {
+                if ((poly[i].y > p.y) != (poly[j].y > p.y) &&
+                    p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x)
+                    inside = !inside;
+            }
+            return inside;
+        }
+
+        Vector2[] localOutline;
+
+        void ComputeOutline()
+        {
+            bool disc = Shape == WaterShape.Disc;
+            float width = disc ? Size.x * 2f : Size.x, depth = disc ? Size.x * 2f : Size.y;
+            int samples = Mathf.Clamp(Mathf.RoundToInt(WaterOutline.PerimeterEstimate(width, depth, disc) / Mathf.Max(0.3f, Cell)), 24, 220);
+            localOutline = WaterOutline.Make(width, depth, disc, Seed, Wobble, samples);
+            worldOutline = new Vector2[localOutline.Length];
+            var origin = new Vector2(transform.position.x, transform.position.z);
+            for (int i = 0; i < localOutline.Length; i++) worldOutline[i] = localOutline[i] + origin;
+        }
+
+        // Is this point (in my mesh space) on the water of another pond? onlyLowerPriority: only ponds drawn "before" me.
+        bool OnOtherWater(Vector3 local, bool onlyLowerPriority)
+        {
+            var p = new Vector2(transform.position.x + local.x, transform.position.z + local.z);
+            foreach (var other in all)
+            {
+                if (other == null || other == this || !other.isActiveAndEnabled) continue;
+                if (onlyLowerPriority && other.Seed >= Seed) continue;
+                if (other.ContainsWorld(p)) return true;
+            }
+            return false;
+        }
+
+        static void MarkAllDirty()
+        {
+            foreach (var s in all) if (s != null) s.dirty = true;
+#if UNITY_EDITOR
+            if (!Application.isPlaying) UnityEditor.EditorApplication.delayCall += FlushAll;
+#endif
+        }
+
+        /// <summary>Rebuild every pond now (other tools that read pond shapes call this first).</summary>
+        public static void Refresh()
+        {
+            foreach (var s in all) if (s != null) { s.worldOutline = null; s.dirty = true; }
+            FlushAll();
+        }
+
+        static void FlushAll()
+        {
+            var copy = new List<WaterSurface>(all);
+            // Outlines are cached from each pond's settings; refresh them first so ponds see each other's final shape.
+            foreach (var s in copy) if (s != null && s.dirty) s.worldOutline = null;
+            foreach (var s in copy) if (s != null && s.dirty && s.isActiveAndEnabled) { s.dirty = false; s.Build(); }
+        }
+
         Mesh mesh;
         readonly List<Mesh> extraMeshes = new List<Mesh>();
         Vector3[] basePos, work;
@@ -50,7 +135,12 @@ namespace Evolve.World
         Vector2 offset;
         float clock, nextUpdate;
 
-        void OnEnable() => Build();
+        void OnEnable()
+        {
+            all.Add(this);
+            worldOutline = null;
+            MarkAllDirty();
+        }
 
 #if UNITY_EDITOR
         void OnValidate()
@@ -64,9 +154,18 @@ namespace Evolve.World
         }
 #endif
 
-        void OnDisable() => Release();
+        void OnDisable()
+        {
+            all.Remove(this);
+            Release();
+            MarkAllDirty();
+        }
 
-        void OnDestroy() => Release();
+        void OnDestroy()
+        {
+            all.Remove(this);
+            Release();
+        }
 
         void Release()
         {
@@ -95,12 +194,12 @@ namespace Evolve.World
         void Build()
         {
             Release();
-            bool disc = Shape == WaterShape.Disc;
-            float width = disc ? Size.x * 2f : Size.x, depth = disc ? Size.x * 2f : Size.y;
-            int samples = Mathf.Clamp(Mathf.RoundToInt(WaterOutline.PerimeterEstimate(width, depth, disc) / Mathf.Max(0.3f, Cell)), 24, 220);
-            var outline = WaterOutline.Make(width, depth, disc, Seed, Wobble, samples);
+            ComputeOutline();
+            var outline = localOutline;
 
             mesh = WaterMeshes.Organic(outline, Cell);
+            // Where another pond already covers the water, draw nothing twice.
+            WaterMeshes.RemoveTriangles(mesh, c => OnOtherWater(c, true));
             mesh.hideFlags = HideFlags.HideAndDontSave; // never saved into the scene: it is rebuilt every time
             mesh.MarkDynamic();
             GetComponent<MeshFilter>().sharedMesh = mesh;
@@ -112,8 +211,13 @@ namespace Evolve.World
             ApplyRipples();
 
             // Wet bank (dark, fading outward) and foam (white, broken up), both following the same shore.
-            Band("Bank", BankMaterial, WaterMeshes.Band(outline, BankOutside, BankInside, Seed * 31 + 1), 0.025f);
-            Band("Foam", FoamMaterial, WaterMeshes.Band(outline, FoamOutside, FoamInside, Seed * 31 + 2), 0.05f);
+            // The parts that would lie on a neighbour's water are removed: ponds that touch simply flow together.
+            var bank = WaterMeshes.Band(outline, BankOutside, BankInside, Seed * 31 + 1);
+            WaterMeshes.RemoveTriangles(bank, c => OnOtherWater(c, false));
+            Band("Bank", BankMaterial, bank, 0.025f);
+            var foam = WaterMeshes.Band(outline, FoamOutside, FoamInside, Seed * 31 + 2);
+            WaterMeshes.RemoveTriangles(foam, c => OnOtherWater(c, false));
+            Band("Foam", FoamMaterial, foam, 0.05f);
         }
 
         void Band(string name, Material material, Mesh bandMesh, float height)
@@ -158,7 +262,9 @@ namespace Evolve.World
 
         void Update()
         {
-            if (!Application.isPlaying || mesh == null) return;
+            if (!Application.isPlaying) return;
+            if (dirty) FlushAll();
+            if (mesh == null) return;
             float dt = Time.deltaTime;
             clock += dt * WaveSpeed;
 
