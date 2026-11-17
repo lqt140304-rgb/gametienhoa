@@ -54,7 +54,8 @@ namespace Evolve.Player
             if (stats == null) FindPlayer();
             if (KeyPressed.Alt()) wantAim = !wantAim;
 
-            bool menuOpen = MouseUiOpen || (interactor != null && interactor.BodyMenuOpen);
+            bool menuOpen = MouseUiOpen || (interactor != null && interactor.BodyMenuOpen)
+                || (stats != null && SurvivalHUD.BlocksInput(stats.gameObject));
             bool dead = stats != null && stats.State.IsDead;
             bool should = wantAim && !menuOpen && !dead;
 
