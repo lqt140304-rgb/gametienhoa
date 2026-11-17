@@ -51,7 +51,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | Phím | Tác dụng |
 |---|---|
 | WASD / cần trái | Trườn |
-| Shift | Chạy nhanh (tốn năng lượng liên tục) |
+| Shift | Chạy nhanh (tốn thêm thức ăn) |
 | Space / nút A | Nảy (tốn năng lượng) |
 | Q / nút X | Dùng Dị Năng |
 | Giữ chuột phải + kéo | Xoay camera |
@@ -60,7 +60,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | H | Ẩn/hiện bảng hướng dẫn |
 
 ## Cần kiểm thử
-- Đói giảm dần; khi đói = 0 thì mất máu; khi no thì hồi máu.
+- Đói chỉ giảm khi di chuyển (nhanh hơn khi chạy nước rút), đứng yên không giảm; khi đói = 0 thì mất máu; khi no thì hồi máu.
 - Đứng yên thì hồi năng lượng; nảy và dùng Dị Năng thì tốn năng lượng.
 - Chạm vào thức ăn thì nó co lại và thanh đói tăng; sau 20 giây thức ăn xuất hiện lại.
 - Màn hình đen trắng, sương mù dày, nhìn xa khoảng 12 m.

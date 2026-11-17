@@ -13,8 +13,8 @@ namespace Evolve.Player
     [RequireComponent(typeof(Rigidbody), typeof(SurvivalStats))]
     public class SlimeController : MonoBehaviour
     {
-        [SerializeField] float crawlSpeed = 1.8f;
-        [Tooltip("Speed multiplier while holding Shift (drains energy)")]
+        [SerializeField] float crawlSpeed = 1.3f;
+        [Tooltip("Speed multiplier while holding Shift (burns extra food)")]
         [SerializeField] float sprintMultiplier = 1.8f;
         [SerializeField] float acceleration = 12f;
         [SerializeField] float hopForce = 5f;
@@ -60,8 +60,9 @@ namespace Evolve.Player
             Vector3 dir = GetMoveDirection();
             stats.IsMoving = dir.sqrMagnitude > 0.01f;
 
-            IsSprinting = stats.IsMoving && ReadSprint()
-                && stats.State.DrainEnergy(stats.Config.SprintEnergyPerSec * Time.fixedDeltaTime);
+            // Sprinting burns food (see SurvivalState.Tick); impossible when starving.
+            IsSprinting = stats.IsMoving && ReadSprint() && stats.State.Hunger > 0f;
+            stats.IsSprinting = IsSprinting;
 
             Vector3 v = rb.linearVelocity;
             Vector3 target = dir * crawlSpeed * (IsSprinting ? sprintMultiplier : 1f);
