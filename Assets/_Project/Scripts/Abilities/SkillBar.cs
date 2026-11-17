@@ -136,6 +136,8 @@ namespace Evolve.Abilities
             }
             if (!ability.Activate(gameObject, level)) { Fail($"{ability.DisplayName} không dùng được lúc này"); return; }
 
+            Evolve.Visuals.SlimeGelAnimator.Play(gameObject, ability is BurstDashAbility || ability is ChargeAbility
+                ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release);
             stats.State.TrySpendEnergy(ability.EnergyCost);
             readyAt[organ] = Time.time + ability.CooldownFor(level);
             FailureReason = "";

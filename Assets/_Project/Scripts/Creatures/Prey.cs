@@ -170,6 +170,7 @@ namespace Evolve.Creatures
         /// <summary>Hurt the prey (spikes and so on). At 0 health it dies and rewards the attacker like a catch.</summary>
         public void TakeDamage(float amount, SurvivalStats by)
         {
+            if (by != null && amount > 0f) Evolve.Visuals.SlimeGelAnimator.Play(by.gameObject, Evolve.Visuals.GelMotion.Attack);
             if (IsReplica)
             {
                 // The host applies the damage; the player who hit it sees the result at once.
@@ -209,6 +210,7 @@ namespace Evolve.Creatures
             caught = true;
 
             NetWorld.Feed(stats, nutrition);
+            Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Absorb);
             var host = stats.GetComponent<OrganHost>();
             var drop = PickDrop(host);
             if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));
