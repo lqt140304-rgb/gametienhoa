@@ -42,3 +42,32 @@ Unity 6.6 URP, C# 9; không có Unity trong môi trường làm việc (chưa bi
 - Kích thước khu: cạnh lớn ~80 m theo tỉ lệ concept (01 80×70, 02 70×60, 03 80×70, 04 70×70, 05 90×40 theo dòng suối, 06 80×55 — lấy từ bảng phiên kia).
 - Vùng ảnh hưởng mỗi khu giảm trong ~60 m; đồi giữa khu tới ~6 m.
 - Mỗi bước là một PR: A (số liệu, địa hình, nước, bơi) → B (mái rễ, nền, thực vật theo quần xã) → C (01, 02) → D (03, 04) → E (05, 06, tài liệu).
+
+---
+
+# Bổ sung (sau khi xem bản dựng đầu): độ cao khác nhau, các khu tách xa hơn, hồ méo hơn
+
+## Vì sao
+Người chơi thấy 6 khu nằm thành một vòng quanh hồ, đi đâu cũng men bờ hồ ⇒ đơn điệu; các khu sát nhau; hồ vẫn giống hình bầu dục. Muốn: khu ở trong hang, khu trũng xuống, khu trên cao; nhiều lối đi khác nhau.
+
+## Đã chốt (người chơi duyệt)
+| Khu | Độ cao | Mô tả |
+|---|---|---|
+| 01 Vũng Sinh Mệnh | ngang mặt hồ (0 m) | nơi xuất hiện, điểm xuất phát |
+| 02 Chân Rễ Cổ Thụ | **trong hang** | bên trong khối rễ khổng lồ, trần ~12 m; một cửa rộng + một khe hẹp 0,9 × 0,65 m chỉ slime lọt |
+| 03 Bãi Mùn Rễ | **hố trũng −6 m** | ẩm, gỗ mục, vũng đọng; xuống bằng dốc mùn |
+| 04 Vườn Bào Tử | **cao nguyên +10 m** | lên bằng đường dốc uốn quanh rễ |
+| 05 Khe Thủy Mạch | **khe sâu −8 m** | suối dưới đáy giữa hai vách đá vôi, hai hố sâu 2 m |
+| 06 Rìa Săn Mồi | **sống đất +6 m** ở rìa bắc | nhìn xuống hồ; cửa hầm cho sinh vật B |
+
+Lối đi: bơi tắt qua hồ; đường hầm từ hang 02 sang hố 03; cầu rễ nối 04 ↔ 06; lối leo từ khe 05 lên 04; đường mòn quanh hồ vẫn còn nhưng mỗi đoạn lên/xuống dốc khác nhau.
+
+## Quyết định của tôi (người chơi kiểm)
+- **Các khu tách xa hơn:** khoảng trống giữa hai khu kề nhau ≥ 65 m (trước 49–77 m). Tâm mới: 01 (-8,-135), 02 (-165,-15), 03 (-140,135), 04 (150,125), 05 (173,-12), 06 (10,168); vách rìa bắt đầu từ ±200 m (trước 175). Vùng ảnh hưởng mỗi khu giảm còn **~40 m**, để giữa các khu có vùng hoang riêng.
+- **Hồ méo hơn:** bán kính bờ dao động khoảng **−15% … +33%** quanh hình bầu dục (3 tầng nhiễu: vịnh lớn, vũng nhỏ, khía bờ). Đường mòn được nắn lại để không lội qua hồ.
+- **Cách làm độ cao:** mỗi khu có một "độ cao nền" (0 / hang / −6 / +10 / −8 / +6) và địa hình hòa dần giữa các nền bằng dốc đi được (≤ ~35°), trừ vách khe 05 và mép cao nguyên 04 (dốc đứng, có đúng một lối dốc lên và một lối leo). **Hang 02** = nền hơi trũng + **mái mesh** (rễ + đất) dựng bằng code phủ trên, có cửa và khe; địa hình Unity không có trần nên không thể làm hang bằng địa hình.
+- **Đường hầm 02 → 03:** một ống rễ/đất (mesh) nối miệng hang với dốc hố 03, rộng ~3 m. **Cầu rễ 04 ↔ 06:** một rễ to nằm ngang, mặt trên phẳng rộng ~2 m.
+- Mực nước hồ không đổi (0); suối chảy từ trên cao (nguồn ở rìa đông) xuống đáy khe 05 rồi ra hồ — suối đi theo đáy khe, phần dốc là ghềnh nhỏ.
+
+## Thứ tự
+Phần này gộp vào **PR A** (bảng số liệu + địa hình), trước khi làm thực vật (PR B). Hang 02, đường hầm và cầu rễ là mesh nên thuộc **PR C** (02) và **PR D/E** (cầu 04–06).
