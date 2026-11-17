@@ -42,7 +42,7 @@ namespace Evolve.World
                 float t = i / (float)(points - 1);
                 float rise = Mathf.Sin(t * Mathf.PI);
                 // a rounded arch whose shoulders are fuller than a plain sine
-                float arch = Mathf.Pow(rise, 0.75f) * height;
+                float arch = Mathf.Pow(Mathf.Max(0f, rise), 0.75f) * height; // sin(pi) is a tiny NEGATIVE number in float; a power of it is NaN
                 Vector3 p = a + along * t + Vector3.up * arch + side * (wobble * rise * Mathf.Sin(t * Mathf.PI * 3f + p1));
                 p.y -= sink * (1f - rise); // buried at both ends
                 path[i] = p;
