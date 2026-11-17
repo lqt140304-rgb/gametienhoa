@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Evolve.Abilities
 {
     /// <summary>
-    /// A spike flying straight. It hurts the first Predator it touches and vanishes on anything else
+    /// A spike flying straight. It hurts the first creature (Predator or Prey) it touches and vanishes on anything else
     /// (ground, walls) or at the end of its range. Created at runtime by SpikeBurstAbility, no prefab needed.
     /// </summary>
     public class SpikeProjectile : MonoBehaviour
@@ -57,6 +57,11 @@ namespace Evolve.Abilities
             {
                 var predator = hit.collider.GetComponentInParent<Predator>();
                 if (predator != null) predator.TakeDamage(damage, owner);
+                else
+                {
+                    var prey = hit.collider.GetComponentInParent<Prey>();
+                    if (prey != null) prey.TakeDamage(damage, owner);
+                }
                 Destroy(gameObject);
                 return;
             }
