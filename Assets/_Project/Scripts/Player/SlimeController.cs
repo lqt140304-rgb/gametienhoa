@@ -156,6 +156,18 @@ namespace Evolve.Player
             }
             Vector3 target = dir * speed;
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
+            // Hug the ground: on a bump or a slope the body follows the surface (moving along it, pressed lightly onto it)
+            // instead of popping off every little rise and dropping back, which read as stutter.
+            float extent = col ? col.bounds.extents.y : 0.5f;
+            if (v.y < 1.5f && Physics.Raycast(rb.position, Vector3.down, out var hit, extent + 0.35f, groundMask, QueryTriggerInteraction.Ignore)
+                && hit.normal.y > 0.6f)
+            {
+                Vector3 along = Vector3.ProjectOnPlane(horizontal, hit.normal);
+                if (along.sqrMagnitude > 1e-6f) along = along.normalized * horizontal.magnitude;
+                float stick = hit.distance > extent + 0.02f ? -2f : -0.3f;   // a little gap below: pull down onto the ground
+                rb.linearVelocity = new Vector3(along.x, Mathf.Min(v.y, along.y + stick), along.z);
+                return;
+            }
             rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
         }
 
@@ -235,7 +247,7 @@ namespace Evolve.Player
             if (!grounded) fallSpeed = Mathf.Min(fallSpeed, rb.linearVelocity.y);
             if (wasAirborne && grounded)
             {
-                squashTarget = -0.4f; // the body mesh does most of the splat (SlimeGelAnimator.Land)
+                if (fallSpeed < -1.5f) squashTarget = -0.4f; // only a real drop spreads the body (a bump or a slope never does)
                 var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
                 // Only a real fall splats; the small lift of a dash or a step off a bump does not.
                 if (jelly != null && fallSpeed < -2.5f) jelly.Land(Mathf.Clamp(-fallSpeed / 7f, 0.3f, 1.2f));

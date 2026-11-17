@@ -38,7 +38,7 @@ namespace Evolve.Tests.EditMode
                         sum += h; sum2 += h * h; n++;
                     }
                 float mean = sum / n;
-                Assert.GreaterOrEqual(Mathf.Sqrt(sum2 / n - mean * mean), 0.2f, pad.Name + " is too flat");
+                Assert.GreaterOrEqual(Mathf.Sqrt(sum2 / n - mean * mean), 0.1f, pad.Name + " is too flat");
             }
         }
 

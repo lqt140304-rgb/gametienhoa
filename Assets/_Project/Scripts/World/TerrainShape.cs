@@ -17,7 +17,7 @@ namespace Evolve.World
         public const float CliffStart = 200f;
         public const float CliffHeight = 20f;
 
-        const float AreaBumps = 1.3f;
+        const float AreaBumps = 0.75f;   // gentle: about 0 .. 1.5 m
         const float MoundHeight = 6f;
         const float RimDistance = WorldScale.ZoneSize * 0.5f;
 
@@ -28,7 +28,7 @@ namespace Evolve.World
             if (depth > 0f) return -depth;
 
             float ox = seed * 0.731f, oz = seed * 0.377f;
-            float bumps = AreaBumps * 2f * ZoneLayout.Noise(x / 22f + ox, z / 22f + oz);   // 0 .. 2.6 m
+            float bumps = AreaBumps * 2f * ZoneLayout.Noise(x / 30f + ox, z / 30f + oz);
             float mounds = MoundHeight * Smooth01((ZoneLayout.Noise(x / 60f + 300f + ox, z / 60f + 300f + oz) - 0.3f) / 0.5f);
             float inArea = ZoneLayout.MaxInfluence(x, z);
             float h = Mathf.Lerp(mounds + 0.5f * bumps, bumps, inArea);
@@ -50,6 +50,7 @@ namespace Evolve.World
         public static float[,] Heights(int resolution, int seed)
         {
             var map = new float[resolution, resolution];
+            var dry = new bool[resolution, resolution];
             float cell = WorldScale.ZoneSize / (resolution - 1);
             for (int zi = 0; zi < resolution; zi++)
             {
@@ -58,7 +59,23 @@ namespace Evolve.World
                 {
                     float x = -RimDistance + xi * cell;
                     map[zi, xi] = Mathf.Clamp01((BaseOffset + HeightAt(x, z, seed)) / TerrainHeight);
+                    dry[zi, xi] = ZoneLayout.DepthAt(x, z) <= 0f;
                 }
+            }
+            // Two gentle smoothing passes over dry land (water beds keep their exact depth), so walking never meets a crease.
+            for (int pass = 0; pass < 2; pass++)
+            {
+                var copy = (float[,])map.Clone();
+                for (int zi = 1; zi < resolution - 1; zi++)
+                    for (int xi = 1; xi < resolution - 1; xi++)
+                    {
+                        if (!dry[zi, xi]) continue;
+                        float sum = 0f; int n = 0;
+                        for (int dz = -1; dz <= 1; dz++)
+                            for (int dx = -1; dx <= 1; dx++)
+                                if (dry[zi + dz, xi + dx]) { sum += copy[zi + dz, xi + dx]; n++; }
+                        map[zi, xi] = sum / n;
+                    }
             }
             return map;
         }
