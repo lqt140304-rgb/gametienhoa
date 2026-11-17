@@ -9,7 +9,7 @@ namespace Evolve.World
     {
         /// <summary>Cached liveness check: a live, enabled Unity component.</summary>
         public static readonly Func<object, bool> IsAliveUnityObject =
-            o => o is Component c && c != null && c.isActiveAndEnabled;
+            o => o is Behaviour b && b != null && b.isActiveAndEnabled;
 
         readonly List<object> items = new List<object>();
 

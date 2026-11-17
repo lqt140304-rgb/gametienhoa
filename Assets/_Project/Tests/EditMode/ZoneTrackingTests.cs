@@ -42,6 +42,24 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void IsAliveUnityObjectDetectsDestroyedAndDisabled()
+        {
+            var go = new GameObject("w", typeof(BoxCollider));
+            var zone = go.AddComponent<WaterZone>();
+            Object.DestroyImmediate(go);
+            Assert.IsFalse(ZoneSet.IsAliveUnityObject(zone));
+            Assert.IsFalse(ZoneSet.IsAliveUnityObject(new object()));
+        }
+
+        [Test]
+        public void ShelterFitsOnlySmallBodies()
+        {
+            Assert.IsTrue(ShelterSensor.Fits(1.3f, 1.30f));
+            Assert.IsFalse(ShelterSensor.Fits(1.3f, 1.36f));
+            Assert.IsTrue(ShelterSensor.Fits(1.3f, 1.0f));
+        }
+
+        [Test]
         public void WaterCountResetsOnLoad()
         {
             WaterZone.SetCountForTests(3);

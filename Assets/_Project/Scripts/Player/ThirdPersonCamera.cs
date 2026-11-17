@@ -98,7 +98,7 @@ namespace Evolve.Player
         {
             if (Override != null || target == null) return pos; // spectating: not our body
             if (shakeStatsFor != target) { shakeStatsFor = target; shakeStats = target.GetComponent<Evolve.Survival.SurvivalStats>(); }
-            if (shakeStats == null || shakeStats.Config == null) return pos;
+            if (shakeStats == null || shakeStats.Config == null || shakeStats.State.IsDead) return pos;
             float amp = Evolve.Survival.StressEffects.CameraShake(shakeStats.State.Stress, shakeStats.Config);
             return amp > 0f ? pos + Random.insideUnitSphere * amp : pos;
         }
