@@ -74,3 +74,5 @@ Mỗi bước là một PR riêng, để nếu có lỗi thì chỉ cần sửa 
 2. Mục 5–12 (mái lưới rễ, nền, thực vật, điểm nhấn): **phiên Claude bên kia** làm. Phiên này làm bước A (mục 1–4), plan: `docs/superpowers/plans/2026-11-17-0.6d-map300-water.md`.
 3. Vũng nước đọng khu 03: **vàng lục**.
 4. Bơi bản đầu: theo đề xuất (không chết đuối, tốn năng lượng nhẹ).
+
+**Cập nhật sau đó (2026-11-17):** chủ dự án đổi thành **bản đồ 500 m, mỗi khu khoảng 80 m** (thay cho 300 m và nhân 1,5). Đi ngang khoảng 8 phút, đúng spec 6.9. Plan đã chỉnh theo.
