@@ -21,6 +21,7 @@ namespace Evolve.Survival
         public static bool F1() => Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame;
         public static bool F() => Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame;
         public static bool C() => Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame;
+        public static bool F2() => Keyboard.current != null && Keyboard.current.f2Key.wasPressedThisFrame;
         public static bool F5() => Keyboard.current != null && Keyboard.current.f5Key.wasPressedThisFrame;
         public static Vector2 MousePosition() => Mouse.current != null ? Mouse.current.position.ReadValue() : (Vector2)new Vector2(Screen.width / 2f, Screen.height / 2f);
         public static bool Alt() => Keyboard.current != null
@@ -41,6 +42,7 @@ namespace Evolve.Survival
         public static bool F1() => Input.GetKeyDown(KeyCode.F1);
         public static bool F() => Input.GetKeyDown(KeyCode.F);
         public static bool C() => Input.GetKeyDown(KeyCode.C);
+        public static bool F2() => Input.GetKeyDown(KeyCode.F2);
         public static bool F5() => Input.GetKeyDown(KeyCode.F5);
         public static Vector2 MousePosition() => Input.mousePosition;
         public static bool Alt() => Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt);
