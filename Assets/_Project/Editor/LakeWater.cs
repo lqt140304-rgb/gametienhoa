@@ -128,7 +128,20 @@ namespace Evolve.EditorTools
                     renderer.receiveShadows = false;
                 }
             }
-            if (terrain != null) AssetDatabase.SaveAssets();
+            // 5) Shallow water is a hollow too: the slime wades IN it (about half its body under the surface) instead of
+            //    standing on top of a film of water. The ponds already know their shores, so each hollow follows its pond.
+            if (terrain != null)
+            {
+                WaterSurface.Refresh();
+                foreach (var pond in WaterSurface.All)
+                {
+                    if (pond == null || (pond.transform.parent != null && pond.transform.parent.name.StartsWith("Deep Pocket"))) continue;
+                    var material = pond.GetComponent<MeshRenderer>().sharedMaterial;
+                    float hollow = material != null && material.name == "Lake_WaterDirty" ? 0.25f : pond.Shape == WaterShape.Stream ? 0.5f : 0.65f;
+                    CarveHollow(terrain, pond, hollow);
+                }
+                AssetDatabase.SaveAssets();
+            }
 
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
@@ -161,13 +174,52 @@ namespace Evolve.EditorTools
                     float t = Vector2.Distance(p, centre) / (waterRadius + 2f);
                     if (t >= 1f) continue;
                     float bowl = Mathf.Pow(1f - t * t, 1.5f);
-                    float worldY = origin.y + heights[j, i] * size.y - depth * bowl;
+                    float worldY = Mathf.Min(origin.y + heights[j, i] * size.y, -depth * bowl);   // from the flat ground: running again does not dig deeper
                     heights[j, i] = Mathf.Clamp01((worldY - origin.y) / size.y);
                 }
             data.SetHeights(x0, z0, heights);
             EditorUtility.SetDirty(data);
             var collider = terrain.GetComponent<TerrainCollider>();
             if (collider != null) collider.terrainData = data;   // refresh the physics shape
+        }
+
+        /// <summary>
+        /// Digs the terrain under a pond: `depth` metres in the middle, shelving up to the shore over about 3 m. Always
+        /// measured from the flat ground (y = 0), so running it again does not dig deeper.
+        /// </summary>
+        static void CarveHollow(Terrain terrain, WaterSurface pond, float depth)
+        {
+            var data = terrain.terrainData;
+            Vector3 origin = terrain.transform.position, size = data.size;
+            int res = data.heightmapResolution;
+            float cell = size.x / (res - 1);
+            var outline = pond.WorldOutline;
+            Vector2 min = outline[0], max = outline[0];
+            foreach (var p in outline) { min = Vector2.Min(min, p); max = Vector2.Max(max, p); }
+            int x0 = Mathf.Clamp(Mathf.FloorToInt((min.x - 1f - origin.x) / cell), 0, res - 1);
+            int x1 = Mathf.Clamp(Mathf.CeilToInt((max.x + 1f - origin.x) / cell), 0, res - 1);
+            int z0 = Mathf.Clamp(Mathf.FloorToInt((min.y - 1f - origin.z) / cell), 0, res - 1);
+            int z1 = Mathf.Clamp(Mathf.CeilToInt((max.y + 1f - origin.z) / cell), 0, res - 1);
+            int w = x1 - x0 + 1, h = z1 - z0 + 1;
+            if (w < 2 || h < 2) return;
+            var heights = data.GetHeights(x0, z0, w, h);
+            const float shelf = 3f;
+            for (int j = 0; j < h; j++)
+                for (int i = 0; i < w; i++)
+                {
+                    var p = new Vector2(origin.x + (x0 + i) * cell, origin.z + (z0 + j) * cell);
+                    if (!pond.ContainsWorld(p)) continue;
+                    float best = float.MaxValue;
+                    for (int k = 0; k < outline.Length; k++) best = Mathf.Min(best, Vector2.SqrMagnitude(outline[k] - p));
+                    float inside = Mathf.Sqrt(best);
+                    float dig = depth * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(inside / shelf));
+                    float worldY = Mathf.Min(origin.y + heights[j, i] * size.y, -dig);   // from the flat ground, never deeper than asked
+                    heights[j, i] = Mathf.Clamp01((worldY - origin.y) / size.y);
+                }
+            data.SetHeights(x0, z0, heights);
+            EditorUtility.SetDirty(data);
+            var collider = terrain.GetComponent<TerrainCollider>();
+            if (collider != null) collider.terrainData = data;
         }
 
         static Material foamMaterial, bankMaterial; // set once per run (the menu is not re-entrant)

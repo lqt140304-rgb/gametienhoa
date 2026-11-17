@@ -41,7 +41,7 @@ namespace Evolve.EditorTools
 
             void Mushroom(Vector2 p, float height, int colour)
             {
-                if (LakeGround.OnWater(ponds, p)) return;
+                if (LakeGround.Wet(ponds, p)) return;
                 FloraMeshes.Mushroom(++seed, height, out var stalk, out var cap, out float lean);
                 var rot = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                 var pos = new Vector3(p.x, LakeGround.GroundY(p.x, p.y) - 0.04f, p.y);
