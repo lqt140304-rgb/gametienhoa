@@ -38,7 +38,7 @@ namespace Evolve.Abilities
 
         void Update()
         {
-            if (ability == null || !Pressed() || Time.time < readyAt || stats.State.IsDead) return;
+            if (SurvivalHUD.BlocksInput(gameObject) || ability == null || !Pressed() || Time.time < readyAt || stats.State.IsDead) return;
             if (stats.State.Energy < ability.EnergyCost) return;
             if (ability.Activate(gameObject))
             {

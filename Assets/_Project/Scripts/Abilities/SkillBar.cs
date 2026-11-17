@@ -81,7 +81,7 @@ namespace Evolve.Abilities
         void Update()
         {
             Sync();
-            if (stats.State.IsDead) return;
+            if (stats.State.IsDead || SurvivalHUD.BlocksInput(gameObject)) return;
             for (int i = 0; i < SlotCount; i++)
                 if (KeyPressed.Digit(i + 1)) { Use(i); break; }
         }

@@ -29,7 +29,8 @@ namespace Evolve.Player
         void LateUpdate()
         {
             if (!target) return;
-            ReadInput(out Vector2 look, out float zoom);
+            Vector2 look = Vector2.zero; float zoom = 0;
+            if (!Evolve.Survival.SurvivalHUD.BlocksInput(target.gameObject)) ReadInput(out look, out zoom);
             yaw += look.x * sensitivity;
             pitch = Mathf.Clamp(pitch - look.y * sensitivity, minPitch, maxPitch);
             distance = Mathf.Clamp(distance - zoom, minDistance, maxDistance);

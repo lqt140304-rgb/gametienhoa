@@ -149,14 +149,16 @@ namespace Evolve.Organs
 
         void UpdateBodyMenu()
         {
-            if (KeyPressed.G()) BodyMenuOpen = !BodyMenuOpen;
+            if (!SurvivalHUD.HasFor(gameObject) && KeyPressed.G()) BodyMenuOpen = !BodyMenuOpen;
         }
+
+        public void OpenBodyMenu() { if (stats == null || !stats.State.IsDead) BodyMenuOpen = true; }
 
         public void CloseBodyMenu() => BodyMenuOpen = false;
 
         void UpdatePrompt()
         {
-            if (Current == null) return;
+            if (Current == null || SurvivalHUD.BlocksInput(gameObject)) return;
             if (KeyPressed.X()) { Current = null; return; } // leave it; touch again to be asked again
 
             var pickup = Current;

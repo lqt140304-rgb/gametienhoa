@@ -9,6 +9,8 @@ namespace Evolve.Survival
     public static class KeyPressed
     {
 #if ENABLE_INPUT_SYSTEM
+        public static bool K() => Keyboard.current != null && Keyboard.current.kKey.wasPressedThisFrame;
+        public static bool Escape() => Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
         public static bool H() => Keyboard.current != null && Keyboard.current.hKey.wasPressedThisFrame;
         public static bool V() => Keyboard.current != null && Keyboard.current.vKey.wasPressedThisFrame;
         public static bool E() => Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
@@ -25,6 +27,8 @@ namespace Evolve.Survival
         public static bool Digit(int n) => Keyboard.current != null && n >= 1 && n <= 9
             && Keyboard.current[Key.Digit1 + (n - 1)].wasPressedThisFrame;
 #else
+        public static bool K() => Input.GetKeyDown(KeyCode.K);
+        public static bool Escape() => Input.GetKeyDown(KeyCode.Escape);
         public static bool H() => Input.GetKeyDown(KeyCode.H);
         public static bool V() => Input.GetKeyDown(KeyCode.V);
         public static bool E() => Input.GetKeyDown(KeyCode.E);

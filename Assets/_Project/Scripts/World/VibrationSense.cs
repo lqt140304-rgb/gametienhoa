@@ -46,7 +46,7 @@ namespace Evolve.World
         {
             if (stats != null && stats.State.IsDead) { scanStart = -1f; return; }
 
-            if (KeyPressed.C() && Time.time >= readyAt && (stats == null || stats.State.TrySpendEnergy(energyCost)))
+            if (!SurvivalHUD.BlocksInput(gameObject) && KeyPressed.C() && Time.time >= readyAt && (stats == null || stats.State.TrySpendEnergy(energyCost)))
                 StartScan();
 
             if (scanStart >= 0f) UpdateWave();
