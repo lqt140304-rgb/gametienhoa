@@ -75,8 +75,12 @@ namespace Evolve.Survival
             float burn = (isMoving ? cfg.HungerDecayPerSec : 0f) + (isSprinting ? cfg.SprintHungerPerSec : 0f);
             Hunger = Clamp(Hunger - burn * dt, MaxHunger);
 
-            if (Hunger > 0f && !isMoving)
-                Energy = Clamp(Energy + cfg.EnergyRegenPerSec * dt, MaxEnergy);
+            // Energy comes back even while moving, just slower than when resting. Not while starving.
+            if (Hunger > 0f)
+            {
+                float regen = isMoving ? cfg.EnergyRegenMovingPerSec : cfg.EnergyRegenPerSec;
+                Energy = Clamp(Energy + regen * dt, MaxEnergy);
+            }
 
             if (Hunger <= 0f)
                 Damage(cfg.StarveDamagePerSec * dt);

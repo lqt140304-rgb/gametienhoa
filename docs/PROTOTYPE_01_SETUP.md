@@ -96,6 +96,6 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 
 ## Cần kiểm thử
 - Đói chỉ giảm khi di chuyển (nhanh hơn khi chạy nước rút), đứng yên không giảm; khi đói = 0 thì mất máu; khi no thì hồi máu.
-- Đứng yên thì hồi năng lượng; nảy và dùng Dị Năng thì tốn năng lượng.
+- Năng lượng hồi cả khi di chuyển (3 mỗi giây), đứng yên hồi nhanh hơn (10 mỗi giây); nảy, quét và dùng kỹ năng thì tốn năng lượng. Đói bằng 0 thì không hồi.
 - Chạm vào thức ăn thì nó co lại và thanh đói tăng; sau 20 giây thức ăn xuất hiện lại.
 - Màn hình đen trắng, sương mù dày, nhìn xa khoảng 12 m.
