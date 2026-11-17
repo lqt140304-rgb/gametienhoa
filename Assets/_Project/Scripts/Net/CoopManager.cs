@@ -79,6 +79,7 @@ namespace Evolve.Net
             DontDestroyOnLoad(go);
             go.AddComponent<CoopManager>();
             go.AddComponent<WorldSync>();
+            go.AddComponent<RescueController>();
             go.AddComponent<CoopMenu>();
         }
 
@@ -181,6 +182,7 @@ namespace Evolve.Net
             if (nm.IsServer) messaging.RegisterNamedMessageHandler(UpMessage, OnUp);
             else messaging.RegisterNamedMessageHandler(DownMessage, OnDown);
             GetComponent<WorldSync>()?.RegisterMessages(messaging, nm.IsServer);
+            GetComponent<RescueController>()?.RegisterMessages(messaging);
         }
 
         // ---------------------------------------------------------------- per frame
@@ -235,6 +237,7 @@ namespace Evolve.Net
             s.MaxHealth = st.MaxHealth;
             s.Lives = (byte)Mathf.Clamp(st.Lives, 0, 255);
             s.Dead = st.IsDead;
+            s.Lost = st.Lost;
 
             var list = localOrgans != null ? localOrgans.OrganList : new List<OrganSO>();
             int n = Mathf.Min(list.Count, PlayerNetState.MaxOrgans);

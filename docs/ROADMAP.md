@@ -53,6 +53,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Cài gói Netcode 2.14.0, co-op 0.4a chạy được (thấy nhau)
 - [x] Co-op 0.4b đợt 1: thế giới chung (quái, thức ăn, cơ quan rơi do Host điều khiển), cắn, bắn, ăn, nhặt; chưa chạy thử
 - [ ] Chơi thử 0.4b đợt 1
-- [ ] Co-op 0.4b đợt 2: cứu đồng đội, chuyền máu, chế độ quan sát
+- [x] Co-op 0.4b đợt 2: cứu đồng đội, chuyền máu, chế độ quan sát (cần chơi thử)
 - [ ] Chơi thử HUD mới ở nhiều độ phân giải và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
