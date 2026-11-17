@@ -1,5 +1,19 @@
 # HUD và menu mới — 18/11/2026
 
+## Bản đang làm trong clone riêng
+
+Clone: `D:/lamgame/unity-cellular`, nhánh `codex/gel-hud`. Lấy riêng các file HUD/test từ `backup-wip-codex`; không cherry-pick toàn bộ commit WIP vì có cả scene/material. Chưa push hoặc mở PR; không ghi thêm vào checkout dùng chung.
+
+- Các ô chỉ số và kỹ năng dùng texture gel riêng: góc bo lệch theo HTML, viền mềm, phản sáng và nền trong. Chuyển động dưới một pixel, chỉ làm thay đổi hình nền; chữ đứng yên.
+- Texture tạo một lần cho từng kích thước/màu, tái sử dụng khi số thay đổi, hủy khi HUD bị hủy.
+- Ô chỉ số gồm biểu tượng/tên, giá trị trên giới hạn hiện tại, trạng thái ngắn. Thân nhiệt dùng °C. Máu tối đa có tính ảnh hưởng Huyết Thiết trong gameplay hiện tại.
+- Trạng thái máu tính lượng hồi theo dinh dưỡng trừ hao hụt do đói, nước và nhiệt độ; có xét bất tử và giới hạn máu hiện tại. Không cố định dòng “Đang hồi phục”.
+- Kiểm tra mới: `tools/check-hud-gel.ps1`, `tools/check-hud-vital-notes.ps1`. Có kiểm tra pixel alpha/góc trong, cache, chuyển động, GUI state, sự kiện vẽ và các trạng thái cơ thể.
+- `tools/check-unity-compile.ps1` biên dịch source của clone, chỉ đọc compiler/reference từ cache Unity cũ. Không ghi DLL vào checkout cũ.
+- Chưa xác nhận hình ảnh trong Play Mode, nên chưa coi là đạt nghiệm thu giống hệt HTML.
+
+---
+
 Bắt đầu tại nhánh `codex/cellular-hud`. Trong lúc làm, tác vụ khác commit và chuyển checkout về `main`, đồng thời cập nhật remote. Phiên triển khai HUD này không chạy pull, push hoặc merge; giữ lại điều kiện GhostMode của cập nhật mới. Không sửa scene, prefab hoặc material để triển khai HUD.
 
 ## Đã đưa vào code

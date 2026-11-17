@@ -45,13 +45,13 @@ namespace Evolve.EditorTools
                 for (int k = 0; k < outline.Length; k += 10)
                 {
                     Vector2 p = outline[k] + Outward(outline, k) * (1.5f + (float)rnd.NextDouble() * 3f);
-                    if (OnWater(ponds, p)) continue;
+                    if (Wet(ponds, p)) continue;
                     AddMoss(mossInstances, p, 0.9f + (float)rnd.NextDouble() * 1.2f, ++seed, ponds);
                 }
             }
             foreach (var p in LakeLayout.Scatter(9, rnd))    // over the core and every biome pad of the layout
             {
-                if (OnWater(ponds, p)) continue;
+                if (Wet(ponds, p)) continue;
                 AddMoss(mossInstances, p, 1.6f + (float)rnd.NextDouble() * 1.5f, ++seed, ponds);
             }
             AddCombined(root, "Moss", mossInstances, MossMaterial());
@@ -80,7 +80,7 @@ namespace Evolve.EditorTools
             var capInstances = new List<CombineInstance>();
             void PlaceRock(Vector2 p, float size)
             {
-                if (OnWater(ponds, p)) return;
+                if (Wet(ponds, p)) return;
                 int variant = rnd.Next(rocks.Count);
                 var rot = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                 var scale = new Vector3(size * (0.8f + (float)rnd.NextDouble() * 0.5f), size * (0.7f + (float)rnd.NextDouble() * 0.6f), size * (0.8f + (float)rnd.NextDouble() * 0.5f));
@@ -108,7 +108,7 @@ namespace Evolve.EditorTools
             var tufts = new List<Vector3>[] { new List<Vector3>(), new List<Vector3>(), new List<Vector3>() };
             void PlaceTuft(Vector2 p)
             {
-                if (OnWater(ponds, p)) return;
+                if (Wet(ponds, p)) return;
                 tufts[rnd.Next(3)].Add(new Vector3(p.x, GroundY(p.x, p.y) - 0.02f, p.y));
             }
             foreach (var pond in ponds)
@@ -153,7 +153,7 @@ namespace Evolve.EditorTools
                 }
                 foreach (var p in line)
                 {
-                    if (OnWater(ponds, p)) Flush(); else run.Add(p);
+                    if (Wet(ponds, p)) Flush(); else run.Add(p);
                 }
                 Flush();
             }
@@ -207,6 +207,9 @@ namespace Evolve.EditorTools
         }
 
         // ---------------------------------------------------------------- placing helpers
+
+        /// <summary>Under water: on a pond, or in a hollow of the ground lower than the water level. Nothing is placed there.</summary>
+        internal static bool Wet(List<WaterSurface> ponds, Vector2 p) => OnWater(ponds, p) || GroundY(p.x, p.y) < -0.04f;
 
         internal static bool OnWater(List<WaterSurface> ponds, Vector2 p)
         {

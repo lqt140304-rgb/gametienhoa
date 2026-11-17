@@ -87,3 +87,9 @@ Hai texture nền sinh từ code (bùn nâu loang có sỏi, rêu) được vẽ
 
 ## Bãi Mùn Rễ và nền
 Hình chữ nhật đen phẳng của Bãi Mùn Rễ ("Humus Ground") được ẩn và thay bằng một mảng bùn sẫm mềm, không có cạnh thẳng. Nền địa hình bớt phủ rêu đều (rêu thành mảng, giữa các mảng lộ bùn).
+
+## Chìm trong nước, không đặt trong chỗ trũng, mù thì tắt đồ phát sáng (khôi phục)
+(Một lần đẩy nhánh đã ghi đè phần này; khôi phục lại.)
+- **Nước nông là lòng chảo**: dưới mọi ao (trừ hốc sâu, đã có lòng chảo riêng) địa hình đào 0,65 m (nước đọng 0,25 m, suối 0,5 m), thoải dần lên bờ trong ~3 m, nên slime lội trong nước. Đào luôn tính từ mặt đất phẳng (lấy mức thấp hơn) nên chạy lại không đào sâu thêm.
+- **Không đặt gì trong chỗ trũng** (`LakeGround.Wet`): rêu, đá, cỏ, nấm, rễ, đường mòn và đá của suối nguồn.
+- **Mù thì tắt đồ phát sáng**: `DetailCulling` đọc `MonochromeVision.Sight`; đèn, vật liệu phát sáng, tia sáng và hạt mờ dần theo thị lực, tắt hẳn khi chưa có mắt.

@@ -29,7 +29,7 @@ namespace Evolve.Tests.EditMode
         public void MenuLeavesExpandedHudVisible(float width,float height)
         {
             float hud=System.Math.Max(.1f,System.Math.Min(1f,System.Math.Min(width/960,height/600)));
-            Assert.LessOrEqual(52+650*HudCatalog.MenuScale(width,height,hud),height-196*hud-12);
+            Assert.LessOrEqual(52+650*HudCatalog.MenuScale(width,height,hud),height-272*hud-12);
         }
     }
 }
