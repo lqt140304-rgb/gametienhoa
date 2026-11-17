@@ -273,10 +273,36 @@ namespace Evolve.EditorTools
         static void AddMoss(List<CombineInstance> list, Vector2 p, float radius, int seed, List<WaterSurface> ponds)
         {
             var outline = WaterOutline.Make(radius * 2f, radius * 2f, true, seed, radius * 0.35f, 28);
-            var mesh = WaterMeshes.Organic(outline, 1.2f);
-            // Moss never grows over water: drop the part of the patch that lies on a pond.
-            WaterMeshes.RemoveTriangles(mesh, c => OnWater(ponds, new Vector2(p.x + c.x, p.y + c.z)));
-            list.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.TRS(new Vector3(p.x, GroundY(p.x, p.y) + 0.03f, p.y), Quaternion.identity, Vector3.one) });
+            var mesh = Drape(WaterMeshes.Organic(outline, 0.5f), Matrix4x4.Translate(new Vector3(p.x, 0f, p.y)), 0.03f, ponds);
+            if (mesh != null) list.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.identity });
+        }
+
+        /// <summary>
+        /// Lays a flat ground decal onto the terrain: every vertex (after <paramref name="placement"/>) is moved to the ground
+        /// height right under it plus <paramref name="lift"/>, so moss, mud and leaves follow every bump instead of floating
+        /// or sinking; triangles over water are dropped (nothing spreads onto a pond). World-space result, or null if
+        /// nothing is left.
+        /// </summary>
+        internal static Mesh Drape(Mesh flat, Matrix4x4 placement, float lift, List<WaterSurface> ponds = null)
+        {
+            var terrain = Terrain.activeTerrain;
+            var verts = flat.vertices;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                var w = placement.MultiplyPoint3x4(verts[i]);
+                float ground = terrain != null ? terrain.SampleHeight(w) + terrain.transform.position.y : GroundY(w.x, w.z);
+                verts[i] = new Vector3(w.x, ground + lift, w.z);
+            }
+            var mesh = new Mesh { name = flat.name + " (draped)" };
+            mesh.vertices = verts;
+            var uv = flat.uv;
+            if (uv.Length == verts.Length) mesh.uv = uv;
+            mesh.triangles = flat.triangles;
+            WaterMeshes.RemoveTriangles(mesh, c => ZoneLayout.DepthAt(c.x, c.z) > 0f || (ponds != null && OnWater(ponds, new Vector2(c.x, c.z))));
+            if (mesh.triangles.Length == 0) return null;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         /// <summary>Size of one decoration chunk (m). Each chunk is its own mesh, so the camera can skip what it does not see.</summary>

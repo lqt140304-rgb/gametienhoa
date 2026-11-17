@@ -24,7 +24,7 @@ namespace Evolve.EditorTools
         const float Spacing = 2.5f;     // one candidate spot per 2.5 x 2.5 m
         const float Reach = 225f;
 
-        internal struct Item { public Mesh Mesh; public Material Material; public Matrix4x4 Matrix; public int MaxLod; }
+        internal struct Item { public Mesh Mesh; public Material Material; public Matrix4x4 Matrix; public int MaxLod; public Vector3? Center; }
 
         [MenuItem("Evolve/Dress Lake: Plant Communities")]
         public static void Dress()
@@ -91,7 +91,7 @@ namespace Evolve.EditorTools
             var chunks = new Dictionary<(int, int), List<Item>>();
             foreach (var item in items)
             {
-                var key = LakeGround.Cell(item.Matrix.GetColumn(3));
+                var key = LakeGround.Cell(item.Center ?? (Vector3)item.Matrix.GetColumn(3));   // draped items are already in world space
                 if (!chunks.TryGetValue(key, out var list)) chunks[key] = list = new List<Item>();
                 list.Add(item);
             }
@@ -222,29 +222,35 @@ namespace Evolve.EditorTools
                 int Mid() => (smallIndex++ % 3 == 0) ? 1 : 0;
                 void Put(Mesh m, Material mat, Vector3 pos, Vector3 scale, int maxLod) =>
                     items.Add(new Item { Mesh = m, Material = mat, Matrix = Matrix4x4.TRS(pos, rot, scale), MaxLod = maxLod });
+                // flat things (moss, mud, leaves, tracks) are laid onto the ground's every bump, and never onto water
+                void Lay(Mesh m, Material mat, Vector3 pos, Vector3 scale, float lift, int maxLod)
+                {
+                    var draped = LakeGround.Drape(m, Matrix4x4.TRS(new Vector3(pos.x, 0f, pos.z), rot, scale), lift);
+                    if (draped != null) items.Add(new Item { Mesh = draped, Material = mat, Matrix = Matrix4x4.identity, MaxLod = maxLod, Center = draped.bounds.center });
+                }
 
                 switch (plant)
                 {
                     case Plant.WetMoss:
-                        Put(patches[v % 4], moss, at + Vector3.up * 0.03f, Vector3.one * (0.7f + size * 0.8f), Mid());
+                        Lay(patches[v % 4], moss, at, Vector3.one * (0.7f + size * 0.8f), 0.03f, Mid());
                         break;
                     case Plant.ThickMoss:
                     {
                         float r = 1.4f + size * 1.8f;
-                        Put(patches[v % 4], moss, at + Vector3.up * 0.035f, new Vector3(r, 1f, r), r > 2.6f ? 2 : 1);
+                        Lay(patches[v % 4], moss, at, new Vector3(r, 1f, r), 0.035f, r > 2.6f ? 2 : 1);
                         break;
                     }
                     case Plant.BareMud:
-                        Put(patches[v % 4], mud, at + Vector3.up * 0.025f, new Vector3(1.2f + size * 1.4f, 1f, 1.2f + size * 1.4f), Mid());
+                        Lay(patches[v % 4], mud, at, new Vector3(1.2f + size * 1.4f, 1f, 1.2f + size * 1.4f), 0.025f, Mid());
                         break;
                     case Plant.Clover:
                         Put(tufts[v % 4], clover, at, Vector3.one * (0.8f + size * 0.6f), 0);
                         break;
                     case Plant.LeafLitter:
-                        Put(leaves[v % 4], leafMats[v % 3], at, Vector3.one * (0.8f + size * 0.5f), 0);
+                        Lay(leaves[v % 4], leafMats[v % 3], at, Vector3.one * (0.8f + size * 0.5f), 0.03f, 0);
                         break;
                     case Plant.TrackMark:
-                        Put(tracks[v % 3], track, at + Vector3.up * 0.02f, Vector3.one, 0);
+                        Lay(tracks[v % 3], track, at, Vector3.one, 0.015f, 0);
                         break;
                     case Plant.EarFungus:
                         Put(fungus[v % 3], fungusMat, at, Vector3.one * (0.8f + size * 0.6f), 0);
