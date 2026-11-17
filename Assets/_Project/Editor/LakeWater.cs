@@ -18,16 +18,16 @@ namespace Evolve.EditorTools
     {
         const string Root = "Assets/_Project";
         const string DressedName = "Water Surface (Dressed)";
-        const string NormalPath = Root + "/Models/WaterRipples.png";
+        const string NormalPath = Root + "/Models/WaterRipples_v2.png";
 
         [MenuItem("Evolve/Dress Lake: Water")]
         public static void Dress()
         {
             EnsureFolders();
             var normal = RippleNormalMap();
-            var clean = WaterMaterial("Lake_WaterClean", new Color(0.20f, 0.78f, 0.78f, 0.58f), normal, 0.7f, new Color(0.02f, 0.10f, 0.10f));
-            var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.38f, 0.44f, 0.24f, 0.78f), normal, 0.35f, Color.black);
-            var deep = WaterMaterial("Lake_WaterDeep", new Color(0.04f, 0.22f, 0.34f, 0.88f), normal, 0.5f, new Color(0.0f, 0.03f, 0.05f));
+            var clean = WaterMaterial("Lake_WaterClean", new Color(0.25f, 0.84f, 0.82f, 0.5f), normal, 0.3f, new Color(0.02f, 0.10f, 0.10f));
+            var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.38f, 0.44f, 0.24f, 0.78f), normal, 0.18f, Color.black);
+            var deep = WaterMaterial("Lake_WaterDeep", new Color(0.04f, 0.22f, 0.34f, 0.88f), normal, 0.22f, new Color(0.0f, 0.03f, 0.05f));
 
             // Take back anything a previous run made, so running the menu twice never stacks surfaces.
             foreach (var old in Object.FindObjectsByType<WaterSurface>())
@@ -120,7 +120,7 @@ namespace Evolve.EditorTools
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_ZWrite", 0f);
-            mat.SetFloat("_Smoothness", 0.96f);
+            mat.SetFloat("_Smoothness", 0.85f);
             mat.SetFloat("_Metallic", 0f);
             mat.SetTexture("_BumpMap", normal);
             mat.SetFloat("_BumpScale", bump);
@@ -146,7 +146,8 @@ namespace Evolve.EditorTools
 
             const int size = 128;
             // (frequency x, frequency y, amplitude, phase): whole numbers of repeats so the texture tiles.
-            var waves = new[] { (3, 1, 1.0f, 0.3f), (-2, 3, 0.8f, 1.9f), (5, -2, 0.5f, 4.1f), (1, 6, 0.4f, 2.6f), (7, 4, 0.25f, 0.8f) };
+            // Few, low, wide waves: calm water, no glittering speckles.
+            var waves = new[] { (2, 1, 1.0f, 0.3f), (-1, 2, 0.8f, 1.9f), (3, -2, 0.45f, 4.1f), (1, 3, 0.3f, 2.6f) };
             var pixels = new Color32[size * size];
             for (int y = 0; y < size; y++)
                 for (int x = 0; x < size; x++)
@@ -159,7 +160,7 @@ namespace Evolve.EditorTools
                         dx += amp * 2f * Mathf.PI * fx * cos;
                         dy += amp * 2f * Mathf.PI * fy * cos;
                     }
-                    var n = new Vector3(-dx * 0.012f, -dy * 0.012f, 1f).normalized;
+                    var n = new Vector3(-dx * 0.006f, -dy * 0.006f, 1f).normalized;
                     pixels[y * size + x] = new Color32(
                         (byte)Mathf.RoundToInt((n.x * 0.5f + 0.5f) * 255f),
                         (byte)Mathf.RoundToInt((n.y * 0.5f + 0.5f) * 255f),
