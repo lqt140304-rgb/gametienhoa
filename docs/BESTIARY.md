@@ -52,7 +52,7 @@ Mở rộng từ 4 lên 12 vị trí, chia 6 hệ chức năng; mỗi cơ quan c
 3. **Cơ quan chủ động cấp kỹ năng**: nhiều cơ quan cấp `AbilitySO` (lớp này đã có trong code). Cơ quan bị phá = khóa kỹ năng đó, áp dụng cả cho quái.
    - **[ĐÃ CHỐT]** Cơ quan khi lên cấp mở thêm **kỹ năng chủ động**, không chỉ hiệu ứng bị động. Người chơi có **5 ô kỹ năng**, bấm bằng phím số **1–5**, và tự chọn kỹ năng nào đặt vào ô nào. "Lên cấp" là cấp cơ quan của repo (mầm → Lv1 → Lv3, nuôi bằng EXP tiến hóa, mục 1). Phím 1–5 đang rỗng trong code (`KeyPressed.Digit` có sẵn nhưng chưa ai dùng).
    - **[ĐỀ XUẤT]** Lv1 chỉ có hiệu ứng bị động; **Lv2 mở kỹ năng chủ động**, **Lv3 nâng cấp kỹ năng đó** (tầm, thời gian, hồi chiêu) cùng +25% hiệu ứng bị động như hiện nay. Kỹ năng tốn năng lượng và có hồi chiêu như `AbilitySO`.
-   - **[ĐÃ CHỐT]** Cơ quan bậc C không có kỹ năng chủ động, chỉ có hiệu ứng bị động; kỹ năng chủ động bắt đầu từ bậc B. **[MỞ]** Mục 5 đang liệt kê vài kỹ năng "bậc từ C" gắn cơ quan C (Hút ẩm xung quanh, Rụng đuôi, Phun bào tử, Rụt mai): cần quyết là bỏ chúng, nâng lên B, hay giữ như hành vi riêng của quái mà người chơi không nhận được. **[ĐÃ CHỐT]** Dị Năng khởi đầu (phím Q, `AbilityCaster` giữ đúng 1) là ô riêng, không chiếm trong 5 ô kỹ năng cơ quan. **[MỞ]** Khi có hơn 5 kỹ năng thì chọn vào ô ở đâu (bảng Cơ thể G?).
+   - **[ĐÃ CHỐT]** Cơ quan bậc C không có kỹ năng chủ động, chỉ có hiệu ứng bị động; kỹ năng chủ động bắt đầu từ bậc B. **[ĐÃ CHỐT]** Bốn kỹ năng gắn cơ quan C (Hút ẩm xung quanh, Rụng đuôi thoát thân, Phun bào tử, Rụt mai) đã nâng lên "bậc từ B" ở mục 5. **[MỞ]** Nhảy vọt, Lặn cát và Pheromone báo động cũng gắn cơ quan nên cần nâng tương tự; Giả xác và Hợp thể là hành vi thuần của quái nên giữ ở C. **[ĐÃ CHỐT]** Dị Năng khởi đầu (phím Q, `AbilityCaster` giữ đúng 1) là ô riêng, không chiếm trong 5 ô kỹ năng cơ quan. **[MỞ]** Khi có hơn 5 kỹ năng thì chọn vào ô ở đâu (bảng Cơ thể G?).
 4. **Ngoài / trong**: cơ quan ngoài (sừng, đuôi, cánh, chi) có thể bị chặt đứt và rơi ngay khi quái còn sống; cơ quan trong (tiêu hóa, hô hấp, tuyến, tim) chỉ thu được khi quái chết.
 
 **12 vị trí (4 vị trí đầu đã có trong code):**
@@ -269,8 +269,8 @@ Quy tắc số lượng: quái C có 0–1 kỹ năng, B có 1–2, A có 2–3,
 
 | Kỹ năng | Bậc từ | Cơ quan | Khắc chế |
 | --- | --- | --- | --- |
-| Rụt mai | C | Bướu / Mai | Chờ; lật ngửa bằng đòn đập |
-| Rụng đuôi thoát thân | C | Đuôi rụng | Đánh lần hai; đuôi rụng là cơ quan rơi |
+| Rụt mai | B | Bướu / Mai | Chờ; lật ngửa bằng đòn đập |
+| Rụng đuôi thoát thân | B | Đuôi rụng | Đánh lần hai; đuôi rụng là cơ quan rơi |
 | Phản gai \[ĐÃ CHỐT\] | B | Gai độc | Đánh từ xa, không húc |
 | Phồng thân | B | Phổi túi | Đâm xuyên khi phồng = nổ choáng |
 | Thạch hóa | S | Mai Thạch Hóa | Dùng 4 s đó để cứu đồng đội |
@@ -289,7 +289,7 @@ Quy tắc số lượng: quái C có 0–1 kỹ năng, B có 1–2, A có 2–3,
 
 | Kỹ năng | Bậc từ | Cơ quan | Khắc chế |
 | --- | --- | --- | --- |
-| Phun bào tử nhiễu giác quan | C | Tuyến bào tử | Lọc khí độc; ra khỏi đám mây |
+| Phun bào tử nhiễu giác quan | B | Tuyến bào tử | Lọc khí độc; ra khỏi đám mây |
 | Giăng tơ / bẫy tơ | B | Tuyến tơ | Nhiệt đốt tơ; đồng đội kéo ra |
 | Tiếng rít gây choáng | A | Tai màng (quái) | Người chơi có Tai màng bị choáng lâu hơn: mặt trái cơ quan |
 | Điều khiển vật chủ | S | Tuyến Ký Sinh | Giết vật chủ nhanh; kháng bào tử |
@@ -298,7 +298,7 @@ Quy tắc số lượng: quái C có 0–1 kỹ năng, B có 1–2, A có 2–3,
 
 | Kỹ năng | Bậc từ | Cơ quan | Khắc chế |
 | --- | --- | --- | --- |
-| Hút ẩm xung quanh | C | Màng giữ ẩm | Rời vùng; slime mất ẩm nhanh |
+| Hút ẩm xung quanh | B | Màng giữ ẩm | Rời vùng; slime mất ẩm nhanh |
 | Tạo vùng nóng / hội tụ nắng | S | Vảy phản nhiệt | Màng chịu nhiệt; đánh lúc mây/đêm |
 | Thở sương giá | S | Phổi Sương Giá | Lớp mỡ/Lông băng; giữ ấm theo bầy |
 | Đào sập hang | A | Hàm nghiền | Không đứng dưới trần nứt |
