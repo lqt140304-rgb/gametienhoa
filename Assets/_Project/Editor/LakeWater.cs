@@ -65,6 +65,12 @@ namespace Evolve.EditorTools
                     s.StreamPath = local;
                     s.StreamHalfWidth = halfWidth;
                     made++;
+                    // The upstream end opens into a round spring pool (the source), instead of ending in a point.
+                    LakeLayout.StreamEnds(a, e, out Vector2 source, out Vector2 flow);
+                    float poolRadius = Mathf.Max(4.5f, halfWidth * 1.9f);
+                    MakeSurface(zone.transform, new Vector3(source.x, 0.06f, source.y), WaterShape.Disc, new Vector2(poolRadius, 0f),
+                        zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
+                    made++;
                     continue;
                 }
                 MakeSurface(zone.transform, new Vector3(b.center.x, 0.06f, b.center.z), WaterShape.Rect,
