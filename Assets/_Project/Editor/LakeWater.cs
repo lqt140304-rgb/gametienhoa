@@ -30,6 +30,8 @@ namespace Evolve.EditorTools
             var deep = WaterMaterial("Lake_WaterDeep", new Color(0.04f, 0.22f, 0.34f, 0.88f), normal, 0.22f, new Color(0.0f, 0.03f, 0.05f));
 
             foamMaterial = FoamMaterial();
+            bankMaterial = BankMaterial();
+            seedCounter = 0;
 
             // Take back anything a previous run made, so running the menu twice never stacks surfaces.
             foreach (var old in Object.FindObjectsByType<WaterSurface>())
@@ -82,7 +84,8 @@ namespace Evolve.EditorTools
             Debug.Log($"Đã dựng {made} mặt nước. Bấm Ctrl+S để lưu scene. (Nước chỉ chuyển động khi Play.)");
         }
 
-        static Material foamMaterial; // set once per run (the menu is not re-entrant)
+        static Material foamMaterial, bankMaterial; // set once per run (the menu is not re-entrant)
+        static int seedCounter;
 
         static GameObject MakeSurface(Transform parent, Vector3 worldPos, WaterShape shape, Vector2 size, Material mat, float wave)
         {
@@ -95,6 +98,8 @@ namespace Evolve.EditorTools
             surface.Size = size;
             surface.WaveHeight = wave;
             surface.FoamMaterial = foamMaterial;
+            surface.BankMaterial = bankMaterial;
+            surface.Seed = 3 + 17 * (++seedCounter); // every pond gets its own winding shore
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
             go.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
             return go;
@@ -183,57 +188,104 @@ namespace Evolve.EditorTools
             return AssetDatabase.LoadAssetAtPath<Texture2D>(NormalPath);
         }
 
-        /// <summary>White translucent foam: strongest in the middle of the ring, fading out on both sides, a bit broken up.</summary>
+        /// <summary>
+        /// Foam: white and translucent, strongest in the middle of the band, fading out on both sides, broken up
+        /// into blotches by smooth random noise (not regular stripes).
+        /// </summary>
         static Material FoamMaterial()
         {
-            const string texPath = Root + "/Models/WaterFoam.png";
-            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
-            if (tex == null)
+            var tex = PaintedTexture(Root + "/Models/WaterFoam_v2.png", 128, 32, (u, v) =>
             {
-                const int w = 128, h = 32;
-                var pixels = new Color32[w * h];
-                for (int y = 0; y < h; y++)
-                    for (int x = 0; x < w; x++)
-                    {
-                        float v = y / (float)(h - 1);                 // 0 = outer edge, 1 = inside the water
-                        float across = Mathf.Sin(Mathf.Clamp01(v) * Mathf.PI);   // fades out on both sides
-                        float u = x / (float)w;
-                        float broken = 0.55f + 0.45f * Mathf.Sin(u * Mathf.PI * 2f * 6f + v * 3f) * Mathf.Sin(u * Mathf.PI * 2f * 11f + 1f);
-                        byte a = (byte)Mathf.RoundToInt(Mathf.Clamp01(across * broken) * 255f);
-                        pixels[y * w + x] = new Color32(255, 255, 255, a);
-                    }
-                var t = new Texture2D(w, h, TextureFormat.RGBA32, false);
-                t.SetPixels32(pixels);
-                File.WriteAllBytes(texPath, t.EncodeToPNG());
-                Object.DestroyImmediate(t);
-                AssetDatabase.ImportAsset(texPath);
-                var importer = (TextureImporter)AssetImporter.GetAtPath(texPath);
-                importer.alphaIsTransparency = true;
-                importer.wrapModeU = TextureWrapMode.Repeat;
-                importer.wrapModeV = TextureWrapMode.Clamp;
-                importer.SaveAndReimport();
-                tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+                float across = Mathf.Sin(Mathf.Clamp01(v) * Mathf.PI);
+                across = Mathf.Pow(across, 0.8f);
+                float blotch = TileableNoise(u * 12f, v * 3f, 12, 5);
+                float fine = TileableNoise(u * 28f, v * 6f, 28, 7);
+                float broken = Mathf.Clamp01(0.15f + 0.95f * blotch * (0.65f + 0.35f * fine));
+                return new Color(1f, 1f, 1f, Mathf.Clamp01(across * broken * 1.2f));
+            });
+            return TranslucentMaterial("Lake_Foam", tex, new Color(0.95f, 1f, 1f, 0.8f), new Color(0.10f, 0.12f, 0.12f), 0.1f, (int)RenderQueue.Transparent - 5);
+        }
+
+        /// <summary>Wet bank: dark brown mud darkening the ground next to the water, fading out away from it.</summary>
+        static Material BankMaterial()
+        {
+            var tex = PaintedTexture(Root + "/Models/WaterBank.png", 128, 32, (u, v) =>
+            {
+                // v: 0 = far from the water, 1 = at the water. Dark right at the water, fading out smoothly.
+                float a = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(v));
+                float mottled = 0.75f + 0.25f * TileableNoise(u * 10f, v * 3f, 10, 11);
+                return new Color(1f, 1f, 1f, a * mottled);
+            });
+            return TranslucentMaterial("Lake_Bank", tex, new Color(0.10f, 0.08f, 0.06f, 0.75f), Color.black, 0.05f, (int)RenderQueue.Transparent - 15);
+        }
+
+        static Texture2D PaintedTexture(string path, int w, int h, System.Func<float, float, Color> paint)
+        {
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (tex != null) return tex;
+            var pixels = new Color32[w * h];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                    pixels[y * w + x] = paint(x / (float)w, y / (float)(h - 1));
+            var t = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            t.SetPixels32(pixels);
+            File.WriteAllBytes(path, t.EncodeToPNG());
+            Object.DestroyImmediate(t);
+            AssetDatabase.ImportAsset(path);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.alphaIsTransparency = true;
+            importer.wrapModeU = TextureWrapMode.Repeat;
+            importer.wrapModeV = TextureWrapMode.Clamp;
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        // Smooth value noise that repeats along x every `periodX` cells and along y every `periodY` cells.
+        static float TileableNoise(float x, float y, int periodX, int periodY)
+        {
+            int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
+            float fx = x - x0, fy = y - y0;
+            float a = Hash(Mod(x0, periodX), Mod(y0, periodY)), b = Hash(Mod(x0 + 1, periodX), Mod(y0, periodY));
+            float c = Hash(Mod(x0, periodX), Mod(y0 + 1, periodY)), d = Hash(Mod(x0 + 1, periodX), Mod(y0 + 1, periodY));
+            fx = fx * fx * (3f - 2f * fx); fy = fy * fy * (3f - 2f * fy);
+            return Mathf.Lerp(Mathf.Lerp(a, b, fx), Mathf.Lerp(c, d, fx), fy);
+        }
+
+        static int Mod(int v, int m) => ((v % m) + m) % m;
+
+        static float Hash(int x, int y)
+        {
+            unchecked
+            {
+                uint h = (uint)(x * 374761393 + y * 668265263);
+                h = (h ^ (h >> 13)) * 1274126177u;
+                return ((h ^ (h >> 16)) & 0xFFFF) / 65535f;
             }
-            string path = Root + "/Materials/Lake_Foam.mat";
+        }
+
+        static Material TranslucentMaterial(string name, Texture2D tex, Color color, Color emission, float smoothness, int queue)
+        {
+            string path = $"{Root}/Materials/{name}.mat";
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (mat == null)
             {
-                mat = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "Lake_Foam" };
+                mat = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
                 AssetDatabase.CreateAsset(mat, path);
             }
             mat.SetTexture("_BaseMap", tex);
-            mat.SetColor("_BaseColor", new Color(0.95f, 1f, 1f, 0.55f));
+            mat.SetColor("_BaseColor", color);
             mat.SetFloat("_Surface", 1f);
             mat.SetFloat("_Blend", 0f);
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_ZWrite", 0f);
-            mat.SetFloat("_Smoothness", 0.1f);
+            mat.SetFloat("_Smoothness", smoothness);
+            mat.SetFloat("_Metallic", 0f);
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            mat.EnableKeyword("_EMISSION");
-            mat.SetColor("_EmissionColor", new Color(0.12f, 0.14f, 0.14f));
+            if (emission.maxColorComponent > 0.001f) { mat.EnableKeyword("_EMISSION"); mat.SetColor("_EmissionColor", emission); }
+            else mat.DisableKeyword("_EMISSION");
             mat.SetOverrideTag("RenderType", "Transparent");
-            mat.renderQueue = (int)RenderQueue.Transparent - 5;
+            mat.renderQueue = queue;
             EditorUtility.SetDirty(mat);
             return mat;
         }

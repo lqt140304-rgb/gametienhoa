@@ -38,20 +38,50 @@ namespace Evolve.Tests.EditMode
             }
         }
 
-        [Test] public void RingsFaceUpAndSpanTheEdge()
+        [Test] public void OutlineIsClosedAndWithinReach()
         {
-            var disc = WaterMeshes.DiscRing(10f, 1f, 0.5f, 32);
-            Assert.AreEqual(11f, disc.bounds.extents.x, 0.05f);
-            var rect = WaterMeshes.RectRing(20f, 8f, 1f, 0.5f, 1.25f);
-            Assert.AreEqual(11f, rect.bounds.extents.x, 0.05f);
-            Assert.AreEqual(5f, rect.bounds.extents.z, 0.05f);
-            foreach (var mesh in new[] { disc, rect })
+            var outline = WaterOutline.Make(24f, 8f, false, 3, 0.8f, 80);
+            Assert.AreEqual(80, outline.Length);
+            foreach (var p in outline)
             {
-                var v = mesh.vertices; var t = mesh.triangles;
-                for (int i = 0; i < t.Length; i += 3)
-                    Assert.Greater(Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]).y, 0f);
-                foreach (var uv in mesh.uv) Assert.That(uv.y, Is.InRange(0f, 1f));
+                Assert.LessOrEqual(Mathf.Abs(p.x), 12f + 0.9f);
+                Assert.LessOrEqual(Mathf.Abs(p.y), 4f + 0.9f);
             }
+        }
+
+        [Test] public void OutlineIsNotAPerfectShapeAndDependsOnSeed()
+        {
+            var a = WaterOutline.Make(30f, 30f, true, 1, 0.8f, 90);
+            var b = WaterOutline.Make(30f, 30f, true, 2, 0.8f, 90);
+            float minR = float.MaxValue, maxR = 0f;
+            foreach (var p in a) { minR = Mathf.Min(minR, p.magnitude); maxR = Mathf.Max(maxR, p.magnitude); }
+            Assert.Greater(maxR - minR, 0.3f);   // the shore wanders (a perfect circle would be 0)
+            Assert.AreNotEqual(a[10], b[10]);
+        }
+
+        [Test] public void OutlineWithoutWobbleIsTheBaseShape()
+        {
+            foreach (var p in WaterOutline.Make(20f, 20f, true, 5, 0f, 60)) Assert.AreEqual(10f, p.magnitude, 0.05f);
+        }
+
+        [Test] public void OrganicSurfaceFacesUpAndStaysInsideTheOutline()
+        {
+            var outline = WaterOutline.Make(20f, 6f, false, 4, 0.8f, 60);
+            var mesh = WaterMeshes.Organic(outline, 1.25f);
+            var v = mesh.vertices; var t = mesh.triangles;
+            for (int i = 0; i < t.Length; i += 3)
+                Assert.Greater(Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]).y, 0f);
+            foreach (var uv in mesh.uv) { Assert.That(uv.x, Is.InRange(-0.001f, 1.001f)); Assert.That(uv.y, Is.InRange(-0.001f, 1.001f)); }
+        }
+
+        [Test] public void BandFacesUpWithUvAcrossZeroToOne()
+        {
+            var outline = WaterOutline.Make(12f, 12f, true, 6, 0.8f, 48);
+            var mesh = WaterMeshes.Band(outline, 1f, 0.4f, 7);
+            var v = mesh.vertices; var t = mesh.triangles;
+            for (int i = 0; i < t.Length; i += 3)
+                Assert.Greater(Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]).y, 0f);
+            foreach (var uv in mesh.uv) Assert.That(uv.y, Is.InRange(0f, 1f));
         }
 
         [Test] public void UvsStayInZeroToOne()
