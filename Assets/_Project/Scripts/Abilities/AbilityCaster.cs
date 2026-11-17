@@ -42,6 +42,8 @@ namespace Evolve.Abilities
             if (stats.State.Energy < ability.EnergyCost) return;
             if (ability.Activate(gameObject))
             {
+                Evolve.Visuals.SlimeGelAnimator.Play(gameObject, ability is BurstDashAbility || ability is ChargeAbility
+                    ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release);
                 stats.State.TrySpendEnergy(ability.EnergyCost);
                 readyAt = Time.time + ability.Cooldown;
             }

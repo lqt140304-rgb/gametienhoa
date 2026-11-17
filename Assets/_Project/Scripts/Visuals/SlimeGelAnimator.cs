@@ -1,0 +1,242 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Evolve.Visuals
+{
+    /// <summary>Motions the gel body can play on top of its constant breathing and crawling.</summary>
+    public enum GelMotion { Absorb, Attack, Release, Dash }
+
+    /// <summary>
+    /// Soft-body animation of the slime, done by bending the body mesh in code (no skeleton):
+    /// breathing, a crawling wave while moving, and short motions for absorbing, attacking and using skills.
+    /// Sits on the slime's "Visual" object (added by SlimeGelCore). Works for remote players too: movement is
+    /// read from how the object actually moves. Other scripts call <see cref="Play(GameObject, GelMotion)"/>.
+    /// All amplitudes are small on purpose, so the organs sitting on the body never poke through.
+    /// </summary>
+    public class SlimeGelAnimator : MonoBehaviour
+    {
+        const float AbsorbTime = 0.9f, AttackTime = 0.45f, ReleaseTime = 0.8f, DashTime = 0.6f;
+
+        MeshFilter filter;
+        Mesh original, mesh;
+        Vector3[] baseVertices, work;
+        SlimeGelCore core;
+        readonly List<MeshFilter> scratch = new List<MeshFilter>();
+
+        Vector3 lastPosition;
+        float speed;
+        Vector3 moveDir;           // in the body's local space (xz)
+
+        GelMotion active;
+        float activeTime = -1f;    // seconds since the motion started, <0 = none
+
+        float nextFollowerScan;
+        float dead;                // 0..1 how collapsed the body is (stats are looked up lazily)
+        Survival.SurvivalStats stats;
+
+        /// <summary>Play a motion on the slime that owns this object (a player or a remote avatar).</summary>
+        public static void Play(GameObject slime, GelMotion motion)
+        {
+            if (slime == null) return;
+            var animator = slime.GetComponentInChildren<SlimeGelAnimator>();
+            if (animator != null) animator.Play(motion);
+        }
+
+        public void Play(GelMotion motion)
+        {
+            // The same motion is not restarted until it is mostly done (contact damage fires every frame).
+            if (activeTime >= 0f && active == motion && activeTime < Duration(motion) * 0.6f) return;
+            active = motion;
+            activeTime = 0f;
+        }
+
+        static float Duration(GelMotion m) => m == GelMotion.Absorb ? AbsorbTime : m == GelMotion.Attack ? AttackTime
+            : m == GelMotion.Release ? ReleaseTime : DashTime;
+
+        void Awake()
+        {
+            filter = GetComponent<MeshFilter>();
+            core = GetComponent<SlimeGelCore>();
+            if (filter == null || filter.sharedMesh == null) { enabled = false; return; }
+            original = filter.sharedMesh;
+            mesh = Instantiate(original);
+            mesh.name = original.name + " (animated)";
+            mesh.MarkDynamic();
+            filter.sharedMesh = mesh;
+            baseVertices = mesh.vertices;
+            work = new Vector3[baseVertices.Length];
+            lastPosition = transform.position;
+        }
+
+        void OnDestroy()
+        {
+            if (mesh != null) Destroy(mesh);
+        }
+
+        void LateUpdate()
+        {
+            float dt = Mathf.Max(Time.deltaTime, 1e-4f);
+
+            // Movement as it really happens in the world (flat), expressed in the body's own directions.
+            Vector3 delta = transform.position - lastPosition;
+            lastPosition = transform.position;
+            delta.y = 0f;
+            Vector3 velocity = delta / dt;
+            speed = Mathf.Lerp(speed, Mathf.Min(velocity.magnitude, 12f), 1f - Mathf.Exp(-10f * dt));
+            if (velocity.sqrMagnitude > 0.04f)
+            {
+                Vector3 local = transform.InverseTransformDirection(velocity.normalized);
+                local.y = 0f;
+                if (local.sqrMagnitude > 1e-4f) moveDir = Vector3.Slerp(moveDir.sqrMagnitude < 1e-4f ? local.normalized : moveDir, local.normalized, 1f - Mathf.Exp(-12f * dt));
+            }
+
+            if (activeTime >= 0f)
+            {
+                activeTime += dt;
+                if (activeTime >= Duration(active)) activeTime = -1f;
+            }
+
+            if (stats == null) stats = GetComponentInParent<Survival.SurvivalStats>();
+            float deadTarget = stats != null && stats.State.IsDead ? 1f : 0f;
+            dead = Mathf.MoveTowards(dead, deadTarget, dt * 2.5f);
+
+            if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ShareMeshWithShells(); }
+
+            Deform();
+            if (core != null) core.Boost = CoreBoost();
+        }
+
+        // Organs that wear the body's shape (the heat layer shell) must bend together with it.
+        void ShareMeshWithShells()
+        {
+            GetComponentsInChildren(true, scratch);
+            foreach (var f in scratch)
+                if (f != filter && f.sharedMesh == original) f.sharedMesh = mesh;
+        }
+
+        float CoreBoost()
+        {
+            if (activeTime < 0f) return 0f;
+            float p = activeTime / Duration(active);
+            switch (active)
+            {
+                case GelMotion.Absorb: return Mathf.Sin(p * Mathf.PI);
+                case GelMotion.Release: return p < 0.45f ? p / 0.45f : Mathf.Max(0f, 1f - (p - 0.45f) / 0.4f);
+                case GelMotion.Attack: return 0.4f * Mathf.Sin(p * Mathf.PI);
+                default: return 0.6f * Mathf.Sin(p * Mathf.PI);
+            }
+        }
+
+        void Deform()
+        {
+            float t = Time.time;
+            float move = Mathf.Clamp01(speed / 4f);
+            Vector3 dir = moveDir;
+
+            float absorb = 0f, attackKick = 0f, attackStretch = 0f, charge = 0f, burst = 0f;
+            float p = activeTime >= 0f ? activeTime / Duration(active) : -1f;
+            if (p >= 0f)
+            {
+                switch (active)
+                {
+                    case GelMotion.Absorb: absorb = p; break;
+                    case GelMotion.Attack: Lunge(p, 1f, out attackKick, out attackStretch); break;
+                    case GelMotion.Dash: Lunge(p, 1.6f, out attackKick, out attackStretch); break;
+                    case GelMotion.Release:
+                        charge = p < 0.45f ? Mathf.SmoothStep(0f, 1f, p / 0.45f) : 0f;
+                        burst = p < 0.45f ? 0f : Mathf.Sin((p - 0.45f) / 0.55f * Mathf.PI) * (1f - (p - 0.45f) / 0.55f * 0.3f);
+                        break;
+                }
+            }
+            float absorbPulse = absorb > 0f ? Mathf.Sin(absorb * Mathf.PI) : 0f;
+
+            for (int i = 0; i < baseVertices.Length; i++)
+            {
+                Vector3 b = baseVertices[i];
+                float h = Mathf.Clamp01((b.y - SlimeMeshBuilder.Bottom) / (SlimeMeshBuilder.Top - SlimeMeshBuilder.Bottom));
+                float rx = Mathf.Sqrt(b.x * b.x + b.z * b.z);
+                float rn = Mathf.Clamp01(rx / 0.65f);
+                Vector3 outward = rx > 1e-4f ? new Vector3(b.x / rx, 0f, b.z / rx) : Vector3.zero;
+                float low = 1f - h;
+                Vector3 o = Vector3.zero;
+
+                // Breathing: the hump rises and sinks slightly.
+                o.y += 0.012f * Mathf.Sin(t * 2.1f) * h;
+                o += outward * 0.006f * Mathf.Sin(t * 2.1f + 1f) * low;
+
+                // Crawling: a wave runs along the body, the hump leans where it is going.
+                if (move > 0.01f && dir.sqrMagnitude > 1e-4f)
+                {
+                    float along = b.x * dir.x + b.z * dir.z;
+                    float wave = Mathf.Sin(along * 13f - t * 9f);
+                    o.y += move * 0.025f * wave * (0.3f + 0.7f * h);
+                    o += outward * move * 0.022f * wave * low;
+                    o += dir * (move * 0.07f * h * h);
+                }
+
+                // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
+                if (absorb > 0f)
+                {
+                    float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - absorb), 2f) / 0.06f) * absorbPulse;
+                    o.y -= 0.05f * ring;
+                    o -= outward * 0.05f * ring;
+                    o -= outward * 0.03f * absorbPulse * rn;
+                    o.y += 0.03f * absorbPulse * h;
+                }
+
+                // Attacking / dashing: pull back, then the front lunges forward.
+                if (attackKick != 0f || attackStretch != 0f)
+                {
+                    float front = 0.5f + 0.5f * Mathf.Clamp(b.z / 0.55f, -1f, 1f);
+                    o.z += attackKick * (0.35f + 0.65f * h) * 0.28f;
+                    o.z += attackStretch * front * 0.16f;
+                    o.y -= Mathf.Abs(attackKick) * 0.1f * h;
+                }
+
+                // Skill: tighten and tremble while charging, then a bristling burst outward.
+                if (charge > 0f)
+                {
+                    o -= outward * 0.05f * charge * rn;
+                    o.y += 0.06f * charge * h;
+                    o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.004f * charge;
+                }
+                if (burst > 0f)
+                {
+                    o += outward * 0.09f * burst * (0.4f + 0.6f * low);
+                    o.y -= 0.05f * burst * h;
+                }
+
+                // Dead: the body slumps into a flat puddle.
+                if (dead > 0f)
+                {
+                    o.y -= (b.y - SlimeMeshBuilder.Bottom) * 0.6f * dead;
+                    o += outward * 0.07f * dead * rn;
+                }
+
+                work[i] = b + o;
+            }
+
+            mesh.vertices = work;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+        }
+
+        /// <summary>Kick curve of a lunge: pulls back first (negative), then shoots forward, then settles.</summary>
+        static void Lunge(float p, float power, out float kick, out float stretch)
+        {
+            if (p < 0.3f) { kick = -0.35f * Mathf.Sin(p / 0.3f * Mathf.PI * 0.5f); stretch = 0f; }
+            else if (p < 0.55f)
+            {
+                float q = (p - 0.3f) / 0.25f;
+                kick = Mathf.Lerp(-0.35f, 0.9f * power, Mathf.SmoothStep(0f, 1f, q));
+                stretch = Mathf.SmoothStep(0f, 1f, q) * power;
+            }
+            else
+            {
+                float q = (p - 0.55f) / 0.45f;
+                kick = Mathf.Lerp(0.9f * power, 0f, Mathf.SmoothStep(0f, 1f, q));
+                stretch = Mathf.Lerp(power, 0f, Mathf.SmoothStep(0f, 1f, q));
+            }
+        }
+    }
+}

@@ -166,6 +166,7 @@ namespace Evolve.Organs
             {
                 // Absorb: always possible, turns the organ into evolution EXP.
                 if (stats != null) stats.State.AddExp(OrganTiers.AbsorbExp(pickup.Organ.Tier));
+                Evolve.Visuals.SlimeGelAnimator.Play(gameObject, Evolve.Visuals.GelMotion.Absorb);
                 Current = null;
                 pickup.MarkTaken();
                 Destroy(pickup.gameObject);

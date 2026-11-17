@@ -60,6 +60,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Chơi thử 0.4b đợt 1
 - [x] Co-op 0.4b đợt 2: cứu đồng đội, chuyền máu, chế độ quan sát (cần chơi thử)
 - [ ] Slime gel 3D (bước 1 của map + nhân vật 3D): **đã code, chưa biên dịch**; menu Evolve → Rebuild Slime Visuals (spec `docs/superpowers/specs/2026-11-17-gel-slime-art-design.md`)
+- [ ] Animation slime gel (di chuyển, hấp thụ, tấn công, kỹ năng): đã code, chưa biên dịch (`Visuals/SlimeGelAnimator.cs`)
 - [ ] Map 3D theo phong cách gel/rêu (bước 2, chưa brainstorm)
 - [ ] Chơi thử HUD mới ở nhiều độ phân giải và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
 - [x] Spec lát cắt Hồ Khởi Sinh + sinh tồn sâu 0.5a–0.5e (`docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md`)
