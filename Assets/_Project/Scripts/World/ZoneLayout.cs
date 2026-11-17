@@ -205,18 +205,29 @@ namespace Evolve.World
             return points;
         }
 
-        /// <summary>The stream's banks as one closed outline (left bank down, right bank back up).</summary>
+        /// <summary>
+        /// The stream's banks as one closed outline (left bank down, right bank back up), about one point per metre so
+        /// where it meets the pools and the lake the join is smooth.
+        /// </summary>
         public static Vector2[] StreamShore()
         {
-            int n = StreamLine.Length;
+            const int sub = 4;
+            int segments = StreamLine.Length - 1, n = segments * sub + 1;
+            var line = new Vector2[n];
+            for (int i = 0; i < n; i++)
+            {
+                int s = Mathf.Min(i / sub, segments - 1);
+                line[i] = Vector2.Lerp(StreamLine[s], StreamLine[s + 1], (i - s * sub) / (float)sub);
+            }
             var points = new Vector2[n * 2];
             for (int i = 0; i < n; i++)
             {
-                Vector2 dir = (StreamLine[Mathf.Min(i + 1, n - 1)] - StreamLine[Mathf.Max(i - 1, 0)]).normalized;
+                // the direction over a few points either side: a smooth bank even where the line bends
+                Vector2 dir = (line[Mathf.Min(i + 3, n - 1)] - line[Mathf.Max(i - 3, 0)]).normalized;
                 Vector2 side = new Vector2(-dir.y, dir.x);
                 float hw = StreamHalfWidthAt(i / (float)(n - 1));
-                points[i] = StreamLine[i] + side * hw;
-                points[2 * n - 1 - i] = StreamLine[i] - side * hw;
+                points[i] = line[i] + side * hw;
+                points[2 * n - 1 - i] = line[i] - side * hw;
             }
             return points;
         }
@@ -245,7 +256,7 @@ namespace Evolve.World
                 Vector2 side = new Vector2(-dir.y, dir.x);
                 float u = i / (float)(line.Length - 1);
                 float ends = Mathf.Sin(u * Mathf.PI);
-                result[i] = line[i] + side * (8f * (Noise(u * 9f + 130f, 2f) - 0.5f) * ends);
+                result[i] = line[i] + side * (5f * (Noise(u * 4f + 130f, 2f) - 0.5f) * ends);   // long, gentle bends: the banks never fold over
             }
             return result;
         }

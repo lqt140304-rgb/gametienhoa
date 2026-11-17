@@ -288,6 +288,8 @@ namespace Evolve.EditorTools
             };
             var parents = new Transform[VegetationNames.Length];
             for (int i = 0; i < parents.Length; i++) parents[i] = new GameObject("Vegetation (" + VegetationNames[i] + ")").transform;
+            // Their glow fades out with the slime's sight: without eyes they show only where its light or a scan reaches.
+            foreach (var parent in parents) parent.gameObject.AddComponent<DetailCulling>().ShowDistance = 5000f;
 
             var points = VegetationScatter.Points(VegetationSeed, Blocked);
             var rng = new System.Random(VegetationSeed + 1);

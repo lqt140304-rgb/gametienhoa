@@ -43,10 +43,10 @@ namespace Evolve.EditorTools
             // 1) The layout's water (World/ZoneLayout): the lake (its south bay is the Life Shallows), the winding stream,
             //    its two deep pools and the humus bed's dirty puddle. The terrain is already carved to their depths.
             var root = new GameObject(LayoutRootName).transform;
-            made += Shoreline(root, LakeName, ZoneLayout.LakeShore(220), clean);
+            made += Shoreline(root, LakeName, ZoneLayout.LakeShore(640), clean);   // about one point per metre: smooth joins
             made += Shoreline(root, StreamName, ZoneLayout.StreamShore(), clean);
             for (int i = 0; i < ZoneLayout.PoolCenters.Length; i++)
-                made += Shoreline(root, "Deep Pool " + (i + 1), ZoneLayout.PoolShore(i, 64), clean);
+                made += Shoreline(root, "Deep Pool " + (i + 1), ZoneLayout.PoolShore(i, 128), clean);
             float puddleLevel = TerrainShape.HeightAt(ZoneLayout.PuddleCenter.x, ZoneLayout.PuddleCenter.y, 1337) + ZoneLayout.PuddleDepth + ZoneLayout.WaterLevel;   // down in the sinkhole
             var puddle = MakeSurface(root, new Vector3(ZoneLayout.PuddleCenter.x, puddleLevel, ZoneLayout.PuddleCenter.y),
                 WaterShape.Disc, new Vector2(ZoneLayout.PuddleRadius, 0f), dirty, 0.01f);
