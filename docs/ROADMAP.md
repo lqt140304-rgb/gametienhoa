@@ -77,4 +77,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Biên dịch và chạy thử 0.6c theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 12
 - [x] Code 0.5c: **đã code, chưa biên dịch/chạy thử**: 5 chất dinh dưỡng (`Survival/NutrientKind`, `FoodProfile`, `NutrientEffects`), năm kho trong `SurvivalState`, cơ quan cần chất (`OrganNutrient`, `OrganDecay`, chặn trang bị `AttachCheck.LackNutrient`, yếu dần rồi tan), thức ăn mang hồ sơ dinh dưỡng, HUD và màu thân báo thiếu (plan `docs/superpowers/plans/2026-11-17-0.5c-nutrition.md`)
 - [ ] Biên dịch và chạy thử 0.5c theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 13
+- [x] Code 0.5d: **đã code, chưa biên dịch/chạy thử**: 3 bệnh (`Survival/DiseaseKind`, `DiseaseRules`; Nhiễm Nước Đọng, Thối Gel, Mờ Bào Tử), nguồn lây (nước bẩn, xác thối, vết thương, đám bào tử `SporeZone`, người bệnh ở gần `ContagionSensor`), triệu chứng trong `SurvivalState`, dòng "Bệnh:" trên HUD, màu thân ngả xanh vàng, byte bệnh trong `PlayerNetState` (plan `docs/superpowers/plans/2026-11-17-0.5d-disease.md`)
+- [ ] Biên dịch và chạy thử 0.5d theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 14
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
