@@ -152,6 +152,25 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void TheCaveAndTheTunnelSitOnDryLand()
+        {
+            Assert.IsTrue(ZoneLayout.InsideCave(ZoneLayout.RootFoot.Center.x, ZoneLayout.RootFoot.Center.y));
+            for (int a = 0; a < 32; a++)
+            {
+                float ang = a * Mathf.PI / 16f;
+                float x = ZoneLayout.RootFoot.Center.x + Mathf.Cos(ang) * ZoneLayout.CaveRadii.x, z = ZoneLayout.RootFoot.Center.y + Mathf.Sin(ang) * ZoneLayout.CaveRadii.y;
+                Assert.AreEqual(0f, ZoneLayout.DepthAt(x, z), $"cave wall at {x},{z}");
+            }
+            var t = ZoneLayout.TunnelLine;
+            for (float f = 0f; f <= 1f; f += 0.05f)
+            {
+                var p = Vector2.Lerp(t[0], t[1], f);
+                Assert.AreEqual(0f, ZoneLayout.DepthAt(p.x, p.y), $"tunnel at {p}");
+                Assert.Less(ZoneLayout.DistanceToPath(p.x, p.y), 0.5f, "the tunnel covers the trail");
+            }
+        }
+
+        [Test]
         public void NoiseIsSmoothAndInRange()
         {
             for (float x = -3f; x < 3f; x += 0.37f)

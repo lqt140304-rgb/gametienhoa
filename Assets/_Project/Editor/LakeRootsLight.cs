@@ -69,7 +69,7 @@ namespace Evolve.EditorTools
             }
             var shelters = new List<Vector2>();
             foreach (var s in Object.FindObjectsByType<ShelterZone>()) shelters.Add(new Vector2(s.transform.position.x, s.transform.position.z));
-            bool NearShelter(Vector2 p) { foreach (var s in shelters) if (Vector2.Distance(s, p) < 5.5f) return true; return false; }
+            bool NearShelter(Vector2 p) { if (ZoneLayout.InsideCave(p.x, p.y, 3f)) return true; foreach (var s in shelters) if (Vector2.Distance(s, p) < 5.5f) return true; return false; }   // and nothing through the cave (Dress Lake: Landmarks)
             Vector3 Ground(Vector2 p) => new Vector3(p.x, LakeGround.GroundY(p.x, p.y), p.y);
 
             void Arches(Vector2 at0, float rangeX, float rangeZ, int count)
