@@ -28,10 +28,11 @@
 - Không chọn đánh thì chết thường, giống thua.
 - **[ĐÃ CHỐT]** Mỗi mạng chỉ được cược Thần Chết **một lần**.
 - **[ĐÃ CHỐT]** Độ khó Thần Chết **cố định**, không nhân theo số người chơi. Trận cược là 1 người đấu 1 Thần Chết, khác với quái A/S/Boss nhân HP theo số người.
+- **[ĐÃ CHỐT]** Thần Chết thuộc **bậc Boss** của Bestiary (giai đoạn theo cơ quan, vùng phá có giới hạn mẫu). Khác Boss thường: không nằm trong vùng nào, trận 1 người, và **không rơi cơ quan S**.
 
 **[MỞ]**
 - Thắng thì vẫn giữ mạng đó, nên bộ đếm "đã cược" gắn với mạng hiện tại và chỉ reset khi mất mạng (thua hoặc chết thật). Xác nhận cách hiểu này.
-- Thần Chết có nằm trong bậc Boss của Bestiary không (đề xuất: có)? Độ khó cố định ở mức nào, có chỉnh theo cấp/cơ quan của người cược không?
+- Độ khó cố định ở mức nào, có chỉnh theo cấp/cơ quan của người cược không?
 
 ## 2. Hệ quả cho các tài liệu khác
 
