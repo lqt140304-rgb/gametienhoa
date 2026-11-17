@@ -5,16 +5,14 @@ namespace Evolve.Organs
 {
     /// <summary>
     /// Lets the player decide what to do with organs:
-    /// touching a dropped organ asks E = attach / replace / absorb, X = leave it;
-    /// G opens the body menu where 1..9 detaches an organ and drops it on the ground.
+    /// touching a dropped organ asks E = attach / replace, F = absorb it for evolution EXP, X = leave it;
+    /// G opens the body menu (drawn by the HUD) to spend EXP, pick a priority organ or detach organs.
     /// Replaced organs are dropped too, so the player can change their mind.
     /// The HUD reads Current, GetPrompt and BodyMenuOpen to draw the dialogs.
     /// </summary>
     [RequireComponent(typeof(OrganHost))]
     public class OrganInteractor : MonoBehaviour
     {
-        [Tooltip("Food gained when absorbing an organ you already have")]
-        [SerializeField] float absorbNutrition = 10f;
         [Tooltip("How far from the body detached organs are dropped")]
         [SerializeField] float dropDistance = 1.5f;
         [Tooltip("On death every organ falls off where you died; each one is lost with this chance")]
@@ -85,14 +83,17 @@ namespace Evolve.Organs
 
         public AttachCheck CurrentCheck => Current != null ? host.Check(Current.Organ) : AttachCheck.Ok;
 
-        /// <summary>Dialog title, body and the label of the E action (null = no action).</summary>
+        /// <summary>EXP gained by absorbing the organ currently offered.</summary>
+        public float CurrentAbsorbExp => Current != null ? OrganTiers.AbsorbExp(Current.Organ.Tier) : 0f;
+
+        /// <summary>Dialog title, body and the label of the E action (null = E does nothing; F always absorbs).</summary>
         public void GetPrompt(out string title, out string body, out string accept)
         {
             title = body = accept = null;
             if (Current == null) return;
             var o = Current.Organ;
             title = $"Tìm thấy: {OrganTiers.Tag(o.Tier)} {o.DisplayName}";
-            string effect = $"{o.Description}\nCần {o.GrowthFoodRequired:0} thức ăn để phát triển.";
+            string effect = $"{o.Description}\nCần {o.GrowthExpRequired:0} EXP tiến hóa để phát triển (đang có {host.Exp:0}).";
             switch (CurrentCheck)
             {
                 case AttachCheck.Ok:
@@ -105,12 +106,10 @@ namespace Evolve.Organs
                     accept = "Thay thế";
                     break;
                 case AttachCheck.AlreadyOwned:
-                    body = $"Bạn đã có {o.DisplayName}.\nHấp thụ để nhận {absorbNutrition:0} thức ăn?";
-                    accept = "Hấp thụ";
+                    body = $"Bạn đã có {o.DisplayName}.\nHấp thụ để nhận {CurrentAbsorbExp:0} EXP tiến hóa?";
                     break;
                 case AttachCheck.NoRoom:
-                    body = $"Cơ thể không đủ chỗ ({host.Count}/{host.MaxOrgans} cơ quan).\nHấp thụ để nhận {absorbNutrition:0} thức ăn?";
-                    accept = "Hấp thụ";
+                    body = $"Cơ thể không đủ chỗ ({host.Count}/{host.MaxOrgans} cơ quan).\nHấp thụ để nhận {CurrentAbsorbExp:0} EXP tiến hóa?";
                     break;
             }
         }
@@ -149,19 +148,26 @@ namespace Evolve.Organs
         void UpdateBodyMenu()
         {
             if (KeyPressed.G()) BodyMenuOpen = !BodyMenuOpen;
-            if (!BodyMenuOpen) return;
-            var list = host.OrganList;
-            for (int i = 0; i < list.Count && i < 9; i++)
-                if (KeyPressed.Digit(i + 1)) { Drop(list[i]); break; }
         }
+
+        public void CloseBodyMenu() => BodyMenuOpen = false;
 
         void UpdatePrompt()
         {
             if (Current == null) return;
             if (KeyPressed.X()) { Current = null; return; } // leave it; touch again to be asked again
 
-            if (!KeyPressed.E()) return;
             var pickup = Current;
+            if (KeyPressed.F())
+            {
+                // Absorb: always possible, turns the organ into evolution EXP.
+                if (stats != null) stats.State.AddExp(OrganTiers.AbsorbExp(pickup.Organ.Tier));
+                Current = null;
+                Destroy(pickup.gameObject);
+                return;
+            }
+
+            if (!KeyPressed.E()) return;
             switch (CurrentCheck)
             {
                 case AttachCheck.Ok:
@@ -173,8 +179,7 @@ namespace Evolve.Organs
                     if (old != null) SpawnDropped(old);
                     break;
                 default:
-                    if (stats != null) stats.State.Feed(absorbNutrition);
-                    break;
+                    return; // nothing to attach; use F to absorb
             }
             Current = null;
             Destroy(pickup.gameObject);

@@ -47,9 +47,10 @@ namespace Evolve.World
             if (Evolve.Survival.KeyPressed.V()) SetSight(sight >= 1f ? 0f : 1f);
         }
 
+        /// <summary>0 = blind, 1 = full colour vision; above 1 (levelled eyes) only extends view range.</summary>
         public void SetSight(float value)
         {
-            value = Mathf.Clamp01(value);
+            value = Mathf.Max(0f, value);
             if (Mathf.Approximately(value, sight)) return;
             sight = value;
             Apply();
@@ -57,12 +58,13 @@ namespace Evolve.World
 
         void Apply()
         {
-            color.saturation.value = Mathf.Lerp(-100f, 0f, sight);
+            float c = Mathf.Clamp01(sight);
+            color.saturation.value = Mathf.Lerp(-100f, 0f, c);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = fogColor;
             RenderSettings.fogStartDistance = 0f;
-            RenderSettings.fogEndDistance = Mathf.Lerp(blindFogEnd, eyesFogEnd, sight * sight);
+            RenderSettings.fogEndDistance = Mathf.Lerp(blindFogEnd, eyesFogEnd, c * c) * (1f + Mathf.Max(0f, sight - 1f));
         }
 
         void OnValidate() { if (color != null) Apply(); }

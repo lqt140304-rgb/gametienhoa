@@ -81,7 +81,7 @@ namespace Evolve.EditorTools
                 o.Slot = OrganSlot.Legs;
                 o.Tier = OrganTier.B;
                 o.SpeedMultiplier = 1.7f;
-                o.GrowthFoodRequired = 45f;
+                o.GrowthExpRequired = 45f;
                 o.VisualPrefab = LegsPrefab(Mat("Pseudopod_B", new Color(0.3f, 0.8f, 0.35f), "Universal Render Pipeline/Lit"), "Organ_MuscularPseudopods", 1.3f);
             });
             var legsA = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_RunnerLegs.asset", o =>
@@ -91,7 +91,7 @@ namespace Evolve.EditorTools
                 o.Slot = OrganSlot.Legs;
                 o.Tier = OrganTier.A;
                 o.SpeedMultiplier = 2f;
-                o.GrowthFoodRequired = 70f;
+                o.GrowthExpRequired = 70f;
                 o.VisualPrefab = LegsPrefab(Mat("Pseudopod_A", new Color(0.3f, 0.5f, 0.9f), "Universal Render Pipeline/Lit"), "Organ_RunnerLegs", 1.6f);
             });
             var preyDrops = Asset<DropTableSO>(Root + "/ScriptableObjects/DropTable_Prey.asset", t =>
@@ -114,7 +114,7 @@ namespace Evolve.EditorTools
                 o.Slot = OrganSlot.Back;
                 o.Tier = OrganTier.B;
                 o.ContactDamage = 15f;
-                o.GrowthFoodRequired = 45f;
+                o.GrowthExpRequired = 45f;
                 o.VisualPrefab = SpikesPrefab(Mat("Spike", new Color(0.45f, 0.2f, 0.55f), "Universal Render Pipeline/Lit"));
             });
             EnsureOrgans(preyDrops, membrane, spikes);

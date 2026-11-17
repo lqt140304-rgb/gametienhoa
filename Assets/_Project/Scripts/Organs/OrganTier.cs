@@ -15,6 +15,15 @@ namespace Evolve.Organs
             _ => new Color(0.85f, 0.85f, 0.85f)
         };
 
+        /// <summary>Evolution EXP gained by absorbing an organ of this tier.</summary>
+        public static float AbsorbExp(OrganTier t) => t switch
+        {
+            OrganTier.B => 30f,
+            OrganTier.A => 60f,
+            OrganTier.S => 120f,
+            _ => 15f
+        };
+
         /// <summary>"[B]" coloured for IMGUI rich text.</summary>
         public static string Tag(OrganTier t) => $"<color=#{ColorUtility.ToHtmlStringRGB(Color(t))}>[{t}]</color>";
     }
