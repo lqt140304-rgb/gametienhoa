@@ -115,29 +115,23 @@ namespace Evolve.EditorTools
             }
 
             // ---------------------------------------------------------------- roots hanging from the ceiling
-            var tops = new List<Vector3>();
-            float ceilingY = 20f;
-            var ceiling = GameObject.Find("Root Ceiling");
-            if (ceiling != null)
+            // Thick roots hang from the roof only in a small cave; a big cave (dome with its own "Hanging Roots") has its own.
+            if (!LakeLayout.HasHangingRoots())
             {
-                float sum = 0f;
-                foreach (Transform t in ceiling.transform) { tops.Add(t.position); sum += t.position.y; }
-                if (tops.Count > 0) ceilingY = sum / tops.Count;
-            }
-            if (tops.Count == 0)
-                for (int i = 0; i < 7; i++) tops.Add(new Vector3(Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble()), ceilingY, Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble())));
-            foreach (var top in tops)
-            {
-                var start = top + new Vector3(((float)rnd.NextDouble() - 0.5f) * 3f, 1f, ((float)rnd.NextDouble() - 0.5f) * 3f);
-                float bottom = 5f + (float)rnd.NextDouble() * 6f;
-                var path = FloraMeshes.VinePath(start, Mathf.Max(4f, start.y - bottom), ++seed, 0.9f, 14);
-                AddRoot(path, 0.95f, 0.1f, 0.14f, false);
-                for (int k = 0; k < 3; k++)
+                var tops = LakeLayout.HangingPoints(rnd);
+                foreach (var top in tops)
                 {
-                    int at = 3 + rnd.Next(6);
-                    float a = (float)rnd.NextDouble() * Mathf.PI * 2f;
-                    var branch = RootMeshes.BranchPath(path[at], new Vector3(Mathf.Cos(a), -0.2f, Mathf.Sin(a)), 3f + (float)rnd.NextDouble() * 3f, 1.5f + (float)rnd.NextDouble() * 2f, ++seed, 8);
-                    AddRoot(branch, 0.3f, 0.05f, 0.1f, false);
+                    var start = top + new Vector3(((float)rnd.NextDouble() - 0.5f) * 3f, 1f, ((float)rnd.NextDouble() - 0.5f) * 3f);
+                    float bottom = 5f + (float)rnd.NextDouble() * 6f;
+                    var path = FloraMeshes.VinePath(start, Mathf.Max(4f, start.y - bottom), ++seed, 0.9f, 14);
+                    AddRoot(path, 0.95f, 0.1f, 0.14f, false);
+                    for (int k = 0; k < 3; k++)
+                    {
+                        int at = 3 + rnd.Next(6);
+                        float a = (float)rnd.NextDouble() * Mathf.PI * 2f;
+                        var branch = RootMeshes.BranchPath(path[at], new Vector3(Mathf.Cos(a), -0.2f, Mathf.Sin(a)), 3f + (float)rnd.NextDouble() * 3f, 1.5f + (float)rnd.NextDouble() * 2f, ++seed, 8);
+                        AddRoot(branch, 0.3f, 0.05f, 0.1f, false);
+                    }
                 }
             }
 
@@ -161,7 +155,8 @@ namespace Evolve.EditorTools
                 if (shafts >= 5) break;
                 var bottomPoint = new Vector3(target.x + (float)(rnd.NextDouble() - 0.5) * 8f, 0f, target.y + (float)(rnd.NextDouble() - 0.5) * 8f);
                 bottomPoint.y = LakeGround.GroundY(bottomPoint.x, bottomPoint.z);
-                Vector3 topPoint = bottomPoint - slant + Vector3.up * (ceilingY + 2f);
+                float roofY = LakeLayout.CeilingY(bottomPoint.x - slant.x, bottomPoint.z - slant.z);   // the real roof above the spot
+                Vector3 topPoint = bottomPoint - slant + Vector3.up * (roofY + 2f);
                 Vector3 dir = (bottomPoint - topPoint).normalized;
                 float height = Vector3.Distance(topPoint, bottomPoint);
                 float topR = 1.2f + (float)rnd.NextDouble() * 1.2f, bottomR = 3.8f + (float)rnd.NextDouble() * 2.2f;
@@ -183,14 +178,14 @@ namespace Evolve.EditorTools
                 l.range = height * 1.05f;
                 l.spotAngle = Mathf.Clamp(2f * Mathf.Atan((bottomR + 1.5f) / height) * Mathf.Rad2Deg, 15f, 90f);
                 l.color = new Color(1f, 0.96f, 0.82f);
-                l.intensity = 0.6f; // gentle: the water is glossy and a strong light makes it glare white
+                l.intensity = Mathf.Clamp(0.6f * (height / 20f) * (height / 20f), 0.6f, 8f); // same brightness on the ground whatever the roof height (a gentle level: glossy water glares)
                 l.shadows = LightShadows.None;
                 lightGo.transform.localRotation = Quaternion.FromToRotation(Vector3.forward, Vector3.down);
                 shafts++;
             }
 
             // ---------------------------------------------------------------- spores in the air
-            MakeSpores(root);
+            foreach (var area in LakeLayout.Areas()) MakeSpores(root, area.Center, area.Radius);
 
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
@@ -214,11 +209,11 @@ namespace Evolve.EditorTools
             return mat;
         }
 
-        static void MakeSpores(Transform parent)
+        static void MakeSpores(Transform parent, Vector2 centre, float radius)
         {
             var go = new GameObject("Spore Dust");
             go.transform.SetParent(parent, false);
-            go.transform.position = new Vector3(0f, 3f, 0f);
+            go.transform.position = new Vector3(centre.x, 3f, centre.y);
             var ps = go.AddComponent<ParticleSystem>();
             var main = ps.main;
             main.loop = true;
@@ -227,13 +222,13 @@ namespace Evolve.EditorTools
             main.startSpeed = 0.12f;
             main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.14f);
             main.startColor = new Color(0.7f, 1f, 0.88f, 0.8f);
-            main.maxParticles = 260;
+            main.maxParticles = 220;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             var emission = ps.emission;
             emission.rateOverTime = 30f;
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
-            shape.scale = new Vector3(100f, 6f, 100f);
+            shape.scale = new Vector3(radius * 1.6f, 6f, radius * 1.6f);
             var noise = ps.noise;
             noise.enabled = true;
             noise.strength = 0.35f;

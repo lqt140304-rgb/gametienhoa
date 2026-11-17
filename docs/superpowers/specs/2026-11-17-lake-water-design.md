@@ -45,3 +45,10 @@ Không collider; chạy lại được.
 
 ## Đường mòn theo bố cục khu (đổi sau 0.6b)
 `Dress Lake: Ground` không còn vẽ đường tới các toạ độ cũ cố định. Nó đọc `World/ZoneLayout.Paths` **bằng tên** (reflection, nên công cụ vẫn biên dịch khi chưa có `ZoneLayout` trong `main`) và vẽ dải bùn dọc đúng các đường mòn của bố cục mới. Chưa có `ZoneLayout` thì đi từ vũng sinh mệnh tới các vùng tìm theo tên đối tượng trong scene (vị trí thật của chúng), và cuối cùng mới tới toạ độ mặc định cũ. Ghi chú: các công cụ Dress khác (nấm, rễ) cũng tìm vùng theo tên đối tượng nên theo bố cục mới; việc rải đá/cỏ/rêu/nấm ngẫu nhiên hiện chỉ phủ vùng lõi 120 m, cần mở rộng ra các bệ sinh cảnh sau khi 0.6b vào `main`.
+
+## Theo bố cục mới của khu (0.6b)
+Các công cụ Dress dùng chung `Editor/LakeLayout.cs`: đọc `World/ZoneLayout.Biomes` (bệ của từng vùng) **bằng tên** qua reflection, cộng thêm vùng lõi quanh vũng sinh mệnh.
+- **Rải ngẫu nhiên** (rêu, đá, cỏ, nấm) phủ vùng lõi và **từng bệ sinh cảnh**, cùng mật độ ở mọi nơi.
+- **Dây leo** treo từ đầu dưới của các "Hanging Roots" của scene (hoặc rễ trần cũ); tối đa dài 24 m nên ở hang cao (mái 85 m) chúng lơ lửng cách đất, không chạm đất. Công cụ rễ **không thêm rễ buông** nếu scene đã có "Hanging Roots" riêng.
+- **Tia sáng** bắt đầu từ mái thật (`Dome`, tính độ cao theo vòm) và cường độ đèn rọi tỉ lệ theo bình phương chiều dài tia để độ sáng ở mặt đất không đổi.
+- **Bụi bào tử** có một hệ cho vùng lõi và một hệ cho mỗi bệ.
