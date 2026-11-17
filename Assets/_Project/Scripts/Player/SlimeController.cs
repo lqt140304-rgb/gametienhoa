@@ -32,7 +32,7 @@ namespace Evolve.Player
         SurvivalStats stats;
         OrganHost organs;
         Vector3 baseScale = Vector3.one;
-        float squash;
+        float squash, squashTarget, wobbleAmp, airK, airTime;
         Vector3 spawnPoint;
         Collider col;
         SphereCollider sphere;
@@ -74,7 +74,7 @@ namespace Evolve.Player
             {
                 Vector3 dir = GetMoveDirection();
                 rb.AddForce(Vector3.up * hopForce + dir * hopForward, ForceMode.VelocityChange);
-                squash = 1f;
+                squashTarget = 1f; // eased in (see AnimateVisual), never an instant jump
             }
             AnimateVisual();
         }
@@ -173,20 +173,31 @@ namespace Evolve.Player
         void AnimateVisual()
         {
             if (visual == null) return;
-            // Landing: spread out flat (negative squash), then settle. In the air: stretch with vertical speed.
-            bool grounded = IsGrounded();
+            float dt = Time.deltaTime;
+
+            // "Grounded" with a short grace period, so a flickering ground check never makes the body pop.
+            if (IsGrounded()) airTime = 0f; else airTime += dt;
+            bool grounded = airTime < 0.08f;
+
+            // Landing: spread out flat (negative squash), then settle.
             if (wasAirborne && grounded)
             {
-                squash = -0.9f;
+                squashTarget = -0.9f;
                 var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
-                if (jelly != null) jelly.Jiggle(3f);
+                if (jelly != null) jelly.Jiggle(1.5f);
             }
             wasAirborne = !grounded;
-            squash = Mathf.Lerp(squash, 0f, 1f - Mathf.Exp(-6f * Time.deltaTime)); // smooth, not linear
-            float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.02f : 0f;
+
+            // Every part of the body scale is eased: the target decays, the body follows the target.
+            squashTarget = Mathf.Lerp(squashTarget, 0f, 1f - Mathf.Exp(-7f * dt));
+            squash = Mathf.Lerp(squash, squashTarget, 1f - Mathf.Exp(-22f * dt));
+            wobbleAmp = Mathf.Lerp(wobbleAmp, stats.IsMoving ? 1f : 0f, 1f - Mathf.Exp(-8f * dt));
+            float wobble = Mathf.Sin(Time.time * 10f) * 0.02f * wobbleAmp;
+            float airTarget = grounded ? 0f : Mathf.Clamp(Mathf.Abs(rb.linearVelocity.y) * 0.03f, 0f, 0.2f);
+            airK = Mathf.Lerp(airK, airTarget, 1f - Mathf.Exp(-16f * dt));
+
             float bs = BodyScale;
-            float airStretch = grounded ? 0f : Mathf.Clamp(Mathf.Abs(rb.linearVelocity.y) * 0.03f, 0f, 0.2f);
-            float y = 1f + squash * 0.35f + wobble + airStretch;
+            float y = 1f + squash * 0.35f + wobble + airK;
             float xz = 1f / Mathf.Sqrt(y); // preserve volume
             visual.localScale = Vector3.Scale(baseScale * bs, new Vector3(xz, y, xz));
 
