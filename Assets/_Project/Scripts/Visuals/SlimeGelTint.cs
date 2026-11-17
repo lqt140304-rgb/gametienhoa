@@ -17,6 +17,7 @@ namespace Evolve.Visuals
         Color[] custom;
 
         readonly List<Renderer> scratch = new List<Renderer>();
+        readonly List<OrganSocket> sockets = new List<OrganSocket>();
         float nextScan;
 
         void OnEnable() => SlimeColor.Changed += Refresh;
@@ -25,7 +26,7 @@ namespace Evolve.Visuals
         void Refresh() => nextScan = 0f;
 
         /// <summary>The colour of the core (for SlimeGelCore).</summary>
-        public Color CoreColor => Colors()[(int)SlimePart.Core];
+        public Color CoreColor => UseLocalColor || custom == null ? SlimeColor.Get(SlimePart.Core) : custom[(int)SlimePart.Core]; // no allocation: read every frame
 
         /// <summary>Use these colours (one per SlimePart) instead of the local player's choice (remote players).</summary>
         public void SetColors(Color[] colors)
@@ -55,7 +56,8 @@ namespace Evolve.Visuals
         {
             var colors = Colors();
             Tint(GetComponent<Renderer>(), colors[(int)SlimePart.Body]);
-            foreach (var socket in GetComponentsInChildren<OrganSocket>(true))
+            GetComponentsInChildren(true, sockets);
+            foreach (var socket in sockets)
             {
                 Color c = colors[(int)PartOf(socket.Slot)];
                 socket.GetComponentsInChildren(true, scratch);
