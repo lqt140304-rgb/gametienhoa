@@ -108,13 +108,12 @@ namespace Evolve.Organs
             if (organ != null && blueprints.Learn(organ.name)) known.Add(organ);
         }
 
-        /// <summary>Grow a known blueprint into a bud again, paying EXP. Only into an empty slot, and only where the body may be reshaped.</summary>
-        public ResimulateResult TryResimulate(OrganSO organ, bool inShelter)
+        /// <summary>Grow a known blueprint into a bud again, paying EXP. Works anywhere; an occupied slot is replaced.</summary>
+        public ResimulateResult TryResimulate(OrganSO organ)
         {
             if (!Knows(organ)) return ResimulateResult.Unknown;
             var st = stats != null ? stats : GetComponent<SurvivalStats>();
-            bool dead = st != null && st.State.IsDead;
-            if (!OrganRules.CanReshape(Evolve.World.ShelterZone.AnyActive, inShelter, dead)) return ResimulateResult.Blocked;
+            if (st != null && st.State.IsDead) return ResimulateResult.Blocked;
             var check = Check(organ);
             if (check != AttachCheck.Ok && check != AttachCheck.SlotOccupied) return ResimulateResult.Blocked; // an occupied slot is replaced
             float cost = OrganRules.ResimulateCost(organ.Tier);

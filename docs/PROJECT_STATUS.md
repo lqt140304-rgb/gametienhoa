@@ -326,7 +326,7 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 
 - Gắn hoặc hấp thụ cơ quan là học bản mẫu; bản mẫu giữ khi cơ quan tan, bị tháo hoặc khi chết (trong phiên chơi, chưa lưu file; không đồng bộ co-op).
 - Menu G có mục "Bản mẫu đã học": mô phỏng lại tốn EXP bằng EXP hấp thụ cùng bậc (số đề xuất); ô đã có cơ quan thì cơ quan cũ bị thay (mất).
-- Gắn, thay, tháo chỉ ở trong nơi trú khi scene có `ShelterZone`; `Prototype_01` không đổi.
+- Gắn, thay, tháo và mô phỏng lại cơ quan **ở bất cứ đâu** (chủ dự án chọn bỏ luật nơi trú; spec 6.8.3 không áp dụng).
 - Chưa làm: vật liệu gel riêng cho cơ quan (hiện dùng `SlimeGelTint` sẵn có, thiếu chất chỉ co nhỏ tới 70%), vỏ riêng cho bản sao rơi, hành động bậc B, hình gel khác biệt từng loại (0.5f).
 
 ## 15. Danh sách kiểm tra thủ công 0.5e (cho chủ dự án)
@@ -334,9 +334,9 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các test `OrganBlueprintTests`.
 
 1. Hấp thụ một cơ quan rơi (F) rồi mở menu G: mục "Bản mẫu đã học" hiện nút của nó.
-2. Ngoài nơi trú (Hồ Khởi Sinh): bấm E lên cơ quan rơi hoặc "Tháo cơ quan" thì có thông báo "Chỉ đổi cơ thể được khi ở nơi trú", không mất gì.
-3. Trong nơi trú: gắn, thay, tháo và "Mô phỏng lại" đều chạy; mô phỏng lại trừ đúng EXP; thiếu EXP thì báo và không trừ.
+2. Ở bất cứ đâu: gắn (E), thay, tháo cơ quan đều chạy.
+3. "Mô phỏng lại" chạy ở mọi nơi, trừ đúng EXP; thiếu EXP thì báo và không trừ.
 4. Cơ quan tan vì thiếu chất: bản mẫu vẫn còn trong danh sách.
 5. Chết hết mạng, chơi lại: bản mẫu còn; cơ quan đã rơi theo luật 50%.
 6. Cơ quan đói chất co nhỏ dần (vật liệu gel riêng chưa làm).
-7. `Prototype_01` (không có nơi trú): gắn và tháo ở đâu cũng được như cũ.
+7. `Prototype_01`: gắn và tháo như cũ.

@@ -14,7 +14,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 | **0.6a: Khu 480 m** | Khu lớn 480 × 480 m (đi ngang ~8 phút), địa hình Unity Terrain đồi và vách rìa, mái hang vòm, rễ buông, 4 cột mốc, ranh giới cứng; vùng lõi 130 × 130 m vẫn phẳng. 0.6b: chia vùng quần thể theo vi sinh cảnh, sinh vật đi theo cao độ. 0.6c: rải thực vật dọc đường | Khu có đủ rộng để khám phá chưa, đi 8 phút có thú vị không? |
 | **0.5c: Dinh dưỡng** | 5 chất kiểu slime (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống); thiếu thì cơ quan yếu dần | Thức ăn có còn là lựa chọn có ý nghĩa không? |
 | **0.5d: Bệnh tật** | 2–3 bệnh (nước đọng, thối gel, mờ bào tử), lây trong co-op | Hậu quả của lựa chọn sai có đủ rõ không? |
-| **0.5e: Gel mô phỏng cơ quan** (đã làm: bản mẫu, đổi ở nơi trú, co nhỏ khi thiếu chất; còn mở: vỏ gel riêng, hành động bậc B → 0.5f) | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
+| **0.5e: Gel mô phỏng cơ quan** (đã làm: bản mẫu, co nhỏ khi thiếu chất; còn mở: vỏ gel riêng, hành động bậc B → 0.5f) | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
 | **Sau đó** | Thêm vùng, Dị Năng, cơ quan; thay hình khối tạm bằng model Blender | — |
 
 ## Nguyên tắc
