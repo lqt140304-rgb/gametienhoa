@@ -94,7 +94,8 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
   - Kỹ năng mở ở Lv2 (`AbilityUnlockLevel`), tự vào ô trống đầu tiên; đổi ô bằng bảng Cơ thể (G). Mất cơ quan thì mất kỹ năng.
   - Hồi chiêu tính theo từng cơ quan, nên đổi ô không làm mới hồi chiêu. Lv3: hồi chiêu ngắn hơn 25%, hiệu lực mạnh hơn 50%.
   - Chân giả cơ bắp (B) → **Xung Phong Húc**: lao tới lực 9, 20 năng lượng, hồi 6 giây, đủ nhanh để húc kẻ săn mồi.
-  - Gai độc (B) → **Xả Gai**: gây 12 sát thương kẻ săn mồi trong 3 m, 20 năng lượng, hồi 8 giây.
+  - Gai độc (B) → **Xả Gai**: bắn một chùm 5 gai (Lv3: 7 gai, mạnh hơn 50%) bay thẳng về phía hồng tâm, mỗi gai 6 sát thương kẻ săn mồi trúng đòn, tầm 14 m, 20 năng lượng, hồi 8 giây.
+  - **Chế độ ngắm (Alt)** [chủ dự án yêu cầu 2026-11-17]: Alt đổi giữa **chế độ chuột** (con trỏ tự do, dùng cho bảng Cơ thể và Menu God, giữ chuột phải để xoay camera) và **chế độ ngắm** (hồng tâm giữa màn hình, chuột xoay camera trực tiếp). Kỹ năng bắn hoặc lao về phía hồng tâm; ở chế độ chuột thì theo hướng camera nhìn.
 
 **Quái vật**
 - **Boss là bậc riêng**, tách khỏi S. S là sinh vật sống trong hệ sinh thái; Boss là trận đánh có giai đoạn, hang ổ riêng.

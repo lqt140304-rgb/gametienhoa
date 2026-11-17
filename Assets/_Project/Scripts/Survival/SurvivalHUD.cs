@@ -1,6 +1,7 @@
 using System.Linq;
 using Evolve.Abilities;
 using Evolve.Organs;
+using Evolve.Player;
 using Evolve.World;
 using UnityEngine;
 
@@ -26,6 +27,7 @@ namespace Evolve.Survival
             "Space  Nảy (tốn năng lượng)\n" +
             "Q  Dùng Dị Năng\n" +
             "1–5  Kỹ năng gắn cơ quan (cơ quan bậc B, Lv2)\n" +
+            "Alt  Đổi chuột ⇄ hồng tâm (ngắm): kỹ năng\n    bắn/lao về phía hồng tâm\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
             "C  Quét rung: ánh sáng lan ra, thấy thức ăn\n    và sinh vật xung quanh trong chốc lát\nV  Bật/tắt mắt (thử nghiệm)\n" +
@@ -151,9 +153,10 @@ namespace Evolve.Survival
             DrawOrganPrompt();
             DrawBodyMenu();
             DrawSkillBar();
+            DrawAim();
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 600), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 640), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }
@@ -254,6 +257,26 @@ namespace Evolve.Survival
                 GUI.color = prev;
                 GUI.Label(bar, status, small);
             }
+        }
+
+        /// <summary>Crosshair in the middle of the screen in aim mode, plus a small mode label.</summary>
+        void DrawAim()
+        {
+            var label = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 12 };
+            GUI.Label(new Rect(Screen.width / 2f - 150, 22, 300, 20),
+                AimController.Aiming ? "Chế độ ngắm (Alt: về chuột)" : "Chế độ chuột (Alt: ngắm)", label);
+            if (!AimController.Aiming) return;
+
+            float cx = Screen.width / 2f, cy = Screen.height / 2f;
+            const float len = 9f, gap = 5f, t = 2f;
+            var prev = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, 0.9f);
+            GUI.DrawTexture(new Rect(cx - gap - len, cy - t / 2f, len, t), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(cx + gap, cy - t / 2f, len, t), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(cx - t / 2f, cy - gap - len, t, len), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(cx - t / 2f, cy + gap, t, len), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(cx - 1.5f, cy - 1.5f, 3f, 3f), Texture2D.whiteTexture);
+            GUI.color = prev;
         }
 
         void DrawOrganPrompt()

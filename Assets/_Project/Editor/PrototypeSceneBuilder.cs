@@ -133,12 +133,10 @@ namespace Evolve.EditorTools
             var spikeBurst = Asset<SpikeBurstAbility>(Root + "/ScriptableObjects/SpikeBurstSO.asset", a =>
             {
                 a.DisplayName = "Xả Gai";
-                a.Description = "Gai bắn tỏa ra, gây sát thương kẻ săn mồi ở gần.";
+                a.Description = "Bắn một chùm gai về phía hồng tâm, gây sát thương kẻ săn mồi trúng đòn.";
                 a.Tier = AbilityTier.B;
                 a.EnergyCost = 20f;
                 a.Cooldown = 8f;
-                a.Radius = 3f;
-                a.Damage = 12f;
             });
             GrantAbility(legsB, charge);
             GrantAbility(spikes, spikeBurst);
