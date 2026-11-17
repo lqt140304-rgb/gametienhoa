@@ -68,7 +68,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 - Trườn **1**, nước rút (Shift) **×1.5**. Hai giá trị này do chủ dự án chỉnh, đã lưu trong scene và là mặc định trong code.
 - Nảy (Space) tốn 8 năng lượng. Đứng yên thì hồi năng lượng.
 - Đói **chỉ giảm khi di chuyển** (0.5 mỗi giây); nước rút tốn thêm 1.5 thức ăn mỗi giây.
-- Nhìn đen trắng, sương mù 6 m (chưa có mắt). Quét rung (phím C, tốn 10 năng lượng, hồi 5 giây): sóng lan 25 m, sương tan ra trong khoảng 2.5 giây, thức ăn (xanh), con mồi (đỏ), kẻ săn mồi (tím) lóe lên một lần. Không còn chấm sáng tự động.
+- Chưa có mắt: đen trắng, thế giới tối, chỉ có một ngọn đèn quanh nhân vật soi sáng bán kính 6 m (`MonochromeVision.blindSightRadius`), nên vùng nhìn thấy tính quanh nhân vật chứ không theo camera. Quét rung (phím C, tốn 10 năng lượng, hồi 5 giây): sóng lan 25 m, ánh sáng lan ra soi địa hình trong khoảng 2.5 giây, thức ăn (xanh), con mồi (đỏ), kẻ săn mồi (tím) lóe lên một lần. Không còn chấm sáng tự động.
 - Bảng phím trên màn hình (H để ẩn/hiện). Phím V bật/tắt mắt để thử nghiệm.
 
 **0.2: Tiến hóa**
