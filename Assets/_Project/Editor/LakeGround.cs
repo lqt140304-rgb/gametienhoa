@@ -31,7 +31,7 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(DressedName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(DressedName).transform;
-            root.gameObject.AddComponent<DetailCulling>();   // only what is near the camera is drawn
+            root.gameObject.AddComponent<DetailCulling>().ShowDistance = 400f;   // small shore details; the open ground has its own LOD
 
             var rnd = new System.Random(2024);
             var ponds = new List<WaterSurface>(WaterSurface.All);
@@ -49,11 +49,7 @@ namespace Evolve.EditorTools
                     AddMoss(mossInstances, p, 0.9f + (float)rnd.NextDouble() * 1.2f, ++seed, ponds);
                 }
             }
-            foreach (var p in LakeLayout.Scatter(9, rnd))    // over the core and every biome pad of the layout
-            {
-                if (Wet(ponds, p)) continue;
-                AddMoss(mossInstances, p, 1.6f + (float)rnd.NextDouble() * 1.5f, ++seed, ponds);
-            }
+            // (moss over the open ground comes from the plant communities: Dress Lake: Plant Communities)
             AddCombined(root, "Moss", mossInstances, MossMaterial());
 
             // The humus bed's flat dark rectangle becomes a soft, uneven patch of dark mud (no straight edges).
@@ -99,8 +95,6 @@ namespace Evolve.EditorTools
                     if (rnd.NextDouble() < 0.4) PlaceRock(p + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * 1.6f, 0.2f + (float)rnd.NextDouble() * 0.35f);
                 }
             }
-            foreach (var p in LakeLayout.Scatter(26, rnd))
-                PlaceRock(p, 0.4f + (float)rnd.NextDouble() * 1.1f);
             AddCombined(root, "Rocks", rockInstances, OpaqueMaterial("Lake_Rock", new Color(0.40f, 0.41f, 0.39f), 0.15f, false));
             AddCombined(root, "Rock Moss", capInstances, OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
 
@@ -118,8 +112,6 @@ namespace Evolve.EditorTools
                     for (int j = 0; j < 2; j++)
                         PlaceTuft(outline[k] + Outward(outline, k) * (0.9f + (float)rnd.NextDouble() * 4.5f) + RandomOffset(rnd, 0.8f));
             }
-            foreach (var p in LakeLayout.Scatter(260, rnd))
-                PlaceTuft(p);
             var grassColors = new[] { new Color(0.36f, 0.50f, 0.20f), new Color(0.46f, 0.58f, 0.24f), new Color(0.30f, 0.42f, 0.18f) };
             for (int g = 0; g < 3; g++)
             {
@@ -137,29 +129,7 @@ namespace Evolve.EditorTools
                     AddMesh(holder, $"Grass {g} {bucket.Key.Item1},{bucket.Key.Item2}", GroundMeshes.Tufts(bucket.Value, 900 + g, 0.45f), grassMaterial);
             }
 
-            // ---- fallen leaves: flat orange-brown specks over the ground ----
-            var leafPositions = new List<Vector3>[] { new List<Vector3>(), new List<Vector3>(), new List<Vector3>() };
-            foreach (var lp in LakeLayout.Scatter(320, rnd))
-            {
-                if (Wet(ponds, lp)) continue;
-                leafPositions[rnd.Next(3)].Add(new Vector3(lp.x, GroundY(lp.x, lp.y) + 0.03f, lp.y));
-            }
-            var leafColours = new[] { new Color(0.52f, 0.30f, 0.12f), new Color(0.64f, 0.42f, 0.17f), new Color(0.40f, 0.24f, 0.10f) };
-            for (int g = 0; g < 3; g++)
-            {
-                var leafBuckets = new Dictionary<(int, int), List<Vector3>>();
-                foreach (var t in leafPositions[g])
-                {
-                    var key = Cell(t);
-                    if (!leafBuckets.TryGetValue(key, out var list)) leafBuckets[key] = list = new List<Vector3>();
-                    list.Add(t);
-                }
-                var holder = new GameObject("Leaves " + g).transform;
-                holder.SetParent(root, false);
-                var leafMaterial = OpaqueMaterial("Lake_Leaf" + g, leafColours[g], 0.1f, true);
-                foreach (var bucket in leafBuckets)
-                    AddMesh(holder, $"Leaves {g} {bucket.Key.Item1},{bucket.Key.Item2}", GroundMeshes.FallenLeaves(bucket.Value, 4000 + g, 0.28f), leafMaterial);
-            }
+            // (fallen leaves come from the plant communities)
 
             // ---- gel nurseries on the shore of the Life Pool: translucent domes with a glowing amber core ----
             var domes = new List<CombineInstance>();
@@ -267,7 +237,7 @@ namespace Evolve.EditorTools
         // ---------------------------------------------------------------- placing helpers
 
         /// <summary>Under water: on a pond, or in a hollow of the ground lower than the water level. Nothing is placed there.</summary>
-        internal static bool Wet(List<WaterSurface> ponds, Vector2 p) => OnWater(ponds, p) || GroundY(p.x, p.y) < -0.04f;
+        internal static bool Wet(List<WaterSurface> ponds, Vector2 p) => OnWater(ponds, p) || ZoneLayout.DepthAt(p.x, p.y) > 0f;   // not by height: the sinkhole is dry land below the lake level
 
         internal static bool OnWater(List<WaterSurface> ponds, Vector2 p)
         {
@@ -352,7 +322,7 @@ namespace Evolve.EditorTools
 
         // ---------------------------------------------------------------- materials
 
-        static Material MossMaterial()
+        internal static Material MossMaterial()
         {
             var tex = LakeWater.PaintedTexture(Root + "/Models/MossPatch_v2.png", 64, 64, (u, v) =>
             {
@@ -365,7 +335,7 @@ namespace Evolve.EditorTools
             return LakeWater.TranslucentMaterial("Lake_Moss", tex, Color.white, Color.black, 0.05f, (int)RenderQueue.Transparent - 20);
         }
 
-        static Material MudPatchMaterial()
+        internal static Material MudPatchMaterial()
         {
             var tex = LakeWater.PaintedTexture(Root + "/Models/MudPatch.png", 64, 64, (u, v) =>
             {

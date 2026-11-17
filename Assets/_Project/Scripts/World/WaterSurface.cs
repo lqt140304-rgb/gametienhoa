@@ -162,7 +162,7 @@ namespace Evolve.World
         MaterialPropertyBlock block;
         Vector2 offset;
         float clock, nextUpdate, nextCullCheck;
-        bool culled;
+        bool culled, still;
 
         void OnEnable()
         {
@@ -306,19 +306,22 @@ namespace Evolve.World
             if (dirty) FlushAll();
             if (mesh == null) return;
 
-            // Far from the camera: do not animate and do not draw (the whole zone is much bigger than what is in view).
+            // Far from the camera (> 200 m) the water stays still but is still drawn (the whole map can be seen from above);
+            // only beyond the far clip distance is it hidden.
             if (Time.time >= nextCullCheck)
             {
                 nextCullCheck = Time.time + 0.3f;
                 var cam = Camera.main;
-                bool far = cam != null && Vector3.Distance(cam.transform.position, transform.position + mesh.bounds.center) - mesh.bounds.extents.magnitude > 170f;
-                if (far != culled)
+                float distance = cam != null ? Vector3.Distance(cam.transform.position, transform.position + mesh.bounds.center) - mesh.bounds.extents.magnitude : 0f;
+                still = distance > 200f;
+                bool hide = distance > 700f;
+                if (hide != culled)
                 {
-                    culled = far;
+                    culled = hide;
                     foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = !culled;
                 }
             }
-            if (culled) return;
+            if (culled || still) return;
             float dt = Time.deltaTime;
             clock += dt * WaveSpeed;
 

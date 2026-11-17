@@ -18,6 +18,19 @@ namespace Evolve.Tests.EditMode
             Assert.That(top, Is.InRange(2.5f, 3.2f));
         }
 
+        [Test] public void LatticeCoversItsAreaAtItsHeight()
+        {
+            var area = new Rect(0f, 0f, 64f, 64f);
+            var mesh = RootMeshes.Lattice(area, 25f, 3, new[] { new Vector2(32f, 32f) });
+            Assert.Greater(mesh.vertexCount, 100);
+            var b = mesh.bounds;
+            Assert.LessOrEqual(b.min.x, 16f); Assert.GreaterOrEqual(b.max.x, 48f);
+            Assert.LessOrEqual(b.min.z, 16f); Assert.GreaterOrEqual(b.max.z, 48f);
+            Assert.GreaterOrEqual(b.min.y, 25f - 7f); Assert.LessOrEqual(b.max.y, 25f + 3.5f);
+            foreach (var v in mesh.vertices) Assert.IsFalse(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z));
+            Assert.Less(RootMeshes.Lattice(area, 25f, 3, null, 7f, false).vertexCount, mesh.vertexCount, "the far version is lighter");
+        }
+
         [Test] public void ArchAndTubeNeverContainNaN()
         {
             for (int seed = 1; seed <= 30; seed++)

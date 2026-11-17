@@ -93,6 +93,13 @@ namespace Evolve.World
         public const float NorthEntryHalfWidth = 10f;
         public const float PathWidth = 5f;
 
+        /// <summary>Where light falls through gaps in the root roof (9 shafts): over the lake and in most areas.</summary>
+        public static readonly Vector2[] LightShafts =
+        {
+            new Vector2(-20f, -40f), new Vector2(40f, -10f), new Vector2(-8f, -128f), new Vector2(-140f, 140f), new Vector2(150f, 120f),
+            new Vector2(175f, -5f), new Vector2(15f, 165f), new Vector2(-110f, 40f), new Vector2(80f, 60f)
+        };
+
         /// <summary>Trails round the lake from area to area, plus the hunter's way in from the north.</summary>
         public static readonly Vector2[][] Paths =
         {
