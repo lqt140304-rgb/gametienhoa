@@ -11,6 +11,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 | **0.5: Vòng lặp hoàn chỉnh** | Boss đầu tiên; xây tổ; lưu tiến trình; chọn Thiên Phú và Khiếm Khuyết | Một ván chơi có trọn vẹn không? |
 | **0.5a: Hồ Khởi Sinh (Underroot Lake)** | Địa hình hồ ngầm, bậc cơ quan D, quần thể theo vùng thay spawner, kẻ săn B đi vào từ rìa, xác phân hủy 3 giai đoạn | Khu hồ có "sống" như một hệ sinh thái không? |
 | **0.5b: Khát, nước, nơi trú** | Thanh Khát, nước sạch/bẩn, nơi trú ẩn, chỉ số Căng thẳng | Có phải đi lại giữa các vi sinh cảnh để sống không? |
+| **0.6a: Khu 480 m** | Khu lớn 480 × 480 m (đi ngang ~8 phút), địa hình Unity Terrain đồi và vách rìa, mái hang vòm, rễ buông, 4 cột mốc, ranh giới cứng; vùng lõi 130 × 130 m vẫn phẳng. 0.6b: chia vùng quần thể theo vi sinh cảnh, sinh vật đi theo cao độ. 0.6c: rải thực vật dọc đường | Khu có đủ rộng để khám phá chưa, đi 8 phút có thú vị không? |
 | **0.5c: Dinh dưỡng** | 5 chất kiểu slime (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống); thiếu thì cơ quan yếu dần | Thức ăn có còn là lựa chọn có ý nghĩa không? |
 | **0.5d: Bệnh tật** | 2–3 bệnh (nước đọng, thối gel, mờ bào tử), lây trong co-op | Hậu quả của lựa chọn sai có đủ rõ không? |
 | **0.5e: Gel mô phỏng cơ quan** | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
@@ -68,4 +69,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Biên dịch và chạy thử 0.5a theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 8
 - [x] Code 0.5b: **đã code, chưa biên dịch/chạy thử**: Khát, Căng thẳng, vùng nước sạch/bẩn (`WaterZone`), nơi trú (`ShelterZone`, 3 hốc Chân Rễ khe 1,35 m), kích thước thân theo số cơ quan, HUD tối giản (giữ Tab xem đủ), phản hồi trên thân slime (`BodyFeedback`), test EditMode
 - [ ] Biên dịch và chạy thử 0.5b theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 9
+- [x] Code 0.6a: **đã code, chưa biên dịch/chạy thử**: `World/WorldScale`, `TerrainShape`, `DomeMesh`, builder dựng Terrain 480 m, mái vòm, rễ, cột mốc, đèn, ranh giới (spec mục 6.9, plan `docs/superpowers/plans/2026-11-17-0.6a-big-zone-terrain.md`)
+- [ ] Biên dịch và chạy thử 0.6a theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 10
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

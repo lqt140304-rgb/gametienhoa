@@ -61,6 +61,11 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 - **Kẻ săn B không bao giờ sinh gần người chơi**: nó đi vào từ Rìa Săn Mồi khi con mồi trong lãnh thổ cạn, có tín hiệu báo trước (rung lớn, sinh vật D bỏ chạy). Xác sinh vật phân hủy theo 3 giai đoạn.
 - Co-op: host chạy mô phỏng quần thể. Chi tiết và bản 0.5a–0.5e: "+SPEC+" mục 6.
 
+## 4.1c. Quy mô khu [ĐÃ CHỐT 2026-11-17]
+
+- **Đi ngang một khu mất khoảng 8 phút** ở tốc độ trườn 1 m/s, nên một khu rộng khoảng **480 × 480 m**. Con số 120 × 120 m cũ của Hồ Khởi Sinh *(đổi ngày 2026-11-17)* trở thành **vùng lõi phẳng 130 × 130 m** (nơi xuất hiện) nằm giữa khu. Con số 600 × 600 m cho cả thế giới trong tài liệu bàn giao không còn đúng; kích thước toàn thế giới quyết định dần theo từng khu.
+- Địa hình bằng Unity Terrain (đồi nhấp nhô, vách ở rìa) kèm mái hang vòm; chưa có hang chồng tầng (cần mô hình Blender sau này). Thảm thực vật rải dọc đường để ăn trên đường đi. Chi tiết: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 6.9.
+
 ## 4.2. Hư hỏng và tái tạo cơ quan [ĐÃ CHỐT hướng]
 
 - **Sát thương kết hợp vị trí và lan truyền** sang cơ quan liên kết / HP cơ thể.

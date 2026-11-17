@@ -1,6 +1,6 @@
 # Thiết kế: Lát cắt dọc Hồ Khởi Sinh + sinh tồn sâu (0.5a → 0.5e)
 
-> Ngày: 2026-11-17 · Trạng thái: **chờ chủ dự án duyệt lần cuối**
+> Ngày: 2026-11-17 · Trạng thái: **0.5a, 0.5b đã merge; mục 6.9 (quy mô khu) chờ duyệt**
 > Nguồn: thảo luận với chủ dự án + [`docs/world/UNDERROOT_WORLD_DESIGN.md`](../../world/UNDERROOT_WORLD_DESIGN.md) (bàn giao v1.2).
 > Nhãn: **[ĐÃ CHỐT]** = chủ dự án quyết; **[ĐỀ XUẤT]** = Claude đề xuất, chủ dự án có thể sửa; **[BUILDER]** = để người làm tự quyết khi code.
 
@@ -155,6 +155,20 @@ Chỉ học cơ chế, không dùng tên/hình ảnh/nội dung của tác phẩ
 4. Mỗi cơ quan có **hình dạng gel khác biệt rõ** trên thân, nhìn là biết.
 
 **Để sau 0.5e:** cơ quan lõi (1 cái mỗi slime, tăng sức cơ quan cùng nhóm); cộng hưởng khi trang bị 2–3 cơ quan cùng loài.
+
+## 6.9. Quy mô khu và địa hình (đổi ngày 2026-11-17) [ĐÃ CHỐT hướng, chi tiết ĐỀ XUẤT]
+
+**Lý do:** chủ dự án thấy khu 120 × 120 m quá nhỏ, thiếu chiều sâu và không gian khám phá. Con số 120 × 120 m ở mục 6.1 **bị thay**: nó trở thành **vùng lõi (Vũng Sinh Mệnh, nơi xuất hiện)** nằm giữa một khu lớn hơn nhiều.
+
+1. **[ĐÃ CHỐT] Đi ngang một khu mất khoảng 8 phút.** Tốc độ trườn giữ **1 m/s** (nước rút 1,5 m/s), nên một khu rộng khoảng **480 × 480 m**. Con số 600 × 600 m cho cả thế giới ở file bàn giao **không còn đúng**: nó chỉ vừa một khu; kích thước toàn thế giới quyết định dần theo từng khu.
+2. **[ĐÃ CHỐT] Phương án 1 (dựng bằng code):** địa hình bằng Unity Terrain tạo từ nhiễu trong Editor script, mái hang là mặt cong lớn kèm cột rễ. Sau này có thể thay địa hình bằng mô hình Blender mà giữ nguyên nước, thức ăn, quần thể, nơi trú.
+3. **[ĐÃ CHỐT] Thảm thực vật rải dọc đường** (rong, rêu, nấm) để ăn trên đường đi, không cần săn con gì. Giữ nguyên tốc độ và hao đói; xem lại sau khi chơi thử.
+4. **[ĐỀ XUẤT] Bố cục khu** (tâm khu = vùng lõi, đơn vị mét): vùng lõi 120 × 120 m ở giữa; Chân Rễ Cổ Thụ ở bắc (~150–200 m); Bãi Mùn Rễ ở đông; Vườn Bào Tử ở tây; Khe Thủy Mạch chạy xuống nam; Rìa Săn Mồi ở đông nam xa (>200 m cách điểm xuất hiện). Các vùng nối nhau bằng đường chính và đường vòng, có địa danh dễ nhận (cột rễ lớn, hốc nước sâu).
+5. **[ĐỀ XUẤT] Chiều cao:** nền đồi lên xuống khoảng ±20 m quanh lòng hồ; mái hang cao 60–90 m so với đáy; rễ cổ thụ buông xuống. Terrain là mặt đồi nên **không có hang chồng tầng hay vòm nhô ra** (giới hạn đã biết, thay bằng mô hình Blender sau).
+6. **[ĐỀ XUẤT] Quần thể:** thay một `Region` bằng **nhiều `Region`**, mỗi vi sinh cảnh một cái, tổ ở đúng vùng; số sinh vật tăng theo diện tích. Giới hạn 30 sinh vật hiện thân đồng thời giữ nguyên (xem lại khi đo).
+7. **[ĐỀ XUẤT] Thực vật:** dùng lại `Nutrient` (đã đồng bộ co-op), rải theo mật độ từng vi sinh cảnh: dày ở đường chính, thưa ở vùng hoang/sâu để có chỗ thiếu. Tổng số giữ dưới khoảng 600 cái mỗi khu để đồng bộ mạng nhẹ. Thức ăn mọc lại chậm theo cơ chế hiện có.
+8. **Không làm trong đợt này:** hang chồng tầng, 6 khu còn lại, lối lên mặt đất, địa hình Blender.
+9. **Rủi ro:** môi trường agent không biên dịch/chạy được, nên chia nhỏ: (a) địa hình + mái hang + kích thước, kiểm đi 8 phút; (b) chia `Region` và sắp bố cục các vi sinh cảnh; (c) rải thực vật và chỉnh cân bằng. Mỗi bước chủ dự án mở Unity kiểm trước khi sang bước sau.
 
 ## 7. Hiệu năng
 
