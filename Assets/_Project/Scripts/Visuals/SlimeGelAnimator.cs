@@ -71,7 +71,10 @@ namespace Evolve.Visuals
 
         /// <summary>A jelly wobble: the body keeps bouncing a little and settles (call after landing, hits, ...).</summary>
         /// <summary>True while an action (skill, attack, absorb) plays; everyday movement animation steps aside then.</summary>
-        public bool ActionPlaying => activeTime >= 0f && active != GelMotion.Gulp;
+        public bool ActionPlaying => (activeTime >= 0f && active != GelMotion.Gulp) || (landT >= 0f && landT < LandRest);
+
+        /// <summary>After a real landing the body rests this long (landing splat plays alone) before moving animation resumes.</summary>
+        const float LandRest = 0.5f;
 
         /// <summary>The body splats flat when it lands (strength about 0.3 soft .. 1.2 hard) and rebounds.</summary>
         public void Land(float strength)
@@ -244,7 +247,9 @@ namespace Evolve.Visuals
             // One animation at a time: while an action plays or the slime is in the air, the everyday movement
             // animation (breathing, crawl, steps) fades out, so animations never fight each other.
             bool airborne = body != null && Mathf.Abs(body.linearVelocity.y) > 1.6f; // small bumps (a dash's little lift) do not count
-            locoK = Mathf.Lerp(locoK, ActionPlaying || airborne ? 0f : 1f, 1f - Mathf.Exp(-14f * dt));
+            bool locoOff = ActionPlaying || airborne;
+            // Off quickly, back on gently (so the resume after an action or a landing is smooth, not a snap).
+            locoK = Mathf.Lerp(locoK, locoOff ? 0f : 1f, 1f - Mathf.Exp(-(locoOff ? 14f : 5f) * dt));
             crawlK = Mathf.Lerp(crawlK, hasLegs ? 0.25f : 1f, 1f - Mathf.Exp(-6f * dt));
 
             float tPulse = 0f, tKick = 0f, tStretch = 0f, tCharge = 0f, tBurst = 0f;
