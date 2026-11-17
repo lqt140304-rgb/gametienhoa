@@ -26,7 +26,7 @@ namespace Evolve.Survival
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
             "V  Bật/tắt mắt (thử nghiệm)\n" +
-            "H  Ẩn/hiện hướng dẫn\n\n" +
+            "H  Ẩn/hiện hướng dẫn\nF1  Menu God (thử nghiệm)\n\n" +
             "Đứng yên: không đói, hồi năng lượng,\nkẻ săn mồi khó phát hiện\n" +
             "Chấm xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi (giác quan rung)\n\n" +
             "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; chết thì cơ quan\nrơi tại chỗ, mỗi cái 50% bị mất)\n\n" +

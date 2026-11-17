@@ -30,6 +30,17 @@ namespace Evolve.Creatures
             if (alive < count && Time.time >= nextSpawn) SpawnOne();
         }
 
+        /// <summary>Debug: spawn one extra prey at a position (counts toward the alive total).</summary>
+        public void SpawnAt(Vector3 position)
+        {
+            if (prefab == null) return;
+            var prey = Instantiate(prefab, new Vector3(position.x, prefab.transform.position.y, position.z), Quaternion.identity, transform);
+            prey.HomeCenter = transform.position;
+            prey.HomeRadius = radius;
+            prey.Caught += OnCaught;
+            alive++;
+        }
+
         void SpawnOne()
         {
             if (prefab == null) return;

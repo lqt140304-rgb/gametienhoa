@@ -18,6 +18,10 @@ namespace Evolve.Creatures
     {
         static readonly List<Predator> active = new List<Predator>();
         public static IReadOnlyList<Predator> Active => active;
+        /// <summary>Debug: predators ignore players and never bite.</summary>
+        public static bool Passive;
+        /// <summary>Debug: predators stop moving.</summary>
+        public static bool Frozen;
 
         [Header("Movement")]
         [SerializeField] float patrolSpeed = 0.8f;
@@ -76,7 +80,7 @@ namespace Evolve.Creatures
 
         void FixedUpdate()
         {
-            if (dead) return;
+            if (dead || Frozen) return;
             Vector3 pos = rb.position;
             UpdateTarget(pos);
 
@@ -121,6 +125,7 @@ namespace Evolve.Creatures
 
         void UpdateTarget(Vector3 pos)
         {
+            if (Passive) { target = null; return; }
             if (target != null)
             {
                 if (target.State.IsDead || Vector3.Distance(pos, target.transform.position) > loseRadius
@@ -149,6 +154,12 @@ namespace Evolve.Creatures
         {
             if (dead) return;
             var stats = c.collider.GetComponentInParent<SurvivalStats>();
+            if (Passive && stats != null)
+            {
+                // Still takes ram damage in peaceful mode, but never bites back.
+                if (first && c.relativeVelocity.magnitude >= ramSpeed) TakeDamage(ramDamage, stats);
+                return;
+            }
             if (stats == null || stats.State.IsDead) return;
             var host = stats.GetComponent<OrganHost>();
 
