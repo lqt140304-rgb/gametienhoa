@@ -71,3 +71,13 @@ Lối đi: bơi tắt qua hồ; đường hầm từ hang 02 sang hố 03; cầu
 
 ## Thứ tự
 Phần này gộp vào **PR A** (bảng số liệu + địa hình), trước khi làm thực vật (PR B). Hang 02, đường hầm và cầu rễ là mesh nên thuộc **PR C** (02) và **PR D/E** (cầu 04–06).
+
+## LOD: nhìn được toàn cảnh mà không giật (người chơi yêu cầu)
+Hiện mọi đồ trang trí ở xa hơn 150 m bị **ẩn hẳn** (DetailCulling) ⇒ nhìn xa thấy đất trống. Thay bằng nhiều mức chi tiết:
+- **Đồ trang trí theo ô 64 m** (rêu, cỏ, lá, nấm, đá, rễ): mỗi ô có một `LODGroup` với 3 mức — **LOD0** (≤ ~60 m) đầy đủ; **LOD1** (≤ ~180 m) chỉ ~1/3 số vật, lưới ít đa giác hơn (nấm/đá/rễ ít cạnh, bỏ cỏ và lá nhỏ); **LOD2** (≤ ~450 m) chỉ còn vật lớn (nấm to, rễ to, đá to) dạng thô nhất; xa hơn thì tắt. Mức chuyển có mờ dần (cross-fade) để không "nhảy hình".
+- **Mái lưới rễ, rễ viền, vòm rễ, hang**: 2 mức (đầy đủ / ít cạnh), không bao giờ tắt hẳn vì là khung cảnh chính.
+- **Địa hình**: dùng LOD sẵn có của Unity Terrain (pixel error ~8 gần, basemap xa 200 m); **nước**: mặt nước xa > 200 m dừng gợn sóng (đứng yên), không ẩn.
+- **Ánh sáng/bóng**: bóng đổ chỉ trong ~80 m; đèn điểm của rễ/nấm tắt ngoài ~60 m (đã có), tia sáng giữ nguyên.
+- Cảm giác "mù" (slime chưa có mắt) vẫn giữ: tầm nhìn bị giới hạn bởi Sight như cũ, LOD chỉ quyết định vẽ gì khi nhìn thấy.
+- Camera far clip 700 m; mục tiêu: chế độ ghost (F6) nhìn từ trên cao thấy cả bản đồ, FPS không thấp hơn khi đứng dưới đất quá ~20%. Người chơi kiểm bằng F4 (bảng hiệu năng).
+- Thuộc **PR B** (khi dựng lại đồ trang trí theo quần xã); PR A thêm phần nước/địa hình.
