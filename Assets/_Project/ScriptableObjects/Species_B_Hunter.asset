@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d69cbbc4662c4d45b6f99998d571996, type: 3}
+  m_Name: Species_B_Hunter
+  m_EditorClassIdentifier: Evolve::Evolve.Ecology.SpeciesSO
+  Id: B_Hunter
+  Prefab: {fileID: 8680699726363953166, guid: 59e329a0ba876184ebb5e5b25e04657f, type: 3}
+  Tier: 1
+  StartCount: 2
+  Capacity: 3
+  BirthsPerMinute: 0.02
+  FoodPerHeadPerMinute: 0.5
+  Prey: {fileID: 11400000, guid: 7512507d956c2664aabf970aa2ac7e63, type: 2}
+  KillsPerHeadPerMinute: 0.5
