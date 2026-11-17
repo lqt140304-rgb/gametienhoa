@@ -71,24 +71,56 @@ namespace Evolve.EditorTools
             bool NearShelter(Vector2 p) { foreach (var s in shelters) if (Vector2.Distance(s, p) < 5.5f) return true; return false; }
             Vector3 Ground(Vector2 p) => new Vector3(p.x, LakeGround.GroundY(p.x, p.y), p.y);
 
-            for (int i = 0; i < 11; i++)
+            void Arches(Vector2 at0, float rangeX, float rangeZ, int count)
             {
-                Vector2 a = centre + new Vector2(Mathf.Lerp(-26f, 26f, (float)rnd.NextDouble()), Mathf.Lerp(-9f, 9f, (float)rnd.NextDouble()));
-                float angle = (float)rnd.NextDouble() * Mathf.PI * 2f, span = 5f + (float)rnd.NextDouble() * 6f;
-                Vector2 b2 = a + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * span;
-                Vector2 mid = (a + b2) * 0.5f;
-                if (NearShelter(a) || NearShelter(b2) || NearShelter(mid) || LakeGround.OnWater(ponds, a) || LakeGround.OnWater(ponds, b2)) continue;
-                float height = 2f + (float)rnd.NextDouble() * 3.2f, radius = 0.4f + (float)rnd.NextDouble() * 0.45f;
-                var path = RootMeshes.ArchPath(Ground(a), Ground(b2), height, ++seed, 0.9f, 16);
-                AddRoot(path, radius * 1.25f, radius * 1.0f, 0.12f, true);
-                // two side roots reaching down to the ground
-                for (int k = 0; k < 2; k++)
+                for (int i = 0; i < count; i++)
                 {
-                    int at = 4 + rnd.Next(7);
-                    Vector3 dir = new Vector3((float)rnd.NextDouble() - 0.5f, 0f, (float)rnd.NextDouble() - 0.5f).normalized;
-                    var branch = RootMeshes.BranchPath(path[at], dir, 2f + (float)rnd.NextDouble() * 2.5f, Mathf.Max(0.5f, path[at].y - Ground(new Vector2(path[at].x, path[at].z)).y + 0.2f), ++seed, 9);
-                    AddRoot(branch, radius * 0.45f, radius * 0.1f, 0.1f, false);
+                    Vector2 a = at0 + new Vector2(Mathf.Lerp(-rangeX, rangeX, (float)rnd.NextDouble()), Mathf.Lerp(-rangeZ, rangeZ, (float)rnd.NextDouble()));
+                    float angle = (float)rnd.NextDouble() * Mathf.PI * 2f, span = 5f + (float)rnd.NextDouble() * 6f;
+                    Vector2 b2 = a + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * span;
+                    Vector2 mid = (a + b2) * 0.5f;
+                    if (NearShelter(a) || NearShelter(b2) || NearShelter(mid) || LakeGround.OnWater(ponds, a) || LakeGround.OnWater(ponds, b2)) continue;
+                    float height = 2f + (float)rnd.NextDouble() * 3.2f, radius = 0.4f + (float)rnd.NextDouble() * 0.45f;
+                    var path = RootMeshes.ArchPath(Ground(a), Ground(b2), height, ++seed, 0.9f, 16);
+                    AddRoot(path, radius * 1.25f, radius * 1.0f, 0.12f, true);
+                    // two side roots reaching down to the ground
+                    for (int k = 0; k < 2; k++)
+                    {
+                        int at = 4 + rnd.Next(7);
+                        Vector3 dir = new Vector3((float)rnd.NextDouble() - 0.5f, 0f, (float)rnd.NextDouble() - 0.5f).normalized;
+                        var branch = RootMeshes.BranchPath(path[at], dir, 2f + (float)rnd.NextDouble() * 2.5f, Mathf.Max(0.5f, path[at].y - Ground(new Vector2(path[at].x, path[at].z)).y + 0.2f), ++seed, 9);
+                        AddRoot(branch, radius * 0.45f, radius * 0.1f, 0.1f, false);
+                    }
                 }
+            }
+
+            void Snake(Vector2 start)
+            {
+                if (LakeGround.OnWater(ponds, start) || NearShelter(start)) return;
+                float angle = (float)rnd.NextDouble() * Mathf.PI * 2f, length = 4f + (float)rnd.NextDouble() * 5f;
+                var path = new Vector3[10];
+                float r = 0.14f + (float)rnd.NextDouble() * 0.2f;
+                Vector2 p = start;
+                for (int j = 0; j < path.Length; j++)
+                {
+                    angle += ((float)rnd.NextDouble() - 0.5f) * 0.7f;
+                    p += new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (length / path.Length);
+                    path[j] = new Vector3(p.x, LakeGround.GroundY(p.x, p.y) + r * 0.2f, p.y);
+                }
+                AddRoot(path, r * 1.2f, r * 0.35f, 0.18f, false);
+            }
+
+            // The ancient roots (the root-foot pad in the layout): the biggest cluster of arches.
+            Arches(centre, 26f, 9f, 11);
+            // Every other biome pad of the layout gets some roots too: a few arches and snaking roots.
+            var otherPads = LakeLayout.Areas();
+            otherPads.RemoveAt(0);                                            // the core has its own ponds' roots below
+            foreach (var pad in otherPads)
+            {
+                if (Vector2.Distance(pad.Center, centre) < 30f) continue;     // that one is the ancient roots above
+                Arches(pad.Center, pad.Radius * 0.6f, pad.Radius * 0.6f, 5);
+                for (int i = 0; i < 9; i++)
+                    Snake(pad.Center + new Vector2(Mathf.Lerp(-pad.Radius, pad.Radius, (float)rnd.NextDouble()), Mathf.Lerp(-pad.Radius, pad.Radius, (float)rnd.NextDouble())) * 0.7f);
             }
 
             // Low roots snaking over the ground near the ponds, half buried.
@@ -148,11 +180,15 @@ namespace Evolve.EditorTools
                 targets.Add(c / o.Length);
             }
             for (int i = 0; i < 4; i++) targets.Add(new Vector2(Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble()), Mathf.Lerp(-45f, 45f, (float)rnd.NextDouble())));
+            foreach (var area in LakeLayout.Areas())      // two shafts in every biome pad of the layout
+                if (area.Name != "Core")
+                    for (int i = 0; i < 2; i++)
+                        targets.Add(area.Center + new Vector2(Mathf.Lerp(-area.Radius, area.Radius, (float)rnd.NextDouble()), Mathf.Lerp(-area.Radius, area.Radius, (float)rnd.NextDouble())) * 0.5f);
             int shafts = 0;
             var slant = new Vector3(5f, 0f, 3f);
             foreach (var target in targets)
             {
-                if (shafts >= 5) break;
+                if (shafts >= 12) break;
                 var bottomPoint = new Vector3(target.x + (float)(rnd.NextDouble() - 0.5) * 8f, 0f, target.y + (float)(rnd.NextDouble() - 0.5) * 8f);
                 bottomPoint.y = LakeGround.GroundY(bottomPoint.x, bottomPoint.z);
                 float roofY = LakeLayout.CeilingY(bottomPoint.x - slant.x, bottomPoint.z - slant.z);   // the real roof above the spot
