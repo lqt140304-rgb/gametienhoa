@@ -78,3 +78,12 @@ Các lớp trang trí trước đây gộp thành vài mesh khổng lồ phủ c
 
 ## Nền địa hình (menu Dress Lake: Terrain)
 Hai texture nền sinh từ code (bùn nâu loang có sỏi, rêu) được vẽ lên địa hình: rêu tụ nhiều dọc bờ nước và thành các mảng mềm lớn, thay cho nền xám phẳng. Đã nằm trong **Rebuild Lake (all steps)** (bước 3/6).
+
+## Suối nguồn (phản hồi 17/11: nguồn nước sơ sài)
+Đầu thượng nguồn của mỗi suối (đầu xa tâm khu hơn) từng chỉ là một mũi nhọn. Giờ:
+- **Dress Lake: Water** mở đầu thượng nguồn vào một **ao nguồn** tròn (bán kính ≥ 4,5 m) hòa vào suối.
+- **Dress Lake: Spring** (`Editor/LakeSpring.cs`, sau Ground) dựng sau ao nguồn một **vòng cung 5 tảng đá lớn phủ rêu** (tảng giữa cao nhất ~3 m), vài hòn nhỏ quanh bờ ao, một **thác nước nhỏ** (`Waterfall`, rộng ~2,6 m, họa tiết gợn chạy xuống), **bọt** chỗ nước rơi và **hơi nước** (hạt trắng mờ nhẹ) bốc lên. Hơi nước tắt khi slime mù như các hạt khác.
+- Nằm trong **Rebuild Lake (all steps)** thành bước 5/7.
+
+## Bãi Mùn Rễ và nền
+Hình chữ nhật đen phẳng của Bãi Mùn Rễ ("Humus Ground") được ẩn và thay bằng một mảng bùn sẫm mềm, không có cạnh thẳng. Nền địa hình bớt phủ rêu đều (rêu thành mảng, giữa các mảng lộ bùn).
