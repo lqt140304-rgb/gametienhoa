@@ -60,7 +60,7 @@ namespace Evolve.World
 
             cam = Camera.main;
             if (cam != null) origBackground = cam.backgroundColor;
-            foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None))
+            foreach (var l in FindObjectsByType<Light>())
                 if (l.type == LightType.Directional) { sun = l; sunBase = l.intensity; break; }
             origAmbientMode = RenderSettings.ambientMode;
             origAmbient = RenderSettings.ambientLight;
