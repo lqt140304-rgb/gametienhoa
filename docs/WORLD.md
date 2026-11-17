@@ -23,7 +23,8 @@
 
 **[ĐÃ CHỐT]**
 - Khi chết, người chơi được **chọn đánh một trận với Thần Chết**, một **boss cố định** (luôn là cùng một boss).
-- **Thắng** thì Thần Chết cho **sống tiếp** (với 1 máu), nhưng **lấy đi 1 mạng**.
+- **Thắng** thì Thần Chết cho **sống tiếp** (với 1 máu) và **giữ nguyên toàn bộ cơ quan** (không rơi, không mất 50%).
+- Về mạng: hai câu của chủ dự án đang **mâu thuẫn** (một câu "lấy đi 1 mạng", một câu "giữ cả mạng và cơ quan"). **[MỞ]** chờ xác nhận.
 - Không chọn đánh, hoặc thua, thì chết.
 
 **[MỞ]**
