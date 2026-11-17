@@ -63,7 +63,9 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 - Cơ quan người chơi **đã có** thì **giảm tỉ lệ rơi**, không bị loại khỏi bảng rơi. Bản trùng vẫn có giá trị (hấp thụ lấy thức ăn, hoặc thay bản đang yếu).
 
-**[ĐỀ XUẤT]** Chọn bậc trước theo trọng số bậc (C/B/A/S), rồi chọn cơ quan trong bậc đó. Cơ quan đã có chỉ còn một phần trọng số (hệ số giảm) so với cơ quan chưa có cùng bậc, để tỉ lệ bậc đúng như bảng. Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường. "Đã có" tính theo cơ quan **đang gắn trên người**. Hệ số mặc định thử nghiệm 0.25, chỉnh được.
+- **Cách roll hai bước:** chọn bậc trước theo trọng số bậc (C/B/A/S), rồi chọn cơ quan trong bậc đó, nên tỉ lệ bậc đúng như bảng.
+- Cơ quan đã có chỉ còn **0.5** trọng số so với cơ quan chưa có cùng bậc (chỉnh được trong Inspector). Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường.
+- "Đã có" tính theo cơ quan **đang gắn trên người**; tháo ra thì tỉ lệ rơi trở lại bình thường (đề xuất, chưa bàn kỹ).
 
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
