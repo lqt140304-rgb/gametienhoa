@@ -12,7 +12,7 @@ namespace Evolve.Ecology
         void OnEnable()
         {
             if (Region == null) Region = GetComponentInParent<Region>();
-            if (Region == null) Region = FindFirstObjectByType<Region>();
+            if (Region == null) Region = FindAnyObjectByType<Region>();
             if (Region != null) Region.RegisterDen(this);
         }
 
@@ -21,7 +21,7 @@ namespace Evolve.Ecology
             if (Region != null) Region.UnregisterDen(this);
         }
 
-        public void Destroy()
+        public void Raze()
         {
             if (Destroyed) return;
             Destroyed = true;

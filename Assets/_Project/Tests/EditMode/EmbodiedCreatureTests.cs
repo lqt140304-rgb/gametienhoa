@@ -9,6 +9,9 @@ namespace Evolve.Tests.EditMode
         [SetUp]
         public void SetUp() => PopulationCap.Embodied = 0;
 
+        [TearDown]
+        public void TearDown() => PopulationCap.Embodied = 0;
+
         [Test]
         public void EmbodiedCreatureReportsOnce()
         {

@@ -6,6 +6,10 @@ namespace Evolve.Ecology
         public static int Embodied;
         public static int Max = 30;
 
+        // Domain reload may be off: clear leaked state when entering Play mode.
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => Embodied = 0;
+
         public static bool TryReserve()
         {
             if (Embodied >= Max) return false;

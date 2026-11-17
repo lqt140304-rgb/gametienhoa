@@ -8,6 +8,7 @@ namespace Evolve.Ecology
     public class PredatorIncursion : MonoBehaviour
     {
         [SerializeField] Region region;
+        [SerializeField] Transform home;
         [SerializeField] SpeciesSO predator;
         [SerializeField] Transform[] entries;
         [SerializeField] int preyThreshold = 4;
@@ -70,7 +71,7 @@ namespace Evolve.Ecology
             int pick = IncursionRule.PickEntry(entryPositions, playerPositions, noSpawnRadius);
             if (pick < 0) return;
 
-            var ec = region.TryEmbodyAt(predator, entryPositions[pick], region.transform.position);
+            var ec = region.TryEmbodyAt(predator, entryPositions[pick], home != null ? home.position : region.transform.position);
             if (ec == null) return;
             current = ec;
             minutesSinceLastHunt = 0f;

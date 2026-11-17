@@ -15,8 +15,10 @@ namespace Evolve.World
 
         const float MinSpeed = 0.5f;
 
+        [SerializeField] bool footsteps = true;
         public float strength = 1f;
         public float interval = 1.2f;
+        public bool Footsteps { get => footsteps; set => footsteps = value; }
 
         public float LastPulseTime { get; private set; } = -999f;
         public float LastPulseStrength { get; private set; }
@@ -44,7 +46,7 @@ namespace Evolve.World
             Vector3 d = pos - lastPos; d.y = 0f;
             lastPos = pos;
             if (dt <= 0f) return;
-            if (d.magnitude / dt > MinSpeed && Time.time >= nextStep)
+            if (footsteps && d.magnitude / dt > MinSpeed && Time.time >= nextStep)
             {
                 nextStep = Time.time + interval;
                 Pulse(strength);

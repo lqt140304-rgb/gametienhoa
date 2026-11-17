@@ -8,6 +8,9 @@ namespace Evolve.Tests.EditMode
         [SetUp]
         public void SetUp() => PopulationCap.Embodied = 0;
 
+        [TearDown]
+        public void TearDown() => PopulationCap.Embodied = 0;
+
         static RegionPopulation Region(float food, float regen = 0f, float cap = 1000f)
             => new RegionPopulation { Food = food, FoodRegenPerMinute = regen, FoodCapacity = cap };
 

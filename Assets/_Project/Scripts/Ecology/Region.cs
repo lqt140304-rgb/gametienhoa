@@ -158,13 +158,15 @@ namespace Evolve.Ecology
                     var den = candidates[Random.Range(0, candidates.Count)];
                     Vector2 off = Random.insideUnitCircle * SpawnOffset;
                     Vector3 denPos = den.transform.position;
-                    Spawn(so, pop, denPos + new Vector3(off.x, 0f, off.y), denPos);
+                    Spawn(so, pop, denPos + new Vector3(off.x, so.Prefab.transform.position.y, off.y), denPos);
                 }
             }
         }
 
         EmbodiedCreature Spawn(SpeciesSO so, SpeciesPopulation pop, Vector3 position, Vector3 home)
         {
+            float baseY = home.y + so.Prefab.transform.position.y;
+            position.y = Mathf.Max(position.y, baseY);
             var go = Instantiate(so.Prefab, position, Quaternion.identity);
             var ec = go.GetComponent<EmbodiedCreature>();
             if (ec == null) ec = go.AddComponent<EmbodiedCreature>();

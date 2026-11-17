@@ -42,8 +42,8 @@ namespace Evolve.EditorTools
 
             // ---- Assets (shared with the prototype; prefabs upgraded in place, tuned values kept) ----
             var shared = P.CreateSharedAssets();
-            var preyPrefab = EnsureEmitter(shared.PreyPrefab, 0.4f);
-            var predatorPrefab = EnsureEmitter(shared.PredatorPrefab, 1f);
+            var preyPrefab = EnsureEmitter(shared.PreyPrefab, 0.4f, false);
+            var predatorPrefab = EnsureEmitter(shared.PredatorPrefab, 1f, true);
             var preyCPrefab = PreyCPrefab(preyPrefab);
 
             var d = P.Asset<SpeciesSO>(SO + "Species_D_Mudmite.asset", s =>
@@ -177,6 +177,9 @@ namespace Evolve.EditorTools
             e2.SetParent(hunt, false); e2.position = new Vector3(30f, 0.35f, -56f);
             var incursion = new GameObject("Predator Incursion").AddComponent<PredatorIncursion>();
             incursion.transform.SetParent(hunt, false);
+            var bHome = new GameObject("B Hunting Ground").transform;
+            bHome.SetParent(hunt, false); bHome.position = new Vector3(-40f, 0f, 0f);
+            P.Set(incursion, "home", bHome);
             P.Set(incursion, "region", region);
             P.Set(incursion, "predator", b);
             P.SetArray(incursion, "entries", new Object[] { e1, e2 });
@@ -214,12 +217,16 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>Add a VibrationEmitter to a prefab asset if it has none (keeps tuned values on existing ones).</summary>
-        static GameObject EnsureEmitter(GameObject prefab, float strength)
+        static GameObject EnsureEmitter(GameObject prefab, float strength, bool footsteps)
         {
-            if (prefab == null || prefab.GetComponent<VibrationEmitter>() != null) return prefab;
+            if (prefab == null) return prefab;
+            var existing = prefab.GetComponent<VibrationEmitter>();
+            if (existing != null && (footsteps || !existing.Footsteps)) return prefab;
             string path = AssetDatabase.GetAssetPath(prefab);
             var contents = PrefabUtility.LoadPrefabContents(path);
-            contents.AddComponent<VibrationEmitter>().strength = strength;
+            var em = contents.GetComponent<VibrationEmitter>();
+            if (em == null) { em = contents.AddComponent<VibrationEmitter>(); em.strength = strength; }
+            em.Footsteps = footsteps;
             PrefabUtility.SaveAsPrefabAsset(contents, path);
             PrefabUtility.UnloadPrefabContents(contents);
             return AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -234,6 +241,7 @@ namespace Evolve.EditorTools
             var inst = (GameObject)PrefabUtility.InstantiatePrefab(prey);
             inst.name = "Prey_C";
             inst.transform.localScale = Vector3.one * 1.6f;
+            var ip = inst.transform.position; inst.transform.position = new Vector3(ip.x, 0.32f, ip.z);
             var variant = PrefabUtility.SaveAsPrefabAsset(inst, path);
             Object.DestroyImmediate(inst);
             return variant;
