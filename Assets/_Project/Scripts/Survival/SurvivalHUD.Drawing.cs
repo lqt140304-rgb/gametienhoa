@@ -110,7 +110,13 @@ namespace Evolve.Survival
         }
         void Line(float x,float y,float width) => Paint(new Rect(x,y,width,1),new Color(.45f,.69f,.84f,.18f),Texture2D.whiteTexture);
         void Label(Rect r,string value,GUIStyle style = null) => GUI.Label(r,value ?? "",style ?? text);
-        bool Button(Rect r,string value,bool selected = false) => GUI.Button(r,value,selected ? selectedAction : action);
+        bool Button(Rect r,string value,bool selected = false)
+        {
+            var previous=GUI.backgroundColor;
+            GUI.backgroundColor=selected?new Color(.30f,.20f,.20f):new Color(.10f,.20f,.30f);
+            bool pressed=GUI.Button(r,value,selected?selectedAction:action);
+            GUI.backgroundColor=previous;return pressed;
+        }
         void WithEnabled(bool enabled, System.Action draw)
         {
             bool old = GUI.enabled; GUI.enabled = old && enabled; draw(); GUI.enabled = old;

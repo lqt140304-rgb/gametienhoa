@@ -22,5 +22,14 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(63,HudCatalog.SpikeTotal(6,5,3));
             Assert.AreEqual(72,HudCatalog.SpikeTotal(8,4,3));
         }
+        [TestCase(1280,800)]
+        [TestCase(1366,768)]
+        [TestCase(1920,1080)]
+        [TestCase(800,600)]
+        public void MenuLeavesExpandedHudVisible(float width,float height)
+        {
+            float hud=System.Math.Max(.1f,System.Math.Min(1.4f,System.Math.Min(width/1280,height/800)));
+            Assert.LessOrEqual(32+650*HudCatalog.MenuScale(width,height,hud),height-196*hud-12);
+        }
     }
 }
