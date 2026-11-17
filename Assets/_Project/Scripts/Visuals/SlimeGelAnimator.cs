@@ -183,32 +183,53 @@ namespace Evolve.Visuals
         }
 
         // per-frame motion parameters shared by the body and the organs
-        float fTime, fMove, fAbsorb, fAbsorbAmp, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
+        float fTime, fMove, fAbsorb, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
         Vector3 fDir;
 
+        float crawlK = 1f; // 1 = body crawls, 0.25 = legs do the walking (eased, so attaching legs does not pop)
+
+        /// <summary>
+        /// Works out the motion parameters for this frame. They are only TARGETS: every value is eased toward its
+        /// target, so switching state (idle, moving, absorbing, attacking, charging...) never makes a sudden jump.
+        /// </summary>
         void PrepareFrame()
         {
+            float dt = Time.deltaTime;
+            float soft = 1f - Mathf.Exp(-14f * dt);   // everyday easing (about 70 ms)
+            float quick = 1f - Mathf.Exp(-32f * dt);  // for the sharp moments (release, lunge)
+
             fTime = Time.time;
-            fMove = Mathf.Clamp01(speed / 4f);   // speed is already smoothed
             fDir = moveDir;
-            fAbsorb = fKick = fStretch = fCharge = fBurst = 0f;
+            fMove = Mathf.Lerp(fMove, Mathf.Clamp01(speed / 4f), 1f - Mathf.Exp(-9f * dt));
+            crawlK = Mathf.Lerp(crawlK, hasLegs ? 0.25f : 1f, 1f - Mathf.Exp(-6f * dt));
+
+            float tPulse = 0f, tKick = 0f, tStretch = 0f, tCharge = 0f, tBurst = 0f;
             float p = activeTime >= 0f ? activeTime / Duration(active) : -1f;
             if (p >= 0f)
             {
                 switch (active)
                 {
-                    case GelMotion.Absorb: fAbsorb = p; fAbsorbAmp = 1f; break;
-                    case GelMotion.Gulp: fAbsorb = p; fAbsorbAmp = 0.35f; break;
-                    case GelMotion.Attack: Lunge(p, 1f, out fKick, out fStretch); break;
-                    case GelMotion.Dash: Lunge(p, 1.6f, out fKick, out fStretch); break;
+                    case GelMotion.Absorb: fAbsorb = p; tPulse = Mathf.Sin(p * Mathf.PI); break;
+                    case GelMotion.Gulp: fAbsorb = p; tPulse = Mathf.Sin(p * Mathf.PI) * 0.35f; break;
+                    case GelMotion.Attack: Lunge(p, 1f, out tKick, out tStretch); break;
+                    case GelMotion.Dash: Lunge(p, 1.6f, out tKick, out tStretch); break;
                     case GelMotion.Release:
                         float f = ReleaseWind / ReleaseTime;
-                        fCharge = p < f ? Mathf.SmoothStep(0f, 1f, p / f) : 0f;
-                        fBurst = p < f ? 0f : Mathf.Sin((p - f) / (1f - f) * Mathf.PI) * (1f - (p - f) / (1f - f) * 0.3f);
+                        tCharge = p < f ? Mathf.SmoothStep(0f, 1f, p / f) : 0f;
+                        if (p >= f)
+                        {
+                            // The burst peaks right at the moment the skill leaves, then relaxes.
+                            float q = (p - f) / (1f - f);
+                            tBurst = Mathf.Min(1f, q / 0.12f) * (1f - q) * (1f - q);
+                        }
                         break;
                 }
             }
-            fAbsorbPulse = fAbsorb > 0f ? Mathf.Sin(fAbsorb * Mathf.PI) * fAbsorbAmp : 0f;
+            fAbsorbPulse = Mathf.Lerp(fAbsorbPulse, tPulse, soft);
+            fKick = Mathf.Lerp(fKick, tKick, quick);
+            fStretch = Mathf.Lerp(fStretch, tStretch, quick);
+            fCharge = Mathf.Lerp(fCharge, tCharge, soft);
+            fBurst = Mathf.Lerp(fBurst, tBurst, quick);
         }
 
         void Deform()
@@ -216,7 +237,7 @@ namespace Evolve.Visuals
             PrepareFrame();
 
             for (int i = 0; i < baseVertices.Length; i++) work[i] = baseVertices[i] + Offset(baseVertices[i]);
-            mesh.vertices = work;
+            mesh.SetVertices(work);
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 
@@ -234,8 +255,7 @@ namespace Evolve.Visuals
                     if (f.Legs) off += Gait(bodyPoint);
                     f.Work[i] = f.Base[i] + toLocal.MultiplyVector(off);
                 }
-                f.Mesh.vertices = f.Work;
-                f.Mesh.RecalculateNormals();
+                f.Mesh.SetVertices(f.Work);
                 f.Mesh.RecalculateBounds();
             }
         }
@@ -259,7 +279,7 @@ namespace Evolve.Visuals
             if (fMove > 0.01f && fDir.sqrMagnitude > 1e-4f)
             {
                 float along = b.x * fDir.x + b.z * fDir.z;
-                float crawl = hasLegs ? 0.25f : 1f;     // with legs the legs do the moving, the body only sways
+                float crawl = crawlK;                   // with legs the legs do the moving, the body only sways
                 float fast = 1f + speed * 0.15f;        // faster = bigger, quicker ripples
                 float wave = Mathf.Sin(along * 11f - t * (9f + speed * 1.5f));
                 o.y += fMove * 0.07f * fast * crawl * wave * (0.3f + 0.7f * h);
@@ -269,7 +289,7 @@ namespace Evolve.Visuals
             }
 
             // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
-            if (fAbsorb > 0f)
+            if (fAbsorbPulse > 0.001f)
             {
                 float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - fAbsorb), 2f) / 0.1f) * fAbsorbPulse;
                 o.y -= 0.05f * ring;
@@ -279,7 +299,7 @@ namespace Evolve.Visuals
             }
 
             // Attacking / dashing: pull back, then the front lunges forward.
-            if (fKick != 0f || fStretch != 0f)
+            if (Mathf.Abs(fKick) > 0.001f || Mathf.Abs(fStretch) > 0.001f)
             {
                 float front = 0.5f + 0.5f * Mathf.Clamp(b.z / 0.55f, -1f, 1f);
                 o.z += fKick * (0.35f + 0.65f * h) * 0.5f;
@@ -288,13 +308,13 @@ namespace Evolve.Visuals
             }
 
             // Skill: tighten and tremble while charging, then a bristling burst outward.
-            if (fCharge > 0f)
+            if (fCharge > 0.001f)
             {
                 o -= outward * 0.1f * fCharge * rn;
                 o.y += 0.12f * fCharge * h;
                 o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.008f * fCharge;
             }
-            if (fBurst > 0f)
+            if (fBurst > 0.001f)
             {
                 o += outward * 0.17f * fBurst * (0.4f + 0.6f * low);
                 o.y -= 0.1f * fBurst * h;
