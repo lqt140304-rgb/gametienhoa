@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Evolve.Creatures;
 using Evolve.Ecology;
 using Evolve.Organs;
+using Evolve.Survival;
 using Evolve.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;

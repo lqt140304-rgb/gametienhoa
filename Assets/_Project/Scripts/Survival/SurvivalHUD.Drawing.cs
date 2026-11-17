@@ -113,7 +113,7 @@ namespace Evolve.Survival
             {
                 var kind = (NutrientKind)k;
                 if (!HudVisibility.ShowNutrient(s.Nutrient(kind), full)) continue;
-                string label = NutrientKinds.SlimeName(kind) + (s.IsWarning(kind) ? " !" : "");
+                string label = s.IsWarning(kind) ? NutrientWarnLabels[k] : NutrientKinds.SlimeName(kind);
                 StatLine(new Rect(x, y + row++ * rowStep, width, rowHeight), label, s.Nutrient(kind), SurvivalState.MaxNutrient, NutrientKinds.ColorOf(kind), !floating);
             }
             GUI.Label(new Rect(x, y + rows * rowStep, width, 28),
@@ -177,6 +177,13 @@ namespace Evolve.Survival
             GUI.color = color; GUI.DrawTexture(r, texture != null ? texture : Texture2D.whiteTexture);
             GUI.color = previous;
         }
+
+        static readonly string[] NutrientWarnLabels =
+        {
+            NutrientKinds.SlimeName(NutrientKind.Protein) + " !", NutrientKinds.SlimeName(NutrientKind.Calcium) + " !",
+            NutrientKinds.SlimeName(NutrientKind.Iron) + " !", NutrientKinds.SlimeName(NutrientKind.Fat) + " !",
+            NutrientKinds.SlimeName(NutrientKind.Vitamin) + " !"
+        };
 
         void StatLine(Rect r, string name, float value, float max, Color color, bool labels)
         {

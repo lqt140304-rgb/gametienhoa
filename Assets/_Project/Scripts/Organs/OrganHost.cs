@@ -288,7 +288,11 @@ namespace Evolve.Organs
                 float value = stats.State.Nutrient(e.Organ.EffectiveNutrient);
                 float next = OrganDecay.Step(e.Decay, value, cfg.NutrientEquipThreshold, cfg.NutrientWarnThreshold,
                     cfg.OrganDissolveSeconds, cfg.OrganRecoverSeconds, Time.deltaTime);
-                if (!Mathf.Approximately(next, e.Decay)) { e.Decay = next; decayChanged = true; }
+                if (!Mathf.Approximately(next, e.Decay))
+                {
+                    if ((int)(next * 50f) != (int)(e.Decay * 50f)) decayChanged = true; // recalculate only per 2% step, not every frame
+                    e.Decay = next;
+                }
                 if (e.Decay >= 1f && dissolve == null) dissolve = e;
             }
             if (decayChanged) Recalculate();
@@ -313,7 +317,7 @@ namespace Evolve.Organs
         }
 
         /// <summary>Effect strength of an organ: growth × level bonus.</summary>
-        float Strength(Entry e) => e.Shown * (1f + levelBonus * Mathf.Max(0, e.Level - 1)) * OrganDecay.StrengthFactor(e.Decay);
+        float Strength(Entry e) => e.Shown * (1f + levelBonus * Mathf.Max(0, e.Level - 1)) * (e.Organ.GrantsSight ? 1f : OrganDecay.StrengthFactor(e.Decay)); // eyes keep their sight until they dissolve (no slow dimming of the world)
 
         void Recalculate()
         {

@@ -40,6 +40,7 @@ namespace Evolve.Tests.EditMode
             foreach (var kind in new[] { FoodKind.GlowMoss, FoodKind.AmberBud, FoodKind.RootDew, FoodKind.EmberBerry })
             {
                 var state = new SurvivalState();
+                state.Reset(); // alive (Feed ignores a dead body)
                 for (int k = 0; k < NutrientKinds.Count; k++) state.Nutrients[k] = 0f;
                 state.Hunger = 10f;
                 state.Feed(12f, FoodProfiles.For(kind));
