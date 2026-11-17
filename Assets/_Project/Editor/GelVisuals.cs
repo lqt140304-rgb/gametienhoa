@@ -20,7 +20,7 @@ namespace Evolve.EditorTools
     {
         const string Root = "Assets/_Project";
         const string OrganMeshes = Root + "/Models/Organs";
-        static readonly Color GelColor = new Color(0.62f, 0.80f, 0.52f, 0.82f);
+        static readonly Color GelColor = new Color(0.62f, 0.80f, 0.52f, 0.88f);
 
         [MenuItem("Evolve/Rebuild Slime Visuals")]
         public static void RebuildAll()
@@ -80,9 +80,10 @@ namespace Evolve.EditorTools
             if (AssetDatabase.IsValidFolder(OrganMeshes)) AssetDatabase.DeleteAsset(OrganMeshes);
             PrototypeSceneBuilder.EnsureFolder(OrganMeshes);
 
-            var gel = BodyGel();
-            var heat = GelMaterial("GelHeatLayer", new Color(0.92f, 0.74f, 0.36f, 0.5f));
-            var eye = GelMaterial("GelEye", new Color(0.96f, 0.93f, 0.78f, 0.55f));
+            // One material for every organ, matched to the body's average tone (the body's veins texture is not used).
+            var gel = GelMaterial("SlimeGelOrgan", new Color(GelColor.r * 0.8f, GelColor.g * 0.8f, GelColor.b * 0.8f, GelColor.a));
+            var heat = GelMaterial("GelHeatLayer", new Color(0.85f, 0.72f, 0.42f, 0.45f));
+            var eye = gel; // the eye bulb is the same gel as everything else
             var black = PrototypeSceneBuilder.Mat("Pupil", new Color(0.05f, 0.05f, 0.05f), "Universal Render Pipeline/Lit");
 
             Save(EyeStalks(gel, eye, black), "Organ_Eyes");
@@ -173,10 +174,8 @@ namespace Evolve.EditorTools
             // position on the back (socket space), length
             var horns = new[]
             {
-                (new Vector3(0f, 0.07f, 0.08f), 0.30f), (new Vector3(0.15f, 0.02f, 0.03f), 0.22f), (new Vector3(-0.15f, 0.02f, 0.03f), 0.22f),
-                (new Vector3(0.1f, 0.0f, -0.1f), 0.26f), (new Vector3(-0.1f, 0.0f, -0.1f), 0.26f), (new Vector3(0f, 0.04f, -0.17f), 0.2f),
-                (new Vector3(0.25f, -0.07f, -0.04f), 0.16f), (new Vector3(-0.25f, -0.07f, -0.04f), 0.16f),
-                (new Vector3(0.08f, 0.09f, -0.04f), 0.18f), (new Vector3(-0.08f, 0.09f, -0.04f), 0.18f)
+                (new Vector3(0f, 0.07f, 0.06f), 0.30f), (new Vector3(0.15f, 0.01f, 0.02f), 0.22f), (new Vector3(-0.15f, 0.01f, 0.02f), 0.22f),
+                (new Vector3(0.1f, 0.0f, -0.12f), 0.24f), (new Vector3(-0.1f, 0.0f, -0.12f), 0.24f), (new Vector3(0f, 0.04f, -0.2f), 0.2f)
             };
             var centre = new Vector3(0f, -0.2f, 0.05f);
             foreach (var (pos, length) in horns)
