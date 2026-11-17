@@ -12,11 +12,13 @@
 - Cả bầy khi **bắt đầu vào map** sinh ra **gần nhau** (cùng khu hồ hang). Hồ khởi đầu của mỗi người chính là điểm hồi sinh mặc định của người đó.
 - **Làm map theo hai giai đoạn:** (1) **map cố định** để chơi thử cơ chế, có sẵn nhiều hồ hang và bốc ngẫu nhiên hồ khởi đầu; (2) về sau mới làm **map ngẫu nhiên** hoàn toàn mỗi ván. Dữ liệu vùng/hồ nên tách khỏi cảnh để chuyển sang bước 2 không phải viết lại.
 - **Địa điểm lưu điểm hồi sinh là tổ của bầy** (tổ đã chốt có xây ở `GAME_DESIGN.md` mục 6). Cả bầy lưu cùng một nơi nên hồi sinh gần nhau, không tách bầy.
+- **Điều kiện dựng tổ:** chỉ dựng được khi **không đang bị tấn công** và **không ở gần khu Boss**. **Nguyên liệu xây tổ lấy từ quái** (rơi khi đánh quái).
 
 **[MỞ]**
 - Gần nhau là cùng một hồ hay các hồ liền kề; người vào giữa ván thì sinh ở đâu?
 - Map ngẫu nhiên hoàn toàn: sinh ra những gì, đảm bảo luôn có đủ bốn vùng, hồ hang, nguồn cơ quan "vé vào vùng" và đường đi hợp lý (làm sau).
-- Tổ tốn gì để dựng; mỗi người lưu điểm riêng tại tổ hay cả bầy dùng chung một điểm; tổ bị phá thì điểm hồi sinh về đâu.
+- Nguyên liệu xây tổ: loại nào, từ quái bậc nào, số lượng bao nhiêu. "Bị tấn công" tính trong bao lâu gần nhất; "gần khu Boss" là bán kính bao nhiêu.
+- **[ĐỀ XUẤT]** Cả bầy dùng chung một tổ (ai chết cũng hồi sinh ở đó); tổ bị phá thì mỗi người quay về hồ khởi đầu của mình. Chờ xác nhận.
 
 ### 1.1 Đối đầu Thần Chết
 
