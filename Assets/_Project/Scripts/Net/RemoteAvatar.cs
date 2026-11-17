@@ -14,7 +14,6 @@ namespace Evolve.Net
     /// </summary>
     public class RemoteAvatar : MonoBehaviour
     {
-        static readonly Vector3 BackSocket = new Vector3(0f, 0.3f, -0.25f);
         static Dictionary<string, OrganSO> organLookup;
 
         public ulong ClientId { get; private set; }
@@ -68,10 +67,8 @@ namespace Evolve.Net
             renderer.sharedMaterial = mat;
 
             // The sockets must exist before OrganHost, which looks for them when it wakes up.
-            AddSocket(body, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
-            AddSocket(body, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
-            AddSocket(body, OrganSlot.Skin, Vector3.zero);
-            AddSocket(body, OrganSlot.Back, BackSocket);
+            foreach (OrganSlot slot in System.Enum.GetValues(typeof(OrganSlot)))
+                AddSocket(body, slot, Evolve.Visuals.SlimeSockets.Position(slot));
             Stats = gameObject.AddComponent<SurvivalStats>();
             Stats.IsRemote = true;
             Stats.RemoteClientId = clientId;

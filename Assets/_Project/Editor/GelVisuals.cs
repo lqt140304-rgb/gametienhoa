@@ -9,16 +9,18 @@ using UnityEngine.Rendering;
 namespace Evolve.EditorTools
 {
     /// <summary>
-    /// Builds the gel look of the slime: translucent gel materials, the dome mesh asset and the gel organ prefabs
-    /// (eye stalks, curved pseudopods, spikes with plates). Everything is code-made stand-ins: each part is its own
-    /// prefab, so a real model can replace it later without touching game code.
+    /// Builds the gel look of the slime: the milky gel material (with painted veins), the smooth body mesh asset and
+    /// the gel organ prefabs. Everything is code-made stand-ins: each part is its own prefab, so a real model can
+    /// replace it later without touching game code.
+    /// Rules for every organ (present and future): same gel material as the body, and it grows out of a soft flared
+    /// base that spreads over the body, so the joint melts in instead of poking through.
     /// Menu: Evolve -> Rebuild Slime Visuals (re-styles the slime in the open scene and rewrites the organ prefabs).
     /// </summary>
     public static class GelVisuals
     {
         const string Root = "Assets/_Project";
-        static readonly Color GelColor = new Color(0.55f, 0.78f, 0.50f, 0.82f);
-        static readonly Vector3 BackSocket = new Vector3(0f, 0.3f, -0.25f);
+        const string OrganMeshes = Root + "/Models/Organs";
+        static readonly Color GelColor = new Color(0.62f, 0.80f, 0.52f, 0.82f);
 
         [MenuItem("Evolve/Rebuild Slime Visuals")]
         public static void RebuildAll()
@@ -36,7 +38,7 @@ namespace Evolve.EditorTools
 
         // ---------------------------------------------------------------- body
 
-        /// <summary>Swap the primitive sphere on "Visual" for the gel dome and add the glowing core.</summary>
+        /// <summary>Swap the primitive sphere on "Visual" for the gel body, move the sockets, add the glowing core.</summary>
         internal static void StyleBody(GameObject visual)
         {
             EnsureFolders();
@@ -45,13 +47,23 @@ namespace Evolve.EditorTools
             filter.sharedMesh = BodyMesh();
             var renderer = visual.GetComponent<MeshRenderer>();
             if (renderer == null) renderer = visual.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = GelMaterial("SlimeGel", GelColor);
+            renderer.sharedMaterial = BodyGel();
+            foreach (var socket in visual.GetComponentsInChildren<OrganSocket>(true))
+                socket.transform.localPosition = SlimeSockets.Position(socket.Slot);
             if (visual.GetComponent<SlimeGelCore>() == null) visual.AddComponent<SlimeGelCore>();
+        }
+
+        static Material BodyGel()
+        {
+            var mat = GelMaterial("SlimeGel", GelColor);
+            mat.SetTexture("_BaseMap", SlimeVeinTexture.GetOrCreate());
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         static Mesh BodyMesh()
         {
-            const string path = Root + "/Models/SlimeBody.asset";
+            const string path = Root + "/Models/SlimeBody_v2.asset";
             var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
             if (mesh != null) return mesh;
             mesh = SlimeMeshBuilder.Build();
@@ -59,57 +71,53 @@ namespace Evolve.EditorTools
             return mesh;
         }
 
-        static Mesh ConeMesh()
-        {
-            const string path = Root + "/Models/GelCone.asset";
-            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-            if (mesh != null) return mesh;
-            mesh = SlimeMeshBuilder.Cone(6, 0.08f, 0.28f);
-            AssetDatabase.CreateAsset(mesh, path);
-            return mesh;
-        }
-
         // ---------------------------------------------------------------- organs
 
-        /// <summary>
-        /// Overwrites the organ prefabs at their existing paths, so OrganSO references keep working.
-        /// Rule for every organ (present and future): it is made of the SAME gel material as the body and grows out of
-        /// a fused blob at its base, so it reads as part of the body. The heat layer is a skin-like shell, not rings.
-        /// </summary>
+        /// <summary>Overwrites the organ prefabs at their existing paths, so OrganSO references keep working.</summary>
         internal static void RebuildOrganPrefabs()
         {
             EnsureFolders();
-            var gel = GelMaterial("SlimeGel", GelColor);
-            var heat = GelMaterial("GelHeatLayer", new Color(0.92f, 0.74f, 0.36f, 0.55f));
-            var white = PrototypeSceneBuilder.Mat("Eye", new Color(0.95f, 0.95f, 0.95f), "Universal Render Pipeline/Lit");
+            if (AssetDatabase.IsValidFolder(OrganMeshes)) AssetDatabase.DeleteAsset(OrganMeshes);
+            PrototypeSceneBuilder.EnsureFolder(OrganMeshes);
+
+            var gel = BodyGel();
+            var heat = GelMaterial("GelHeatLayer", new Color(0.92f, 0.74f, 0.36f, 0.5f));
+            var eye = GelMaterial("GelEye", new Color(0.96f, 0.93f, 0.78f, 0.55f));
             var black = PrototypeSceneBuilder.Mat("Pupil", new Color(0.05f, 0.05f, 0.05f), "Universal Render Pipeline/Lit");
 
-            Save(EyeStalks(gel, white, black), "Organ_Eyes");
+            Save(EyeStalks(gel, eye, black), "Organ_Eyes");
             Save(Pseudopods("Organ_Pseudopods", gel, 1f), "Organ_Pseudopods");
             Save(Pseudopods("Organ_MuscularPseudopods", gel, 1.3f), "Organ_MuscularPseudopods");
             Save(Pseudopods("Organ_RunnerLegs", gel, 1.6f), "Organ_RunnerLegs");
             Save(HeatLayer(heat), "Organ_HeatMembrane");
-            Save(SpikesAndPlates(gel), "Organ_ToxicSpikes");
+            Save(Horns(gel), "Organ_ToxicSpikes");
             AssetDatabase.SaveAssets();
         }
 
-        /// <summary>A gel blob that melts the organ into the body.</summary>
-        static void Blob(Transform parent, Vector3 pos, Vector3 scale, Material gel) =>
-            Part(PrimitiveType.Sphere, "Blob", parent, pos, scale, gel);
-
-        static GameObject EyeStalks(Material gel, Material white, Material black)
+        static GameObject EyeStalks(Material gel, Material eye, Material black)
         {
             var root = new GameObject("Organ_Eyes");
-            foreach (float side in new[] { -1f, 1f })
+            foreach (float s in new[] { -1f, 1f })
             {
-                float x = 0.12f * side;
-                Blob(root.transform, new Vector3(x, -0.03f, 0f), new Vector3(0.2f, 0.12f, 0.2f), gel);
-                Blob(root.transform, new Vector3(x * 1.1f, 0.03f, 0.01f), new Vector3(0.13f, 0.12f, 0.13f), gel);
-                var stalk = Part(PrimitiveType.Capsule, "Stalk", root.transform, new Vector3(x * 1.45f, 0.14f, 0.03f), new Vector3(0.05f, 0.12f, 0.05f), gel);
-                stalk.transform.localRotation = Quaternion.Euler(0f, 0f, -side * 16f);
-                Blob(root.transform, new Vector3(x * 1.75f, 0.27f, 0.04f), Vector3.one * 0.12f, gel); // socket of the eye
-                var eye = Part(PrimitiveType.Sphere, "Eye", root.transform, new Vector3(x * 1.75f, 0.3f, 0.06f), Vector3.one * 0.17f, white);
-                Part(PrimitiveType.Sphere, "Pupil", eye.transform, new Vector3(0f, 0f, 0.42f), Vector3.one * 0.52f, black);
+                var p0 = new Vector3(0.11f * s, -0.05f, 0f);
+                var path = Curve(p0, new Vector3(0.14f * s, 0.07f, 0.03f), new Vector3(0.2f * s, 0.17f, 0.06f), new Vector3(0.24f * s, 0.27f, 0.08f), 9);
+                var radii = new float[path.Length];
+                for (int i = 0; i < radii.Length; i++) radii[i] = Mathf.Lerp(0.055f, 0.03f, Mathf.SmoothStep(0f, 1f, i / (float)(radii.Length - 1)));
+                AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 10), gel, Vector3.zero, Quaternion.identity);
+
+                // Teardrop bulb at the tip, a bit translucent, with a dark pupil inside.
+                Vector3 tip = path[path.Length - 1];
+                Vector3 dir = (tip - path[path.Length - 2]).normalized;
+                var bulbOffsets = new[] { 0f, 0.025f, 0.055f, 0.085f, 0.115f, 0.14f };
+                var bulbRadii = new[] { 0.03f, 0.056f, 0.074f, 0.076f, 0.054f, 0f };
+                var bulb = new Vector3[bulbOffsets.Length];
+                for (int i = 0; i < bulb.Length; i++) bulb[i] = tip + dir * bulbOffsets[i];
+                AddMesh(root, SlimeMeshBuilder.Tube(bulb, bulbRadii, 12), eye, Vector3.zero, Quaternion.identity);
+                var pupil = PrototypeSceneBuilder.Part(PrimitiveType.Sphere, "Pupil", root.transform, tip + dir * 0.085f + new Vector3(0f, 0f, 0.05f), Vector3.one * 0.045f, black);
+                pupil.name = "Pupil";
+
+                // Soft fillet that spreads over the body where the stalk leaves it.
+                AddMesh(root, SlimeMeshBuilder.Flare(0.15f, 0.06f, 0.1f), gel, new Vector3(0.11f * s, -0.1f, 0f), Quaternion.identity);
             }
             return root;
         }
@@ -117,23 +125,30 @@ namespace Evolve.EditorTools
         static GameObject Pseudopods(string name, Material gel, float size)
         {
             var root = new GameObject(name);
+            float reach = 0.3f + 0.1f * size, thick = Mathf.Sqrt(size);
             foreach (float sx in new[] { -1f, 1f })
                 foreach (float sz in new[] { -1f, 1f })
                 {
-                    var shoulder = new Vector3(sx * 0.26f, 0.18f, sz * 0.2f);
-                    Vector3 dir = new Vector3(sx * 0.6f, -0.8f, sz * 0.5f).normalized;
-                    Blob(root.transform, shoulder, new Vector3(0.26f, 0.2f, 0.26f) * size, gel);               // fused into the body
-                    var upper = Part(PrimitiveType.Capsule, "Upper", root.transform, shoulder + dir * 0.12f * size,
-                        new Vector3(0.12f, 0.15f, 0.12f) * size, gel);
-                    upper.transform.localRotation = Quaternion.FromToRotation(Vector3.up, dir);
-                    var lower = Part(PrimitiveType.Capsule, "Lower", root.transform, shoulder + dir * 0.27f * size,
-                        new Vector3(0.085f, 0.13f, 0.085f) * size, gel);
-                    lower.transform.localRotation = Quaternion.FromToRotation(Vector3.up, dir);
-                    Vector3 foot = shoulder + dir * 0.4f * size;
-                    Part(PrimitiveType.Sphere, "Foot", root.transform, foot, new Vector3(0.2f, 0.07f, 0.2f) * size, gel);
-                    foreach (float t in new[] { -1f, 0f, 1f })   // three toe bumps
-                        Part(PrimitiveType.Sphere, "Toe", root.transform, foot + new Vector3(sx * 0.07f + t * 0.05f, -0.01f, sz * 0.1f) * size,
-                            Vector3.one * 0.06f * size, gel);
+                    var shoulder = new Vector3(sx * 0.18f, 0.04f, sz * 0.15f);
+                    var curve = Curve(shoulder,
+                        new Vector3(sx * reach * 0.55f, 0.08f, sz * reach * 0.45f),
+                        new Vector3(sx * reach * 0.9f, 0f, sz * reach * 0.8f),
+                        new Vector3(sx * reach, -0.12f, sz * reach * 0.9f), 8);
+                    var path = new Vector3[curve.Length + 3];
+                    var radii = new float[path.Length];
+                    for (int i = 0; i < curve.Length; i++)
+                    {
+                        path[i] = curve[i];
+                        radii[i] = Mathf.Lerp(0.12f, 0.07f, Mathf.SmoothStep(0f, 1f, i / (float)(curve.Length - 1))) * thick;
+                    }
+                    Vector3 foot = curve[curve.Length - 1];
+                    path[curve.Length] = foot + new Vector3(sx * 0.02f, -0.012f, sz * 0.02f); radii[curve.Length] = 0.085f * thick; // rounded pad
+                    path[curve.Length + 1] = foot + new Vector3(sx * 0.035f, -0.02f, sz * 0.035f); radii[curve.Length + 1] = 0.05f * thick;
+                    path[curve.Length + 2] = foot + new Vector3(sx * 0.04f, -0.024f, sz * 0.04f); radii[curve.Length + 2] = 0f;
+                    AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 12), gel, Vector3.zero, Quaternion.identity);
+
+                    // Wide soft shoulder so the leg grows out of the body.
+                    AddMesh(root, SlimeMeshBuilder.Flare(0.2f * thick, 0.11f * thick, 0.1f), gel, new Vector3(shoulder.x, shoulder.y - 0.08f, shoulder.z), Quaternion.identity);
                 }
             return root;
         }
@@ -151,49 +166,61 @@ namespace Evolve.EditorTools
             return root;
         }
 
-        static GameObject SpikesAndPlates(Material gel)
+        /// <summary>Short curved horns on the back, each rising out of a flared base.</summary>
+        static GameObject Horns(Material gel)
         {
             var root = new GameObject("Organ_ToxicSpikes");
-            var cone = ConeMesh();
-            // (position on the back, length factor)
-            var spikes = new[]
+            // position on the back (socket space), length
+            var horns = new[]
             {
-                (new Vector3(0f, 0.1f, 0.05f), 1.3f), (new Vector3(0.15f, 0.02f, 0.02f), 1.0f), (new Vector3(-0.15f, 0.02f, 0.02f), 1.0f),
-                (new Vector3(0.1f, -0.05f, -0.12f), 1.15f), (new Vector3(-0.1f, -0.05f, -0.12f), 1.15f), (new Vector3(0f, 0.03f, -0.1f), 1.2f),
-                (new Vector3(0.24f, -0.07f, -0.05f), 0.8f), (new Vector3(-0.24f, -0.07f, -0.05f), 0.8f),
-                (new Vector3(0.07f, 0.07f, -0.2f), 0.9f), (new Vector3(-0.07f, 0.07f, -0.2f), 0.9f)
+                (new Vector3(0f, 0.07f, 0.08f), 0.30f), (new Vector3(0.15f, 0.02f, 0.03f), 0.22f), (new Vector3(-0.15f, 0.02f, 0.03f), 0.22f),
+                (new Vector3(0.1f, 0.0f, -0.1f), 0.26f), (new Vector3(-0.1f, 0.0f, -0.1f), 0.26f), (new Vector3(0f, 0.04f, -0.17f), 0.2f),
+                (new Vector3(0.25f, -0.07f, -0.04f), 0.16f), (new Vector3(-0.25f, -0.07f, -0.04f), 0.16f),
+                (new Vector3(0.08f, 0.09f, -0.04f), 0.18f), (new Vector3(-0.08f, 0.09f, -0.04f), 0.18f)
             };
-            foreach (var (off, len) in spikes)
+            var centre = new Vector3(0f, -0.2f, 0.05f);
+            foreach (var (pos, length) in horns)
             {
-                Vector3 outward = (BackSocket + off - new Vector3(0f, -0.1f, 0f)).normalized;
-                Blob(root.transform, off, new Vector3(0.14f, 0.07f, 0.14f), gel);   // each spike rises out of a gel swelling
-                var go = new GameObject("Spike");
-                go.transform.SetParent(root.transform, false);
-                go.transform.localPosition = off;
-                go.transform.localRotation = Quaternion.FromToRotation(Vector3.up, outward);
-                go.transform.localScale = new Vector3(1f, len, 1f);
-                go.AddComponent<MeshFilter>().sharedMesh = cone;
-                go.AddComponent<MeshRenderer>().sharedMaterial = gel;
-            }
-            // Overlapping armour plates, same gel as the body.
-            var plates = new[]
-            {
-                (new Vector3(0f, 0.05f, 0f), new Vector3(0.36f, 0.025f, 0.26f), -8f),
-                (new Vector3(0f, -0.02f, -0.15f), new Vector3(0.3f, 0.025f, 0.22f), -35f),
-                (new Vector3(0.2f, -0.02f, -0.02f), new Vector3(0.2f, 0.022f, 0.2f), 20f)
-            };
-            foreach (var (pos, scale, tilt) in plates)
-            {
-                var plate = Part(PrimitiveType.Cylinder, "Plate", root.transform, pos, scale, gel);
-                plate.transform.localRotation = Quaternion.Euler(tilt, 0f, 0f);
+                Vector3 dir = ((pos - centre).normalized + Vector3.up * 0.3f).normalized;
+                var path = new Vector3[5];
+                var radii = new[] { 0.055f, 0.042f, 0.03f, 0.016f, 0f };
+                for (int i = 0; i < path.Length; i++)
+                {
+                    float t = i / 4f;
+                    path[i] = pos + dir * length * t + Vector3.back * 0.04f * t * t; // slight curve toward the back
+                }
+                AddMesh(root, SlimeMeshBuilder.Tube(path, radii, 8), gel, Vector3.zero, Quaternion.identity);
+                // Flared base lying along the horn's axis, sunk a little into the body.
+                AddMesh(root, SlimeMeshBuilder.Flare(0.11f, 0.05f, 0.06f), gel, pos - dir * 0.03f, Quaternion.FromToRotation(Vector3.up, dir));
             }
             return root;
         }
 
         // ---------------------------------------------------------------- helpers
 
-        static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat) =>
-            PrototypeSceneBuilder.Part(type, name, parent, pos, scale, mat);
+        static Vector3[] Curve(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, int count)
+        {
+            var points = new Vector3[count];
+            for (int i = 0; i < count; i++)
+            {
+                float t = i / (float)(count - 1), u = 1f - t;
+                points[i] = u * u * u * p0 + 3f * u * u * t * p1 + 3f * u * t * t * p2 + t * t * t * p3;
+            }
+            return points;
+        }
+
+        /// <summary>Saves the mesh as an asset (prefabs can only keep asset meshes) and adds it under the organ root.</summary>
+        static void AddMesh(GameObject root, Mesh mesh, Material mat, Vector3 pos, Quaternion rot)
+        {
+            string path = $"{OrganMeshes}/{root.name}_{root.transform.childCount}.asset";
+            AssetDatabase.CreateAsset(mesh, path);
+            var go = new GameObject(mesh.name);
+            go.transform.SetParent(root.transform, false);
+            go.transform.localPosition = pos;
+            go.transform.localRotation = rot;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+        }
 
         static void Save(GameObject go, string name)
         {
@@ -223,7 +250,7 @@ namespace Evolve.EditorTools
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_ZWrite", 0f);
-            mat.SetFloat("_Smoothness", 0.9f);
+            mat.SetFloat("_Smoothness", 0.92f);
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.SetOverrideTag("RenderType", "Transparent");
             mat.renderQueue = (int)RenderQueue.Transparent;

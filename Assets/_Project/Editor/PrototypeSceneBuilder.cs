@@ -240,13 +240,16 @@ namespace Evolve.EditorTools
             };
         }
 
+        /// <summary>Slime collider radius at BodyScale 1 (base diameter = 2 × this). Shelter gaps are sized from it.</summary>
+        internal const float SlimeRadius = 0.5f;
+
         /// <summary>Slime player + follow camera (Camera.main) + vision volume + HUD. Returns the slime.</summary>
         internal static GameObject CreatePlayer(SharedAssets shared, Vector3 position)
         {
             // Slime
             var slime = new GameObject("Slime");
             slime.transform.position = position;
-            slime.AddComponent<SphereCollider>().radius = 0.5f;
+            slime.AddComponent<SphereCollider>().radius = SlimeRadius;
             var rb = slime.AddComponent<Rigidbody>();
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
@@ -257,18 +260,19 @@ namespace Evolve.EditorTools
             visual.transform.SetParent(slime.transform, false);
             visual.GetComponent<Renderer>().sharedMaterial = shared.SlimeMat;
             GelVisuals.StyleBody(visual);
-            Socket(visual.transform, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
-            Socket(visual.transform, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
-            Socket(visual.transform, OrganSlot.Skin, Vector3.zero);
-            Socket(visual.transform, OrganSlot.Back, BackSocket);
+            foreach (OrganSlot slot in System.Enum.GetValues(typeof(OrganSlot)))
+                Socket(visual.transform, slot, Evolve.Visuals.SlimeSockets.Position(slot));
 
             var host = slime.AddComponent<OrganHost>();
             slime.AddComponent<OrganInteractor>();
             var stats = slime.AddComponent<SurvivalStats>();
             Set(stats, "config", shared.Config);
             slime.AddComponent<ClimateSensor>();
+            slime.AddComponent<WaterSensor>();   // thirst only switches on in scenes with a WaterZone
+            slime.AddComponent<ShelterSensor>();
             slime.AddComponent<SkillBar>();
             var controller = slime.AddComponent<SlimeController>();
+            slime.AddComponent<BodyFeedback>();
             Set(controller, "visual", visual.transform);
             var caster = slime.AddComponent<AbilityCaster>();
             SetArray(caster, "randomPool", new Object[] { shared.Dash });

@@ -127,6 +127,12 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 
 **[ĐÃ CHỐT 2026-11-17]** Thêm chỉ số **Khát** (0.5b), **Căng thẳng** 0–100 (0.5b, không có hậu quả nặng ở 100, chỉ hiệu ứng tăng dần) và **5 chất dinh dưỡng** tên kiểu slime (0.5c): **Sợi Nhầy** (đạm), **Tinh Vôi** (canxi), **Huyết Thiết** (sắt), **Mỡ Nhờn** (chất béo), **Tinh Chất Sống** (vitamin). Dinh dưỡng là điều kiện của cơ quan: thiếu kéo dài thì cơ quan yếu dần rồi tiêu biến (bản mẫu vẫn còn). Đói vẫn là calo tổng. Chi tiết: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 5, 6.2, 6.3.
 
+**[ĐÃ CHỐT, đã code 0.5b]** **Khát** (0–100): chỉ bật ở scene có vùng nước (`WaterZone`), nên scene `Prototype_01` không bị khát. Giảm dần theo thời gian, nhanh hơn khi nước rút và khi trời nóng; đứng trong nước thì uống đầy lại. Nước sạch (Vũng Sinh Mệnh, Khe Thủy Mạch) và nước bẩn (vũng nước đọng ở Bãi Mùn Rễ) đều giải khát; nước bẩn chỉ được đánh dấu, bệnh do nước bẩn để 0.5d. Khát về 0 thì mất máu; khát dưới một nửa thì không hồi máu. Thân slime xám khô khi thiếu nước.
+
+**[ĐÃ CHỐT, đã code 0.5b]** **Căng thẳng** (0–100): tăng khi bị tấn công (theo lượng sát thương), khi đói hoặc khát dưới 25%, khi thân nhiệt ngoài vùng dễ chịu; giảm khi no đủ và giảm nhanh khi ở **nơi trú** (hốc rễ, khe hẹp). Ở nơi trú năng lượng hồi gấp đôi. Hiệu ứng tăng dần, **không có hậu quả nặng ở 100**: camera rung, vòng quét rung co lại, năng lượng hồi chậm khi rất cao. Slime càng nhiều cơ quan thì càng to; to quá (từ 6 cơ quan) thì không chui lọt khe trú.
+
+Nguồn số liệu: mọi con số (tốc độ khát, lượng uống, ngưỡng căng thẳng, hệ số nơi trú) nằm trong `SurvivalConfig` (`ScriptableObjects/SurvivalConfigSO.asset`, chỉnh được trong Inspector); thiết kế ở `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 6.2 và 6.7.
+
 **[ĐỀ XUẤT]** Độ ẩm (rất quan trọng cho slime), sinh khối để phát triển bộ phận, khối lượng, ổn định cấu trúc, chuyển hóa, cảm nhận, kháng môi trường, oxy theo tình huống và độc tố.
 
 ## 6. Co-op và xây dựng

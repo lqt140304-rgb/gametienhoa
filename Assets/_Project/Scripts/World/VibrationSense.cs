@@ -31,6 +31,7 @@ namespace Evolve.World
         MonochromeVision vision;
         readonly HashSet<Transform> flashed = new HashSet<Transform>();
         float scanStart = -1f;
+        float scanRadius;
         float readyAt;
 
         [Header("Passive")]
@@ -40,6 +41,10 @@ namespace Evolve.World
         public float EnergyCost => energyCost;
         public float CooldownRemaining => Mathf.Max(0f, readyAt - Time.time);
         public bool IsScanning => scanStart >= 0f;
+
+        // Stress narrows the senses; applied at the point of use so the serialized radii stay untouched.
+        float SenseMul => stats != null && stats.Config != null
+            ? StressEffects.SenseRadiusMultiplier(stats.State.Stress, stats.Config) : 1f;
 
         void Awake()
         {
@@ -63,7 +68,8 @@ namespace Evolve.World
             if (pulsePrefab == null) return;
             var list = VibrationEmitter.Active;
             if (seenPulses.Count > 256) seenPulses.Clear();
-            float r2 = passiveRadius * passiveRadius;
+            float pr = passiveRadius * SenseMul;
+            float r2 = pr * pr;
             for (int i = 0; i < list.Count; i++)
             {
                 var e = list[i];
@@ -76,7 +82,7 @@ namespace Evolve.World
                 Vector3 at = e.transform.position + Vector3.up * 0.5f;
                 float sq = (at - transform.position).sqrMagnitude;
                 if (sq > r2) continue;
-                float intensity = e.LastPulseStrength * (1f - Mathf.Sqrt(sq) / passiveRadius);
+                float intensity = e.LastPulseStrength * (1f - Mathf.Sqrt(sq) / pr);
                 if (intensity <= 0.02f) continue;
 
                 Color c = e.IsPredator ? predatorColor : preyColor;
@@ -91,16 +97,17 @@ namespace Evolve.World
         void StartScan()
         {
             if (vision == null) vision = FindAnyObjectByType<MonochromeVision>();
+            scanRadius = radius * SenseMul;
             scanStart = Time.time;
             readyAt = Time.time + cooldown;
             flashed.Clear();
-            if (vision != null) vision.Reveal(radius, expandSeconds, holdSeconds, fadeSeconds);
+            if (vision != null) vision.Reveal(scanRadius, expandSeconds, holdSeconds, fadeSeconds);
         }
 
         void UpdateWave()
         {
             float t = (Time.time - scanStart) / Mathf.Max(0.01f, expandSeconds);
-            float r = Mathf.Min(1f, t) * radius;
+            float r = Mathf.Min(1f, t) * scanRadius;
 
             foreach (var n in Nutrient.Active) TryFlash(n.transform, Vector3.zero, r, foodColor);
             foreach (var p in Prey.Active) TryFlash(p.transform, Vector3.zero, r, preyColor);
