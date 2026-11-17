@@ -11,7 +11,7 @@ namespace Evolve.Visuals
     /// </summary>
     public class PerfOverlay : MonoBehaviour
     {
-        bool show;
+        int mode; // 0 hidden, 1 numbers, 2 numbers + body animation off (to test)
         int frames;
         float accumulated, worst;
         string text = "";
@@ -28,7 +28,11 @@ namespace Evolve.Visuals
 
         void Update()
         {
-            if (KeyPressed.F4()) show = !show;
+            if (KeyPressed.F4())
+            {
+                mode = (mode + 1) % 3;
+                SlimeGelAnimator.Paused = mode == 2;
+            }
             float dt = Time.unscaledDeltaTime;
             frames++;
             accumulated += dt;
@@ -45,8 +49,9 @@ namespace Evolve.Visuals
 
         void OnGUI()
         {
-            if (!show) return;
-            GUI.Box(new Rect(Screen.width - 330, 8, 322, 46), text.Length > 0 ? text : "đang đo...");
+            if (mode == 0) return;
+            string head = mode == 2 ? "ANIMATION THÂN ĐANG TẮT (F4 để bật lại)\n" : "";
+            GUI.Box(new Rect(Screen.width - 330, 8, 322, mode == 2 ? 64 : 46), head + (text.Length > 0 ? text : "đang đo..."));
         }
     }
 }
