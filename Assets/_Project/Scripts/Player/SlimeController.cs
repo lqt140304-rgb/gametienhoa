@@ -147,9 +147,9 @@ namespace Evolve.Player
                 float vertical = ReadVertical();
                 Vector3 swim = SwimLogic.Velocity(dir, vertical, speed);
                 // float low, only the back above the surface, bobbing gently; Space never lifts it higher than that
-                float target = SwimLogic.TargetY(Evolve.World.ZoneLayout.WaterLevel) + 0.03f * Mathf.Sin(Time.time * 0.6f * Mathf.PI * 2f);
-                if (vertical >= 0f && rb.position.y >= target - 0.02f) swim.y = Mathf.Clamp((target - rb.position.y) * 3f, -0.4f, 0.4f);
-                else if (vertical == 0f) swim.y = Mathf.Min(swim.y, (target - rb.position.y) * 3f);
+                float floatY = SwimLogic.TargetY(Evolve.World.ZoneLayout.WaterLevel) + 0.03f * Mathf.Sin(Time.time * 0.6f * Mathf.PI * 2f);
+                if (vertical >= 0f && rb.position.y >= floatY - 0.02f) swim.y = Mathf.Clamp((floatY - rb.position.y) * 3f, -0.4f, 0.4f);
+                else if (vertical == 0f) swim.y = Mathf.Min(swim.y, (floatY - rb.position.y) * 3f);
                 rb.linearVelocity = Vector3.MoveTowards(v, swim, acceleration * Time.fixedDeltaTime);
                 stats.State.TrySpendEnergy(SwimLogic.EnergyPerSecond * Time.fixedDeltaTime);
                 return;
