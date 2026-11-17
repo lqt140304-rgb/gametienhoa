@@ -7,6 +7,12 @@ using UnityEngine.InputSystem;
 
 namespace Evolve.Player
 {
+    /// <summary>Body size curve: grows with equipped organs, capped.</summary>
+    public static class BodySize
+    {
+        public static float ScaleFor(int organCount) => Mathf.Min(1.5f, 1f + 0.06f * organCount);
+    }
+
     /// <summary>
     /// Primordial slime: slow crawl (free) and hop (costs energy).
     /// Movement is camera-relative. Requires a Rigidbody (freeze rotation).
@@ -35,6 +41,15 @@ namespace Evolve.Player
         float squash;
         Vector3 spawnPoint;
         Collider col;
+        SphereCollider sphere;
+        CapsuleCollider capsule;
+        float baseRadius, baseHeight;
+
+        /// <summary>Current body scale (smoothed toward BodySize.ScaleFor(organ count)). Applied to collider and visual.</summary>
+        public float BodyScale { get; private set; } = 1f;
+        /// <summary>Collider diameter in world units at BodyScale 1 (cached in Awake).</summary>
+        public float BaseDiameter { get; private set; } = 1f;
+        const float BodyScaleRate = 0.5f;
 
         void Awake()
         {
@@ -43,6 +58,10 @@ namespace Evolve.Player
             stats = GetComponent<SurvivalStats>();
             organs = GetComponent<OrganHost>();
             col = GetComponent<Collider>();
+            sphere = col as SphereCollider;
+            capsule = col as CapsuleCollider;
+            if (sphere != null) { baseRadius = sphere.radius; baseHeight = 0f; BaseDiameter = baseRadius * 2f * MaxAbs(transform.lossyScale); }
+            else if (capsule != null) { baseRadius = capsule.radius; baseHeight = capsule.height; BaseDiameter = baseRadius * 2f * MaxAbs(transform.lossyScale); }
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
             if (visual != null) baseScale = visual.localScale;
             spawnPoint = transform.position;
@@ -99,6 +118,7 @@ namespace Evolve.Player
         void FixedUpdate()
         {
             if (stats.State.IsDead) return;
+            UpdateBodyScale();
             Vector3 dir = GetMoveDirection();
             stats.IsMoving = dir.sqrMagnitude > 0.01f;
 
@@ -111,6 +131,31 @@ namespace Evolve.Player
             Vector3 target = dir * crawlSpeed * organSpeed * (IsSprinting ? sprintMultiplier : 1f);
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
             rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
+        }
+
+        static float MaxAbs(Vector3 v) => Mathf.Max(Mathf.Abs(v.x), Mathf.Max(Mathf.Abs(v.y), Mathf.Abs(v.z)));
+
+        /// <summary>Smooth BodyScale toward the organ-count target, resize the collider from cached base values
+        /// and lift the body by the radius growth so it does not sink into the ground. No-op when settled.</summary>
+        void UpdateBodyScale()
+        {
+            float target = organs != null ? BodySize.ScaleFor(organs.Count) : 1f;
+            if (Mathf.Approximately(BodyScale, target)) return;
+            float old = BodyScale;
+            BodyScale = Mathf.MoveTowards(old, target, BodyScaleRate * Time.fixedDeltaTime);
+            float growth = 0f;
+            if (sphere != null)
+            {
+                sphere.radius = baseRadius * BodyScale;
+                growth = baseRadius * (BodyScale - old);
+            }
+            else if (capsule != null)
+            {
+                capsule.radius = baseRadius * BodyScale;
+                capsule.height = baseHeight * BodyScale;
+                growth = baseHeight * 0.5f * (BodyScale - old);
+            }
+            if (growth > 0f) rb.position += Vector3.up * (growth * transform.lossyScale.y);
         }
 
         Vector3 GetMoveDirection()
@@ -134,9 +179,10 @@ namespace Evolve.Player
             if (visual == null) return;
             squash = Mathf.MoveTowards(squash, 0f, Time.deltaTime * 3f);
             float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.05f : 0f;
+            float bs = BodyScale;
             float y = 1f + squash * 0.35f + wobble;
             float xz = 1f / Mathf.Sqrt(y); // preserve volume
-            visual.localScale = Vector3.Scale(baseScale, new Vector3(xz, y, xz));
+            visual.localScale = Vector3.Scale(baseScale * bs, new Vector3(xz, y, xz));
 
             // Face the direction of travel so front-mounted organs (eyes) lead.
             Vector3 hv = rb.linearVelocity; hv.y = 0f;
