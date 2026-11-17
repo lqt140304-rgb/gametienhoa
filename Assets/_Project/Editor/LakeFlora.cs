@@ -28,6 +28,7 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(DressedName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(DressedName).transform;
+            root.gameObject.AddComponent<DetailCulling>();   // only what is near the camera is drawn and lit
             var rnd = new System.Random(77);
             var ponds = new List<WaterSurface>(WaterSurface.All);
 

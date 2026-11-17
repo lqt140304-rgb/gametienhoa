@@ -150,7 +150,8 @@ namespace Evolve.World
         Vector3[] basePos, work;
         MaterialPropertyBlock block;
         Vector2 offset;
-        float clock, nextUpdate;
+        float clock, nextUpdate, nextCullCheck;
+        bool culled;
 
         void OnEnable()
         {
@@ -293,6 +294,20 @@ namespace Evolve.World
             if (!Application.isPlaying) return;
             if (dirty) FlushAll();
             if (mesh == null) return;
+
+            // Far from the camera: do not animate and do not draw (the whole zone is much bigger than what is in view).
+            if (Time.time >= nextCullCheck)
+            {
+                nextCullCheck = Time.time + 0.3f;
+                var cam = Camera.main;
+                bool far = cam != null && Vector3.Distance(cam.transform.position, transform.position + mesh.bounds.center) - mesh.bounds.extents.magnitude > 170f;
+                if (far != culled)
+                {
+                    culled = far;
+                    foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = !culled;
+                }
+            }
+            if (culled) return;
             float dt = Time.deltaTime;
             clock += dt * WaveSpeed;
 

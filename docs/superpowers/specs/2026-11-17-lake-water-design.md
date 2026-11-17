@@ -67,3 +67,14 @@ Dựng lại: Build Underroot Lake, rồi Dress Lake: Water, Ground, Mushrooms a
 - **Nước sâu**: dưới mỗi hốc nước sâu, địa hình được đào thành một lòng chảo tròn sâu ~2,5 m (dốc đứng ở mép nước), cộng ba lớp nước sẫm dần về giữa. Nếu scene không có Terrain thì chỉ còn các lớp sẫm.
 - **Rêu**: mảng nhỏ hơn (0,9–2,1 m dọc bờ, 1,6–3,1 m rải rác), thưa hơn, và phần nào rơi trên mặt nước bị cắt bỏ.
 - Đèn rọi của các tia sáng dịu hơn (tối đa 4), nước bớt bóng (0,75), để bớt vệt chói trên mặt nước.
+
+## Hiệu năng: chỉ vẽ phần gần camera (sau phản hồi 17/11: FPS tụt vì cả khu 480 m được vẽ)
+Các lớp trang trí trước đây gộp thành vài mesh khổng lồ phủ cả khu, nên camera luôn "thấy" một phần của mỗi mesh và GPU vẽ cả khu; đèn cũng bị chọn theo tâm mesh khổng lồ. Sửa:
+- **Chia ô**: mọi mesh trang trí (rêu, đá, cỏ, nấm, dây leo, rễ...) được gộp theo từng ô vuông 64 m, mỗi ô một mesh riêng với khung bao đúng chỗ của nó (`LakeGround.AddCombined`, bucket cỏ), nên camera chỉ vẽ ô nó nhìn thấy, và đèn chọn theo ô.
+- **`DetailCulling`** (trên mỗi gốc trang trí): khi Play, tắt mesh, đèn và hạt cách camera quá 150 m (trễ 25 m để không nhấp nháy), bật lại khi đến gần; đo theo mặt phẳng ngang.
+- **`WaterSurface`** xa hơn 170 m không chuyển động sóng và không vẽ.
+- Trang trí không đổ bóng; địa hình bớt chi tiết ở xa (`heightmapPixelError` 12, `basemapDistance` 160) và không đổ bóng.
+- Tia sáng tối đa 8 (trước 12), bụi bào tử ít và nhẹ hơn (12 hạt/giây, tối đa 120 mỗi hệ).
+
+## Nền địa hình (menu Dress Lake: Terrain)
+Hai texture nền sinh từ code (bùn nâu loang có sỏi, rêu) được vẽ lên địa hình: rêu tụ nhiều dọc bờ nước và thành các mảng mềm lớn, thay cho nền xám phẳng. Đã nằm trong **Rebuild Lake (all steps)** (bước 3/6).
