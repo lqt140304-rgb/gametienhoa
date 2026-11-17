@@ -18,6 +18,7 @@ namespace Evolve.Net
         public byte Lives;
         public bool Dead;
         public bool Lost; // corpse gone for good
+        public Color32 BodyColor = new Color32(173, 224, 173, 255); // the slime colour chosen by this player
         public string[] OrganNames;
         public byte[] OrganLevels;
 
@@ -33,6 +34,9 @@ namespace Evolve.Net
             w.WriteValueSafe(Lives);
             w.WriteValueSafe(Dead);
             w.WriteValueSafe(Lost);
+            w.WriteValueSafe(BodyColor.r);
+            w.WriteValueSafe(BodyColor.g);
+            w.WriteValueSafe(BodyColor.b);
 
             int n = OrganNames == null ? 0 : Mathf.Min(OrganNames.Length, MaxOrgans);
             w.WriteValueSafe((byte)n);
@@ -56,6 +60,9 @@ namespace Evolve.Net
             r.ReadValueSafe(out byte lives);
             r.ReadValueSafe(out bool dead);
             r.ReadValueSafe(out bool lost);
+            r.ReadValueSafe(out byte cr);
+            r.ReadValueSafe(out byte cg);
+            r.ReadValueSafe(out byte cb);
             r.ReadValueSafe(out byte count);
 
             s.Name = name;
@@ -66,6 +73,7 @@ namespace Evolve.Net
             s.Lives = lives;
             s.Dead = dead;
             s.Lost = lost;
+            s.BodyColor = new Color32(cr, cg, cb, 255);
             s.OrganNames = new string[count];
             s.OrganLevels = new byte[count];
             for (int i = 0; i < count; i++)
