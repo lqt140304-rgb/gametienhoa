@@ -34,11 +34,17 @@ namespace Evolve.World
 
         void OnEnable() => Build();
 
+#if UNITY_EDITOR
         void OnValidate()
         {
-            // Rebuild after the inspector changed a value (not while the object is being created).
-            if (isActiveAndEnabled) Build();
+            // Unity forbids destroying meshes inside OnValidate, so the rebuild after an inspector change is
+            // postponed to the next editor tick.
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (this != null && isActiveAndEnabled) Build();
+            };
         }
+#endif
 
         void OnDisable() => Release();
 
