@@ -52,6 +52,18 @@ namespace Evolve.Tests.EditMode
             Assert.IsTrue(Evolve.Survival.HudVisibility.ShowNutrient(100f, true));
         }
 
+        [Test] public void SickTintBounds()
+        {
+            var current = new Color(0.3f, 0.8f, 0.4f, 0.6f);
+            var healthy = BodyFeedback.SickTint(current, 0);
+            Assert.AreEqual(current.r, healthy.r, 1e-5f); Assert.AreEqual(current.g, healthy.g, 1e-5f); Assert.AreEqual(current.b, healthy.b, 1e-5f);
+            var sick = BodyFeedback.SickTint(current, 2);
+            Assert.AreEqual(current.a, sick.a, 1e-5f);
+            Assert.LessOrEqual(Mathf.Abs(sick.r - current.r), 0.3f * Mathf.Abs(0.55f - current.r) + 1e-5f);
+            Assert.LessOrEqual(Mathf.Abs(sick.g - current.g), 0.3f * Mathf.Abs(0.65f - current.g) + 1e-5f);
+            Assert.LessOrEqual(Mathf.Abs(sick.b - current.b), 0.3f * Mathf.Abs(0.2f - current.b) + 1e-5f);
+        }
+
         [Test] public void DeficiencyTintBounds()
         {
             var current = new Color(0.3f, 0.8f, 0.4f, 0.6f);

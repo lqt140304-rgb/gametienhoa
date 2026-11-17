@@ -165,6 +165,7 @@ namespace Evolve.EditorTools
             MakeDen("Den C (Rootcrawler) 2", garden, S + new Vector3(-3f, 0f, -9f), c, sporeRegion, denMat);
             MakeDen("Den D (Mudmite) 3", garden, S + new Vector3(12f, 0f, -20f), d, sporeRegion, denMat); // prey for the C of this region
             MakeDen("Den D (Mudmite) 5", garden, S + new Vector3(-6f, 0f, 22f), d, sporeRegion, denMat);
+            SporeCloud("Spore Cloud (mushroom cluster)", garden, S + new Vector3(0f, 3f, 0f), new Vector3(20f, 6f, 30f)); // breathing it can give Mờ Bào Tử
 
             // ---- Rìa Săn Mồi (south-east): B den at the edge + 2 incursion entries ----
             var hunt = new GameObject("Ria San Moi (Hunting Edge)").transform;
@@ -307,6 +308,17 @@ namespace Evolve.EditorTools
             if (total > SyncedFoodLimit)
                 Debug.LogWarning($"Underroot_Lake có {total} cục thức ăn, vượt giới hạn đồng bộ co-op {SyncedFoodLimit}: người vào phòng sẽ thấy thức ăn lệch.");
             Debug.Log($"Thực vật phát quang: {points.Count} cây, tổng {total} cục thức ăn trong scene.");
+        }
+
+        static void SporeCloud(string name, Transform parent, Vector3 center, Vector3 size)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = center;
+            var col = go.AddComponent<BoxCollider>();
+            col.size = size;
+            col.isTrigger = true;
+            go.AddComponent<SporeZone>();
         }
 
         static Region MakeRegion(string name, Pad pad, float deactivateRadius, params SpeciesSO[] species)

@@ -103,7 +103,7 @@ namespace Evolve.Net
             {
                 var colors = new Color[Evolve.Visuals.SlimeColor.PartCount];
                 for (int i = 0; i < colors.Length; i++)
-                    colors[i] = new Color32(s.PartColors[i * 3], s.PartColors[i * 3 + 1], s.PartColors[i * 3 + 2], 255);
+                    colors[i] = BodyFeedback.SickTint(new Color32(s.PartColors[i * 3], s.PartColors[i * 3 + 1], s.PartColors[i * 3 + 2], 255), s.Diseases); // a sick player looks sick
                 tint.SetColors(colors);
             }
             Lost = s.Lost;
@@ -113,6 +113,7 @@ namespace Evolve.Net
             st.MaxHealth = MaxHealth;
             st.Health = Dead ? 0f : Mathf.Max(0.01f, Health);
             st.Lives = Lives;
+            st.SetDiseaseMask(s.Diseases); // the ghost shows (and can pass on) the other player's diseases
             if (hasPrevious && now - lastApplyTime > 0.01f)
                 Stats.IsMoving = (s.Position - previousPosition).magnitude / (now - lastApplyTime) > 0.3f;
             previousPosition = s.Position;

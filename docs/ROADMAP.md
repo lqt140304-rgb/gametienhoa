@@ -14,7 +14,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 | **0.6a: Khu 480 m** | Khu lớn 480 × 480 m (đi ngang ~8 phút), địa hình Unity Terrain đồi và vách rìa, mái hang vòm, rễ buông, 4 cột mốc, ranh giới cứng; vùng lõi 130 × 130 m vẫn phẳng. 0.6b: chia vùng quần thể theo vi sinh cảnh, sinh vật đi theo cao độ. 0.6c: rải thực vật dọc đường | Khu có đủ rộng để khám phá chưa, đi 8 phút có thú vị không? |
 | **0.5c: Dinh dưỡng** | 5 chất kiểu slime (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống); thiếu thì cơ quan yếu dần | Thức ăn có còn là lựa chọn có ý nghĩa không? |
 | **0.5d: Bệnh tật** | 2–3 bệnh (nước đọng, thối gel, mờ bào tử), lây trong co-op | Hậu quả của lựa chọn sai có đủ rõ không? |
-| **0.5e: Gel mô phỏng cơ quan** | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
+| **0.5e: Gel mô phỏng cơ quan** (đã làm: bản mẫu, đổi ở nơi trú, co nhỏ khi thiếu chất; còn mở: vỏ gel riêng, hành động bậc B → 0.5f) | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
 | **Sau đó** | Thêm vùng, Dị Năng, cơ quan; thay hình khối tạm bằng model Blender | — |
 
 ## Nguyên tắc
@@ -77,4 +77,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Biên dịch và chạy thử 0.6c theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 12
 - [x] Code 0.5c: **đã code, chưa biên dịch/chạy thử**: 5 chất dinh dưỡng (`Survival/NutrientKind`, `FoodProfile`, `NutrientEffects`), năm kho trong `SurvivalState`, cơ quan cần chất (`OrganNutrient`, `OrganDecay`, chặn trang bị `AttachCheck.LackNutrient`, yếu dần rồi tan), thức ăn mang hồ sơ dinh dưỡng, HUD và màu thân báo thiếu (plan `docs/superpowers/plans/2026-11-17-0.5c-nutrition.md`)
 - [ ] Biên dịch và chạy thử 0.5c theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 13
+- [x] Code 0.5d: **đã code, chưa biên dịch/chạy thử**: 3 bệnh (`Survival/DiseaseKind`, `DiseaseRules`; Nhiễm Nước Đọng, Thối Gel, Mờ Bào Tử), nguồn lây (nước bẩn, xác thối, vết thương, đám bào tử `SporeZone`, người bệnh ở gần `ContagionSensor`), triệu chứng trong `SurvivalState`, dòng "Bệnh:" trên HUD, màu thân ngả xanh vàng, byte bệnh trong `PlayerNetState` (plan `docs/superpowers/plans/2026-11-17-0.5d-disease.md`)
+- [ ] Biên dịch và chạy thử 0.5d theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 14
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

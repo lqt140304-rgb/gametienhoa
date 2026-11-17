@@ -270,6 +270,8 @@ namespace Evolve.EditorTools
             slime.AddComponent<ClimateSensor>();
             slime.AddComponent<WaterSensor>();   // thirst only switches on in scenes with a WaterZone
             slime.AddComponent<ShelterSensor>();
+            slime.AddComponent<SporeSensor>();      // spore clouds only exist in some scenes
+            slime.AddComponent<ContagionSensor>();  // Thối Gel spreads between players
             slime.AddComponent<SkillBar>();
             var controller = slime.AddComponent<SlimeController>();
             slime.AddComponent<BodyFeedback>();
