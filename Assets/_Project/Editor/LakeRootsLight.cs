@@ -80,7 +80,7 @@ namespace Evolve.EditorTools
                     float angle = (float)rnd.NextDouble() * Mathf.PI * 2f, span = 5f + (float)rnd.NextDouble() * 6f;
                     Vector2 b2 = a + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * span;
                     Vector2 mid = (a + b2) * 0.5f;
-                    if (NearShelter(a) || NearShelter(b2) || NearShelter(mid) || LakeGround.OnWater(ponds, a) || LakeGround.OnWater(ponds, b2)) continue;
+                    if (NearShelter(a) || NearShelter(b2) || NearShelter(mid) || LakeGround.Wet(ponds, a) || LakeGround.Wet(ponds, b2)) continue;
                     float height = 2f + (float)rnd.NextDouble() * 3.2f, radius = 0.4f + (float)rnd.NextDouble() * 0.45f;
                     var path = RootMeshes.ArchPath(Ground(a), Ground(b2), height, ++seed, 0.9f, 16);
                     AddRoot(path, radius * 1.25f, radius * 1.0f, 0.12f, true);
@@ -97,7 +97,7 @@ namespace Evolve.EditorTools
 
             void Snake(Vector2 start)
             {
-                if (LakeGround.OnWater(ponds, start) || NearShelter(start)) return;
+                if (LakeGround.Wet(ponds, start) || NearShelter(start)) return;
                 float angle = (float)rnd.NextDouble() * Mathf.PI * 2f, length = 4f + (float)rnd.NextDouble() * 5f;
                 var path = new Vector3[10];
                 float r = 0.14f + (float)rnd.NextDouble() * 0.2f;
@@ -132,7 +132,7 @@ namespace Evolve.EditorTools
                 {
                     if (rnd.NextDouble() > 0.6) continue;
                     Vector2 start = outline[k] + LakeGround.Outward(outline, k) * (1.5f + (float)rnd.NextDouble() * 3f);
-                    if (LakeGround.OnWater(ponds, start) || NearShelter(start)) continue;
+                    if (LakeGround.Wet(ponds, start) || NearShelter(start)) continue;
                     float angle = (float)rnd.NextDouble() * Mathf.PI * 2f, length = 4f + (float)rnd.NextDouble() * 5f;
                     var path = new Vector3[10];
                     float r = 0.14f + (float)rnd.NextDouble() * 0.2f;
