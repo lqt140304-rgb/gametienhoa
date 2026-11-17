@@ -55,6 +55,8 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | Q / nút X | Dùng Dị Năng |
 | Giữ chuột phải + kéo | Xoay camera |
 | Lăn chuột | Phóng to/thu nhỏ |
+| V | Bật/tắt mắt (thử nghiệm: xem màu, nhìn xa) |
+| H | Ẩn/hiện bảng hướng dẫn |
 
 ## Cần kiểm thử
 - Đói giảm dần; khi đói = 0 thì mất máu; khi no thì hồi máu.
