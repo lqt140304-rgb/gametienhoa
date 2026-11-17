@@ -10,7 +10,7 @@ namespace Evolve.Abilities
     /// </summary>
     public class SpikeProjectile : MonoBehaviour
     {
-        const float Radius = 0.15f;
+        const float Radius = 0.3f; // generous, so small creatures are not missed
 
         Vector3 direction;
         float speed, maxDistance, damage, travelled;
