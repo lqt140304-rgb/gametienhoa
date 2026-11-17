@@ -257,10 +257,8 @@ namespace Evolve.EditorTools
             visual.transform.SetParent(slime.transform, false);
             visual.GetComponent<Renderer>().sharedMaterial = shared.SlimeMat;
             GelVisuals.StyleBody(visual);
-            Socket(visual.transform, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
-            Socket(visual.transform, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
-            Socket(visual.transform, OrganSlot.Skin, Vector3.zero);
-            Socket(visual.transform, OrganSlot.Back, BackSocket);
+            foreach (OrganSlot slot in System.Enum.GetValues(typeof(OrganSlot)))
+                Socket(visual.transform, slot, Evolve.Visuals.SlimeSockets.Position(slot));
 
             var host = slime.AddComponent<OrganHost>();
             slime.AddComponent<OrganInteractor>();
