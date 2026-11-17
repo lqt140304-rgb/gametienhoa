@@ -29,6 +29,8 @@ namespace Evolve.EditorTools
             var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.38f, 0.44f, 0.24f, 0.78f), normal, 0.18f, Color.black);
             var deep = WaterMaterial("Lake_WaterDeep", new Color(0.04f, 0.22f, 0.34f, 0.88f), normal, 0.22f, new Color(0.0f, 0.03f, 0.05f));
 
+            foamMaterial = FoamMaterial();
+
             // Take back anything a previous run made, so running the menu twice never stacks surfaces.
             foreach (var old in Object.FindObjectsByType<WaterSurface>())
                 if (old.name == DressedName) Object.DestroyImmediate(old.gameObject);
@@ -80,6 +82,8 @@ namespace Evolve.EditorTools
             Debug.Log($"Đã dựng {made} mặt nước. Bấm Ctrl+S để lưu scene. (Nước chỉ chuyển động khi Play.)");
         }
 
+        static Material foamMaterial; // set once per run (the menu is not re-entrant)
+
         static GameObject MakeSurface(Transform parent, Vector3 worldPos, WaterShape shape, Vector2 size, Material mat, float wave)
         {
             var go = new GameObject(DressedName);
@@ -90,6 +94,7 @@ namespace Evolve.EditorTools
             surface.Shape = shape;
             surface.Size = size;
             surface.WaveHeight = wave;
+            surface.FoamMaterial = foamMaterial;
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
             go.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
             return go;
@@ -176,6 +181,61 @@ namespace Evolve.EditorTools
             importer.wrapMode = TextureWrapMode.Repeat;
             importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Texture2D>(NormalPath);
+        }
+
+        /// <summary>White translucent foam: strongest in the middle of the ring, fading out on both sides, a bit broken up.</summary>
+        static Material FoamMaterial()
+        {
+            const string texPath = Root + "/Models/WaterFoam.png";
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+            if (tex == null)
+            {
+                const int w = 128, h = 32;
+                var pixels = new Color32[w * h];
+                for (int y = 0; y < h; y++)
+                    for (int x = 0; x < w; x++)
+                    {
+                        float v = y / (float)(h - 1);                 // 0 = outer edge, 1 = inside the water
+                        float across = Mathf.Sin(Mathf.Clamp01(v) * Mathf.PI);   // fades out on both sides
+                        float u = x / (float)w;
+                        float broken = 0.55f + 0.45f * Mathf.Sin(u * Mathf.PI * 2f * 6f + v * 3f) * Mathf.Sin(u * Mathf.PI * 2f * 11f + 1f);
+                        byte a = (byte)Mathf.RoundToInt(Mathf.Clamp01(across * broken) * 255f);
+                        pixels[y * w + x] = new Color32(255, 255, 255, a);
+                    }
+                var t = new Texture2D(w, h, TextureFormat.RGBA32, false);
+                t.SetPixels32(pixels);
+                File.WriteAllBytes(texPath, t.EncodeToPNG());
+                Object.DestroyImmediate(t);
+                AssetDatabase.ImportAsset(texPath);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(texPath);
+                importer.alphaIsTransparency = true;
+                importer.wrapModeU = TextureWrapMode.Repeat;
+                importer.wrapModeV = TextureWrapMode.Clamp;
+                importer.SaveAndReimport();
+                tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+            }
+            string path = Root + "/Materials/Lake_Foam.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "Lake_Foam" };
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.SetTexture("_BaseMap", tex);
+            mat.SetColor("_BaseColor", new Color(0.95f, 1f, 1f, 0.55f));
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_Blend", 0f);
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_Smoothness", 0.1f);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", new Color(0.12f, 0.14f, 0.14f));
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.renderQueue = (int)RenderQueue.Transparent - 5;
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         static void EnsureFolders()

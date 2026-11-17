@@ -63,6 +63,82 @@ namespace Evolve.World
             return Make("WaterDisc", verts, uvs, tris);
         }
 
+        /// <summary>
+        /// A ring around a disc of `radius`: from `outer` metres outside the edge (v = 0) to `inner` metres inside it
+        /// (v = 1). u runs once around, scaled so the pattern repeats about every 2 m.
+        /// </summary>
+        public static Mesh DiscRing(float radius, float outer, float inner, int sectors)
+        {
+            sectors = Mathf.Max(12, sectors);
+            var verts = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            float circumference = 2f * Mathf.PI * radius;
+            for (int s = 0; s <= sectors; s++)
+            {
+                float a = s / (float)sectors * Mathf.PI * 2f;
+                var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                float u = s / (float)sectors * circumference / 2f;
+                verts.Add(dir * (radius + outer)); uvs.Add(new Vector2(u, 0f));
+                verts.Add(dir * Mathf.Max(0.05f, radius - inner)); uvs.Add(new Vector2(u, 1f));
+            }
+            var tris = new List<int>();
+            for (int s = 0; s < sectors; s++)
+            {
+                int o0 = s * 2, i0 = o0 + 1, o1 = o0 + 2, i1 = o0 + 3;
+                AddUp(tris, verts, o0, i0, o1);
+                AddUp(tris, verts, o1, i0, i1);
+            }
+            return Make("WaterDiscRing", verts, uvs, tris);
+        }
+
+        /// <summary>The same kind of ring around a rectangle (outer rectangle v = 0, inner rectangle v = 1).</summary>
+        public static Mesh RectRing(float width, float depth, float outer, float inner, float cell)
+        {
+            float hw = width * 0.5f, hd = depth * 0.5f;
+            var corners = new[]
+            {
+                new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(1f, 1f), new Vector2(-1f, 1f)
+            };
+            var verts = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            float travelled = 0f;
+            Vector3 lastOuter = Vector3.zero;
+            bool first = true;
+            for (int e = 0; e < 4; e++)
+            {
+                Vector2 c0 = corners[e], c1 = corners[(e + 1) % 4];
+                float edgeLength = e % 2 == 0 ? width : depth;
+                int n = Mathf.Max(1, Mathf.RoundToInt(edgeLength / Mathf.Max(0.1f, cell)));
+                for (int k = 0; k < n; k++)
+                {
+                    Vector2 c = Vector2.Lerp(c0, c1, k / (float)n);
+                    var o = new Vector3(c.x * (hw + outer), 0f, c.y * (hd + outer));
+                    var i = new Vector3(c.x * Mathf.Max(0.05f, hw - inner), 0f, c.y * Mathf.Max(0.05f, hd - inner));
+                    // The ring's points on the straight parts: move along the edge, not along the diagonal.
+                    float t = k / (float)n;
+                    var along = new Vector2(Mathf.Lerp(c0.x, c1.x, t), Mathf.Lerp(c0.y, c1.y, t));
+                    if (e % 2 == 0) { o.x = along.x * (hw + outer); i.x = along.x * Mathf.Max(0.05f, hw - inner); }
+                    else { o.z = along.y * (hd + outer); i.z = along.y * Mathf.Max(0.05f, hd - inner); }
+                    if (!first) travelled += Vector3.Distance(o, lastOuter);
+                    lastOuter = o; first = false;
+                    verts.Add(o); uvs.Add(new Vector2(travelled / 2f, 0f));
+                    verts.Add(i); uvs.Add(new Vector2(travelled / 2f, 1f));
+                }
+            }
+            // close the loop
+            verts.Add(verts[0]); uvs.Add(new Vector2((travelled + Vector3.Distance(lastOuter, verts[0])) / 2f, 0f));
+            verts.Add(verts[1]); uvs.Add(new Vector2((travelled + Vector3.Distance(lastOuter, verts[0])) / 2f, 1f));
+            var tris = new List<int>();
+            int pairs = verts.Count / 2;
+            for (int s = 0; s < pairs - 1; s++)
+            {
+                int o0 = s * 2, i0 = o0 + 1, o1 = o0 + 2, i1 = o0 + 3;
+                AddUp(tris, verts, o0, i0, o1);
+                AddUp(tris, verts, o1, i0, i1);
+            }
+            return Make("WaterRectRing", verts, uvs, tris);
+        }
+
         // Adds a triangle facing up (Unity front faces are clockwise: normal = cross(b - a, c - a)).
         static void AddUp(List<int> tris, List<Vector3> verts, int a, int b, int c)
         {

@@ -23,10 +23,14 @@ namespace Evolve.World
         public float WaveSpeed = 1f;
         [Tooltip("Size of one ripple pattern repeat in metres (the pattern keeps the same size on big and small ponds)")]
         public float MetersPerRepeat = 9f;
+        [Header("Shore foam")]
+        public Material FoamMaterial;
+        [Tooltip("Metres of foam outside the water's edge / inside it")]
+        public float FoamOutside = 0.9f, FoamInside = 0.35f;
         [Tooltip("How fast the ripple texture drifts (texture repeats per second)")]
         public Vector2 Drift = new Vector2(0.012f, 0.007f);
 
-        Mesh mesh;
+        Mesh mesh, foamMesh;
         Vector3[] basePos, work;
         MaterialPropertyBlock block;
         Vector2 offset;
@@ -52,6 +56,13 @@ namespace Evolve.World
 
         void Release()
         {
+            if (foamMesh != null)
+            {
+                var foam = transform.Find("Foam");
+                if (foam != null) { var ff = foam.GetComponent<MeshFilter>(); if (ff != null && ff.sharedMesh == foamMesh) ff.sharedMesh = null; }
+                if (Application.isPlaying) Destroy(foamMesh); else DestroyImmediate(foamMesh);
+                foamMesh = null;
+            }
             if (mesh == null) return;
             var filter = GetComponent<MeshFilter>();
             if (filter != null && filter.sharedMesh == mesh) filter.sharedMesh = null;
@@ -72,6 +83,35 @@ namespace Evolve.World
             b.Expand(new Vector3(0f, 0.5f, 0f));
             mesh.bounds = b;
             ApplyRipples();
+            BuildFoam();
+        }
+
+        // A thin ring of foam around the edge: it hides the hard cut between water and ground.
+        void BuildFoam()
+        {
+            var foam = transform.Find("Foam");
+            if (FoamMaterial == null)
+            {
+                if (foam != null) foam.gameObject.SetActive(false);
+                return;
+            }
+            if (foam == null)
+            {
+                var go = new GameObject("Foam");
+                go.transform.SetParent(transform, false);
+                go.AddComponent<MeshFilter>();
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                foam = go.transform;
+            }
+            foam.gameObject.SetActive(true);
+            foam.localPosition = new Vector3(0f, 0.05f, 0f);
+            foam.GetComponent<MeshRenderer>().sharedMaterial = FoamMaterial;
+            foamMesh = Shape == WaterShape.Rect
+                ? WaterMeshes.RectRing(Size.x, Size.y, FoamOutside, FoamInside, Cell)
+                : WaterMeshes.DiscRing(Size.x, FoamOutside, FoamInside, Mathf.Max(24, Mathf.RoundToInt(2f * Mathf.PI * Size.x / Cell)));
+            foamMesh.hideFlags = HideFlags.HideAndDontSave;
+            foam.GetComponent<MeshFilter>().sharedMesh = foamMesh;
         }
 
         // Tiling and drift of the ripple pattern go through a property block: no material copies, works in the editor too.
