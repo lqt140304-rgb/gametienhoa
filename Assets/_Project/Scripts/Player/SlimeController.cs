@@ -32,7 +32,7 @@ namespace Evolve.Player
         SurvivalStats stats;
         OrganHost organs;
         Vector3 baseScale = Vector3.one;
-        float squash, squashTarget, wobbleAmp, airK, airTime, scaleK = 1f;
+        float squash, squashTarget, wobbleAmp, airK, airTime, scaleK = 1f, fallSpeed;
         Evolve.Visuals.SlimeGelAnimator jellyAnimator;
         Vector3 spawnPoint;
         Collider col;
@@ -181,11 +181,13 @@ namespace Evolve.Player
             bool grounded = airTime < 0.08f;
 
             // Landing: spread out flat (negative squash), then settle.
+            if (!grounded) fallSpeed = Mathf.Min(fallSpeed, rb.linearVelocity.y);
             if (wasAirborne && grounded)
             {
-                squashTarget = -0.9f;
+                squashTarget = -0.4f; // the body mesh does most of the splat (SlimeGelAnimator.Land)
                 var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
-                if (jelly != null) jelly.Jiggle(1.5f);
+                if (jelly != null) jelly.Land(Mathf.Clamp(-fallSpeed / 7f, 0.3f, 1.2f));
+                fallSpeed = 0f;
             }
             wasAirborne = !grounded;
 
