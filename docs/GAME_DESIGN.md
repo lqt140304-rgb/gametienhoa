@@ -45,6 +45,20 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 **[ĐỀ XUẤT]** Mô hình cơ thể mô-đun: mỗi cơ quan có định nghĩa, instance, prefab hiển thị, tương thích vùng neo, chi phí sinh khối/năng lượng, khối lượng và khả năng nâng đỡ. Tiến hóa có thể thay đổi hình dạng dần hoặc thêm cơ quan. Dấu ấn thích nghi mở các biến thể nhưng không thay thế điều kiện tìm được cơ quan.
 
+## 4.1. Phân cấp nguồn cơ quan [ĐÃ CHỐT]
+
+- **C**: cơ quan từ sinh vật nhỏ, yếu.
+- **B**: cơ quan từ sinh vật thông thường.
+- **A**: cơ quan từ đại thú fantasy, sinh vật lớn.
+- **S**: cơ quan từ boss hoặc cự thú huyền thoại.
+- Sinh vật cao cấp vẫn có thể mang cơ quan bậc thấp hơn. Mẫu hư hỏng không thay đổi tier gốc.
+
+## 4.2. Hư hỏng và tái tạo cơ quan [ĐÃ CHỐT hướng]
+
+- **Sát thương kết hợp vị trí và lan truyền** sang cơ quan liên kết / HP cơ thể.
+- **Bản thiết kế đã nghiên cứu được giữ vĩnh viễn**. Cơ quan bị phá hủy có thể tái tạo bằng tài nguyên, không buộc săn lại boss.
+- Các công thức Damage, Integrity, Trauma, chất lượng mẫu và chi phí sửa chữa hiện **[ĐỀ XUẤT]**; xem [Biological Integrity System v1.1](BIOLOGICAL_INTEGRITY.md).
+
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
 **[ĐÃ CHỐT]** Máu; thanh đói; thanh năng lượng; thanh kinh nghiệm tiến hóa; thanh nhiệt độ.
@@ -74,7 +88,7 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 - Thông số cụ thể và xác suất rút Dị Năng.
 - Danh sách Thiên Phú bị động và Khiếm Khuyết cuối cùng.
-- Chi phí, điều kiện từng cơ quan; cách tháo/thay và mất mát khi chết.
+- Chi phí và điều kiện cụ thể từng cơ quan; cách tháo/thay; mất mát khi chết. Đã chốt giữ blueprint và tái tạo bằng tài nguyên khi cơ quan hỏng.
 - Giao diện chọn đặc tính đầu game; cách lưu thế giới, topology multiplayer.
 - Cân bằng nhiệt độ, độ ẩm, đói và nguồn thức ăn.
 
