@@ -167,6 +167,7 @@ namespace Evolve.Organs
                 // Absorb: always possible, turns the organ into evolution EXP.
                 if (stats != null) stats.State.AddExp(OrganTiers.AbsorbExp(pickup.Organ.Tier));
                 Current = null;
+                pickup.MarkTaken();
                 Destroy(pickup.gameObject);
                 return;
             }
@@ -186,6 +187,7 @@ namespace Evolve.Organs
                     return; // nothing to attach; use F to absorb
             }
             Current = null;
+            pickup.MarkTaken();
             Destroy(pickup.gameObject);
         }
     }

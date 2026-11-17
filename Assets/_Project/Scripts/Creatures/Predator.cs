@@ -57,6 +57,14 @@ namespace Evolve.Creatures
         public float Health { get; private set; }
         public bool IsChasing => target != null;
         public bool IsTired => Time.time < tiredUntil;
+        public float MaxHealth => maxHealth;
+
+        /// <summary>Id shared with other machines (the host hands it out).</summary>
+        public int NetId { get; set; }
+        /// <summary>Client side: a copy of a predator that really lives on the host. It reports hits to the host.</summary>
+        public bool IsReplica { get; set; }
+
+        const float BiteReach = 1.1f;
 
         public event Action<Predator> Killed;
 
@@ -73,6 +81,7 @@ namespace Evolve.Creatures
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             Health = maxHealth;
             HomeCenter = transform.position;
+            NetId = NetWorld.NextId();
         }
 
         void OnEnable() => active.Add(this);
@@ -80,7 +89,7 @@ namespace Evolve.Creatures
 
         void FixedUpdate()
         {
-            if (dead || Frozen) return;
+            if (dead || Frozen || IsReplica) return;
             Vector3 pos = rb.position;
             UpdateTarget(pos);
 
@@ -121,6 +130,31 @@ namespace Evolve.Creatures
                 rb.MovePosition(pos + dir * speed * Time.fixedDeltaTime);
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
             }
+
+            BiteRemotePlayers();
+        }
+
+        // Remote players have no collider here (they are ghosts), so they are bitten by being close enough.
+        // The damage is sent to the player's own machine.
+        void BiteRemotePlayers()
+        {
+            if (Passive || Time.time < nextBite) return;
+            Vector3 pos = rb.position;
+            foreach (var p in SurvivalStats.All)
+            {
+                if (!p.IsRemote || p.State.IsDead) continue;
+                Vector3 d = p.transform.position - pos; d.y = 0f;
+                if (d.sqrMagnitude > BiteReach * BiteReach) continue;
+
+                nextBite = Time.time + biteCooldown;
+                target = p;
+                retreatUntil = Time.time + retreatTime;
+                NetWorld.BiteRemote?.Invoke(p, biteDamage, Flat(p.transform.position - transform.position) * knockback);
+
+                var host = p.GetComponent<OrganHost>();
+                if (host != null && host.ContactDamage > 0f) TakeDamage(host.ContactDamage, p);
+                return;
+            }
         }
 
         void UpdateTarget(Vector3 pos)
@@ -154,6 +188,14 @@ namespace Evolve.Creatures
         {
             if (dead) return;
             var stats = c.collider.GetComponentInParent<SurvivalStats>();
+            if (IsReplica)
+            {
+                // The host decides about bites. A replica only reports a ram by the local player.
+                if (stats != null && !stats.IsRemote && !stats.State.IsDead && first && c.relativeVelocity.magnitude >= ramSpeed)
+                    TakeDamage(ramDamage, stats);
+                return;
+            }
+            if (stats != null && stats.IsRemote) return; // remote players are handled by distance
             if (Passive && stats != null)
             {
                 // Still takes ram damage in peaceful mode, but never bites back.
@@ -183,6 +225,12 @@ namespace Evolve.Creatures
 
         public void TakeDamage(float amount, SurvivalStats by)
         {
+            if (IsReplica)
+            {
+                // A replica takes no damage itself: the host applies it and the replica follows.
+                if (amount > 0f) NetWorld.ReportPredatorHit?.Invoke(NetId, amount);
+                return;
+            }
             if (dead || amount <= 0f) return;
             Health -= amount;
             retreatUntil = Time.time + retreatTime;
@@ -191,7 +239,7 @@ namespace Evolve.Creatures
             dead = true;
             if (by != null)
             {
-                by.State.Feed(nutrition);
+                NetWorld.Feed(by, nutrition);
                 var host = by.GetComponent<OrganHost>();
                 var drop = drops != null ? drops.Roll(o => host != null && host.Has(o)) : null;
                 if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));

@@ -1,14 +1,16 @@
 using System.Collections.Generic;
 using Evolve.Organs;
 using Evolve.Player;
+using Evolve.Survival;
 using UnityEngine;
 
 namespace Evolve.Net
 {
     /// <summary>
     /// A ghost of another player: a coloured slime that follows the position it was last told, wears the same
-    /// organs (via OrganHost) and carries a name and health for the labels. It has no physics and no survival
-    /// stats, so creatures in the local world ignore it (the world is not shared yet).
+    /// organs (via OrganHost) and carries a name and health for the labels. It has no physics, but it does carry
+    /// a SurvivalStats marked IsRemote (numbers come from the network): on the host, creatures chase it, bite it
+    /// and get caught by it by distance, and the results are sent to the real player.
     /// </summary>
     public class RemoteAvatar : MonoBehaviour
     {
@@ -22,7 +24,11 @@ namespace Evolve.Net
         public byte Lives { get; private set; }
         public bool Dead { get; private set; }
         public float LastSeen { get; private set; }
+        public SurvivalStats Stats { get; private set; }
 
+        Vector3 previousPosition;
+        float lastApplyTime;
+        bool hasPrevious;
         Transform body;
         OrganHost organs;
         Vector3 targetPosition;
@@ -62,6 +68,9 @@ namespace Evolve.Net
             AddSocket(body, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
             AddSocket(body, OrganSlot.Skin, Vector3.zero);
             AddSocket(body, OrganSlot.Back, BackSocket);
+            Stats = gameObject.AddComponent<SurvivalStats>();
+            Stats.IsRemote = true;
+            Stats.RemoteClientId = clientId;
             organs = gameObject.AddComponent<OrganHost>();
         }
 
@@ -90,6 +99,18 @@ namespace Evolve.Net
             MaxHealth = s.MaxHealth > 0f ? s.MaxHealth : 100f;
             Lives = s.Lives;
             Dead = s.Dead;
+
+            // Mirror the numbers into the ghost's stats so creatures can react to it.
+            var st = Stats.State;
+            st.MaxHealth = MaxHealth;
+            st.Health = Dead ? 0f : Mathf.Max(0.01f, Health);
+            st.Lives = Lives;
+            if (hasPrevious && now - lastApplyTime > 0.01f)
+                Stats.IsMoving = (s.Position - previousPosition).magnitude / (now - lastApplyTime) > 0.3f;
+            previousPosition = s.Position;
+            lastApplyTime = now;
+            hasPrevious = true;
+
             targetPosition = s.Position;
             targetYaw = s.Yaw;
             if (!placed)
@@ -129,7 +150,7 @@ namespace Evolve.Net
                 if (!wanted.Contains(have)) organs.Detach(have.Slot);
         }
 
-        static OrganSO FindOrgan(string name)
+        internal static OrganSO FindOrgan(string name)
         {
             if (string.IsNullOrEmpty(name)) return null;
             if (organLookup == null || !organLookup.ContainsKey(name))

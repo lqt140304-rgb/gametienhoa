@@ -18,6 +18,13 @@ namespace Evolve.Survival
         public bool IsMoving { get; set; }
         public bool IsSprinting { get; set; }
 
+        /// <summary>
+        /// True for the ghost of another (remote) player. Its numbers come from the network, so it does not tick;
+        /// creatures can still target it, and rewards and damage for it are sent to its owner (see NetWorld).
+        /// </summary>
+        public bool IsRemote { get; set; }
+        public ulong RemoteClientId { get; set; }
+
         void Awake()
         {
             if (config == null) config = ScriptableObject.CreateInstance<SurvivalConfig>();
@@ -30,6 +37,10 @@ namespace Evolve.Survival
         void OnEnable() => all.Add(this);
         void OnDisable() => all.Remove(this);
 
-        void Update() => state.Tick(Time.deltaTime, config, IsMoving, IsSprinting);
+        void Update()
+        {
+            if (IsRemote) return;
+            state.Tick(Time.deltaTime, config, IsMoving, IsSprinting);
+        }
     }
 }

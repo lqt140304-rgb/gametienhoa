@@ -1,6 +1,7 @@
-# Co-op 0.4a: cài đặt và thử
+# Co-op 0.4: cài đặt và thử
 
-Bản này là **nền móng**: hai (hoặc nhiều) người vào cùng một phòng và **thấy nhau** (vị trí, cơ quan, máu, mạng). Mỗi người vẫn chơi trong thế giới của riêng mình; quái, thức ăn và cơ quan rơi **chưa dùng chung** (làm ở 0.4b).
+- **0.4a (đã chạy được):** vào cùng một phòng và **thấy nhau** (vị trí, cơ quan, máu, mạng).
+- **0.4b đợt 1 (bản này, chưa chạy thử):** **thế giới chung**. Chủ phòng (Host) điều khiển con mồi, kẻ săn mồi, thức ăn và cơ quan rơi; người vào phòng thấy đúng thế giới đó, cùng bị cắn, cùng bắn trúng, cùng ăn và nhặt đồ. Cứu đồng đội, chuyền máu và chế độ quan sát để đợt 2.
 
 Mô hình mạng đã chọn: **một người làm chủ phòng (Host), người khác nhập IP** (Netcode for GameObjects, không cần Relay hay máy chủ riêng).
 
@@ -19,6 +20,7 @@ Mã co-op nằm trong assembly riêng `Evolve.Net`, **chỉ được biên dịc
 
 Cần hai bản game chạy cùng lúc: **Unity Editor** và **một bản build**.
 
+0. **Cả hai bản phải cùng phiên bản code và cùng scene.** Sau khi lấy code mới, **tạo lại bản build** và dùng cùng scene `Prototype_01` (nếu khác nhau, thức ăn sẽ không đồng bộ và Console báo cảnh báo).
 1. **Tạo bản build:** File → Build Profiles (hoặc Build Settings), kiểm tra scene `Prototype_01` có trong danh sách (công cụ dựng scene tự thêm), chọn Windows, bấm **Build** vào thư mục `D:\gametienhoa\Build` (thư mục này đã được Git bỏ qua). Lần đầu Windows hỏi tường lửa: bấm **Allow access**.
 2. **Bản build:** chạy file `.exe`, bấm **F2**, đặt tên, bấm **Mở phòng (Host)**.
 3. **Unity Editor:** bấm Play, **F2**, để địa chỉ `127.0.0.1`, bấm **Vào phòng (Join)**.
@@ -35,12 +37,17 @@ Có thể đảo vai (Editor làm Host, bản build Join).
 
 | Có | Chưa |
 |---|---|
-| Vị trí và hướng nhìn, mượt hơn nhờ nội suy | Quái (con mồi, kẻ săn mồi), thức ăn, cơ quan rơi |
-| Cơ quan đang mang và cấp của chúng | Gây sát thương cho nhau hay cho quái của người khác |
-| Máu, số mạng, đã chết hay chưa | Cứu đồng đội, chuyền máu, chế độ quan sát |
-| Tên người chơi | Lưu phòng, quản lý nhiều phòng |
+| Vị trí và hướng nhìn của người chơi, cơ quan và cấp, máu, mạng, tên | Cứu đồng đội, chuyền máu, chế độ quan sát |
+| **Con mồi và kẻ săn mồi** (Host điều khiển, người vào phòng thấy bản sao mượt) | Thanh máu của kẻ săn mồi hiển thị cho người vào phòng |
+| Kẻ săn mồi **đuổi và cắn cả hai người**; cắn người vào phòng thì họ mất máu và bị hất văng | Hồi sinh và mất mạng đồng bộ cho đồng đội |
+| Người vào phòng **bắn và húc** kẻ săn mồi: sát thương gửi về Host | Quái nhìn thấy người vào phòng bằng va chạm (hiện dùng khoảng cách) |
+| Người vào phòng **bắt con mồi, hạ kẻ săn mồi**: nhận thức ăn, cơ quan rơi xuất hiện cho cả hai | Lưu phòng, quản lý nhiều phòng |
+| **Thức ăn** dùng chung (cục nào bị ăn thì cả hai thấy co lại) | |
+| **Cơ quan rơi** dùng chung; nhặt thì biến mất ở bên kia; người vào phòng chết thì cơ quan rơi cũng xuất hiện ở cả hai | |
 
-Người chơi khác được vẽ như một "bóng": không có va chạm, quái trong thế giới của bạn **không** thấy họ. Khi chưa có mắt, thế giới tối nên bạn chỉ thấy họ khi lại gần, nhưng **tên và thanh máu luôn hiện** trên màn hình (tạm thời, để dễ thử).
+Người chơi khác được vẽ như một "bóng": không có va chạm với bạn. Khi chưa có mắt, thế giới tối nên bạn chỉ thấy họ khi lại gần, nhưng **tên và thanh máu luôn hiện** trên màn hình (tạm thời, để dễ thử).
+
+Khi **vào phòng**, thế giới riêng của bạn (quái, thức ăn, cơ quan rơi) được **ẩn đi** và thay bằng thế giới của Host; khi **thoát phòng** thì thế giới riêng hiện lại như cũ. Cơ quan, EXP và chỉ số của chính bạn luôn là của bạn và được giữ nguyên.
 
 ## 5. Cách hoạt động (cho người làm tiếp)
 
@@ -48,7 +55,10 @@ Người chơi khác được vẽ như một "bóng": không có va chạm, qu�
 - Người chơi khác là `RemoteAvatar`: một slime tạo bằng code, dùng lại `OrganHost` để mọc cơ quan thật (`OrganHost.MirrorOrgan`), không có `SurvivalStats`.
 - `CoopManager` tự thêm khi Play (như Menu God) và tự tạo `NetworkManager` lúc chạy, nên **không phải sửa scene**. `NetworkConfig.EnableSceneManagement = false`.
 - Cờ `SurvivalHUD.ExternalMenuOpen` làm menu co-op hành xử như menu HUD: con trỏ hiện ra, kỹ năng và xoay camera bị chặn (nhưng nhân vật vẫn đi được khi gõ chữ).
-- Bước tiếp theo (0.4b): đưa quái, thức ăn và cơ quan rơi về Host điều khiển bằng `NetworkObject`, kèm quản lý sát thương.
+- **Thế giới chung (0.4b đợt 1)** vẫn không dùng `NetworkObject`, dùng thêm các tin nhắn có tên (`WorldSync`): Host → client gửi vị trí quái (10 lần/giây), thức ăn còn lại và cơ quan rơi (2 lần/giây), cú cắn và thức ăn nhận được; client → Host gửi sát thương lên kẻ săn mồi, cơ quan đã nhặt, và yêu cầu tạo cơ quan rơi (khi người chơi chết).
+- Phía client, `Prey`/`Predator` là **bản sao** (`IsReplica`): không chạy AI, chỉ đi theo vị trí Host báo (`ReplicaMotion`), và gửi sát thương về Host. Người chơi từ xa là `SurvivalStats` có `IsRemote` nên quái trên Host đuổi, cắn và bị bắt **theo khoảng cách** (`NetWorld.BiteRemote`, `NetWorld.FeedRemote`).
+- Cú nhặt cơ quan được áp dụng ngay phía client rồi báo Host. Hai người nhặt cùng lúc có thể cùng được cơ quan đó (bản đầu chấp nhận).
+- Đợt 2: cứu đồng đội, chuyền máu, quan sát.
 
 ## 6. Khi gặp sự cố
 
@@ -59,3 +69,7 @@ Người chơi khác được vẽ như một "bóng": không có va chạm, qu�
 | "Không kết nối được" sau 10 giây | Kiểm tra địa chỉ, cổng, tường lửa của máy Host; thử `127.0.0.1` trên cùng một máy |
 | "Không mở được phòng (cổng đang bận?)" | Đã có một bản khác đang Host cổng đó; đổi cổng hoặc tắt bản kia |
 | Bản không bấm vào có vẻ đứng yên | Game tự chạy nền khi vào phòng; nếu vẫn đứng, bấm vào cửa sổ đó |
+| Quái bên người vào phòng không giống Host | Bản build cũ hơn code hiện tại: tạo lại bản build |
+| Console: "số cục thức ăn khác nhau" | Hai bên khác scene; dùng cùng `Prototype_01` |
+| Người vào phòng thấy hai lớp quái | Báo lại kèm ảnh; quái riêng của họ lẽ ra bị ẩn khi vào phòng |
+| Menu God tạo quái ở bên người vào phòng | Chỉ nên dùng Menu God ở bên Host; bên người vào phòng quái tạo ra không đồng bộ |
