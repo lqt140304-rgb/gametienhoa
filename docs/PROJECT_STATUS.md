@@ -7,7 +7,7 @@
 
 1. Đọc file này, rồi `docs/GAME_DESIGN.md` (nguồn thiết kế chính).
 2. Chạy `git fetch` rồi xem `git log origin/main` và `git branch -r`. **Chủ dự án và các phiên khác cũng đang sửa repo.** Hiện có các nhánh `docs/bestiary` (một phiên khác đang soạn `docs/BESTIARY.md`), `claude/tender-lamport-kegpkf` và hai nhánh cũ đã merge. Đừng đụng vào nhánh của phiên khác.
-   - **Cảnh báo về `docs/bestiary`:** commit `eabe0fa` trên nhánh đó vô tình kéo theo thay đổi của `Prototype_01.unity` (có vẻ là scene cũ, do Unity đang mở và `git add .`). Trước khi merge nhánh này vào `main`, kiểm tra `git diff origin/main...origin/docs/bestiary -- Assets/_Project/Scenes/Prototype_01.unity` và bỏ phần scene ra (`git checkout origin/main -- <file scene>`), nếu không có nguy cơ ghi đè hoặc xung đột với bản scene mới. Nhắc phiên soạn bestiary chỉ `git add docs/BESTIARY.md`.
+   - **Về `docs/bestiary`:** nhánh có lúc lỡ kéo theo thay đổi scene cũ (commit `eabe0fa`), nhưng đã được gỡ bằng commit `e728532`. Đã kiểm tra (2026-11-17): so với `main`, nhánh chỉ thêm `docs/BESTIARY.md` và gộp được sạch, không xung đột. Vẫn nhắc phiên soạn bestiary chỉ `git add docs/BESTIARY.md`, không dùng `git add .`.
 3. Làm việc trên **nhánh riêng** của phiên (không đẩy thẳng lên `main`), xong thì mở pull request. Chỉ merge khi chủ dự án bảo ("merge pull request #N").
 
 ## 1. Dự án là gì
