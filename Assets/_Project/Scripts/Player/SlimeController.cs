@@ -57,7 +57,7 @@ namespace Evolve.Player
                 else if (stats.State.IsCorpse && KeyPressed.Y()) NewRun();
                 return;
             }
-            if (!SurvivalHUD.BlocksInput(gameObject) && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
+            if (ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
                 rb.AddForce(Vector3.up * hopForce + dir * hopForward, ForceMode.VelocityChange);
@@ -115,7 +115,7 @@ namespace Evolve.Player
 
         Vector3 GetMoveDirection()
         {
-            Vector2 input = SurvivalHUD.BlocksInput(gameObject) ? Vector2.zero : ReadMove();
+            Vector2 input = ReadMove();
             if (input.sqrMagnitude < 0.01f) return Vector3.zero;
             Vector3 fwd = cameraTransform ? cameraTransform.forward : Vector3.forward;
             Vector3 right = cameraTransform ? cameraTransform.right : Vector3.right;

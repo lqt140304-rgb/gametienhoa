@@ -12,10 +12,10 @@ namespace Evolve.Survival
         static readonly Dictionary<GameObject, SurvivalHUD> owners = new Dictionary<GameObject, SurvivalHUD>();
         HudMenu menu;
         bool followPlayer;
-        int selectedSkill;
+        Vector2 skillScroll;
         Vector2 organScroll;
         GUIStyle text, small, heading, action;
-        Texture2D circle;
+
         readonly Color ink = new Color(.86f, .91f, .81f);
         readonly Color muted = new Color(.65f, .75f, .61f);
         readonly Color surface = new Color(.055f, .12f, .095f, .96f);
@@ -40,7 +40,7 @@ namespace Evolve.Survival
         }
 
         void OnEnable() { if (stats != null) RegisterHud(); }
-        void OnDestroy() { if (circle != null) Destroy(circle); }
+
 
         void Update()
         {
@@ -70,15 +70,6 @@ namespace Evolve.Survival
             small.normal.textColor = muted;
             heading = new GUIStyle(text) { fontSize = 21, fontStyle = FontStyle.Bold };
             action = new GUIStyle(GUI.skin.button) { fontSize = 13, padding = new RectOffset(8, 8, 7, 7) };
-            circle = new Texture2D(64, 64, TextureFormat.RGBA32, false);
-            var pixels = new Color[64 * 64];
-            for (int y = 0; y < 64; y++)
-                for (int x = 0; x < 64; x++)
-                {
-                    float d = Vector2.Distance(new Vector2(x + .5f, y + .5f), new Vector2(32, 32));
-                    pixels[y * 64 + x] = new Color(1, 1, 1, Mathf.Clamp01(32 - d));
-                }
-            circle.SetPixels(pixels); circle.Apply();
         }
 
         float UiScale => Mathf.Max(.1f, Mathf.Min(1.4f, Mathf.Min(Screen.width / 960f, Screen.height / 600f)));
@@ -122,7 +113,7 @@ namespace Evolve.Survival
             }
             DrawSkillChip(new Rect(skillX + 324, skillY, 50, 58), "C", sense != null ? "Cảm nhận rung" : null,
                 sense != null ? sense.CooldownRemaining : 0, sense != null ? sense.EnergyCost : 0);
-            if (GUI.Button(new Rect(right.x, right.y + 55, 108, 32), "K · Kỹ năng", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Skills));
+            if (GUI.Button(new Rect(right.x, right.y + 55, 108, 32), "K · Kho skill", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Skills));
             if (GUI.Button(new Rect(right.x + 116, right.y + 55, 114, 32), "G · Cơ quan", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Organs));
             if (GUI.Button(new Rect(canvas.x - 136, 18, 112, 28), "Giao diện", action)) SetMenu(HudLayout.Toggle(menu, HudMenu.Settings));
             if (!string.IsNullOrEmpty(GUI.tooltip))
@@ -177,7 +168,7 @@ namespace Evolve.Survival
             if (!MenuOpen) return;
             var old = GUI.matrix;
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one * UiScale);
-            if (menu == HudMenu.Skills) DrawSkillRing();
+            if (menu == HudMenu.Skills) DrawSkillInventory();
             else if (menu == HudMenu.Organs) DrawOrgansPanel();
             else if (menu == HudMenu.Settings) DrawSettings();
             else if (menu == HudMenu.Help)
@@ -214,57 +205,52 @@ namespace Evolve.Survival
             GUILayout.EndArea();
         }
 
-        void DrawSkillRing()
+        void DrawSkillInventory()
         {
-            Vector2 at = PlayerAnchor(UiScale) ?? canvas / 2;
-            at.x = HudLayout.ClampCenter(at.x, 350, canvas.x);
-            at.y = HudLayout.ClampCenter(at.y - 25, 510, canvas.y);
-            for (int i = 0; i < 7; i++)
+            var r = new Rect(canvas.x / 2 - 245, 55, 490, canvas.y - 165);
+            Paint(r, surface);
+            GUILayout.BeginArea(new Rect(r.x + 18, r.y + 14, r.width - 36, r.height - 28));
+            GUILayout.Label("Kho kỹ năng", heading);
+            GUILayout.Label("Chọn kỹ năng từ cơ quan đang gắn để trang bị vào 5 ô.", small);
+            skillScroll = GUILayout.BeginScrollView(skillScroll);
+            int count = 0;
+            if (organs != null && skills != null)
             {
-                float angle = (-90 + i * 360f / 7) * Mathf.Deg2Rad;
-                Vector2 p = at + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 120;
-                Rect node = new Rect(p.x - 29, p.y - 29, 58, 58);
-                bool available = i == 0 ? caster != null && caster.Ability != null
-                    : i == 6 ? stats.GetComponent<VibrationSense>() != null
-                    : skills != null && skills.GetSlot(i - 1) != null;
-                Paint(node, selectedSkill == i ? new Color(.63f, .76f, .49f, .95f) : surface, circle);
-                var label = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter, fontSize = 19 };
-                GUI.Label(node, i == 0 ? "Q" : i == 6 ? "C" : i.ToString(), label);
-                if (!available) GUI.Label(new Rect(node.x - 6, node.yMax, 70, 18), "Chưa mở", small);
-                else if (i > 0 && i < 6 && skills.CooldownRemaining(i - 1) > 0)
-                    GUI.Label(new Rect(node.x, node.yMax, 70, 18), $"{skills.CooldownRemaining(i - 1):0.0}s", small);
-                if (GUI.Button(node, new GUIContent("", available ? "Xem kỹ năng" : "Chưa có kỹ năng"), GUIStyle.none)) selectedSkill = i;
+                foreach (var organ in organs.OrganList)
+                {
+                    if (!skills.IsUnlocked(organ)) continue;
+                    count++;
+                    var ability = organ.GrantedAbility;
+                    int equipped = skills.SlotOf(organ);
+                    GUILayout.Space(12);
+                    GUILayout.Label(ability.DisplayName, text);
+                    GUILayout.Label($"{organ.DisplayName} · Lv{organs.GetLevel(organ)} · " +
+                        (equipped >= 0 ? $"Đang ở ô {equipped + 1}" : "Chưa trang bị"), small);
+                    GUILayout.Label(ability.Description, small);
+                    GUILayout.Label($"{ability.EnergyCost:0} NL · Hồi {ability.CooldownFor(organs.GetLevel(organ)):0.#}s", small);
+                    GUILayout.BeginHorizontal();
+                    for (int slot = 0; slot < SkillBar.SlotCount; slot++)
+                    {
+                        var occupied = skills.GetSlot(slot);
+                        string label = equipped == slot ? $"[{slot + 1}]" : (slot + 1).ToString();
+                        string hint = occupied != null ? $"Đổi với {occupied.GrantedAbility.DisplayName}" : "Trang bị vào ô trống";
+                        if (GUILayout.Button(new GUIContent(label, hint), action)) skills.Assign(slot, organ);
+                    }
+                    GUILayout.EndHorizontal();
+                }
             }
-            var info = new Rect(at.x - 170, at.y + 157, 340, 45);
-            Paint(new Rect(info.x - 8, info.y - 4, info.width + 16, 90), surface);
-            string title, detail;
-            if (selectedSkill == 0 && caster != null && caster.Ability != null)
-            {
-                var a = caster.Ability;
-                title = $"Q · {a.DisplayName}";
-                detail = $"{a.Description}\n{a.EnergyCost:0} NL · {Ready(caster.CooldownRemaining, a.EnergyCost)}";
-            }
-            else if (selectedSkill == 6 && stats.GetComponent<VibrationSense>() is VibrationSense sense)
-            {
-                title = "C · Cảm nhận rung";
-                detail = $"Phát hiện chuyển động quanh cơ thể.\n{sense.EnergyCost:0} NL · {Ready(sense.CooldownRemaining, sense.EnergyCost)}";
-            }
-            else if (selectedSkill >= 1 && selectedSkill <= 5 && skills != null && skills.GetSlot(selectedSkill - 1) is OrganSO source)
-            {
-                var a = source.GrantedAbility;
-                title = $"{selectedSkill} · {a.DisplayName}";
-                detail = $"{a.Description}\n{a.EnergyCost:0} NL · {Ready(skills.CooldownRemaining(selectedSkill - 1), a.EnergyCost)}";
-            }
-            else
-            {
-                title = selectedSkill == 0 || selectedSkill == 6 ? "Chưa có kỹ năng" : $"Ô {selectedSkill} · Chưa mở";
-                detail = "Nâng cơ quan có kỹ năng đến cấp mở khóa.\nQ là Dị Năng riêng; C là giác quan.";
-            }
-            GUI.Label(new Rect(info.x, info.y, info.width, 25), title, text);
-            GUI.Label(new Rect(info.x, info.y + 25, info.width, 60), detail, small);
-            if (GUI.Button(new Rect(at.x - 32, at.y - 14, 64, 28), "Đóng", action)) SetMenu(HudMenu.None);
+            if (count == 0)
+                GUILayout.Label("Chưa có kỹ năng cơ quan được mở. Nâng cơ quan có kỹ năng đến cấp yêu cầu để thêm vào kho.", text);
+            GUILayout.Space(16);
+            GUILayout.Label("Khả năng riêng", text);
+            if (caster != null && caster.Ability != null)
+                GUILayout.Label($"Q · {caster.Ability.DisplayName} (không chiếm ô)", small);
+            if (stats.GetComponent<VibrationSense>() != null)
+                GUILayout.Label("C · Cảm nhận rung (giác quan riêng)", small);
+            GUILayout.EndScrollView();
+            if (GUILayout.Button("Đóng · K / Esc", action)) SetMenu(HudMenu.None);
+            GUILayout.EndArea();
         }
-
         void DrawOrgansPanel()
         {
             if (organs == null || interactor == null) { SetMenu(HudMenu.None); return; }
