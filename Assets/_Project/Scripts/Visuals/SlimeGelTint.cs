@@ -20,8 +20,22 @@ namespace Evolve.Visuals
         readonly List<OrganSocket> sockets = new List<OrganSocket>();
         float nextScan;
 
-        void OnEnable() => SlimeColor.Changed += Refresh;
-        void OnDisable() => SlimeColor.Changed -= Refresh;
+        Evolve.Organs.OrganHost host;
+
+        void OnEnable()
+        {
+            SlimeColor.Changed += Refresh;
+            host = GetComponentInParent<Evolve.Organs.OrganHost>();
+            if (host != null) { host.Attached += OnOrgan; host.Removed += OnOrgan; host.Changed += Refresh; }
+        }
+
+        void OnDisable()
+        {
+            SlimeColor.Changed -= Refresh;
+            if (host != null) { host.Attached -= OnOrgan; host.Removed -= OnOrgan; host.Changed -= Refresh; }
+        }
+
+        void OnOrgan(OrganSO organ) => nextScan = 0f; // colour a new organ the frame it appears
 
         void Refresh() => nextScan = 0f;
 
