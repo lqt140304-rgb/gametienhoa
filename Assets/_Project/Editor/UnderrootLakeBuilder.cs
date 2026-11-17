@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Evolve.Creatures;
 using Evolve.Ecology;
 using Evolve.Organs;
@@ -192,6 +193,9 @@ namespace Evolve.EditorTools
             P.Set(incursion, "predator", b);
             P.SetArray(incursion, "entries", new Object[] { e1, e2 });
 
+            // ---- Glowing edible plants along the trails and in the biomes ----
+            BuildVegetation(shared.NutrientPrefab);
+
             // ---- Co-op templates: WorldSync (client) reads .Prefab from these; count 0 → spawn nothing ----
             var preyTemplate = new GameObject("Net Template (Prey)").AddComponent<PreySpawner>();
             P.Set(preyTemplate, "prefab", preyPrefab.GetComponent<Prey>());
@@ -209,6 +213,95 @@ namespace Evolve.EditorTools
             AssetDatabase.SaveAssets();
             Selection.activeGameObject = slime;
             Debug.Log("Đã dựng " + ScenePath + ". Chân Rễ phía bắc, Bãi Mùn Rễ (tổ D) phía đông, Vườn Bào Tử (tổ C) phía tây, Khe Thủy Mạch xuống nam, Rìa Săn Mồi (B) đông nam; đường mòn nối các nơi.");
+        }
+
+        const int VegetationSeed = 4242;
+        const int SyncedFoodLimit = 400; // WorldSync sends at most this many food blobs
+
+        static readonly string[] VegetationNames = { "Glow Moss", "Amber Bud", "Spore Pod", "Root Dew", "Ember Berry" };
+        static readonly Vector2[] VegetationScale =
+        {
+            new Vector2(0.7f, 1.0f), new Vector2(0.9f, 1.3f), new Vector2(0.8f, 1.2f), new Vector2(0.6f, 0.9f), new Vector2(0.8f, 1.1f)
+        };
+
+        /// <summary>One emissive material per plant kind (a property block would not be saved in the scene).</summary>
+        static Material GlowMat(string name, Color baseColor, Color glow, float intensity)
+        {
+            var m = P.Mat(name, baseColor, Lit);
+            m.EnableKeyword("_EMISSION");
+            m.SetColor("_EmissionColor", glow * intensity);
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        static void AddBlocker(List<Bounds> list, Collider c, float margin)
+        {
+            if (c == null) return;
+            var b = c.bounds;
+            b.Expand(margin * 2f); // Expand grows the whole box: margin on each side
+            list.Add(b);
+        }
+
+        /// <summary>Scatter the glowing plants (VegetationScatter) as Nutrient objects on the ground, away from water, dens and shelters.</summary>
+        static void BuildVegetation(GameObject nutrientPrefab)
+        {
+            Physics.SyncTransforms(); // collider bounds must reflect the objects just created
+            var blockers = new List<Bounds>();
+            foreach (var w in Object.FindObjectsByType<WaterZone>()) AddBlocker(blockers, w.GetComponent<Collider>(), 2f);
+            foreach (var sh in Object.FindObjectsByType<ShelterZone>()) AddBlocker(blockers, sh.GetComponent<Collider>(), 2f);
+            foreach (var den in Object.FindObjectsByType<Den>()) blockers.Add(new Bounds(den.transform.position, new Vector3(10f, 10f, 10f)));
+            foreach (var n in Object.FindObjectsByType<Nutrient>()) blockers.Add(new Bounds(n.transform.position, new Vector3(6f, 6f, 6f)));
+            foreach (var t in Object.FindObjectsByType<Transform>())
+            {
+                if (t.name.StartsWith("Deep Pocket")) blockers.Add(new Bounds(t.position, new Vector3(16f, 16f, 16f)));
+                if (t.name.StartsWith("Landmark ")) blockers.Add(new Bounds(t.position, new Vector3(11f, 1f, 11f))); // solid 7 m pillars (not the "Landmarks" parent)
+            }
+
+            bool Blocked(float x, float z)
+            {
+                if (x * x + z * z < 18f * 18f) return true; // the spawn pool
+                for (int i = 0; i < blockers.Count; i++)
+                {
+                    var b = blockers[i];
+                    if (x >= b.min.x && x <= b.max.x && z >= b.min.z && z <= b.max.z) return true;
+                }
+                return false;
+            }
+
+            var mats = new[]
+            {
+                GlowMat("Veg_GlowMoss", new Color(0.1f, 0.35f, 0.3f), new Color(0.2f, 0.9f, 0.75f), 1.6f),
+                GlowMat("Veg_AmberBud", new Color(0.5f, 0.3f, 0.05f), new Color(1f, 0.6f, 0.15f), 2f),
+                GlowMat("Veg_SporePod", new Color(0.35f, 0.2f, 0.5f), new Color(0.7f, 0.4f, 1f), 2.2f),
+                GlowMat("Veg_RootDew", new Color(0.5f, 0.75f, 0.8f), new Color(0.6f, 0.9f, 1f), 1.8f),
+                GlowMat("Veg_EmberBerry", new Color(0.5f, 0.12f, 0.05f), new Color(1f, 0.35f, 0.1f), 2f),
+            };
+            var parents = new Transform[VegetationNames.Length];
+            for (int i = 0; i < parents.Length; i++) parents[i] = new GameObject("Vegetation (" + VegetationNames[i] + ")").transform;
+
+            var points = VegetationScatter.Points(VegetationSeed, Blocked);
+            var rng = new System.Random(VegetationSeed + 1);
+            foreach (var pt in points)
+            {
+                int k = (int)pt.Kind;
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(nutrientPrefab, parents[k]);
+                float size = Mathf.Lerp(VegetationScale[k].x, VegetationScale[k].y, (float)rng.NextDouble());
+                float y = TerrainShape.HeightAt(pt.Position.x, pt.Position.y, TerrainSeed) + 0.25f * size; // sphere radius 0.25 x size: rests on the ground
+                go.transform.position = new Vector3(pt.Position.x, y, pt.Position.y);
+                go.transform.localScale = nutrientPrefab.transform.localScale * size;
+                go.GetComponentInChildren<Renderer>().sharedMaterial = mats[k];
+                var so = new SerializedObject(go.GetComponent<Nutrient>());
+                so.FindProperty("totalNutrition").floatValue = 12f;   // a plant is a snack, not a meal
+                so.FindProperty("respawnSeconds").floatValue = 180f;  // and grows back slowly
+                so.ApplyModifiedPropertiesWithoutUndo();
+                if (pt.Kind == VegetationKind.SporePod) go.AddComponent<GlowPulse>();
+            }
+
+            int total = Object.FindObjectsByType<Nutrient>().Length;
+            if (total > SyncedFoodLimit)
+                Debug.LogWarning($"Underroot_Lake có {total} cục thức ăn, vượt giới hạn đồng bộ co-op {SyncedFoodLimit}: người vào phòng sẽ thấy thức ăn lệch.");
+            Debug.Log($"Thực vật phát quang: {points.Count} cây, tổng {total} cục thức ăn trong scene.");
         }
 
         static Region MakeRegion(string name, Pad pad, float deactivateRadius, params SpeciesSO[] species)

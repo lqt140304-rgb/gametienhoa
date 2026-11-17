@@ -168,7 +168,8 @@ Chỉ học cơ chế, không dùng tên/hình ảnh/nội dung của tác phẩ
 6. **[ĐỀ XUẤT] Quần thể:** thay một `Region` bằng **nhiều `Region`**, mỗi vi sinh cảnh một cái, tổ ở đúng vùng; số sinh vật tăng theo diện tích. Giới hạn 30 sinh vật hiện thân đồng thời giữ nguyên (xem lại khi đo).
 7. **[ĐỀ XUẤT] Thực vật:** dùng lại `Nutrient` (đã đồng bộ co-op), rải theo mật độ từng vi sinh cảnh: dày ở đường chính, thưa ở vùng hoang/sâu để có chỗ thiếu. Tổng số giữ dưới khoảng 600 cái mỗi khu để đồng bộ mạng nhẹ. Thức ăn mọc lại chậm theo cơ chế hiện có.
 8. **[ĐÃ CHỐT] 480 m là MỘT khu** (chủ dự án đã chơi thử, thấy ổn); thế giới gồm nhiều khu, tổng kích thước chưa chốt. Bố cục bước 0.6b: bốn bệ phẳng (y = 0) cho Chân Rễ (bắc), Bãi Mùn Rễ (đông), Vườn Bào Tử (tây), Rìa Săn Mồi (đông nam), suối xuống nam, đường mòn và đường vòng; mỗi bệ một `Region`. Dữ liệu ở `World/ZoneLayout`.
-9. **Không làm trong đợt này:** hang chồng tầng, 6 khu còn lại, lối lên mặt đất, địa hình Blender.
+9. **[ĐÃ CHỐT hướng] Thực vật theo hướng fantasy huyền bí, phát quang (0.6c):** năm loại cây phát sáng theo vùng (Rêu Lân Quang, Nụ Hổ Phách, Bọc Bào Tử Tím, Giọt Sương Rễ, Quả Than Hồng), vẫn là thức ăn thường; trần 380 cây (giới hạn đồng bộ 400); mô hình riêng để bước sau.
+10. **Không làm trong đợt này:** hang chồng tầng, 6 khu còn lại, lối lên mặt đất, địa hình Blender.
 9. **Rủi ro:** môi trường agent không biên dịch/chạy được, nên chia nhỏ: (a) địa hình + mái hang + kích thước, kiểm đi 8 phút; (b) chia `Region` và sắp bố cục các vi sinh cảnh; (c) rải thực vật và chỉnh cân bằng. Mỗi bước chủ dự án mở Unity kiểm trước khi sang bước sau.
 
 ## 7. Hiệu năng
