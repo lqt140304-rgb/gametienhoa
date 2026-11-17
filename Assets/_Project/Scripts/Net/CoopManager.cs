@@ -43,6 +43,20 @@ namespace Evolve.Net
         Transform localVisual;
 
         public bool IsActive => nm != null && nm.IsListening;
+        internal NetworkManager Nm => nm;
+
+        /// <summary>This machine's own player (not a ghost), or null if there is none in the scene.</summary>
+        public SurvivalStats LocalStats
+        {
+            get
+            {
+                if (localStats == null) FindLocalPlayer();
+                return localStats;
+            }
+        }
+
+        internal RemoteAvatar GetRemote(ulong clientId) =>
+            remotes.TryGetValue(clientId, out var avatar) && avatar != null ? avatar : null;
         public IEnumerable<RemoteAvatar> Remotes => remotes.Values;
 
         public string Status
@@ -64,6 +78,7 @@ namespace Evolve.Net
             var go = new GameObject("Co-op (F2)");
             DontDestroyOnLoad(go);
             go.AddComponent<CoopManager>();
+            go.AddComponent<WorldSync>();
             go.AddComponent<CoopMenu>();
         }
 
@@ -165,6 +180,7 @@ namespace Evolve.Net
             if (messaging == null) return;
             if (nm.IsServer) messaging.RegisterNamedMessageHandler(UpMessage, OnUp);
             else messaging.RegisterNamedMessageHandler(DownMessage, OnDown);
+            GetComponent<WorldSync>()?.RegisterMessages(messaging, nm.IsServer);
         }
 
         // ---------------------------------------------------------------- per frame
