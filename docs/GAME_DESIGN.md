@@ -45,6 +45,28 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 **[ĐỀ XUẤT]** Mô hình cơ thể mô-đun: mỗi cơ quan có định nghĩa, instance, prefab hiển thị, tương thích vùng neo, chi phí sinh khối/năng lượng, khối lượng và khả năng nâng đỡ. Tiến hóa có thể thay đổi hình dạng dần hoặc thêm cơ quan. Dấu ấn thích nghi mở các biến thể nhưng không thay thế điều kiện tìm được cơ quan.
 
+## 4.1. Phân cấp nguồn cơ quan [ĐÃ CHỐT]
+
+- **C**: cơ quan từ sinh vật nhỏ, yếu.
+- **B**: cơ quan từ sinh vật thông thường.
+- **A**: cơ quan từ đại thú fantasy, sinh vật lớn.
+- **S**: cơ quan từ boss hoặc cự thú huyền thoại.
+- Sinh vật cao cấp vẫn có thể mang cơ quan bậc thấp hơn. Mẫu hư hỏng không thay đổi tier gốc.
+
+## 4.2. Hư hỏng và tái tạo cơ quan [ĐÃ CHỐT hướng]
+
+- **Sát thương kết hợp vị trí và lan truyền** sang cơ quan liên kết / HP cơ thể.
+- **Bản thiết kế đã nghiên cứu được giữ vĩnh viễn**. Cơ quan bị phá hủy có thể tái tạo bằng tài nguyên, không buộc săn lại boss.
+- Các công thức Damage, Integrity, Trauma, chất lượng mẫu và chi phí sửa chữa hiện **[ĐỀ XUẤT]**; xem [Biological Integrity System v1.1](BIOLOGICAL_INTEGRITY.md).
+
+## 4.3. Rơi cơ quan khi săn [ĐÃ CHỐT]
+
+- Cơ quan người chơi **đã có** thì **giảm tỉ lệ rơi**, không bị loại khỏi bảng rơi. Bản trùng vẫn có giá trị (hấp thụ lấy thức ăn, hoặc thay bản đang yếu).
+
+- **Cách roll hai bước:** chọn bậc trước theo trọng số bậc (C/B/A/S), rồi chọn cơ quan trong bậc đó, nên tỉ lệ bậc đúng như bảng.
+- Cơ quan đã có chỉ còn **0.8** trọng số so với cơ quan chưa có cùng bậc (chỉnh được trong Inspector). Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường.
+- "Đã có" tính theo cơ quan **đang gắn trên người**; tháo ra thì tính là chưa có, tỉ lệ rơi trở lại bình thường.
+
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
 **[ĐÃ CHỐT]** Máu; thanh đói; thanh năng lượng; thanh kinh nghiệm tiến hóa; thanh nhiệt độ.
@@ -56,6 +78,26 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 **[ĐÃ CHỐT hướng]** Co-op online 4–8 người, vai trò tự hình thành nhờ tiến hóa; xây tổ và công trình theo những cơ quan hiện có.
 
 **[ĐỀ XUẤT]** Truyền dưỡng chất, giữ ấm theo bầy, cứu hộ lõi nguy kịch, tổ dùng để lưu trữ và tiến hóa. Chưa chốt quy tắc chết/hồi sinh và đồng bộ.
+
+## 6.1. Mạng, chết và cứu hộ
+
+**[ĐÃ CHỐT]**
+- Mỗi người có **3 mạng** (tính riêng từng người). Còn mạng thì tự hồi sinh chủ động, giữ cơ quan.
+- Chết đủ 3 lần thì **không tự hồi sinh được nữa**; người đó thành **xác nằm tại chỗ chết**.
+- Nếu có đồng đội thì có thể **cứu**. Cứu kịp thì người chơi sống lại và đồ vẫn nằm trên người.
+- **Không cứu được thì đồ mới rơi ra.** Khi xác chưa chết hẳn (còn trong thời hạn cứu), đồng đội **không nhặt trực tiếp** được đồ từ xác.
+- Đồ rơi ai cũng nhặt được, kể cả đồng đội. Mỗi cơ quan nhặt có **50% bị mất, tính riêng từng bộ phận**.
+- Việc đồng đội lạm dụng nhau (bỏ mặc để nhặt đồ) được **chấp nhận**: game thiên về chiều sâu và hardcore, không cần quá thân thiện.
+- **Thời hạn cứu: 120 giây.** Hết 120 giây mà chưa cứu được thì xác chết hẳn và đồ rơi ra.
+- **Chi phí cứu kiểu chuyền máu:** 1 máu của người được cứu bằng **3 máu** của người cứu. Người cứu **chuyền liên tục** cho đến khi thấy đủ thì tự buông.
+- **Hai giai đoạn cứu:** (1) cứu thường, giữ tương tác khoảng **5 giây** để đưa người chết từ 0 lên **1 máu**; (2) sau đó chuyền máu 3:1.
+- Giai đoạn chuyền máu: thời gian chuyền mỗi máu **giảm dần**, máu đầu tiên mất 5 giây, giảm đều đến mức nhanh nhất **0.5 giây** mỗi máu sau khoảng **10 máu**; sau đó giữ nguyên tốc độ đó.
+- Người được cứu **sống tiếp mạng vừa rồi**, không được cộng thêm mạng. Chết lần nữa thì lại thành xác.
+- Người hết mạng vào **chế độ quan sát**, xem từ góc nhìn (POV) của người còn sống.
+
+**[ĐỀ XUẤT]** (chưa duyệt)
+- Cứu bị ngắt nếu người cứu bị tấn công.
+- Có thể giới hạn số lần cứu hoặc cho hồi lại mạng khi qua cột mốc (hạ boss, xây tổ). Tình huống không có đồng đội (chơi một mình) hết mạng là thua.
 
 ## 7. Công nghệ
 
@@ -74,7 +116,7 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 - Thông số cụ thể và xác suất rút Dị Năng.
 - Danh sách Thiên Phú bị động và Khiếm Khuyết cuối cùng.
-- Chi phí, điều kiện từng cơ quan; cách tháo/thay và mất mát khi chết.
+- Chi phí và điều kiện cụ thể từng cơ quan; cách tháo/thay. Mất mát khi chết đã chốt ở mục 6.1 (3 mạng, xác, cứu, đồ rơi 50/50). Đã chốt giữ blueprint và tái tạo bằng tài nguyên khi cơ quan hỏng.
 - Giao diện chọn đặc tính đầu game; cách lưu thế giới, topology multiplayer.
 - Cân bằng nhiệt độ, độ ẩm, đói và nguồn thức ăn.
 

@@ -182,7 +182,7 @@ namespace Evolve.Creatures
             {
                 by.State.Feed(nutrition);
                 var host = by.GetComponent<OrganHost>();
-                var drop = drops != null ? drops.Roll(o => host == null || !host.Has(o)) : null;
+                var drop = drops != null ? drops.Roll(o => host != null && host.Has(o)) : null;
                 if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));
             }
             Debug.Log($"{name} bị hạ gục");

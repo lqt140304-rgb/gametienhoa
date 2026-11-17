@@ -52,7 +52,9 @@ namespace Evolve.Player
         {
             if (stats.State.IsDead)
             {
-                if (KeyPressed.R()) Respawn();
+                if (stats.State.CanRespawn && KeyPressed.R()) Respawn();
+                // Temporary, until teammates can rescue: out of lives = start a fresh run.
+                else if (stats.State.IsCorpse && KeyPressed.Y()) NewRun();
                 return;
             }
             if (ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
@@ -72,6 +74,13 @@ namespace Evolve.Player
             transform.position = spawnPoint;
             stats.State.Ambient = stats.Config.DefaultAmbient;
             stats.State.Reset();
+        }
+
+        /// <summary>Prototype only: restart with all lives. Real design: only a teammate can revive a corpse.</summary>
+        void NewRun()
+        {
+            stats.State.ResetLives();
+            Respawn();
         }
 
         void FixedUpdate()
