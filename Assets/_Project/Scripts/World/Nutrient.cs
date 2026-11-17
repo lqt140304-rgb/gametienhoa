@@ -31,6 +31,8 @@ namespace Evolve.World
         [Tooltip("Nutrition absorbed per second (primitive membrane is slow)")]
         [SerializeField] float absorbRate = 5f;
         [SerializeField] float respawnSeconds = 20f;
+        [Tooltip("What this food is made of: which nutrients (Sợi Nhầy, Tinh Vôi, ...) eating it gives")]
+        [SerializeField] FoodKind foodKind = FoodKind.Generic;
 
         float remaining;
         Vector3 baseScale;
@@ -107,7 +109,7 @@ namespace Evolve.World
         {
             float amount = Mathf.Min(absorbRate * Time.fixedDeltaTime, remaining);
             remaining -= amount;
-            NetWorld.Feed(stats, amount);
+            NetWorld.Feed(stats, amount, FoodProfiles.For(foodKind));
             Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Gulp);
             transform.localScale = baseScale * Mathf.Lerp(0.3f, 1f, remaining / totalNutrition);
 

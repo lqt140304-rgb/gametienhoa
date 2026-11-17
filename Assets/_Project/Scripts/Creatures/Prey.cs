@@ -212,7 +212,7 @@ namespace Evolve.Creatures
         {
             caught = true;
 
-            NetWorld.Feed(stats, nutrition);
+            NetWorld.Feed(stats, nutrition, FoodProfiles.For(FoodKind.PreyMeat));
             Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Gulp);
             var host = stats.GetComponent<OrganHost>();
             var drop = PickDrop(host);

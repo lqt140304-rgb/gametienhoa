@@ -152,6 +152,9 @@ namespace Evolve.EditorTools
             {
                 var n = (GameObject)PrefabUtility.InstantiatePrefab(shared.NutrientPrefab, humusRoot);
                 n.transform.position = new Vector3(Mathf.Lerp(163f, 177f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-12f, 12f, (float)rng.NextDouble()));
+                var nso = new SerializedObject(n.GetComponent<Nutrient>());
+                nso.FindProperty("foodKind").enumValueIndex = (int)FoodKind.AmberBud; // the humus bed's own food
+                nso.ApplyModifiedPropertiesWithoutUndo();
             }
             MakeDen("Den D (Mudmite) 1", humusRoot, new Vector3(167f, 0f, 8f), d, humusRegion, denMat);
             MakeDen("Den D (Mudmite) 2", humusRoot, new Vector3(174f, 0f, -8f), d, humusRegion, denMat);
@@ -235,6 +238,15 @@ namespace Evolve.EditorTools
             return m;
         }
 
+        static FoodKind FoodKindFor(VegetationKind kind) => kind switch
+        {
+            VegetationKind.AmberBud => FoodKind.AmberBud,
+            VegetationKind.SporePod => FoodKind.SporePod,
+            VegetationKind.RootDew => FoodKind.RootDew,
+            VegetationKind.EmberBerry => FoodKind.EmberBerry,
+            _ => FoodKind.GlowMoss
+        };
+
         static void AddBlocker(List<Bounds> list, Collider c, float margin)
         {
             if (c == null) return;
@@ -294,6 +306,7 @@ namespace Evolve.EditorTools
                 var so = new SerializedObject(go.GetComponent<Nutrient>());
                 so.FindProperty("totalNutrition").floatValue = 12f;   // a plant is a snack, not a meal
                 so.FindProperty("respawnSeconds").floatValue = 180f;  // and grows back slowly
+                so.FindProperty("foodKind").enumValueIndex = (int)FoodKindFor(pt.Kind); // which nutrients eating it gives
                 so.ApplyModifiedPropertiesWithoutUndo();
                 if (pt.Kind == VegetationKind.SporePod) go.AddComponent<GlowPulse>();
             }
