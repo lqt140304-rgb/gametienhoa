@@ -134,10 +134,25 @@ namespace Evolve.Abilities
                 Fail($"thiếu năng lượng cho {ability.DisplayName} ({stats.State.Energy:0}/{ability.EnergyCost:0})");
                 return;
             }
-            if (!ability.Activate(gameObject, level)) { Fail($"{ability.DisplayName} không dùng được lúc này"); return; }
+            if (pending) { Fail("đang tụ lực"); return; }
 
-            Evolve.Visuals.SlimeGelAnimator.Play(gameObject, ability is BurstDashAbility || ability is ChargeAbility
-                ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release);
+            // The body winds up first; the skill leaves at the moment the animation releases.
+            var motion = ability is BurstDashAbility || ability is ChargeAbility
+                ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release;
+            Evolve.Visuals.SlimeGelAnimator.Play(gameObject, motion);
+            StartCoroutine(FireAfter(Evolve.Visuals.SlimeGelAnimator.WindUp(motion), organ, ability, level));
+        }
+
+        bool pending;
+
+        System.Collections.IEnumerator FireAfter(float delay, OrganSO organ, AbilitySO ability, int level)
+        {
+            pending = true;
+            if (delay > 0f) yield return new WaitForSeconds(delay);
+            pending = false;
+            if (stats.State.IsDead) yield break;
+            if (stats.State.Energy < ability.EnergyCost) { Fail($"thiếu năng lượng cho {ability.DisplayName}"); yield break; }
+            if (!ability.Activate(gameObject, level)) { Fail($"{ability.DisplayName} không dùng được lúc này"); yield break; }
             stats.State.TrySpendEnergy(ability.EnergyCost);
             readyAt[organ] = Time.time + ability.CooldownFor(level);
             FailureReason = "";

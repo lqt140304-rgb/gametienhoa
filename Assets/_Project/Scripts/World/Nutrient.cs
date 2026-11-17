@@ -108,7 +108,7 @@ namespace Evolve.World
             float amount = Mathf.Min(absorbRate * Time.fixedDeltaTime, remaining);
             remaining -= amount;
             NetWorld.Feed(stats, amount);
-            Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Absorb);
+            Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Gulp);
             transform.localScale = baseScale * Mathf.Lerp(0.3f, 1f, remaining / totalNutrition);
 
             if (remaining <= 0f)

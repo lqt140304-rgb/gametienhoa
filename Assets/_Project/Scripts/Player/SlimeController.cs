@@ -175,9 +175,14 @@ namespace Evolve.Player
             if (visual == null) return;
             // Landing: spread out flat (negative squash), then settle. In the air: stretch with vertical speed.
             bool grounded = IsGrounded();
-            if (wasAirborne && grounded) squash = -0.9f;
+            if (wasAirborne && grounded)
+            {
+                squash = -0.9f;
+                var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
+                if (jelly != null) jelly.Jiggle(3f);
+            }
             wasAirborne = !grounded;
-            squash = Mathf.MoveTowards(squash, 0f, Time.deltaTime * 3f);
+            squash = Mathf.Lerp(squash, 0f, 1f - Mathf.Exp(-6f * Time.deltaTime)); // smooth, not linear
             float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.02f : 0f;
             float bs = BodyScale;
             float airStretch = grounded ? 0f : Mathf.Clamp(Mathf.Abs(rb.linearVelocity.y) * 0.03f, 0f, 0.2f);
