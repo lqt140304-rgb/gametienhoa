@@ -25,6 +25,10 @@ namespace Evolve.Visuals
         /// <summary>Time spent bending meshes since the last read (for the F4 performance overlay).</summary>
         public static long CostTicks;
 
+        /// <summary>Test switch (F4, third press): all body animation off, to see whether a stutter comes from it.</summary>
+        public static bool Paused;
+        bool wasPaused;
+
         MeshFilter filter;
         Mesh original, mesh;
         Vector3[] baseVertices, work;
@@ -71,7 +75,7 @@ namespace Evolve.Visuals
 
         /// <summary>A jelly wobble: the body keeps bouncing a little and settles (call after landing, hits, ...).</summary>
         /// <summary>True while an action (skill, attack, absorb) plays; everyday movement animation steps aside then.</summary>
-        public bool ActionPlaying => (activeTime >= 0f && active != GelMotion.Gulp) || (landT >= 0f && landT < LandRest);
+        public bool ActionPlaying => !Paused && ( (activeTime >= 0f && active != GelMotion.Gulp) || (landT >= 0f && landT < LandRest));
 
         /// <summary>After a real landing the body rests this long (landing splat plays alone) before moving animation resumes.</summary>
         const float LandRest = 0.5f;
@@ -113,6 +117,13 @@ namespace Evolve.Visuals
             body = GetComponentInParent<Rigidbody>();
         }
 
+        // Back to the undeformed shapes (body and organs).
+        void RestShapes()
+        {
+            if (mesh != null) { mesh.SetVertices(baseVertices); mesh.RecalculateNormals(); mesh.RecalculateBounds(); }
+            foreach (var f in followers.Values) if (f.Mesh != null) { f.Mesh.SetVertices(f.Base); f.Mesh.RecalculateBounds(); }
+        }
+
         void OnDestroy()
         {
             if (mesh != null) Destroy(mesh);
@@ -121,6 +132,12 @@ namespace Evolve.Visuals
 
         void LateUpdate()
         {
+            if (Paused)
+            {
+                if (!wasPaused) { wasPaused = true; RestShapes(); }
+                return;
+            }
+            wasPaused = false;
             float dt = Mathf.Max(Time.deltaTime, 1e-4f);
 
             // Movement as it really happens in the world (flat), expressed in the body's own directions.
