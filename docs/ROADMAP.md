@@ -25,6 +25,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Chơi thử 0.1, chỉnh tốc độ (trườn 1, nước rút ×1.5) và cơ chế đói (chỉ giảm khi di chuyển, nước rút tốn thức ăn)
 - [x] Code 0.2: con mồi bỏ chạy và biết mệt, rơi cơ quan; Mắt sơ khai (có màu, nhìn xa), Chân giả (×1.4 tốc độ); điểm gắn trên thân; slime quay mặt theo hướng đi
 - [x] Chơi thử 0.2: con mồi quá dễ bắt, cơ quan mọc ngay lập tức
-- [x] Con mồi nhanh hơn (1.6), cơ quan phát triển dần trong 20 giây và tốn thức ăn
+- [x] Con mồi nhanh hơn (1.6); cơ quan lớn bằng thức ăn: mỗi cơ quan cần 30 thức ăn, một nửa mỗi bữa ăn nuôi cơ quan (cả bữa nếu đã no)
 - [ ] Chơi thử lại 0.2
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

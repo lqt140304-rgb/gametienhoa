@@ -20,6 +20,12 @@ namespace Evolve.Survival
         public bool IsDead => Health <= 0f;
 
         public event Action Changed;
+
+        /// <summary>
+        /// Optional hook that takes a share of eaten food (e.g. for growing organs).
+        /// Receives the amount eaten, returns what is left for hunger.
+        /// </summary>
+        public Func<float, float> FoodFilter;
         public event Action Died;
 
         public void Reset()
@@ -58,17 +64,10 @@ namespace Evolve.Survival
             return true;
         }
 
-        /// <summary>Spend stored food (e.g. on growing organs).</summary>
-        public void ConsumeFood(float amount)
-        {
-            if (IsDead || amount <= 0f) return;
-            Hunger = Clamp(Hunger - amount, MaxHunger);
-            Changed?.Invoke();
-        }
-
         public void Feed(float nutrition)
         {
             if (IsDead) return;
+            if (FoodFilter != null) nutrition = FoodFilter(nutrition);
             Hunger = Clamp(Hunger + nutrition, MaxHunger);
             Changed?.Invoke();
         }

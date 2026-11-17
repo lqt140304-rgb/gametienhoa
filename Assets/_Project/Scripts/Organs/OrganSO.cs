@@ -19,10 +19,8 @@ namespace Evolve.Organs
         public GameObject VisualPrefab;
 
         [Header("Growth")]
-        [Tooltip("Seconds to grow from bud to full organ (0 = instant)")]
-        public float GrowthSeconds = 20f;
-        [Tooltip("Total food (hunger) consumed while growing")]
-        public float GrowthFoodCost = 10f;
+        [Tooltip("Food that must be eaten to grow from bud to full organ (0 = instant)")]
+        public float GrowthFoodRequired = 30f;
 
         [Header("Effects (at full growth)")]
         [Tooltip("Gives colour vision and long view range")]
