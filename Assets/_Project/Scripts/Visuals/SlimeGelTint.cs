@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Evolve.Visuals
 {
     /// <summary>
-    /// Colours the gel of the body and of every organ with the slime's colour, per renderer (no material copies):
+    /// Colours the gel of the body and of every organ with the slime's colour, per renderer (own material instances):
     /// only renderers whose material is the gel ("SlimeGel...") are touched, so eyes and the heat film keep their look.
     /// The local player uses the chosen colour (SlimeColor); remote players get theirs from the network.
     /// Sits on the slime's "Visual" object (added by SlimeGelCore).
@@ -15,7 +15,6 @@ namespace Evolve.Visuals
         public bool UseLocalColor = true;
         public Color Custom = SlimeColor.Default;
 
-        MaterialPropertyBlock block;
         readonly List<Renderer> scratch = new List<Renderer>();
         float nextScan;
 
@@ -44,7 +43,6 @@ namespace Evolve.Visuals
         {
             Color c = UseLocalColor ? SlimeColor.Current : Custom;
             c.a = SlimeColor.Alpha;
-            if (block == null) block = new MaterialPropertyBlock();
 
             Tint(GetComponent<Renderer>(), c);
             foreach (var socket in GetComponentsInChildren<OrganSocket>(true))
@@ -57,9 +55,9 @@ namespace Evolve.Visuals
         void Tint(Renderer r, Color c)
         {
             if (r == null || r.sharedMaterial == null || !r.sharedMaterial.name.StartsWith("SlimeGel")) return;
-            r.GetPropertyBlock(block);
-            block.SetColor("_BaseColor", c);
-            r.SetPropertyBlock(block);
+            // A per-renderer material instance (created once, then reused): the most reliable way to colour one slime.
+            var mat = r.material;
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c); else mat.color = c;
         }
     }
 }
