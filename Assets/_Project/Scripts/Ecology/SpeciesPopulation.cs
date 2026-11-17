@@ -15,6 +15,9 @@ namespace Evolve.Ecology
         public float KillsPerHeadPerMinute;
 
         // Fractional accumulators (floored when they reach a whole number).
+        /// <summary>Set during Tick; whether the species had enough food/prey for births.</summary>
+        [System.NonSerialized] public bool Fed = true;
+
         public float BirthAccum;
         public float DeathAccum;
         public float KillAccum;

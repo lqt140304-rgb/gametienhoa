@@ -36,15 +36,13 @@ namespace Evolve.Ecology
             if (Food > FoodCapacity) Food = FoodCapacity;
             if (Food < 0f) Food = 0f;
 
-            var fed = new Dictionary<SpeciesPopulation, bool>();
-
             // 2. Region-food eaters; shortage kills (shortage% * 0.5) of the unembodied.
             for (int i = 0; i < species.Count; i++)
             {
                 var s = species[i];
                 if (s.PreyId != null) continue;
                 float need = s.Count * s.FoodPerHeadPerMinute * minutes;
-                bool isFed = true;
+                s.Fed = true;
                 if (need > 0f)
                 {
                     float eaten = need <= Food ? need : Food;
@@ -52,16 +50,16 @@ namespace Evolve.Ecology
                     float shortage = (need - eaten) / need;
                     if (shortage > Eps)
                     {
-                        isFed = false;
+                        s.Fed = false;
                         s.DeathAccum += shortage * 0.5f * s.Available;
                         int deaths = (int)System.Math.Floor(s.DeathAccum + Eps);
                         if (deaths > s.Available) deaths = s.Available;
                         for (int k = 0; k < deaths; k++) s.Kill(false);
                         s.DeathAccum -= deaths;
+                        if (s.DeathAccum < 0f) s.DeathAccum = 0f;
                         if (s.Available <= 0) s.DeathAccum = 0f;
                     }
                 }
-                fed[s] = isFed;
             }
 
             // 3. Predation on unembodied prey.
@@ -69,7 +67,6 @@ namespace Evolve.Ecology
             {
                 var s = species[i];
                 if (s.PreyId == null) continue;
-                fed[s] = true;
                 var prey = Get(s.PreyId);
                 if (prey == null || prey == s) continue;
                 s.KillAccum += s.Count * s.KillsPerHeadPerMinute * minutes;
@@ -77,6 +74,7 @@ namespace Evolve.Ecology
                 int kills = whole < prey.Available ? whole : prey.Available;
                 for (int k = 0; k < kills; k++) prey.Kill(false);
                 s.KillAccum -= kills;
+                if (s.KillAccum < 0f) s.KillAccum = 0f;
                 if (kills < whole) s.KillAccum = 0f; // no banking when prey ran out
             }
 
@@ -84,7 +82,12 @@ namespace Evolve.Ecology
             for (int i = 0; i < species.Count; i++)
             {
                 var s = species[i];
-                if (s.Dens <= 0 || !fed[s]) continue;
+                if (s.PreyId != null)
+                {
+                    var p = Get(s.PreyId);
+                    s.Fed = p != null && p != s && p.Count > 0;
+                }
+                if (s.Dens <= 0 || !s.Fed) continue;
                 s.BirthAccum += s.BirthsPerMinute * s.Dens * minutes;
                 int births = (int)System.Math.Floor(s.BirthAccum + Eps);
                 int room = s.Capacity - s.Count;
@@ -98,6 +101,7 @@ namespace Evolve.Ecology
                 {
                     s.Count += births;
                     s.BirthAccum -= births;
+                    if (s.BirthAccum < 0f) s.BirthAccum = 0f;
                 }
             }
         }

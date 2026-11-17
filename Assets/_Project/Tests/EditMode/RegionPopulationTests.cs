@@ -61,6 +61,16 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void PredatorWithoutPreyDoesNotBreed()
+        {
+            var r = Region(0f);
+            r.Add(new SpeciesPopulation { Id = "prey", Count = 0, Capacity = 20 });
+            var pred = r.Add(new SpeciesPopulation { Id = "pred", Count = 2, Capacity = 10, PreyId = "prey", Dens = 1, BirthsPerMinute = 5f });
+            r.Tick(1f);
+            Assert.AreEqual(2, pred.Count);
+        }
+
+        [Test]
         public void StoreThenEmbodyKeepsCount()
         {
             var s = new SpeciesPopulation { Id = "a", Count = 5, Capacity = 10 };
