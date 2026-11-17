@@ -27,23 +27,23 @@ namespace Evolve.Visuals
             if (GetComponent<SlimeGelTint>() == null) gameObject.AddComponent<SlimeGelTint>();
             if (GetComponent<SlimeGelAnimator>() == null) gameObject.AddComponent<SlimeGelAnimator>();
             block = new MaterialPropertyBlock();
-            var amber = MakeMaterial(Amber, 1.6f, 1f);
-            var haloA = MakeMaterial(Amber, 0.8f, 0.14f);
+            var amber = MakeMaterial(Amber, 1.0f, 1f);
+            var haloA = MakeMaterial(Amber, 0.5f, 0.12f);
             var haloB = MakeMaterial(new Color(1f, 0.8f, 0.4f), 0.5f, 0.07f);
             var bubbleMat = MakeMaterial(new Color(0.9f, 1f, 0.85f), 0.2f, 0.45f);
 
             var centre = new Vector3(0.03f, -0.1f, -0.02f);
-            core = MakePart("Core", centre, 0.18f, amber).transform;
+            core = MakePart("Core", centre, 0.085f, amber).transform;
             coreRenderer = core.GetComponent<Renderer>();
-            halo1 = MakePart("CoreHalo", centre, 0.27f, haloA).transform;
-            halo2 = MakePart("CoreHalo", centre, 0.35f, haloB).transform;
+            halo1 = MakePart("CoreHalo", centre, 0.12f, haloA).transform; // tiny soft glow, stays inside the body
+            halo2 = halo1; // (no second halo)
 
             var rnd = new System.Random(11);
             for (int i = 0; i < 6; i++)
             {
                 float a = (float)rnd.NextDouble() * Mathf.PI * 2f, r = 0.15f + (float)rnd.NextDouble() * 0.2f;
                 MakePart("Bubble", new Vector3(Mathf.Cos(a) * r, -0.2f + (float)rnd.NextDouble() * 0.34f, Mathf.Sin(a) * r),
-                    0.03f + (float)rnd.NextDouble() * 0.035f, bubbleMat);
+                    0.018f + (float)rnd.NextDouble() * 0.02f, bubbleMat);
             }
         }
 
@@ -56,12 +56,11 @@ namespace Evolve.Visuals
             float rate = Mathf.Lerp(7f, 2.2f, health);
             phase += Time.deltaTime * rate;
             float beat = 0.5f + 0.5f * Mathf.Sin(phase);
-            float pulse = 1f + 0.1f * beat + 0.25f * Boost;
-            core.localScale = Vector3.one * (0.18f * pulse);
-            halo1.localScale = Vector3.one * (0.27f * pulse);
-            halo2.localScale = Vector3.one * (0.35f * pulse);
+            float pulse = 1f + 0.08f * beat + 0.15f * Boost;
+            core.localScale = Vector3.one * (0.085f * pulse);
+            halo1.localScale = Vector3.one * (0.12f * pulse);
 
-            float glow = (Mathf.Lerp(0.3f, 1.3f, health) + 1.2f * Boost) * (0.75f + 0.25f * beat);
+            float glow = (Mathf.Lerp(0.25f, 0.9f, health) + 0.8f * Boost) * (0.75f + 0.25f * beat);
             coreRenderer.GetPropertyBlock(block);
             block.SetColor("_EmissionColor", Amber * glow);
             coreRenderer.SetPropertyBlock(block);

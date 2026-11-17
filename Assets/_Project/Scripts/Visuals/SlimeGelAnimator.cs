@@ -29,6 +29,7 @@ namespace Evolve.Visuals
             public MeshFilter Filter;
             public Mesh Mesh;
             public Vector3[] Base, Work;
+            public bool Legs;
         }
         readonly Dictionary<MeshFilter, Follower> followers = new Dictionary<MeshFilter, Follower>();
         readonly List<MeshFilter> dead_ = new List<MeshFilter>();
@@ -41,6 +42,8 @@ namespace Evolve.Visuals
         float activeTime = -1f;    // seconds since the motion started, <0 = none
 
         float nextFollowerScan;
+        float gaitPhase;
+        bool hasLegs;
         float dead;                // 0..1 how collapsed the body is (stats are looked up lazily)
         Survival.SurvivalStats stats;
 
@@ -101,6 +104,8 @@ namespace Evolve.Visuals
                 if (local.sqrMagnitude > 1e-4f) moveDir = Vector3.Slerp(moveDir.sqrMagnitude < 1e-4f ? local.normalized : moveDir, local.normalized, 1f - Mathf.Exp(-12f * dt));
             }
 
+            if (speed > 0.3f) gaitPhase += dt * (5f + speed * 1.6f);
+
             if (activeTime >= 0f)
             {
                 activeTime += dt;
@@ -111,7 +116,7 @@ namespace Evolve.Visuals
             float deadTarget = stats != null && stats.State.IsDead ? 1f : 0f;
             dead = Mathf.MoveTowards(dead, deadTarget, dt * 2.5f);
 
-            if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ScanFollowers(); }
+            if (Time.time >= nextFollowerScan) { nextFollowerScan = Time.time + 0.4f; ScanFollowers(); UpdateHasLegs(); }
 
             Deform();
             if (core != null) core.Boost = CoreBoost();
@@ -140,9 +145,15 @@ namespace Evolve.Visuals
                     copy.MarkDynamic();
                     f.sharedMesh = copy;
                     var verts = copy.vertices;
-                    followers[f] = new Follower { Filter = f, Mesh = copy, Base = verts, Work = new Vector3[verts.Length] };
+                    followers[f] = new Follower { Filter = f, Mesh = copy, Base = verts, Work = new Vector3[verts.Length], Legs = socket.Slot == Evolve.Organs.OrganSlot.Legs };
                 }
             }
+        }
+
+        void UpdateHasLegs()
+        {
+            hasLegs = false;
+            foreach (var f in followers.Values) if (f.Legs && f.Filter != null) { hasLegs = true; break; }
         }
 
         float CoreBoost()
@@ -204,7 +215,9 @@ namespace Evolve.Visuals
                 for (int i = 0; i < f.Base.Length; i++)
                 {
                     Vector3 bodyPoint = toBody.MultiplyPoint3x4(f.Base[i]);
-                    f.Work[i] = f.Base[i] + toLocal.MultiplyVector(Offset(bodyPoint));
+                    Vector3 off = Offset(bodyPoint);
+                    if (f.Legs) off += Gait(bodyPoint);
+                    f.Work[i] = f.Base[i] + toLocal.MultiplyVector(off);
                 }
                 f.Mesh.vertices = f.Work;
                 f.Mesh.RecalculateNormals();
@@ -224,49 +237,52 @@ namespace Evolve.Visuals
             Vector3 o = Vector3.zero;
 
             // Breathing: the hump rises and sinks slightly.
-            o.y += 0.012f * Mathf.Sin(t * 2.1f) * h;
-            o += outward * 0.006f * Mathf.Sin(t * 2.1f + 1f) * low;
+            o.y += 0.02f * Mathf.Sin(t * 2.1f) * h;
+            o += outward * 0.01f * Mathf.Sin(t * 2.1f + 1f) * low;
 
             // Crawling: a wave runs along the body, the hump leans where it is going.
             if (fMove > 0.01f && fDir.sqrMagnitude > 1e-4f)
             {
                 float along = b.x * fDir.x + b.z * fDir.z;
-                float wave = Mathf.Sin(along * 13f - t * 9f);
-                o.y += fMove * 0.025f * wave * (0.3f + 0.7f * h);
-                o += outward * fMove * 0.022f * wave * low;
-                o += fDir * (fMove * 0.07f * h * h);
+                float crawl = hasLegs ? 0.25f : 1f;     // with legs the legs do the moving, the body only sways
+                float fast = 1f + speed * 0.15f;        // faster = bigger, quicker ripples
+                float wave = Mathf.Sin(along * 11f - t * (9f + speed * 1.5f));
+                o.y += fMove * 0.07f * fast * crawl * wave * (0.3f + 0.7f * h);
+                o += outward * fMove * 0.06f * fast * crawl * wave * low;
+                o += fDir * (fMove * 0.16f * fast * h * h);
+                if (hasLegs) o.y += fMove * 0.035f * Mathf.Sin(gaitPhase * 2f) * h;   // body bobs with each step
             }
 
             // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
             if (fAbsorb > 0f)
             {
                 float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - fAbsorb), 2f) / 0.06f) * fAbsorbPulse;
-                o.y -= 0.05f * ring;
-                o -= outward * 0.05f * ring;
-                o -= outward * 0.03f * fAbsorbPulse * rn;
-                o.y += 0.03f * fAbsorbPulse * h;
+                o.y -= 0.11f * ring;
+                o -= outward * 0.11f * ring;
+                o -= outward * 0.07f * fAbsorbPulse * rn;
+                o.y += 0.07f * fAbsorbPulse * h;
             }
 
             // Attacking / dashing: pull back, then the front lunges forward.
             if (fKick != 0f || fStretch != 0f)
             {
                 float front = 0.5f + 0.5f * Mathf.Clamp(b.z / 0.55f, -1f, 1f);
-                o.z += fKick * (0.35f + 0.65f * h) * 0.28f;
-                o.z += fStretch * front * 0.16f;
-                o.y -= Mathf.Abs(fKick) * 0.1f * h;
+                o.z += fKick * (0.35f + 0.65f * h) * 0.5f;
+                o.z += fStretch * front * 0.3f;
+                o.y -= Mathf.Abs(fKick) * 0.2f * h;
             }
 
             // Skill: tighten and tremble while charging, then a bristling burst outward.
             if (fCharge > 0f)
             {
-                o -= outward * 0.05f * fCharge * rn;
-                o.y += 0.06f * fCharge * h;
-                o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.004f * fCharge;
+                o -= outward * 0.1f * fCharge * rn;
+                o.y += 0.12f * fCharge * h;
+                o += new Vector3(Mathf.Sin(t * 70f + b.z * 20f), 0f, Mathf.Cos(t * 63f + b.x * 20f)) * 0.008f * fCharge;
             }
             if (fBurst > 0f)
             {
-                o += outward * 0.09f * fBurst * (0.4f + 0.6f * low);
-                o.y -= 0.05f * fBurst * h;
+                o += outward * 0.17f * fBurst * (0.4f + 0.6f * low);
+                o.y -= 0.1f * fBurst * h;
             }
 
             // Dead: the body slumps into a flat puddle.
@@ -275,6 +291,22 @@ namespace Evolve.Visuals
                 o.y -= (b.y - SlimeMeshBuilder.Bottom) * 0.6f * dead;
                 o += outward * 0.07f * dead * rn;
             }
+            return o;
+        }
+
+        /// <summary>
+        /// Walking with legs: diagonal pairs of legs alternate. The foot (far from the body centre) swings along the
+        /// direction of travel and lifts while it swings; near the shoulder almost nothing moves.
+        /// </summary>
+        Vector3 Gait(Vector3 b)
+        {
+            if (fMove < 0.01f) return Vector3.zero;
+            float sx = b.x >= 0f ? 1f : -1f, sz = b.z >= 0f ? 1f : -1f;
+            float phase = gaitPhase + (sx * sz > 0f ? 0f : Mathf.PI);
+            float reach = Mathf.Clamp01((Mathf.Sqrt(b.x * b.x + b.z * b.z) - 0.1f) / 0.22f);
+            float lift = Mathf.Max(0f, Mathf.Cos(phase));
+            Vector3 o = fDir * (Mathf.Sin(phase) * 0.16f * fMove * reach);
+            o.y += lift * 0.13f * fMove * reach;
             return o;
         }
 
