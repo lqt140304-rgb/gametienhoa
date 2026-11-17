@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12c4eb1131efc9547978393261568b34, type: 3}
+  m_Name: Organ_RunnerLegs
+  m_EditorClassIdentifier: Evolve::Evolve.Organs.OrganSO
+  DisplayName: "Ch\xE2n ch\u1EA1y"
+  Description: "Ch\xE2n c\xF3 kh\u1EDBp \u0111\u1EA7u ti\xEAn: t\u1ED1c \u0111\u1ED9 g\u1EA5p \u0111\xF4i."
+  Slot: 1
+  Tier: 2
+  DropWeight: 1
+  VisualPrefab: {fileID: 1098053135959476689, guid: cc52dc0aaec458c4d8db787b6eef8dff, type: 3}
+  GrowthFoodRequired: 70
+  GrantsSight: 0
+  SpeedMultiplier: 2
