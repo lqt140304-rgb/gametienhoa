@@ -20,6 +20,7 @@ namespace Evolve.Organs
         [Range(0, 1)] public float DropChance = 0.6f;
 
         [Header("Tier weights (relative)")]
+        [Min(0)] public float WeightD = 0f;
         [Min(0)] public float WeightC = 70f;
         [Min(0)] public float WeightB = 22f;
         [Min(0)] public float WeightA = 7f;
@@ -31,10 +32,11 @@ namespace Evolve.Organs
 
         public List<OrganSO> Organs = new List<OrganSO>();
 
-        static readonly OrganTier[] AllTiers = { OrganTier.C, OrganTier.B, OrganTier.A, OrganTier.S };
+        static readonly OrganTier[] AllTiers = { OrganTier.D, OrganTier.C, OrganTier.B, OrganTier.A, OrganTier.S };
 
         public float TierWeight(OrganTier t) => t switch
         {
+            OrganTier.D => WeightD,
             OrganTier.B => WeightB,
             OrganTier.A => WeightA,
             OrganTier.S => WeightS,

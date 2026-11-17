@@ -33,6 +33,10 @@ namespace Evolve.World
         float scanStart = -1f;
         float readyAt;
 
+        [Header("Passive")]
+        [SerializeField] float passiveRadius = 30f;
+        readonly Dictionary<VibrationEmitter, int> seenPulses = new Dictionary<VibrationEmitter, int>();
+
         public float EnergyCost => energyCost;
         public float CooldownRemaining => Mathf.Max(0f, readyAt - Time.time);
         public bool IsScanning => scanStart >= 0f;
@@ -50,6 +54,38 @@ namespace Evolve.World
                 StartScan();
 
             if (scanStart >= 0f) UpdateWave();
+            UpdatePassive();
+        }
+
+        // Free listening: new pulses from emitters within passiveRadius show a faint ring, fainter with distance.
+        void UpdatePassive()
+        {
+            if (pulsePrefab == null) return;
+            var list = VibrationEmitter.Active;
+            if (seenPulses.Count > 256) seenPulses.Clear();
+            float r2 = passiveRadius * passiveRadius;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var e = list[i];
+                if (e == null || e.transform.IsChildOf(transform)) continue;
+                seenPulses.TryGetValue(e, out int seen);
+                if (e.PulseCount == seen) continue;
+                seenPulses[e] = e.PulseCount;
+                if (Time.time - e.LastPulseTime > 0.25f) continue; // stale (e.g. dictionary was reset)
+
+                Vector3 at = e.transform.position + Vector3.up * 0.5f;
+                float sq = (at - transform.position).sqrMagnitude;
+                if (sq > r2) continue;
+                float intensity = e.LastPulseStrength * (1f - Mathf.Sqrt(sq) / passiveRadius);
+                if (intensity <= 0.02f) continue;
+
+                Color c = e.IsPredator ? predatorColor : preyColor;
+                c.a = Mathf.Clamp01(intensity);
+                var p = Instantiate(pulsePrefab, at, Quaternion.identity);
+                var main = p.main;
+                main.startColor = c;
+                Destroy(p.gameObject, main.duration + main.startLifetime.constantMax);
+            }
         }
 
         void StartScan()

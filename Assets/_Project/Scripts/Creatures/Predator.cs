@@ -59,6 +59,30 @@ namespace Evolve.Creatures
         public bool IsTired => Time.time < tiredUntil;
         public float MaxHealth => maxHealth;
 
+        float netFraction = 1f, predictedFraction = 1f, predictedUntil;
+
+        /// <summary>
+        /// Health as 0..1 for bars. A replica shows the host's value, but drops at once when the local player hits it
+        /// (for a second, until the host's own number arrives).
+        /// </summary>
+        public float HealthFraction
+        {
+            get
+            {
+                if (!IsReplica) return Mathf.Clamp01(Health / Mathf.Max(1f, maxHealth));
+                return Time.time < predictedUntil ? Mathf.Min(netFraction, predictedFraction) : netFraction;
+            }
+        }
+
+        /// <summary>Client: the host's health for this predator, as 0..1.</summary>
+        public void SetNetHealth(float fraction) => netFraction = Mathf.Clamp01(fraction);
+
+        void ShowHit(float amount)
+        {
+            HitFlash.Play(gameObject);
+            CombatEvents.Raise(transform, amount);
+        }
+
         /// <summary>Id shared with other machines (the host hands it out).</summary>
         public int NetId { get; set; }
         /// <summary>Client side: a copy of a predator that really lives on the host. It reports hits to the host.</summary>
@@ -228,12 +252,20 @@ namespace Evolve.Creatures
             if (IsReplica)
             {
                 // A replica takes no damage itself: the host applies it and the replica follows.
-                if (amount > 0f) NetWorld.ReportPredatorHit?.Invoke(NetId, amount);
+                // But the player who hit it sees the result at once (flash, number, bar) without waiting.
+                if (amount > 0f)
+                {
+                    predictedFraction = Mathf.Max(0f, HealthFraction - amount / Mathf.Max(1f, maxHealth));
+                    predictedUntil = Time.time + 1f;
+                    ShowHit(amount);
+                    NetWorld.ReportCreatureHit?.Invoke(NetId, amount);
+                }
                 return;
             }
             if (dead || amount <= 0f) return;
             Health -= amount;
             retreatUntil = Time.time + retreatTime;
+            ShowHit(amount);
             if (Health > 0f) return;
 
             dead = true;
@@ -246,6 +278,9 @@ namespace Evolve.Creatures
             }
             Debug.Log($"{name} bị hạ gục");
             Killed?.Invoke(this);
+            bool hasEc = TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec);
+            if (hasEc) ec.NotifyKilled();
+            Evolve.Ecology.Carcass.Spawn(new Vector3(transform.position.x, 0.2f, transform.position.z), 1.5f, hasEc ? ec.Region : null);
             Destroy(gameObject);
         }
     }

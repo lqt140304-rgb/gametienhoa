@@ -40,6 +40,80 @@ namespace Evolve.EditorTools
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
+            var shared = CreateSharedAssets();
+            var preyPrefab = shared.PreyPrefab;
+            var predatorPrefab = shared.PredatorPrefab;
+            var nutrientPrefab = shared.NutrientPrefab;
+
+            // Ground
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            ground.name = "Ground";
+            ground.transform.localScale = new Vector3(10, 1, 10);
+            ground.GetComponent<Renderer>().sharedMaterial = shared.GroundMat;
+
+            var slime = CreatePlayer(shared, new Vector3(0, 1, 0));
+
+            // Food
+            var foodRoot = new GameObject("Nutrients").transform;
+            var rng = new System.Random(140304);
+            for (int i = 0; i < NutrientCount; i++)
+            {
+                var n = (GameObject)PrefabUtility.InstantiatePrefab(nutrientPrefab, foodRoot);
+                float angle = (float)(rng.NextDouble() * Mathf.PI * 2);
+                float dist = Mathf.Lerp(3f, SpawnRadius, (float)rng.NextDouble());
+                n.transform.position = new Vector3(Mathf.Cos(angle) * dist, 0.25f, Mathf.Sin(angle) * dist);
+            }
+
+            // Prey
+            var spawner = new GameObject("Prey Spawner").AddComponent<PreySpawner>();
+            Set(spawner, "prefab", preyPrefab.GetComponent<Prey>());
+
+            // Desert: hot strip on the east edge with richer food and more predators
+            var desert = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            desert.name = "Desert";
+            Object.DestroyImmediate(desert.GetComponent<Collider>());
+            desert.transform.position = new Vector3(37.5f, 0.01f, 0f);
+            desert.transform.localScale = new Vector3(2.5f, 1f, 5f);
+            desert.GetComponent<Renderer>().sharedMaterial = Mat("Sand", new Color(0.85f, 0.72f, 0.45f), "Universal Render Pipeline/Lit");
+
+            var zoneGo = new GameObject("Desert Zone (50°C)");
+            zoneGo.transform.position = new Vector3(37.5f, 3f, 0f);
+            var zoneCol = zoneGo.AddComponent<BoxCollider>();
+            zoneCol.isTrigger = true;
+            zoneCol.size = new Vector3(25f, 6f, 50f);
+            var zone = zoneGo.AddComponent<TemperatureZone>();
+            zone.Ambient = 50f;
+            zone.DisplayName = "Hoang mạc";
+
+            var desertFood = new GameObject("Nutrients (Desert)").transform;
+            for (int i = 0; i < 12; i++)
+            {
+                var n = (GameObject)PrefabUtility.InstantiatePrefab(nutrientPrefab, desertFood);
+                n.transform.position = new Vector3(Mathf.Lerp(28f, 48f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-22f, 22f, (float)rng.NextDouble()));
+            }
+
+            // Predators: two in the desert, one roaming the far side of the plains
+            PredatorSpawnerAt("Predator Spawner (Desert)", new Vector3(38f, 0f, 0f), 2, 10f, predatorPrefab);
+            PredatorSpawnerAt("Predator Spawner (Plains)", new Vector3(-25f, 0f, 25f), 1, 10f, predatorPrefab);
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            AddToBuildSettings(ScenePath);
+            AssetDatabase.SaveAssets();
+            Selection.activeGameObject = slime;
+            Debug.Log("Đã dựng " + ScenePath + ". Bấm Play: WASD trườn, Space nảy, Q Dị Năng, giữ chuột phải xoay camera. Hoang mạc ở phía đông (x > 25).");
+        }
+
+        /// <summary>Assets shared by scene builders (materials, SOs, creature prefabs). Created once, reused after.</summary>
+        internal sealed class SharedAssets
+        {
+            public Material GroundMat, SlimeMat;
+            public SurvivalConfig Config;
+            public BurstDashAbility Dash;
+            public GameObject PreyPrefab, PredatorPrefab, NutrientPrefab, PulsePrefab;
+        }
+
+        internal static SharedAssets CreateSharedAssets()
+        {
             // Assets
             var groundMat = Mat("Ground", new Color(0.35f, 0.45f, 0.3f), "Universal Render Pipeline/Lit");
             var slimeMat = Mat("Slime", new Color(0.45f, 0.85f, 0.55f), "Universal Render Pipeline/Lit");
@@ -156,15 +230,20 @@ namespace Evolve.EditorTools
             var nutrientPrefab = NutrientPrefab(foodMat);
             var pulsePrefab = PulsePrefab(pulseMat);
 
-            // Ground
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            ground.name = "Ground";
-            ground.transform.localScale = new Vector3(10, 1, 10);
-            ground.GetComponent<Renderer>().sharedMaterial = groundMat;
+            return new SharedAssets
+            {
+                GroundMat = groundMat, SlimeMat = slimeMat, Config = config, Dash = dash,
+                PreyPrefab = preyPrefab, PredatorPrefab = predatorPrefab,
+                NutrientPrefab = nutrientPrefab, PulsePrefab = pulsePrefab,
+            };
+        }
 
+        /// <summary>Slime player + follow camera (Camera.main) + vision volume + HUD. Returns the slime.</summary>
+        internal static GameObject CreatePlayer(SharedAssets shared, Vector3 position)
+        {
             // Slime
             var slime = new GameObject("Slime");
-            slime.transform.position = new Vector3(0, 1, 0);
+            slime.transform.position = position;
             slime.AddComponent<SphereCollider>().radius = 0.5f;
             var rb = slime.AddComponent<Rigidbody>();
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -174,7 +253,7 @@ namespace Evolve.EditorTools
             visual.name = "Visual";
             Object.DestroyImmediate(visual.GetComponent<Collider>());
             visual.transform.SetParent(slime.transform, false);
-            visual.GetComponent<Renderer>().sharedMaterial = slimeMat;
+            visual.GetComponent<Renderer>().sharedMaterial = shared.SlimeMat;
             Socket(visual.transform, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
             Socket(visual.transform, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
             Socket(visual.transform, OrganSlot.Skin, Vector3.zero);
@@ -183,19 +262,19 @@ namespace Evolve.EditorTools
             var host = slime.AddComponent<OrganHost>();
             slime.AddComponent<OrganInteractor>();
             var stats = slime.AddComponent<SurvivalStats>();
-            Set(stats, "config", config);
+            Set(stats, "config", shared.Config);
             slime.AddComponent<ClimateSensor>();
             slime.AddComponent<SkillBar>();
             var controller = slime.AddComponent<SlimeController>();
             Set(controller, "visual", visual.transform);
             var caster = slime.AddComponent<AbilityCaster>();
-            SetArray(caster, "randomPool", new Object[] { dash });
+            SetArray(caster, "randomPool", new Object[] { shared.Dash });
             var sense = slime.AddComponent<VibrationSense>();
-            Set(sense, "pulsePrefab", pulsePrefab.GetComponent<ParticleSystem>());
+            Set(sense, "pulsePrefab", shared.PulsePrefab.GetComponent<ParticleSystem>());
 
             // Camera
             var cam = Camera.main;
-            cam.transform.SetPositionAndRotation(new Vector3(0, 4, -6), Quaternion.Euler(25, 0, 0));
+            cam.transform.SetPositionAndRotation(position + new Vector3(0, 3, -6), Quaternion.Euler(25, 0, 0));
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.08f, 0.08f, 0.08f);
             cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;
@@ -215,59 +294,12 @@ namespace Evolve.EditorTools
             var hud = new GameObject("HUD").AddComponent<SurvivalHUD>();
             Set(hud, "stats", stats);
 
-            // Food
-            var foodRoot = new GameObject("Nutrients").transform;
-            var rng = new System.Random(140304);
-            for (int i = 0; i < NutrientCount; i++)
-            {
-                var n = (GameObject)PrefabUtility.InstantiatePrefab(nutrientPrefab, foodRoot);
-                float angle = (float)(rng.NextDouble() * Mathf.PI * 2);
-                float dist = Mathf.Lerp(3f, SpawnRadius, (float)rng.NextDouble());
-                n.transform.position = new Vector3(Mathf.Cos(angle) * dist, 0.25f, Mathf.Sin(angle) * dist);
-            }
-
-            // Prey
-            var spawner = new GameObject("Prey Spawner").AddComponent<PreySpawner>();
-            Set(spawner, "prefab", preyPrefab.GetComponent<Prey>());
-
-            // Desert: hot strip on the east edge with richer food and more predators
-            var desert = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            desert.name = "Desert";
-            Object.DestroyImmediate(desert.GetComponent<Collider>());
-            desert.transform.position = new Vector3(37.5f, 0.01f, 0f);
-            desert.transform.localScale = new Vector3(2.5f, 1f, 5f);
-            desert.GetComponent<Renderer>().sharedMaterial = Mat("Sand", new Color(0.85f, 0.72f, 0.45f), "Universal Render Pipeline/Lit");
-
-            var zoneGo = new GameObject("Desert Zone (50°C)");
-            zoneGo.transform.position = new Vector3(37.5f, 3f, 0f);
-            var zoneCol = zoneGo.AddComponent<BoxCollider>();
-            zoneCol.isTrigger = true;
-            zoneCol.size = new Vector3(25f, 6f, 50f);
-            var zone = zoneGo.AddComponent<TemperatureZone>();
-            zone.Ambient = 50f;
-            zone.DisplayName = "Hoang mạc";
-
-            var desertFood = new GameObject("Nutrients (Desert)").transform;
-            for (int i = 0; i < 12; i++)
-            {
-                var n = (GameObject)PrefabUtility.InstantiatePrefab(nutrientPrefab, desertFood);
-                n.transform.position = new Vector3(Mathf.Lerp(28f, 48f, (float)rng.NextDouble()), 0.25f, Mathf.Lerp(-22f, 22f, (float)rng.NextDouble()));
-            }
-
-            // Predators: two in the desert, one roaming the far side of the plains
-            PredatorSpawnerAt("Predator Spawner (Desert)", new Vector3(38f, 0f, 0f), 2, 10f, predatorPrefab);
-            PredatorSpawnerAt("Predator Spawner (Plains)", new Vector3(-25f, 0f, 25f), 1, 10f, predatorPrefab);
-
-            EditorSceneManager.SaveScene(scene, ScenePath);
-            AddToBuildSettings(ScenePath);
-            AssetDatabase.SaveAssets();
-            Selection.activeGameObject = slime;
-            Debug.Log("Đã dựng " + ScenePath + ". Bấm Play: WASD trườn, Space nảy, Q Dị Năng, giữ chuột phải xoay camera. Hoang mạc ở phía đông (x > 25).");
+            return slime;
         }
 
         static readonly Vector3 BackSocket = new Vector3(0f, 0.3f, -0.25f);
 
-        static void PredatorSpawnerAt(string name, Vector3 pos, int count, float radius, GameObject prefab)
+        internal static void PredatorSpawnerAt(string name, Vector3 pos, int count, float radius, GameObject prefab)
         {
             var go = new GameObject(name);
             go.transform.position = pos;
@@ -363,7 +395,7 @@ namespace Evolve.EditorTools
             go.AddComponent<OrganSocket>().Slot = slot;
         }
 
-        static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat)
+        internal static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat)
         {
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
@@ -512,7 +544,7 @@ namespace Evolve.EditorTools
             return profile;
         }
 
-        static Material Mat(string name, Color color, string shaderName)
+        internal static Material Mat(string name, Color color, string shaderName)
         {
             string path = $"{Root}/Materials/{name}.mat";
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -526,7 +558,7 @@ namespace Evolve.EditorTools
             return mat;
         }
 
-        static T Asset<T>(string path, System.Action<T> init = null) where T : ScriptableObject
+        internal static T Asset<T>(string path, System.Action<T> init = null) where T : ScriptableObject
         {
             var a = AssetDatabase.LoadAssetAtPath<T>(path);
             if (a != null) return a;
@@ -536,7 +568,7 @@ namespace Evolve.EditorTools
             return a;
         }
 
-        static void Set(Object target, string field, Object value)
+        internal static void Set(Object target, string field, Object value)
         {
             var so = new SerializedObject(target);
             var prop = so.FindProperty(field);
@@ -545,7 +577,7 @@ namespace Evolve.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        static void SetArray(Object target, string field, Object[] values)
+        internal static void SetArray(Object target, string field, Object[] values)
         {
             var so = new SerializedObject(target);
             var prop = so.FindProperty(field);
@@ -556,7 +588,7 @@ namespace Evolve.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        static void EnsureFolder(string path)
+        internal static void EnsureFolder(string path)
         {
             if (AssetDatabase.IsValidFolder(path)) return;
             int slash = path.LastIndexOf('/');
@@ -564,7 +596,7 @@ namespace Evolve.EditorTools
             AssetDatabase.CreateFolder(path.Substring(0, slash), path.Substring(slash + 1));
         }
 
-        static void AddToBuildSettings(string path)
+        internal static void AddToBuildSettings(string path)
         {
             var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             scenes.RemoveAll(s => s.path == path);

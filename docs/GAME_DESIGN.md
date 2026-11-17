@@ -47,16 +47,25 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 ## 4.1. Phân cấp nguồn cơ quan [ĐÃ CHỐT]
 
+- **D** **[ĐÃ CHỐT 2026-11-17]**: cơ quan từ sinh vật gần như vô hại, cuối chuỗi thức ăn (khu ngầm chỉ có D/C/B). Bậc thấp nhất, màu xám tối, EXP hấp thụ thấp nhất. Thứ tự bậc thành D, C, B, A, S (giá trị số của C/B/A/S giữ nguyên để asset cũ không lệch). Chi tiết: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 5.
 - **C**: cơ quan từ sinh vật nhỏ, yếu.
 - **B**: cơ quan từ sinh vật thông thường.
 - **A**: cơ quan từ đại thú fantasy, sinh vật lớn.
 - **S**: cơ quan từ boss hoặc cự thú huyền thoại.
 - Sinh vật cao cấp vẫn có thể mang cơ quan bậc thấp hơn. Mẫu hư hỏng không thay đổi tier gốc.
 
+## 4.1b. Quần thể theo vùng [ĐÃ CHỐT 2026-11-17]
+
+- Khu ngầm **không dùng spawner** thả quái ngẫu nhiên. Mỗi vùng (`Region`) giữ **con số quần thể** theo loài (số lượng, sinh sản, sức chứa, thức ăn của vùng, danh sách tổ/hang).
+- Gần người chơi: sinh vật hiện thân từ tổ/hang; xa: chỉ là con số, chạy phép tính sinh sản/chết đói/bị săn, không AI, không vật lý. Giết quái thì quần thể giảm thật; phá tổ thì loài đó mất nguồn sinh.
+- **Kẻ săn B không bao giờ sinh gần người chơi**: nó đi vào từ Rìa Săn Mồi khi con mồi trong lãnh thổ cạn, có tín hiệu báo trước (rung lớn, sinh vật D bỏ chạy). Xác sinh vật phân hủy theo 3 giai đoạn.
+- Co-op: host chạy mô phỏng quần thể. Chi tiết và bản 0.5a–0.5e: "+SPEC+" mục 6.
+
 ## 4.2. Hư hỏng và tái tạo cơ quan [ĐÃ CHỐT hướng]
 
 - **Sát thương kết hợp vị trí và lan truyền** sang cơ quan liên kết / HP cơ thể.
 - **Bản thiết kế đã nghiên cứu được giữ vĩnh viễn**. Cơ quan bị phá hủy có thể tái tạo bằng tài nguyên, không buộc săn lại boss.
+- **[ĐÃ CHỐT 2026-11-17] Cơ quan là gel mô phỏng**: giết quái, rơi cơ quan, slime **hấp thụ** (học bản mẫu); khi trang bị, slime dùng gel trên thân mô phỏng hình dạng cơ quan. Logic ổ gắn, EXP, cấp giữ nguyên. *(Đổi ngày 2026-11-17, trước đây là gắn nguyên khối.)* Chi tiết: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 5 và 6.5.
 - Các công thức Damage, Integrity, Trauma, chất lượng mẫu và chi phí sửa chữa hiện **[ĐỀ XUẤT]**; xem [Biological Integrity System v1.1](BIOLOGICAL_INTEGRITY.md).
 
 ## 4.3. Rơi cơ quan khi săn [ĐÃ CHỐT]
@@ -65,6 +74,7 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 - **Cách roll hai bước:** chọn bậc trước theo trọng số bậc (C/B/A/S), rồi chọn cơ quan trong bậc đó, nên tỉ lệ bậc đúng như bảng.
 - Cơ quan đã có chỉ còn **0.8** trọng số so với cơ quan chưa có cùng bậc (chỉnh được trong Inspector). Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường.
+- **[ĐÃ CHỐT 2026-11-17]** Cơ quan rơi ra là **bản mẫu để hấp thụ**; người chơi học bản mẫu rồi mô phỏng bằng gel (xem 4.2). Ở 0.5a vật phẩm cơ quan vẫn như cũ, phần gel làm ở 0.5e.
 - "Đã có" tính theo cơ quan **đang gắn trên người**; tháo ra thì tính là chưa có, tỉ lệ rơi trở lại bình thường.
 
 ## 4.4. EXP tiến hóa và cấp cơ quan [ĐÃ CHỐT, thông số ĐỀ XUẤT]
@@ -94,7 +104,7 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
   - Kỹ năng mở ở Lv2 (`AbilityUnlockLevel`), tự vào ô trống đầu tiên; đổi ô bằng bảng Cơ thể (G). Mất cơ quan thì mất kỹ năng.
   - Hồi chiêu tính theo từng cơ quan, nên đổi ô không làm mới hồi chiêu. Lv3: hồi chiêu ngắn hơn 25%, hiệu lực mạnh hơn 50%.
   - Chân giả cơ bắp (B) → **Xung Phong Húc**: lao tới lực 9, 20 năng lượng, hồi 6 giây, đủ nhanh để húc kẻ săn mồi.
-  - Gai độc (B) → **Xả Gai**: bắn một chùm 5 gai (Lv3: 7 gai, mạnh hơn 50%) bay thẳng về phía hồng tâm, mỗi gai 6 sát thương kẻ săn mồi trúng đòn, tầm 14 m, 20 năng lượng, hồi 8 giây.
+  - Gai độc (B) → **Xả Gai**: bắn một chùm 5 gai (Lv3: 7 gai, mạnh hơn 50%) bay thẳng về phía hồng tâm, mỗi gai 6 sát thương cho kẻ săn mồi **và con mồi** trúng đòn (con mồi có 12 máu: một loạt gai hạ được, thưởng giống như bắt), tầm 14 m, 20 năng lượng, hồi 8 giây.
   - **Chế độ ngắm** [chủ dự án yêu cầu 2026-11-17]: **Chế độ chuột** (mặc định): con trỏ tự do, giữ chuột phải để xoay camera, kỹ năng bắn/lao **theo hướng con trỏ**. **Alt** vào **chế độ ngắm**: hồng tâm giữa màn hình, chuột xoay camera trực tiếp, camera lệch qua vai (để hồng tâm không đè lên nhân vật), kỹ năng đi theo hồng tâm. **F5** đổi **góc nhìn thứ nhất** (camera ở mắt, ẩn thân, luôn có hồng tâm). Điểm ngắm là vật đầu tiên tia từ camera chạm; nếu là mặt đất hoặc không chạm gì thì bắn ngang theo hướng đó. Bảng cơ quan, menu HUD và Menu God tự trả con trỏ.
 
 **Quái vật**
@@ -115,6 +125,8 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 
 **[ĐÃ CHỐT]** Máu; thanh đói; thanh năng lượng; thanh kinh nghiệm tiến hóa; thanh nhiệt độ.
 
+**[ĐÃ CHỐT 2026-11-17]** Thêm chỉ số **Khát** (0.5b), **Căng thẳng** 0–100 (0.5b, không có hậu quả nặng ở 100, chỉ hiệu ứng tăng dần) và **5 chất dinh dưỡng** tên kiểu slime (0.5c): **Sợi Nhầy** (đạm), **Tinh Vôi** (canxi), **Huyết Thiết** (sắt), **Mỡ Nhờn** (chất béo), **Tinh Chất Sống** (vitamin). Dinh dưỡng là điều kiện của cơ quan: thiếu kéo dài thì cơ quan yếu dần rồi tiêu biến (bản mẫu vẫn còn). Đói vẫn là calo tổng. Chi tiết: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 5, 6.2, 6.3.
+
 **[ĐỀ XUẤT]** Độ ẩm (rất quan trọng cho slime), sinh khối để phát triển bộ phận, khối lượng, ổn định cấu trúc, chuyển hóa, cảm nhận, kháng môi trường, oxy theo tình huống và độc tố.
 
 ## 6. Co-op và xây dựng
@@ -124,6 +136,8 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 **[ĐỀ XUẤT]** Truyền dưỡng chất, giữ ấm theo bầy, cứu hộ lõi nguy kịch, tổ dùng để lưu trữ và tiến hóa. Chưa chốt quy tắc chết/hồi sinh và đồng bộ.
 
 ## 6.1. Mạng, chết và cứu hộ
+
+**[ĐÃ CHỐT 2026-11-17] Chết với cơ quan gel (từ 0.5e):** người chết **giữ bản mẫu** đã học nhưng mọi cơ quan gel đang mô phỏng **tan ra**; muốn mô phỏng lại phải đủ chất và EXP. Tại chỗ chết rơi **bản sao bản mẫu** để người khác nhặt và học (50% mất mỗi bản, cứu kịp trong 120 giây thì không tan, không rơi). Điều này thay cho việc rơi nguyên cơ quan ở dưới *(đổi ngày 2026-11-17; luật hiện tại trong prototype vẫn giữ đến khi làm 0.5e)*. Chi tiết: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 5, 6.5.
 
 **[ĐÃ CHỐT]**
 - Mỗi người có **3 mạng** (tính riêng từng người). Còn mạng thì tự hồi sinh chủ động tại điểm xuất phát, nhưng **mất cơ quan**: toàn bộ cơ quan rơi ra **tại chỗ chết**, mỗi cơ quan **50% bị mất** (tính riêng từng cái), phần còn lại nằm trên đất, ai cũng nhặt được, nhặt lại phải nuôi từ mầm. *(Đổi ngày 2026-11-17, trước đây là giữ cơ quan.)*

@@ -9,6 +9,11 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 | **0.3: Thế giới phản kháng** | Kẻ thù săn người chơi; chỉ số nhiệt độ; vùng thứ 2 (hoang mạc) | Có áp lực buộc phải tiến hóa không? |
 | **0.4: Co-op** | 2–4 người chơi qua Netcode for GameObjects; đồng bộ chỉ số và cơ quan | Chơi chung có vui hơn chơi một mình không? |
 | **0.5: Vòng lặp hoàn chỉnh** | Boss đầu tiên; xây tổ; lưu tiến trình; chọn Thiên Phú và Khiếm Khuyết | Một ván chơi có trọn vẹn không? |
+| **0.5a: Hồ Khởi Sinh (Underroot Lake)** | Địa hình hồ ngầm, bậc cơ quan D, quần thể theo vùng thay spawner, kẻ săn B đi vào từ rìa, xác phân hủy 3 giai đoạn | Khu hồ có "sống" như một hệ sinh thái không? |
+| **0.5b: Khát, nước, nơi trú** | Thanh Khát, nước sạch/bẩn, nơi trú ẩn, chỉ số Căng thẳng | Có phải đi lại giữa các vi sinh cảnh để sống không? |
+| **0.5c: Dinh dưỡng** | 5 chất kiểu slime (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống); thiếu thì cơ quan yếu dần | Thức ăn có còn là lựa chọn có ý nghĩa không? |
+| **0.5d: Bệnh tật** | 2–3 bệnh (nước đọng, thối gel, mờ bào tử), lây trong co-op | Hậu quả của lựa chọn sai có đủ rõ không? |
+| **0.5e: Gel mô phỏng cơ quan** | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
 | **Sau đó** | Thêm vùng, Dị Năng, cơ quan; thay hình khối tạm bằng model Blender | — |
 
 ## Nguyên tắc
@@ -55,4 +60,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Chơi thử 0.4b đợt 1
 - [ ] Co-op 0.4b đợt 2: cứu đồng đội, chuyền máu, chế độ quan sát
 - [ ] Chơi thử HUD mới ở nhiều độ phân giải và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
+- [x] Spec lát cắt Hồ Khởi Sinh + sinh tồn sâu 0.5a–0.5e (`docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md`)
+- [x] Code 0.5a: **đã code, chưa biên dịch/chạy thử** (chưa có Unity để biên dịch): bậc D, `Ecology/` (quần thể, `Region`, `Den`, xác, kẻ săn B đi vào), `VibrationEmitter`, menu **Evolve → Build Underroot Lake**, test EditMode
+- [ ] Biên dịch và chạy thử 0.5a theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 8
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
