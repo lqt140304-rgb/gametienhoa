@@ -210,7 +210,7 @@ namespace Evolve.Creatures
             caught = true;
 
             NetWorld.Feed(stats, nutrition);
-            Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Absorb);
+            Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Gulp);
             var host = stats.GetComponent<OrganHost>();
             var drop = PickDrop(host);
             if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));

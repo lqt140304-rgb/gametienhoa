@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Evolve.Visuals
 {
     /// <summary>Motions the gel body can play on top of its constant breathing and crawling.</summary>
-    public enum GelMotion { Absorb, Attack, Release, Dash }
+    public enum GelMotion { Absorb, Gulp, Attack, Release, Dash }
 
     /// <summary>
     /// Soft-body animation of the slime, done by bending the body mesh in code (no skeleton):
@@ -15,7 +15,12 @@ namespace Evolve.Visuals
     /// </summary>
     public class SlimeGelAnimator : MonoBehaviour
     {
-        const float AbsorbTime = 0.9f, AttackTime = 0.45f, ReleaseTime = 0.8f, DashTime = 0.6f;
+        const float AbsorbTime = 1.3f, GulpTime = 0.5f, AttackTime = 0.5f, ReleaseTime = 0.65f, DashTime = 0.5f;
+        const float ReleaseWind = 0.3f;   // seconds of charging before a skill is released
+        const float DashWind = 0.15f;     // pull-back before a dash lunges (0.3 of DashTime)
+
+        /// <summary>Seconds the body needs to wind up before a skill of this motion should leave.</summary>
+        public static float WindUp(GelMotion motion) => motion == GelMotion.Release ? ReleaseWind : motion == GelMotion.Dash ? DashWind : 0f;
 
         MeshFilter filter;
         Mesh original, mesh;
@@ -43,6 +48,7 @@ namespace Evolve.Visuals
 
         float nextFollowerScan;
         float gaitPhase;
+        float jig, jigV;       // damped wobble after landings and after a motion ends
         bool hasLegs;
         float dead;                // 0..1 how collapsed the body is (stats are looked up lazily)
         Survival.SurvivalStats stats;
@@ -55,6 +61,9 @@ namespace Evolve.Visuals
             if (animator != null) animator.Play(motion);
         }
 
+        /// <summary>A jelly wobble: the body keeps bouncing a little and settles (call after landing, hits, ...).</summary>
+        public void Jiggle(float strength) => jigV += strength;
+
         public void Play(GelMotion motion)
         {
             // The same motion is not restarted until it is mostly done (contact damage fires every frame).
@@ -63,8 +72,8 @@ namespace Evolve.Visuals
             activeTime = 0f;
         }
 
-        static float Duration(GelMotion m) => m == GelMotion.Absorb ? AbsorbTime : m == GelMotion.Attack ? AttackTime
-            : m == GelMotion.Release ? ReleaseTime : DashTime;
+        static float Duration(GelMotion m) => m == GelMotion.Absorb ? AbsorbTime : m == GelMotion.Gulp ? GulpTime
+            : m == GelMotion.Attack ? AttackTime : m == GelMotion.Release ? ReleaseTime : DashTime;
 
         void Awake()
         {
@@ -109,8 +118,11 @@ namespace Evolve.Visuals
             if (activeTime >= 0f)
             {
                 activeTime += dt;
-                if (activeTime >= Duration(active)) activeTime = -1f;
+                if (activeTime >= Duration(active)) { activeTime = -1f; if (active != GelMotion.Gulp) jigV += 2.2f; }
             }
+            // Damped spring: the wobble swings back and forth and dies out.
+            jigV += (-90f * jig - 7f * jigV) * dt;
+            jig += jigV * dt;
 
             if (stats == null) stats = GetComponentInParent<Survival.SurvivalStats>();
             float deadTarget = stats != null && stats.State.IsDead ? 1f : 0f;
@@ -162,21 +174,22 @@ namespace Evolve.Visuals
             float p = activeTime / Duration(active);
             switch (active)
             {
-                case GelMotion.Absorb: return Mathf.Sin(p * Mathf.PI);
-                case GelMotion.Release: return p < 0.45f ? p / 0.45f : Mathf.Max(0f, 1f - (p - 0.45f) / 0.4f);
+                case GelMotion.Absorb: return 0.6f * Mathf.Sin(p * Mathf.PI);
+                case GelMotion.Gulp: return 0.25f * Mathf.Sin(p * Mathf.PI);
+                case GelMotion.Release: { float f = ReleaseWind / ReleaseTime; return p < f ? p / f : Mathf.Max(0f, 1f - (p - f) / 0.4f); }
                 case GelMotion.Attack: return 0.4f * Mathf.Sin(p * Mathf.PI);
                 default: return 0.6f * Mathf.Sin(p * Mathf.PI);
             }
         }
 
         // per-frame motion parameters shared by the body and the organs
-        float fTime, fMove, fAbsorb, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
+        float fTime, fMove, fAbsorb, fAbsorbAmp, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
         Vector3 fDir;
 
         void PrepareFrame()
         {
             fTime = Time.time;
-            fMove = Mathf.Clamp01(speed / 4f);
+            fMove = Mathf.Clamp01(speed / 4f);   // speed is already smoothed
             fDir = moveDir;
             fAbsorb = fKick = fStretch = fCharge = fBurst = 0f;
             float p = activeTime >= 0f ? activeTime / Duration(active) : -1f;
@@ -184,16 +197,18 @@ namespace Evolve.Visuals
             {
                 switch (active)
                 {
-                    case GelMotion.Absorb: fAbsorb = p; break;
+                    case GelMotion.Absorb: fAbsorb = p; fAbsorbAmp = 1f; break;
+                    case GelMotion.Gulp: fAbsorb = p; fAbsorbAmp = 0.35f; break;
                     case GelMotion.Attack: Lunge(p, 1f, out fKick, out fStretch); break;
                     case GelMotion.Dash: Lunge(p, 1.6f, out fKick, out fStretch); break;
                     case GelMotion.Release:
-                        fCharge = p < 0.45f ? Mathf.SmoothStep(0f, 1f, p / 0.45f) : 0f;
-                        fBurst = p < 0.45f ? 0f : Mathf.Sin((p - 0.45f) / 0.55f * Mathf.PI) * (1f - (p - 0.45f) / 0.55f * 0.3f);
+                        float f = ReleaseWind / ReleaseTime;
+                        fCharge = p < f ? Mathf.SmoothStep(0f, 1f, p / f) : 0f;
+                        fBurst = p < f ? 0f : Mathf.Sin((p - f) / (1f - f) * Mathf.PI) * (1f - (p - f) / (1f - f) * 0.3f);
                         break;
                 }
             }
-            fAbsorbPulse = fAbsorb > 0f ? Mathf.Sin(fAbsorb * Mathf.PI) : 0f;
+            fAbsorbPulse = fAbsorb > 0f ? Mathf.Sin(fAbsorb * Mathf.PI) * fAbsorbAmp : 0f;
         }
 
         void Deform()
@@ -256,11 +271,11 @@ namespace Evolve.Visuals
             // Absorbing: a ring travels from the rim toward the core while the body gulps inward.
             if (fAbsorb > 0f)
             {
-                float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - fAbsorb), 2f) / 0.06f) * fAbsorbPulse;
-                o.y -= 0.11f * ring;
-                o -= outward * 0.11f * ring;
-                o -= outward * 0.07f * fAbsorbPulse * rn;
-                o.y += 0.07f * fAbsorbPulse * h;
+                float ring = Mathf.Exp(-Mathf.Pow(rn - (1f - fAbsorb), 2f) / 0.1f) * fAbsorbPulse;
+                o.y -= 0.05f * ring;
+                o -= outward * 0.045f * ring;
+                o -= outward * 0.03f * fAbsorbPulse * rn;
+                o.y += 0.03f * fAbsorbPulse * h;
             }
 
             // Attacking / dashing: pull back, then the front lunges forward.
@@ -283,6 +298,13 @@ namespace Evolve.Visuals
             {
                 o += outward * 0.17f * fBurst * (0.4f + 0.6f * low);
                 o.y -= 0.1f * fBurst * h;
+            }
+
+            // Jelly wobble: taller and thinner, then wider and flatter, and back.
+            if (Mathf.Abs(jig) > 1e-4f)
+            {
+                o.y += jig * 0.06f * h;
+                o -= outward * jig * 0.04f * rn;
             }
 
             // Dead: the body slumps into a flat puddle.

@@ -38,12 +38,26 @@ namespace Evolve.Abilities
 
         void Update()
         {
-            if (SurvivalHUD.BlocksInput(gameObject) || ability == null || !Pressed() || Time.time < readyAt || stats.State.IsDead) return;
+            if (pending || SurvivalHUD.BlocksInput(gameObject) || ability == null || !Pressed() || Time.time < readyAt || stats.State.IsDead) return;
             if (stats.State.Energy < ability.EnergyCost) return;
+
+            // The body winds up first; the ability leaves at the moment the animation releases.
+            var motion = ability is BurstDashAbility || ability is ChargeAbility
+                ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release;
+            Evolve.Visuals.SlimeGelAnimator.Play(gameObject, motion);
+            StartCoroutine(FireAfter(Evolve.Visuals.SlimeGelAnimator.WindUp(motion)));
+        }
+
+        bool pending;
+
+        System.Collections.IEnumerator FireAfter(float delay)
+        {
+            pending = true;
+            if (delay > 0f) yield return new WaitForSeconds(delay);
+            pending = false;
+            if (stats.State.IsDead || stats.State.Energy < ability.EnergyCost) yield break;
             if (ability.Activate(gameObject))
             {
-                Evolve.Visuals.SlimeGelAnimator.Play(gameObject, ability is BurstDashAbility || ability is ChargeAbility
-                    ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release);
                 stats.State.TrySpendEnergy(ability.EnergyCost);
                 readyAt = Time.time + ability.Cooldown;
             }
