@@ -156,17 +156,21 @@ namespace Evolve.Player
             }
             Vector3 target = dir * speed;
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
-            // Hug the ground: on a bump or a slope the body follows the surface (moving along it, pressed lightly onto it)
-            // instead of popping off every little rise and dropping back, which read as stutter.
-            float extent = col ? col.bounds.extents.y : 0.5f;
-            if (v.y < 1.5f && Physics.Raycast(rb.position, Vector3.down, out var hit, extent + 0.35f, groundMask, QueryTriggerInteraction.Ignore)
-                && hit.normal.y > 0.6f)
+            // Hug the ground while crawling: on a slope the body moves along the surface (up or down it) instead of
+            // bumping into each rise or flying off each dip, which read as stutter. It never presses into the ground
+            // (that would stick it in place) and never cancels a hop or a fall.
+            if (dir.sqrMagnitude > 0.01f && v.y < 1f)
             {
-                Vector3 along = Vector3.ProjectOnPlane(horizontal, hit.normal);
-                if (along.sqrMagnitude > 1e-6f) along = along.normalized * horizontal.magnitude;
-                float stick = hit.distance > extent + 0.02f ? -2f : -0.3f;   // a little gap below: pull down onto the ground
-                rb.linearVelocity = new Vector3(along.x, Mathf.Min(v.y, along.y + stick), along.z);
-                return;
+                float extent = col ? col.bounds.extents.y : 0.5f;
+                if (Physics.Raycast(rb.position, Vector3.down, out var hit, extent + 0.3f, groundMask, QueryTriggerInteraction.Ignore)
+                    && hit.normal.y > 0.6f && hit.collider.attachedRigidbody != rb)
+                {
+                    Vector3 along = Vector3.ProjectOnPlane(horizontal, hit.normal);
+                    if (along.sqrMagnitude > 1e-6f) along = along.normalized * horizontal.magnitude;
+                    float y = hit.distance > extent + 0.06f ? Mathf.Min(v.y, along.y - 1f) : along.y;   // a small gap: settle down onto it
+                    rb.linearVelocity = new Vector3(along.x, y, along.z);
+                    return;
+                }
             }
             rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
         }
