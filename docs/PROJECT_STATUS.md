@@ -87,7 +87,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | Màng chịu nhiệt | C | Da | Chịu nóng thêm 20°C |
 | Gai độc | B | Lưng | Phản 15 sát thương khi bị cắn |
 
-**0.3: Thế giới phản kháng** (pull request #12, đã merge; **chủ dự án CHƯA chơi thử**)
+**0.3: Thế giới phản kháng** (pull request #12, đã merge, chủ dự án đã chơi thử)
 - Kẻ săn mồi:
   - Phát hiện trong 7 m (×0.4 nếu người chơi đứng yên). Đuổi 1.4, mệt sau 6 giây.
   - Cắn 15 máu kèm hất văng. Có 40 máu.
@@ -95,12 +95,13 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
   - Khi chết: +35 thức ăn, chắc chắn rơi cơ quan theo `DropTable_Predator` (trọng số 30/40/25/5).
 - Nhiệt độ: thân nhiệt dần theo nhiệt độ không khí. Ngoài khoảng 5–35°C (cộng khả năng chịu nóng từ cơ quan) thì mất 0.2 máu mỗi giây cho mỗi độ vượt.
 - Hoang mạc: phía đông map (x từ 25 đến 50), 50°C, thêm 12 thức ăn, 2 kẻ săn mồi. Đồng bằng có 1 kẻ săn mồi ở góc tây bắc.
-- Chết: bấm R để hồi sinh, **giữ cơ quan**.
+- Chết: bấm R để hồi sinh.
 
-**Sau 0.3** (pull request #13, #14 của một phiên khác, đã merge; **chưa chơi thử**)
+**Sau 0.3** (pull request #13, #14 của một phiên khác, đã merge, đã chơi thử)
 - `DropTableSO`: bốc hai bước (`Distribution()`, `Roll(isOwned)`) và `OwnedWeightMultiplier = 0.8`. Lưu ý: `Roll` giờ nhận hàm **isOwned**, không còn là hàm **allowed** như trước.
 - `SurvivalState`: `MaxLives = 3`, `Lives`, `CanRespawn`, `IsCorpse`, `ResetLives()`. Mỗi lần chết trừ 1 mạng.
 - R hồi sinh khi còn mạng. Hết mạng thì thành xác; bấm **Y** để chơi lại từ đầu (tạm, vì chưa có đồng đội cứu). HUD hiện số mạng.
+- **Chết mất cơ quan** (chủ dự án quyết định sau khi chơi thử 0.3): còn mạng thì mọi cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất (`OrganInteractor.deathLossChance`). Hết mạng thì cơ quan nằm trên xác; bấm Y thì chúng rơi ra tại xác theo cùng luật.
 
 ## 5. Khác biệt giữa prototype và thiết kế (cần lưu ý)
 

@@ -77,7 +77,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | V | Bật/tắt mắt (thử nghiệm: xem màu, nhìn xa) |
 | H | Ẩn/hiện bảng hướng dẫn |
 | E | Chọn khi chạm vào cơ quan: lắp / thay thế / hấp thụ |
-| R | Hồi sinh khi chết (giữ nguyên cơ quan) |
+| R | Hồi sinh khi chết (3 mạng; cơ quan rơi tại chỗ chết, mỗi cái 50% bị mất) |
 | X | Bỏ qua cơ quan |
 | G | Mở/đóng bảng Cơ thể; trong bảng bấm 1, 2… để tháo cơ quan (rơi ra đất) |
 
