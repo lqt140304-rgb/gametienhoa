@@ -37,6 +37,13 @@ namespace Evolve.Creatures
         public float HomeRadius { get; set; } = 25f;
         public bool IsTired => tiredUntil > Time.time;
 
+        /// <summary>Id shared with other machines (the host hands it out).</summary>
+        public int NetId { get; set; }
+        /// <summary>Client side: a copy of a creature that really lives on the host. It only follows what the host reports.</summary>
+        public bool IsReplica { get; set; }
+
+        const float CatchRadius = 0.9f;
+
         public event Action<Prey> Caught;
 
         Rigidbody rb;
@@ -49,6 +56,7 @@ namespace Evolve.Creatures
             rb = GetComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
+            NetId = NetWorld.NextId();
         }
 
         void OnEnable() => active.Add(this);
@@ -56,7 +64,7 @@ namespace Evolve.Creatures
 
         void FixedUpdate()
         {
-            if (Frozen) return;
+            if (Frozen || IsReplica) return;
             Vector3 pos = rb.position;
             Vector3 dir;
             float speed;
@@ -95,6 +103,21 @@ namespace Evolve.Creatures
                 rb.MovePosition(pos + dir * speed * Time.fixedDeltaTime);
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.2f));
             }
+
+            CheckRemoteCatch();
+        }
+
+        // Remote players have no collider here (they are ghosts), so they catch by getting close.
+        void CheckRemoteCatch()
+        {
+            if (caught) return;
+            Vector3 pos = rb.position;
+            foreach (var p in SurvivalStats.All)
+            {
+                if (!p.IsRemote || p.State.IsDead) continue;
+                Vector3 d = p.transform.position - pos; d.y = 0f;
+                if (d.sqrMagnitude <= CatchRadius * CatchRadius) { Catch(p); return; }
+            }
         }
 
         static Transform NearestPlayer(Vector3 pos, out float dist)
@@ -111,12 +134,17 @@ namespace Evolve.Creatures
 
         void OnCollisionEnter(Collision c)
         {
-            if (caught) return;
+            if (caught || IsReplica) return;
             var stats = c.collider.GetComponentInParent<SurvivalStats>();
-            if (stats == null || stats.State.IsDead) return;
+            if (stats == null || stats.State.IsDead || stats.IsRemote) return;
+            Catch(stats);
+        }
+
+        void Catch(SurvivalStats stats)
+        {
             caught = true;
 
-            stats.State.Feed(nutrition);
+            NetWorld.Feed(stats, nutrition);
             var host = stats.GetComponent<OrganHost>();
             var drop = PickDrop(host);
             if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));

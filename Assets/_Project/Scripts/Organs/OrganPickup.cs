@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Evolve.Survival;
 using UnityEngine;
 
 namespace Evolve.Organs
@@ -8,13 +10,54 @@ namespace Evolve.Organs
     /// </summary>
     public class OrganPickup : MonoBehaviour
     {
+        static readonly List<OrganPickup> active = new List<OrganPickup>();
+        public static IReadOnlyList<OrganPickup> Active => active;
+
         [SerializeField] OrganSO organ;
         float baseY;
 
         public OrganSO Organ => organ;
 
-        /// <summary>Create a pickup for the organ at a position (no prefab needed).</summary>
+        /// <summary>Id shared with other machines (the host hands it out).</summary>
+        public int NetId { get; set; }
+        /// <summary>Client side: a copy of a pickup that really lies in the host's world.</summary>
+        public bool IsReplica { get; set; }
+
+        void OnEnable() => active.Add(this);
+        void OnDisable() => active.Remove(this);
+
+        /// <summary>
+        /// Create a pickup for the organ at a position (no prefab needed). On a client the host owns the world,
+        /// so the request goes to the host and the pickup comes back as a replica (returns null here).
+        /// </summary>
         public static OrganPickup Spawn(OrganSO organ, Vector3 position)
+        {
+            if (NetWorld.IsClient)
+            {
+                NetWorld.RequestPickupSpawn?.Invoke(organ.name, position);
+                return null;
+            }
+            var pickup = Create(organ, position);
+            pickup.NetId = NetWorld.NextId();
+            return pickup;
+        }
+
+        /// <summary>Client: show a pickup that exists on the host.</summary>
+        public static OrganPickup CreateReplica(OrganSO organ, Vector3 position, int netId)
+        {
+            var pickup = Create(organ, position);
+            pickup.NetId = netId;
+            pickup.IsReplica = true;
+            return pickup;
+        }
+
+        /// <summary>Tell the host this (replica) pickup was taken, so it disappears for everyone.</summary>
+        public void MarkTaken()
+        {
+            if (IsReplica) NetWorld.ReportPickupTaken?.Invoke(NetId);
+        }
+
+        static OrganPickup Create(OrganSO organ, Vector3 position)
         {
             var go = new GameObject("Pickup_" + organ.name);
             go.transform.position = position;
@@ -53,7 +96,7 @@ namespace Evolve.Organs
             if (interactor != null) { interactor.Offer(this); return; }
 
             var host = other.GetComponentInParent<OrganHost>();
-            if (host != null && host.TryAttach(organ)) Destroy(gameObject);
+            if (host != null && host.TryAttach(organ)) { MarkTaken(); Destroy(gameObject); }
         }
 
         void OnTriggerExit(Collider other)

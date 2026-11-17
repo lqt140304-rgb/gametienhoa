@@ -50,6 +50,9 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Camera lệch qua vai khi ngắm; đạn và lao theo con trỏ ở chế độ chuột; góc nhìn thứ nhất (F5)
 - [x] Chơi thử camera vai, góc nhìn thứ nhất, HUD mới và năng lượng hồi khi di chuyển
 - [x] Co-op 0.4a (nền móng): Host + nhập IP, thấy nhau (vị trí, cơ quan, máu, mạng); mã trong assembly `Evolve.Net`, cần cài gói Netcode (`docs/COOP_SETUP.md`)
-- [ ] Cài gói Netcode, chơi thử co-op 0.4a trên một máy rồi hai máy
-- [ ] Co-op 0.4b: thế giới chung (quái, thức ăn, cơ quan rơi do Host điều khiển), sát thương, cứu đồng đội, quan sát (độ phân giải khác nhau, Play Mode) và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
+- [x] Cài gói Netcode 2.14.0, co-op 0.4a chạy được (thấy nhau)
+- [x] Co-op 0.4b đợt 1: thế giới chung (quái, thức ăn, cơ quan rơi do Host điều khiển), cắn, bắn, ăn, nhặt; chưa chạy thử
+- [ ] Chơi thử 0.4b đợt 1
+- [ ] Co-op 0.4b đợt 2: cứu đồng đội, chuyền máu, chế độ quan sát
+- [ ] Chơi thử HUD mới ở nhiều độ phân giải và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

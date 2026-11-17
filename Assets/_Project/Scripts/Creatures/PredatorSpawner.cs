@@ -6,6 +6,8 @@ namespace Evolve.Creatures
     public class PredatorSpawner : MonoBehaviour
     {
         [SerializeField] Predator prefab;
+        /// <summary>The predator this spawner makes (clients copy it to show replicas).</summary>
+        public Predator Prefab => prefab;
         [SerializeField] int count = 1;
         [Tooltip("Territory radius around this object")]
         [SerializeField] float radius = 10f;

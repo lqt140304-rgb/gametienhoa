@@ -83,7 +83,7 @@ namespace Evolve.Net
             GUILayout.Space(4);
             GUILayout.Label("Cùng một máy: một bên Host, bên kia nhập 127.0.0.1.\nCùng mạng LAN: bên kia nhập địa chỉ của máy Host:\n" +
                             (string.IsNullOrEmpty(localAddresses) ? "(không tìm thấy)" : localAddresses) +
-                            "\nBản này chỉ hiển thị người chơi khác; thế giới chưa chung.");
+                            "\nChủ phòng điều khiển thế giới (quái, thức ăn, cơ quan rơi);\nngười vào phòng thấy cùng thế giới đó.");
             GUI.DragWindow();
         }
 
