@@ -65,7 +65,7 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 - **Cách roll hai bước:** chọn bậc trước theo trọng số bậc (C/B/A/S), rồi chọn cơ quan trong bậc đó, nên tỉ lệ bậc đúng như bảng.
 - Cơ quan đã có chỉ còn **0.8** trọng số so với cơ quan chưa có cùng bậc (chỉnh được trong Inspector). Nếu cả bậc chỉ còn cơ quan đã có thì chúng vẫn rơi bình thường.
-- "Đã có" tính theo cơ quan **đang gắn trên người**; tháo ra thì tỉ lệ rơi trở lại bình thường (đề xuất, chưa bàn kỹ).
+- "Đã có" tính theo cơ quan **đang gắn trên người**; tháo ra thì tính là chưa có, tỉ lệ rơi trở lại bình thường.
 
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
@@ -89,11 +89,12 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 - Đồ rơi ai cũng nhặt được, kể cả đồng đội. Mỗi cơ quan nhặt có **50% bị mất, tính riêng từng bộ phận**.
 - Việc đồng đội lạm dụng nhau (bỏ mặc để nhặt đồ) được **chấp nhận**: game thiên về chiều sâu và hardcore, không cần quá thân thiện.
 - **Thời hạn cứu: 120 giây.** Hết 120 giây mà chưa cứu được thì xác chết hẳn và đồ rơi ra.
-- **Chi phí cứu kiểu chuyền máu:** 1 máu của người được cứu bằng **3 máu** của người cứu.
+- **Chi phí cứu kiểu chuyền máu:** 1 máu của người được cứu bằng **3 máu** của người cứu. Người cứu **chuyền liên tục** cho đến khi thấy đủ thì tự buông.
+- Người được cứu **sống tiếp mạng vừa rồi**, không được cộng thêm mạng. Chết lần nữa thì lại thành xác.
 - Người hết mạng vào **chế độ quan sát**, xem từ góc nhìn (POV) của người còn sống.
 
 **[ĐỀ XUẤT]** (chưa duyệt)
-- Cứu bị ngắt nếu người cứu bị tấn công. Người được cứu sống lại với 1 mạng; lượng máu hồi tùy lượng máu người cứu chuyền.
+- Cứu bị ngắt nếu người cứu bị tấn công.
 - Có thể giới hạn số lần cứu hoặc cho hồi lại mạng khi qua cột mốc (hạ boss, xây tổ). Tình huống không có đồng đội (chơi một mình) hết mạng là thua.
 
 ## 7. Công nghệ
