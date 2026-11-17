@@ -28,18 +28,24 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\n\n" +
             "Đứng yên: không đói, hồi năng lượng\n" +
             "Chấm xanh = thức ăn, chấm đỏ = con mồi\n(giác quan rung, thay cho mắt)\n\n" +
-            "Bắt con mồi (chạm vào) để nhận cơ quan.\nCon mồi chạy mệt sẽ phải dừng nghỉ.";
+            "Bắt con mồi (chạm vào) để nhận cơ quan.\nCon mồi chạy mệt sẽ phải dừng nghỉ.\nCơ quan lớn bằng thức ăn: ăn đủ thì tiến hóa\n(một nửa bữa ăn nuôi cơ quan).";
 
         void Start()
         {
             if (stats == null) return;
             caster = stats.GetComponent<AbilityCaster>();
             organs = stats.GetComponent<OrganHost>();
-            if (organs != null) organs.Attached += o =>
+            if (organs != null)
             {
-                toast = $"Tiến hóa: {o.DisplayName}!\n{o.Description}";
-                toastUntil = Time.time + 4f;
-            };
+                organs.Attached += o => Toast($"Mầm {o.DisplayName}: ăn thêm {o.GrowthFoodRequired:0} thức ăn để phát triển");
+                organs.Completed += o => Toast($"Tiến hóa: {o.DisplayName}!\n{o.Description}");
+            }
+        }
+
+        void Toast(string text)
+        {
+            toast = text;
+            toastUntil = Time.time + 4f;
         }
 
         void Update()
@@ -67,10 +73,18 @@ namespace Evolve.Survival
                 DrawBar(new Rect(20, y, 200, 20), caster.CooldownProgress, c, status);
                 y += 28;
             }
-            string organList = organs != null && organs.Organs.Any()
-                ? string.Join(", ", organs.Organs.Select(o => o.DisplayName)) : "chưa có";
-            GUI.Label(new Rect(20, y, 500, 22), $"Cơ quan: {organList}");
-            if (s.IsDead) GUI.Label(new Rect(20, y + 24, 300, 22), "Đã chết");
+            // Organs: finished ones as text, growing ones as food progress bars.
+            var all = organs != null ? organs.Organs.ToList() : new System.Collections.Generic.List<OrganSO>();
+            var done = all.Where(x => organs.GetGrowth(x) >= 1f).Select(x => x.DisplayName).ToList();
+            GUI.Label(new Rect(20, y, 500, 22), $"Cơ quan: {(done.Count > 0 ? string.Join(", ", done) : "chưa có")}");
+            y += 24;
+            foreach (var o in all.Where(x => organs.GetGrowth(x) < 1f))
+            {
+                DrawBar(new Rect(20, y, 200, 20), organs.GetGrowth(o), new Color(0.75f, 0.5f, 1f),
+                    $"{o.DisplayName}: {organs.GetFed(o):0}/{o.GrowthFoodRequired:0} thức ăn");
+                y += 28;
+            }
+            if (s.IsDead) GUI.Label(new Rect(20, y, 300, 22), "Đã chết");
 
             if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };
             if (Time.time < toastUntil)
@@ -80,7 +94,7 @@ namespace Evolve.Survival
             }
 
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 310, 20, 290, 340), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 380), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }

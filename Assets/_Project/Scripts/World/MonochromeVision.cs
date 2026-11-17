@@ -7,13 +7,14 @@ namespace Evolve.World
 {
     /// <summary>
     /// "No eyes" vision: desaturates the URP volume and uses dense fog for short
-    /// view range. Follows the player's OrganHost: evolving eyes restores colour.
+    /// view range. Follows the player's OrganHost: growing eyes gradually restores colour and range.
     /// Put on a GameObject with a global Volume whose profile has Color Adjustments.
     /// </summary>
     [RequireComponent(typeof(Volume))]
     public class MonochromeVision : MonoBehaviour
     {
-        [SerializeField] bool hasEyes;
+        [Tooltip("0 = blind (grey, short range), 1 = full colour vision")]
+        [Range(0, 1)] [SerializeField] float sight;
         [Tooltip("Player whose organs decide the vision")]
         [SerializeField] OrganHost host;
         [SerializeField] float blindFogEnd = 12f;
@@ -37,25 +38,31 @@ namespace Evolve.World
             if (host != null) host.Changed -= OnOrgansChanged;
         }
 
-        void OnOrgansChanged() => SetHasEyes(host.HasSight);
+        void OnOrgansChanged() => SetSight(host.Sight);
 
-        public bool HasEyes => hasEyes;
+        public float Sight => sight;
 
         void Update()
         {
-            if (Evolve.Survival.KeyPressed.V()) SetHasEyes(!hasEyes);
+            if (Evolve.Survival.KeyPressed.V()) SetSight(sight >= 1f ? 0f : 1f);
         }
 
-        public void SetHasEyes(bool value) { hasEyes = value; Apply(); }
+        public void SetSight(float value)
+        {
+            value = Mathf.Clamp01(value);
+            if (Mathf.Approximately(value, sight)) return;
+            sight = value;
+            Apply();
+        }
 
         void Apply()
         {
-            color.saturation.value = hasEyes ? 0f : -100f;
+            color.saturation.value = Mathf.Lerp(-100f, 0f, sight);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = fogColor;
             RenderSettings.fogStartDistance = 0f;
-            RenderSettings.fogEndDistance = hasEyes ? eyesFogEnd : blindFogEnd;
+            RenderSettings.fogEndDistance = Mathf.Lerp(blindFogEnd, eyesFogEnd, sight * sight);
         }
 
         void OnValidate() { if (color != null) Apply(); }
