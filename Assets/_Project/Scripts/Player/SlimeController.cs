@@ -178,7 +178,7 @@ namespace Evolve.Player
             if (wasAirborne && grounded) squash = -0.9f;
             wasAirborne = !grounded;
             squash = Mathf.MoveTowards(squash, 0f, Time.deltaTime * 3f);
-            float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.05f : 0f;
+            float wobble = stats.IsMoving ? Mathf.Sin(Time.time * 10f) * 0.02f : 0f;
             float bs = BodyScale;
             float airStretch = grounded ? 0f : Mathf.Clamp(Mathf.Abs(rb.linearVelocity.y) * 0.03f, 0f, 0.2f);
             float y = 1f + squash * 0.35f + wobble + airStretch;

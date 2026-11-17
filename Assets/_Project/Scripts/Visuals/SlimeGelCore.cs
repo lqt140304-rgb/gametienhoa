@@ -24,6 +24,7 @@ namespace Evolve.Visuals
         void Awake()
         {
             stats = GetComponentInParent<SurvivalStats>();
+            if (GetComponent<SlimeGelAnimator>() == null) gameObject.AddComponent<SlimeGelAnimator>();
             block = new MaterialPropertyBlock();
             var amber = MakeMaterial(Amber, 3f, 1f);
             var haloA = MakeMaterial(Amber, 1.2f, 0.28f);

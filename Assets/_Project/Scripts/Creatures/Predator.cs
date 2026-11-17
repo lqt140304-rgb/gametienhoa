@@ -249,6 +249,7 @@ namespace Evolve.Creatures
 
         public void TakeDamage(float amount, SurvivalStats by)
         {
+            if (by != null && amount > 0f) Evolve.Visuals.SlimeGelAnimator.Play(by.gameObject, Evolve.Visuals.GelMotion.Attack);
             if (IsReplica)
             {
                 // A replica takes no damage itself: the host applies it and the replica follows.
