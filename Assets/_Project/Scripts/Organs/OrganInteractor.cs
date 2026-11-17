@@ -113,6 +113,10 @@ namespace Evolve.Organs
                 case AttachCheck.NoRoom:
                     body = $"Cơ thể không đủ chỗ ({host.Count}/{host.MaxOrgans} cơ quan).\nHấp thụ để nhận {CurrentAbsorbExp:0} EXP tiến hóa?";
                     break;
+                case AttachCheck.LackNutrient:
+                    var lack = o.EffectiveNutrient;
+                    body = $"Cơ thể thiếu {Evolve.Survival.NutrientKinds.SlimeName(lack)} ({Evolve.Survival.NutrientKinds.RealName(lack)}) để mô phỏng {o.DisplayName}.\nĂn thêm thức ăn giàu {Evolve.Survival.NutrientKinds.RealName(lack)}.\nHoặc hấp thụ để nhận {CurrentAbsorbExp:0} EXP tiến hóa.";
+                    break;
             }
         }
 

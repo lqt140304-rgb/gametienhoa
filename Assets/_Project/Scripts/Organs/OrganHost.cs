@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Evolve.Organs
 {
     /// <summary>Result of asking whether an organ can be attached.</summary>
-    public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom }
+    public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom, LackNutrient }
 
     /// <summary>
     /// Holds the organs a creature has evolved and grows them with evolution EXP.
@@ -37,6 +37,7 @@ namespace Evolve.Organs
             public int Level;        // 0 = bud, 1..MaxLevel
             public float Progress;   // EXP invested toward the next level
             public float Shown;      // smoothed 0..1 growth for visuals and effects
+            public float Decay;      // 0 healthy .. 1 dissolved (starved of the nutrient it needs)
             public float Growth => Level >= 1 ? 1f : (Organ.GrowthExpRequired <= 0f ? 1f : Mathf.Clamp01(Progress / Organ.GrowthExpRequired));
             public float NextCost => Level == 0 ? Organ.GrowthExpRequired : Level < MaxLevel ? Organ.GrowthExpRequired * Level : 0f;
             public bool Maxed => Level >= MaxLevel;
@@ -73,6 +74,8 @@ namespace Evolve.Organs
         public event Action<OrganSO, int> LeveledUp;
         /// <summary>Raised when an organ is detached (removed or replaced).</summary>
         public event Action<OrganSO> Removed;
+        /// <summary>Raised when an organ dissolves because the body ran out of the nutrient it needs.</summary>
+        public event Action<OrganSO> Dissolved;
         /// <summary>Raised whenever the combined effects change.</summary>
         public event Action Changed;
 
@@ -100,9 +103,12 @@ namespace Evolve.Organs
         public AttachCheck Check(OrganSO organ)
         {
             if (Has(organ)) return AttachCheck.AlreadyOwned;
-            if (organs.ContainsKey(organ.Slot)) return AttachCheck.SlotOccupied;
+            // The body must hold enough of the nutrient this organ needs (both for a free slot and for a replacement).
+            var st = stats != null ? stats : GetComponent<SurvivalStats>(); // Awake may not have run yet (EditMode tests)
+            bool lacks = st != null && !st.IsRemote && st.State.IsLacking(organ.EffectiveNutrient);
+            if (organs.ContainsKey(organ.Slot)) return lacks ? AttachCheck.LackNutrient : AttachCheck.SlotOccupied;
             if (maxOrgans > 0 && organs.Count >= maxOrgans) return AttachCheck.NoRoom;
-            return AttachCheck.Ok;
+            return lacks ? AttachCheck.LackNutrient : AttachCheck.Ok;
         }
 
         /// <summary>Growth 0..1 from bud to full organ, or -1 if not owned.</summary>
@@ -128,7 +134,7 @@ namespace Evolve.Organs
         {
             if (organ == null) return false;
             var check = Check(organ);
-            if (check == AttachCheck.AlreadyOwned || check == AttachCheck.NoRoom) return false;
+            if (check == AttachCheck.AlreadyOwned || check == AttachCheck.NoRoom || check == AttachCheck.LackNutrient) return false;
 
             if (organs.ContainsKey(organ.Slot)) Detach(organ.Slot);
 
@@ -267,7 +273,40 @@ namespace Evolve.Organs
                 changed = true;
             }
             if (changed) Recalculate();
+            UpdateStarvation();
         }
+
+        /// <summary>The nutrient an organ needs running out weakens it, and in the end dissolves it (it drops as a pickup for now).</summary>
+        void UpdateStarvation()
+        {
+            if (stats == null || stats.IsRemote || stats.State.IsDead || stats.Config == null || order.Count == 0) return;
+            var cfg = stats.Config;
+            Entry dissolve = null;
+            bool decayChanged = false;
+            foreach (var e in order)
+            {
+                float value = stats.State.Nutrient(e.Organ.EffectiveNutrient);
+                float next = OrganDecay.Step(e.Decay, value, cfg.NutrientEquipThreshold, cfg.NutrientWarnThreshold,
+                    cfg.OrganDissolveSeconds, cfg.OrganRecoverSeconds, Time.deltaTime);
+                if (!Mathf.Approximately(next, e.Decay))
+                {
+                    if ((int)(next * 50f) != (int)(e.Decay * 50f)) decayChanged = true; // recalculate only per 2% step, not every frame
+                    e.Decay = next;
+                }
+                if (e.Decay >= 1f && dissolve == null) dissolve = e;
+            }
+            if (decayChanged) Recalculate();
+            if (dissolve == null) return;
+
+            var organ = dissolve.Organ;
+            Debug.Log($"{name}: {organ.DisplayName} tan vì thiếu {NutrientKinds.SlimeName(organ.EffectiveNutrient)}");
+            Detach(organ.Slot);
+            OrganPickup.Spawn(organ, new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.25f, transform.position.z));
+            Dissolved?.Invoke(organ);
+        }
+
+        /// <summary>0 healthy .. 1 dissolved; -1 if not owned.</summary>
+        public float GetDecay(OrganSO organ) => Has(organ) ? organs[organ.Slot].Decay : -1f;
 
         void ApplyVisual(Entry e)
         {
@@ -278,7 +317,7 @@ namespace Evolve.Organs
         }
 
         /// <summary>Effect strength of an organ: growth × level bonus.</summary>
-        float Strength(Entry e) => e.Shown * (1f + levelBonus * Mathf.Max(0, e.Level - 1));
+        float Strength(Entry e) => e.Shown * (1f + levelBonus * Mathf.Max(0, e.Level - 1)) * (e.Organ.GrantsSight ? 1f : OrganDecay.StrengthFactor(e.Decay)); // eyes keep their sight until they dissolve (no slow dimming of the world)
 
         void Recalculate()
         {
@@ -291,6 +330,11 @@ namespace Evolve.Organs
                 if (e.Organ.GrantsSight) sight = Mathf.Max(sight, k);
                 contact += e.Organ.ContactDamage * k;
                 heat += e.Organ.HeatResistance * k;
+            }
+            if (stats != null && stats.State.NutrientLoad != null)
+            {
+                for (int k = 0; k < stats.State.NutrientLoad.Length; k++) stats.State.NutrientLoad[k] = 0;
+                foreach (var e in order) stats.State.NutrientLoad[(int)e.Organ.EffectiveNutrient]++;
             }
             SpeedMultiplier = speed;
             Sight = sight;

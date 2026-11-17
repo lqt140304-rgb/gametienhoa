@@ -29,6 +29,16 @@ namespace Evolve.Survival
         [Tooltip("Health lost per second at 0 thirst")] public float DehydrationDamagePerSec = 3f;
         [Tooltip("Health regenerates only when thirst >= this fraction (if thirst is enabled)")] [Range(0, 1)] public float HealThirstThreshold = 0.5f;
 
+        [Header("Nutrients (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống)")]
+        [Tooltip("Each store (0..100) starts, and starts again after a respawn, at this value")] public float NutrientStart = 80f;
+        [Tooltip("Every store loses this much per second")] public float NutrientBaseDecayPerSec = 0.04f;
+        [Tooltip("Extra loss per second for each equipped organ that needs that nutrient")] public float NutrientOrganDecayPerSec = 0.03f;
+        [Tooltip("Nutrient points gained per unit of food, times the food's profile")] public float NutrientGainPerFood = 1f;
+        [Tooltip("An organ can only be equipped while its nutrient store is at least this; below it the body is 'lacking'")] public float NutrientEquipThreshold = 40f;
+        [Tooltip("Below this the warning shows and organs needing the nutrient start to weaken")] public float NutrientWarnThreshold = 25f;
+        [Tooltip("Seconds of starvation after which a weakening organ dissolves")] public float OrganDissolveSeconds = 300f;
+        [Tooltip("Seconds of being fed for a weakened organ to recover fully")] public float OrganRecoverSeconds = 600f;
+
         [Header("Stress")]
         [Tooltip("Stress gained per point of damage taken from outside (e.g. a predator bite)")] public float StressPerDamage = 0.5f;
         [Tooltip("Stress gained per second while hunger or thirst is under 25%")] public float StressLowNeedsPerSec = 0.4f;

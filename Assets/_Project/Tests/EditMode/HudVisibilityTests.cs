@@ -1,6 +1,7 @@
 using Evolve.Player;
 using Evolve.Survival;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Evolve.Tests.EditMode
 {
@@ -42,6 +43,27 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(1f, dry, 1e-4f); Assert.AreEqual(1f, pale, 1e-4f);
             BodyFeedback.TintAmounts(0, 100, 100, 100, false, out dry, out pale);
             Assert.AreEqual(0f, dry, 1e-4f);
+        }
+
+        [Test] public void ShowNutrientThresholds()
+        {
+            Assert.IsTrue(Evolve.Survival.HudVisibility.ShowNutrient(39f));
+            Assert.IsFalse(Evolve.Survival.HudVisibility.ShowNutrient(40f));
+            Assert.IsTrue(Evolve.Survival.HudVisibility.ShowNutrient(100f, true));
+        }
+
+        [Test] public void DeficiencyTintBounds()
+        {
+            var current = new Color(0.3f, 0.8f, 0.4f, 0.6f);
+            foreach (Evolve.Survival.NutrientKind kind in System.Enum.GetValues(typeof(Evolve.Survival.NutrientKind)))
+            {
+                var none = BodyFeedback.DeficiencyTint(current, kind, 0f);
+                Assert.AreEqual(current.r, none.r, 1e-5f); Assert.AreEqual(current.g, none.g, 1e-5f); Assert.AreEqual(current.b, none.b, 1e-5f);
+                var worst = BodyFeedback.DeficiencyTint(current, kind, 5f); // severity is clamped to 1
+                Assert.LessOrEqual(Mathf.Abs(worst.r - current.r), 0.5f + 1e-5f);
+                Assert.LessOrEqual(Mathf.Abs(worst.g - current.g), 0.5f + 1e-5f);
+                Assert.LessOrEqual(Mathf.Abs(worst.b - current.b), 0.5f + 1e-5f);
+            }
         }
     }
 }

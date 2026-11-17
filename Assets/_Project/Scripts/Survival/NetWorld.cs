@@ -38,5 +38,16 @@ namespace Evolve.Survival
             if (stats.IsRemote) FeedRemote?.Invoke(stats, amount);
             else stats.State.Feed(amount);
         }
+
+        /// <summary>
+        /// Same, with the food's nutrient profile. A remote player only receives the amount over the network (the
+        /// profile does not travel yet), so they get the default mixed profile for food the host feeds them.
+        /// </summary>
+        public static void Feed(SurvivalStats stats, float amount, FoodProfile profile)
+        {
+            if (stats == null || amount <= 0f) return;
+            if (stats.IsRemote) FeedRemote?.Invoke(stats, amount);
+            else stats.State.Feed(amount, profile);
+        }
     }
 }

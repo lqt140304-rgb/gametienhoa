@@ -84,7 +84,8 @@ namespace Evolve.Ecology
             var stats = other.GetComponentInParent<SurvivalStats>();
             if (stats == null || stats.State.IsDead || stats.IsRemote) return;
             nextBite = Time.time + BiteCooldown;
-            NetWorld.Feed(stats, Decay.Eat(BiteAmount));
+            bool rotten = Decay.Stage == CarcassStage.Rotten; // decided before eating; humus is not edible at all
+            NetWorld.Feed(stats, Decay.Eat(BiteAmount), FoodProfiles.Carcass(rotten));
             if (Decay.FoodLeft <= 0.01f) Destroy(gameObject); // eaten up
         }
     }

@@ -22,6 +22,13 @@ namespace Evolve.Player
         Vector3 basePosition;
         bool ready, trembling;
 
+        /// <summary>Pure: pull the body colour toward the colour of a lacking nutrient, up to half way at severity 1.</summary>
+        public static Color DeficiencyTint(Color current, NutrientKind kind, float severity)
+        {
+            var target = Color.Lerp(NutrientKinds.ColorOf(kind), new Color(0.6f, 0.6f, 0.6f), 0.4f);
+            return Color.Lerp(current, target, 0.5f * Mathf.Clamp01(severity));
+        }
+
         /// <summary>Pure: how far toward dry (0..1) and pale (0..1) the body tint goes.</summary>
         public static void TintAmounts(float thirst, float maxThirst, float hunger, float maxHunger, bool thirstEnabled,
             out float dry, out float pale)
@@ -63,6 +70,15 @@ namespace Evolve.Player
             baseColor.a = Evolve.Visuals.SlimeColor.Alpha;
             Color c = Color.Lerp(baseColor, DryColor, dry * 0.7f);
             c = Color.Lerp(c, PaleColor, pale * 0.6f);
+            var worst = s.LowestNutrient(); // the nutrient the body lacks most shows in the gel
+            float warn = stats.Config != null ? stats.Config.NutrientWarnThreshold : 25f;
+            float value = s.Nutrient(worst);
+            if (value < warn)
+            {
+                float alpha = c.a;
+                c = DeficiencyTint(c, worst, 1f - value / Mathf.Max(1f, warn));
+                c.a = alpha;
+            }
             bodyRenderer.GetPropertyBlock(block);
             block.SetColor(BaseColorId, c);
             block.SetColor(ColorId, c);

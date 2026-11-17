@@ -74,6 +74,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `World/` (khu lớn) | `WorldScale`, `TerrainShape`, `DomeMesh` | **0.6a, chưa biên dịch.** Hằng số quy mô (khu 480 m, lõi phẳng 130 m), hàm độ cao địa hình (lõi phẳng đúng y = 0, đồi, vách rìa), mesh mái vòm quay vào trong. `UnderrootLakeBuilder` dùng chúng để dựng Terrain, mái, rễ, cột mốc, đèn, ranh giới; asset sinh ra nằm ở `Assets/_Project/Terrain/` |
 | `World/` (bố cục khu) | `GroundHeight`, `ZoneLayout` | **0.6b, chưa biên dịch.** `GroundHeight` đọc độ cao Terrain để con mồi, kẻ săn, cơ quan rơi và xác bám mặt đất (không có Terrain thì giữ độ cao cũ). `ZoneLayout` giữ dữ liệu bệ vi sinh cảnh, suối, đường mòn; `TerrainShape` dùng nó để làm phẳng bệ và suối (y = 0) |
 | `World/` (thực vật) | `VegetationScatter`, `GlowPulse` | **0.6c, chưa biên dịch.** `VegetationScatter` chọn vị trí và loại cây phát quang (mật độ theo vùng, cách nhau ≥ 6 m, trần 380); `GlowPulse` làm cây Bọc Bào Tử nhấp nháy khi camera ở gần (trong 80 m). `UnderrootLakeBuilder` đặt chúng thành `Nutrient` (12 dinh dưỡng, mọc lại 180 giây) |
+| `Survival/` (dinh dưỡng) | `NutrientKind`, `FoodProfile`, `NutrientEffects`; `Organs/OrganNutrient`, `OrganDecay` | **0.5c, chưa biên dịch.** Năm kho trong `SurvivalState.Nutrients` (hao theo thời gian và theo `NutrientLoad` cơ quan), hệ số suy yếu khi thiếu; mỗi nguồn thức ăn đưa kèm `FoodProfile` (`NetWorld.Feed(stats, amount, profile)`); `OrganHost` chặn trang bị khi thiếu chất, cho cơ quan yếu dần rồi tan (`Dissolved`) |
 | `Editor/` | `PrototypeSceneBuilder`, `UnderrootLakeBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; menu **Evolve → Build Underroot Lake** dựng scene `Scenes/Underroot_Lake` (tạo species asset D/C/B, prefab `Prey_C`, gắn `VibrationEmitter`, tag `ShallowWater`; dùng chung `CreateSharedAssets`/`CreatePlayer` của builder prototype); `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
 **Lưu ý về công cụ dựng scene:**
@@ -193,6 +194,16 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Hiệu ứng phát sáng trông đẹp nhất khi có Bloom trong hậu kỳ; chưa kiểm tra có sẵn hay không.
 - **Công cụ "Dress Lake"** của phiên khác vẫn dựng cây cỏ trang trí không ăn được; hai bên độc lập, chạy lại cả hai sau khi dựng lại scene.
 
+## 6.7. Bản 0.5c (dinh dưỡng): trạng thái và giới hạn
+
+**Code 0.5c chưa từng được biên dịch hay chạy.** Kiểm tra theo mục 13.
+
+- Mọi số liệu (hao 0,04 mỗi giây cộng 0,03 mỗi cơ quan, ngưỡng 40 và 25, tan sau 300 giây, hồi sau 600 giây, các hệ số) là số đặt tạm trong `SurvivalConfig` và `NutrientEffects` để chỉnh khi chơi thử. Khi cả 5 kho từ 40 trở lên, mọi hành vi giữ y như trước.
+- **Co-op:** kho dinh dưỡng của mỗi người do máy của chính họ tính. Thức ăn do Host điều khiển cho người vào phòng chỉ đi qua tin nhắn mang lượng calo, **không mang loại chất**, nên người vào phòng nhận bộ chất "hỗn hợp" mặc định cho phần ăn đó (làm đủ cần mở rộng đồng bộ co-op). Người khác chưa thấy kho của bạn.
+- Cơ quan tan thì rơi ra đất như một vật nhặt được (mất phần đã nuôi) cho đến khi có bản mẫu thật (0.5e). Nhặt lại cần đủ chất cơ quan đó đòi.
+- Huyết Thiết chưa có cơ quan nào dùng; bệnh tật (0.5d) chưa có. `OrganSO.NutrientNeed` đặt `Auto` cho mọi asset cũ (theo vị trí gắn); muốn đổi cho từng cơ quan, chỉnh trong Inspector.
+- Scene cũ chưa gán loại thức ăn cho cây: dựng lại bằng **Evolve → Build Underroot Lake** để cây có loại (Rêu Lân Quang cho Tinh Chất Sống, ...); thức ăn thường của scene khác dùng hồ sơ hỗn hợp.
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
@@ -273,3 +284,15 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 
 ## Công cụ xem map (ghost và góc nhìn rộng)
 `Dev/GhostMode.cs` (chỉ Editor và bản dev, tự thêm khi Play): **F6** bật/tắt chế độ ghost (slime bay xuyên mọi thứ theo hướng nhìn: WASD, Space lên, Ctrl xuống, Shift nhanh); **F7** mở bảng nhỏ (ghost, tốc độ bay, góc nhìn); **Page Up / Page Down** tăng/giảm góc nhìn bất cứ lúc nào, **Home** về mặc định. Slime vẫn sống (đói, sinh vật tấn công) khi là ghost; trong co-op người khác thấy nó bay.
+
+## 13. Danh sách kiểm tra thủ công 0.5c (cho chủ dự án)
+
+1. Console không lỗi đỏ; **Test Runner → EditMode → Run All** xanh (thêm `NutrientModelTests`, `SurvivalNutrientTests`, `OrganNutritionTests`, `FoodProfilesWiringTests` và hai test mới trong `HudVisibilityTests`).
+2. Chạy lại **Evolve → Build Underroot Lake** (rồi "Dress Lake"). Vào Play: ban đầu cả 5 chất ở 80, HUD **không** hiện chất nào; giữ **Tab** hiện đủ 5 hàng (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống).
+3. Ăn thịt (bắt con mồi): Sợi Nhầy, Huyết Thiết, Mỡ Nhờn tăng. Ăn từng loại cây: Rêu Lân Quang tăng Tinh Chất Sống, Nụ Hổ Phách tăng Mỡ Nhờn, Giọt Sương Rễ tăng Tinh Vôi, Quả Than Hồng tăng Huyết Thiết.
+4. Đứng yên lâu: các kho tụt chậm. Mang thêm cơ quan: kho chất cơ quan đó đòi tụt nhanh hơn (xem hàng trên Tab).
+5. Dùng Inspector (SurvivalStats → state → Nutrients) đặt Tinh Vôi = 10: HUD hiện hàng Tinh Vôi kèm dấu "!"; thân slime đổi màu; **không lắp được** cơ quan Lưng (hộp thoại báo thiếu Tinh Vôi); hấp thụ (F) vẫn dùng được.
+6. Đặt Tinh Chất Sống = 10: vòng quét rung (phím C) co lại khoảng 0,7 lần. Đặt Sợi Nhầy = 0: hồi máu chậm rõ; Huyết Thiết = 0: máu tối đa giảm còn 70%.
+7. Có cơ quan đang gắn, đặt chất nó cần = 5 và đợi: bảng Cơ quan (phím G) hiện "đang yếu X%"; sau khoảng 5 phút cơ quan tan và rơi ra đất. Ăn đủ lại: cơ quan còn yếu thì hồi dần.
+8. Hồi sinh: 5 kho đầy lại (80). `Prototype_01` vẫn chạy như cũ.
+9. Co-op F2: vào phòng không lỗi (người vào phòng nhận hồ sơ hỗn hợp cho phần ăn do Host điều khiển).

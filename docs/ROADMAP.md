@@ -75,4 +75,6 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Biên dịch và chạy thử 0.6b theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 11
 - [x] Code 0.6c: **đã code, chưa biên dịch/chạy thử**: `World/VegetationScatter` (rải 5 loại cây phát quang, trần 380), `GlowPulse` (nhấp nháy), builder đặt thức ăn thực vật dọc đường mòn và trong các bệ (plan `docs/superpowers/plans/2026-11-17-0.6c-vegetation.md`)
 - [ ] Biên dịch và chạy thử 0.6c theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 12
+- [x] Code 0.5c: **đã code, chưa biên dịch/chạy thử**: 5 chất dinh dưỡng (`Survival/NutrientKind`, `FoodProfile`, `NutrientEffects`), năm kho trong `SurvivalState`, cơ quan cần chất (`OrganNutrient`, `OrganDecay`, chặn trang bị `AttachCheck.LackNutrient`, yếu dần rồi tan), thức ăn mang hồ sơ dinh dưỡng, HUD và màu thân báo thiếu (plan `docs/superpowers/plans/2026-11-17-0.5c-nutrition.md`)
+- [ ] Biên dịch và chạy thử 0.5c theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 13
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

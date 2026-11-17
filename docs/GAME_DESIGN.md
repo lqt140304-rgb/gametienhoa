@@ -131,6 +131,10 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 
 ## 5. Chỉ số [ĐÃ CHỐT / ĐỀ XUẤT]
 
+**[ĐÃ CHỐT 2026-11-17] Năm chất dinh dưỡng (0.5c)**, tên kiểu slime, ghi chú nêu chất thật: **Sợi Nhầy** (đạm), **Tinh Vôi** (canxi), **Huyết Thiết** (sắt), **Mỡ Nhờn** (chất béo), **Tinh Chất Sống** (vitamin). Mỗi chất là một kho 0 đến 100 hao dần theo thời gian và hao nhanh hơn với mỗi cơ quan đang trang bị cần chất đó. Thức ăn cho một bộ chất tùy loại (thịt: Sợi Nhầy và Huyết Thiết; Rêu Lân Quang: Tinh Chất Sống; Nụ Hổ Phách: Mỡ Nhờn; Giọt Sương Rễ: Tinh Vôi; Quả Than Hồng: Huyết Thiết; xác thối cho ít hơn nhiều).
+- **Thiếu chất làm cơ thể suy yếu (dưới 40) [ĐỀ XUẤT số liệu]:** thiếu Sợi Nhầy hồi máu chậm (tới 0,4 lần); thiếu Tinh Vôi đòn đánh gây nhiều sát thương hơn (tới 1,4 lần); thiếu Huyết Thiết giảm máu tối đa (tới 0,7 lần) và hồi năng lượng chậm (tới 0,6 lần); thiếu Mỡ Nhờn nhiệt độ thân theo không khí nhanh hơn (tới 1,8 lần); thiếu Tinh Chất Sống giác quan kém (tới 0,6 lần).
+- **Cơ quan cần chất [ĐÃ CHỐT hướng (b)]:** Mắt cần Tinh Chất Sống, Chân cần Sợi Nhầy, Da cần Mỡ Nhờn, Lưng (gai, vỏ) cần Tinh Vôi (đặt được riêng cho từng cơ quan). Thiếu chất thì **không trang bị được**; thiếu kéo dài (dưới 25) thì cơ quan yếu dần (còn 20% sức) rồi tan sau khoảng 5 phút, ăn đủ thì hồi dần. Cơ quan tan rơi ra đất như vật nhặt được (bản mẫu thật ở 0.5e). Huyết Thiết chưa gắn cơ quan nào (chưa có ô tim) mà tác động thẳng lên thân.
+
 **[ĐÃ CHỐT]** Máu; thanh đói; thanh năng lượng; thanh kinh nghiệm tiến hóa; thanh nhiệt độ.
 
 **[ĐÃ CHỐT 2026-11-17]** Thêm chỉ số **Khát** (0.5b), **Căng thẳng** 0–100 (0.5b, không có hậu quả nặng ở 100, chỉ hiệu ứng tăng dần) và **5 chất dinh dưỡng** tên kiểu slime (0.5c): **Sợi Nhầy** (đạm), **Tinh Vôi** (canxi), **Huyết Thiết** (sắt), **Mỡ Nhờn** (chất béo), **Tinh Chất Sống** (vitamin). Dinh dưỡng là điều kiện của cơ quan: thiếu kéo dài thì cơ quan yếu dần rồi tiêu biến (bản mẫu vẫn còn). Đói vẫn là calo tổng. Chi tiết: `docs/superpowers/specs/2026-11-17-underroot-survival-slice-design.md` mục 5, 6.2, 6.3.
