@@ -1,78 +1,72 @@
-# Bổ sung kế hoạch: bản đồ 300 m (12 mục của chủ dự án) — ý kiến của Claude
+# Bàn giao bản đồ 500 m (bước A đã chốt, mục 5–12 cho phiên trang trí)
 
-> Ngày: 2026-11-17 · Nhãn: **[ĐÃ CHỐT]** chủ dự án quyết; **[ĐỀ XUẤT]** Claude đề xuất, chờ duyệt.
-> Đây là phần bổ sung, chưa phải plan triển khai. Khi chủ dự án chốt các câu hỏi ở mục 4, Claude viết plan cho từng bước (A, B, C...).
+> Ngày: 2026-11-17 · Nhãn: **[ĐÃ CHỐT]** chủ dự án quyết; **[ĐỀ XUẤT]** Claude đề xuất.
+> Tên file giữ `map300` cho khỏi gãy liên kết cũ, nhưng nội dung là bản đồ **500 m**.
+> Gửi cho phiên Claude làm trang trí (các file `Editor/Lake*.cs`). Phiên làm bước A (địa hình, nước, bơi) sẽ viết code theo plan `docs/superpowers/plans/2026-11-17-0.6d-map300-water.md`.
 
-## 1. 12 mục cần làm (do chủ dự án giao)
+## 1. Quyết định đã chốt
 
-1. Bảng số liệu bản đồ 300 m: vị trí 6 khu, hồ, suối, hai hố sâu, đường mòn.
-2. Địa hình đọc từ bảng đó: suối sâu 0,15 m, nước nông 0,4 m, hố 2 m. Bỏ lớp nền phẳng và các khối chặn cũ.
-3. Nước: tất cả về màu xanh ngọc cũ.
-4. Bơi và lặn: nước sâu hơn 0,5 m thì slime bơi; Space nổi lên, Ctrl lặn xuống, tốc độ 65%; nước nông vẫn lội như cũ.
-5. Mái lưới rễ cao khoảng 25 m, 8–10 tia sáng, rễ nhiều lớp quanh viền.
-6. Nền và thực vật theo từng khu.
-7–12. Điểm nhấn từng khu theo thứ tự 01 đến 06.
-8'. Cập nhật tài liệu, chạy Rebuild Lake (all steps) để kiểm tra (**chủ dự án chạy trên máy mình**; Claude không chạy được Unity).
+1. Bản đồ **500 × 500 m**, mỗi khu khoảng **80 m**. Đi ngang khoảng 8 phút (1 m/s), đúng spec 6.9. **[ĐÃ CHỐT]**
+2. Địa hình đọc từ bảng số liệu bên dưới: suối sâu 0,15 m, nước nông 0,4 m, hố 2 m. Bỏ lớp nền phẳng và các khối chặn cũ (hộp trigger nước, blocker hố sâu). **[ĐÃ CHỐT]**
+3. Nước: tất cả về màu xanh ngọc cũ. Riêng **vũng đọng ở khu 03 nhuốm hơi vàng lục** để người chơi còn nhận ra nước bẩn (gây bệnh Nhiễm Nước Đọng). **[ĐÃ CHỐT]**
+4. Bơi và lặn: nước sâu hơn 0,5 m thì slime bơi. Space nổi lên, Ctrl lặn xuống, tốc độ 65%. Nước nông vẫn lội như cũ. Bản đầu: không chết đuối, tốn năng lượng nhẹ. **[ĐÃ CHỐT]**
+5. Mái lưới rễ cao khoảng 25 m, 8–10 tia sáng, rễ nhiều lớp quanh viền. **[ĐÃ CHỐT]**
+6. Nền và thực vật theo từng khu. **[ĐÃ CHỐT]**
+7–12. Điểm nhấn từng khu theo thứ tự 01 đến 06. **[ĐÃ CHỐT]**
+13. Cập nhật tài liệu, chạy Evolve → Rebuild Lake (all steps) để kiểm tra (chủ dự án chạy trên máy mình). **[ĐÃ CHỐT]**
 
-## 2. Ý kiến bổ sung
+**Phân việc:** mục 1–4 (bảng số liệu, địa hình, màu nước, bơi) do phiên A làm. Mục 5–12 (mái rễ, nền, thực vật, điểm nhấn từng khu) do **phiên trang trí** làm. Chỉ một phiên nên sửa các file `Editor/Lake*.cs` tại một thời điểm.
 
-**2.1. Làm sau khi kiểm 0.5d và 0.5e.** Cả hai bản đã merge nhưng chưa biên dịch lần nào. Nên có kết quả Console và Test Runner trước khi làm lại bản đồ.
+## 2. Bảng số liệu bản đồ 500 m
 
-**2.2. 300 m thay 480 m là làm lại 0.6a–0.6c.**
-- Phải sửa `WorldScale`, `TerrainShape`, `ZoneLayout`, mái vòm (`DomeMesh`), tường biên, vị trí quần thể (Region, Den), vị trí rải thực vật, và test `ZoneLayoutTests`, `TerrainShapeTests`, `VegetationScatterTests`, `DomeMeshTests`.
-- Đi ngang khu mất khoảng 5 phút (300 m ÷ 1 m/s), không còn 8 phút như spec 6.9; spec cần sửa.
-- Các khu trong concept chỉ 25–35 m. Trên 300 m mỗi khu chỉ bằng khoảng một phần mười bề ngang, giữa các khu sẽ trống. **[ĐỀ XUẤT]** nhân kích thước khu lên khoảng 1,5 lần so với bảng concept, hoặc chủ dự án tự ghi kích thước mới.
+Tọa độ (x, z) mét tính từ tâm khu (x đông, z bắc). Kích thước = rộng × sâu. Vị trí tương đối lấy từ concept rồi nhân 5/3 lên 500 m, khu chỉnh về khoảng 80 m. **[ĐỀ XUẤT, chờ chủ dự án duyệt từng số]**
 
-**2.3. Bảng số liệu (mục 1).** Dạng dữ liệu thuần (không phụ thuộc cảnh), một nguồn dùng chung cho địa hình, nước, đường mòn, dựng cảnh và test. Vị trí tương đối lấy từ concept (bắc là phía rìa săn mồi 06, hồ ở giữa và phía nam, khe nước 05 ở đông, nơi trú 02 ở tây, bãi mùn 03 tây bắc, vườn bào tử 04 đông bắc). Chủ dự án duyệt từng số trước khi làm bước sau.
+| Khu | Tên | Tâm | Kích thước | Ghi chú |
+|---|---|---|---|---|
+| 01 | Vùng Sự Khởi Sinh | (-8, -120) | 80 × 70 | bờ nam của hồ, nơi xuất hiện |
+| 02 | Lõi Rễ Cổ Đại (nơi trú) | (-150, -18) | 70 × 60 | bờ tây; lõi rễ cùng khe nứt hẹp |
+| 03 | Bãi Mùn Rễ | (-125, 118) | 80 × 70 | tây bắc; khúc gỗ mục, vũng đọng vàng lục |
+| 04 | Vườn Bào Tử | (137, 110) | 70 × 70 | đông bắc; nấm lớn |
+| 05 | Khe Thủy Mạch | (173, -8) | 90 × 40 | đông; suối chảy, hai hố sâu |
+| 06 | Rìa Săn Mồi | (13, 153) | 80 × 55 | bắc; cung rễ 4 × 8 m; cửa vào của B tại (17, 233) |
 
-**2.4. Địa hình khoét nước (mục 2).**
-- Mực nước y = 0; địa hình tự khoét sâu xuống 0,15 m (suối), 0,4 m (nước nông), 2 m (hố).
-- Bỏ các hộp trigger nước cũ thì thay bằng một hàm tra độ sâu nước theo tọa độ, lấy từ cùng bảng số liệu. Cảm biến nước, thức ăn, thú dùng chung hàm này. `Prototype_01` vẫn dùng trigger như cũ.
-- Bỏ lớp nền phẳng: các thứ đang đứng trên y = 0 (thức ăn, tổ, quần thể) phải đặt theo `GroundHeight`.
+- **Hồ:** elip tâm (-8, -42), bán trục 110 × 80 (rộng 220 × 160 m), sâu 0,4 m, bờ mềm 6 m. Khu 01 và 02 nằm sát mép hồ.
+- **Suối** (rộng 10 m, sâu 0,15 m): (213, 10) → (187, -7) → (158, -17) → (133, -25) → (103, -37), đổ vào bờ đông hồ.
+- **Hố sâu** (bán kính 10 m, sâu 2 m): (193, 0) và (157, -20).
+- **Vũng đọng khu 03:** tròn tâm (-120, 103), bán kính 6 m, sâu 0,3 m, nước bẩn.
+- **Đường mòn:**
+  - 01→02: (-8,-120), (-83,-100), (-133,-67), (-150,-18)
+  - 02→03: (-150,-18), (-142,50), (-125,118)
+  - 03→06: (-125,118), (-67,142), (13,153)
+  - 06→04: (13,153), (75,142), (137,110)
+  - 04→05: (137,110), (167,58), (173,8)
+  - 05→01: (173,-8), (100,-117), (-8,-120)
+  - lối của B: (17,233), (13,153)
+- **Vách rìa:** từ ±175 m lên cao tối đa 20 m tại ±250 m (mái 25 m).
+- Mực nước y = 0; địa hình khoét xuống từ đó.
 
-**2.5. Màu nước (mục 3).** Nước đọng màu bùn là dấu hiệu để tránh bệnh Nhiễm Nước Đọng. **[ĐỀ XUẤT]** tất cả nước xanh ngọc, riêng một vũng đọng ở khu 03 nhuốm hơi vàng lục (hoặc có bọt tảo) để người chơi còn phân biệt được.
+## 3. Điều phiên trang trí cần biết
 
-**2.6. Bơi và lặn (mục 4).**
-- Ngưỡng bơi: độ sâu nước tại vị trí slime > 0,5 m (tính bằng mực nước − `GroundHeight`).
-- Hiện Space là nhảy (`SlimeController.ReadHop`); khi đang bơi Space đổi thành nổi lên. Cần kiểm tra Ctrl chưa dùng cho việc khác.
-- **[ĐỀ XUẤT]** bản đầu: không chết đuối, tốn năng lượng nhẹ khi bơi (số đặt trong `SurvivalConfig`), tốc độ 65%, camera không đổi. Chìm, ngạt, hiệu ứng dưới nước để bản sau.
-- Co-op: vị trí y đã được gửi qua mạng nên người khác thấy bạn bơi; chưa cần đổi `PlayerNetState`.
-- Thú D/C trong hố sâu và rung động trong nước: để bản sau.
+- Bước A **giữ** `ZoneLayout.Biomes` (`Pad[]`, các khu 02–06, bán kính = nửa cạnh lớn) và `ZoneLayout.Paths` (`Vector2[][]`) nên `Editor/LakeLayout.cs` (đọc bằng reflection) vẫn chạy. Dữ liệu mới (`ZoneLayout.Zones`, hồ, suối, hố) sẽ có thêm.
+- Các object trong scene giữ tên cũ: "Vung Sinh Menh (Life Pool)", "Spawn Point n", "Den ...", "Region (...)". Sẽ **mất**: "Pool Water", "Shallow Water" (các hộp), "Deep Pocket*", "Humus Ground". `LakeWater.Dress` hiện tìm chúng để đặt mặt nước, nên cần sửa để đặt mặt nước theo `WaterMap` (hồ, suối, hố, vũng đọng); mặt nước có sẵn do bước A tạo ở `y = 0`.
+- Mái vòm: bán kính 0,75 × 500 m, cao 25 m; vách rìa cao ≤ 20 m. Mái lưới rễ và các tia sáng 8–10 làm trên mái này.
+- Mỗi khu có địa hình gồ ghề nhẹ (không còn nền phẳng); đặt vật theo `GroundHeight`, không giả định y = 0.
+- Nước sâu (hố 2 m) có thể bơi: đừng đặt vật cản trong nước.
 
-**2.6b. Nơi trú (liên quan 0.5e).** Luật "chỉ đổi cơ thể ở nơi trú" đã bỏ; khu 02 (lõi rễ cổ đại) vẫn là nơi trú ẩn khỏi kẻ săn B.
+## 4. Rủi ro
 
-**2.7. Mái rễ 25 m (mục 5).** Vách đá viền hiện cao 45 m (`TerrainShape.CliffHeight`), cao hơn mái; phải hạ xuống dưới 25 m. Số tia sáng tối đa hiện khoảng 12 theo công thức cũ, 8–10 tia là hợp lý. Rễ nhiều lớp quanh viền cần giới hạn số mesh để giữ FPS.
+- Không biên dịch và không thấy hình trong môi trường agent; trang trí phải kiểm bằng ảnh và Console chủ dự án gửi lại.
+- Đổi bố cục có thể làm hỏng quần thể, đường mòn, đồng bộ co-op và các test đã có (bước A cập nhật test).
+- Hiệu năng: nhiều rễ, nấm, tia sáng trên bản đồ 500 m; kiểm FPS sau mỗi bước.
 
-**2.8. Phân chia việc và nhịp làm [ĐỀ XUẤT].** Các file `Editor/Lake*.cs` do phiên Claude bên kia trang trí; chỉ một phiên nên giữ chúng tại một thời điểm.
+## 5. Nhịp làm đề xuất
 
-| Bước | Nội dung | Kiểm bằng |
+| Bước | Nội dung | Ai làm |
 |---|---|---|
-| A | Mục 1–4 (dữ liệu, địa hình, màu nước, bơi) | Test Runner + chơi thử |
-| B | Mục 5–6 (mái rễ, nền, thực vật) | Rebuild Lake + ảnh |
-| C | Khu 01, 02 | Rebuild + ảnh |
-| D | Khu 03, 04 | Rebuild + ảnh |
-| E | Khu 05, 06, rồi cập nhật tài liệu | Rebuild + ảnh |
+| A | Bảng số liệu, địa hình khoét nước, màu nước, bơi | phiên A |
+| B | Mái lưới rễ 25 m, nền, thực vật theo khu | phiên trang trí |
+| C | Khu 01, 02 | phiên trang trí |
+| D | Khu 03, 04 | phiên trang trí |
+| E | Khu 05, 06, rồi cập nhật tài liệu | phiên trang trí |
 
-Mỗi bước là một PR riêng, để nếu có lỗi thì chỉ cần sửa trong bước đó.
-
-## 3. Rủi ro
-
-- Không biên dịch và không thấy hình trong môi trường agent; bước B–E phải qua ảnh chủ dự án gửi lại.
-- Làm lại bố cục có thể làm hỏng quần thể, đường mòn, đồng bộ co-op và các test đã có.
-- Hiệu năng: nhiều rễ, nấm, tia sáng; kiểm FPS sau mỗi bước.
-
-## 4. Câu hỏi cần chủ dự án chốt
-
-1. Kích thước khu: giữ đúng bảng concept, hay nhân 1,5 lần (đề xuất)?
-2. Mục 5–12 do phiên nào làm (phiên này hay phiên bên kia)?
-3. Vũng nước đọng ở khu 03: nhuốm hơi vàng lục (đề xuất), hay xanh ngọc như các nước khác?
-4. Bơi bản đầu: không chết đuối, tốn năng lượng nhẹ (đề xuất), hay có ngạt?
-
-## 5. Quyết định đã chốt (2026-11-17)
-
-1. Kích thước khu: **nhân 1,5 lần** so với bảng concept.
-2. Mục 5–12 (mái lưới rễ, nền, thực vật, điểm nhấn): **phiên Claude bên kia** làm. Phiên này làm bước A (mục 1–4), plan: `docs/superpowers/plans/2026-11-17-0.6d-map300-water.md`.
-3. Vũng nước đọng khu 03: **vàng lục**.
-4. Bơi bản đầu: theo đề xuất (không chết đuối, tốn năng lượng nhẹ).
-
-**Cập nhật sau đó (2026-11-17):** chủ dự án đổi thành **bản đồ 500 m, mỗi khu khoảng 80 m** (thay cho 300 m và nhân 1,5). Đi ngang khoảng 8 phút, đúng spec 6.9. Plan đã chỉnh theo.
+Mỗi bước là một PR riêng.
