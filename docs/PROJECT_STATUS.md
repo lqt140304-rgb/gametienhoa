@@ -246,3 +246,7 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 10. `Prototype_01` dựng lại vẫn chạy như cũ (sinh vật giữ độ cao như trước).
 11. Ghi nhận khi chơi: kẻ săn B chỉ vào được khi bạn đứng cách tổ B khoảng 40 đến 70 m (hai cửa vào cách tâm 25 m, luật 40 m quanh người chơi); để quần thể chạy vài phút rồi xem số C và D có còn không (cân bằng sinh/ăn còn là số đặt tạm).
 12. `GroundHeightTests` bị bỏ qua (không lỗi) nếu đang mở scene có Terrain; muốn chạy nó, mở `Prototype_01` rồi chạy lại Test Runner.
+
+
+## Công cụ xem map (ghost và góc nhìn rộng)
+`Dev/GhostMode.cs` (chỉ Editor và bản dev, tự thêm khi Play): **F6** bật/tắt chế độ ghost (slime bay xuyên mọi thứ theo hướng nhìn: WASD, Space lên, Ctrl xuống, Shift nhanh); **F7** mở bảng nhỏ (ghost, tốc độ bay, góc nhìn); **Page Up / Page Down** tăng/giảm góc nhìn bất cứ lúc nào, **Home** về mặc định. Slime vẫn sống (đói, sinh vật tấn công) khi là ghost; trong co-op người khác thấy nó bay.
