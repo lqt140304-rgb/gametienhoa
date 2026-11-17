@@ -13,7 +13,9 @@ namespace Evolve.Player
     [RequireComponent(typeof(Rigidbody), typeof(SurvivalStats))]
     public class SlimeController : MonoBehaviour
     {
-        [SerializeField] float crawlSpeed = 2.5f;
+        [SerializeField] float crawlSpeed = 1.8f;
+        [Tooltip("Speed multiplier while holding Shift (drains energy)")]
+        [SerializeField] float sprintMultiplier = 1.8f;
         [SerializeField] float acceleration = 12f;
         [SerializeField] float hopForce = 5f;
         [SerializeField] float hopForward = 3f;
@@ -24,6 +26,8 @@ namespace Evolve.Player
         [SerializeField] Transform visual;
 
         Rigidbody rb;
+
+        public bool IsSprinting { get; private set; }
         SurvivalStats stats;
         Vector3 baseScale = Vector3.one;
         float squash;
@@ -56,8 +60,11 @@ namespace Evolve.Player
             Vector3 dir = GetMoveDirection();
             stats.IsMoving = dir.sqrMagnitude > 0.01f;
 
+            IsSprinting = stats.IsMoving && ReadSprint()
+                && stats.State.DrainEnergy(stats.Config.SprintEnergyPerSec * Time.fixedDeltaTime);
+
             Vector3 v = rb.linearVelocity;
-            Vector3 target = dir * crawlSpeed;
+            Vector3 target = dir * crawlSpeed * (IsSprinting ? sprintMultiplier : 1f);
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
             rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
         }
@@ -102,6 +109,16 @@ namespace Evolve.Player
             return Vector2.ClampMagnitude(v, 1f);
 #else
             return Vector2.ClampMagnitude(new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1f);
+#endif
+        }
+
+        static bool ReadSprint()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed)
+                || (Gamepad.current != null && Gamepad.current.leftStickButton.isPressed);
+#else
+            return Input.GetKey(KeyCode.LeftShift);
 #endif
         }
 

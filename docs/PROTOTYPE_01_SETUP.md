@@ -51,6 +51,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | Phím | Tác dụng |
 |---|---|
 | WASD / cần trái | Trườn |
+| Shift | Chạy nhanh (tốn năng lượng liên tục) |
 | Space / nút A | Nảy (tốn năng lượng) |
 | Q / nút X | Dùng Dị Năng |
 | Giữ chuột phải + kéo | Xoay camera |

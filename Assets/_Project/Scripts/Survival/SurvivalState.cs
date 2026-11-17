@@ -56,6 +56,15 @@ namespace Evolve.Survival
             return true;
         }
 
+        /// <summary>Drain energy continuously (clamps at 0). Returns false once empty.</summary>
+        public bool DrainEnergy(float amount)
+        {
+            if (Energy <= 0f) return false;
+            Energy = Clamp(Energy - amount, MaxEnergy);
+            Changed?.Invoke();
+            return true;
+        }
+
         public void Feed(float nutrition)
         {
             if (IsDead) return;
