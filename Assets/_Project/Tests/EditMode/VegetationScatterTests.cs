@@ -78,14 +78,14 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void HuntEdgeIsSparserThanHumus()
         {
-            var pts = VegetationScatter.Points(1, None);
             int humus = 0, edge = 0;
-            foreach (var p in pts)
-            {
-                if (ZoneLayout.DistanceToPath(p.Position.x, p.Position.y) <= VegetationScatter.PathReach) continue;
-                if (Vector2.Distance(p.Position, ZoneLayout.Humus.Center) <= ZoneLayout.Humus.Radius) humus++;
-                else if (Vector2.Distance(p.Position, ZoneLayout.HuntEdge.Center) <= ZoneLayout.HuntEdge.Radius) edge++;
-            }
+            for (int seed = 1; seed <= 8; seed++) // several seeds: one seed's counts are too small to compare reliably
+                foreach (var p in VegetationScatter.Points(seed, None))
+                {
+                    if (ZoneLayout.DistanceToPath(p.Position.x, p.Position.y) <= VegetationScatter.PathReach) continue;
+                    if (Vector2.Distance(p.Position, ZoneLayout.Humus.Center) <= ZoneLayout.Humus.Radius) humus++;
+                    else if (Vector2.Distance(p.Position, ZoneLayout.HuntEdge.Center) <= ZoneLayout.HuntEdge.Radius) edge++;
+                }
             Assert.GreaterOrEqual(humus, 2f * Mathf.Max(edge, 1));
         }
 

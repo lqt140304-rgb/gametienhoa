@@ -19,7 +19,7 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void PhaseOffsetsDiffer()
         {
-            Assert.AreNotEqual(GlowPulse.Intensity(3f, 1.6f, 0.45f, 0f), GlowPulse.Intensity(3f, 1.6f, 0.45f, 1.7f), 1e-4f);
+            Assert.That(GlowPulse.Intensity(3f, 1.6f, 0.45f, 0f), Is.Not.EqualTo(GlowPulse.Intensity(3f, 1.6f, 0.45f, 1.7f)).Within(1e-4f));
         }
 
         [Test]

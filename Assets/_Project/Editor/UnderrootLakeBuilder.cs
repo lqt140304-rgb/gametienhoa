@@ -253,7 +253,10 @@ namespace Evolve.EditorTools
             foreach (var den in Object.FindObjectsByType<Den>()) blockers.Add(new Bounds(den.transform.position, new Vector3(10f, 10f, 10f)));
             foreach (var n in Object.FindObjectsByType<Nutrient>()) blockers.Add(new Bounds(n.transform.position, new Vector3(6f, 6f, 6f)));
             foreach (var t in Object.FindObjectsByType<Transform>())
+            {
                 if (t.name.StartsWith("Deep Pocket")) blockers.Add(new Bounds(t.position, new Vector3(16f, 16f, 16f)));
+                if (t.name.StartsWith("Landmark ")) blockers.Add(new Bounds(t.position, new Vector3(11f, 1f, 11f))); // solid 7 m pillars (not the "Landmarks" parent)
+            }
 
             bool Blocked(float x, float z)
             {
@@ -283,9 +286,9 @@ namespace Evolve.EditorTools
             {
                 int k = (int)pt.Kind;
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(nutrientPrefab, parents[k]);
-                float y = TerrainShape.HeightAt(pt.Position.x, pt.Position.y, TerrainSeed) + 0.25f;
-                go.transform.position = new Vector3(pt.Position.x, y, pt.Position.y);
                 float size = Mathf.Lerp(VegetationScale[k].x, VegetationScale[k].y, (float)rng.NextDouble());
+                float y = TerrainShape.HeightAt(pt.Position.x, pt.Position.y, TerrainSeed) + 0.25f * size; // sphere radius 0.25 x size: rests on the ground
+                go.transform.position = new Vector3(pt.Position.x, y, pt.Position.y);
                 go.transform.localScale = nutrientPrefab.transform.localScale * size;
                 go.GetComponentInChildren<Renderer>().sharedMaterial = mats[k];
                 var so = new SerializedObject(go.GetComponent<Nutrient>());
