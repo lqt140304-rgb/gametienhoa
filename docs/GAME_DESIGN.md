@@ -90,11 +90,13 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 - Việc đồng đội lạm dụng nhau (bỏ mặc để nhặt đồ) được **chấp nhận**: game thiên về chiều sâu và hardcore, không cần quá thân thiện.
 - **Thời hạn cứu: 120 giây.** Hết 120 giây mà chưa cứu được thì xác chết hẳn và đồ rơi ra.
 - **Chi phí cứu kiểu chuyền máu:** 1 máu của người được cứu bằng **3 máu** của người cứu. Người cứu **chuyền liên tục** cho đến khi thấy đủ thì tự buông.
+- **Hai giai đoạn cứu:** (1) cứu thường, giữ tương tác khoảng **5 giây** để đưa người chết từ 0 lên **1 máu**; (2) sau đó chuyền máu 3:1.
 - Người được cứu **sống tiếp mạng vừa rồi**, không được cộng thêm mạng. Chết lần nữa thì lại thành xác.
 - Người hết mạng vào **chế độ quan sát**, xem từ góc nhìn (POV) của người còn sống.
 
 **[ĐỀ XUẤT]** (chưa duyệt)
 - Cứu bị ngắt nếu người cứu bị tấn công.
+- Giai đoạn chuyền máu: thời gian chuyền mỗi máu **giảm dần**, bắt đầu từ mức 5 giây rồi nhanh dần (cách hiểu tạm, cần xác nhận mức nhanh nhất và tốc độ giảm).
 - Có thể giới hạn số lần cứu hoặc cho hồi lại mạng khi qua cột mốc (hạ boss, xây tổ). Tình huống không có đồng đội (chơi một mình) hết mạng là thua.
 
 ## 7. Công nghệ
