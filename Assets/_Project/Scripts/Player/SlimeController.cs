@@ -53,8 +53,8 @@ namespace Evolve.Player
             if (stats.State.IsDead)
             {
                 if (stats.State.CanRespawn && KeyPressed.R()) Respawn();
-                // Temporary, until teammates can rescue: out of lives = start a fresh run.
-                else if (stats.State.IsCorpse && KeyPressed.Y()) NewRun();
+                // Single player only: out of lives = start a fresh run. In co-op teammates rescue (RescueController).
+                else if (stats.State.IsCorpse && !NetWorld.CoopActive && KeyPressed.Y()) NewRun();
                 return;
             }
             if (ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))

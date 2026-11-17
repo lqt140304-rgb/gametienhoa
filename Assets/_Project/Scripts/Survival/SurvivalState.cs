@@ -43,6 +43,34 @@ namespace Evolve.Survival
 
         public event Action Changed;
 
+        /// <summary>Co-op: the corpse was not rescued in time; it is gone for good and its owner only spectates.</summary>
+        [NonSerialized] public bool Lost;
+
+        /// <summary>A teammate pulled this corpse back: alive again with a little health, continuing the same life.</summary>
+        public void Revive(float health)
+        {
+            if (!IsCorpse || Lost) return;
+            Lives = 1;
+            Health = Clamp(health, MaxHealth);
+            Changed?.Invoke();
+        }
+
+        /// <summary>Health given by a teammate (blood transfer).</summary>
+        public void Heal(float amount)
+        {
+            if (IsDead || amount <= 0f) return;
+            Health = Clamp(Health + amount, MaxHealth);
+            Changed?.Invoke();
+        }
+
+        /// <summary>Health given away; never kills (stops at 1).</summary>
+        public void Drain(float amount)
+        {
+            if (IsDead || amount <= 0f) return;
+            Health = UnityEngine.Mathf.Max(1f, Health - amount);
+            Changed?.Invoke();
+        }
+
         /// <summary>
         /// Optional hook that takes a share of eaten food (e.g. for growing organs).
         /// Receives the amount eaten, returns what is left for hunger.
@@ -54,6 +82,7 @@ namespace Evolve.Survival
         public void ResetLives()
         {
             Lives = MaxLives;
+            Lost = false;
             Changed?.Invoke();
         }
 
