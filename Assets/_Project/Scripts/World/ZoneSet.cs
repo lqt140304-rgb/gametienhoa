@@ -1,11 +1,16 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Evolve.World
 {
     /// <summary>Pure set of zones a body currently overlaps. No duplicates; safe against double exit.</summary>
     public class ZoneSet
     {
+        /// <summary>Cached liveness check: a live, enabled Unity component.</summary>
+        public static readonly Func<object, bool> IsAliveUnityObject =
+            o => o is Component c && c != null && c.isActiveAndEnabled;
+
         readonly List<object> items = new List<object>();
 
         public int Count => items.Count;

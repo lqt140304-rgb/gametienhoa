@@ -8,7 +8,6 @@ namespace Evolve.World
     public class ShelterSensor : MonoBehaviour
     {
         readonly ZoneSet zones = new ZoneSet();
-        readonly System.Func<object, bool> isAlive = o => o is UnityEngine.Object u && u != null;
         SurvivalStats stats;
 
         public bool InShelter { get; private set; }
@@ -18,7 +17,7 @@ namespace Evolve.World
         void Update()
         {
             if (stats.IsRemote) return;
-            zones.Prune(isAlive);
+            zones.Prune(ZoneSet.IsAliveUnityObject);
             InShelter = zones.Count > 0 && !stats.State.IsDead;
             stats.State.InShelter = InShelter;
         }

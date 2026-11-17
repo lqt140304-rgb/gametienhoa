@@ -8,7 +8,6 @@ namespace Evolve.World
     public class WaterSensor : MonoBehaviour
     {
         readonly ZoneSet zones = new ZoneSet();
-        readonly System.Func<object, bool> isAlive = o => o is UnityEngine.Object u && u != null;
         SurvivalStats stats;
 
         public bool InWater => zones.Count > 0;
@@ -35,7 +34,7 @@ namespace Evolve.World
         void Update()
         {
             if (stats.IsRemote) return;
-            zones.Prune(isAlive);
+            zones.Prune(ZoneSet.IsAliveUnityObject);
             stats.State.ThirstEnabled = WaterZone.AnyInScene;
             if (zones.Count > 0 && !stats.State.IsDead)
                 stats.State.Drink(stats.Config.DrinkPerSec * Time.deltaTime);

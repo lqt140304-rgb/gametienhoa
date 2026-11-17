@@ -15,7 +15,10 @@ namespace Evolve.World
 
         // Domain reload may be off: clear leaked state when entering Play mode.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => Count = 0;
+        public static void ResetStatics() => Count = 0;
+
+        /// <summary>Test hook: force the counter without relying on lifecycle callbacks.</summary>
+        public static void SetCountForTests(int n) => Count = n;
 
         void Reset() => GetComponent<Collider>().isTrigger = true;
         void Awake() => GetComponent<Collider>().isTrigger = true;

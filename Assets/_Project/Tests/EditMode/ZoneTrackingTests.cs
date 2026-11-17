@@ -9,12 +9,7 @@ namespace Evolve.Tests.EditMode
         [SetUp] public void SetUp() => ResetWaterCount();
         [TearDown] public void TearDown() => ResetWaterCount();
 
-        static void ResetWaterCount()
-        {
-            var m = typeof(WaterZone).GetMethod("ResetStatics",
-                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            m.Invoke(null, null);
-        }
+        static void ResetWaterCount() => WaterZone.ResetStatics();
 
         [Test]
         public void SensorsHandleOverlap()
@@ -49,12 +44,11 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void WaterCountResetsOnLoad()
         {
-            var go = new GameObject("w", typeof(BoxCollider), typeof(WaterZone));
-            Assert.AreEqual(1, WaterZone.Count);
-            ResetWaterCount();
+            WaterZone.SetCountForTests(3);
+            Assert.IsTrue(WaterZone.AnyInScene);
+            WaterZone.ResetStatics();
             Assert.AreEqual(0, WaterZone.Count);
-            Object.DestroyImmediate(go);
-            Assert.AreEqual(0, WaterZone.Count);
+            Assert.IsFalse(WaterZone.AnyInScene);
         }
     }
 }
