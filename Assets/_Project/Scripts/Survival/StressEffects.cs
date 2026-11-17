@@ -8,7 +8,7 @@ namespace Evolve.Survival
         {
             float start = cfg.StressShakeStart;
             if (stress <= start) return 0f;
-            float t = (stress - start) / (SurvivalState.MaxStress - start);
+            float t = (stress - start) / UnityEngine.Mathf.Max(1f, SurvivalState.MaxStress - start);
             return 0.05f * (t > 1f ? 1f : t);
         }
 
@@ -17,7 +17,7 @@ namespace Evolve.Survival
         {
             float start = cfg.StressSenseStart;
             if (stress <= start) return 1f;
-            float t = (stress - start) / (SurvivalState.MaxStress - start);
+            float t = (stress - start) / UnityEngine.Mathf.Max(1f, SurvivalState.MaxStress - start);
             return 1f - 0.4f * (t > 1f ? 1f : t);
         }
 

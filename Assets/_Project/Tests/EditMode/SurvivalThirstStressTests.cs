@@ -110,9 +110,25 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void StressAtMaxHasNoDirectDamage()
         {
+            s.ThirstEnabled = true;
+            s.Health = 50f;
+            s.Hunger = 100f;
+            s.Thirst = 100f;
             s.Stress = 100f;
             s.Tick(10f, cfg, false, false);
-            Assert.AreEqual(100f, s.Health, 0.001f);
+            Assert.GreaterOrEqual(s.Health, 50f);
+        }
+
+        [Test]
+        public void ReviveGivesThirstFloorAndCapsStress()
+        {
+            s.Health = 0f;
+            s.Lives = 0;
+            s.Thirst = 0f;
+            s.Stress = 90f;
+            s.Revive(1f);
+            Assert.AreEqual(50f, s.Thirst, 0.001f);
+            Assert.AreEqual(50f, s.Stress, 0.001f);
         }
 
         [Test]

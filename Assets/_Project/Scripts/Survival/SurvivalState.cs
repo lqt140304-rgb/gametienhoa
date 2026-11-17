@@ -64,6 +64,8 @@ namespace Evolve.Survival
             if (!IsCorpse || Lost) return;
             Lives = 1;
             Health = Clamp(health, MaxHealth);
+            Thirst = UnityEngine.Mathf.Max(Thirst, MaxThirst * 0.5f);
+            Stress = UnityEngine.Mathf.Min(Stress, 50f);
             Changed?.Invoke();
         }
 
