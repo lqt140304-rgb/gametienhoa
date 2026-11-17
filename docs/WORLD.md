@@ -23,12 +23,12 @@
 
 **[ĐÃ CHỐT]**
 - Khi chết, người chơi được **chọn đánh một trận với Thần Chết**, một **boss cố định** (luôn là cùng một boss).
-- **Thắng** thì Thần Chết cho **sống tiếp** (với 1 máu) và **giữ nguyên toàn bộ cơ quan** (không rơi, không mất 50%).
-- Về mạng: hai câu của chủ dự án đang **mâu thuẫn** (một câu "lấy đi 1 mạng", một câu "giữ cả mạng và cơ quan"). **[MỞ]** chờ xác nhận.
-- Không chọn đánh, hoặc thua, thì chết.
+- **Thắng** thì sống tiếp tại chỗ với **1 máu**, **không mất mạng** và **giữ đầy đủ cơ quan** (không rơi, không mất 50%).
+- **Thua** thì chết thường: **mất 1 mạng** và cơ quan rơi theo luật 50/50 như `GAME_DESIGN.md` mục 6.1.
+- Không chọn đánh thì chết thường, giống thua.
 
 **[MỞ]**
-- **Thần Chết, thua thì sao?** Thắng thì sống tiếp nhưng trừ 1 mạng. Nếu thua cũng chỉ là chết thường (cũng trừ 1 mạng) thì cược không tốn thêm gì; cần quyết thua mất thêm gì, và thắng thì cơ quan có rơi không.
+- **Thắng không mất gì**, nên người chơi luôn chọn đánh: cần quyết giới hạn (mỗi mạng một lần, hồi chiêu, hay chỉ độ khó của Thần Chết là rào chắn).
 - Thần Chết là boss riêng hay đứng ngoài bậc Boss của Bestiary? Chỉnh độ khó theo số người/cấp người chơi không?
 
 ## 2. Hệ quả cho các tài liệu khác
