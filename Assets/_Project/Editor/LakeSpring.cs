@@ -35,7 +35,7 @@ namespace Evolve.EditorTools
             var caps = new List<CombineInstance>();
             var variants = new List<Mesh>();
             var variantCaps = new List<Mesh>();
-            for (int v = 0; v < 4; v++) { variants.Add(GroundMeshes.Rock(700 + v, out var cap, 0.82f));   // moss only on the flattest tops variantCaps.Add(cap); }
+            for (int v = 0; v < 4; v++) { variants.Add(GroundMeshes.Rock(700 + v, out var cap, 0.82f)); variantCaps.Add(cap); }   // moss only on the flattest tops
             var rnd = new System.Random(808);
 
             var waterfallMaterial = WaterfallMaterial();
