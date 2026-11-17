@@ -66,13 +66,13 @@ namespace Evolve.EditorTools
             {
                 s.Id = "C_Rootcrawler"; s.Prefab = preyCPrefab; s.Tier = OrganTier.C;
                 s.StartCount = 10; s.Capacity = 16; s.BirthsPerMinute = 0.35f;
-                s.Prey = d; s.KillsPerHeadPerMinute = 0.3f;
+                s.Prey = d; s.KillsPerHeadPerMinute = 0.05f;
             });
             var b = P.Asset<SpeciesSO>(SO + "Species_B_Hunter.asset", s =>
             {
                 s.Id = "B_Hunter"; s.Prefab = predatorPrefab; s.Tier = OrganTier.B;
                 s.StartCount = 2; s.Capacity = 3; s.BirthsPerMinute = 0.02f;
-                s.Prey = c; s.KillsPerHeadPerMinute = 0.5f;
+                s.Prey = c; s.KillsPerHeadPerMinute = 0.15f;
             });
             FillMissing(d, preyPrefab, null);
             FillMissing(c, preyCPrefab, d);
@@ -107,9 +107,9 @@ namespace Evolve.EditorTools
             for (int i = 0; i < 28; i++) rng.NextDouble();
 
             // ---- Regions: one per populated biome (population numbers live per region) ----
-            var humusRegion = MakeRegion("Region (Bai Mun Re)", ZoneLayout.Humus, d);
-            var sporeRegion = MakeRegion("Region (Vuon Bao Tu)", ZoneLayout.Spore, d, c);
-            var edgeRegion = MakeRegion("Region (Ria San Moi)", ZoneLayout.HuntEdge, c, b);
+            var humusRegion = MakeRegion("Region (Bai Mun Re)", ZoneLayout.Humus, 90f, d);
+            var sporeRegion = MakeRegion("Region (Vuon Bao Tu)", ZoneLayout.Spore, 90f, d, c);
+            var edgeRegion = MakeRegion("Region (Ria San Moi)", ZoneLayout.HuntEdge, 140f, d, c, b) // wide deactivate radius so the hunter does not vanish while chasing;
 
             // ---- Vũng Sinh Mệnh (life pool) ----
             var pool = new GameObject("Vung Sinh Menh (Life Pool)").transform;
@@ -168,12 +168,14 @@ namespace Evolve.EditorTools
             }
             MakeDen("Den C (Rootcrawler) 1", garden, new Vector3(-168f, 0f, 9f), c, sporeRegion, denMat);
             MakeDen("Den C (Rootcrawler) 2", garden, new Vector3(-173f, 0f, -9f), c, sporeRegion, denMat);
-            MakeDen("Den D (Mudmite) 3", garden, new Vector3(-162f, 0f, -12f), d, sporeRegion, denMat); // prey for the C of this region
+            MakeDen("Den D (Mudmite) 3", garden, new Vector3(-158f, 0f, -20f), d, sporeRegion, denMat); // prey for the C of this region
+            MakeDen("Den D (Mudmite) 5", garden, new Vector3(-176f, 0f, 22f), d, sporeRegion, denMat);
 
             // ---- Rìa Săn Mồi (south-east): B den at the edge + 2 incursion entries ----
             var hunt = new GameObject("Ria San Moi (Hunting Edge)").transform;
             MakeDen("Den B (Hunter)", hunt, new Vector3(170f, 0f, -170f), b, edgeRegion, denMat);
             MakeDen("Den C (Rootcrawler) 3", hunt, new Vector3(180f, 0f, -160f), c, edgeRegion, denMat); // prey for the hunter
+            MakeDen("Den D (Mudmite) 4", hunt, new Vector3(160f, 0f, -180f), d, edgeRegion, denMat); // so the C of this region can breed
             var e1 = new GameObject("Incursion Entry East").transform;
             e1.SetParent(hunt, false); e1.position = new Vector3(171f, 0.35f, -145f);
             var e2 = new GameObject("Incursion Entry South").transform;
@@ -209,7 +211,7 @@ namespace Evolve.EditorTools
             Debug.Log("Đã dựng " + ScenePath + ". Chân Rễ phía bắc, Bãi Mùn Rễ (tổ D) phía đông, Vườn Bào Tử (tổ C) phía tây, Khe Thủy Mạch xuống nam, Rìa Săn Mồi (B) đông nam; đường mòn nối các nơi.");
         }
 
-        static Region MakeRegion(string name, Pad pad, params SpeciesSO[] species)
+        static Region MakeRegion(string name, Pad pad, float deactivateRadius, params SpeciesSO[] species)
         {
             var go = new GameObject(name);
             go.transform.position = new Vector3(pad.Center.x, 0f, pad.Center.y);
@@ -217,7 +219,7 @@ namespace Evolve.EditorTools
             var so = new SerializedObject(region);
             so.FindProperty("size").vector3Value = new Vector3(pad.Radius * 2f, 40f, pad.Radius * 2f);
             so.FindProperty("activateRadius").floatValue = 70f;
-            so.FindProperty("deactivateRadius").floatValue = 90f;
+            so.FindProperty("deactivateRadius").floatValue = deactivateRadius;
             so.ApplyModifiedPropertiesWithoutUndo();
             P.SetArray(region, "species", species);
             return region;

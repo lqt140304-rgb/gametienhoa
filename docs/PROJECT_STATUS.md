@@ -174,11 +174,12 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 **Code 0.6b chưa từng được biên dịch hay chạy.** Kiểm tra theo mục 11.
 
 - Bốn bệ phẳng bán kính 50 m: Chân Rễ (bắc, 0 170), Bãi Mùn Rễ (đông, 170 0), Vườn Bào Tử (tây, -170 0), Rìa Săn Mồi (đông nam, 170 -170); suối Khe Thủy Mạch dài xuống tận z = -170. Nội dung hồ chỉ dời x, z, **không đổi độ cao** (vì bệ phẳng y = 0).
-- Ba `Region` thay cho một: Bãi Mùn Rễ [D], Vườn Bào Tử [D, C], Rìa Săn Mồi [C, B]; mỗi vùng có đủ mồi của kẻ săn. Số mặc định mới khi tạo asset loài: D 18/32, C 10/16 (sinh 0,35), B 2/3. **Asset loài đã tồn tại thì giữ số cũ**; muốn dùng số mới thì xóa `ScriptableObjects/Species_*.asset` rồi dựng lại.
+- Ba `Region` thay cho một: Bãi Mùn Rễ [D], Vườn Bào Tử [D, C], Rìa Săn Mồi [D, C, B]; mỗi vùng có đủ mồi cho kẻ săn và tổ D để C sinh sản (C chỉ sinh khi có D trong vùng). Rìa Săn Mồi có `deactivateRadius` 140 để kẻ săn không biến mất giữa lúc đang đuổi. Số mặc định mới khi tạo asset loài: D 18/32, C 10/16 (sinh 0,35, ăn D 0,05/con/phút), B 2/3 (ăn C 0,15/con/phút); tốc độ ăn giảm so với 0.5a để quần thể không tuyệt chủng trong vài phút khi vùng không có người. **Asset loài đã tồn tại thì giữ số cũ**; muốn dùng số mới thì xóa `ScriptableObjects/Species_*.asset` rồi dựng lại.
 - Kẻ săn B hiện thân ở cửa vào của Rìa Săn Mồi và tuần tra góc đông nam (nhà tại (110, -110), bán kính 90). Các thiết lập `homeRadius` chỉnh được ở `Predator Incursion`.
 - **Cột mốc:** một cột 30 m ngoài tâm mỗi bệ và một cột ở cuối suối (thay cho 4 cột la bàn của 0.6a).
 - Đường mòn là lớp đất sáng vẽ lên terrain (không làm phẳng, vẫn leo dốc được). Giới hạn dốc nới tới 0,75 (khoảng 37°).
 - **Vẫn chưa làm:** nơi trú chặn kẻ săn B, sinh vật D bỏ chạy khi B tới, nước ở điểm xuất hiện, thảm thực vật dọc đường (0.6c). Các khu khác chưa có.
+- **Công cụ `LakeGround.cs` của phiên trang trí** vẽ đường đất tới các vị trí **cũ** của vi sinh cảnh ((40,0), (0,50), (-40,0)); sau 0.6b nó trỏ vào đất trống, cần phiên đó cập nhật.
 - **Phiên trang trí hồ** ("Dress Lake", `Editor/LakeWater.cs`, `LakeGround.cs`) đọc scene theo tên và theo `WaterZone`: sau khi dựng lại scene, **chạy lại các menu "Dress Lake"** để nước bờ và đất trang trí được dựng lên chỗ mới.
 
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
@@ -243,3 +244,5 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 8. Ghi lại FPS (mở Stats) ở bệ đông sinh vật và ở giữa khu.
 9. Co-op F2: người vào phòng thấy sinh vật đứng đúng mặt đất; không lỗi.
 10. `Prototype_01` dựng lại vẫn chạy như cũ (sinh vật giữ độ cao như trước).
+11. Ghi nhận khi chơi: kẻ săn B chỉ vào được khi bạn đứng cách tổ B khoảng 40 đến 70 m (hai cửa vào cách tâm 25 m, luật 40 m quanh người chơi); để quần thể chạy vài phút rồi xem số C và D có còn không (cân bằng sinh/ăn còn là số đặt tạm).
+12. `GroundHeightTests` bị bỏ qua (không lỗi) nếu đang mở scene có Terrain; muốn chạy nó, mở `Prototype_01` rồi chạy lại Test Runner.
