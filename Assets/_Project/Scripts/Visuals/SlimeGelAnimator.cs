@@ -48,6 +48,10 @@ namespace Evolve.Visuals
 
         Vector3 lastPosition;
         Rigidbody body;
+        Evolve.Organs.OrganHost host;
+
+        void OnOrganEvent(Evolve.Organs.OrganSO organ) => nextFollowerScan = 0f;
+        void OnOrganChanged() => nextFollowerScan = 0f;
         float speed;
         Vector3 moveDir;           // in the body's local space (xz)
 
@@ -115,6 +119,10 @@ namespace Evolve.Visuals
             work = new Vector3[baseVertices.Length];
             lastPosition = transform.position;
             body = GetComponentInParent<Rigidbody>();
+            // A newly equipped organ must start bending (and be coloured) the very frame it appears,
+            // not up to 0.4 s later: that delay was a visible pop.
+            host = GetComponentInParent<Evolve.Organs.OrganHost>();
+            if (host != null) { host.Attached += OnOrganEvent; host.Removed += OnOrganEvent; host.Changed += OnOrganChanged; }
         }
 
         // Back to the undeformed shapes (body and organs).
@@ -126,6 +134,7 @@ namespace Evolve.Visuals
 
         void OnDestroy()
         {
+            if (host != null) { host.Attached -= OnOrganEvent; host.Removed -= OnOrganEvent; host.Changed -= OnOrganChanged; }
             if (mesh != null) Destroy(mesh);
             foreach (var f in followers.Values) if (f.Mesh != null) Destroy(f.Mesh);
         }
