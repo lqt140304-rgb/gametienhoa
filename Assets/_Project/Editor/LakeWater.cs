@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using Evolve.World;
 using UnityEditor;
@@ -46,6 +47,26 @@ namespace Evolve.EditorTools
                 if (box == null) continue;
                 Bounds b = box.bounds;
                 HideFlatVisuals(zone.transform);
+                float longSide = Mathf.Max(b.size.x, b.size.z), shortSide = Mathf.Min(b.size.x, b.size.z);
+                if (longSide >= 20f && longSide >= shortSide * 4f)
+                {
+                    // A long thin zone is a stream: it winds like a real one (the trigger box stays straight).
+                    bool alongX = b.size.x >= b.size.z;
+                    Vector2 a = alongX ? new Vector2(b.min.x, b.center.z) : new Vector2(b.center.x, b.min.z);
+                    Vector2 e = alongX ? new Vector2(b.max.x, b.center.z) : new Vector2(b.center.x, b.max.z);
+                    float halfWidth = Mathf.Clamp(shortSide * 0.5f, 2f, 3.5f);
+                    var world = GroundMeshes.WindingLine(a, e, 900 + made, 4f, 2f, 50f);   // very long, slow bends so the two banks never cross
+                    var centre = new Vector2(b.center.x, b.center.z);
+                    var local = new Vector2[world.Length];
+                    for (int i = 0; i < world.Length; i++) local[i] = world[i] - centre;
+                    var go = MakeSurface(zone.transform, new Vector3(b.center.x, 0.06f, b.center.z), WaterShape.Stream,
+                        new Vector2(longSide, halfWidth * 2f), zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
+                    var s = go.GetComponent<WaterSurface>();
+                    s.StreamPath = local;
+                    s.StreamHalfWidth = halfWidth;
+                    made++;
+                    continue;
+                }
                 MakeSurface(zone.transform, new Vector3(b.center.x, 0.06f, b.center.z), WaterShape.Rect,
                     new Vector2(b.size.x, b.size.z), zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
                 made++;
@@ -64,6 +85,7 @@ namespace Evolve.EditorTools
             }
 
             // 3) Deep pockets: dark, deeper water instead of the black disc.
+            var deepPockets = new List<(Vector2 centre, float radius, Transform root)>();
             foreach (var t in Object.FindObjectsByType<Transform>())
             {
                 if (!t.name.StartsWith("Deep Pocket")) continue;
@@ -77,11 +99,69 @@ namespace Evolve.EditorTools
                 }
                 MakeSurface(t, new Vector3(t.position.x, 0.04f, t.position.z), WaterShape.Disc, new Vector2(radius, 0f), deep, 0.02f);
                 made++;
+                deepPockets.Add((new Vector2(t.position.x, t.position.z), radius, t));
             }
+
+            // 4) Deep means deep: dig a real basin in the terrain under each deep pocket (when the zone has a terrain),
+            //    and add darker, nearly opaque layers toward the middle so the water looks like it goes down.
+            var terrain = Object.FindAnyObjectByType<Terrain>();
+            var abyss = WaterMaterial("Lake_WaterAbyss", new Color(0.01f, 0.07f, 0.12f, 0.5f), normal, 0.1f, Color.black);
+            foreach (var pocket in deepPockets)
+            {
+                if (terrain != null) CarveBasin(terrain, pocket.centre, pocket.radius);
+                for (int ring = 0; ring < 3; ring++)
+                {
+                    float r = pocket.radius * (0.8f - ring * 0.25f);
+                    var disc = new GameObject("Depth (Dressed)");
+                    disc.transform.SetParent(pocket.root, true);
+                    disc.transform.position = new Vector3(pocket.centre.x, 0.07f + ring * 0.004f, pocket.centre.y);
+                    disc.AddComponent<MeshFilter>().sharedMesh = WaterMeshes.Disc(r, 1.25f);
+                    var renderer = disc.AddComponent<MeshRenderer>();
+                    renderer.sharedMaterial = abyss;
+                    renderer.shadowCastingMode = ShadowCastingMode.Off;
+                    renderer.receiveShadows = false;
+                }
+            }
+            if (terrain != null) AssetDatabase.SaveAssets();
 
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
             Debug.Log($"Đã dựng {made} mặt nước. Bấm Ctrl+S để lưu scene. (Nước chỉ chuyển động khi Play.)");
+        }
+
+        /// <summary>
+        /// Lowers the terrain into a round bowl (about 2.5 m deep in the middle) under a deep pocket, steep at the
+        /// water's edge, so the deep water is a real hollow and not a flat disc. Only changes the heights near the pocket.
+        /// </summary>
+        static void CarveBasin(Terrain terrain, Vector2 centre, float waterRadius)
+        {
+            var data = terrain.terrainData;
+            Vector3 origin = terrain.transform.position, size = data.size;
+            int res = data.heightmapResolution;
+            float cell = size.x / (res - 1);
+            float reach = waterRadius + 3f;
+            int x0 = Mathf.Clamp(Mathf.FloorToInt((centre.x - reach - origin.x) / cell), 0, res - 1);
+            int x1 = Mathf.Clamp(Mathf.CeilToInt((centre.x + reach - origin.x) / cell), 0, res - 1);
+            int z0 = Mathf.Clamp(Mathf.FloorToInt((centre.y - reach - origin.z) / cell), 0, res - 1);
+            int z1 = Mathf.Clamp(Mathf.CeilToInt((centre.y + reach - origin.z) / cell), 0, res - 1);
+            int w = x1 - x0 + 1, h = z1 - z0 + 1;
+            if (w < 2 || h < 2) return;
+            var heights = data.GetHeights(x0, z0, w, h);
+            const float depth = 2.5f;
+            for (int j = 0; j < h; j++)
+                for (int i = 0; i < w; i++)
+                {
+                    var p = new Vector2(origin.x + (x0 + i) * cell, origin.z + (z0 + j) * cell);
+                    float t = Vector2.Distance(p, centre) / (waterRadius + 2f);
+                    if (t >= 1f) continue;
+                    float bowl = Mathf.Pow(1f - t * t, 1.5f);
+                    float worldY = origin.y + heights[j, i] * size.y - depth * bowl;
+                    heights[j, i] = Mathf.Clamp01((worldY - origin.y) / size.y);
+                }
+            data.SetHeights(x0, z0, heights);
+            EditorUtility.SetDirty(data);
+            var collider = terrain.GetComponent<TerrainCollider>();
+            if (collider != null) collider.terrainData = data;   // refresh the physics shape
         }
 
         static Material foamMaterial, bankMaterial; // set once per run (the menu is not re-entrant)
@@ -130,7 +210,7 @@ namespace Evolve.EditorTools
             mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_ZWrite", 0f);
-            mat.SetFloat("_Smoothness", 0.85f);
+            mat.SetFloat("_Smoothness", 0.75f);
             mat.SetFloat("_Metallic", 0f);
             mat.SetTexture("_BumpMap", normal);
             mat.SetFloat("_BumpScale", bump);

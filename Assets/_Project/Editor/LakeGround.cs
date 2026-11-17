@@ -41,17 +41,17 @@ namespace Evolve.EditorTools
             foreach (var pond in ponds)
             {
                 var outline = pond.WorldOutline;
-                for (int k = 0; k < outline.Length; k += 6)
+                for (int k = 0; k < outline.Length; k += 10)
                 {
                     Vector2 p = outline[k] + Outward(outline, k) * (1.5f + (float)rnd.NextDouble() * 3f);
                     if (OnWater(ponds, p)) continue;
-                    AddMoss(mossInstances, p, 1.4f + (float)rnd.NextDouble() * 2.2f, ++seed);
+                    AddMoss(mossInstances, p, 0.9f + (float)rnd.NextDouble() * 1.2f, ++seed, ponds);
                 }
             }
-            foreach (var p in LakeLayout.Scatter(14, rnd))    // over the core and every biome pad of the layout
+            foreach (var p in LakeLayout.Scatter(9, rnd))    // over the core and every biome pad of the layout
             {
                 if (OnWater(ponds, p)) continue;
-                AddMoss(mossInstances, p, 3f + (float)rnd.NextDouble() * 3f, ++seed);
+                AddMoss(mossInstances, p, 1.6f + (float)rnd.NextDouble() * 1.5f, ++seed, ponds);
             }
             AddCombined(root, "Moss", mossInstances, MossMaterial());
 
@@ -209,10 +209,12 @@ namespace Evolve.EditorTools
             return 0f;
         }
 
-        static void AddMoss(List<CombineInstance> list, Vector2 p, float radius, int seed)
+        static void AddMoss(List<CombineInstance> list, Vector2 p, float radius, int seed, List<WaterSurface> ponds)
         {
             var outline = WaterOutline.Make(radius * 2f, radius * 2f, true, seed, radius * 0.35f, 28);
             var mesh = WaterMeshes.Organic(outline, 1.2f);
+            // Moss never grows over water: drop the part of the patch that lies on a pond.
+            WaterMeshes.RemoveTriangles(mesh, c => OnWater(ponds, new Vector2(p.x + c.x, p.y + c.z)));
             list.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.TRS(new Vector3(p.x, GroundY(p.x, p.y) + 0.03f, p.y), Quaternion.identity, Vector3.one) });
         }
 

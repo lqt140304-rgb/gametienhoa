@@ -84,6 +84,45 @@ namespace Evolve.Tests.EditMode
             foreach (var uv in mesh.uv) Assert.That(uv.y, Is.InRange(0f, 1f));
         }
 
+        [Test] public void StreamEdgesAreAWidthApart()
+        {
+            var path = GroundMeshes.WindingLine(new Vector2(0f, 0f), new Vector2(60f, 0f), 3, 4f, 2f, 50f);
+            WaterStream.Edges(path, 3f, 1, 0.25f, out var left, out var right);
+            Assert.AreEqual(path.Length, left.Length);
+            for (int i = 0; i < path.Length; i++)
+            {
+                float width = Vector2.Distance(left[i], right[i]);
+                Assert.That(width, Is.InRange(3f * 2f * 0.7f, 3f * 2f * 1.3f));
+            }
+            Assert.AreEqual(path.Length * 2, WaterStream.Polygon(left, right).Length);
+        }
+
+        [Test] public void WindingStreamActuallyWindsAndStaysOneRiver()
+        {
+            var path = GroundMeshes.WindingLine(new Vector2(0f, 0f), new Vector2(60f, 0f), 3, 4f, 2f, 50f);
+            float maxSide = 0f;
+            foreach (var p in path) maxSide = Mathf.Max(maxSide, Mathf.Abs(p.y));
+            Assert.Greater(maxSide, 1f);                       // it bends
+            // The bends are gentle enough that the two banks never cross: no flipped strip triangle.
+            WaterStream.Edges(path, 3f, 1, 0.25f, out var left, out var right);
+            var mesh = WaterMeshes.Strip(left, right, 1.25f);
+            var v = mesh.vertices; var t = mesh.triangles;
+            for (int i = 0; i < t.Length; i += 3)
+                Assert.Greater(Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]).y, 0f);
+        }
+
+        [Test] public void StreamBandsFaceUpAndKeepUvInRange()
+        {
+            var path = GroundMeshes.WindingLine(new Vector2(0f, 0f), new Vector2(40f, 5f), 4, 3f, 2f, 50f);
+            WaterStream.Edges(path, 3f, 2, 0.2f, out var left, out var right);
+            var band = WaterMeshes.Combine(WaterMeshes.EdgeBand(left, 1f, 0.4f, 1f, 1), WaterMeshes.EdgeBand(right, 1f, 0.4f, -1f, 2));
+            var v = band.vertices; var t = band.triangles;
+            Assert.Greater(t.Length, 0);
+            for (int i = 0; i < t.Length; i += 3)
+                Assert.Greater(Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]).y, 0f);
+            foreach (var uv in band.uv) Assert.That(uv.y, Is.InRange(0f, 1f));
+        }
+
         [Test] public void UvsStayInZeroToOne()
         {
             foreach (var uv in WaterMeshes.Disc(8f, 1f).uv) { Assert.That(uv.x, Is.InRange(0f, 1f)); Assert.That(uv.y, Is.InRange(0f, 1f)); }

@@ -61,3 +61,9 @@ Dựng lại: Build Underroot Lake, rồi Dress Lake: Water, Ground, Mushrooms a
 
 ## Dựng lại cả hồ bằng một menu
 **Evolve → Rebuild Lake (all steps)** (`Editor/LakeRebuildAll.cs`) chạy đúng thứ tự: Build Underroot Lake → Dress Lake: Water → Ground → Mushrooms and Vines → Roots and Light, rồi lưu scene. Dừng và báo bước nào lỗi nếu có. Từng bước vẫn dùng riêng được.
+
+## Suối uốn lượn, nước sâu có chiều sâu, rêu bớt lan (phản hồi 17/11)
+- **Suối**: vùng nước dài và mảnh (từ 20 m, dài hơn rộng ≥ 4 lần) giờ là `WaterShape.Stream`: mặt nước theo một đường tâm **uốn lượn** (bước sóng ~50 m, biên độ 4 m; hai bờ không cắt nhau), bề rộng thay đổi dọc suối, bọt và bờ đất ướt chạy dọc hai bờ (`WaterStream`, `WaterMeshes.Strip/EdgeBand`). Hộp kích hoạt uống nước vẫn thẳng (không đổi cách chơi).
+- **Nước sâu**: dưới mỗi hốc nước sâu, địa hình được đào thành một lòng chảo tròn sâu ~2,5 m (dốc đứng ở mép nước), cộng ba lớp nước sẫm dần về giữa. Nếu scene không có Terrain thì chỉ còn các lớp sẫm.
+- **Rêu**: mảng nhỏ hơn (0,9–2,1 m dọc bờ, 1,6–3,1 m rải rác), thưa hơn, và phần nào rơi trên mặt nước bị cắt bỏ.
+- Đèn rọi của các tia sáng dịu hơn (tối đa 4), nước bớt bóng (0,75), để bớt vệt chói trên mặt nước.
