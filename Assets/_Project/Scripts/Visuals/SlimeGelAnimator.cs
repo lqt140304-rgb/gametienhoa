@@ -202,7 +202,8 @@ namespace Evolve.Visuals
                 followers.Remove(key);
             }
 
-            foreach (var socket in GetComponentsInChildren<Evolve.Organs.OrganSocket>(true))
+            GetComponentsInChildren(true, sockets);
+            foreach (var socket in sockets)
             {
                 socket.GetComponentsInChildren(true, scratch);
                 foreach (var f in scratch)
@@ -239,6 +240,9 @@ namespace Evolve.Visuals
         }
 
         // per-frame motion parameters shared by the body and the organs
+        float fBreath, fBreath2, fWaveTime;
+        int frameCount;
+        readonly List<Evolve.Organs.OrganSocket> sockets = new List<Evolve.Organs.OrganSocket>();
         float fTime, fMove, fAbsorb, fAbsorbPulse, fKick, fStretch, fCharge, fBurst;
         Vector3 fDir;
 
@@ -256,6 +260,9 @@ namespace Evolve.Visuals
             float quick = 1f - Mathf.Exp(-32f * dt);  // for the sharp moments (release, lunge)
 
             fTime = Time.time;
+            fBreath = Mathf.Sin(fTime * 2.1f);
+            fBreath2 = Mathf.Sin(fTime * 2.1f + 1f);
+            fWaveTime = fTime * (9f + speed * 1.5f);
             fLand = landT >= 0f
                 ? Mathf.SmoothStep(0f, 1f, landT / 0.04f) * Mathf.Exp(-6f * landT) * Mathf.Cos(landT * 16f) * landStrength
                 : 0f;
@@ -301,10 +308,16 @@ namespace Evolve.Visuals
         void Deform()
         {
             PrepareFrame();
+            frameCount++;
+
+            // Standing still (only breathing): every second frame is plenty.
+            bool still = fMove * locoK < 0.02f && activeTime < 0f && Mathf.Abs(fLand) < 0.002f
+                && Mathf.Abs(jig) < 0.002f && leanPos.sqrMagnitude < 4e-6f && dead < 0.01f;
+            if (still && (frameCount & 1) == 0) return;
 
             for (int i = 0; i < baseVertices.Length; i++) work[i] = baseVertices[i] + Offset(baseVertices[i]);
             mesh.SetVertices(work);
-            mesh.RecalculateNormals();
+            if ((frameCount & 1) == 0) mesh.RecalculateNormals(); // lighting a frame late is not visible
             mesh.RecalculateBounds();
 
             // Organs: the same displacement field, evaluated where each organ vertex sits relative to the body.
@@ -338,8 +351,8 @@ namespace Evolve.Visuals
             Vector3 o = Vector3.zero;
 
             // Breathing: the hump rises and sinks slightly.
-            o.y += 0.02f * locoK * Mathf.Sin(t * 2.1f) * h;
-            o += outward * 0.01f * locoK * Mathf.Sin(t * 2.1f + 1f) * low;
+            o.y += 0.02f * locoK * fBreath * h;
+            o += outward * 0.01f * locoK * fBreath2 * low;
 
             // Crawling: a wave runs along the body, the hump leans where it is going.
             if (fMove * locoK > 0.01f && fDir.sqrMagnitude > 1e-4f)
@@ -347,7 +360,7 @@ namespace Evolve.Visuals
                 float along = b.x * fDir.x + b.z * fDir.z;
                 float crawl = crawlK * locoK;                   // with legs the legs do the moving, the body only sways
                 float fast = 1f + Mathf.Min(speed, 6f) * 0.1f;        // faster = bigger, quicker ripples
-                float wave = Mathf.Sin(along * 11f - t * (9f + speed * 1.5f));
+                float wave = Mathf.Sin(along * 11f - fWaveTime);
                 o.y += fMove * 0.07f * fast * crawl * wave * (0.3f + 0.7f * h);
                 o += outward * fMove * 0.06f * fast * crawl * wave * low;
                 o += fDir * (fMove * locoK * 0.16f * fast * h * h);
