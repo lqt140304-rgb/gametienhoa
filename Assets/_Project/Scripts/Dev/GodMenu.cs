@@ -17,6 +17,7 @@ namespace Evolve.DevTools
     public class GodMenu : MonoBehaviour
     {
         static readonly Vector3 DesertCenter = new Vector3(37.5f, 1f, 0f);
+        const int WindowId = 0x60D; // any fixed id unique among IMGUI windows
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
@@ -85,7 +86,7 @@ namespace Evolve.DevTools
                 GUI.Label(new Rect(Screen.width / 2f - 60, 4, 200, 22), "F1: Menu God");
                 return;
             }
-            window = GUILayout.Window(GetInstanceID(), window, DrawWindow, "Menu God (F1 để đóng)");
+            window = GUILayout.Window(WindowId, window, DrawWindow, "Menu God (F1 để đóng)");
         }
 
         void DrawWindow(int id)
