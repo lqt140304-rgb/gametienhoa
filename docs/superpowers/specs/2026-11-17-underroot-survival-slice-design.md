@@ -145,6 +145,17 @@ Tooltip ghi chất thật tương ứng. Thiếu chất thì gel đổi màu/ch�
 
 **Hoãn:** truyền chất giữa đồng đội và nghỉ chung giảm Căng thẳng nhanh hơn — xem xét sau 0.5e.
 
+## 6.8. Thiết kế cơ quan (học cơ chế cấy ghép kiểu cyberpunk) [ĐÃ CHỐT]
+
+Chỉ học cơ chế, không dùng tên/hình ảnh/nội dung của tác phẩm khác.
+
+1. **Cơ quan là cách chơi, không chỉ chỉ số** (0.5e): mỗi cơ quan bậc B mở một **hành động** mới (ví dụ [ĐỀ XUẤT]: gai bắn, xúc tu bám trần rễ để leo, túi khí nổi trên nước sâu). Bậc C/D lo giác quan và chỉ số nền.
+2. **Giới hạn cơ thể bằng hệ đã có**: không thêm thanh "sức chứa"; giới hạn là tiêu hao 5 chất + kích thước slime (6.7.4). Không có cơ chế mất kiểm soát.
+3. **Đổi bố cục gel chỉ ở nơi trú an toàn** (0.5e): tháo/lắp/đổi cơ quan chỉ làm được khi ở trong vùng nơi trú; ngoài trú cơ thể cố định. Hấp thụ cơ quan rơi vẫn làm được ở mọi nơi [ĐỀ XUẤT].
+4. Mỗi cơ quan có **hình dạng gel khác biệt rõ** trên thân, nhìn là biết.
+
+**Để sau 0.5e:** cơ quan lõi (1 cái mỗi slime, tăng sức cơ quan cùng nhóm); cộng hưởng khi trang bị 2–3 cơ quan cùng loài.
+
 ## 7. Hiệu năng
 
 - Sinh vật chỉ hiện thân (L0) gần người chơi; còn lại là số (L2).
