@@ -14,6 +14,7 @@ namespace Evolve.Ecology
         bool initialized;
 
         public SpeciesPopulation Population => population;
+        public Region Region => region;
 
         public void Init(Region region, SpeciesPopulation population)
         {

@@ -50,6 +50,8 @@ namespace Evolve.Creatures
         Vector3 wanderDir;
         float nextTurn, fleeTime, tiredUntil;
         bool caught;
+        Evolve.World.VibrationEmitter emitter;
+        float nextFleePulse;
 
         void Awake()
         {
@@ -57,6 +59,7 @@ namespace Evolve.Creatures
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             NetId = NetWorld.NextId();
+            TryGetComponent(out emitter);
         }
 
         void OnEnable() => active.Add(this);
@@ -79,6 +82,7 @@ namespace Evolve.Creatures
                 dir = pos - threat.position; dir.y = 0f; dir.Normalize();
                 speed = fleeSpeed;
                 fleeTime += Time.fixedDeltaTime;
+                if (emitter != null && Time.time >= nextFleePulse) { emitter.Pulse(0.4f); nextFleePulse = Time.time + 0.5f; }
                 if (fleeTime >= stamina) { tiredUntil = Time.time + restTime; fleeTime = 0f; }
             }
             else
