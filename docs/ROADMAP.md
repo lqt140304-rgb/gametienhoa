@@ -44,5 +44,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] 5 ô kỹ năng gắn cơ quan (phím 1–5), mở ở Lv2, Lv3 nâng cấp; 2 kỹ năng mẫu (Xung Phong Húc, Xả Gai)
 - [x] Chơi thử 5 ô kỹ năng: Xả Gai tỏa quanh người nên không biết bắn đi đâu
 - [x] Chế độ ngắm (Alt): hồng tâm, chuột xoay camera; Xả Gai thành chùm gai bắn về phía hồng tâm
-- [ ] Chơi thử chế độ ngắm và chỉnh số
+- [x] Chơi thử chế độ ngắm: Alt hoạt động
+- [x] HUD/UI mới của Codex trên `main` (kho kỹ năng K, bảng cơ quan G, thanh Q · 1–5 · C, HUD cố định hoặc đi theo nhân vật)
+- [ ] Chơi thử HUD mới (độ phân giải khác nhau, Play Mode) và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
