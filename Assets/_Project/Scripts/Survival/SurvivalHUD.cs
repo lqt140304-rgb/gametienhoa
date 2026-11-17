@@ -54,12 +54,23 @@ namespace Evolve.Survival
             Bar(0, "Máu", s.Health, s.MaxHealth, Color.red);
             Bar(1, "Đói", s.Hunger, s.MaxHunger, new Color(1f, 0.6f, 0.1f));
             Bar(2, "Năng lượng", s.Energy, s.MaxEnergy, Color.cyan);
+            float y = 104;
             if (caster != null && caster.Ability != null)
-                GUI.Label(new Rect(20, 104, 400, 22), $"Dị Năng: {caster.Ability.DisplayName} (bậc {caster.Ability.Tier})");
+            {
+                var a = caster.Ability;
+                GUI.Label(new Rect(20, y, 400, 22), $"Dị Năng [Q]: {a.DisplayName} (bậc {a.Tier}, {a.EnergyCost:0} năng lượng)");
+                y += 24;
+                float cd = caster.CooldownRemaining;
+                bool noEnergy = s.Energy < a.EnergyCost;
+                string status = cd > 0f ? $"Hồi chiêu: {cd:0.0}s" : noEnergy ? "Thiếu năng lượng" : "Sẵn sàng";
+                Color c = cd > 0f ? new Color(0.6f, 0.6f, 0.6f) : noEnergy ? new Color(0.9f, 0.4f, 0.3f) : new Color(0.4f, 0.9f, 0.4f);
+                DrawBar(new Rect(20, y, 200, 20), caster.CooldownProgress, c, status);
+                y += 28;
+            }
             string organList = organs != null && organs.Organs.Any()
                 ? string.Join(", ", organs.Organs.Select(o => o.DisplayName)) : "chưa có";
-            GUI.Label(new Rect(20, 126, 500, 22), $"Cơ quan: {organList}");
-            if (s.IsDead) GUI.Label(new Rect(20, 150, 300, 22), "Đã chết");
+            GUI.Label(new Rect(20, y, 500, 22), $"Cơ quan: {organList}");
+            if (s.IsDead) GUI.Label(new Rect(20, y + 24, 300, 22), "Đã chết");
 
             if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };
             if (Time.time < toastUntil)
@@ -76,12 +87,16 @@ namespace Evolve.Survival
 
         static void Bar(int row, string label, float value, float max, Color c)
         {
-            var r = new Rect(20, 20 + row * 28, 200, 20);
+            DrawBar(new Rect(20, 20 + row * 28, 200, 20), max > 0 ? value / max : 0, c, $"{label}: {value:0}/{max:0}");
+        }
+
+        static void DrawBar(Rect r, float fill, Color c, string label)
+        {
             GUI.Box(r, GUIContent.none);
             var prev = GUI.color; GUI.color = c;
-            GUI.DrawTexture(new Rect(r.x + 2, r.y + 2, (r.width - 4) * (max > 0 ? value / max : 0), r.height - 4), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(r.x + 2, r.y + 2, (r.width - 4) * Mathf.Clamp01(fill), r.height - 4), Texture2D.whiteTexture);
             GUI.color = prev;
-            GUI.Label(new Rect(r.xMax + 8, r.y, 200, 20), $"{label}: {value:0}/{max:0}");
+            GUI.Label(new Rect(r.xMax + 8, r.y, 260, 20), label);
         }
     }
 }
