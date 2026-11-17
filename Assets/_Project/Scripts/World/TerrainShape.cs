@@ -16,7 +16,7 @@ namespace Evolve.World
         public const float CliffHeight = 45f;
 
         const float BlendWidth = 70f;     // core edge (65 m) to full hills (135 m)
-        const float HillAmplitude = 14f;
+        const float HillAmplitude = 12f;
         const float RimDistance = WorldScale.ZoneSize * 0.5f;
 
         /// <summary>Height in metres above the core surface at world position (x, z). 0 in the core, never negative.</summary>
@@ -29,7 +29,7 @@ namespace Evolve.World
             float n1 = Mathf.PerlinNoise((x + ox) / 170f, (z + oz) / 170f);
             float n2 = Mathf.PerlinNoise((x + ox) / 70f, (z + oz) / 70f);
             float n = Mathf.Clamp01(0.65f * n1 + 0.35f * n2);
-            float hills = HillAmplitude * n * blend;
+            float hills = HillAmplitude * n * blend * (1f - ZoneLayout.PadMask(x, z)); // biome pads and the stream stay flat
 
             float cliff = CliffHeight * Smooth01((d - CliffStart) / (RimDistance - CliffStart));
             return Mathf.Max(hills, cliff);
