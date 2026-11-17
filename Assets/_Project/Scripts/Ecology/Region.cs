@@ -95,7 +95,7 @@ namespace Evolve.Ecology
 
         void Update()
         {
-            if (Population == null) return;
+            if (Population == null || NetWorld.IsClient) return;
             timer += Time.deltaTime;
             if (timer < tickSeconds) return;
             timer -= tickSeconds;

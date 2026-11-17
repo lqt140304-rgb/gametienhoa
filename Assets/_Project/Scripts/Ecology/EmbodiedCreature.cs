@@ -11,6 +11,7 @@ namespace Evolve.Ecology
         Region region;
         SpeciesPopulation population;
         bool reported;
+        bool initialized;
 
         public SpeciesPopulation Population => population;
 
@@ -19,6 +20,7 @@ namespace Evolve.Ecology
             this.region = region;
             this.population = population;
             reported = false;
+            initialized = true;
         }
 
         /// <summary>Anchor the creature's wandering area (Prey/Predator) to the den.</summary>
@@ -33,7 +35,7 @@ namespace Evolve.Ecology
         /// <summary>The creature was killed in the scene: the population loses one head.</summary>
         public void NotifyKilled()
         {
-            if (reported) return;
+            if (reported || !initialized) return;
             reported = true;
             if (population != null) population.Kill(true);
             PopulationCap.Release();
@@ -43,7 +45,7 @@ namespace Evolve.Ecology
         /// <summary>Region deactivated: return the head to the abstract population.</summary>
         public void StoreBack()
         {
-            if (reported) return;
+            if (reported || !initialized) return;
             reported = true;
             if (population != null) population.Store();
             PopulationCap.Release();
@@ -54,7 +56,7 @@ namespace Evolve.Ecology
         void OnDestroy()
         {
             // Destroyed by something else without reporting: treat as stored back.
-            if (reported) return;
+            if (reported || !initialized) return;
             reported = true;
             if (population != null) population.Store();
             PopulationCap.Release();
