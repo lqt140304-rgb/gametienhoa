@@ -22,5 +22,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Thiết lập repo, project Unity URP
 - [x] Code 0.1: di chuyển, camera, chỉ số sinh tồn, thức ăn, thị giác, giác quan rung, khung Dị Năng
 - [x] Công cụ tự dựng scene (menu **Evolve → Build Prototype Scene**)
-- [ ] Chơi thử 0.1 và ghi nhận phản hồi
+- [x] Chơi thử 0.1, chỉnh tốc độ (trườn 1, nước rút ×1.5) và cơ chế đói (chỉ giảm khi di chuyển, nước rút tốn thức ăn)
+- [x] Code 0.2: con mồi bỏ chạy và biết mệt, rơi cơ quan; Mắt sơ khai (có màu, nhìn xa), Chân giả (×1.4 tốc độ); điểm gắn trên thân; slime quay mặt theo hướng đi
+- [ ] Chơi thử 0.2
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

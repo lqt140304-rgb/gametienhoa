@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Evolve.Survival
@@ -5,6 +6,10 @@ namespace Evolve.Survival
     /// <summary>Unity wrapper that ticks a SurvivalState.</summary>
     public class SurvivalStats : MonoBehaviour
     {
+        static readonly List<SurvivalStats> all = new List<SurvivalStats>();
+        /// <summary>Every living player/creature with survival stats (for AI targeting).</summary>
+        public static IReadOnlyList<SurvivalStats> All => all;
+
         [SerializeField] SurvivalConfig config;
         [SerializeField] SurvivalState state = new SurvivalState();
 
@@ -19,6 +24,9 @@ namespace Evolve.Survival
             state.Reset();
             state.Died += () => Debug.Log($"{name} died");
         }
+
+        void OnEnable() => all.Add(this);
+        void OnDisable() => all.Remove(this);
 
         void Update() => state.Tick(Time.deltaTime, config, IsMoving, IsSprinting);
     }

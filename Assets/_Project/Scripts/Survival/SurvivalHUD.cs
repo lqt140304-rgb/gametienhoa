@@ -1,4 +1,6 @@
+using System.Linq;
 using Evolve.Abilities;
+using Evolve.Organs;
 using UnityEngine;
 
 namespace Evolve.Survival
@@ -10,6 +12,9 @@ namespace Evolve.Survival
         [SerializeField] bool showControls = true;
 
         AbilityCaster caster;
+        OrganHost organs;
+        string toast;
+        float toastUntil;
         GUIStyle box;
 
         const string Controls =
@@ -22,11 +27,19 @@ namespace Evolve.Survival
             "V  Bật/tắt mắt (thử nghiệm)\n" +
             "H  Ẩn/hiện hướng dẫn\n\n" +
             "Đứng yên: không đói, hồi năng lượng\n" +
-            "Chấm xanh nhấp nháy = thức ăn ở gần\n(giác quan rung, thay cho mắt)";
+            "Chấm xanh = thức ăn, chấm đỏ = con mồi\n(giác quan rung, thay cho mắt)\n\n" +
+            "Bắt con mồi (chạm vào) để nhận cơ quan.\nCon mồi chạy mệt sẽ phải dừng nghỉ.";
 
         void Start()
         {
-            if (stats != null) caster = stats.GetComponent<AbilityCaster>();
+            if (stats == null) return;
+            caster = stats.GetComponent<AbilityCaster>();
+            organs = stats.GetComponent<OrganHost>();
+            if (organs != null) organs.Attached += o =>
+            {
+                toast = $"Tiến hóa: {o.DisplayName}!\n{o.Description}";
+                toastUntil = Time.time + 4f;
+            };
         }
 
         void Update()
@@ -43,11 +56,20 @@ namespace Evolve.Survival
             Bar(2, "Năng lượng", s.Energy, s.MaxEnergy, Color.cyan);
             if (caster != null && caster.Ability != null)
                 GUI.Label(new Rect(20, 104, 400, 22), $"Dị Năng: {caster.Ability.DisplayName} (bậc {caster.Ability.Tier})");
-            if (s.IsDead) GUI.Label(new Rect(20, 128, 300, 22), "Đã chết");
+            string organList = organs != null && organs.Organs.Any()
+                ? string.Join(", ", organs.Organs.Select(o => o.DisplayName)) : "chưa có";
+            GUI.Label(new Rect(20, 126, 500, 22), $"Cơ quan: {organList}");
+            if (s.IsDead) GUI.Label(new Rect(20, 150, 300, 22), "Đã chết");
 
             if (box == null) box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 14, padding = new RectOffset(10, 10, 8, 8) };
+            if (Time.time < toastUntil)
+            {
+                var big = new GUIStyle(box) { alignment = TextAnchor.MiddleCenter, fontSize = 20, wordWrap = true };
+                GUI.Box(new Rect(Screen.width / 2f - 220, Screen.height * 0.2f, 440, 90), toast, big);
+            }
+
             if (showControls)
-                GUI.Box(new Rect(Screen.width - 300, 20, 280, 270), Controls, box);
+                GUI.Box(new Rect(Screen.width - 310, 20, 290, 340), Controls, box);
             else
                 GUI.Label(new Rect(Screen.width - 160, 20, 150, 22), "H: hướng dẫn");
         }

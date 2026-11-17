@@ -1,3 +1,4 @@
+using Evolve.Organs;
 using Evolve.Survival;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -13,9 +14,9 @@ namespace Evolve.Player
     [RequireComponent(typeof(Rigidbody), typeof(SurvivalStats))]
     public class SlimeController : MonoBehaviour
     {
-        [SerializeField] float crawlSpeed = 1.3f;
+        [SerializeField] float crawlSpeed = 1f;
         [Tooltip("Speed multiplier while holding Shift (burns extra food)")]
-        [SerializeField] float sprintMultiplier = 1.8f;
+        [SerializeField] float sprintMultiplier = 1.5f;
         [SerializeField] float acceleration = 12f;
         [SerializeField] float hopForce = 5f;
         [SerializeField] float hopForward = 3f;
@@ -29,6 +30,7 @@ namespace Evolve.Player
 
         public bool IsSprinting { get; private set; }
         SurvivalStats stats;
+        OrganHost organs;
         Vector3 baseScale = Vector3.one;
         float squash;
         Collider col;
@@ -38,6 +40,7 @@ namespace Evolve.Player
             rb = GetComponent<Rigidbody>();
             rb.freezeRotation = true;
             stats = GetComponent<SurvivalStats>();
+            organs = GetComponent<OrganHost>();
             col = GetComponent<Collider>();
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
             if (visual != null) baseScale = visual.localScale;
@@ -65,7 +68,8 @@ namespace Evolve.Player
             stats.IsSprinting = IsSprinting;
 
             Vector3 v = rb.linearVelocity;
-            Vector3 target = dir * crawlSpeed * (IsSprinting ? sprintMultiplier : 1f);
+            float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
+            Vector3 target = dir * crawlSpeed * organSpeed * (IsSprinting ? sprintMultiplier : 1f);
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
             rb.linearVelocity = new Vector3(horizontal.x, v.y, horizontal.z);
         }
@@ -94,6 +98,11 @@ namespace Evolve.Player
             float y = 1f + squash * 0.35f + wobble;
             float xz = 1f / Mathf.Sqrt(y); // preserve volume
             visual.localScale = Vector3.Scale(baseScale, new Vector3(xz, y, xz));
+
+            // Face the direction of travel so front-mounted organs (eyes) lead.
+            Vector3 hv = rb.linearVelocity; hv.y = 0f;
+            if (hv.sqrMagnitude > 0.05f)
+                visual.rotation = Quaternion.Slerp(visual.rotation, Quaternion.LookRotation(hv), Time.deltaTime * 10f);
         }
 
         static Vector2 ReadMove()

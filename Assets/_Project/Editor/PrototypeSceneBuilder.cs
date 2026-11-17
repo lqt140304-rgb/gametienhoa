@@ -1,4 +1,6 @@
 using Evolve.Abilities;
+using Evolve.Creatures;
+using Evolve.Organs;
 using Evolve.Player;
 using Evolve.Survival;
 using Evolve.World;
@@ -51,6 +53,28 @@ namespace Evolve.EditorTools
                 a.Description = "Co bóp màng cơ thể dữ dội để lao về phía trước.";
                 a.Tier = AbilityTier.C;
             });
+            var eyeMat = Mat("Eye", new Color(0.95f, 0.95f, 0.95f), "Universal Render Pipeline/Lit");
+            var pupilMat = Mat("Pupil", new Color(0.05f, 0.05f, 0.05f), "Universal Render Pipeline/Lit");
+            var legMat = Mat("Pseudopod", new Color(0.3f, 0.65f, 0.4f), "Universal Render Pipeline/Lit");
+            var preyMat = Mat("Prey", new Color(0.9f, 0.45f, 0.55f), "Universal Render Pipeline/Lit");
+
+            var eyes = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_Eyes.asset", o =>
+            {
+                o.DisplayName = "Mắt sơ khai";
+                o.Description = "Cảm nhận được ánh sáng và màu sắc, nhìn xa hơn.";
+                o.Slot = OrganSlot.Eyes;
+                o.GrantsSight = true;
+                o.VisualPrefab = EyesPrefab(eyeMat, pupilMat);
+            });
+            var legs = Asset<OrganSO>(Root + "/ScriptableObjects/Organ_Pseudopods.asset", o =>
+            {
+                o.DisplayName = "Chân giả";
+                o.Description = "Những xúc tu ngắn giúp trườn nhanh hơn.";
+                o.Slot = OrganSlot.Legs;
+                o.SpeedMultiplier = 1.4f;
+                o.VisualPrefab = LegsPrefab(legMat);
+            });
+            var preyPrefab = PreyPrefab(preyMat, new[] { eyes, legs });
             var nutrientPrefab = NutrientPrefab(foodMat);
             var pulsePrefab = PulsePrefab(pulseMat);
 
@@ -73,7 +97,10 @@ namespace Evolve.EditorTools
             Object.DestroyImmediate(visual.GetComponent<Collider>());
             visual.transform.SetParent(slime.transform, false);
             visual.GetComponent<Renderer>().sharedMaterial = slimeMat;
+            Socket(visual.transform, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
+            Socket(visual.transform, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
 
+            var host = slime.AddComponent<OrganHost>();
             var stats = slime.AddComponent<SurvivalStats>();
             Set(stats, "config", config);
             var controller = slime.AddComponent<SlimeController>();
@@ -98,7 +125,8 @@ namespace Evolve.EditorTools
             var volume = volumeGo.AddComponent<Volume>();
             volume.isGlobal = true;
             volume.sharedProfile = VisionProfile();
-            volumeGo.AddComponent<MonochromeVision>();
+            var vision = volumeGo.AddComponent<MonochromeVision>();
+            Set(vision, "host", host);
 
             // HUD
             var hud = new GameObject("HUD").AddComponent<SurvivalHUD>();
@@ -115,11 +143,93 @@ namespace Evolve.EditorTools
                 n.transform.position = new Vector3(Mathf.Cos(angle) * dist, 0.25f, Mathf.Sin(angle) * dist);
             }
 
+            // Prey
+            var spawner = new GameObject("Prey Spawner").AddComponent<PreySpawner>();
+            Set(spawner, "prefab", preyPrefab.GetComponent<Prey>());
+
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddToBuildSettings(ScenePath);
             AssetDatabase.SaveAssets();
             Selection.activeGameObject = slime;
             Debug.Log("Đã dựng " + ScenePath + ". Bấm Play: WASD trườn, Space nảy, Q Dị Năng, giữ chuột phải xoay camera.");
+        }
+
+        static void Socket(Transform parent, OrganSlot slot, Vector3 localPos)
+        {
+            var go = new GameObject("Socket_" + slot);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.AddComponent<OrganSocket>().Slot = slot;
+        }
+
+        static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat)
+        {
+            var go = GameObject.CreatePrimitive(type);
+            go.name = name;
+            Object.DestroyImmediate(go.GetComponent<Collider>());
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = pos;
+            go.transform.localScale = scale;
+            go.GetComponent<Renderer>().sharedMaterial = mat;
+            return go;
+        }
+
+        static GameObject SavePrefab(GameObject go, string path)
+        {
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
+            Object.DestroyImmediate(go);
+            return prefab;
+        }
+
+        static GameObject EyesPrefab(Material white, Material black)
+        {
+            const string path = Root + "/Prefabs/Organ_Eyes.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+
+            var root = new GameObject("Organ_Eyes");
+            foreach (float x in new[] { -0.13f, 0.13f })
+            {
+                var eye = Part(PrimitiveType.Sphere, "Eye", root.transform, new Vector3(x, 0f, 0f), Vector3.one * 0.18f, white);
+                Part(PrimitiveType.Sphere, "Pupil", eye.transform, new Vector3(0f, 0f, 0.4f), Vector3.one * 0.5f, black);
+            }
+            return SavePrefab(root, path);
+        }
+
+        static GameObject LegsPrefab(Material mat)
+        {
+            const string path = Root + "/Prefabs/Organ_Pseudopods.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+
+            var root = new GameObject("Organ_Pseudopods");
+            foreach (var p in new[] { new Vector3(-0.25f, 0f, 0.2f), new Vector3(0.25f, 0f, 0.2f), new Vector3(-0.25f, 0f, -0.2f), new Vector3(0.25f, 0f, -0.2f) })
+            {
+                var leg = Part(PrimitiveType.Capsule, "Pseudopod", root.transform, p, new Vector3(0.12f, 0.1f, 0.12f), mat);
+                leg.transform.localRotation = Quaternion.Euler(p.z * 60f, 0f, -p.x * 60f);
+            }
+            return SavePrefab(root, path);
+        }
+
+        static GameObject PreyPrefab(Material mat, OrganSO[] drops)
+        {
+            const string path = Root + "/Prefabs/Prey.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+
+            var root = new GameObject("Prey");
+            root.transform.position = new Vector3(0f, 0.2f, 0f);
+            var col = root.AddComponent<CapsuleCollider>();
+            col.direction = 2; // along Z
+            col.radius = 0.18f;
+            col.height = 0.55f;
+            root.AddComponent<Rigidbody>().isKinematic = true;
+            var prey = root.AddComponent<Prey>();
+            SetArray(prey, "dropTable", drops);
+
+            Part(PrimitiveType.Sphere, "Body", root.transform, Vector3.zero, new Vector3(0.35f, 0.3f, 0.55f), mat);
+            Part(PrimitiveType.Sphere, "Head", root.transform, new Vector3(0f, 0.05f, 0.28f), Vector3.one * 0.22f, mat);
+            return SavePrefab(root, path);
         }
 
         static GameObject NutrientPrefab(Material mat)
