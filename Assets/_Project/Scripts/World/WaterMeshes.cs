@@ -146,6 +146,22 @@ namespace Evolve.World
             return Make("WaterBand", verts, uvs, tris);
         }
 
+        /// <summary>Removes the triangles whose centre (in the mesh's own space) is chosen by `drop`.</summary>
+        public static void RemoveTriangles(Mesh mesh, System.Func<Vector3, bool> drop)
+        {
+            var v = mesh.vertices;
+            var t = mesh.triangles;
+            var keep = new List<int>(t.Length);
+            for (int i = 0; i < t.Length; i += 3)
+            {
+                Vector3 c = (v[t[i]] + v[t[i + 1]] + v[t[i + 2]]) / 3f;
+                if (drop(c)) continue;
+                keep.Add(t[i]); keep.Add(t[i + 1]); keep.Add(t[i + 2]);
+            }
+            mesh.SetTriangles(keep, 0);
+            mesh.RecalculateBounds();
+        }
+
         // Adds a triangle facing up (Unity front faces are clockwise: normal = cross(b - a, c - a)).
         static void AddUp(List<int> tris, List<Vector3> verts, int a, int b, int c)
         {

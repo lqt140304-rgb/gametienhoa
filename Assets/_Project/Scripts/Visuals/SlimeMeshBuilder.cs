@@ -140,7 +140,7 @@ namespace Evolve.Visuals
             tris.Add(a); tris.Add(b); tris.Add(c);
         }
 
-        static void Icosphere(List<Vector3> verts, List<int> tris, int subdivisions)
+        internal static void Icosphere(List<Vector3> verts, List<int> tris, int subdivisions)
         {
             float t = (1f + Mathf.Sqrt(5f)) / 2f;
             var baseVerts = new[]
