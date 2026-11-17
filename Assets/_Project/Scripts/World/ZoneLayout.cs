@@ -92,7 +92,7 @@ namespace Evolve.World
             new[] { new Vector2(-150f, -18f), new Vector2(-142f, 50f), new Vector2(-125f, 118f) },                              // 02 -> 03
             new[] { new Vector2(-125f, 118f), new Vector2(-67f, 142f), new Vector2(13f, 153f) },                                // 03 -> 06
             new[] { new Vector2(13f, 153f), new Vector2(75f, 142f), new Vector2(137f, 110f) },                                  // 06 -> 04
-            new[] { new Vector2(137f, 110f), new Vector2(167f, 58f), new Vector2(173f, 22f) },                                  // 04 -> 05
+            new[] { new Vector2(137f, 110f), new Vector2(167f, 58f), new Vector2(173f, 8f) },                                   // 04 -> 05 (ends inside Khe Thủy Mạch)
             new[] { new Vector2(150f, -45f), new Vector2(110f, -110f), new Vector2(40f, -148f), new Vector2(-20f, -150f) },    // 05 -> 01
             new[] { NorthEntry, new Vector2(13f, 153f) },                                                                       // the hunter's way in
         };
