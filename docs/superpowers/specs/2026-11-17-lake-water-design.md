@@ -21,5 +21,9 @@ Thay các hộp xám xanh phẳng đang đóng vai nước bằng **mặt nướ
 - Mặt nước nằm ngang. **Bọt bờ** (đã làm): một vòng viền trắng mờ dần hai phía (mesh vòng `WaterMeshes.DiscRing/RectRing`, vật liệu `Lake_Foam`) che đường cắt cứng giữa nước và đất. Mặt nước tự nó vẫn không mờ dần ở mép (cần shader tùy chỉnh).
 - Nước chỉ chuyển động khi Play (trong Editor là mặt tĩnh).
 
+## Bờ nước uốn lượn (sau phản hồi 17/11)
+- Chủ dự án thấy bờ quá thẳng/tròn và viền bọt nhìn như sọc. Mỗi mặt nước giờ có **đường bờ ngẫu nhiên uốn lượn** (`WaterOutline`: hình chữ nhật bo tròn hoặc tròn, uốn bởi ba sóng dài ~11 m, ~6 m, ~3,4 m; mỗi ao một hạt giống riêng).
+- Quanh bờ có **dải đất ướt** tối màu (`Lake_Bank`, mờ dần ra xa) và **dải bọt** loang lổ (`Lake_Foam`, nhiễu mịn), bề rộng dải cũng dao động.
+
 ## Kiểm tra
 Chạy menu → Console không lỗi; Test Runner xanh (có test `WaterMeshesTests`); Play: nước xanh ngọc gợn nhẹ ở Vũng Sinh Mệnh, khe nam và hai bên; nước đọng ở Bãi Mùn Rễ màu bùn; hai hốc sâu sẫm; slime đi qua nước như cũ; FPS không giảm đáng kể.
