@@ -17,6 +17,7 @@ namespace Evolve.Net
         public float Health, MaxHealth;
         public byte Lives;
         public bool Dead;
+        public bool Lost; // corpse gone for good
         public string[] OrganNames;
         public byte[] OrganLevels;
 
@@ -31,6 +32,7 @@ namespace Evolve.Net
             w.WriteValueSafe(MaxHealth);
             w.WriteValueSafe(Lives);
             w.WriteValueSafe(Dead);
+            w.WriteValueSafe(Lost);
 
             int n = OrganNames == null ? 0 : Mathf.Min(OrganNames.Length, MaxOrgans);
             w.WriteValueSafe((byte)n);
@@ -53,6 +55,7 @@ namespace Evolve.Net
             r.ReadValueSafe(out float maxHealth);
             r.ReadValueSafe(out byte lives);
             r.ReadValueSafe(out bool dead);
+            r.ReadValueSafe(out bool lost);
             r.ReadValueSafe(out byte count);
 
             s.Name = name;
@@ -62,6 +65,7 @@ namespace Evolve.Net
             s.MaxHealth = maxHealth;
             s.Lives = lives;
             s.Dead = dead;
+            s.Lost = lost;
             s.OrganNames = new string[count];
             s.OrganLevels = new byte[count];
             for (int i = 0; i < count; i++)

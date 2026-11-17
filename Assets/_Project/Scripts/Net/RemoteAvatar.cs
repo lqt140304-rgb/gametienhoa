@@ -23,6 +23,7 @@ namespace Evolve.Net
         public float MaxHealth { get; private set; } = 100f;
         public byte Lives { get; private set; }
         public bool Dead { get; private set; }
+        public bool Lost { get; private set; }
         public float LastSeen { get; private set; }
         public SurvivalStats Stats { get; private set; }
 
@@ -99,6 +100,7 @@ namespace Evolve.Net
             MaxHealth = s.MaxHealth > 0f ? s.MaxHealth : 100f;
             Lives = s.Lives;
             Dead = s.Dead;
+            Lost = s.Lost;
 
             // Mirror the numbers into the ghost's stats so creatures can react to it.
             var st = Stats.State;
@@ -120,7 +122,7 @@ namespace Evolve.Net
                 placed = true;
             }
             MirrorOrgans(s.OrganNames, s.OrganLevels);
-            body.localScale = Dead ? new Vector3(1.1f, 0.25f, 1.1f) : Vector3.one;
+            body.localScale = Lost ? Vector3.zero : Dead ? new Vector3(1.1f, 0.25f, 1.1f) : Vector3.one;
         }
 
         void Update()

@@ -45,8 +45,12 @@ namespace Evolve.Player
             yaw = transform.eulerAngles.y;
         }
 
+        /// <summary>Spectator mode: look at this instead of our own body (set by the co-op rescue code).</summary>
+        public Transform Override;
+
         void LateUpdate()
         {
+            Transform target = Override != null ? Override : this.target;
             if (!target) return;
             Vector2 look = Vector2.zero; float zoom = 0;
             if (!Evolve.Survival.SurvivalHUD.BlocksInput(target.gameObject)) ReadInput(out look, out zoom);

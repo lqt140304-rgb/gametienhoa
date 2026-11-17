@@ -82,9 +82,12 @@ namespace Evolve.Survival
                     dead.fontSize = 28; dead.fontStyle = FontStyle.Bold;
                     GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Hết mạng", dead);
                     dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
-                    GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Thân xác nằm lại, chỉ đồng đội mới cứu được (chưa có trong bản thử)", dead);
+                    if (NetWorld.CoopActive) { } // RescueController draws the rescue / spectator text
+                    else {
+                    GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Thân xác nằm lại, chỉ đồng đội mới cứu được (chơi một mình: chưa có ai cứu)", dead);
                     GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Cơ quan vẫn nằm trên xác. Chơi lại thì chúng rơi ra tại xác, mỗi cái 50% bị mất.", dead);
                     GUI.Label(new Rect(0, Screen.height / 2f + 56, Screen.width, 30), "Y  Chơi lại từ đầu (tạm thời)", dead);
+                    }
                 }
                 else
                 {

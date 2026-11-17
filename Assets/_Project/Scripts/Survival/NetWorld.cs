@@ -18,6 +18,9 @@ namespace Evolve.Survival
         /// <summary>True while this machine is a client: creatures and pickups here are replicas of the host's.</summary>
         public static bool IsClient;
 
+        /// <summary>True while connected to a co-op room (host or client): out of lives, only teammates can help.</summary>
+        public static bool CoopActive;
+
         // client -> host
         /// <summary>A hit on a creature (predator or prey) that lives on the host: its id and the damage.</summary>
         public static Action<int, float> ReportCreatureHit;

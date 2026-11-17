@@ -49,6 +49,14 @@ Người chơi khác được vẽ như một "bóng": không có va chạm vớ
 
 Khi **vào phòng**, thế giới riêng của bạn (quái, thức ăn, cơ quan rơi) được **ẩn đi** và thay bằng thế giới của Host; khi **thoát phòng** thì thế giới riêng hiện lại như cũ. Cơ quan, EXP và chỉ số của chính bạn luôn là của bạn và được giữ nguyên.
 
+## 4b. Cứu đồng đội (đợt 2)
+
+- Hết 3 mạng = thành xác. Đồng đội **giữ T** cạnh xác (trong 3 m) 5 giây thì xác sống lại với 1 máu, vẫn cùng mạng cũ.
+- Tiếp tục giữ T để **truyền máu**: người cứu mất 3 máu cho mỗi 1 máu tặng, tối đa 10 máu, càng về sau càng nhanh (5 giây -> 0,5 giây mỗi máu). Người cứu không bao giờ tự chết vì truyền máu.
+- Sau **120 giây** không ai cứu: xác mất hẳn, cơ quan rơi ra (mỗi cái 50% bị mất), chủ xác chỉ còn quan sát.
+- **Tab**: đổi người đang xem khi đã thành xác. Chơi một mình thì vẫn bấm Y để chơi lại.
+- Tin nhắn: `evolve.rs` (reliable; máy khách gửi host, host chuyển tới người nhận). Các con số là bản thử, chỉnh ở đầu `RescueController.cs`.
+
 ## 5. Cách hoạt động (cho người làm tiếp)
 
 - Không dùng `NetworkObject` hay prefab. Mỗi người gửi **trạng thái** (`PlayerNetState`) khoảng 10 lần mỗi giây bằng tin nhắn có tên của Netcode (`CustomMessagingManager`): client gửi `evolve.up` cho Host; Host hiển thị rồi chuyển tiếp `evolve.dn` (kèm id người gửi) cho các client khác; Host cũng gửi trạng thái của chính mình.
