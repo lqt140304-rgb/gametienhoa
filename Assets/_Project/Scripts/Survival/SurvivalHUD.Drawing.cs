@@ -29,7 +29,7 @@ namespace Evolve.Survival
         public bool MenuOpen => menu != HudMenu.None;
         public static bool HasFor(GameObject owner) => owner != null && owners.TryGetValue(owner, out var hud) && hud != null && hud.isActiveAndEnabled;
         public static bool ExternalMenuOpen;
-        public static bool BlocksInput(GameObject owner) => ExternalMenuOpen || Evolve.Visuals.SlimeColorMenu.IsOpen || (HasFor(owner) && owners[owner].MenuOpen);
+        public static bool BlocksInput(GameObject owner) => ExternalMenuOpen || Evolve.Visuals.SlimeColorMenu.IsOpen || Evolve.DevTools.GhostMode.PanelOpen || (HasFor(owner) && owners[owner].MenuOpen);
 
         void RegisterHud()
         {
