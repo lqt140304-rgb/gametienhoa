@@ -33,3 +33,6 @@ Viền bọt và bờ đất ướt của từng ao từng bị vẽ đè lên n
 
 ## Mặt đất (bước 2)
 Menu **Evolve → Dress Lake: Ground** (`Editor/LakeGround.cs`, chạy sau Dress Lake: Water): các mảng rêu mềm dọc bờ và rải trên đất phẳng, đá có mũ rêu (6 dạng), cỏ (3 sắc xanh), đường mòn bùn uốn lượn từ vũng sinh mệnh ra Bãi Mùn Rễ, Chân Rễ, Vườn Bào Tử (đứt đoạn khi gặp nước). Không collider, gộp thành vài mesh dưới một object, đặt theo bề mặt thật bằng tia chiếu xuống, chạy lại được. Bước sau: nấm to, dây leo, rễ, ánh sáng.
+
+## Nấm khổng lồ và dây leo (bước 3)
+Menu **Evolve → Dress Lake: Mushrooms and Vines** (`Editor/LakeFlora.cs`, chạy sau Dress Lake: Water): nấm khổng lồ (thân loe chân, mũ vòm dày, hơi nghiêng, đốm sáng trên mũ; mũ tím nhạt, san hô, xanh ngọc) thành cụm lớn ở Vườn Bào Tử, dọc bờ nước và rải rác, vài cây cao có đèn điểm; dây leo buông từ các rễ trần hang (`Root Ceiling`) với lá dọc theo dây. Không collider, gộp thành vài mesh dưới `Lake Flora (Dressed)`, chạy lại được. Bước sau: rễ chi tiết và ánh sáng (tia sáng xuyên trần).
