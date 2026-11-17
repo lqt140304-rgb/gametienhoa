@@ -198,6 +198,7 @@ namespace Evolve.Creatures
             }
             Debug.Log($"{name} bị hạ gục");
             Killed?.Invoke(this);
+            GetComponent<Evolve.Ecology.EmbodiedCreature>()?.NotifyKilled();
             Destroy(gameObject);
         }
     }

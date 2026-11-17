@@ -122,6 +122,7 @@ namespace Evolve.Creatures
             if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, 0.25f, transform.position.z));
 
             Caught?.Invoke(this);
+            GetComponent<Evolve.Ecology.EmbodiedCreature>()?.NotifyKilled();
             Destroy(gameObject);
         }
 
