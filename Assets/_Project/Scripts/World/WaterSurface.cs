@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Evolve.World
 {
-    public enum WaterShape { Rect, Disc }
+    public enum WaterShape { Rect, Disc, Stream }
 
     /// <summary>
     /// A calm, gently moving pond: a mesh built in code that fills a winding shoreline (WaterOutline), whose vertices
@@ -22,6 +22,12 @@ namespace Evolve.World
         public Vector2 Size = new Vector2(10f, 10f);
         [Tooltip("Spacing of the mesh vertices in metres")]
         public float Cell = 1.25f;
+        [Header("Stream (Shape = Stream)")]
+        [Tooltip("Centre line of the stream, in this object's own space (x, z). Size = (length, width) is used for the ripple scale.")]
+        public Vector2[] StreamPath;
+        public float StreamHalfWidth = 3f;
+        [Tooltip("How much the stream's width wanders (0 = constant)")]
+        public float StreamWobble = 0.25f;
         public float WaveHeight = 0.03f;
         public float WaveSpeed = 1f;
 
@@ -81,8 +87,19 @@ namespace Evolve.World
 
         Vector2[] localOutline;
 
+        Vector2[] streamLeft, streamRight;
+
         void ComputeOutline()
         {
+            if (Shape == WaterShape.Stream && StreamPath != null && StreamPath.Length >= 2)
+            {
+                WaterStream.Edges(StreamPath, StreamHalfWidth, Seed, StreamWobble, out streamLeft, out streamRight);
+                localOutline = WaterStream.Polygon(streamLeft, streamRight);
+                worldOutline = new Vector2[localOutline.Length];
+                var o = new Vector2(transform.position.x, transform.position.z);
+                for (int i = 0; i < localOutline.Length; i++) worldOutline[i] = localOutline[i] + o;
+                return;
+            }
             bool disc = Shape == WaterShape.Disc;
             float width = disc ? Size.x * 2f : Size.x, depth = disc ? Size.x * 2f : Size.y;
             int samples = Mathf.Clamp(Mathf.RoundToInt(WaterOutline.PerimeterEstimate(width, depth, disc) / Mathf.Max(0.3f, Cell)), 24, 220);
@@ -197,7 +214,8 @@ namespace Evolve.World
             ComputeOutline();
             var outline = localOutline;
 
-            mesh = WaterMeshes.Organic(outline, Cell);
+            bool stream = Shape == WaterShape.Stream && streamLeft != null;
+            mesh = stream ? WaterMeshes.Strip(streamLeft, streamRight, Cell) : WaterMeshes.Organic(outline, Cell);
             // Where another pond already covers the water, draw nothing twice.
             WaterMeshes.RemoveTriangles(mesh, c => OnOtherWater(c, true));
             mesh.hideFlags = HideFlags.HideAndDontSave; // never saved into the scene: it is rebuilt every time
@@ -216,10 +234,14 @@ namespace Evolve.World
 
             // Wet bank (dark, fading outward) and foam (white, broken up), both following the same shore.
             // The parts that would lie on a neighbour's water are removed: ponds that touch simply flow together.
-            var bank = WaterMeshes.Band(outline, BankOutside, BankInside, Seed * 31 + 1);
+            var bank = stream
+                ? WaterMeshes.Combine(WaterMeshes.EdgeBand(streamLeft, BankOutside, BankInside, 1f, Seed * 31 + 1), WaterMeshes.EdgeBand(streamRight, BankOutside, BankInside, -1f, Seed * 31 + 3))
+                : WaterMeshes.Band(outline, BankOutside, BankInside, Seed * 31 + 1);
             WaterMeshes.RemoveTriangles(bank, c => OnOtherWater(c, false));
             Band("Bank", BankMaterial, bank, 0.025f);
-            var foam = WaterMeshes.Band(outline, FoamOutside, FoamInside, Seed * 31 + 2);
+            var foam = stream
+                ? WaterMeshes.Combine(WaterMeshes.EdgeBand(streamLeft, FoamOutside, FoamInside, 1f, Seed * 31 + 2), WaterMeshes.EdgeBand(streamRight, FoamOutside, FoamInside, -1f, Seed * 31 + 4))
+                : WaterMeshes.Band(outline, FoamOutside, FoamInside, Seed * 31 + 2);
             WaterMeshes.RemoveTriangles(foam, c => OnOtherWater(c, false));
             Band("Foam", FoamMaterial, foam, 0.05f);
         }
@@ -257,8 +279,9 @@ namespace Evolve.World
             var renderer = GetComponent<MeshRenderer>();
             if (renderer == null) return;
             if (block == null) block = new MaterialPropertyBlock();
-            float w = Shape == WaterShape.Rect ? Size.x : Size.x * 2f;
-            float d = Shape == WaterShape.Rect ? Size.y : Size.x * 2f;
+            bool box = Shape != WaterShape.Disc;
+            float w = box ? Size.x : Size.x * 2f;
+            float d = box ? Size.y : Size.x * 2f;
             float repeat = Mathf.Max(0.5f, MetersPerRepeat);
             renderer.GetPropertyBlock(block);
             block.SetVector("_BaseMap_ST", new Vector4(w / repeat, d / repeat, offset.x, offset.y));

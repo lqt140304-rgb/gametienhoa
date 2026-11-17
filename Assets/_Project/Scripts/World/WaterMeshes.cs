@@ -162,6 +162,84 @@ namespace Evolve.World
             mesh.RecalculateBounds();
         }
 
+        /// <summary>
+        /// The water of a stream: a strip between a left and a right bank (same number of points on both), split into
+        /// columns about `cell` metres wide. UV: u along the stream (0..1), v across (0..1).
+        /// </summary>
+        public static Mesh Strip(Vector2[] left, Vector2[] right, float cell)
+        {
+            int rows = left.Length;
+            float widthSum = 0f;
+            for (int i = 0; i < rows; i++) widthSum += Vector2.Distance(left[i], right[i]);
+            int cols = Mathf.Max(1, Mathf.RoundToInt(widthSum / rows / Mathf.Max(0.1f, cell)));
+            var verts = new List<Vector3>((cols + 1) * rows);
+            var uvs = new List<Vector2>(verts.Capacity);
+            for (int i = 0; i < rows; i++)
+                for (int c = 0; c <= cols; c++)
+                {
+                    Vector2 p = Vector2.Lerp(left[i], right[i], c / (float)cols);
+                    verts.Add(new Vector3(p.x, 0f, p.y));
+                    uvs.Add(new Vector2(i / (float)(rows - 1), c / (float)cols));
+                }
+            var tris = new List<int>();
+            for (int i = 0; i < rows - 1; i++)
+                for (int c = 0; c < cols; c++)
+                {
+                    int a = i * (cols + 1) + c, b = (i + 1) * (cols + 1) + c, c1 = a + 1, d = b + 1;
+                    AddUp(tris, verts, a, b, c1);
+                    AddUp(tris, verts, c1, b, d);
+                }
+            return Make("WaterStrip", verts, uvs, tris);
+        }
+
+        /// <summary>
+        /// A band along ONE bank of a stream (an open line): `outer` metres on the dry side (v = 0) to `inner` metres on the
+        /// water side (v = 1). outwardSign +1 for the left bank, -1 for the right bank. The width wanders (seeded).
+        /// </summary>
+        public static Mesh EdgeBand(Vector2[] edge, float outer, float inner, float outwardSign, int seed)
+        {
+            int n = edge.Length;
+            var rnd = new System.Random(seed);
+            float p1 = (float)rnd.NextDouble() * Mathf.PI * 2f, p2 = (float)rnd.NextDouble() * Mathf.PI * 2f;
+            var verts = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            float travelled = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                if (i > 0) travelled += Vector2.Distance(edge[i], edge[i - 1]);
+                Vector2 t = edge[Mathf.Min(i + 1, n - 1)] - edge[Mathf.Max(i - 1, 0)];
+                t = t.sqrMagnitude > 1e-8f ? t.normalized : Vector2.right;
+                Vector2 normal = new Vector2(-t.y, t.x) * Mathf.Sign(outwardSign);
+                float wobble = 0.75f + 0.25f * Mathf.Sin(travelled * 0.9f + p1) + 0.15f * Mathf.Sin(travelled * 1.7f + p2);
+                Vector2 o = edge[i] + normal * (outer * wobble);
+                Vector2 inn = edge[i] - normal * inner;
+                verts.Add(new Vector3(o.x, 0f, o.y)); uvs.Add(new Vector2(travelled / 2f, 0f));
+                verts.Add(new Vector3(inn.x, 0f, inn.y)); uvs.Add(new Vector2(travelled / 2f, 1f));
+            }
+            var tris = new List<int>();
+            for (int i = 0; i < n - 1; i++)
+            {
+                int o0 = i * 2, i0 = o0 + 1, o1 = o0 + 2, i1 = o0 + 3;
+                AddUp(tris, verts, o0, i0, o1);
+                AddUp(tris, verts, o1, i0, i1);
+            }
+            return Make("WaterEdgeBand", verts, uvs, tris);
+        }
+
+        /// <summary>Joins two meshes into one new mesh (the originals are destroyed).</summary>
+        public static Mesh Combine(Mesh a, Mesh b)
+        {
+            var combined = new Mesh { name = "WaterCombined" };
+            combined.CombineMeshes(new[]
+            {
+                new CombineInstance { mesh = a, transform = Matrix4x4.identity },
+                new CombineInstance { mesh = b, transform = Matrix4x4.identity }
+            }, true, true);
+            combined.RecalculateBounds();
+            if (Application.isPlaying) { Object.Destroy(a); Object.Destroy(b); } else { Object.DestroyImmediate(a); Object.DestroyImmediate(b); }
+            return combined;
+        }
+
         // Adds a triangle facing up (Unity front faces are clockwise: normal = cross(b - a, c - a)).
         static void AddUp(List<int> tris, List<Vector3> verts, int a, int b, int c)
         {

@@ -91,13 +91,13 @@ namespace Evolve.World
         }
 
         /// <summary>A line from a to b that winds sideways in between (zero sideways offset at both ends).</summary>
-        public static Vector2[] WindingLine(Vector2 a, Vector2 b, int seed, float amplitude, float step)
+        public static Vector2[] WindingLine(Vector2 a, Vector2 b, int seed, float amplitude, float step, float waveLength = 14f)
         {
             float length = Vector2.Distance(a, b);
             int n = Mathf.Max(2, Mathf.RoundToInt(length / Mathf.Max(0.5f, step)));
             var rnd = new System.Random(seed);
             float p1 = (float)rnd.NextDouble() * Mathf.PI * 2f, p2 = (float)rnd.NextDouble() * Mathf.PI * 2f;
-            int waves = Mathf.Max(1, Mathf.RoundToInt(length / 14f));
+            int waves = Mathf.Max(1, Mathf.RoundToInt(length / Mathf.Max(4f, waveLength)));
             Vector2 dir = (b - a).normalized, side = new Vector2(-dir.y, dir.x);
             var line = new Vector2[n + 1];
             for (int i = 0; i <= n; i++)

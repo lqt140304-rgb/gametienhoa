@@ -214,7 +214,7 @@ namespace Evolve.EditorTools
                 l.range = height * 1.05f;
                 l.spotAngle = Mathf.Clamp(2f * Mathf.Atan((bottomR + 1.5f) / height) * Mathf.Rad2Deg, 15f, 90f);
                 l.color = new Color(1f, 0.96f, 0.82f);
-                l.intensity = Mathf.Clamp(0.6f * (height / 20f) * (height / 20f), 0.6f, 8f); // same brightness on the ground whatever the roof height (a gentle level: glossy water glares)
+                l.intensity = Mathf.Clamp(0.45f * (height / 20f) * (height / 20f), 0.45f, 4f); // same brightness on the ground whatever the roof height (a gentle level: glossy water glares)
                 l.shadows = LightShadows.None;
                 lightGo.transform.localRotation = Quaternion.FromToRotation(Vector3.forward, Vector3.down);
                 shafts++;
