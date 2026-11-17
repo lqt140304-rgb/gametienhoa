@@ -147,6 +147,8 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 
 **Định hướng hiện tại:** Unity **6.6** + URP, C#, Blender, 3D Stylized Low Poly. Editor build dự kiến `6000.6.9f1`; cần ghi chính xác vào `ProjectSettings/ProjectVersion.txt` khi tạo project.
 
+**[ĐÃ CHỐT]** (2026-11-17) **Mô hình mạng:** Netcode for GameObjects (nhánh 2.x của Unity 6.6), **một người làm chủ phòng (Host), người khác nhập IP**. Chưa dùng Unity Relay hay máy chủ riêng. Bản 0.4a chỉ đồng bộ trạng thái người chơi; thế giới chung (quái, thức ăn, cơ quan rơi do Host điều khiển) làm ở 0.4b. Xem `docs/COOP_SETUP.md`.
+
 **[ĐỀ XUẤT]** ScriptableObjects cho dữ liệu; prefab cơ quan gắn với vùng neo động; bone/Blend Shapes cho biến dạng; Shader Graph cho chất liệu slime; Unity Input System, Netcode for GameObjects cho multiplayer. Không đồng bộ toàn bộ mesh qua mạng; đồng bộ IDs cơ quan, tham số hình thái và trạng thái.
 
 ## 8. Roadmap prototype [ĐỀ XUẤT]
@@ -161,7 +163,7 @@ Chi tiết (12 vị trí, 54 cơ quan, tier quái, 9 kiểu xã hội, kỹ năn
 - Thông số cụ thể và xác suất rút Dị Năng.
 - Danh sách Thiên Phú bị động và Khiếm Khuyết cuối cùng.
 - Chi phí và điều kiện cụ thể từng cơ quan; cách tháo/thay. Mất mát khi chết đã chốt ở mục 6.1 (3 mạng, xác, cứu, đồ rơi 50/50). Đã chốt giữ blueprint và tái tạo bằng tài nguyên khi cơ quan hỏng.
-- Giao diện chọn đặc tính đầu game; cách lưu thế giới, topology multiplayer.
+- Giao diện chọn đặc tính đầu game; cách lưu thế giới. (Mô hình mạng đã chốt, xem mục 7.)
 - Cân bằng nhiệt độ, độ ẩm, đói và nguồn thức ăn.
 
 Mọi thay đổi thiết kế cần được cập nhật tại đây trước khi triển khai lớn.

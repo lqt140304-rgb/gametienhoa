@@ -48,5 +48,8 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] HUD/UI mới của Codex trên `main` (kho kỹ năng K, bảng cơ quan G, thanh Q · 1–5 · C, HUD cố định hoặc đi theo nhân vật)
 - [x] Chơi thử chế độ ngắm: hồng tâm quá gần nhân vật; đạn ở chế độ chuột không theo con trỏ
 - [x] Camera lệch qua vai khi ngắm; đạn và lao theo con trỏ ở chế độ chuột; góc nhìn thứ nhất (F5)
-- [ ] Chơi thử camera vai, góc nhìn thứ nhất và HUD mới (độ phân giải khác nhau, Play Mode) và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
+- [x] Chơi thử camera vai, góc nhìn thứ nhất, HUD mới và năng lượng hồi khi di chuyển
+- [x] Co-op 0.4a (nền móng): Host + nhập IP, thấy nhau (vị trí, cơ quan, máu, mạng); mã trong assembly `Evolve.Net`, cần cài gói Netcode (`docs/COOP_SETUP.md`)
+- [ ] Cài gói Netcode, chơi thử co-op 0.4a trên một máy rồi hai máy
+- [ ] Co-op 0.4b: thế giới chung (quái, thức ăn, cơ quan rơi do Host điều khiển), sát thương, cứu đồng đội, quan sát (độ phân giải khác nhau, Play Mode) và chỉnh số kỹ năng Xả Gai / Xung Phong Húc
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`

@@ -63,6 +63,7 @@ Assembly `Evolve` (thư mục `Scripts/`) và `Evolve.Editor` (thư mục `Edito
 | `Organs/` | `OrganSO`, `OrganTier`, `OrganSocket`, `OrganHost`, `OrganInteractor`, `OrganPickup`, `DropTableSO` | Cơ quan, bậc, điểm gắn, EXP và cấp (`Invest`, `Priority`), bảng hỏi lắp/thay/hấp thụ, bảng Cơ thể, rơi khi chết, bảng rơi đồ hai bước |
 | `Creatures/` | `Prey`, `PreySpawner`, `Predator`, `PredatorSpawner` | Con mồi bỏ chạy và mệt; kẻ săn mồi tuần tra, đuổi, cắn |
 | `World/` | `Nutrient`, `MonochromeVision`, `VibrationSense`, `TemperatureZone`, `ClimateSensor` | Thức ăn; thị giác (đen trắng, ánh sáng quanh nhân vật); quét rung; vùng nhiệt độ |
+| `Net/` | `CoopManager`, `CoopMenu`, `RemoteAvatar`, `PlayerNetState` | **Co-op 0.4a** (Netcode for GameObjects, host + IP). Assembly riêng `Evolve.Net`, chỉ biên dịch khi đã cài gói `com.unity.netcode.gameobjects` (`defineConstraints` + `versionDefines`). Tự thêm khi Play, phím F2. Xem `docs/COOP_SETUP.md` |
 | `Dev/` | `GodMenu` | Menu thử nghiệm (F1), tự thêm khi Play; chỉ có trong Editor và bản build debug |
 | `Editor/` | `PrototypeSceneBuilder`, `HudSmokeCheck` | Menu **Evolve → Build Prototype Scene** dựng scene `Scenes/Prototype_01`; `HudSmokeCheck` là kiểm tra tự động HUD (batchmode, chưa chạy thành công) |
 
@@ -134,7 +135,7 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
-1. **0.4 Co-op** (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
+1. **0.4b: thế giới chung** (0.4a nền móng đã viết, **chưa chạy thử**, xem `docs/COOP_SETUP.md`): đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
 2. **Hệ thống hư hỏng cơ quan (BIS)** theo `BIOLOGICAL_INTEGRITY.md` mục H: mắt, chân, giáp; vùng trúng đòn; Integrity; blueprint; tái tạo tại tổ. Chơi một người cũng làm được. Công thức còn là đề xuất, cần hỏi chủ dự án trước.
 3. Quay lại phản hồi gần nhất của chủ dự án để chỉnh: độ sáng quanh nhân vật (`blindLightIntensity` 8), tầm quét, độ khó kẻ săn mồi và hoang mạc.
 4. Các mục còn lại: Thiên Phú, Khiếm Khuyết, màn hình tạo nhân vật, Dị Năng theo danh sách v2.0, lưu/tải, tổ, boss; cập nhật `README.md`.

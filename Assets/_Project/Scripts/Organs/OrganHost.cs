@@ -215,6 +215,24 @@ namespace Evolve.Organs
             Recalculate();
         }
 
+        /// <summary>
+        /// Remote avatars: show this organ at exactly this level, without any EXP involved
+        /// (the real owner spends the EXP on their own machine).
+        /// </summary>
+        public void MirrorOrgan(OrganSO organ, int level)
+        {
+            if (organ == null) return;
+            level = Mathf.Clamp(level, 0, MaxLevel);
+            if (Has(organ) && organs[organ.Slot].Level > level) Detach(organ.Slot); // went back to a bud: start over
+            if (!Has(organ)) TryAttach(organ);
+            if (!Has(organ)) return;
+
+            var e = organs[organ.Slot];
+            while (e.Level < level) LevelUp(e);
+            e.Shown = level >= 1 ? 1f : e.Growth;
+            Recalculate();
+        }
+
         /// <summary>Debug: raise every organ to at least the given level (1..MaxLevel).</summary>
         public void DebugSetLevel(int level)
         {

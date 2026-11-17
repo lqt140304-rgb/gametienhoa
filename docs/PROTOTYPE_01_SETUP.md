@@ -87,6 +87,7 @@ Chỉ cần nếu muốn hiểu scene được ghép thế nào.
 | 1–5 | Dùng kỹ năng gắn cơ quan trong ô tương ứng (cơ quan bậc B, mở ở Lv2; Lv3 mạnh hơn, hồi nhanh hơn). Đổi ô trong bảng Cơ thể (G) |
 | Chuột | Ở chế độ chuột, kỹ năng bắn/lao (Q, 1–5) đi **theo hướng con trỏ** |
 | Alt | Chế độ ngắm: **hồng tâm** giữa màn hình, chuột xoay camera luôn (không cần giữ chuột phải), camera lệch qua vai; kỹ năng đi theo hồng tâm. Mở bảng G hoặc F1 thì con trỏ tự hiện lại |
+| F2 | Menu co-op: Host/Join, thấy người chơi khác (cần cài gói Netcode, xem `docs/COOP_SETUP.md`) |
 | F5 | Góc nhìn thứ nhất: camera ở mắt nhân vật, ẩn thân, có hồng tâm; bấm lại để về góc ngoài |
 | X | Bỏ qua cơ quan |
 | F1 | Mở/đóng **Menu God** để thử nghiệm: bất tử, nhận cơ quan, tạo sinh vật, dịch chuyển, tốc độ game, bốc thử tỉ lệ rơi |

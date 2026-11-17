@@ -1,0 +1,143 @@
+using System.Collections.Generic;
+using Evolve.Organs;
+using Evolve.Player;
+using UnityEngine;
+
+namespace Evolve.Net
+{
+    /// <summary>
+    /// A ghost of another player: a coloured slime that follows the position it was last told, wears the same
+    /// organs (via OrganHost) and carries a name and health for the labels. It has no physics and no survival
+    /// stats, so creatures in the local world ignore it (the world is not shared yet).
+    /// </summary>
+    public class RemoteAvatar : MonoBehaviour
+    {
+        static readonly Vector3 BackSocket = new Vector3(0f, 0.3f, -0.25f);
+        static Dictionary<string, OrganSO> organLookup;
+
+        public ulong ClientId { get; private set; }
+        public string DisplayName { get; private set; } = "";
+        public float Health { get; private set; }
+        public float MaxHealth { get; private set; } = 100f;
+        public byte Lives { get; private set; }
+        public bool Dead { get; private set; }
+        public float LastSeen { get; private set; }
+
+        Transform body;
+        OrganHost organs;
+        Vector3 targetPosition;
+        float targetYaw;
+        string organKey = "";
+        bool placed;
+
+        public static RemoteAvatar Create(ulong clientId, string name)
+        {
+            var go = new GameObject($"Remote Player {clientId}");
+            var avatar = go.AddComponent<RemoteAvatar>();
+            avatar.Build(clientId, name);
+            return avatar;
+        }
+
+        void Build(ulong clientId, string name)
+        {
+            ClientId = clientId;
+            DisplayName = name;
+
+            var visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            visual.name = "Visual";
+            DestroyImmediate(visual.GetComponent<Collider>());
+            visual.transform.SetParent(transform, false);
+            body = visual.transform;
+
+            // A copy of the local slime's material, tinted so each player has their own colour.
+            var renderer = visual.GetComponent<Renderer>();
+            var shared = FindSlimeMaterial();
+            var mat = shared != null ? new Material(shared) : renderer.material;
+            Color tint = Color.HSVToRGB((clientId * 0.37f) % 1f, 0.55f, 0.95f);
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", tint); else mat.color = tint;
+            renderer.sharedMaterial = mat;
+
+            // The sockets must exist before OrganHost, which looks for them when it wakes up.
+            AddSocket(body, OrganSlot.Eyes, new Vector3(0f, 0.15f, 0.42f));
+            AddSocket(body, OrganSlot.Legs, new Vector3(0f, -0.38f, 0f));
+            AddSocket(body, OrganSlot.Skin, Vector3.zero);
+            AddSocket(body, OrganSlot.Back, BackSocket);
+            organs = gameObject.AddComponent<OrganHost>();
+        }
+
+        static void AddSocket(Transform parent, OrganSlot slot, Vector3 localPosition)
+        {
+            var go = new GameObject("Socket_" + slot);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.AddComponent<OrganSocket>().Slot = slot;
+        }
+
+        static Material FindSlimeMaterial()
+        {
+            var controller = FindAnyObjectByType<SlimeController>();
+            if (controller == null) return null;
+            var r = controller.GetComponentInChildren<Renderer>();
+            return r != null ? r.sharedMaterial : null;
+        }
+
+        /// <summary>Take in a new state from the network.</summary>
+        public void Apply(PlayerNetState s, float now)
+        {
+            LastSeen = now;
+            if (!string.IsNullOrEmpty(s.Name)) DisplayName = s.Name;
+            Health = s.Health;
+            MaxHealth = s.MaxHealth > 0f ? s.MaxHealth : 100f;
+            Lives = s.Lives;
+            Dead = s.Dead;
+            targetPosition = s.Position;
+            targetYaw = s.Yaw;
+            if (!placed)
+            {
+                transform.position = targetPosition;
+                body.rotation = Quaternion.Euler(0f, targetYaw, 0f);
+                placed = true;
+            }
+            MirrorOrgans(s.OrganNames, s.OrganLevels);
+            body.localScale = Dead ? new Vector3(1.1f, 0.25f, 1.1f) : Vector3.one;
+        }
+
+        void Update()
+        {
+            if (!placed) return;
+            float k = 1f - Mathf.Exp(-14f * Time.deltaTime);
+            transform.position = Vector3.Lerp(transform.position, targetPosition, k);
+            body.rotation = Quaternion.Slerp(body.rotation, Quaternion.Euler(0f, targetYaw, 0f), k);
+        }
+
+        void MirrorOrgans(string[] names, byte[] levels)
+        {
+            string key = names == null ? "" : string.Join(",", names) + "|" + (levels == null ? "" : string.Join(",", levels));
+            if (key == organKey) return;
+            organKey = key;
+
+            var wanted = new List<OrganSO>();
+            if (names != null)
+                for (int i = 0; i < names.Length; i++)
+                {
+                    var organ = FindOrgan(names[i]);
+                    if (organ == null) continue;
+                    wanted.Add(organ);
+                    organs.MirrorOrgan(organ, levels[i]);
+                }
+            foreach (var have in organs.OrganList)
+                if (!wanted.Contains(have)) organs.Detach(have.Slot);
+        }
+
+        static OrganSO FindOrgan(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+            if (organLookup == null || !organLookup.ContainsKey(name))
+            {
+                organLookup = new Dictionary<string, OrganSO>();
+                foreach (var o in Resources.FindObjectsOfTypeAll<OrganSO>()) organLookup[o.name] = o;
+            }
+            return organLookup.TryGetValue(name, out var found) ? found : null;
+        }
+    }
+}
