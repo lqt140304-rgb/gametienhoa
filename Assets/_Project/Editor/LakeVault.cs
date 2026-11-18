@@ -26,6 +26,9 @@ namespace Evolve.EditorTools
         const string EarthSheet = "Ceiling Earth";
         const string RibsName = "Vault Ribs";
         const string OldHangingRoots = "Hanging Roots";          // 28 plain smooth cylinders from the scene builder
+        const string SkyName = "Vault Sky Windows";             // a patch of sky behind each light hole
+        const string RimName = "Vault Rim Roots";               // Blender roots that replace the straight code-built rim roots
+        const string PropsName = "Vault Hanging Props";          // long roots, curtains, glow pods, stalactites by zone
         const string PillarsName = "Vault Pillars";              // Blender replacements for the three smooth "Landmark" columns
         const string HangingName = "Vault Hanging Roots";       // their Blender replacement
         const int Seed = 11;
@@ -58,6 +61,9 @@ namespace Evolve.EditorTools
             DestroyChild(parent, RibsName);
             DestroyChild(parent, HangingName);
             DestroyChild(parent, PillarsName);
+            DestroyChild(parent, PropsName);
+            DestroyChild(parent, SkyName);
+            DestroyChild(parent, RimName);
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
@@ -67,8 +73,12 @@ namespace Evolve.EditorTools
             int pieces = BuildRibs(parent, ribs, prefabs);
             int hanging = ReplaceHangingCylinders(parent);
             hanging += ReplacePillars(parent);
+            int props = PlaceHangingProps(parent, ribs, slots, ceiling);
+            props += PlaceBones(parent, ribs, slots, ceiling);
+            int windows = BuildSkyWindows(parent, ceiling);
+            int rim = ReplaceRimRoots(parent, ceiling);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
+            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá), {windows} ô trời qua các lỗ sáng, {rim} rễ rìa Blender thay rễ thẳng cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
 
         [MenuItem("Evolve/Restore Lake Canopy (undo)")]
@@ -83,6 +93,10 @@ namespace Evolve.EditorTools
             DestroyChild(parent, RibsName);
             DestroyChild(parent, HangingName);
             DestroyChild(parent, PillarsName);
+            DestroyChild(parent, PropsName);
+            DestroyChild(parent, SkyName);
+            DestroyChild(parent, RimName);
+            SetRim(true);
             SetOldCylinders(true);
             SetPillars(true);
             old.name = NewRoof;
@@ -230,6 +244,258 @@ namespace Evolve.EditorTools
                 }
             }
             SetOldCylinders(false);
+            return made;
+        }
+
+        // ------------------------------------------------------------------ the rim roots
+
+        static void SetRim(bool visible)
+        {
+            var rim = GameObject.Find("Rim Roots");   // the code-built straight roots (LakeCanopy); only their renderers go, the object stays
+            if (rim == null) return;
+            foreach (var r in rim.GetComponentsInChildren<Renderer>(true)) r.enabled = visible;
+        }
+
+        /// <summary>Hide the straight, smooth rim roots and hang Blender roots (thick at the roof, tapering, with side roots) from the vault down the wall
+        /// in three rows, each stretched to reach the ground, in varied widths and leans. The hunter's way in on the north side stays open.</summary>
+        static int ReplaceRimRoots(Transform canopy, Func<float, float, float> ceiling)
+        {
+            var prefabs = new List<GameObject>();
+            for (int i = 0; i < 4; i++) { var p = Load("HangRoot_" + i); if (p != null) prefabs.Add(p); }
+            if (prefabs.Count == 0 || GameObject.Find("Rim Roots") == null) return 0;
+            var parent = new GameObject(RimName).transform;
+            parent.SetParent(canopy, false);
+            var rnd = new System.Random(Seed + 131);
+            float[] rows = { 206f, 220f, 234f };
+            float[] spacing = { 17f, 14f, 12f };
+            int made = 0;
+            for (int row = 0; row < rows.Length; row++)
+            {
+                float d = rows[row];
+                for (float s = -d; s < d; s += spacing[row])
+                    for (int side = 0; side < 4; side++)
+                    {
+                        float along = s + ((float)rnd.NextDouble() - 0.5f) * spacing[row] * 0.7f;
+                        Vector2 p = side == 0 ? new Vector2(along, d) : side == 1 ? new Vector2(along, -d) : side == 2 ? new Vector2(d, along) : new Vector2(-d, along);
+                        if (side == 0 && Mathf.Abs(p.x - ZoneLayout.NorthEntry.x) < 20f) continue;
+                        float roof = VaultLayout.VaultHeight(p.x, p.y, ceiling(p.x, p.y));
+                        float ground = LakeGround.GroundY(p.x, p.y) - 0.6f;
+                        float h = roof - ground;
+                        if (h < 4f) continue;
+                        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[rnd.Next(prefabs.Count)], parent);
+                        go.transform.position = new Vector3(p.x, roof + 0.4f, p.y);
+                        go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                        float w = (row == 0 ? 2.2f : row == 1 ? 2.8f : 3.4f) * (0.7f + 0.6f * (float)rnd.NextDouble());
+                        go.transform.localScale = new Vector3(w, (h + 0.4f) / 10f, w);
+                        foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                        made++;
+                    }
+            }
+            SetRim(false);
+            return made;
+        }
+
+        // ------------------------------------------------------------------ sky through the holes
+
+        /// <summary>Behind each light hole the dark dome would show; instead hang a disc of dusk sky (stars, thin cloud) just under the dome, unlit and unfogged,
+        /// so looking up through a hole you see the sky. The vault shell hides everything of the disc except what the hole shows.</summary>
+        static int BuildSkyWindows(Transform canopy, Func<float, float, float> ceiling)
+        {
+            var tex = LakeWater.PaintedTexture(Root + "/Models/VaultSky.png", 256, 256, (u, v) =>
+            {
+                float cloud = LakeWater.TileableNoise(u * 7f, v * 7f, 7, 7) * 0.6f + LakeWater.TileableNoise(u * 19f, v * 19f, 19, 19) * 0.4f;
+                var top = new Color(0.07f, 0.10f, 0.24f);
+                var low = new Color(0.30f, 0.20f, 0.32f);
+                var c = Color.Lerp(top, low, Mathf.SmoothStep(0f, 1f, v));
+                c = Color.Lerp(c, new Color(0.55f, 0.50f, 0.65f), Mathf.Clamp01((cloud - 0.5f) * 2.2f) * 0.55f);
+                float h = Mathf.Abs(Mathf.Sin(u * 12.9898f * 50f + v * 78.233f * 50f) * 43758.5453f) % 1f;
+                if (h > 0.994f && cloud < 0.55f) c = Color.Lerp(c, Color.white, 0.9f);
+                c.a = 1f;
+                return c;
+            });
+            var shader = Shader.Find("Sprites/Default");   // unlit, ignores fog and the vision colour fade
+            var mat = new Material(shader) { name = "Lake_VaultSky", mainTexture = tex };
+            AssetDatabase.DeleteAsset(Root + "/Materials/Lake_VaultSky.mat");
+            AssetDatabase.CreateAsset(mat, Root + "/Materials/Lake_VaultSky.mat");
+            var parent = new GameObject(SkyName).transform;
+            parent.SetParent(canopy, false);
+            int made = 0;
+            const float radius = 24f;
+            const int segs = 32;
+            foreach (var sh in ZoneLayout.LightShafts)
+            {
+                float y = ceiling(sh.x, sh.y) - 0.5f;
+                var verts = new List<Vector3> { new Vector3(sh.x, y, sh.y) };
+                var uvs = new List<Vector2> { new Vector2((sh.x + 250f) / 500f, (sh.y + 250f) / 500f) };
+                var tris = new List<int>();
+                for (int i = 0; i < segs; i++)
+                {
+                    float a = i * Mathf.PI * 2f / segs;
+                    float px = sh.x + Mathf.Cos(a) * radius, pz = sh.y + Mathf.Sin(a) * radius;
+                    verts.Add(new Vector3(px, y, pz));
+                    uvs.Add(new Vector2(Mathf.Clamp01((px + 250f) / 500f), Mathf.Clamp01((pz + 250f) / 500f)));
+                    tris.Add(0); tris.Add(1 + (i + 1) % segs); tris.Add(1 + i);
+                }
+                var mesh = new Mesh { name = "Sky Window" };
+                mesh.SetVertices(verts); mesh.SetUVs(0, uvs); mesh.SetTriangles(tris, 0);
+                mesh.RecalculateBounds();
+                var go = new GameObject("Sky Window " + made);
+                go.transform.SetParent(parent, false);
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = mat;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = false;
+                made++;
+            }
+            return made;
+        }
+
+        // ------------------------------------------------------------------ hanging props by zone
+
+        static GameObject Load(string name) => AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + name + ".fbx");
+
+        /// <summary>Things hanging from the vault, by zone: 01 turquoise pods over the lake; 02 thick old roots; 03 root curtains; 04 purple spore pods;
+        /// 05 stalactites; 06 sparse dry roots. Roots come in three lengths so they form layers. Clear of the hall, the light holes and slits, and the ribs. No collision.</summary>
+        static int PlaceHangingProps(Transform canopy, RibPath[] ribs, Vector2[] slots, Func<float, float, float> ceiling)
+        {
+            var parent = new GameObject(PropsName).transform;
+            parent.SetParent(canopy, false);
+            var ribPoints = new List<Vector2>();
+            foreach (var r in ribs) foreach (var q in r.Points) ribPoints.Add(new Vector2(q.x, q.z));
+            var placed = new List<Vector2>();
+            var rnd = new System.Random(Seed + 53);
+            // per zone: (model prefix, variants, weight); the first entries are the zone's character
+            var kinds = new (string prefix, int variants, float w)[][]
+            {
+                new[] { ("VaultPod", 3, 5f), ("VaultRoot", 2, 1f) },                                  // 01
+                new[] { ("VaultRoot", 4, 5f) },                                                      // 02 (long ones favoured below)
+                new[] { ("VaultCurtain", 2, 3f), ("VaultRoot", 3, 2f) },                             // 03
+                new[] { ("VaultPod", 3, 4f), ("VaultRoot", 2, 1f) },                                  // 04
+                new[] { ("VaultStalactite", 3, 5f), ("VaultRoot", 2, 1f) },                           // 05
+                new[] { ("VaultRoot", 2, 1f) },                                                      // 06 sparse
+            };
+            float[] density = { 1f, 1.1f, 1f, 1f, 1f, 0.35f };
+            Color[] glow = { new Color(0.25f, 0.95f, 0.8f), default, default, new Color(0.7f, 0.35f, 1f), default, default };
+            int made = 0, lights = 0;
+            for (int attempt = 0; attempt < 6000 && made < 170; attempt++)
+            {
+                float x = ((float)rnd.NextDouble() - 0.5f) * 2f * 228f, z = ((float)rnd.NextDouble() - 0.5f) * 2f * 228f;
+                if (ZoneLayout.InsideCave(x, z, 9f)) continue;
+                var p = new Vector2(x, z);
+                int zone = 0; float best = -1f;
+                for (int i = 0; i < ZoneLayout.Zones.Length; i++) { float v = ZoneLayout.Influence(i, x, z); if (v > best) { best = v; zone = i; } }
+                if (rnd.NextDouble() > density[zone]) continue;
+                bool clear = true;
+                foreach (var sh in ZoneLayout.LightShafts) if (Vector2.Distance(p, sh) < 11f) { clear = false; break; }
+                if (clear) foreach (var sl in slots) if (Vector2.Distance(p, sl) < 9f) { clear = false; break; }
+                if (clear) foreach (var q in ribPoints) if (Vector2.Distance(p, q) < 6f) { clear = false; break; }
+                if (clear) foreach (var o in placed) if (Vector2.Distance(p, o) < 6f) { clear = false; break; }
+                if (!clear) continue;
+
+                var set = kinds[zone];
+                float total = 0f; foreach (var k in set) total += k.w;
+                float pick = (float)rnd.NextDouble() * total;
+                var kind = set[0];
+                foreach (var k in set) { if (pick < k.w) { kind = k; break; } pick -= k.w; }
+                int variant = rnd.Next(kind.variants);
+                if (kind.prefix == "VaultRoot")
+                {
+                    if (zone == 1) variant = 1 + rnd.Next(3);   // the old-root core hangs the longest: 8, 14 or 20 m
+                }
+                var prefab = Load(kind.prefix + "_" + variant);
+                if (prefab == null) continue;
+                float roof = VaultLayout.VaultHeight(x, z, ceiling(x, z));
+                float ground = LakeGround.GroundY(x, z);
+                if (roof - ground < 8f) continue;
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+                go.transform.position = new Vector3(x, roof + 0.3f, z);
+                go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                float k2 = 0.85f + 0.4f * (float)rnd.NextDouble();
+                if (kind.prefix == "VaultRoot" || kind.prefix == "VaultStalactite") k2 = Mathf.Min(k2, (roof - ground - 4f) / (kind.prefix == "VaultRoot" ? new[] { 4f, 8f, 14f, 20f }[variant] : new[] { 3f, 4.5f, 6f }[variant]));
+                go.transform.localScale = Vector3.one * Mathf.Max(0.4f, k2);
+                foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                if (kind.prefix == "VaultStalactite" && rnd.NextDouble() < 0.6)
+                {
+                    var tip = new GameObject("Drip Point");
+                    tip.transform.SetParent(go.transform, false);
+                    tip.transform.position = go.transform.position + Vector3.down * (new[] { 3f, 4.5f, 6f }[variant] * go.transform.localScale.y * 0.95f);
+                    tip.AddComponent<VaultLifeFx>().Effect = VaultLifeFx.Kind.Drip;
+                }
+                if (kind.prefix == "VaultPod" && glow[zone].a > 0f)
+                {
+                    var sp = new GameObject("Spore Point");
+                    sp.transform.SetParent(go.transform, false);
+                    sp.transform.position = go.transform.position + Vector3.down * 3.8f * go.transform.localScale.y;
+                    var fx = sp.AddComponent<VaultLifeFx>();
+                    fx.Effect = VaultLifeFx.Kind.Spores;
+                    fx.Tint = glow[zone];
+                }
+                if (kind.prefix == "VaultPod" && lights < 14 && glow[zone].a > 0f)
+                {
+                    var lg = new GameObject("Pod Light");
+                    lg.transform.SetParent(go.transform, false);
+                    lg.transform.position = go.transform.position + Vector3.down * 3.6f * go.transform.localScale.y;
+                    var l = lg.AddComponent<Light>();
+                    l.type = LightType.Point; l.color = glow[zone]; l.range = 9f; l.intensity = 1.6f; l.shadows = LightShadows.None;
+                    var lv = lg.AddComponent<LightByVision>();
+                    lv.Pulse = 0.25f;
+                    lights++;
+                }
+                placed.Add(p);
+                made++;
+            }
+            Debug.Log($"Vật treo trên vòm: {made}, {lights} đèn túi.");
+            return made;
+        }
+
+        /// <summary>A few dragon skulls and ribcages held up in the dark by root cables, far apart, high above the ground, clear of the hall, light holes, slits and ribs.
+        /// Teal eye lights (at most 6, dark without eyes).</summary>
+        static int PlaceBones(Transform canopy, RibPath[] ribs, Vector2[] slots, Func<float, float, float> ceiling)
+        {
+            var parent = new GameObject("Dragon Bones").transform;
+            parent.SetParent(canopy.Find(PropsName), false);
+            var ribPoints = new List<Vector2>();
+            foreach (var r in ribs) foreach (var q in r.Points) ribPoints.Add(new Vector2(q.x, q.z));
+            var placed = new List<Vector2>();
+            var rnd = new System.Random(Seed + 97);
+            string[] names = { "DragonSkull_0", "DragonSkull_1", "DragonRibcage_0", "DragonSkull_1", "DragonSkull_0", "DragonRibcage_0" };
+            int made = 0, lights = 0;
+            for (int attempt = 0; attempt < 4000 && made < 8; attempt++)
+            {
+                float x = ((float)rnd.NextDouble() - 0.5f) * 2f * 200f, z = ((float)rnd.NextDouble() - 0.5f) * 2f * 200f;
+                var p = new Vector2(x, z);
+                if (ZoneLayout.InsideCave(x, z, 14f)) continue;
+                bool clear = true;
+                foreach (var sh in ZoneLayout.LightShafts) if (Vector2.Distance(p, sh) < 16f) { clear = false; break; }
+                if (clear) foreach (var sl in slots) if (Vector2.Distance(p, sl) < 14f) { clear = false; break; }
+                if (clear) foreach (var q in ribPoints) if (Vector2.Distance(p, q) < 10f) { clear = false; break; }
+                if (clear) foreach (var o in placed) if (Vector2.Distance(p, o) < 45f) { clear = false; break; }
+                if (!clear) continue;
+                float roof = VaultLayout.VaultHeight(x, z, ceiling(x, z));
+                float ground = LakeGround.GroundY(x, z);
+                if (roof - ground < 17f) continue;   // the bones hang 9 m below the anchor: keep 8 m clear above the ground
+                string name = names[made % names.Length];
+                var prefab = Load(name);
+                if (prefab == null) continue;
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+                go.transform.position = new Vector3(x, roof + 0.3f, z);
+                go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                if (name.StartsWith("DragonSkull") && lights < 6)
+                {
+                    var lg = new GameObject("Eye Light");
+                    lg.transform.SetParent(go.transform, false);
+                    lg.transform.position = go.transform.position + go.transform.right * 1f + Vector3.down * 7.3f;
+                    var l = lg.AddComponent<Light>();
+                    l.type = LightType.Point; l.color = new Color(0.35f, 1f, 0.85f); l.range = 12f; l.intensity = 2f; l.shadows = LightShadows.None;
+                    lg.AddComponent<LightByVision>().Pulse = 0.3f;
+                    lights++;
+                }
+                placed.Add(p);
+                made++;
+            }
+            Debug.Log($"Xương rồng treo: {made} ({lights} đèn mắt).");
             return made;
         }
 

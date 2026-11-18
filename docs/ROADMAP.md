@@ -92,3 +92,4 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Ánh sáng lọt qua kẽ rễ (mặt trời đổ bóng của mái, F9 bật tắt; chờ duyệt FPS và hình trong Unity)
 
 - [x] Vòm rễ đa tầng và sườn rễ từ Đại sảnh (giai đoạn 2; chờ duyệt hình trong Unity)
+- [x] Vật treo trên vòm (rễ dài ba tầng, màn rễ, túi sáng, nhũ đá) và thay cột trụ cũ bằng rễ Blender (giai đoạn 3; chờ duyệt hình trong Unity)
