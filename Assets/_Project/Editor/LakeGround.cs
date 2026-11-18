@@ -36,21 +36,7 @@ namespace Evolve.EditorTools
             var rnd = new System.Random(2024);
             var ponds = new List<WaterSurface>(WaterSurface.All);
 
-            // ---- moss patches ----
-            var mossInstances = new List<CombineInstance>();
-            int seed = 100;
-            foreach (var pond in ponds)
-            {
-                var outline = pond.WorldOutline;
-                for (int k = 0; k < outline.Length; k += 10)
-                {
-                    Vector2 p = outline[k] + Outward(outline, k) * (1.5f + (float)rnd.NextDouble() * 3f);
-                    if (Wet(ponds, p)) continue;
-                    AddMoss(mossInstances, p, 0.9f + (float)rnd.NextDouble() * 1.2f, ++seed, ponds);
-                }
-            }
-            // (moss over the open ground comes from the plant communities: Dress Lake: Plant Communities)
-            AddCombined(root, "Moss", mossInstances, MossMaterial());
+            // (moss, mud and trails are painted into the terrain itself now: Dress Lake: Terrain; flat decals looked like patches)
 
             // The humus bed's flat dark rectangle becomes a soft, uneven patch of dark mud (no straight edges).
             var humusBed = GameObject.Find("Humus Ground");
@@ -137,31 +123,9 @@ namespace Evolve.EditorTools
             AddCombined(root, "Gel Nursery", domes, LakeWater.TranslucentMaterial("Lake_GelDome", null, new Color(0.72f, 0.86f, 0.50f, 0.5f), Color.black, 0.92f, (int)RenderQueue.Transparent + 1));
             AddCombined(root, "Gel Nursery Cores", cores, OpaqueMaterial("Lake_GelCoreSpot", new Color(0.95f, 0.62f, 0.18f), 0.4f, false, new Color(0.9f, 0.5f, 0.12f)));
 
-            // ---- mud paths from the pool to the other areas ----
-            var ribbons = new List<CombineInstance>();
-            int pathSeed = 7;
-            foreach (var trail in TrailLines())
-            {
-                Vector2 a = trail[0], b = trail[trail.Length - 1];
-                var line = GroundMeshes.WindingLine(a, b, ++pathSeed, Mathf.Min(3.5f, Vector2.Distance(a, b) * 0.06f), 1.5f);
-                var run = new List<Vector2>();
-                void Flush()
-                {
-                    if (run.Count >= 3)
-                        ribbons.Add(new CombineInstance { mesh = GroundMeshes.Ribbon(run, 1.6f, ++pathSeed, GroundY, 0.015f), transform = Matrix4x4.identity });
-                    run = new List<Vector2>();
-                }
-                foreach (var p in line)
-                {
-                    if (Wet(ponds, p)) Flush(); else run.Add(p);
-                }
-                Flush();
-            }
-            AddCombined(root, "Mud Paths", ribbons, PathMaterial());
-
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
-            Debug.Log("Đã trang trí mặt đất (rêu, đá, cỏ, đường mòn). Bấm Ctrl+S để lưu scene. Chạy lại menu này sẽ làm lại từ đầu.");
+            Debug.Log("Đã trang trí mặt đất (cỏ, bờ ổ gel). Bấm Ctrl+S để lưu scene. Chạy lại menu này sẽ làm lại từ đầu.");
         }
 
         /// <summary>

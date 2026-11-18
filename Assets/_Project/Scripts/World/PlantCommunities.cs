@@ -88,7 +88,20 @@ namespace Evolve.World
             return influences;
         }
 
-        static float DensityOnLand(Plant plant, float x, float z, float[] influences)
+        /// <summary>
+        /// The density of every plant at (x, z) as if it were dry land (index = <see cref="Plant"/>), with the patch edges
+        /// <paramref name="softness"/> wide (0.15 = what plants use; larger = softer fields, for painting the ground). The
+        /// area influences are worked out once for all the plants.
+        /// </summary>
+        public static float[] DensityAll(float x, float z, float softness = 0.15f)
+        {
+            var influences = Influences(x, z, out _);
+            var result = new float[Profiles.Length];
+            for (int i = 0; i < result.Length; i++) result[i] = DensityOnLand((Plant)i, x, z, influences, softness);
+            return result;
+        }
+
+        static float DensityOnLand(Plant plant, float x, float z, float[] influences, float softness = 0.15f)
         {
             var p = Profiles[(int)plant];
             float liking = 0f, weights = 0f, max = 0f;
@@ -102,7 +115,7 @@ namespace Evolve.World
             liking = (liking + wild * p.Wild) / Mathf.Max(1e-4f, weights + wild);
             int id = (int)plant;
             float n = ZoneLayout.Noise(x / p.PatchSize + 500f + id * 37f, z / p.PatchSize + 200f + id * 11f);
-            float patch = Smooth01((n - p.Threshold) / 0.15f);
+            float patch = Smooth01((n - p.Threshold) / softness);
             return liking * patch * p.Density;
         }
 

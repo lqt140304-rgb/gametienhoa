@@ -17,7 +17,7 @@ namespace Evolve.World
         public const float CliffStart = 200f;
         public const float CliffHeight = 20f;
 
-        const float AreaBumps = 0.75f;   // gentle: about 0 .. 1.5 m
+        const float AreaBumps = 0.65f;   // gentle, long swells: about 0 .. 1.3 m over ~40 m
         const float MoundHeight = 6f;
         const float RimDistance = WorldScale.ZoneSize * 0.5f;
 
@@ -28,7 +28,7 @@ namespace Evolve.World
             if (depth > 0f) return -depth;
 
             float ox = seed * 0.731f, oz = seed * 0.377f;
-            float bumps = AreaBumps * 2f * ZoneLayout.Noise(x / 30f + ox, z / 30f + oz);
+            float bumps = AreaBumps * 2f * ZoneLayout.Noise(x / 40f + ox, z / 40f + oz);
             float mounds = MoundHeight * Smooth01((ZoneLayout.Noise(x / 60f + 300f + ox, z / 60f + 300f + oz) - 0.3f) / 0.5f);
             float inArea = ZoneLayout.MaxInfluence(x, z);
             float h = Mathf.Lerp(mounds + 0.5f * bumps, bumps, inArea);
