@@ -467,3 +467,11 @@ Checklist: (1) Console sạch; (2) Dress Lake: Realism, rồi Ctrl+S; (3) cảnh
 - Hạn chế: chưa có va chạm cho các cụm này (đi xuyên qua); thú vẫn đi xuyên.
 
 Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Ground Life, Ctrl+S; (3) mỗi khu có màu sáng riêng, đường mòn có đèn dẫn; (4) không có đèn trong nước sâu hay giữa đường; (5) FPS không tụt quá 10% (đèn nhỏ có giới hạn).
+
+## 28. Thảm cỏ rẽ sang hai bên: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Grass** (bước 21/22 của Rebuild Lake, sau Ground Clutter; chạy lại được): thảm cỏ 3D thật quanh vùng nước. `World/GrassMath.Density`: đầy trong khoảng 30 m quanh nước, thưa dần tới hết ở 80 m, loang lổ có bãi trống, không mọc trong nước, trong hang và giữa đường mòn. Bốn mẫu bụi cỏ (cao 0,55 đến 1,15 m, mỗi bụi 5 đến 8 lá thon, cong) là chi tiết địa hình (Terrain detail) dùng GPU instancing nên Unity tự cắt và mờ xa; khoảng 6 bụi mỗi mét vuông ở chỗ dày nhất. Cỏ thẻ cũ của `LakeClutter` giảm 85% ở chỗ đã có thảm cỏ 3D.
+- Shader `Evolve/GrassBlade`: gốc tối, ngọn sáng, lung lay nhẹ theo gió; khi có ai đi qua thì lá cỏ **nghiêng ra xa và cúi xuống**. `World/GrassPushers` (tự tạo khi chạy game) báo cho shader 8 người hoặc thú gần camera nhất (slime cả thật lẫn từ xa, Prey, Predator) qua `_EvolvePushers`.
+- Hạn chế: cỏ không đổ bóng; đo FPS (số lượng lá lớn); chưa nhìn được trong Unity.
+
+Checklist: (1) Console sạch, Test Runner xanh (`GrassMathTests`); (2) Dress Lake: Grass, Ctrl+S; (3) Play, đi vào cỏ: lá rẽ sang hai bên và đứng dậy sau khi đi qua; (4) cỏ dày quanh hồ, thưa dần ra xa, đường mòn trống; (5) FPS không tụt quá 15%.
