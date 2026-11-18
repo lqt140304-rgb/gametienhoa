@@ -84,3 +84,21 @@ Cả hệ rễ là một: "cây cổ thụ" có **cội nằm ở Đại sảnh*
 ## 7. Để lại cho người làm
 
 - Dạng hình học chính xác của đoạn rễ (modifier, nhiễu), số lượng biến thể, quy tắc chia nhánh chi tiết, cường độ và tầm của đèn sinh học, giá trị ambient cuối cùng sau khi xem ảnh.
+
+## 8. Quyết định của Claude sau builder check (chủ dự án kiểm)
+
+1. **Ánh sáng lọt ở đâu:** vòm không đặc. Ngoài 9 lỗ sáng lớn (bán kính 8 m), khoét thêm khoảng 40 **khe hẹp** (rộng 1–4 m, dạng vết nứt) giữa các sườn rễ; vòm là mặt có lỗ khoét, không phải vỏ liền.
+2. **Đèn sinh học và đèn lối ra theo thị lực:** nhân cường độ với thị lực (như mặt trời); chưa có mắt thì tắt (chỉ còn đèn quanh người).
+3. **Ambient khi thị lực dở dang:** nội suy từ đen lên ambient của khu theo thị lực; bỏ mức trần 0,45 cũ.
+4. **Vòm và `Dome`:** bám theo `Dome` hiện có, thấp hơn khoảng 3 m, không thay `Dome`. Khu 06 sáng hơn nhờ sườn rễ thưa và khe rộng, không đổi độ cao.
+
+## 9. Phản hồi của chủ dự án (2026-11-18): trần không phẳng, nối với rễ rìa
+
+- **Trần phải đa dạng và có chiều sâu, không phải một mặt phẳng.** **[ĐÃ CHỐT]**
+- Phần trần **liên quan đến rễ bao quanh bản đồ**: sườn rễ trên trần và rễ ở vách rìa phải là **một hệ liền mạch**. **[ĐÃ CHỐT]**
+
+**Cách làm [ĐỀ XUẤT]:**
+- **Địa hình của vòm (nhiều tầng, nhiều độ cao):** vòm gồm các "khoang" có độ cao khác nhau: khoang cao hình mái chuông trên hồ và khu 04, khoang thấp hơn trên khu 02 và 03, vài hốc lõm sâu (như mái vòm con) và vài chỗ gờ nhô xuống. Chênh cao giữa các khoang khoảng 6–12 m, nối với nhau bằng sườn rễ cong và cung rễ (không bậc thang cứng). Giới hạn trên là mặt `Dome` trừ 3 m, giới hạn dưới khoảng 14 m (để slime và thành phố người cây còn thoáng).
+- **Chiều sâu nhiều lớp:** lớp gần (rễ rủ thấp 4–12 m, bụi, nấm bám), lớp giữa (xà ngang, sườn rễ chính, cung rễ bắc qua), lớp xa (vòm cao tối với nhũ đá và rễ mờ trong sương). Rễ rủ có ba độ dài chính để nhìn thấy tầng.
+- **Hệ rễ liền với rễ rìa:** các sườn rễ chính chạy dọc vòm xuống tới vách rìa và **hạ thành trụ rễ (chân chống)** áp vào vách, bám xuống mặt đất, giữa các tấm vách đá `Cliff_N` đã có. Cùng một bộ đoạn Blender (`Rib_*`) dùng cho cả trần lẫn trụ rễ rìa; công cụ mới thay luôn cụm rễ rìa của `LakeCanopy` ("rễ lớn leo vách từ đất lên mái") để không còn hai kiểu rễ chồng nhau.
+- **Điểm tâm:** chờ chủ dự án chọn (A: cội ở Đại sảnh, thêm vài sườn phụ tỏa từ hồ; B: cội ở giữa bản đồ).
