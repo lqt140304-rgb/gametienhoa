@@ -130,6 +130,20 @@ namespace Evolve.EditorTools
             go.AddComponent<MeshCollider>().sharedMesh = shell;   // solid: only the door and the slit lead in
             go.isStatic = true;
 
+            // the dome's layered skin: big overlapping bark plates over the smooth shell (not over the door, the slit or underground)
+            var plates = CaveMeshes.Shingles(rx, rz, h, 1.9f, 1.6f, 0.4f, 303,
+                c => c.y < sink + 0.4f
+                    || (c.x > rx * 0.65f && Mathf.Abs(c.z) < 6.5f && c.y < sink + 6f)
+                    || (c.z > rz * 0.65f && Mathf.Abs(c.x) < 4f && c.y < sink + 4f));
+            var plateGo = new GameObject("Cave Bark Plates");
+            plateGo.transform.SetParent(parent, false);
+            plateGo.transform.position = origin;
+            plateGo.AddComponent<MeshFilter>().sharedMesh = plates;
+            var plateRenderer = plateGo.AddComponent<MeshRenderer>();
+            plateRenderer.sharedMaterial = LakeTreefolkCity.ShingleMaterial();
+            plateRenderer.shadowCastingMode = ShadowCastingMode.TwoSided;
+            plateGo.isStatic = true;
+
             // the slit: root blocks narrow the hole to a gap only a slime fits through
             float wallZ = c.y + rz * Mathf.Cos(Mathf.Asin(Mathf.Clamp01(sink / h))) - 0.2f;
             float side = SlitWidth * 0.5f + (3.2f - SlitWidth) * 0.25f;

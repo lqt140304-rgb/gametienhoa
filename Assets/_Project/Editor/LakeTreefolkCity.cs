@@ -228,6 +228,28 @@ namespace Evolve.EditorTools
             l.shadows = LightShadows.None;
         }
 
+        /// <summary>Overlapping bark plates, one texture per plate (grain, darker underside): used for the huts and the hall's dome.</summary>
+        internal static Material ShingleMaterial()
+        {
+            const string path = "Assets/_Project/Models/LakeBarkPlates.png";
+            var tex = LakeWater.PaintedTexture(path, 64, 64, (u, v) =>
+            {
+                float grain = LakeWater.TileableNoise(u * 12f, v * 3f, 12, 3);
+                float streak = 0.82f + 0.3f * Mathf.Abs(Mathf.Sin((u * 9f + 0.8f * grain) * Mathf.PI));
+                float shade = Mathf.Lerp(0.55f, 1f, Mathf.SmoothStep(0f, 0.35f, v));          // dark under the plate above
+                float rim = v > 0.9f ? 0.8f : 1f;                                              // a worn upper rim
+                var c = new Color(0.33f, 0.23f, 0.15f) * (0.7f + 0.4f * grain) * streak * shade * rim;
+                // a fleck of moss now and then
+                if (LakeWater.TileableNoise(u * 5f + 3f, v * 5f, 5, 5) > 0.82f) c = Color.Lerp(c, new Color(0.22f, 0.32f, 0.14f), 0.55f);
+                c.a = 1f;
+                return c;
+            });
+            var mat = LakeGround.OpaqueMaterial("Lake_BarkPlates", Color.white, 0.08f, true);
+            mat.SetTexture("_BaseMap", tex);
+            EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
         // ---------------------------------------------------------------- the houses round the hall
 
         const float HutSink = 0.3f;   // the dome's base is sunk this far below the ground, so it grows out of it
@@ -237,9 +259,11 @@ namespace Evolve.EditorTools
             var parent = new GameObject("Houses").transform;
             parent.SetParent(root, false);
             var earth = LakeGround.OpaqueMaterial("Lake_HutEarth", new Color(0.33f, 0.24f, 0.16f), 0.05f, true);
+            var plateMaterial = ShingleMaterial();
             var blob = FloraMeshes.Blob();
             var roots = new List<CombineInstance>();
             var lamps = new List<CombineInstance>();
+            var mossCaps = new List<CombineInstance>();
             var houses = CityLayout.Houses();
             for (int i = 0; i < houses.Length; i++)
             {
@@ -268,6 +292,18 @@ namespace Evolve.EditorTools
                 mr.shadowCastingMode = ShadowCastingMode.TwoSided;
                 go.AddComponent<MeshCollider>().sharedMesh = shell;
                 go.isStatic = true;
+
+                // the wall's layered skin: overlapping bark plates over the smooth dome (never across the doorway)
+                var plates = CaveMeshes.Shingles(r, rz, H, 0.36f, 0.32f, 0.085f, 9600 + i, c => c.y < HutSink - 0.05f || (c.x > 0f && Mathf.Abs(c.z) < 0.88f && c.y - HutSink < 2.0f));
+                var plateGo = new GameObject("Bark Plates");
+                plateGo.transform.SetParent(go.transform, false);
+                plateGo.AddComponent<MeshFilter>().sharedMesh = plates;
+                var plateRenderer = plateGo.AddComponent<MeshRenderer>();
+                plateRenderer.sharedMaterial = plateMaterial;
+                plateRenderer.shadowCastingMode = ShadowCastingMode.TwoSided;
+                plateGo.isStatic = true;
+                // a cap of moss on top
+                mossCaps.Add(new CombineInstance { mesh = blob, transform = Matrix4x4.TRS(go.transform.TransformPoint(new Vector3(0f, H - 0.12f, 0f)), go.transform.rotation, new Vector3(r * 0.95f, 0.36f, rz * 0.85f)) });
 
                 // a point on the dome's surface at local height y and sideways z (x from the ellipsoid), nudged out by `push`
                 Vector3 Surface(float y, float z, float push)
@@ -321,6 +357,7 @@ namespace Evolve.EditorTools
             }
             LakeGround.AddCombined(parent, "House Roots", roots, bark);
             LakeGround.AddCombined(parent, "House Lamps", lamps, amber);
+            LakeGround.AddCombined(parent, "House Moss", mossCaps, LakeGround.MossMaterial());
         }
 
         // ---------------------------------------------------------------- the village: paving, lamp posts, statues, gardens, woodpiles
