@@ -16,13 +16,29 @@ namespace Evolve.Traits
         string coreId;
         string[] flawIds = NoFlaws;
         OrganHost organs;
+        Evolve.Player.SlimeController slime;
+        readonly FamiliarityGrid familiarity = new FamiliarityGrid();
         readonly List<(OrganSlot slot, float integrity)> worn = new List<(OrganSlot, float)>();
 
         public string CoreId => coreId;
         public IReadOnlyList<string> FlawIds => flawIds;
         public event Action Changed;
 
-        void Awake() => organs = GetComponent<OrganHost>();
+        void Awake()
+        {
+            organs = GetComponent<OrganHost>();
+            slime = GetComponent<Evolve.Player.SlimeController>();
+        }
+
+        // Nhân Quen Đất: the ground under the player becomes familiar; swimming is not covered.
+        void Update()
+        {
+            if (slime == null) return;
+            if (!HasCore("core.quen_dat") || slime.IsSwimming) { slime.TraitSpeed = 1f; return; }
+            var p = new Vector2(transform.position.x, transform.position.z);
+            familiarity.Visit(p, Time.time);
+            slime.TraitSpeed = familiarity.SpeedMultiplier(p, Time.time);
+        }
 
         public bool HasCore(string id) => coreId != null && coreId == id;
 
@@ -41,6 +57,7 @@ namespace Evolve.Traits
         public void Set(string newCoreId, IReadOnlyList<string> newFlawIds)
         {
             coreId = string.IsNullOrEmpty(newCoreId) ? null : newCoreId;
+            familiarity.Clear();
             flawIds = newFlawIds != null ? new List<string>(newFlawIds).ToArray() : NoFlaws;
             Changed?.Invoke();
         }

@@ -19,6 +19,8 @@ namespace Evolve.Traits
         // Nhân Quen Đất
         public const float QuenDatCell = 4f;
         public const float QuenDatMaxBonus = 0.15f;
+        public const float QuenDatGain = 0.2f;                    // familiarity added each time a cell is entered
+        public const float QuenDatDecayPerSecond = 1f / 180f;     // a fully familiar cell is forgotten after three minutes away
 
         // Nhân Con Bạc
         public const float BossLuckFactor = 0.5f;

@@ -17,6 +17,8 @@ namespace Evolve.Player
         [SerializeField] float crawlSpeed = 1f;
         /// <summary>Speed multiplier set by other systems (1 = normal).</summary>
         [System.NonSerialized] public float SpeedScale = 1f;
+        /// <summary>Speed factor from a core (Nhân Quen Đất): 1 = none. Written by PlayerTraits.</summary>
+        [System.NonSerialized] public float TraitSpeed = 1f;
         /// <summary>In water at least SwimLogic.SwimDepth deep: no gravity, Space rises, Ctrl dives.</summary>
         public bool IsSwimming { get; private set; }
         /// <summary>In shallower water: walks, but slower.</summary>
@@ -144,7 +146,7 @@ namespace Evolve.Player
             Vector3 v = rb.linearVelocity;
             float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
             UpdateWater();
-            float speed = crawlSpeed * organSpeed * SpeedScale * (IsSprinting ? sprintMultiplier : 1f)
+            float speed = crawlSpeed * organSpeed * SpeedScale * TraitSpeed * (IsSprinting ? sprintMultiplier : 1f)
                 * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f);
             if (IsSwimming)
             {
