@@ -125,3 +125,82 @@ def render_preview(objects, path, angle):
     for o in objects:
         o.hide_render = o.name.endswith("_COL")
     bpy.ops.render.render(write_still=True)
+
+
+# ---------------------------------------------------------------- shared geometry helpers (landmarks)
+
+def ring_frame(path, i):
+    """Return (tangent, normal, binormal) for point i of a polyline path."""
+    a = path[max(0, i - 1)]
+    b = path[min(len(path) - 1, i + 1)]
+    t = (b - a).normalized()
+    up = mathutils.Vector((0, 0, 1))
+    if abs(t.dot(up)) > 0.95:
+        up = mathutils.Vector((1, 0, 0))
+    n = t.cross(up).normalized()
+    bn = t.cross(n).normalized()
+    return t, n, bn
+
+
+def tube_rings(bm, path, radii, segs, wobble=None):
+    """Add rings of vertices around the path; returns list of rings (each a list of BMVert)."""
+    rings = []
+    for i, p in enumerate(path):
+        _, n, bn = ring_frame(path, i)
+        ring = []
+        for k in range(segs):
+            a = 2 * math.pi * k / segs
+            r = radii[i] * (1.0 + (wobble(p, a) if wobble else 0.0))
+            ring.append(bm.verts.new(p + (n * math.cos(a) + bn * math.sin(a)) * r))
+        rings.append(ring)
+    return rings
+
+
+def bridge_rings(bm, rings, flip=False):
+    for i in range(len(rings) - 1):
+        a, b = rings[i], rings[i + 1]
+        n = len(a)
+        for k in range(n):
+            quad = [a[k], a[(k + 1) % n], b[(k + 1) % n], b[k]]
+            bm.faces.new(quad[::-1] if flip else quad)
+
+
+def cap_ring(bm, ring, flip=False):
+    bm.faces.new(ring[::-1] if flip else ring)
+
+
+def finish_object(bm, name, material=None):
+    """bmesh -> mesh object linked to the scene, with smooth shading and recalculated normals."""
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    for p in mesh.polygons:
+        p.use_smooth = True
+    obj = bpy.data.objects.new(name, mesh)
+    link(obj)
+    if material is not None:
+        mesh.materials.append(material)
+    return obj
+
+
+def paint(obj, fn, attribute="Col"):
+    """Vertex colours: fn(position, normal) -> (r, g, b) linear."""
+    mesh = obj.data
+    mesh.calc_loop_triangles()
+    attr = mesh.color_attributes.new(attribute, "BYTE_COLOR", "CORNER")
+    for poly in mesh.polygons:
+        for li in poly.loop_indices:
+            v = mesh.vertices[mesh.loops[li].vertex_index]
+            c = fn(v.co, v.normal)
+            attr.data[li].color = (c[0], c[1], c[2], 1.0)
+
+
+def collider_from_bm(bm, name):
+    return finish_object(bm, name)
+
+
+def ray_hits(obj, origin, direction, distance=1000.0):
+    """True if a ray (object space = world here) hits the mesh."""
+    hit, _, _, _ = obj.ray_cast(origin, direction, distance=distance)
+    return hit

@@ -14,25 +14,48 @@ namespace Evolve.EditorTools
         const string Folder = "Assets/_Project/Models/Underroot";
         const string SourceFolder = "tools/blender/out";
         const int Count = 6;
+        static readonly string[] LandmarkNames =
+        {
+            "Log_Hollow", "Mushroom_Giant_0", "Mushroom_Giant_1", "Mushroom_Giant_2",
+            "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch"
+        };
 
         [MenuItem("Evolve/Install Blender Rocks")]
         public static void InstallMenu()
         {
-            int n = EnsureRocks();
-            Debug.Log(n > 0 ? $"Đã cài {n} file FBX đá vào {Folder}." : "Đá Blender đã có sẵn (hoặc thiếu file nguồn trong tools/blender/out).");
+            int n = EnsureRocks() + EnsureLandmarks();
+            Debug.Log(n > 0 ? $"Đã cài {n} file FBX (đá, gỗ, nấm, cung rễ) vào {Folder}." : "Vật thể Blender đã có sẵn (hoặc thiếu file nguồn trong tools/blender/out).");
         }
 
         /// <summary>Writes any missing Rock_N.fbx from its .b64 text copy. Returns how many files were written.</summary>
         public static int EnsureRocks()
         {
+            var names = new string[Count];
+            for (int i = 0; i < Count; i++) names[i] = "Rock_" + i;
+            return Ensure(names);
+        }
+
+        /// <summary>Writes any missing landmark FBX (log, mushrooms, root arch) from its .b64 text copy.</summary>
+        public static int EnsureLandmarks() => Ensure(LandmarkNames);
+
+        public static bool LandmarksPresent()
+        {
+            string projectRoot = Path.GetDirectoryName(Application.dataPath);
+            foreach (var n in LandmarkNames)
+                if (!File.Exists(Path.Combine(projectRoot, Folder, n + ".fbx"))) return false;
+            return true;
+        }
+
+        static int Ensure(string[] names)
+        {
             string projectRoot = Path.GetDirectoryName(Application.dataPath);
             Directory.CreateDirectory(Path.Combine(projectRoot, Folder));
             int written = 0;
-            for (int i = 0; i < Count; i++)
+            foreach (var name in names)
             {
-                string target = Path.Combine(projectRoot, Folder, $"Rock_{i}.fbx");
+                string target = Path.Combine(projectRoot, Folder, name + ".fbx");
                 if (File.Exists(target)) continue;
-                string source = Path.Combine(projectRoot, SourceFolder, $"Rock_{i}.fbx.b64");
+                string source = Path.Combine(projectRoot, SourceFolder, name + ".fbx.b64");
                 if (!File.Exists(source)) { Debug.LogWarning("Thiếu file nguồn " + source); continue; }
                 File.WriteAllBytes(target, System.Convert.FromBase64String(File.ReadAllText(source).Trim()));
                 written++;

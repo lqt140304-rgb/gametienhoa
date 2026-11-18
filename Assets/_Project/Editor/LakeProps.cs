@@ -121,7 +121,7 @@ namespace Evolve.EditorTools
         /// Makes sure the placed rock is solid whatever the import did: every "_COL" child gets a MeshCollider (and no renderer);
         /// if the FBX has no collider mesh, the rock's own mesh becomes the collider (a rock must never be walkable-through).
         /// </summary>
-        static void EnsureCollision(GameObject go, bool log)
+        internal static void EnsureCollision(GameObject go, bool log)
         {
             var filters = go.GetComponentsInChildren<MeshFilter>(true);
             bool hasCollider = false;
