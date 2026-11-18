@@ -106,6 +106,8 @@ namespace Evolve.Traits
         string[] pendingFlaws = new string[0];
         string pendingCore;
         float escArmedUntil;
+        bool tabDown;          // Tab is held: the OS repeats KeyDown while it is, and only the first one may toggle the detail
+        float lastTabDownAt;
 
         void Finish(string coreId, string[] flaws)
         {
@@ -137,6 +139,7 @@ namespace Evolve.Traits
             if (phase == Phase.Idle || phase == Phase.Done) return;
             Setup();
             var e = Event.current;
+            if (e.type == EventType.KeyUp && e.keyCode == KeyCode.Tab) tabDown = false;
             if (e.type == EventType.KeyDown) HandleKey(e);
 
             float w = Screen.width, h = Screen.height;
@@ -244,7 +247,16 @@ namespace Evolve.Traits
             if (e.keyCode >= KeyCode.Alpha1 && e.keyCode <= KeyCode.Alpha3) { int i = e.keyCode - KeyCode.Alpha1; if (i < count) selected = i; e.Use(); return; }
             switch (e.keyCode)
             {
-                case KeyCode.Tab: if (phase == Phase.Core) detail = !detail; e.Use(); break;
+                case KeyCode.Tab:
+                    // Holding Tab repeats KeyDown many times a second; toggle only on the first until it is released (or the repeats stop).
+                    if (!tabDown || Time.unscaledTime - lastTabDownAt > 1.5f)
+                    {
+                        if (phase == Phase.Core) detail = !detail;
+                        tabDown = true;
+                    }
+                    lastTabDownAt = Time.unscaledTime;
+                    e.Use();
+                    break;
                 case KeyCode.Escape:
                     if (Time.unscaledTime < escArmedUntil) { skipped = true; phase = Phase.Done; }
                     else { escArmedUntil = Time.unscaledTime + 3f; notice = "Bấm Esc lần nữa để chơi không Lõi."; }
