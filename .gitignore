@@ -35,3 +35,4 @@ Thumbs.db
 *.slnx
 .superpowers/
 .venv-blender/
+__pycache__/
