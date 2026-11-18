@@ -85,7 +85,7 @@ def export_fbx(objects, path):
     )
 
 
-def render_preview(objects, path, angle):
+def render_preview(objects, path, angle, distance=3.2):
     """Render objects (visible mesh only) from 'front', 'side' or 'top' with a simple sun and ground."""
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
@@ -116,7 +116,7 @@ def render_preview(objects, path, angle):
     link(sun)
     cam = bpy.data.objects.new("_preview_cam", bpy.data.cameras.new("cam"))
     link(cam)
-    d = size * 3.2
+    d = size * distance
     pos = {"front": (0, -d, size * 0.5), "side": (d, 0, size * 0.5), "top": (0, 0.001, d * 1.1)}[angle]
     cam.location = pos
     direction = -mathutils.Vector(pos) + mathutils.Vector((0, 0, size * 0.3))
