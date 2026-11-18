@@ -230,7 +230,9 @@ namespace Evolve.EditorTools
                 var b = r.bounds;
                 Color c = Color.white;
                 var mat = r.sharedMaterial;
-                if (mat != null) c = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : mat.color;
+                if (mat != null && mat.HasProperty("_BaseColor")) c = mat.GetColor("_BaseColor");
+                else if (mat != null && mat.HasProperty("_Color")) c = mat.color;
+                else c = new Color(0.95f, 0.85f, 0.6f); // vertex-colour props (Blender mushrooms) have no colour property: warm cap glow
                 for (int i = 0; i < 4 && made < MaxGlowLights; i++)
                 {
                     var go = new GameObject("Glow");

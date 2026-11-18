@@ -13,3 +13,5 @@ python3 -m venv .venv-blender && .venv-blender/bin/pip install bpy   # bpy 5.3, 
 - `build_rocks.py`: 6 tảng đá (0,3 / 0,6 / 1 / 1,6 / 2,4 / 3,2 m), 1.280 mặt, va chạm 80 mặt, rêu phủ mặt hướng lên.
 - Lưu ý: phải `import bpy` trước `bmesh` và `mathutils`.
 - Ảnh xem trước (3D Cycles CPU, 800×600) ở `docs/art/previews/`; hình trong Unity do chủ dự án chụp.
+
+- `build_landmarks.py` / `test_landmarks.py`: khúc gỗ rỗng, nấm khổng lồ và nhỏ, cung rễ (`python -I tools/blender/build_landmarks.py --out Assets/_Project/Models/Underroot --previews docs/art/previews`). Cần Python 3.11–3.13 cho `bpy` 5.3.

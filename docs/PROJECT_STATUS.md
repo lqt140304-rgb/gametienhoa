@@ -367,3 +367,12 @@ Checklist: (1) thả 6 FBX vào `Assets/_Project/Models/Underroot/`, Console s�
 - Hạn chế: không phản chiếu thật (chỉ viền sáng và vệt nắng), shader viết tay chưa biên dịch thử, sương áp cho cả scene (dưới nước `UnderwaterTint` vẫn ghi đè), chỉ bản đồ hồ 500 m (menu đã gắn vào Rebuild Lake).
 
 Checklist: (1) Console sạch, Test Runner xanh (có `WaterLookTests`); (2) chạy menu: nước không hồng hay đen; (3) mép nước mờ dần, vùng sâu đậm hơn, bọt ở chỗ nước chạm đá và bờ; (4) vũng khu 03 vẫn vàng lục; (5) có sương, ambient xanh lục, Bloom và Vignette không làm tối hoặc cháy; (6) nấm phát sáng chiếu lên đất; (7) bơi xuống hố: `UnderwaterTint` vẫn chạy, ra khỏi nước sương trở lại; (8) FPS bằng PerfOverlay không giảm quá 15%; (9) Restore trả về như cũ; (10) chụp ảnh trong Unity gửi cho tôi.
+
+
+## 19. Điểm nhấn Blender (khúc gỗ mục, nấm khổng lồ, cung rễ): trạng thái và danh sách kiểm tra
+
+- `tools/blender/build_landmarks.py` dựng: `Log_Hollow` (gỗ rỗng 9 m, hai đầu hở, va chạm là ống rỗng), `Mushroom_Giant_0..2` (7 / 5,5 / 4,5 m, mũ tên `Giant Caps_N`, va chạm chỉ ở thân), `Mushroom_Small_0..3`, `RootArch` (khe giữa ≥ 2,2 m, cao 8 m, va chạm hai chân). FBX cài từ `tools/blender/out/*.fbx.b64` (menu **Evolve → Install Blender Rocks** hoặc tự động).
+- Menu **Evolve → Dress Lake: Landmark Props** (bước 15/16 của Rebuild Lake, trước Light and Water Look): xoá "03 Rotting Log", "04 Giant Mushrooms", "06 Root Arch" của `LakeLandmarks` và đặt bản Blender ở cùng chỗ. Thiếu FBX thì giữ bản cũ. Không sửa `LakeLandmarks.cs`.
+- Hạn chế: hình dạng là bản đầu (cung rễ trơn, mũ nấm bán cầu đơn giản); ảnh xem trước ở `docs/art/previews/` (không vào git).
+
+Checklist: (1) Console sạch, Test Runner xanh; (2) chạy menu: các object cũ biến mất, bản Blender xuất hiện đúng chỗ (03 khúc gỗ, 04 cụm nấm, 06 cung rễ); (3) chui qua khúc gỗ được từ hai đầu; (4) nấm lớn: chạm thân bị chặn, đi dưới mũ cao không bị chặn; (5) đi qua cung rễ vào khu 06 với slime cỡ tối đa; (6) chạy menu hai lần: không nhân đôi; (7) FPS bằng PerfOverlay; (8) đèn nấm còn; (9) chụp ảnh gửi tôi.
