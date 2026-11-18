@@ -90,9 +90,9 @@ namespace Evolve.Organs
         }
 
         /// <summary>Roll a drop. <paramref name="isOwned"/> marks organs the catcher already wears (they stay possible, just less likely).</summary>
-        public OrganSO Roll(Func<OrganSO, bool> isOwned = null)
+        public OrganSO Roll(Func<OrganSO, bool> isOwned = null, float dropChanceMultiplier = 1f)
         {
-            if (UnityEngine.Random.value > DropChance) return null;
+            if (UnityEngine.Random.value > Evolve.Traits.LuckRules.AdjustedDropChance(DropChance, dropChanceMultiplier)) return null;
 
             var dist = Distribution(isOwned);
             if (dist.Count == 0) return null;
