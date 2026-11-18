@@ -302,6 +302,22 @@ namespace Evolve.EditorTools
                 if (kind.prefix == "VaultRoot" || kind.prefix == "VaultStalactite") k2 = Mathf.Min(k2, (roof - ground - 4f) / (kind.prefix == "VaultRoot" ? new[] { 4f, 8f, 14f, 20f }[variant] : new[] { 3f, 4.5f, 6f }[variant]));
                 go.transform.localScale = Vector3.one * Mathf.Max(0.4f, k2);
                 foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                if (kind.prefix == "VaultStalactite" && rnd.NextDouble() < 0.6)
+                {
+                    var tip = new GameObject("Drip Point");
+                    tip.transform.SetParent(go.transform, false);
+                    tip.transform.position = go.transform.position + Vector3.down * (new[] { 3f, 4.5f, 6f }[variant] * go.transform.localScale.y * 0.95f);
+                    tip.AddComponent<VaultLifeFx>().Effect = VaultLifeFx.Kind.Drip;
+                }
+                if (kind.prefix == "VaultPod" && glow[zone].a > 0f)
+                {
+                    var sp = new GameObject("Spore Point");
+                    sp.transform.SetParent(go.transform, false);
+                    sp.transform.position = go.transform.position + Vector3.down * 3.8f * go.transform.localScale.y;
+                    var fx = sp.AddComponent<VaultLifeFx>();
+                    fx.Effect = VaultLifeFx.Kind.Spores;
+                    fx.Tint = glow[zone];
+                }
                 if (kind.prefix == "VaultPod" && lights < 14 && glow[zone].a > 0f)
                 {
                     var lg = new GameObject("Pod Light");
@@ -309,7 +325,8 @@ namespace Evolve.EditorTools
                     lg.transform.position = go.transform.position + Vector3.down * 3.6f * go.transform.localScale.y;
                     var l = lg.AddComponent<Light>();
                     l.type = LightType.Point; l.color = glow[zone]; l.range = 9f; l.intensity = 1.6f; l.shadows = LightShadows.None;
-                    lg.AddComponent<LightByVision>();
+                    var lv = lg.AddComponent<LightByVision>();
+                    lv.Pulse = 0.25f;
                     lights++;
                 }
                 placed.Add(p);
@@ -359,7 +376,7 @@ namespace Evolve.EditorTools
                     lg.transform.position = go.transform.position + go.transform.right * 1f + Vector3.down * 7.3f;
                     var l = lg.AddComponent<Light>();
                     l.type = LightType.Point; l.color = new Color(0.35f, 1f, 0.85f); l.range = 12f; l.intensity = 2f; l.shadows = LightShadows.None;
-                    lg.AddComponent<LightByVision>();
+                    lg.AddComponent<LightByVision>().Pulse = 0.3f;
                     lights++;
                 }
                 placed.Add(p);
