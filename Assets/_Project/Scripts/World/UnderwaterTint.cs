@@ -12,6 +12,8 @@ namespace Evolve.World
     {
         static readonly Color Tint = new Color(0.10f, 0.42f, 0.44f, 0.45f);
         bool under;
+        /// <summary>True while the camera is under the water (other fog users, like ZoneAtmosphere, step aside).</summary>
+        public bool IsUnder => under;
         bool savedFog;
         Color savedFogColor;
         float savedFogDensity;

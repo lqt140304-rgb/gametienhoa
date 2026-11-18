@@ -86,3 +86,5 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Ánh sáng và nước đẹp hơn (`LakeLook`, shader `LakeWater`; chờ duyệt hình trong Unity)
 
 - [x] Điểm nhấn Blender: khúc gỗ mục, nấm khổng lồ, cung rễ có va chạm (chờ duyệt hình trong Unity)
+
+- [x] Không khí riêng từng khu: sương và hạt theo khu, tối đa 150 hạt (chờ duyệt trong Unity)

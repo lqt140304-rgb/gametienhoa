@@ -75,6 +75,8 @@ namespace Evolve.Player
                 if (GetComponent<Evolve.World.SwimRipple>() == null) gameObject.AddComponent<Evolve.World.SwimRipple>();
                 if (cameraTransform != null && cameraTransform.GetComponent<Evolve.World.UnderwaterTint>() == null)
                     cameraTransform.gameObject.AddComponent<Evolve.World.UnderwaterTint>();
+                if (cameraTransform != null && cameraTransform.GetComponent<Evolve.World.ZoneAtmosphere>() == null)
+                    cameraTransform.gameObject.AddComponent<Evolve.World.ZoneAtmosphere>(); // per-zone fog and a few particles
             }
         }
 

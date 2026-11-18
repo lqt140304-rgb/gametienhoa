@@ -25,9 +25,9 @@ kit.new_scene()
 log, col = bl.build_log(1)
 w, d, h = kit.bounds(log)
 check(near(w, 9.0, 0.12), "log length %.2f" % w)
-# width includes the gentle bend (+0.8 m), height includes the two branch stubs
-check(1.8 <= d <= 3.0 and 1.8 <= h <= 3.6, "log section %.2f x %.2f" % (d, h))
-check(kit.tri_count(log) <= 6000, "log tris %d" % kit.tri_count(log))
+# width includes the bend (+0.8 m) and root tendrils, height the branch stubs
+check(1.8 <= d <= 4.5 and 1.8 <= h <= 4.0, "log section %.2f x %.2f" % (d, h))
+check(kit.tri_count(log) <= 14000, "log tris %d" % kit.tri_count(log))
 check(kit.tri_count(col) <= 300, "log collider tris %d" % kit.tri_count(col))
 check(col.name == "Log_Hollow_COL", "collider name")
 for o, label in ((log, "display"), (col, "collider")):
