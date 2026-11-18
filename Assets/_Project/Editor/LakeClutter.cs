@@ -230,7 +230,8 @@ namespace Evolve.EditorTools
         /// <summary>A double-sided alpha-cut material from a painted texture (blades, leaves), instanced.</summary>
         static Material Cutout(string name, Texture2D tex)
         {
-            var m = LakeGround.OpaqueMaterial("Clutter_" + name, Color.white, 0.05f, true);
+            // the cave is dark: a little glow keeps blades and leaves from sinking into the soil
+            var m = LakeGround.OpaqueMaterial("Clutter_" + name, new Color(1.5f, 1.5f, 1.5f), 0.05f, true, new Color(0.05f, 0.07f, 0.03f));
             m.SetTexture("_BaseMap", tex);
             m.SetFloat("_AlphaClip", 1f);
             m.SetFloat("_Cutoff", 0.45f);
@@ -400,10 +401,10 @@ namespace Evolve.EditorTools
             {
                 case Kind.Grass:
                 {
-                    var palette = new[] { (new Color(0.12f, 0.2f, 0.06f), new Color(0.32f, 0.5f, 0.16f), new Color(0.6f, 0.72f, 0.28f)),
-                                          (new Color(0.14f, 0.2f, 0.07f), new Color(0.38f, 0.52f, 0.16f), new Color(0.72f, 0.78f, 0.3f)),
-                                          (new Color(0.18f, 0.18f, 0.07f), new Color(0.5f, 0.5f, 0.18f), new Color(0.82f, 0.76f, 0.34f)),
-                                          (new Color(0.1f, 0.18f, 0.08f), new Color(0.24f, 0.42f, 0.16f), new Color(0.5f, 0.66f, 0.3f)) };
+                    var palette = new[] { (new Color(0.2f, 0.34f, 0.1f), new Color(0.46f, 0.72f, 0.22f), new Color(0.78f, 0.92f, 0.4f)),
+                                          (new Color(0.22f, 0.32f, 0.1f), new Color(0.52f, 0.7f, 0.22f), new Color(0.88f, 0.92f, 0.42f)),
+                                          (new Color(0.3f, 0.28f, 0.1f), new Color(0.7f, 0.66f, 0.24f), new Color(0.95f, 0.86f, 0.44f)),
+                                          (new Color(0.16f, 0.3f, 0.12f), new Color(0.36f, 0.62f, 0.24f), new Color(0.66f, 0.86f, 0.44f)) };
                     var pal = palette[variant % palette.Length];
                     var tex = BladesTexture($"Grass_{variant}", 40 + variant, 7 + variant, 0.075f, 0.25f, pal.Item1, pal.Item2, pal.Item3);
                     mesh = Cards(rnd, 4 + variant % 2, 0.5f + 0.08f * variant, 0.42f + 0.05f * variant, 0.12f, 0.2f);
