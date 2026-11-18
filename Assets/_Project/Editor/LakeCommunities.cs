@@ -38,6 +38,7 @@ namespace Evolve.EditorTools
             var culling = root.gameObject.AddComponent<DetailCulling>();   // only for the sight fade of glowing caps:
             culling.ShowDistance = 5000f;                                   // distance is handled by the LODGroups
 
+            houses = null;   // re-read the layout each run
             var kit = new Kit();
             var keepOut = KeepOutPoints();
             var rnd = new System.Random(7070);
@@ -58,7 +59,7 @@ namespace Evolve.EditorTools
                     if (!flat && trail < ZoneLayout.PathWidth) continue;                    // trails stay clear
                     if (!flat && Near(keepOut, px, pz, 6f)) continue;                       // dens, shelters, the spawn
                     if (!flat && (ZoneLayout.InsideCave(px, pz, 2f) || ZoneLayout.DistanceToLine(new Vector2(px, pz), ZoneLayout.TunnelLine) < 4f
-                        || Vector2.Distance(new Vector2(px, pz), LandmarkLayout.LogCenter) < 6f || Vector2.Distance(new Vector2(px, pz), LandmarkLayout.GiantMushrooms) < 10f)) continue;   // the landmarks stand clear   // the cave and the tunnel stay clear
+                        || Vector2.Distance(new Vector2(px, pz), LandmarkLayout.LogCenter) < 6f || NearHouse(px, pz) || Vector2.Distance(new Vector2(px, pz), LandmarkLayout.GiantMushrooms) < 10f)) continue;   // the landmarks stand clear   // the cave and the tunnel stay clear
                     float y = LakeGround.GroundY(px, pz);
                     if (kit.Add(items, plant.Value, new Vector3(px, y, pz), yaw, size)) placed++;
                 }
@@ -77,6 +78,14 @@ namespace Evolve.EditorTools
             foreach (var t in Object.FindObjectsByType<Transform>())
                 if (t.name.StartsWith("Spawn Point")) points.Add(new Vector2(t.position.x, t.position.z));
             return points;
+        }
+
+        static CityLayout.House[] houses;
+        static bool NearHouse(float x, float z)
+        {
+            if (houses == null) houses = CityLayout.Houses();
+            foreach (var h in houses) if ((h.Position.x - x) * (h.Position.x - x) + (h.Position.y - z) * (h.Position.y - z) < 16f) return true;   // within 4 m
+            return false;
         }
 
         static bool Near(List<Vector2> points, float x, float z, float radius)

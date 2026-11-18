@@ -51,6 +51,27 @@ namespace Evolve.Tests.EditMode
             Assert.IsTrue(ZoneLayout.InsideCave(CityLayout.SlitAt.x, CityLayout.SlitAt.y - 0.5f));
         }
 
+        [Test] public void HousesStandRoundTheHall()
+        {
+            var houses = CityLayout.Houses();
+            Assert.GreaterOrEqual(houses.Length, 10);
+            Assert.LessOrEqual(houses.Length, CityLayout.MaxHouses);
+            int shelters = 0;
+            for (int i = 0; i < houses.Length; i++)
+            {
+                var p = houses[i].Position;
+                Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.y, 3f), "outside the hall");
+                Assert.AreEqual(0f, ZoneLayout.DepthAt(p.x, p.y), "dry");
+                Assert.GreaterOrEqual(ZoneLayout.DistanceToPath(p.x, p.y), 5f, "off the trails");
+                Assert.GreaterOrEqual(ZoneLayout.DistanceToLine(p, ZoneLayout.TunnelLine), 6f, "off the tunnel");
+                var step = CityLayout.DoorStep(houses[i]);
+                Assert.Less(Vector2.Distance(step, CityLayout.HallCenter), Vector2.Distance(p, CityLayout.HallCenter), "the door faces the hall");
+                if (houses[i].Shelter) shelters++;
+                for (int j = i + 1; j < houses.Length; j++) Assert.GreaterOrEqual(Vector2.Distance(p, houses[j].Position), 7.5f);
+            }
+            Assert.AreEqual(3, shelters);
+        }
+
         [Test] public void TheTunnelStartsOutsideTheEnlargedHall()
         {
             foreach (var p in ZoneLayout.TunnelLine) Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.y, 3f));

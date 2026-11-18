@@ -136,9 +136,7 @@ namespace Evolve.EditorTools
             // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters (gap 1.35 m, ShelterZone inside), cool 18°C ----
             var roots = new GameObject("Chan Re Co Thu (Ancient Roots)").transform;
             Zone(roots, new Vector3(ZoneLayout.RootFoot.Center.x, 3f, ZoneLayout.RootFoot.Center.y), new Vector3(50f, 6f, 16f), 18f, "Chân Rễ Cổ Thụ");
-            // the three small root shelters stand just north of the Great Hall (the hall itself fills the middle of the area)
-            foreach (float dx in new[] { -22f, 17f, 29f })
-                Shelter(roots, new Vector3(ZoneLayout.RootFoot.Center.x + dx, 0f, ZoneLayout.RootFoot.Center.y + ZoneLayout.CaveRadii.y + 7f), root);
+            // (the slime shelters of this area are three of the treefolk's houses: Dress Lake: Treefolk City)
 
             // ---- Bãi Mùn Rễ (east): warm 26°C, 6 nutrients, 2 D dens ----
             var humusRoot = new GameObject("Bai Mun Re (Humus Bed)").transform;

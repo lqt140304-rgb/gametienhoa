@@ -11,7 +11,8 @@ namespace Evolve.EditorTools
     /// Evolve → Dress Lake: Treefolk City (spec 2026-11-18-treefolk-city-design). Builds the city from World/CityLayout.
     /// Step 1: the inside of the Great Hall (the cave dome itself comes from Dress Lake: Landmarks): eight great root pillars
     /// from floor to roof, the carved dais with its three steps and the chieftain's throne of petrified wood, the amber
-    /// furnace at the far end, and amber lamps. Run again to rebuild.
+    /// furnace at the far end, and amber lamps; then the round root huts standing round the hall (the old cube shelters are
+    /// gone: three of the huts are the slime shelters). Run again to rebuild.
     /// </summary>
     public static class LakeTreefolkCity
     {
@@ -35,10 +36,11 @@ namespace Evolve.EditorTools
             Pillars(root, bark, amber);
             Dais(root, stone, wood, amber);
             Furnace(root, stone, bark, amber);
+            Houses(root, bark, amber);
 
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
-            Debug.Log("Đã dựng nội thất Đại Sảnh người cây: 8 cột rễ, bục chạm khắc, ngai và lò hổ phách. Bấm Ctrl+S để lưu scene.");
+            Debug.Log("Đã dựng Đại Sảnh người cây (8 cột rễ, bục, ngai, lò hổ phách) và " + CityLayout.Houses().Length + " nhà quanh sảnh (3 nhà là chỗ trú cho slime). Bấm Ctrl+S để lưu scene.");
         }
 
         static float Floor(Vector2 p) => LakeGround.GroundY(p.x, p.y);
@@ -223,6 +225,70 @@ namespace Evolve.EditorTools
             l.intensity = 1.6f;
             l.color = new Color(1f, 0.55f, 0.2f);
             l.shadows = LightShadows.None;
+        }
+
+        // ---------------------------------------------------------------- the houses round the hall
+
+        static void Houses(Transform root, Material bark, Material amber)
+        {
+            var parent = new GameObject("Houses").transform;
+            parent.SetParent(root, false);
+            var earth = LakeGround.OpaqueMaterial("Lake_HutEarth", new Color(0.33f, 0.24f, 0.16f), 0.05f, true);
+            var blob = FloraMeshes.Blob();
+            var roots = new List<CombineInstance>();
+            var lamps = new List<CombineInstance>();
+            var houses = CityLayout.Houses();
+            for (int i = 0; i < houses.Length; i++)
+            {
+                var h = houses[i];
+                float ground = LakeGround.GroundY(h.Position.x, h.Position.y);
+                float r = h.Radius, height = r * 1.35f;
+                var shell = CaveMeshes.Shell(r, r * 0.92f, height + 0.3f, 28, 9, 9100 + i, 0.1f);
+                // the door: 1.1 m wide, 1.4 m high, on the local +x side (turned toward the hall)
+                WaterMeshes.RemoveTriangles(shell, v => v.x > 0f && Mathf.Abs(v.z) < 0.55f && v.y < 1.7f);
+                var go = new GameObject("House " + i);
+                go.transform.SetParent(parent, false);
+                go.transform.position = new Vector3(h.Position.x, ground - 0.3f, h.Position.y);
+                go.transform.rotation = Quaternion.Euler(0f, h.Yaw, 0f);
+                go.AddComponent<MeshFilter>().sharedMesh = shell;
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = earth;
+                mr.shadowCastingMode = ShadowCastingMode.TwoSided;
+                go.AddComponent<MeshCollider>().sharedMesh = shell;
+                go.isStatic = true;
+
+                // roots wrapping the hut, a door frame, and a lamp beside the door
+                var rnd = new System.Random(9200 + i);
+                for (int k = 0; k < 4; k++)
+                {
+                    float a0 = k * Mathf.PI * 2f / 4f + 0.4f;
+                    if (Mathf.Abs(Mathf.DeltaAngle(a0 * Mathf.Rad2Deg, 0f)) < 40f) continue;    // not across the door
+                    var path = new Vector3[8];
+                    for (int s = 0; s < path.Length; s++)
+                    {
+                        float t = s / (float)(path.Length - 1) * Mathf.PI * 0.5f;
+                        Vector3 local = new Vector3(Mathf.Cos(a0) * r * 1.03f * Mathf.Cos(t), height * 1.02f * Mathf.Sin(t) - 0.25f, Mathf.Sin(a0) * r * 0.95f * Mathf.Cos(t));
+                        path[s] = go.transform.TransformPoint(local);
+                    }
+                    roots.Add(new CombineInstance { mesh = RootMeshes.RootTube(path, 0.28f, 0.14f, 9300 + i * 4 + k, 0.25f, 7), transform = Matrix4x4.identity });
+                }
+                Vector3 doorTop = go.transform.TransformPoint(new Vector3(r, 1.5f, 0f));
+                Vector3 doorL = go.transform.TransformPoint(new Vector3(r - 0.1f, -0.2f, -0.65f)), doorR = go.transform.TransformPoint(new Vector3(r - 0.1f, -0.2f, 0.65f));
+                roots.Add(new CombineInstance { mesh = RootMeshes.RootTube(new[] { doorL, go.transform.TransformPoint(new Vector3(r + 0.02f, 1.1f, -0.7f)), doorTop, go.transform.TransformPoint(new Vector3(r + 0.02f, 1.1f, 0.7f)), doorR }, 0.16f, 0.14f, 9400 + i, 0.1f, 7), transform = Matrix4x4.identity });
+                lamps.Add(new CombineInstance { mesh = blob, transform = Matrix4x4.TRS(go.transform.TransformPoint(new Vector3(r + 0.25f, 1.6f, 0.95f)), Quaternion.identity, new Vector3(0.22f, 0.3f, 0.22f)) });
+
+                if (!h.Shelter) continue;
+                // this hut shelters a slime: a trigger over its floor (the door lets a slime of body scale up to 1.4 in)
+                var zoneGo = new GameObject("Shelter Zone");
+                zoneGo.transform.SetParent(go.transform, false);
+                zoneGo.transform.localPosition = new Vector3(-0.3f, 1.0f + 0.3f, 0f);
+                var col = zoneGo.AddComponent<BoxCollider>();
+                col.isTrigger = true;
+                col.size = new Vector3(r * 1.3f, 1.4f, r * 1.3f);
+                zoneGo.AddComponent<ShelterZone>().MaxBodyScale = 1.4f;
+            }
+            LakeGround.AddCombined(parent, "House Roots", roots, bark);
+            LakeGround.AddCombined(parent, "House Lamps", lamps, amber);
         }
     }
 }

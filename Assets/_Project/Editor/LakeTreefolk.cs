@@ -10,7 +10,7 @@ namespace Evolve.EditorTools
 {
     /// <summary>
     /// Evolve → Dress Lake: Treefolk. Puts the placeholder band of treefolk in the Root Foot cave (spec 2026-11-17-treefolk
-    /// -grudge-design): 12 of them (3 guards: two at the wide door, one at the slit), home points round the cave floor, the
+    /// -grudge-design): 24 of them (3 guards: two at the wide door, one at the slit), home points round the cave floor, the
     /// hall at its centre, the root walls that close the door and the slit to a hated player, and the carved atonement stone
     /// 25 m outside the door. Run again to rebuild.
     /// </summary>
@@ -53,8 +53,7 @@ namespace Evolve.EditorTools
                 float a = i * Mathf.PI * 2f / 8f + 0.2f;
                 Home(c.x + Mathf.Cos(a) * rx * 0.6f, c.y + Mathf.Sin(a) * rz * 0.6f);
             }
-            Home(c.x + rx + 4f, c.y + 3f);
-            Home(c.x + rx + 5f, c.y - 4f);
+            foreach (var house in CityLayout.Houses()) { var step = CityLayout.DoorStep(house); Home(step.x, step.y); }   // the doorstep of every house
             tribe.HomePoints = homes.ToArray();
 
             // the band
@@ -66,10 +65,10 @@ namespace Evolve.EditorTools
                 At(c.x + 1.8f, c.y + rz - 1.5f),                                  // the slit (north), inside
             };
             var rnd = new System.Random(2020);
-            for (int i = 0; i < 12; i++)
+            for (int i = 0; i < 24; i++)
             {
                 bool guard = i < posts.Length;
-                Vector3 pos = guard ? posts[i] : homes[i % 8].position + new Vector3((float)rnd.NextDouble() - 0.5f, 0f, (float)rnd.NextDouble() - 0.5f);
+                Vector3 pos = guard ? posts[i] : homes[i % homes.Count].position + new Vector3((float)rnd.NextDouble() - 0.5f, 0f, (float)rnd.NextDouble() - 0.5f);
                 float height = guard ? 1.45f : 1.1f + (float)rnd.NextDouble() * 0.3f;
                 var go = new GameObject((guard ? "Treefolk Guard " : "Treefolk ") + i);
                 go.transform.SetParent(root, false);
@@ -123,7 +122,7 @@ namespace Evolve.EditorTools
             stone.AddComponent<AtonementStone>().Tribe = tribe;
 
             EditorSceneManager.MarkAllScenesDirty();
-            Debug.Log("Đã đặt 12 người cây (3 lính gác), rễ bít cửa và đá tạ lỗi ở hang Chân Rễ. Bấm Ctrl+S để lưu scene.");
+            Debug.Log("Đã đặt 24 người cây (3 lính gác), rễ bít cửa và đá tạ lỗi ở hang Chân Rễ. Bấm Ctrl+S để lưu scene.");
         }
 
         /// <summary>A wall of upright roots with a solid box collider, hidden at first.</summary>
