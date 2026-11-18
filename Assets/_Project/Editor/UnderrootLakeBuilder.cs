@@ -136,7 +136,9 @@ namespace Evolve.EditorTools
             // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters (gap 1.35 m, ShelterZone inside), cool 18°C ----
             var roots = new GameObject("Chan Re Co Thu (Ancient Roots)").transform;
             Zone(roots, new Vector3(ZoneLayout.RootFoot.Center.x, 3f, ZoneLayout.RootFoot.Center.y), new Vector3(50f, 6f, 16f), 18f, "Chân Rễ Cổ Thụ");
-            for (int i = 0; i < 3; i++) Shelter(roots, new Vector3(ZoneLayout.RootFoot.Center.x - 16f + i * 16f, 0f, ZoneLayout.RootFoot.Center.y), root);
+            // the three small root shelters stand just north of the Great Hall (the hall itself fills the middle of the area)
+            foreach (float dx in new[] { -22f, 17f, 29f })
+                Shelter(roots, new Vector3(ZoneLayout.RootFoot.Center.x + dx, 0f, ZoneLayout.RootFoot.Center.y + ZoneLayout.CaveRadii.y + 7f), root);
 
             // ---- Bãi Mùn Rễ (east): warm 26°C, 6 nutrients, 2 D dens ----
             var humusRoot = new GameObject("Bai Mun Re (Humus Bed)").transform;
@@ -465,7 +467,7 @@ namespace Evolve.EditorTools
         static void BuildLandmarks()
         {
             var parent = new GameObject("Landmarks").transform;
-            AddLandmark(parent, "RootFoot", Outward(ZoneLayout.RootFoot), new Color(0.32f, 0.22f, 0.14f));
+            // (no pillar for the Root Foot: the Great Hall is its landmark)
             AddLandmark(parent, "Humus", Outward(ZoneLayout.Humus), new Color(0.3f, 0.2f, 0.08f));
             AddLandmark(parent, "Spore", Outward(ZoneLayout.Spore), new Color(0.45f, 0.3f, 0.55f));
             AddLandmark(parent, "HuntEdge", Outward(ZoneLayout.HuntEdge), new Color(0.5f, 0.15f, 0.12f));
