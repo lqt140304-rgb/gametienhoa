@@ -94,6 +94,7 @@ namespace Evolve.World
             for (int m = 0; m < mainCount; m++)   // branches
             {
                 var rib = all[m];
+                if (rib.Points.Length < 7) continue;   // a rib cut short (it met the hall or another rib) is too short to fork
                 for (int b = 0; b < 3; b++)
                 {
                     int idx = Mathf.Clamp((int)(rib.Points.Length * (0.25f + 0.25f * b)) + 1, 2, rib.Points.Length - 3);
