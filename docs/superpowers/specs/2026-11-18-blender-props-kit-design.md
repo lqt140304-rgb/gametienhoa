@@ -111,3 +111,8 @@ Mỗi bước là một PR riêng.
 3. **Slime đi vòng, không leo lên vật lớn [ĐỀ XUẤT]:** vật lớn dựng vách dốc, không thành bậc; đá nhỏ dưới 0,3 m là bậc bước qua được. Khe và vòm trên lối đi rộng ít nhất 2,2 m (đủ cho slime cỡ tối đa, `BodyScale` 1,5, đường kính khoảng 1,5 m); khe nơi trú vẫn 1,35 m.
 3b. Kiểm "không kẹt": slime to nhất đi qua mọi vòm và khe trên đường mòn; đá không chắn lối đường mòn.
 4. **Nhịp duyệt [ĐỀ XUẤT]:** duyệt ảnh render và va chạm sau bước 1 (nhóm đá). Sau đó các nhóm còn lại làm theo lô, chủ dự án duyệt theo lô, sửa sau.
+
+## 9. Chủ dự án đã chốt (2026-11-18)
+
+- Bản thiết kế được **duyệt**.
+- Vật thể Blender **thay thế** nấm, rễ, đá, dây leo dựng bằng code (không để cạnh nhau). Gỡ phần code tương ứng từng nhóm một, sau khi chủ dự án duyệt nhóm Blender đó; việc gỡ nằm trong các file `Editor/Lake*.cs` của phiên trang trí và phải báo phiên đó.
