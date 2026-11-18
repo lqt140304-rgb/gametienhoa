@@ -51,9 +51,9 @@ namespace Evolve.Organs
             var traits = GetComponent<Evolve.Traits.PlayerTraits>();
             if (Evolve.Traits.DeathLossRules.KeepsEquippedOrgans(traits != null && traits.HasCore(Evolve.Traits.DeathLossRules.CoreId), stats.State.Lives))
             {
-                LastDeathKept = host.Count;
+                LastDeathKept = 0;   // the HUD reads this as 'organs on the ground to pick up': nothing fell off
                 LastDeathLost = 0;
-                DroppedOnDeath?.Invoke(0, 0);   // nothing fell off, nothing was lost
+                DroppedOnDeath?.Invoke(0, 0);
                 return;
             }
             DropAllOnDeath();

@@ -64,6 +64,21 @@ namespace Evolve.Traits
             return new ConfirmResult(ConfirmOutcome.Accepted, hand.ToArray());
         }
 
+        /// <summary>Locks a core for a player who chose it before the room existed (solo, then host or join). False if taken, unknown, or the player already has one.</summary>
+        public bool Claim(int playerId, string coreId)
+        {
+            if (string.IsNullOrEmpty(coreId) || !cores.Contains(coreId) || owners.ContainsKey(coreId) || chosen.ContainsKey(playerId)) return false;
+            if (!hands.TryGetValue(playerId, out var hand)) { hand = new List<string>(); hands[playerId] = hand; }
+            if (!hand.Contains(coreId))
+            {
+                if (hand.Count >= TraitTuning.HandSize) hand.RemoveAt(hand.Count - 1);
+                hand.Add(coreId);
+            }
+            owners[coreId] = playerId;
+            chosen[playerId] = coreId;
+            return true;
+        }
+
         /// <summary>The player left the room: their hand goes away and the core they took becomes free again.</summary>
         public void Leave(int playerId)
         {

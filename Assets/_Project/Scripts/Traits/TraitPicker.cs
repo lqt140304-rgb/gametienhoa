@@ -11,7 +11,7 @@ namespace Evolve.Traits
     /// </summary>
     public class TraitPicker : MonoBehaviour
     {
-        enum Phase { Idle, Waiting, Core, Flaw, Done }
+        enum Phase { Idle, Waiting, Core, Flaw, Sent, Done }
         enum Mode { Solo, Host, Client }
 
         Phase phase = Phase.Idle;
@@ -44,15 +44,16 @@ namespace Evolve.Traits
 
         void Update()
         {
-            if (phase == Phase.Done) return;
             if (player == null)
             {
                 if (Time.unscaledTime < nextFind) return;
                 nextFind = Time.unscaledTime + 0.5f;
-                player = FindAnyObjectByType<PlayerTraits>();
+                player = TraitNet.Local;
                 if (player == null) return;
             }
-            if (player.CoreId != null || skipped) { phase = Phase.Done; return; }
+            if (player.CoreId != null) { phase = Phase.Done; return; }
+            if (skipped) return;
+            if (phase == Phase.Done) phase = Phase.Idle;   // the core was given up (someone else took it in the room): choose again
             if (TraitCatalog.Cores.Count == 0)
             {
                 phase = Phase.Idle;
@@ -83,26 +84,28 @@ namespace Evolve.Traits
 
         void OnHandReceived(string[] h)
         {
-            if (mode != Mode.Client || phase == Phase.Done) return;
+            if (mode != Mode.Client || phase == Phase.Done || phase == Phase.Sent) return;
             hand = h ?? new string[0];
             if (phase == Phase.Waiting && hand.Length > 0) phase = Phase.Core;
         }
 
         void OnResultReceived(ConfirmResult result)
         {
-            if (mode != Mode.Client || phase == Phase.Done) return;
+            if (mode != Mode.Client || phase != Phase.Sent) return;
             HandleResult(result);
         }
 
         void HandleResult(ConfirmResult result)
         {
-            if (result.Outcome == ConfirmOutcome.Accepted) { Finish(chosenCore, pendingFlaws); return; }
+            if (result.Outcome == ConfirmOutcome.Accepted) { Finish(pendingCore, pendingFlaws); return; }
             hand = result.NewHand ?? hand;
             chosenCore = null; selected = 0; phase = hand.Length > 0 ? Phase.Core : Phase.Waiting;
             notice = result.Outcome == ConfirmOutcome.TakenReplaced ? "Lõi đó vừa có người khác chọn. Hãy chọn lại." : "Lựa chọn không hợp lệ. Hãy chọn lại.";
         }
 
         string[] pendingFlaws = new string[0];
+        string pendingCore;
+        float escArmedUntil;
 
         void Finish(string coreId, string[] flaws)
         {
@@ -121,9 +124,10 @@ namespace Evolve.Traits
                 return;
             }
             pendingFlaws = core.Options[selected].FlawIds;
+            pendingCore = chosenCore;
             if (mode == Mode.Solo) HandleResult(soloRoom.Confirm(0, chosenCore));
             else if (mode == Mode.Host) HandleResult(TraitNet.HostConfirm(chosenCore));
-            else TraitNet.ClientPick?.Invoke(chosenCore, pendingFlaws);   // the answer comes back through ResultReceived
+            else { phase = Phase.Sent; TraitNet.ClientPick?.Invoke(pendingCore, pendingFlaws); }   // the answer comes back through ResultReceived; Esc and Backspace are ignored meanwhile
         }
 
         // ---------------------------------------------------------------- drawing
@@ -140,9 +144,9 @@ namespace Evolve.Traits
             GUI.DrawTexture(new Rect(0, 0, w, h), pixel);
             GUI.color = Color.white;
 
-            if (phase == Phase.Waiting)
+            if (phase == Phase.Waiting || phase == Phase.Sent)
             {
-                GUI.Label(new Rect(0, h * 0.45f, w, 40), "Đang chờ chủ phòng chia thẻ…   (Esc: chơi không Lõi)", titleStyle);
+                GUI.Label(new Rect(0, h * 0.45f, w, 40), phase == Phase.Sent ? "Đang chờ chủ phòng xác nhận…" : "Đang chờ chủ phòng chia thẻ…   (Esc hai lần: chơi không Lõi)", titleStyle);
                 return;
             }
 
@@ -152,7 +156,7 @@ namespace Evolve.Traits
             if (phase == Phase.Core) DrawCards(w, h); else DrawFlaws(w, h);
 
             GUI.Label(new Rect(0, h - 44, w, 24), phase == Phase.Core
-                ? "1–3 chọn   ·   Tab chi tiết   ·   Enter tiếp   ·   Esc chơi không Lõi"
+                ? "1–3 chọn   ·   Tab chi tiết   ·   Enter tiếp   ·   Esc hai lần: chơi không Lõi"
                 : "1–3 chọn   ·   Enter xác nhận   ·   Backspace quay lại", smallStyle);
         }
 
@@ -235,12 +239,17 @@ namespace Evolve.Traits
 
         void HandleKey(Event e)
         {
+            if (phase == Phase.Sent) { e.Use(); return; }   // the host is answering: nothing can be changed now
             int count = phase == Phase.Core ? hand.Length : (TraitCatalog.Core(chosenCore) != null ? TraitCatalog.Core(chosenCore).Options.Length : 0);
             if (e.keyCode >= KeyCode.Alpha1 && e.keyCode <= KeyCode.Alpha3) { int i = e.keyCode - KeyCode.Alpha1; if (i < count) selected = i; e.Use(); return; }
             switch (e.keyCode)
             {
                 case KeyCode.Tab: if (phase == Phase.Core) detail = !detail; e.Use(); break;
-                case KeyCode.Escape: skipped = true; phase = Phase.Done; e.Use(); break;
+                case KeyCode.Escape:
+                    if (Time.unscaledTime < escArmedUntil) { skipped = true; phase = Phase.Done; }
+                    else { escArmedUntil = Time.unscaledTime + 3f; notice = "Bấm Esc lần nữa để chơi không Lõi."; }
+                    e.Use();
+                    break;
                 case KeyCode.Backspace: if (phase == Phase.Flaw) { phase = Phase.Core; chosenCore = null; selected = 0; } e.Use(); break;
                 case KeyCode.Return:
                 case KeyCode.KeypadEnter:

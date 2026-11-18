@@ -15,6 +15,8 @@ namespace Evolve.Traits
         public static Func<string, ConfirmResult> HostConfirm;      // host: the host's own pick
         public static Action<string, string[]> ClientPick;          // client: send the pick to the host
         public static bool IsClient;                                // true while connected to a host as a client
+        /// <summary>The local player's traits (the one that owns a SlimeController), set by PlayerTraits.</summary>
+        public static PlayerTraits Local;
 
         /// <summary>Client side: the host dealt (or re-dealt) this hand.</summary>
         public static event Action<string[]> HandReceived;
@@ -26,9 +28,12 @@ namespace Evolve.Traits
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void Reset()
         {
-            HostHand = null; HostConfirm = null; ClientPick = null; IsClient = false; LastHand = null;
+            HostHand = null; HostConfirm = null; ClientPick = null; IsClient = false; LastHand = null; Local = null;
             HandReceived = null; ResultReceived = null;
         }
+
+        /// <summary>Forget what came from a finished co-op session.</summary>
+        public static void ClearClient() { LastHand = null; IsClient = false; ClientPick = null; }
 
         public static void RaiseHand(string[] hand) { LastHand = hand; HandReceived?.Invoke(hand); }
         public static void RaiseResult(ConfirmResult result) { if (result.NewHand != null) LastHand = result.NewHand; ResultReceived?.Invoke(result); }

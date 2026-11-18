@@ -20,6 +20,7 @@ namespace Evolve.Net
         CoopManager coop;
         TraitRoom room;
         NetworkManager hooked;
+        bool autoPicked;   // a client that chose before joining has already offered that core to the host
 
         void Awake() => coop = GetComponent<CoopManager>();
 
@@ -63,6 +64,9 @@ namespace Evolve.Net
                 nm.OnClientConnectedCallback += OnClientConnected;
                 nm.OnClientDisconnectCallback += OnClientDisconnected;
             }
+            // A host who chose a core before the room existed (solo first) keeps it, and nobody else can take it.
+            var local = TraitNet.Local;
+            if (local != null && local.CoreId != null) room.Claim(HostId(), local.CoreId);
             TraitNet.HostHand = () => room != null ? room.Join(HostId()) : new string[0];
             TraitNet.HostConfirm = coreId => room != null ? room.Confirm(HostId(), coreId) : new ConfirmResult(ConfirmOutcome.Invalid, new string[0]);
         }
@@ -78,6 +82,8 @@ namespace Evolve.Net
                 hooked = null;
             }
             room = null;
+            autoPicked = false;
+            TraitNet.ClearClient();
             TraitNet.HostHand = null; TraitNet.HostConfirm = null; TraitNet.ClientPick = null; TraitNet.IsClient = false;
         }
 
@@ -101,9 +107,25 @@ namespace Evolve.Net
                 var result = TraitChoice.IsValid(options, flaws)
                     ? room.Confirm((int)sender, coreId)
                     : new ConfirmResult(ConfirmOutcome.Invalid, room.Hand((int)sender));
+                // A client who chose before joining offers a core that is not in the hand it was dealt: lock it if it is still free.
+                if (result.Outcome == ConfirmOutcome.Invalid && TraitChoice.IsValid(options, flaws) && Array.IndexOf(room.Hand((int)sender), coreId) < 0)
+                    result = room.Claim((int)sender, coreId)
+                        ? new ConfirmResult(ConfirmOutcome.Accepted, room.Hand((int)sender))
+                        : new ConfirmResult(ConfirmOutcome.TakenReplaced, room.Hand((int)sender));
+                if (result.Outcome == ConfirmOutcome.Accepted) GiveTraitsToAvatar(sender, coreId, flaws);
                 Send(ResultMessage, sender, result.NewHand, result.Outcome);
             }
             catch (Exception e) { Debug.LogException(e); }
+        }
+
+        /// <summary>The host rolls drops for every player, so a client's avatar needs its core too (Nhân Con Bạc).</summary>
+        void GiveTraitsToAvatar(ulong client, string coreId, string[] flaws)
+        {
+            var avatar = coop != null ? coop.GetRemote(client) : null;
+            if (avatar == null) return;
+            var traits = avatar.GetComponent<PlayerTraits>();
+            if (traits == null) traits = avatar.gameObject.AddComponent<PlayerTraits>();
+            traits.Set(coreId, flaws);
         }
 
         void Send(string name, ulong client, string[] hand, ConfirmOutcome? outcome)
@@ -141,6 +163,15 @@ namespace Evolve.Net
             {
                 reader.ReadValueSafe(out string text);
                 TraitNet.RaiseHand(TraitNet.DecodeHand(text));
+                // Chose a core before joining: offer it to the host once, so the room locks it.
+                var local = TraitNet.Local;
+                if (!autoPicked && local != null && local.CoreId != null && local.FlawIds.Count > 0)
+                {
+                    autoPicked = true;
+                    var flaws = new string[local.FlawIds.Count];
+                    for (int i = 0; i < flaws.Length; i++) flaws[i] = local.FlawIds[i];
+                    SendPick(local.CoreId, flaws);
+                }
             }
             catch (Exception e) { Debug.LogException(e); }
         }
@@ -153,6 +184,9 @@ namespace Evolve.Net
                 reader.ReadValueSafe(out string text);
                 if (outcome > (byte)ConfirmOutcome.Invalid) return;
                 TraitNet.RaiseResult(new ConfirmResult((ConfirmOutcome)outcome, TraitNet.DecodeHand(text)));
+                // The core chosen before joining was taken by someone else: give it up so the picker opens again with the new hand.
+                var local = TraitNet.Local;
+                if (outcome != (byte)ConfirmOutcome.Accepted && local != null && local.CoreId != null) local.Set(null, null);
             }
             catch (Exception e) { Debug.LogException(e); }
         }

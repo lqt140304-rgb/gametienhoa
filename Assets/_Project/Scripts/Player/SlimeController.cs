@@ -103,7 +103,7 @@ namespace Evolve.Player
                 else if (stats.State.IsCorpse && !NetWorld.CoopActive && KeyPressed.Y()) NewRun();
                 return;
             }
-            if (!IsSwimming && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
+            if (!IsSwimming && Time.time >= frozenUntil && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
                 float k = Mathf.Sqrt(Mathf.Clamp(transform.lossyScale.y, 0.3f, 1.5f));   // a smaller slime hops proportionally lower (height grows with speed squared)
@@ -151,7 +151,7 @@ namespace Evolve.Player
             if (Time.time < frozenUntil) dir = Vector3.zero;   // Run Rẩy
             var traits = traitsComp;
             float turn = traits != null ? Evolve.Traits.FlawRules.TurnRateMultiplier(stats.State.Health / Mathf.Max(1f, stats.State.MaxHealth), traits.FlawStrength(Evolve.Traits.FlawRules.LuongCuong)) : 1f;
-            if (turn < 0.999f) { steer = Vector3.MoveTowards(steer, dir, SteerRate * turn * Time.fixedDeltaTime); dir = steer; }   // Luống Cuống: steering is sluggish
+            if (turn < 0.999f) { steer = Vector3.MoveTowards(steer, dir, Evolve.Traits.FlawRules.SteerRate(turn, SteerRate) * Time.fixedDeltaTime); dir = steer; }   // Luống Cuống: steering is sluggish
             else steer = dir;
             stats.IsMoving = dir.sqrMagnitude > 0.01f;
 

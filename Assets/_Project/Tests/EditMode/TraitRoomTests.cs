@@ -111,6 +111,31 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void ClaimLocksAFreeCoreAndRefusesTakenOrUnknown()
+        {
+            var room = new TraitRoom(1, Cores(4));
+            Assert.IsTrue(room.Claim(1, "core.0"));
+            Assert.IsTrue(room.IsLocked("core.0"));
+            Assert.AreEqual(1, room.OwnerOf("core.0"));
+            Assert.IsFalse(room.Claim(2, "core.0"));        // taken
+            Assert.IsFalse(room.Claim(2, "core.nope"));     // not in stock
+            Assert.IsFalse(room.Claim(1, "core.1"));        // the player already has one
+            Assert.IsFalse(room.Claim(3, null));
+        }
+
+        [Test]
+        public void ClaimedCoreMakesALaterConfirmGetAReplacement()
+        {
+            var room = new TraitRoom(2, Cores(4));
+            var hand = room.Join(2);
+            string target = hand[0];
+            Assert.IsTrue(room.Claim(1, target));           // player 1 already had this core before the room existed
+            var result = room.Confirm(2, target);
+            Assert.AreEqual(ConfirmOutcome.TakenReplaced, result.Outcome);
+            CollectionAssert.DoesNotContain(result.NewHand, target);
+        }
+
+        [Test]
         public void RoomJoinTwiceReturnsSameHand()
         {
             var room = new TraitRoom(8, Cores(12));

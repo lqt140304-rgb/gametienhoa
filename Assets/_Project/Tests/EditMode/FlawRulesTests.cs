@@ -41,6 +41,16 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void SteerRateGrowsContinuouslyWithTurnMultiplier()
+        {
+            Assert.AreEqual(3f, FlawRules.SteerRate(0.5f, 6f), 1e-4f);
+            Assert.Greater(FlawRules.SteerRate(0.85f, 6f), 10f);       // a mostly compensated flaw is nearly instant
+            Assert.Greater(FlawRules.SteerRate(0.999f, 6f), 100f);     // no visible jump at the threshold
+            float previous = 0f;
+            for (float t = 0.5f; t <= 0.999f; t += 0.05f) { float r = FlawRules.SteerRate(t, 6f); Assert.Greater(r, previous); previous = r; }
+        }
+
+        [Test]
         public void AbsorbOnlyWithinWindow()
         {
             Assert.AreEqual(1f, FlawRules.AbsorbMultiplier(-1f, 1f), 1e-6f);

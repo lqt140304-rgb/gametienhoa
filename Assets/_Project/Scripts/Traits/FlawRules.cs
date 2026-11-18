@@ -29,6 +29,10 @@ namespace Evolve.Traits
             return 1f - (1f - slowest) * depth;
         }
 
+        /// <summary>How fast the movement direction may change when Luống Cuống slows steering: 0.5 turn multiplier is about half the base rate, and it rises smoothly toward instant as the multiplier approaches 1.</summary>
+        public static float SteerRate(float turnMultiplier, float baseRate) =>
+            0.5f * baseRate * turnMultiplier / Math.Max(0.01f, 1f - turnMultiplier);
+
         /// <summary>
         /// Dạ Dày Kén: for 20 seconds after eating a food for the first time, everything eaten is absorbed 30% less.
         /// <paramref name="secondsSinceNewFood"/> is the time since a never-eaten food was last eaten (use a huge number or a

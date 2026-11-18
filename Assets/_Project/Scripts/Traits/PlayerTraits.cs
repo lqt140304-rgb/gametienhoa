@@ -30,7 +30,10 @@ namespace Evolve.Traits
             organs = GetComponent<OrganHost>();
             slime = GetComponent<Evolve.Player.SlimeController>();
             stats = GetComponent<Evolve.Survival.SurvivalStats>();
+            if (slime != null) TraitNet.Local = this;   // only the local player owns a SlimeController; remote avatars get a PlayerTraits without one
         }
+
+        void OnDestroy() { if (TraitNet.Local == this) TraitNet.Local = null; }
 
         void OnEnable()
         {
@@ -52,7 +55,7 @@ namespace Evolve.Traits
         // Nhân Quen Đất: the ground under the player becomes familiar; swimming is not covered.
         void Update()
         {
-            if (stats != null)
+            if (stats != null && slime != null)   // flags that change the local body; a remote avatar's numbers come from its owner
             {
                 var state = stats.State;
                 state.HungerBurnMultiplier = FlawRules.HungerBurnMultiplier(FlawStrength(FlawRules.DoiSom));
