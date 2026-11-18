@@ -307,7 +307,7 @@ def build_cliff(seed):
     either side), horizontal strata with ledges, vertical cracks and moss on the ledges. Collider: a plain 12-triangle box."""
     rng = random.Random(seed)
     off = Vector((rng.uniform(0, 80), rng.uniform(0, 80), rng.uniform(0, 80)))
-    nx, nz = 36, 44
+    nx, nz = 24, 30
     bm = bmesh.new()
     grid = {}
     for face in (0, 1):

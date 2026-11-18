@@ -95,25 +95,31 @@ namespace Evolve.EditorTools
             var parent = new GameObject("Rim Cliffs").transform;
             parent.SetParent(root, false);
             var rnd = new System.Random(8080);
-            const float step = 28f, edge = 243f;
+            const float step = 24f, edge = 243f; // slabs are 28 m wide: they overlap a little, no seams
             Vector2 gate = ZoneLayout.NorthEntry;
             int made = 0;
             for (float t = -238f; t <= 238f; t += step)
                 for (int side = 0; side < 4; side++)
                 {
                     Vector2 p = side == 0 ? new Vector2(t, edge) : side == 1 ? new Vector2(t, -edge) : side == 2 ? new Vector2(edge, t) : new Vector2(-edge, t);
-                    if (Vector2.Distance(p, gate) < 24f) continue; // keep the way in open
+                    if (side == 0 && Mathf.Abs(p.x - gate.x) < 32f) continue; // keep the way in open, and the ramp up to it (the ground drops there)
                     float yaw = side < 2 ? 0f : 90f;
                     var go = Place("Cliff_" + rnd.Next(4), parent, p, Quaternion.Euler(0f, yaw, 0f), 1f, -5f, ref count);
                     if (go != null) { go.transform.localScale = new Vector3(1f, 0.8f, 1f); made++; }
                 }
+            // two flank slabs that end exactly where the ramp ends
+            foreach (float dx in new[] { -32f, 32f })
+            {
+                var go = Place("Cliff_" + rnd.Next(4), parent, new Vector2(gate.x + dx, edge), Quaternion.identity, 1f, -5f, ref count);
+                if (go != null) { go.transform.localScale = new Vector3(1f, 0.8f, 1f); made++; }
+            }
             Debug.Log("Vách rìa Blender: " + made + " tấm.");
         }
 
         // ---- roots hanging from the roof (no collision: they are up in the dark) ----
         static void PlaceHangingRoots(Transform root, ref int count)
         {
-            var parent = new GameObject("Hanging Roots").transform;
+            var parent = new GameObject("Blender Hanging Roots").transform; // not "Hanging Roots": LakeLayout looks that name up for the code-built ones
             parent.SetParent(root, false);
             var rnd = new System.Random(7070);
             int made = 0;
@@ -124,13 +130,13 @@ namespace Evolve.EditorTools
                 int variant = rnd.Next(4);
                 if (ZoneLayout.InsideCave(x, z, 6f)) continue;
                 bool inShaft = false;
-                foreach (var s in ZoneLayout.LightShafts) if (Vector2.Distance(new Vector2(x, z), s) < 8f) { inShaft = true; break; }
+                foreach (var s in ZoneLayout.LightShafts) if (Vector2.Distance(new Vector2(x, z), s) < 11f) { inShaft = true; break; } // 8 m hole + the side roots' reach
                 if (inShaft) continue;
                 float ceiling = LakeLayout.CeilingY(x, z, 28f);
                 float ground = LakeGround.GroundY(x, z);
                 float room = ceiling - ground - 5f;   // hang down to 5 m above the ground at most
                 if (room < 5f) continue;
-                float k = Mathf.Clamp(Mathf.Min(14f, room) / 10f, 0.5f, 1.6f);
+                float k = Mathf.Clamp(Mathf.Min(14f, room) / 10f, 0.5f, 1.4f);
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "HangRoot_" + variant + ".fbx");
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
                 go.transform.position = new Vector3(x, ceiling + 0.3f, z);
