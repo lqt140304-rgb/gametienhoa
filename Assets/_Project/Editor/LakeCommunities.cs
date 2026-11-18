@@ -84,7 +84,7 @@ namespace Evolve.EditorTools
         static bool NearClassHouse(float x, float z)
         {
             if (classHouses == null) classHouses = CityLayout.ClassHouses();
-            foreach (var h in classHouses) if ((h.Position.x - x) * (h.Position.x - x) + (h.Position.y - z) * (h.Position.y - z) < 64f) return true;   // within 8 m
+            foreach (var h in classHouses) if ((h.Position.x - x) * (h.Position.x - x) + (h.Position.y - z) * (h.Position.y - z) < 144f) return true;   // within 12 m (the pens, yards and ranges reach out)
             return false;
         }
 
