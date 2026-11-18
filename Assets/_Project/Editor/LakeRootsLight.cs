@@ -184,7 +184,8 @@ namespace Evolve.EditorTools
                 Vector3 topPoint = bottomPoint - slant + Vector3.up * (roofY + 2f);
                 Vector3 dir = (bottomPoint - topPoint).normalized;
                 float height = Vector3.Distance(topPoint, bottomPoint);
-                float topR = 1.2f + (float)rnd.NextDouble() * 1.2f, bottomR = 3.8f + (float)rnd.NextDouble() * 2.2f;
+                // as wide as the 8 m hole in the roof (Dress Lake: Root Vault cuts holes of radius 8), widening a little towards the ground
+                float topR = 7.6f + (float)rnd.NextDouble() * 0.8f, bottomR = 8.6f + (float)rnd.NextDouble() * 1.6f;
 
                 var go = new GameObject("Light Shaft");
                 go.transform.SetParent(root, false);
