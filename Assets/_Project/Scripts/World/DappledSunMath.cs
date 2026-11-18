@@ -7,7 +7,7 @@ namespace Evolve.World
     {
         public const float Elevation = 72f;       // degrees above the horizon: almost straight down
         public const float Yaw = 25f;
-        public const float Intensity = 1.8f;      // bright, because most of it is blocked by the roof
+        public const float Intensity = 0.85f;     // the roof is a thick mat of roots: even what leaks through is dim (1.8 was far too bright)
         public const float SwayAmplitude = 2.5f;  // degrees
         public const float SwayPeriod = 70f;      // seconds
         public const float ShadowDistance = 120f;

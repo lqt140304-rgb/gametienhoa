@@ -399,7 +399,7 @@ Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`); (2)
 
 ## 22. Ánh sáng lọt qua kẽ rễ (mặt trời đổ bóng của mái): trạng thái và danh sách kiểm tra
 
-- Menu **Evolve → Dress Lake: Dappled Sun** (bước 17/17 của Rebuild Lake, chỉ ở scene `Underroot_Lake`): đèn chính gần thẳng đứng (72°), ấm nhạt, cường độ 1,8, bóng mềm; mái rễ (Lake Canopy → Roof) đổ bóng nên ánh sáng chỉ lọt qua kẽ rễ và 9 lỗ sáng; ambient xanh lục rất tối (0,06; 0,08; 0,08); mọi URP asset: tầm bóng 120 m, 4 tầng, bản đồ 2048, bóng mềm. `DappledSun` lắc đèn ±2,5° (chu kỳ 70 s) cho mảng sáng trôi; `ShadowToggle`: **phím F9** bật tắt bóng của mái (so FPS).
+- Menu **Evolve → Dress Lake: Dappled Sun** (bước 17/17 của Rebuild Lake, chỉ ở scene `Underroot_Lake`): đèn chính gần thẳng đứng (72°), ấm nhạt, cường độ 0,85 (đã hạ từ 1,8 vì quá sáng so với một mái toàn rễ), bóng mềm; mái rễ (Lake Canopy → Roof) đổ bóng nên ánh sáng chỉ lọt qua kẽ rễ và 9 lỗ sáng; ambient xanh lục rất tối (0,06; 0,08; 0,08); mọi URP asset: tầm bóng 120 m, 4 tầng, bản đồ 2048, bóng mềm. `DappledSun` lắc đèn ±2,5° (chu kỳ 70 s) cho mảng sáng trôi; `ShadowToggle`: **phím F9** bật tắt bóng của mái (so FPS).
 - **Evolve → Restore Lake Sun (undo)** trả lại đèn, ambient, URP và mái như trước (sao lưu ở `Settings/LakeSunBackup.json`, chỉ ghi lần Dress đầu).
 - Không đổi `MonochromeVision` (chưa có mắt vẫn đen trắng, tối, chỉ sáng quanh người; cường độ đèn do nó nhân lại), `ZoneAtmosphere` (sương mỏng theo khu).
 - Hạn chế: nặng máy (mục tiêu FPS giảm không quá 15%); vùng xa hơn 120 m không có bóng nên sáng đều (sương theo khu che); bóng của mức chi tiết xa của mái thô hơn.
