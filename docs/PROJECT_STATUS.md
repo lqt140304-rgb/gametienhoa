@@ -458,3 +458,12 @@ Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Ro
 - Hạn chế: đất địa hình và các vật liệu Lit khác chưa có vân chi tiết (đây là việc của lớp nền); SSAO tốn FPS (kiểm bằng PerfOverlay); `Rebuild Lake` bước 18 dựng lại volume nên chạy lại bước 20 sau đó.
 
 Checklist: (1) Console sạch; (2) Dress Lake: Realism, rồi Ctrl+S; (3) cảnh bớt bóng nhựa, đá và rễ có vân, khe tối hơn; (4) FPS không tụt quá 15%; (5) Restore Lake Realism trả lại như cũ.
+
+## 27. Sự sống và nguồn sáng tầng mặt đất: trạng thái và danh sách kiểm tra
+
+- Chủ dự án nhận xét: dưới mặt đất còn trống và thiếu nguồn sáng. Menu **Evolve → Dress Lake: Ground Life** (bước 20/21 của Rebuild Lake; hoàn tác: Restore Lake Ground Life): rải khoảng 430 cụm theo từng khu: nấm sáng (`LumaShroom_0..2`), cụm tinh thể phát sáng (`CrystalCluster_0..2`), hoa đèn lồng (`BulbPlant_0..1`) và rễ trồi lên đất (`RootStub_0..1`, tối, không sáng), đều làm bằng Blender (`tools/blender/build_groundlife.py`, test `test_groundlife.py`). Màu sáng theo khu: 01 ngọc, 02 hổ phách, 03 vàng lục, 04 tím, 05 xanh băng, 06 đỏ dịu. Khoảng một phần ba cụm sáng có đèn nhỏ (tối đa 90, mờ theo thị lực, tắt khi xa 60 m); thêm đèn dẫn đường mỗi 16 m dọc các đường mòn, luân phiên hai bên.
+- Phần sáng của vật thể là đối tượng riêng có chữ "Glow" trong tên: `PropImportPostprocessor` gán vật liệu tự phát sáng `Rock_Glow` (shader `Evolve/RockVertexColor` có thêm `_Glow`, tắt khi mù theo `_EvolveBlind`). Túi sáng và mắt rồng treo trên vòm cũng nhận vật liệu này sau khi nhập lại FBX.
+- Cần **Reinstall Blender Props (overwrite)** trước. Tránh nước sâu, đường mòn (trừ đèn dẫn đường), nơi trú, hang, cột Landmark, thức ăn.
+- Hạn chế: chưa có va chạm cho các cụm này (đi xuyên qua); thú vẫn đi xuyên.
+
+Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Ground Life, Ctrl+S; (3) mỗi khu có màu sáng riêng, đường mòn có đèn dẫn; (4) không có đèn trong nước sâu hay giữa đường; (5) FPS không tụt quá 10% (đèn nhỏ có giới hạn).

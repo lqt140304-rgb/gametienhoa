@@ -23,7 +23,9 @@ namespace Evolve.EditorTools
             "Rib_Tip_0", "Rib_Tip_1", "Rib_Foot_0", "Rib_Foot_1",
             "VaultRoot_0", "VaultRoot_1", "VaultRoot_2", "VaultRoot_3", "VaultCurtain_0", "VaultCurtain_1",
             "VaultPod_0", "VaultPod_1", "VaultPod_2", "VaultStalactite_0", "VaultStalactite_1", "VaultStalactite_2",
-            "DragonSkull_0", "DragonSkull_1", "DragonRibcage_0"
+            "DragonSkull_0", "DragonSkull_1", "DragonRibcage_0",
+            "LumaShroom_0", "LumaShroom_1", "LumaShroom_2", "CrystalCluster_0", "CrystalCluster_1", "CrystalCluster_2",
+            "BulbPlant_0", "BulbPlant_1", "RootStub_0", "RootStub_1"
         };
 
         [MenuItem("Evolve/Install Blender Rocks")]
