@@ -60,7 +60,7 @@ Mỗi hàng là `AtmosphereProfile` (màu sương, tầm nhìn khi có mắt, lo
 
 - `ZoneAtmosphereMath` (thuần): trộn các hồ sơ theo trọng số = `Influence` của từng khu (chuẩn hóa; ngoài mọi khu thì dùng hồ sơ mặc định `Wild`): `Blend(float[] weights) -> AtmosphereProfile`; sương `FogEnd` nội suy; `ApplySight(float sight, ...)`: sương khi mù = đen (giữ như `MonochromeVision`), khi có mắt = màu khu; tầm nhìn nhân với `1 + max(0, sight − 1)` như hiện có.
 - `ZoneAtmosphere : MonoBehaviour` (trên camera, thêm lúc chạy): `LateUpdate` đọc vị trí camera, lấy trọng số, trộn, đặt `RenderSettings.fogColor`, `fogMode = Linear`, `fogStartDistance`, `fogEndDistance`; **bỏ qua** khi camera dưới nước (`UnderwaterTint` đang ghi đè); đọc thị lực từ `MonochromeVision.Sight` (null thì coi là 1); trộn mượt theo thời gian (không nhảy khi dịch chuyển tức thì).
-- Hạt: ba hệ hạt (rơi, bay lên, trôi ngang) đi theo camera trong hộp 30 m quanh camera; mỗi hệ có mật độ phát = mật độ hồ sơ trộn của kiểu đó × trọng số; tối đa 600 hạt hiển thị cùng lúc; vật liệu hạt URP Particles Unlit, trong mờ cộng hoặc alpha, tạo bằng code.
+- Hạt: ba hệ hạt (rơi, bay lên, trôi ngang) đi theo camera trong hộp 30 m quanh camera; mỗi hệ có mật độ phát = mật độ hồ sơ trộn của kiểu đó × trọng số; **tối đa 150 hạt hiển thị cùng lúc** (chủ dự án: đừng nhiều hạt, gây lag); có công tắc tắt hạt (phím và biến) và chỉ phát hạt khi camera ở trong khu có hạt; vật liệu hạt URP Particles Unlit, trong mờ cộng hoặc alpha, tạo bằng code.
 - Khi mù (chưa có mắt) hạt tắt dần (không thấy gì xa) trừ hạt rất gần.
 
 ### 5.3. Tích hợp
@@ -75,10 +75,14 @@ Mỗi hàng là `AtmosphereProfile` (màu sương, tầm nhìn khi có mắt, lo
 
 ## 7. Ngân sách và rủi ro
 
-- ≤ 600 hạt cùng lúc, 3 hệ hạt, không bóng đổ; mục tiêu FPS không giảm quá 5%.
+- **≤ 150 hạt cùng lúc**, 3 hệ hạt, không bóng đổ, hạt lớn và chậm (ít mà rõ, không rải dày); mục tiêu FPS không giảm quá 3%.
 - Rủi ro: hạt xuyên vật thể gần camera (chấp nhận); sương quá dày ở khu 06 làm khó chơi (giữ tầm nhìn ≥ 40 m).
 
 ## 8. Để lại cho người làm
 
 - Chi tiết hình dạng hạt (texture sinh bằng code), tốc độ và hướng trôi cuối cùng, tên và vị trí file.
 - Nếu cần, tách bảng bầu không khí thành ScriptableObject để chỉnh trong Inspector (hiện dữ liệu trong code).
+
+## 9. Ghi chú sau phản hồi của chủ dự án (2026-11-18)
+
+- Sương theo bảng đề xuất đã được chấp nhận (**[ĐÃ CHỐT]**); hạt phải ít để không lag: tối đa 150 hạt, có công tắc tắt.
