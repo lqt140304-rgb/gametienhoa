@@ -23,6 +23,15 @@ namespace Evolve.EditorTools
             PropInstaller.EnsureLandmarks();
             if (!PropInstaller.LandmarksPresent()) { Debug.LogWarning("Thiếu FBX điểm nhấn trong " + ModelFolder + " (xem tools/blender/out): giữ bản dựng bằng code."); return; }
 
+            // load every model first: only when all of them are there do the code-built versions go
+            var all = new[] { "Log_Hollow", "Mushroom_Giant_0", "Mushroom_Giant_1", "Mushroom_Giant_2", "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch" };
+            foreach (var name in all)
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + name + ".fbx") == null)
+                {
+                    Debug.LogWarning("Không nạp được " + name + ".fbx (chưa nhập xong?): giữ bản dựng bằng code. Thử Assets → Reimport rồi chạy lại.");
+                    return;
+                }
+
             DestroyByName(RootName);
             DestroyByName(LogName);
             DestroyByName(MushroomsName);
@@ -32,7 +41,13 @@ namespace Evolve.EditorTools
 
             // ---- 03 hollow log ----
             var c = LandmarkLayout.LogCenter;
-            var log = Place("Log_Hollow", root, c, Quaternion.Euler(0f, -LandmarkLayout.LogAngle, 0f), 1f, -0.12f, ref count);
+            // sit the 9 m log on the LOWEST of its two ends and middle, sunk 0.3 m: the bore floor is then at or below the ground
+            // at both openings (no rim step for a slime to catch on), whatever the slope
+            var logDir = new Vector2(Mathf.Cos(LandmarkLayout.LogAngle * Mathf.Deg2Rad), Mathf.Sin(LandmarkLayout.LogAngle * Mathf.Deg2Rad));
+            float logY = Mathf.Min(LakeGround.GroundY(c.x, c.y),
+                Mathf.Min(LakeGround.GroundY(c.x + logDir.x * LandmarkLayout.LogLength * 0.5f, c.y + logDir.y * LandmarkLayout.LogLength * 0.5f),
+                          LakeGround.GroundY(c.x - logDir.x * LandmarkLayout.LogLength * 0.5f, c.y - logDir.y * LandmarkLayout.LogLength * 0.5f))) - 0.3f;
+            var log = Place("Log_Hollow", root, c, Quaternion.Euler(0f, -LandmarkLayout.LogAngle, 0f), 1f, 0f, ref count, logY);
 
             // ---- 04 giant mushrooms (3 giants + 14 smaller ones, same layout seed as the code version) ----
             var m = LandmarkLayout.GiantMushrooms;
@@ -70,12 +85,12 @@ namespace Evolve.EditorTools
             Debug.Log($"Điểm nhấn Blender: đã thay khúc gỗ, nấm khổng lồ và cung rễ bằng {count} vật thể. Bấm Ctrl+S để lưu scene.");
         }
 
-        static GameObject Place(string model, Transform parent, Vector2 xz, Quaternion rotation, float scale, float sink, ref int count)
+        static GameObject Place(string model, Transform parent, Vector2 xz, Quaternion rotation, float scale, float sink, ref int count, float? absoluteY = null)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + model + ".fbx");
             if (prefab == null) { Debug.LogWarning("Không nạp được " + model + ".fbx"); return null; }
             var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
-            go.transform.position = new Vector3(xz.x, LakeGround.GroundY(xz.x, xz.y) + sink, xz.y);
+            go.transform.position = new Vector3(xz.x, absoluteY ?? (LakeGround.GroundY(xz.x, xz.y) + sink), xz.y);
             go.transform.rotation = rotation;
             go.transform.localScale = Vector3.one * scale;
             LakeProps.EnsureCollision(go, count == 0);
