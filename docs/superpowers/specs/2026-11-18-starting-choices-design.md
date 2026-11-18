@@ -27,9 +27,9 @@ Kho Khuyết Điểm dùng chung (số liệu tạm): Thân Dễ Vỡ (máu tố
 | Nhân Phản Chấn | Bị đánh trúng thì tích lực, đòn kế tiếp mạnh hơn | Mô Nặng · Đói Nhanh · Sợ Nhiệt |
 | Nhân Cộng Sinh | Ở gần đồng đội thì cả hai hồi máu nhanh hơn | Cảm Giác Cùn · Hồi Chậm · Sợ Độc |
 | Nhân Ăn Mòn | Chạm vật hữu cơ thì tiết dịch ăn dần, hút thêm dinh dưỡng | Thân Dễ Vỡ · Nhảy Thấp · Cảm Giác Cùn |
-| Nhân Bám Dính | Bám vách và trần, trườn lên cao | Sợ Nhiệt · Thân Dễ Vỡ · Mô Nặng |
+| Nhân Bám Dính | Không bị hất văng khi đứng vững hoặc đi chậm; leo dốc không mất tốc | Sợ Nhiệt · Hao Nền · Đói Nhanh |
 | Nhân Dự Trữ | Khi no thì tích mỡ, về sau đói chậm lại | Nhảy Thấp · Sợ Lạnh · Mô Nặng |
-| Nhân Phát Quang | Phát sáng soi bóng tối, thu hút sinh vật nhỏ làm mồi | Thân Dễ Vỡ · Hao Nền · Sợ Độc |
+| Nhân Quang Hợp (thay Phát Quang) | Đứng hoặc đi trong tia sáng xuyên rễ thì hồi năng lượng dần | Thân Dễ Vỡ · Cảm Giác Cùn · Sợ Lạnh |
 
 Đã bỏ khỏi danh sách theo phản hồi: Nhân Dò Rung và Nhân Tái Cấu (vô dụng), Nhân Tích Bào (giống kỹ năng bấm hơn là Lõi).
 Nguyên tắc: **Lõi tự chạy, đổi một luật của cơ thể; Dị Năng mới là thứ bấm nút.**
@@ -40,7 +40,7 @@ Nguyên tắc: **Lõi tự chạy, đổi một luật của cơ thể; Dị Nă
 Đã duyệt: **Nhân Quen Đất** (đi lại một đường nhiều lần thì nhanh hơn trên đường đó).
 Đã duyệt: **Nhân Thích Nghi** (chịu lặp lại một loại sát thương môi trường thì kháng loại đó tăng dần, hết bị tác động thì giảm; Khuyết Điểm không dùng nhóm Sợ-).
 Đã duyệt: **Nhân Giữ Gốc** = khi chết **không mất cơ quan đang trang bị** (không áp dụng cho vật phẩm mang theo hay kho). Quyết định của Claude, chờ phản hồi: không áp dụng ở lần chết thứ 3 (hết mạng); Khuyết Điểm nặng hơn mức thường, kiểu cộng hai Khuyết Điểm nhẹ.
-Cần kiểm tra thêm: Nhân Phát Quang và Nhân Bám Dính có giống hành động bấm nút không.
+Đã chỉnh lại theo phản hồi: Nhân Phát Quang thành Nhân Quang Hợp; Nhân Bám Dính thành luật không bị hất văng khi đứng vững. Chờ duyệt.
 
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
