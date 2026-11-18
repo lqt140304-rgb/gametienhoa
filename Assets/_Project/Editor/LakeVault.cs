@@ -26,6 +26,7 @@ namespace Evolve.EditorTools
         const string EarthSheet = "Ceiling Earth";
         const string RibsName = "Vault Ribs";
         const string OldHangingRoots = "Hanging Roots";          // 28 plain smooth cylinders from the scene builder
+        const string PropsName = "Vault Hanging Props";          // long roots, curtains, glow pods, stalactites by zone
         const string PillarsName = "Vault Pillars";              // Blender replacements for the three smooth "Landmark" columns
         const string HangingName = "Vault Hanging Roots";       // their Blender replacement
         const int Seed = 11;
@@ -58,6 +59,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, RibsName);
             DestroyChild(parent, HangingName);
             DestroyChild(parent, PillarsName);
+            DestroyChild(parent, PropsName);
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
@@ -67,8 +69,9 @@ namespace Evolve.EditorTools
             int pieces = BuildRibs(parent, ribs, prefabs);
             int hanging = ReplaceHangingCylinders(parent);
             hanging += ReplacePillars(parent);
+            int props = PlaceHangingProps(parent, ribs, slots, ceiling);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
+            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá). Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
 
         [MenuItem("Evolve/Restore Lake Canopy (undo)")]
@@ -83,6 +86,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, RibsName);
             DestroyChild(parent, HangingName);
             DestroyChild(parent, PillarsName);
+            DestroyChild(parent, PropsName);
             SetOldCylinders(true);
             SetPillars(true);
             old.name = NewRoof;
@@ -230,6 +234,87 @@ namespace Evolve.EditorTools
                 }
             }
             SetOldCylinders(false);
+            return made;
+        }
+
+        // ------------------------------------------------------------------ hanging props by zone
+
+        static GameObject Load(string name) => AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + name + ".fbx");
+
+        /// <summary>Things hanging from the vault, by zone: 01 turquoise pods over the lake; 02 thick old roots; 03 root curtains; 04 purple spore pods;
+        /// 05 stalactites; 06 sparse dry roots. Roots come in three lengths so they form layers. Clear of the hall, the light holes and slits, and the ribs. No collision.</summary>
+        static int PlaceHangingProps(Transform canopy, RibPath[] ribs, Vector2[] slots, Func<float, float, float> ceiling)
+        {
+            var parent = new GameObject(PropsName).transform;
+            parent.SetParent(canopy, false);
+            var ribPoints = new List<Vector2>();
+            foreach (var r in ribs) foreach (var q in r.Points) ribPoints.Add(new Vector2(q.x, q.z));
+            var placed = new List<Vector2>();
+            var rnd = new System.Random(Seed + 53);
+            // per zone: (model prefix, variants, weight); the first entries are the zone's character
+            var kinds = new (string prefix, int variants, float w)[][]
+            {
+                new[] { ("VaultPod", 3, 5f), ("VaultRoot", 2, 1f) },                                  // 01
+                new[] { ("VaultRoot", 4, 5f) },                                                      // 02 (long ones favoured below)
+                new[] { ("VaultCurtain", 2, 3f), ("VaultRoot", 3, 2f) },                             // 03
+                new[] { ("VaultPod", 3, 4f), ("VaultRoot", 2, 1f) },                                  // 04
+                new[] { ("VaultStalactite", 3, 5f), ("VaultRoot", 2, 1f) },                           // 05
+                new[] { ("VaultRoot", 2, 1f) },                                                      // 06 sparse
+            };
+            float[] density = { 1f, 1.1f, 1f, 1f, 1f, 0.35f };
+            Color[] glow = { new Color(0.25f, 0.95f, 0.8f), default, default, new Color(0.7f, 0.35f, 1f), default, default };
+            int made = 0, lights = 0;
+            for (int attempt = 0; attempt < 6000 && made < 170; attempt++)
+            {
+                float x = ((float)rnd.NextDouble() - 0.5f) * 2f * 228f, z = ((float)rnd.NextDouble() - 0.5f) * 2f * 228f;
+                if (ZoneLayout.InsideCave(x, z, 9f)) continue;
+                var p = new Vector2(x, z);
+                int zone = 0; float best = -1f;
+                for (int i = 0; i < ZoneLayout.Zones.Length; i++) { float v = ZoneLayout.Influence(i, x, z); if (v > best) { best = v; zone = i; } }
+                if (rnd.NextDouble() > density[zone]) continue;
+                bool clear = true;
+                foreach (var sh in ZoneLayout.LightShafts) if (Vector2.Distance(p, sh) < 11f) { clear = false; break; }
+                if (clear) foreach (var sl in slots) if (Vector2.Distance(p, sl) < 9f) { clear = false; break; }
+                if (clear) foreach (var q in ribPoints) if (Vector2.Distance(p, q) < 6f) { clear = false; break; }
+                if (clear) foreach (var o in placed) if (Vector2.Distance(p, o) < 6f) { clear = false; break; }
+                if (!clear) continue;
+
+                var set = kinds[zone];
+                float total = 0f; foreach (var k in set) total += k.w;
+                float pick = (float)rnd.NextDouble() * total;
+                var kind = set[0];
+                foreach (var k in set) { if (pick < k.w) { kind = k; break; } pick -= k.w; }
+                int variant = rnd.Next(kind.variants);
+                if (kind.prefix == "VaultRoot")
+                {
+                    if (zone == 1) variant = 1 + rnd.Next(3);   // the old-root core hangs the longest: 8, 14 or 20 m
+                }
+                var prefab = Load(kind.prefix + "_" + variant);
+                if (prefab == null) continue;
+                float roof = VaultLayout.VaultHeight(x, z, ceiling(x, z));
+                float ground = LakeGround.GroundY(x, z);
+                if (roof - ground < 8f) continue;
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+                go.transform.position = new Vector3(x, roof + 0.3f, z);
+                go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                float k2 = 0.85f + 0.4f * (float)rnd.NextDouble();
+                if (kind.prefix == "VaultRoot" || kind.prefix == "VaultStalactite") k2 = Mathf.Min(k2, (roof - ground - 4f) / (kind.prefix == "VaultRoot" ? new[] { 4f, 8f, 14f, 20f }[variant] : new[] { 3f, 4.5f, 6f }[variant]));
+                go.transform.localScale = Vector3.one * Mathf.Max(0.4f, k2);
+                foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                if (kind.prefix == "VaultPod" && lights < 14 && glow[zone].a > 0f)
+                {
+                    var lg = new GameObject("Pod Light");
+                    lg.transform.SetParent(go.transform, false);
+                    lg.transform.position = go.transform.position + Vector3.down * 3.6f * go.transform.localScale.y;
+                    var l = lg.AddComponent<Light>();
+                    l.type = LightType.Point; l.color = glow[zone]; l.range = 9f; l.intensity = 1.6f; l.shadows = LightShadows.None;
+                    lg.AddComponent<LightByVision>();
+                    lights++;
+                }
+                placed.Add(p);
+                made++;
+            }
+            Debug.Log($"Vật treo trên vòm: {made}, {lights} đèn túi.");
             return made;
         }
 

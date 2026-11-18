@@ -425,3 +425,13 @@ Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`, `Dap
 - Hạn chế: số đoạn rễ lớn (khoảng 900 đoạn, tự đổi sang bản đơn giản khi xa); hình dạng bản đầu; đoạn rẽ nhánh `Rib_Fork` và đoạn cong `Rib_Bend` chưa dùng (nhánh bắt đầu chen vào thân sườn mẹ); khi nối, mối giữa hai đoạn có thể lộ ra nhẹ.
 
 Checklist: (1) Console sạch, Test Runner xanh (`VaultLayoutTests`); (2) **Reinstall Blender Props (overwrite)**; (3) Dress Lake: Root Vault, rồi Dress Lake: Dappled Sun, Ctrl+S; (4) nhìn lên: trần không phẳng, có khoang cao thấp và hốc; sườn rễ chạy từ phía Đại sảnh ra, chia nhánh; (5) mảng sáng qua lỗ và khe; (6) chân chống ở rìa chạm đất giữa các tấm vách; (7) khu 06 gần lối vào còn thoáng; (8) FPS bằng PerfOverlay; (9) Restore Lake Canopy trả mái cũ; (10) chụp ảnh nhìn lên từ vài khu gửi tôi.
+
+
+## 25. Vật treo trên vòm và thay cột trụ cũ (giai đoạn 3 của trần vòm): trạng thái và danh sách kiểm tra
+
+- **Thay đồ cũ:** `Dress Lake: Root Vault` ẩn 28 "Hanging Roots" tròn nhẵn (chỉ tắt renderer, vì `LakeLayout` và dây leo tìm theo tên) và treo rễ Blender cùng chỗ, cùng độ dài; ba cột "Landmark" (Humus, Spore, HuntEdge) thành thân rễ gồm 4 rễ Blender kéo giãn (2 rủ từ mái, 2 mọc từ nền), cột tròn cũ còn làm vật cản vô hình hẹp 4 m. `Restore Lake Canopy` trả lại cả hai.
+- **Vật treo mới (Blender, `tools/blender/build_hanging.py`, test `test_hanging.py`):** `VaultRoot_0..3` (rễ rủ dài 4, 8, 14, 20 m), `VaultCurtain_0..1` (màn rễ mảnh rộng 6 m), `VaultPod_0..2` (túi sáng, mũi phát sáng là đối tượng riêng `Pod Glow_N`), `VaultStalactite_0..2` (nhũ đá 3, 4,5, 6 m). Không va chạm.
+- **Đặt theo khu** (cùng menu Root Vault, nhóm "Vault Hanging Props"): 01 túi xanh ngọc; 02 rễ già dày, dài nhất; 03 màn rễ và rễ ngắn; 04 túi tím bào tử; 05 nhũ đá; 06 thưa. Tránh Đại sảnh (9 m), lỗ sáng (11 m), khe sáng (9 m), sườn rễ (6 m). Tối đa 14 đèn túi (`LightByVision`, tắt khi chưa có mắt). Chưa làm "nấm tầng bám sườn" của khu 03.
+- Cần **Reinstall Blender Props (overwrite)** để có FBX mới; thiếu FBX thì rễ buông cũ được giữ.
+
+Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Root Vault, Ctrl+S; (3) không còn cột đen tròn nhẵn, không còn gai khổng lồ trên sườn rễ; (4) mỗi khu có vật treo đúng tính cách, độ dài rễ tạo tầng; (5) túi sáng chỉ thấy khi có mắt; (6) FPS không tụt rõ.
