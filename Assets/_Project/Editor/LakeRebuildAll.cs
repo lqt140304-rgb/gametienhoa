@@ -18,19 +18,20 @@ namespace Evolve.EditorTools
         {
             var steps = new (string name, Action run)[]
             {
-                ("1/13 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
-                ("2/13 Nước (Dress Lake: Water)", LakeWater.Dress),
-                ("3/13 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
-                ("4/13 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
-                ("5/13 Quần xã thực vật (Dress Lake: Plant Communities)", LakeCommunities.Dress),
-                ("6/13 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
-                ("7/13 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
-                ("8/13 Mái lưới rễ (Dress Lake: Root Canopy)", LakeCanopy.Dress),
-                ("9/13 Điểm nhấn các khu (Dress Lake: Landmarks)", LakeLandmarks.Dress),
-                ("10/13 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
-                ("11/13 Thành phố người cây (Dress Lake: Treefolk City)", LakeTreefolkCity.Dress),
-                ("12/13 Nhà các class (Dress Lake: Class Houses)", LakeClassHouses.Dress),
-                ("13/13 Người cây (Dress Lake: Treefolk)", LakeTreefolk.Dress),
+                ("1/14 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
+                ("2/14 Nước (Dress Lake: Water)", LakeWater.Dress),
+                ("3/14 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
+                ("4/14 Chi tiết 3D mặt đất (Dress Lake: Ground Clutter)", LakeClutter.Dress),
+                ("5/14 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
+                ("6/14 Quần xã thực vật (Dress Lake: Plant Communities)", LakeCommunities.Dress),
+                ("7/14 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
+                ("8/14 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
+                ("9/14 Mái lưới rễ (Dress Lake: Root Canopy)", LakeCanopy.Dress),
+                ("10/14 Điểm nhấn các khu (Dress Lake: Landmarks)", LakeLandmarks.Dress),
+                ("11/14 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
+                ("12/14 Thành phố người cây (Dress Lake: Treefolk City)", LakeTreefolkCity.Dress),
+                ("13/14 Nhà các class (Dress Lake: Class Houses)", LakeClassHouses.Dress),
+                ("14/14 Người cây (Dress Lake: Treefolk)", LakeTreefolk.Dress),
             };
             try
             {
