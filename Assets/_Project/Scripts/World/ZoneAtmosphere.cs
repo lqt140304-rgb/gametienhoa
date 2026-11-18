@@ -15,6 +15,7 @@ namespace Evolve.World
     {
         const float BlendPerSecond = 0.4f;   // how fast the zone weights follow the camera (a teleport settles in about 2.5 s)
         const float BoxX = 30f, BoxY = 14f, BoxZ = 30f;
+        const float LifetimeMin = 4f, LifetimeMax = 6f;
         const int ParticlesPerSystem = 50;   // 3 systems x 50 = 150 = ZoneAtmosphereMath.MaxParticles
 
         /// <summary>Influence of each zone (01..06) at a point.</summary>
@@ -83,7 +84,7 @@ namespace Evolve.World
             main.playOnAwake = false;
             main.maxParticles = ParticlesPerSystem;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(9f, 14f);
+            main.startLifetime = new ParticleSystem.MinMaxCurve(LifetimeMin, LifetimeMax); // short: the box refills quickly when the camera moves
             main.startSpeed = 0f;
             var shape = ps.shape;
             shape.enabled = true;
@@ -116,7 +117,7 @@ namespace Evolve.World
                 ParticlesEnabled = !ParticlesEnabled;
                 Debug.Log("Hạt không khí: " + (ParticlesEnabled ? "bật" : "tắt"));
             }
-            if (vision == null) vision = FindFirstObjectByType<MonochromeVision>();
+            if (vision == null) vision = FindAnyObjectByType<MonochromeVision>();
             if (underwater == null) underwater = GetComponent<UnderwaterTint>();
             float sight = vision != null ? vision.Sight : 1f;
             bool under = underwater != null && underwater.IsUnder;
@@ -138,17 +139,31 @@ namespace Evolve.World
             UpdateParticles(sight, under);
         }
 
+        bool wasOn;
+        Group lastActive = Group.Falling;
+
         void UpdateParticles(float sight, bool under)
         {
             bool on = ParticlesEnabled && !under && sight >= 0.05f;
-            float budget = on ? ZoneAtmosphereMath.ParticleBudget(sight, Current.Density) : 0f;
+            if (!on)
+            {
+                if (wasOn) foreach (var ps in systems) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); // really off, nothing lingers
+                wasOn = false;
+                return;
+            }
+            if (!wasOn) foreach (var ps in systems) ps.Play();
+            wasOn = true;
+
+            float target = Mathf.Min(ZoneAtmosphereMath.ParticleBudget(sight, Current.Density), ParticlesPerSystem);
+            float rate = target / ((LifetimeMin + LifetimeMax) * 0.5f);   // steady state: rate x lifetime = target live particles
             var active = GroupOf(Current.Particles);
             for (int i = 0; i < systems.Length; i++)
             {
                 var ps = systems[i];
                 bool mine = (Group)i == active;
+                ps.transform.rotation = Quaternion.identity; // the box stays level whatever the camera's pitch and yaw
                 var emission = ps.emission;
-                emission.rateOverTime = mine ? budget : 0f; // the active group emits the whole (capped) budget; its 50-particle limit keeps the total small
+                emission.rateOverTime = mine ? rate : 0f;     // the other groups just fade out within a few seconds
                 if (!mine) continue;
                 var main = ps.main;
                 main.startSize = Current.Size * Random.Range(0.8f, 1.2f);
@@ -162,6 +177,7 @@ namespace Evolve.World
                     default: vel.x = s * 0.6f; vel.y = 0f; vel.z = s * 0.4f; break;
                 }
             }
+            lastActive = active;
         }
     }
 }

@@ -101,8 +101,9 @@ namespace Evolve.Tests.EditMode
         {
             Assert.AreEqual(ZoneAtmosphereMath.MaxParticles, ZoneAtmosphereMath.ParticleBudget(1f, 1000f), 1e-4f);
             Assert.AreEqual(0f, ZoneAtmosphereMath.ParticleBudget(0f, 5f), 1e-4f);
-            Assert.AreEqual(100f, ZoneAtmosphereMath.ParticleBudget(1f, 5f), 1e-3f);
-            Assert.LessOrEqual(ZoneAtmosphereMath.MaxParticles, 150);
+            Assert.AreEqual(50f, ZoneAtmosphereMath.ParticleBudget(1f, 5f), 1e-3f);
+            foreach (var z in ZoneAtmosphereMath.Zones)
+                Assert.LessOrEqual(ZoneAtmosphereMath.ParticleBudget(1f, z.Density), 50f, "one group emits at a time, 50 particles at most each");
         }
     }
 }

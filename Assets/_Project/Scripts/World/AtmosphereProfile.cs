@@ -13,7 +13,7 @@ namespace Evolve.World
         public float FogEnd;
         public ParticleKind Particles;
         public Color ParticleColor;
-        /// <summary>Particles per second over the whole 30 m box around the camera.</summary>
+        /// <summary>Particles alive at once in the 30 m box around the camera = Density x 10 (5 = about 50).</summary>
         public float Density;
         /// <summary>Particle size in metres.</summary>
         public float Size;

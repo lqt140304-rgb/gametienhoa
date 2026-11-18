@@ -68,7 +68,7 @@ namespace Evolve.World
             return Mathf.Lerp(BlindFogEnd, p.FogEnd, c * c) * (1f + Mathf.Max(0f, sight - 1f));
         }
 
-        /// <summary>Particles per second to emit: none without eyes, never above the cap.</summary>
-        public static float ParticleBudget(float sight, float density) => Mathf.Min(MaxParticles, density * 20f * Mathf.Clamp01(sight));
+        /// <summary>How many particles should be alive at once: none without eyes, never above the cap (Density 5 = 50 particles).</summary>
+        public static float ParticleBudget(float sight, float density) => Mathf.Min(MaxParticles, density * 10f * Mathf.Clamp01(sight));
     }
 }
