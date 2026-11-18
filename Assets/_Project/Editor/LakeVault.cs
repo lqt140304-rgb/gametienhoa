@@ -25,6 +25,8 @@ namespace Evolve.EditorTools
         const string NewRoof = "Roof";
         const string EarthSheet = "Ceiling Earth";
         const string RibsName = "Vault Ribs";
+        const string OldHangingRoots = "Hanging Roots";          // 28 plain smooth cylinders from the scene builder
+        const string HangingName = "Vault Hanging Roots";       // their Blender replacement
         const int Seed = 11;
         const float Chunk = 64f;
         const float Cell = 4f;
@@ -53,6 +55,7 @@ namespace Evolve.EditorTools
             }
             DestroyChild(parent, NewRoof);
             DestroyChild(parent, RibsName);
+            DestroyChild(parent, HangingName);
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
@@ -60,8 +63,9 @@ namespace Evolve.EditorTools
 
             int chunks = BuildShell(parent, ceiling, slots);
             int pieces = BuildRibs(parent, ribs, prefabs);
+            int hanging = ReplaceHangingCylinders(parent);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
+            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
 
         [MenuItem("Evolve/Restore Lake Canopy (undo)")]
@@ -74,6 +78,8 @@ namespace Evolve.EditorTools
             if (old == null) { Debug.LogWarning("Không có mái cũ để trả lại (chưa chạy Root Vault)."); return; }
             DestroyChild(parent, NewRoof);
             DestroyChild(parent, RibsName);
+            DestroyChild(parent, HangingName);
+            SetOldCylinders(true);
             old.name = NewRoof;
             old.gameObject.SetActive(true);
             var earth = parent.Find(EarthSheet);
@@ -173,6 +179,53 @@ namespace Evolve.EditorTools
             r.receiveShadows = false;
             go.isStatic = true;
             return r;
+        }
+
+        // ------------------------------------------------------------------ the old hanging cylinders
+
+        static void SetOldCylinders(bool visible)
+        {
+            var old = GameObject.Find(OldHangingRoots);   // stays active: LakeLayout and the vines look it up by name
+            if (old == null) return;
+            foreach (var r in old.GetComponentsInChildren<Renderer>(true)) r.enabled = visible;
+        }
+
+        /// <summary>The scene builder hung 28 plain smooth cylinders from the dome (the black flat-ended columns). Hide them and hang a Blender
+        /// root, two cables thick, from the same top point with the same length.</summary>
+        static int ReplaceHangingCylinders(Transform canopy)
+        {
+            var old = GameObject.Find(OldHangingRoots);
+            if (old == null) return 0;
+            var prefabs = new List<GameObject>();
+            for (int i = 0; i < 4; i++)
+            {
+                var p = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "HangRoot_" + i + ".fbx");
+                if (p != null) prefabs.Add(p);
+            }
+            if (prefabs.Count == 0) return 0;   // keep the cylinders if there is nothing to replace them with
+            var parent = new GameObject(HangingName).transform;
+            parent.SetParent(canopy, false);
+            var rnd = new System.Random(Seed + 9);
+            int made = 0;
+            foreach (Transform t in old.transform)
+            {
+                var r = t.GetComponent<Renderer>();
+                if (r == null) continue;
+                float len = t.lossyScale.y * 2f;                    // Unity's cylinder is 2 m tall
+                Vector3 top = t.position + t.up * (len * 0.5f);
+                float k = len / 10f;                                // the Blender roots are 10 m long
+                for (int c = 0; c < 2; c++)
+                {
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[rnd.Next(prefabs.Count)], parent);
+                    go.transform.position = top + new Vector3((float)(rnd.NextDouble() - 0.5) * 1.6f, 0.4f, (float)(rnd.NextDouble() - 0.5) * 1.6f);
+                    go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                    go.transform.localScale = Vector3.one * (k * (c == 0 ? 1f : 0.7f));
+                    foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                    made++;
+                }
+            }
+            SetOldCylinders(false);
+            return made;
         }
 
         // ------------------------------------------------------------------ the ribs
