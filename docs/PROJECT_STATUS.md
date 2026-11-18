@@ -395,3 +395,13 @@ Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`); (2)
 - Khu 03: sương xám ấm hơn (đỡ nâu), tầm nhìn 75 m, hạt lá mờ và nhỏ hơn (số hạt 3).
 - Cập nhật FBX: menu **Evolve → Reinstall Blender Props (overwrite)** ghi đè từ `tools/blender/out/*.fbx.b64` (menu Install chỉ ghi file còn thiếu).
 - Checklist: (1) Console sạch; (2) Evolve → Reinstall Blender Props (overwrite), rồi Dress Lake: Landmark Props; (3) nấm khu 04 có mũ đốm và váy; cung rễ khu 06 nhiều rễ; (4) vách quanh rìa liền khối, lối vào phía bắc còn mở; (5) rễ rủ trên mái, không che tia sáng; (6) khu 03: gỗ dễ nhìn, hạt bớt chói; (7) FPS bằng PerfOverlay; (8) chụp ảnh gửi tôi.
+
+
+## 22. Ánh sáng lọt qua kẽ rễ (mặt trời đổ bóng của mái): trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Dappled Sun** (bước 17/17 của Rebuild Lake, chỉ ở scene `Underroot_Lake`): đèn chính gần thẳng đứng (72°), ấm nhạt, cường độ 1,8, bóng mềm; mái rễ (Lake Canopy → Roof) đổ bóng nên ánh sáng chỉ lọt qua kẽ rễ và 9 lỗ sáng; ambient xanh lục rất tối (0,06; 0,08; 0,08); mọi URP asset: tầm bóng 120 m, 4 tầng, bản đồ 2048, bóng mềm. `DappledSun` lắc đèn ±2,5° (chu kỳ 70 s) cho mảng sáng trôi; `ShadowToggle`: **phím F9** bật tắt bóng của mái (so FPS).
+- **Evolve → Restore Lake Sun (undo)** trả lại đèn, ambient, URP và mái như trước (sao lưu ở `Settings/LakeSunBackup.json`, chỉ ghi lần Dress đầu).
+- Không đổi `MonochromeVision` (chưa có mắt vẫn đen trắng, tối, chỉ sáng quanh người; cường độ đèn do nó nhân lại), `ZoneAtmosphere` (sương mỏng theo khu).
+- Hạn chế: nặng máy (mục tiêu FPS giảm không quá 15%); vùng xa hơn 120 m không có bóng nên sáng đều (sương theo khu che); bóng của mức chi tiết xa của mái thô hơn.
+
+Checklist: (1) Console sạch, Test Runner xanh (`DappledSunMathTests`); (2) chạy menu trong scene `Underroot_Lake`, rồi Ctrl+S; (3) mảng sáng dưới các kẽ mái và 9 lỗ sáng, vùng khác tối, mảng sáng trôi chậm; (4) chưa có mắt: đen trắng, tối, chỉ sáng quanh người; có mắt (V): thấy mảng sáng; (5) đo FPS bằng PerfOverlay, F9 tắt bóng thì FPS hồi lại (ghi số trước và sau); (6) Restore Lake Sun trả về như cũ; (7) chụp ảnh gửi tôi.

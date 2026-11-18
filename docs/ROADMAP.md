@@ -88,3 +88,5 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Điểm nhấn Blender: khúc gỗ mục, nấm khổng lồ, cung rễ có va chạm (chờ duyệt hình trong Unity)
 
 - [x] Không khí riêng từng khu: sương và hạt theo khu, tối đa 150 hạt (chờ duyệt trong Unity)
+
+- [x] Ánh sáng lọt qua kẽ rễ (mặt trời đổ bóng của mái, F9 bật tắt; chờ duyệt FPS và hình trong Unity)
