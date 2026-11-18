@@ -55,6 +55,10 @@ Shader "Evolve/LakeWater"
                 half4 _Emission;
             CBUFFER_END
 
+            // set by MonochromeVision: 0 = full sight (default when unset), 1 = blind; centre + radius of the lit area around the character
+            float _EvolveBlind;
+            float4 _EvolveSightCenter;
+
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; float fogFactor : TEXCOORD1; };
 
@@ -107,6 +111,12 @@ Shader "Evolve/LakeWater"
                 // soft edge: transparent exactly where the water touches ground
                 col.a *= saturate(depth / max(0.01, _EdgeSoft));
                 col.rgb = MixFog(col.rgb, i.fogFactor);
+
+                // blind: the water is invisible except near the character (and inside a vibration scan), like everything else
+                float near = _EvolveSightCenter.w > 0.0 ? saturate(1.0 - distance(i.positionWS, _EvolveSightCenter.xyz) / _EvolveSightCenter.w) : 0.0;
+                float visible = 1.0 - _EvolveBlind * (1.0 - near * near);
+                col.rgb *= visible;
+                col.a *= visible;
                 return col;
             }
             ENDHLSL
