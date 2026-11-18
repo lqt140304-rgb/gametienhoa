@@ -27,6 +27,8 @@ namespace Evolve.World
         }
 
         public bool ParticlesEnabled { get; set; } = true;
+        /// <summary>When true (default) the zone's dusk ambient light is set every frame, scaled by the player's sight.</summary>
+        public bool ControlsAmbient { get; set; } = true;
         public AtmosphereProfile Current { get; private set; }
 
         enum Group { Falling, Rising, Drifting }
@@ -135,6 +137,12 @@ namespace Evolve.World
                 RenderSettings.fogStartDistance = 0f;
                 RenderSettings.fogEndDistance = ZoneAtmosphereMath.FogEndFor(Current, sight);
                 RenderSettings.fogColor = ZoneAtmosphereMath.FogColorFor(Current, sight);
+            }
+            if (ControlsAmbient)
+            {
+                // also under water (nothing else writes it there): black without eyes, the zone's dusk ambient with them
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight = ZoneAtmosphereMath.AmbientFor(Current, sight);
             }
             UpdateParticles(sight, under);
         }

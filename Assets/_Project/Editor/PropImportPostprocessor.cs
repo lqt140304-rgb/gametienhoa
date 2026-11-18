@@ -65,10 +65,13 @@ namespace Evolve.EditorTools
             if (main != null && lods.Count > 0)
             {
                 var group = root.AddComponent<LODGroup>();
-                var levels = new List<LOD> { new LOD(0.5f, new[] { main }) };
-                float h = 0.25f;
+                // ribs are long thin pieces seen from far away: the detailed copy only up close, the plain one down to a speck
+                bool rib = root.name.StartsWith("Rib_");
+                var levels = new List<LOD> { new LOD(rib ? 0.30f : 0.5f, new[] { main }) };
+                float h = rib ? 0.01f : 0.25f;
                 foreach (var kv in lods) { levels.Add(new LOD(h, kv.Value.ToArray())); h *= 0.4f; }
                 group.SetLODs(levels.ToArray());
+                group.RecalculateBounds();
             }
             foreach (var t in root.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, (StaticEditorFlags)(-1));
         }

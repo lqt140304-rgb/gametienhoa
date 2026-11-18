@@ -51,9 +51,11 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void Constants_AreSafe()
         {
-            Assert.GreaterOrEqual(DappledSunMath.Intensity, 1f);
-            Assert.LessOrEqual(DappledSunMath.Intensity, 3f);
+            Assert.GreaterOrEqual(DappledSunMath.Intensity, 0.4f);
+            Assert.LessOrEqual(DappledSunMath.Intensity, 1f);
             Assert.GreaterOrEqual(DappledSunMath.ShadowDistance, 80f);
+            Assert.GreaterOrEqual(DappledSunMath.ShadowStrength, 0.4f);
+            Assert.LessOrEqual(DappledSunMath.ShadowStrength, 0.85f);
             Assert.GreaterOrEqual(DappledSunMath.ShadowCascades, 2);
             Assert.LessOrEqual(DappledSunMath.ShadowCascades, 4);
             var c = DappledSunMath.AmbientColor;

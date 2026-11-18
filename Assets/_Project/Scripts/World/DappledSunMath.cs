@@ -7,16 +7,17 @@ namespace Evolve.World
     {
         public const float Elevation = 72f;       // degrees above the horizon: almost straight down
         public const float Yaw = 25f;
-        public const float Intensity = 1.8f;      // bright, because most of it is blocked by the roof
+        public const float Intensity = 0.6f;      // dusk-dim: the roof is a thick mat of roots (1.8 was far too bright)
         public const float SwayAmplitude = 2.5f;  // degrees
         public const float SwayPeriod = 70f;      // seconds
         public const float ShadowDistance = 120f;
         public const int ShadowCascades = 4;
         public const int ShadowResolution = 2048;
         public const float ReflectionIntensity = 0.3f;
+        public const float ShadowStrength = 0.65f;   // not pitch black: the shadow of a big root must not look like a cut
 
         public static readonly Color AmbientColor = new Color(0.06f, 0.08f, 0.08f, 1f);
-        public static readonly Color SunColor = new Color(1f, 0.92f, 0.75f, 1f);
+        public static readonly Color SunColor = new Color(1f, 0.93f, 0.80f, 1f);   // warm, but not so yellow that the green ground turns olive
 
         /// <summary>(pitch, yaw) of the sun at a time: the base angles swayed slowly so the patches of light drift. Period 0 or less: no sway.</summary>
         public static Vector2 Angles(float elevation, float yaw, float time, float amplitude, float period)
