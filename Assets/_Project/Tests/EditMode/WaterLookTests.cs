@@ -69,8 +69,6 @@ namespace Evolve.Tests.EditMode
         {
             Assert.GreaterOrEqual(WaterLook.BloomThreshold, 0.8f);
             Assert.LessOrEqual(WaterLook.BloomIntensity, 1f);
-            Assert.LessOrEqual(Mathf.Abs(WaterLook.Contrast), 20f);
-            Assert.LessOrEqual(Mathf.Abs(WaterLook.Saturation), 20f);
             Assert.LessOrEqual(WaterLook.VignetteIntensity, 0.35f);
         }
     }

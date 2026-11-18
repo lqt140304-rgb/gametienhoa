@@ -362,7 +362,7 @@ Checklist: (1) thả 6 FBX vào `Assets/_Project/Models/Underroot/`, Console s�
 
 ## 18. Ánh sáng và nước đẹp hơn: trạng thái và danh sách kiểm tra
 
-- Menu **Evolve → Dress Lake: Light and Water Look** (cũng là bước 15/15 của Rebuild Lake): bật Depth Texture của URP; đặt ambient ba tầng xanh lục tối và sương mũ 2 (tầm nhìn khoảng 220 m, `WaterLook`); dựng Volume hậu xử lý (Bloom, tương phản +8, bão hòa +10, Vignette 0,25, Tonemapping ACES) lưu ở `Settings/LakeLook.asset`; khoảng 24 đèn điểm không bóng cho nấm khổng lồ; đổi hai material nước sang shader `Evolve/LakeWater` (màu và độ mờ theo độ sâu, mép nước mờ dần, bọt nơi nước chạm đáy).
+- Menu **Evolve → Dress Lake: Light and Water Look** (cũng là bước 15/15 của Rebuild Lake): bật Depth Texture của URP; dựng Volume hậu xử lý (chỉ Bloom và Vignette nhẹ; màu, sương, ambient do MonochromeVision lo) lưu ở `Settings/LakeLook.asset`; khoảng 24 đèn điểm không bóng cho nấm khổng lồ; đổi hai material nước sang shader `Evolve/LakeWater` (màu và độ mờ theo độ sâu, mép nước mờ dần, bọt nơi nước chạm đáy).
 - **Evolve → Restore Lake Look (undo)** trả mọi thứ về như trước (sương, ambient, depth texture, shader nước về URP Lit, xóa Volume và đèn).
 - Hạn chế: không phản chiếu thật (chỉ viền sáng và vệt nắng), shader viết tay chưa biên dịch thử, sương áp cho cả scene (dưới nước `UnderwaterTint` vẫn ghi đè), chỉ bản đồ hồ 500 m (menu đã gắn vào Rebuild Lake).
 

@@ -10,8 +10,8 @@ using UnityEngine.Rendering.Universal;
 namespace Evolve.EditorTools
 {
     /// <summary>
-    /// Makes the lake look like a cavern: dark teal ambient light and fog, a post-processing volume (bloom, contrast,
-    /// vignette, tonemapping), glow lights for the giant mushrooms, and the water shader with depth-based colour,
+    /// Makes the lake look like a cavern: a post-processing volume (bloom, light vignette; saturation, fog, ambient and
+    /// daylight stay with MonochromeVision), glow lights for the giant mushrooms, and the water shader with depth-based colour,
     /// soft edges and foam. Menu: Evolve -> Dress Lake: Light and Water Look. Rerunnable; "Restore Lake Look" undoes it.
     /// </summary>
     public static class LakeLook
@@ -51,14 +51,13 @@ namespace Evolve.EditorTools
             var backup = LoadBackup();
             if (!backup.saved) SaveBackup();
             SetupUrp();
-            SetupAtmosphere();
             SetupPostProcess();
             SetupWater();
             SetupGlowLights();
             AssetDatabase.SaveAssets();
             var scene = EditorSceneManager.GetActiveScene();
             if (scene.IsValid()) EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log("Đã đặt ánh sáng và nước (sương, ambient, hậu xử lý, đèn nấm, shader nước). Nếu có gì lạ: Evolve → Restore Lake Look (undo).");
+            Debug.Log("Đã đặt ánh sáng và nước (hậu xử lý nhẹ, đèn nấm, shader nước; sương, ambient và màu theo mắt do MonochromeVision lo). Nếu có gì lạ: Evolve → Restore Lake Look (undo).");
         }
 
         [MenuItem("Evolve/Restore Lake Look (undo)")]
@@ -165,18 +164,6 @@ namespace Evolve.EditorTools
             if (n == 0) Debug.LogWarning("Không tìm thấy URP asset: nước sẽ không mờ dần theo độ sâu.");
         }
 
-        static void SetupAtmosphere()
-        {
-            RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = WaterLook.AmbientSky;
-            RenderSettings.ambientEquatorColor = WaterLook.AmbientEquator;
-            RenderSettings.ambientGroundColor = WaterLook.AmbientGround;
-            RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = WaterLook.FogColor;
-            RenderSettings.fogDensity = WaterLook.FogDensityFor(220f);
-        }
-
         static void SetupPostProcess()
         {
             DestroyByName(VolumeName);
@@ -189,21 +176,16 @@ namespace Evolve.EditorTools
             bloom.threshold.Override(WaterLook.BloomThreshold);
             bloom.intensity.Override(WaterLook.BloomIntensity);
             bloom.scatter.Override(WaterLook.BloomScatter);
-            var colour = profile.Add<ColorAdjustments>(true);
-            colour.contrast.Override(WaterLook.Contrast);
-            colour.saturation.Override(WaterLook.Saturation);
             var vignette = profile.Add<Vignette>(true);
             vignette.intensity.Override(WaterLook.VignetteIntensity);
             vignette.smoothness.Override(WaterLook.VignetteSmoothness);
-            var tone = profile.Add<Tonemapping>(true);
-            tone.mode.Override(TonemappingMode.ACES);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             EditorUtility.SetDirty(profile);
 
             var go = new GameObject(VolumeName);
             var volume = go.AddComponent<Volume>();
             volume.isGlobal = true;
-            volume.priority = 10f;
+            volume.priority = -10f; // below the vision volume: MonochromeVision owns saturation, fog, ambient and daylight
             volume.sharedProfile = profile;
 
             var cam = Camera.main;
