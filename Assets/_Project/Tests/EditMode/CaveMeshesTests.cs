@@ -27,6 +27,14 @@ namespace Evolve.Tests.EditMode
             Assert.Greater(after, before * 0.9f);
         }
 
+        [Test] public void DiscIsASolidCylinder()
+        {
+            var mesh = CaveMeshes.Disc(4f, 0.25f, 32);
+            Assert.AreEqual(8f, mesh.bounds.size.x, 0.01f);
+            Assert.AreEqual(0.25f, mesh.bounds.size.y, 1e-4f);
+            Assert.AreEqual(0f, mesh.bounds.min.y, 1e-4f);
+        }
+
         [Test] public void TunnelArchesOverItsPath()
         {
             var path = new List<Vector3> { new Vector3(0f, 0f, 0f), new Vector3(0f, -1f, 10f), new Vector3(3f, -3f, 20f) };

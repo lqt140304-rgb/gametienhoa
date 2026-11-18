@@ -94,5 +94,38 @@ namespace Evolve.World
             mesh.RecalculateBounds();
             return mesh;
         }
+
+        /// <summary>
+        /// A solid upright disc (a flat cylinder): radius <paramref name="radius"/>, from y = 0 up to <paramref name="height"/>,
+        /// base on the origin. Closed (top, side), so it works with a MeshCollider and an ordinary single-sided material.
+        /// </summary>
+        public static Mesh Disc(float radius, float height, int sides)
+        {
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+            for (int i = 0; i < sides; i++)
+            {
+                float a = i * Mathf.PI * 2f / sides;
+                var d = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
+                verts.Add(d);                                  // bottom ring
+                verts.Add(d + Vector3.up * height);            // top ring
+            }
+            int top = verts.Count;
+            verts.Add(Vector3.up * height);                    // top centre
+            for (int i = 0; i < sides; i++)
+            {
+                int n = (i + 1) % sides;
+                int b0 = i * 2, t0 = i * 2 + 1, b1 = n * 2, t1 = n * 2 + 1;
+                tris.Add(b0); tris.Add(t0); tris.Add(b1);      // side
+                tris.Add(b1); tris.Add(t0); tris.Add(t1);
+                tris.Add(top); tris.Add(t1); tris.Add(t0);     // top
+            }
+            var mesh = new Mesh { name = "Disc" };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
     }
 }

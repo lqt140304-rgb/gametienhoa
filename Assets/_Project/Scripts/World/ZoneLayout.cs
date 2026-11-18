@@ -93,9 +93,9 @@ namespace Evolve.World
         public const float NorthEntryHalfWidth = 10f;
         public const float PathWidth = 5f;
 
-        /// <summary>The ancient root cave of Chân Rễ Cổ Thụ: an oval dome over the area's centre.</summary>
-        public static readonly Vector2 CaveRadii = new Vector2(19f, 15f);
-        public const float CaveHeight = 12f;
+        /// <summary>The ancient root cave of Chân Rễ Cổ Thụ, the treefolk's Great Hall: an oval dome over the area's centre.</summary>
+        public static readonly Vector2 CaveRadii = new Vector2(29f, 22f);   // the Great Hall: 58 x 44 m
+        public const float CaveHeight = 18f;
         /// <summary>The root tunnel from the cave's side of the map down into the sinkhole (along the 02 -> 03 trail).</summary>
         public static readonly Vector2[] TunnelLine = { new Vector2(-167f, 67.5f), new Vector2(-144.5f, 123.75f) };
 

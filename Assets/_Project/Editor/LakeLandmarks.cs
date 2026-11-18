@@ -117,7 +117,7 @@ namespace Evolve.EditorTools
             Vector3 origin = new Vector3(c.x, floor - sink, c.y);
 
             // the shell, with a wide door toward the lake (east) and a hole to the north narrowed into a slit below
-            var shell = CaveMeshes.Shell(rx, rz, h, 72, 18, 202, 0.08f);
+            var shell = CaveMeshes.Shell(rx, rz, h, 120, 28, 202, 0.06f);
             WaterMeshes.RemoveTriangles(shell, v => v.x > 0f && Mathf.Abs(v.z) < 2.6f && v.y < sink + 3.6f);       // the door
             WaterMeshes.RemoveTriangles(shell, v => v.z > 0f && Mathf.Abs(v.x) < 1.6f && v.y < sink + 2.0f);       // the slit's hole
             var go = new GameObject("Cave Shell");
@@ -181,11 +181,11 @@ namespace Evolve.EditorTools
             if (humus != null) LakeGround.AddMesh(parent, "Humus Floor", humus, LakeGround.OpaqueMaterial("Lake_Humus", new Color(0.36f, 0.24f, 0.14f), 0.15f, false));
             var lightGo = new GameObject("Cave Glow");
             lightGo.transform.SetParent(parent, false);
-            lightGo.transform.position = new Vector3(c.x, floor + 4f, c.y);
+            lightGo.transform.position = new Vector3(c.x, floor + 9f, c.y);
             var l = lightGo.AddComponent<Light>();
             l.type = LightType.Point;
-            l.range = 20f;
-            l.intensity = 1.2f;
+            l.range = 50f;
+            l.intensity = 1.6f;
             l.color = new Color(1f, 0.72f, 0.42f);
             l.shadows = LightShadows.None;
         }
