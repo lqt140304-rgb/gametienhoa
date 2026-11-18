@@ -36,3 +36,7 @@ Thumbs.db
 .superpowers/
 .venv-blender/
 __pycache__/
+
+# Scanned assets downloaded on each machine (Evolve -> Install Scanned Assets)
+Assets/_Project/ThirdParty/Scanned/
+Assets/_Project/ThirdParty/Scanned.meta

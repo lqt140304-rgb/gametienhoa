@@ -492,3 +492,12 @@ Checklist: (1) Console sạch, Test Runner xanh (`FoodProfilesWiringTests`); (2)
 - Hạn chế: nước vẫn phẳng (chỉ pháp tuyến gợn, chưa có sóng nhô thật); không phản chiếu chính xác vật thể (không có phản xạ phẳng theo màn hình); nếu Opaque Texture tắt thì nước ra đen; đèn phụ chỉ tính trong giới hạn của URP; shader mới chưa được biên dịch hay thấy trong Unity.
 
 Checklist: (1) Console sạch (không lỗi shader); (2) Dress Lake: Water Realism, Ctrl+S; (3) thấy đáy hồ và vân sáng chuyển động ở chỗ nông, nước sâu xanh lục sẫm; (4) nhìn xiên gần bờ thấy phản chiếu, đứng gần nấm sáng thấy vệt sáng trên nước; (5) chưa có mắt vẫn không thấy nước; (6) FPS không tụt quá 10%.
+
+## 31. Thảm thực vật quét thật (đợt 0–1: tài sản, vật liệu bán thực, dải mẫu): trạng thái và danh sách kiểm tra
+
+- Spec `docs/superpowers/specs/2026-11-18-scanned-flora-design.md`, plan `docs/superpowers/plans/2026-11-18-scanned-flora-wave1.md`. Danh sách 22 tài sản Poly Haven (CC0, khoảng 350 MB): `tools/assets/flora_manifest.json`, trang duyệt có ảnh `docs/art/flora-selection.md`.
+- **Evolve → Install Scanned Assets**: tải về máy vào `Assets/_Project/ThirdParty/Scanned/` (không vào git), không tải lại file đã có, tài sản lỗi thì báo và làm tiếp; rồi dựng prefab với vật liệu URP **bán thực** (`World/SemiRealGrade`: bớt bão hòa 25%, ngả tông xanh lạnh của hang, giữ độ sáng; độ bóng thấp; lá cắt alpha, hai mặt, không đổ bóng).
+- **Evolve → Dress Lake: Scanned Flora Sample** (hoàn tác: Restore Lake Scanned Flora Sample): dải mẫu 40 m ở khu 01 (dương xỉ, tầm ma ở mép ẩm; rêu, cỏ hoa, dây bò; đá rêu, gỗ chết, gốc cây, cụm rễ, cây non) và hai góc máy cố định `Camera Spot 01a/01b`.
+- Test: `FloraManifestTests`, `FloraDownloadTests`, `SemiRealGradeTests` (chưa chạy trong Unity).
+
+Checklist: (1) Console sạch, Test Runner xanh; (2) Install Scanned Assets (cần mạng, vài phút); (3) Dress Lake: Scanned Flora Sample, Ctrl+S; (4) nhìn từ hai góc máy: chất lượng có tới mức bạn muốn không, lá không đen mặt sau, màu có hợp với phần còn lại không; (5) FPS tại góc máy ≥ 90.
