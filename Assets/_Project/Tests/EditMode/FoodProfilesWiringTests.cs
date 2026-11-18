@@ -56,5 +56,32 @@ namespace Evolve.Tests.EditMode
                 Assert.AreEqual(expected, best, kind.ToString());
             }
         }
+
+        [Test]
+        public void EveryForagePlantAndMineralRaisesItsMainNutrientMost()
+        {
+            var expected = new System.Collections.Generic.Dictionary<FoodKind, NutrientKind>
+            {
+                { FoodKind.WaterLily, NutrientKind.Vitamin }, { FoodKind.Cattail, NutrientKind.Fat }, { FoodKind.BitterFern, NutrientKind.Iron },
+                { FoodKind.FatMushroom, NutrientKind.Fat }, { FoodKind.SweetRoot, NutrientKind.Protein }, { FoodKind.IceBloom, NutrientKind.Calcium },
+                { FoodKind.LimeCrystal, NutrientKind.Calcium }, { FoodKind.IronNodule, NutrientKind.Iron }, { FoodKind.SaltCrust, NutrientKind.Calcium },
+                { FoodKind.GlowQuartz, NutrientKind.Vitamin }
+            };
+            foreach (var kv in expected)
+            {
+                var p = FoodProfiles.For(kv.Key);
+                NutrientKind best = NutrientKind.Protein;
+                for (int k = 1; k < NutrientKinds.Count; k++) if (p.Of((NutrientKind)k) > p.Of(best)) best = (NutrientKind)k;
+                Assert.AreEqual(kv.Value, best, kv.Key.ToString());
+            }
+        }
+
+        [Test]
+        public void MineralsAreFocusedAndRicherThanPlants()
+        {
+            Assert.GreaterOrEqual(FoodProfiles.For(FoodKind.LimeCrystal).Calcium, 1.2f);
+            Assert.GreaterOrEqual(FoodProfiles.For(FoodKind.IronNodule).Iron, 1.2f);
+            Assert.Greater(FoodProfiles.For(FoodKind.LimeCrystal).Calcium, FoodProfiles.For(FoodKind.RootDew).Calcium);
+        }
     }
 }

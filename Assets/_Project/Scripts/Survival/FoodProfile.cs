@@ -23,7 +23,14 @@ namespace Evolve.Survival
     }
 
     /// <summary>What a food source is; maps to its <see cref="FoodProfile"/>.</summary>
-    public enum FoodKind { Generic, PreyMeat, PredatorMeat, GlowMoss, AmberBud, SporePod, RootDew, EmberBerry }
+    public enum FoodKind
+    {
+        Generic, PreyMeat, PredatorMeat, GlowMoss, AmberBud, SporePod, RootDew, EmberBerry,
+        // plants (Dress Lake: Forage), appended so saved scenes keep their numbers
+        WaterLily, Cattail, BitterFern, FatMushroom, SweetRoot, IceBloom,
+        // minerals: a slime can digest them too
+        LimeCrystal, IronNodule, SaltCrust, GlowQuartz
+    }
 
     public static class FoodProfiles
     {
@@ -37,6 +44,16 @@ namespace Evolve.Survival
         static readonly FoodProfile SporePod = new FoodProfile(0f, 0.4f, 0f, 0f, 0.6f);
         static readonly FoodProfile RootDew = new FoodProfile(0f, 1.0f, 0f, 0f, 0.2f);
         static readonly FoodProfile EmberBerry = new FoodProfile(0f, 0f, 0.8f, 0f, 0.2f);
+        static readonly FoodProfile WaterLily = new FoodProfile(0f, 0.3f, 0f, 0.1f, 0.8f);
+        static readonly FoodProfile Cattail = new FoodProfile(0.25f, 0f, 0f, 0.5f, 0.3f);
+        static readonly FoodProfile BitterFern = new FoodProfile(0f, 0f, 0.5f, 0f, 0.5f);
+        static readonly FoodProfile FatMushroom = new FoodProfile(0.2f, 0f, 0f, 1.0f, 0f);
+        static readonly FoodProfile SweetRoot = new FoodProfile(0.6f, 0f, 0f, 0.4f, 0.1f);
+        static readonly FoodProfile IceBloom = new FoodProfile(0f, 0.5f, 0f, 0f, 0.5f);
+        static readonly FoodProfile LimeCrystal = new FoodProfile(0f, 1.3f, 0f, 0f, 0f);
+        static readonly FoodProfile IronNodule = new FoodProfile(0f, 0f, 1.3f, 0f, 0f);
+        static readonly FoodProfile SaltCrust = new FoodProfile(0f, 0.6f, 0.2f, 0f, 0.3f);
+        static readonly FoodProfile GlowQuartz = new FoodProfile(0f, 0f, 0.4f, 0f, 0.6f);
 
         public static FoodProfile For(FoodKind kind) => kind switch
         {
@@ -47,6 +64,16 @@ namespace Evolve.Survival
             FoodKind.SporePod => SporePod,
             FoodKind.RootDew => RootDew,
             FoodKind.EmberBerry => EmberBerry,
+            FoodKind.WaterLily => WaterLily,
+            FoodKind.Cattail => Cattail,
+            FoodKind.BitterFern => BitterFern,
+            FoodKind.FatMushroom => FatMushroom,
+            FoodKind.SweetRoot => SweetRoot,
+            FoodKind.IceBloom => IceBloom,
+            FoodKind.LimeCrystal => LimeCrystal,
+            FoodKind.IronNodule => IronNodule,
+            FoodKind.SaltCrust => SaltCrust,
+            FoodKind.GlowQuartz => GlowQuartz,
             _ => Mixed
         };
 

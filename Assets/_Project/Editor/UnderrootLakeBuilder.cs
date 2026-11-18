@@ -216,7 +216,7 @@ namespace Evolve.EditorTools
         }
 
         const int VegetationSeed = 4242;
-        const int SyncedFoodLimit = 400; // WorldSync sends at most this many food blobs
+        const int SyncedFoodLimit = FoodSyncLimit.MaxBlobs; // WorldSync sends at most this many food blobs
 
         static readonly string[] VegetationNames = { "Glow Moss", "Amber Bud", "Spore Pod", "Root Dew", "Ember Berry" };
         static readonly Vector2[] VegetationScale =

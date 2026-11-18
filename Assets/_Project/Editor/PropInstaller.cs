@@ -25,7 +25,9 @@ namespace Evolve.EditorTools
             "VaultPod_0", "VaultPod_1", "VaultPod_2", "VaultStalactite_0", "VaultStalactite_1", "VaultStalactite_2",
             "DragonSkull_0", "DragonSkull_1", "DragonRibcage_0",
             "LumaShroom_0", "LumaShroom_1", "LumaShroom_2", "CrystalCluster_0", "CrystalCluster_1", "CrystalCluster_2",
-            "BulbPlant_0", "BulbPlant_1", "RootStub_0", "RootStub_1"
+            "BulbPlant_0", "BulbPlant_1", "RootStub_0", "RootStub_1",
+            "Forage_WaterLily", "Forage_Cattail", "Forage_BitterFern", "Forage_FatMushroom", "Forage_SweetRoot", "Forage_IceBloom",
+            "Forage_LimeCrystal", "Forage_IronNodule", "Forage_SaltCrust", "Forage_Quartz"
         };
 
         [MenuItem("Evolve/Install Blender Rocks")]

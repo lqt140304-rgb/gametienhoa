@@ -36,6 +36,8 @@ namespace Evolve.Net
         const byte KindPredator = 1;
         const int MaxCreatures = 40;
         const int MaxPickups = 30;
+        /// <summary>At most this many food blobs are synced (one byte each; the buffer is 4096 bytes). Raised from 400 for the forage plants and minerals.</summary>
+        const int MaxFoodBlobs = Evolve.World.FoodSyncLimit.MaxBlobs;
         const float ReplicaStale = 1.5f;
 
         class Replica
@@ -184,8 +186,8 @@ namespace Evolve.Net
             var w = new FastBufferWriter(4096, Allocator.Temp);
             try
             {
-                w.WriteValueSafe((ushort)Mathf.Min(nutrients.Count, 400));
-                for (int i = 0; i < nutrients.Count && i < 400; i++)
+                w.WriteValueSafe((ushort)Mathf.Min(nutrients.Count, MaxFoodBlobs));
+                for (int i = 0; i < nutrients.Count && i < MaxFoodBlobs; i++)
                     w.WriteValueSafe((byte)Mathf.RoundToInt(nutrients[i].Fraction * 255f));
 
                 w.WriteValueSafe((byte)drops.Count);
