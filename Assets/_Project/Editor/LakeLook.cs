@@ -197,8 +197,8 @@ namespace Evolve.EditorTools
         {
             var shader = Shader.Find(WaterShaderName);
             if (shader == null) { Debug.LogWarning("Không tìm thấy shader " + WaterShaderName + ": giữ nước như cũ."); return; }
-            Retint("Lake_WaterClean", shader, new Color(0.02f, 0.27f, 0.31f, 0.92f), 3.0f);
-            Retint("Lake_WaterDirty", shader, new Color(0.22f, 0.26f, 0.07f, 0.95f), 1.5f);
+            Retint("Lake_WaterClean", shader, new Color(0.02f, 0.27f, 0.31f, 0.70f), 3.0f);
+            Retint("Lake_WaterDirty", shader, new Color(0.22f, 0.26f, 0.07f, 0.80f), 1.5f);
         }
 
         static void Retint(string name, Shader shader, Color deep, float deepDistance)
@@ -213,7 +213,8 @@ namespace Evolve.EditorTools
             mat.SetColor("_DeepColor", deep);
             mat.SetFloat("_DeepDistance", deepDistance);
             if (bump != null) mat.SetTexture("_BumpMap", bump);
-            mat.renderQueue = (int)RenderQueue.Transparent + 20;
+            // drawn just BEFORE the slime's gel (queue Transparent): a swimming slime is never washed out by the water over it
+            mat.renderQueue = (int)RenderQueue.Transparent - 2;
             EditorUtility.SetDirty(mat);
         }
 
