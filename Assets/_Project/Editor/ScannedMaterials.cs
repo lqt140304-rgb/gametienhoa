@@ -20,7 +20,7 @@ namespace Evolve.EditorTools
             string model = FindFile(folder, ".fbx") ?? FindFile(folder, ".gltf") ?? FindFile(folder, ".glb");
             if (model == null) { Debug.LogWarning($"[Scanned] {a.id}: chưa có model trong {folder}."); return null; }
             string tex = folder + "/textures";
-            string diff = FindFile(tex, "_diff_"), nor = FindFile(tex, "_nor_gl_"), alpha = FindFile(tex, "_alpha_"), ao = FindFile(tex, "_ao_");
+            string diff = FindFile(tex, "_diff_"), nor = FindFile(tex, "_nor_gl_"), alpha = FindFile(tex, "_alpha_"), ao = FindFile(tex, "_ao_"), arm = FindFile(tex, "_arm_");
 
             if (nor != null && AssetImporter.GetAtPath(nor) is TextureImporter ni && ni.textureType != TextureImporterType.NormalMap)
             {
@@ -29,21 +29,34 @@ namespace Evolve.EditorTools
             }
             string graded = diff != null ? GradedBaseMap(diff, alpha, folder + "/" + a.id + "_base_semireal.png") : null;
 
-            string matPath = folder + "/" + a.id + "_semireal.mat";
-            var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
-            if (mat == null) { mat = new Material(Shader.Find(Lit)) { name = a.id + "_semireal" }; AssetDatabase.CreateAsset(mat, matPath); }
-            if (graded != null) mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(graded));
-            if (nor != null) { mat.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(nor)); mat.EnableKeyword("_NORMALMAP"); mat.SetFloat("_BumpScale", 1f); }
-            if (ao != null) { mat.SetTexture("_OcclusionMap", AssetDatabase.LoadAssetAtPath<Texture2D>(ao)); mat.EnableKeyword("_OCCLUSIONMAP"); }
-            mat.SetFloat("_Smoothness", 1f - SemiRealGrade.Roughness(0.75f));
-            mat.SetFloat("_Metallic", 0f);
-            mat.SetFloat("_SpecularHighlights", 0f); mat.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
             bool foliage = a.IsFoliage || alpha != null;
-            mat.SetFloat("_AlphaClip", foliage ? 1f : 0f);
-            mat.SetFloat("_Cutoff", 0.45f);
-            if (foliage) mat.EnableKeyword("_ALPHATEST_ON"); else mat.DisableKeyword("_ALPHATEST_ON");
-            mat.SetFloat("_Cull", foliage ? 0f : 2f);
-            mat.doubleSidedGI = foliage;
+            string matPath = folder + "/" + a.id + "_semireal.mat";
+            var shader = foliage ? Shader.Find("Evolve/ScannedFoliage") : Shader.Find(Lit);
+            if (shader == null) shader = Shader.Find(Lit);
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+            if (mat == null) { mat = new Material(shader) { name = a.id + "_semireal" }; AssetDatabase.CreateAsset(mat, matPath); }
+            mat.shader = shader;
+            if (graded != null) mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(graded));
+            if (nor != null) { mat.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(nor)); mat.EnableKeyword("_NORMALMAP"); }
+            if (foliage)
+            {
+                // our two-sided leaf shader: back faces lit like the front (URP Lit with Cull Off would leave them black)
+                if (arm != null) mat.SetTexture("_ArmMap", AssetDatabase.LoadAssetAtPath<Texture2D>(arm));
+                else if (ao != null) mat.SetTexture("_ArmMap", AssetDatabase.LoadAssetAtPath<Texture2D>(ao));
+                mat.SetFloat("_Cutoff", 0.45f);
+                mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+            }
+            else
+            {
+                // solid scans (rock, wood): URP Lit, matte; AO only from a plain AO map (URP reads it from G, the packed ARM keeps AO in R)
+                if (ao != null) { mat.SetTexture("_OcclusionMap", AssetDatabase.LoadAssetAtPath<Texture2D>(ao)); mat.EnableKeyword("_OCCLUSIONMAP"); }
+                mat.SetFloat("_Smoothness", 1f - SemiRealGrade.Roughness(0.75f));
+                mat.SetFloat("_Metallic", 0f);
+                mat.SetFloat("_SpecularHighlights", 0f); mat.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+                mat.SetFloat("_AlphaClip", 0f); mat.DisableKeyword("_ALPHATEST_ON");
+                mat.SetFloat("_Cull", 2f);
+                mat.renderQueue = -1;
+            }
             mat.enableInstancing = true;
             EditorUtility.SetDirty(mat);
 
@@ -65,7 +78,8 @@ namespace Evolve.EditorTools
                 lod.SetLODs(new[] { new LOD(foliage ? 0.03f : 0.01f, renderers) });   // culled when tiny on screen
                 lod.RecalculateBounds();
             }
-            foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, (StaticEditorFlags)(-1));
+            // occlusion and reflection only: static batching would undo GPU instancing and inflate memory with hundreds of copies
+            foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, StaticEditorFlags.OccludeeStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.ReflectionProbeStatic);
             var prefab = PrefabUtility.SaveAsPrefabAsset(go, folder + "/" + a.id + ".prefab");
             Object.DestroyImmediate(go);
             return prefab;

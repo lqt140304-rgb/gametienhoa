@@ -35,20 +35,30 @@ namespace Evolve.EditorTools
                 {
                     var a = manifest.assets[i];
                     if (EditorUtility.DisplayCancelableProgressBar("Tải tài sản quét (Poly Haven)", $"{a.id} ({i + 1}/{manifest.assets.Length})", i / (float)manifest.assets.Length)) break;
-                    string json = Get(Api + a.id, out string error);
-                    if (json == null) { failed.Add($"{a.id}: {error}"); continue; }
-                    var plan = FloraDownload.Plan(json, a, p => File.Exists(Path.Combine(root, p)));
-                    if (FloraDownload.PickUrl(json, a, out _) == null) { failed.Add($"{a.id}: không có FBX/glTF {a.resolution}"); continue; }
-                    bool ok = true;
-                    foreach (var (url, path) in plan)
+                    try
                     {
-                        string target = Path.Combine(root, path);
-                        Directory.CreateDirectory(Path.GetDirectoryName(target));
-                        long got = Download(url, target, out string err);
-                        if (got < 0) { failed.Add($"{a.id}: {Path.GetFileName(path)}: {err}"); ok = false; break; }
-                        bytes += got;
+                        string json = Get(Api + a.id, out string error);
+                        if (json == null)
+                        {
+                            // offline or renamed upstream: what is already on disk still counts
+                            if (HasModel(root, a)) { done++; Debug.Log($"[Scanned] {a.id}: không liên lạc được Poly Haven ({error}), dùng bản đã có trên máy."); }
+                            else failed.Add($"{a.id}: {error}");
+                            continue;
+                        }
+                        if (FloraDownload.PickUrl(json, a, out _) == null) { failed.Add($"{a.id}: không có FBX/glTF {a.resolution}"); continue; }
+                        var plan = FloraDownload.Plan(json, a, p => File.Exists(Path.Combine(root, p)));
+                        bool ok = true;
+                        foreach (var (url, path) in plan)
+                        {
+                            string target = Path.Combine(root, path);
+                            Directory.CreateDirectory(Path.GetDirectoryName(target));
+                            long got = Download(url, target, out string err);
+                            if (got < 0) { failed.Add($"{a.id}: {Path.GetFileName(path)}: {err}"); ok = false; break; }
+                            bytes += got;
+                        }
+                        if (ok) done++;
                     }
-                    if (ok) done++;
+                    catch (System.Exception e) { failed.Add($"{a.id}: {e.GetType().Name}: {e.Message}"); }   // a locked file or too long a path must not stop the others
                 }
             }
             finally { EditorUtility.ClearProgressBar(); }
@@ -63,6 +73,12 @@ namespace Evolve.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log($"Tài sản quét: {done}/{manifest.assets.Length} đã đủ file, tải thêm {bytes / 1e6:0.#} MB, {prefabs} prefab bán thực trong {FloraDownload.Root}.");
             if (failed.Count > 0) Debug.LogWarning("Tài sản lỗi (chạy lại menu để thử lại):\n" + string.Join("\n", failed));
+        }
+
+        static bool HasModel(string root, FloraAsset a)
+        {
+            string dir = Path.Combine(root, FloraDownload.FolderFor(a));
+            return Directory.Exists(dir) && (Directory.GetFiles(dir, "*.fbx").Length > 0 || Directory.GetFiles(dir, "*.gltf").Length > 0);
         }
 
         static string Get(string url, out string error)
