@@ -162,6 +162,35 @@ Quy tắc tạm khi kho còn nhỏ (hiện 12 Lõi, phòng 5 người trở lên
 
 Cần kiểm tra khi cài đặt: chia thẻ bằng seed của host, gửi cho từng máy; người vào trễ hoặc rời phòng thì thẻ của họ được trả lại kho và chia lại.
 
+## Bố cục màn hình chọn (phác bằng chữ, chờ duyệt)
+```
++--------------------------------------------------------------+
+|  Dị Năng của bạn:  [Co Rút]  (rút ngẫu nhiên, chỉ xem)       |
++--------------------------------------------------------------+
+|  CHỌN LÕI (1 trong 3)                                        |
+|  +----------+   +----------+   +----------+                  |
+|  | Màng     |   | Nhân     |   | Nhân     |                  |
+|  | Thẩm Thấu|   | Ngụy Sắc |   | Con Bạc  |                  |
+|  | luật Lõi |   | luật Lõi |   | luật Lõi |                  |
+|  +----------+   +----------+   +----------+                  |
++--------------------------------------------------------------+
+|  CHỌN KHUYẾT ĐIỂM (hiện sau khi chọn Lõi)                    |
+|  [Run Rẩy]   [Mờ Trong Tối]   [Cơ Quan Mau Mòn]              |
+|  mô tả luật xấu + cơ quan nào có thể bù                      |
++--------------------------------------------------------------+
+|                         [ Xác nhận ]                         |
++--------------------------------------------------------------+
+```
+Thẻ đang xem phóng lớn, hiện mô tả luật, giới hạn, ví dụ tình huống. Với Lõi nặng, ba lựa chọn Khuyết Điểm hiện dạng cặp. Có nút xem lại cả hai trước khi xác nhận. Người chơi xem được bộ thẻ của mình từ màn hình tải.
+
+## Đối chiếu với tài liệu gameplay V1.1 (cần sửa khi hợp nhất)
+- Mục 5.4 (hai ô chủ động): **bỏ**. Thanh kỹ năng có **6 ô: Q (Dị Năng) + 5 ô từ cơ quan và class**, khớp hotbar hiện tại trong code.
+- Từ "thiên phú": **Dị Năng** là thiên phú chủ động (phím Q); **Lõi** là thiên phú bị động. Ô A trong tài liệu V1.1 = Q.
+- Mục 4 (lõi sống bẩm sinh): Lõi của người chơi là phần năng lực gắn với lõi sống; vẫn tách khỏi **lõi điều khiển trang bị** (tối đa 1).
+- Mục 10 hàng "Ô kỹ năng chiến đấu": mâu thuẫn được gỡ theo hướng giữ hotbar 5 + Q.
+- Mục 14 câu 1: đã quyết (giữ hotbar). Câu chưa đụng tới: EXP cá thể và EXP nuôi cơ quan, mốc tiến hóa 15/40/70/90, mốc ô cơ quan.
+- `docs/GAME_DESIGN.md` mục 3 (Tạo nhân vật) cần cập nhật: Dị Năng rút ngẫu nhiên, đổi được bằng dụng cụ đặc biệt; Thiên Phú bị động đổi tên **Lõi**; chọn Khuyết Điểm theo Lõi; chống trùng; 12 Lõi nháp.
+
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
 
