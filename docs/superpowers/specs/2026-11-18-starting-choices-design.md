@@ -16,20 +16,23 @@ Trạng thái: **đang thảo luận**, chưa phải thiết kế hoàn chỉnh.
 2. Lõi + Khuyết Điểm vẫn là **lợi ròng**: bỏ Khuyết Điểm đi thì Lõi vẫn rõ là tốt.
 3. Khuyết Điểm **làm người chơi để ý**, không làm họ thua; không biến mất sau cấp 20, không phạt nặng mọi trận.
 
-## Danh sách Lõi đầu tiên (bản nháp, chưa duyệt)
-Kho Khuyết Điểm dùng chung (số liệu tạm): Thân Dễ Vỡ (máu tối đa thấp hơn), Hồi Chậm (hồi năng lượng chậm), Đói Nhanh, Cảm Giác Cùn (tầm cảm nhận ngắn), Mô Nặng (di chuyển chậm hơn chút), Nhảy Thấp, Sợ Nhiệt, Sợ Lạnh, Sợ Độc, Hao Nền (năng lượng hao nền nhiều hơn).
+## Danh sách Lõi đầu tiên (bản nháp)
+Khuyết Điểm là **luật xấu tự chạy** (xem kho bên dưới), mức nhẹ vừa phải. Mỗi Lõi chọn 3 Khuyết Điểm khác trục với hành vi mạnh của Lõi. Lõi nặng (Nhân Con Bạc, Nhân Giữ Gốc) có 3 lựa chọn, mỗi lựa chọn là **một cặp hai Khuyết Điểm**.
 
 | Lõi | Cơ chế | 3 Khuyết Điểm (chọn 1) |
 |---|---|---|
-| Màng Thẩm Thấu | Đứng yên trong nước hoặc rêu thì hút dưỡng chất dần | Thân Dễ Vỡ · Cảm Giác Cùn · Sợ Nhiệt |
-| Nhân Thần Tốc | Nảy đúng nhịp liên tiếp thì tăng tốc theo chuỗi | Hao Nền · Thân Dễ Vỡ · Sợ Độc |
-| Nhân Ngụy Sắc | Đứng yên vài giây thì hòa vào nền | Hồi Chậm · Sợ Lạnh · Đói Nhanh |
-| Nhân Phản Chấn | Bị đánh trúng thì tích lực, đòn kế tiếp mạnh hơn | Mô Nặng · Đói Nhanh · Sợ Nhiệt |
-| Nhân Cộng Sinh | Ở gần đồng đội thì cả hai hồi máu nhanh hơn | Cảm Giác Cùn · Hồi Chậm · Sợ Độc |
-| Nhân Ăn Mòn | Chạm vật hữu cơ thì tiết dịch ăn dần, hút thêm dinh dưỡng | Thân Dễ Vỡ · Nhảy Thấp · Cảm Giác Cùn |
-| Nhân Bám Dính | Không bị hất văng khi đứng vững hoặc đi chậm; leo dốc không mất tốc | Sợ Nhiệt · Hao Nền · Đói Nhanh |
-| Nhân Dự Trữ | Khi no thì tích mỡ, về sau đói chậm lại | Nhảy Thấp · Sợ Lạnh · Mô Nặng |
-| Nhân Quang Hợp (thay Phát Quang) | Đứng hoặc đi trong tia sáng xuyên rễ thì hồi năng lượng dần | Thân Dễ Vỡ · Cảm Giác Cùn · Sợ Lạnh |
+| Màng Thẩm Thấu | Đứng yên trong nước nông hoặc rêu thì hút dưỡng chất dần | Run Rẩy · Mờ Trong Tối · Cơ Quan Mau Mòn |
+| Nhân Thần Tốc | Nảy đúng nhịp liên tiếp thì tăng tốc theo chuỗi | Đói Sớm · Cơ Quan Mau Mòn · Dạ Dày Kén |
+| Nhân Ngụy Sắc | Đứng yên vài giây thì hòa vào nền | Ngại Đông · Dạ Dày Kén · Luống Cuống |
+| Nhân Phản Chấn | Bị đánh trúng thì tích lực, đòn kế tiếp mạnh hơn | Đói Sớm · Lạ Vùng · Bám Bùn |
+| Nhân Cộng Sinh | Ở gần đồng đội thì cùng hồi máu nhanh hơn | Vệt Mùi · Mờ Trong Tối · Mau Khô |
+| Nhân Ăn Mòn | Chạm vật hữu cơ thì tiết dịch ăn dần, hút thêm dinh dưỡng | Run Rẩy · Lạ Vùng · Dễ Bị Chú Ý |
+| Nhân Con Bạc | Tăng tỉ lệ rơi theo bậc cơ quan (kể cả boss) | (Đói Sớm + Mờ Trong Tối) · (Run Rẩy + Lạ Vùng) · (Cơ Quan Mau Mòn + Ngại Đông) |
+| Nhân Thích Nghi | Chịu lặp lại một loại sát thương môi trường thì kháng loại đó tăng dần | Run Rẩy · Ngại Đông · Dễ Bị Chú Ý |
+| Nhân Quang Hợp | Đứng hoặc đi trong tia sáng xuyên rễ thì hồi năng lượng | Bám Bùn · Vệt Mùi · Cơ Quan Mau Mòn |
+| Nhân Bám Dính | Không bị hất văng khi đứng vững hoặc đi chậm; leo dốc không mất tốc | Mờ Trong Tối · Mau Khô · Dạ Dày Kén |
+| Nhân Quen Đất | Đi lại một đường nhiều lần thì nhanh hơn trên đường đó | Run Rẩy · Đói Sớm · Luống Cuống |
+| Nhân Giữ Gốc | Chết lần 1 hoặc 2 không mất cơ quan đang trang bị | (Đói Sớm + Lạ Vùng) · (Mờ Trong Tối + Ngại Đông) · (Dạ Dày Kén + Luống Cuống) |
 
 Đã bỏ khỏi danh sách theo phản hồi: Nhân Dò Rung và Nhân Tái Cấu (vô dụng), Nhân Tích Bào (giống kỹ năng bấm hơn là Lõi).
 Nguyên tắc: **Lõi tự chạy, đổi một luật của cơ thể; Dị Năng mới là thứ bấm nút.**
@@ -129,29 +132,25 @@ Mỗi Lõi sẽ được mô tả theo cùng khuôn: kích hoạt khi nào, gi�
 - Tương tác: Khuyết Điểm không dùng Mô Nặng hoặc Nhảy Thấp.
 - Co-op: host quyết định hất văng, kiểm tra điều kiện đứng vững.
 
-## Kho Khuyết Điểm chi tiết (bản nháp)
-Quy ước chung (số liệu tạm):
-- Khuyết Điểm vĩnh viễn, không xoá được. Cơ quan đúng vị trí giải phẫu có thể **bù tối đa 70%** tác động; còn 30% luôn ở lại. Cơ quan hỏng hoặc mất thì phần bù mất theo.
-- Mỗi Khuyết Điểm có một biểu tượng cố định trên HUD và mô tả khi rê chuột. Tác động phải **nhìn thấy được**, không ẩn.
-- Lõi "nặng hơn" (Nhân Con Bạc, Nhân Giữ Gốc): mỗi lựa chọn là **một cặp hai Khuyết Điểm** thay vì một.
-- Trục: Sống còn (máu, đói, năng lượng) · Cảm giác · Vận động · Môi trường.
+## Kho Khuyết Điểm chi tiết (bản nháp, mức nhẹ vừa)
+Nguyên tắc: Khuyết Điểm là **luật xấu tự chạy**, gây phiền chứ không gây đau; không có hình phạt mất máu theo đồng hồ. Vĩnh viễn, không xoá được. Cơ quan đúng vị trí giải phẫu **bù tối đa 70%** (cơ quan hỏng thì mất phần bù). Mỗi Khuyết Điểm có biểu tượng cố định trên HUD và mô tả khi rê chuột. Số liệu đều là số tạm.
 
-| Khuyết Điểm | Trục | Tác động (tạm) | Cơ quan bù được (vị trí) | Tín hiệu cho người chơi |
-|---|---|---|---|---|
-| Thân Dễ Vỡ | Sống còn | Máu tối đa −12% | Lưng (giáp), Da/màng | Thanh máu ngắn hơn, viền thanh đổi màu |
-| Hồi Chậm | Sống còn | Hồi năng lượng chậm −25% | Tuyến, Tiêu hóa | Thanh năng lượng hồi chậm, đồng hồ hiện |
-| Đói Nhanh | Sống còn | Độ no tụt nhanh hơn +20% | Tiêu hóa | Thanh no tụt nhanh, báo đói sớm hơn |
-| Hao Nền | Sống còn | Năng lượng nền hao thêm +15% | Tiêu hóa, Hô hấp | Năng lượng không tăng khi đứng yên |
-| Cảm Giác Cùn | Cảm giác | Tầm cảm nhận (vòng nhìn) ngắn lại −25% | Mắt, Cảm quan phụ | Vòng nhìn nhỏ hơn, nền mờ sớm hơn |
-| Mô Nặng | Vận động | Tốc độ di chuyển −8% | Chân, Vây/cánh, Đuôi | Slime ngồi thấp hơn, trườn chậm |
-| Nhảy Thấp | Vận động | Cú nảy thấp và ngắn hơn −20% | Chân, Đuôi | Cú nảy thấp, hiệu ứng nảy yếu |
-| Sợ Nhiệt | Môi trường | Nhận thêm sát thương nhiệt +30% | Da/màng | Biểu tượng lửa gạch, viền đỏ khi gần nguồn nóng |
-| Sợ Lạnh | Môi trường | Nhận thêm sát thương lạnh +30% | Da/màng | Biểu tượng tuyết gạch, thân run khi lạnh |
-| Sợ Độc | Môi trường | Nhận thêm sát thương độc +30% | Tuyến, Hô hấp | Biểu tượng độc gạch, thân tái khi trúng độc |
+| Khuyết Điểm | Luật xấu (tự chạy) | Cơ quan bù |
+|---|---|---|
+| Run Rẩy | Bị đánh trúng thì khựng 0,7 giây, không nảy được | Chân, Đuôi |
+| Vệt Mùi | Đi qua đâu để lại vệt mùi 20 giây; kẻ địch trong khoảng 15 m có thể theo vệt | Tuyến |
+| Mờ Trong Tối | Ở nơi tối thì tầm nhìn hẹp lại 15% | Mắt, Cảm quan phụ |
+| Đói Sớm | Độ no tụt nhanh hơn 10%, báo đói sớm hơn; không mất thêm máu | Tiêu hóa |
+| Bám Bùn | Đi qua bùn hoặc nước nông bị chậm thêm 2 giây sau khi ra | Chân, Vây/cánh |
+| Luống Cuống | Máu dưới 25% thì xoay hướng chậm hơn rõ rệt | Đuôi, Cảm quan phụ |
+| Ngại Đông | Có từ ba sinh vật trở lên gần nhau (trong 6 m) thì hồi năng lượng chậm đi 20% | Tuyến |
+| Mau Khô | Ở xa nước hoặc rêu quá 90 giây thì thân khô, đi chậm hơn 8%; vào nước hoặc rêu là hết ngay | Da/màng |
+| Cơ Quan Mau Mòn | Độ nguyên vẹn cơ quan mất nhanh hơn 20% khi trúng đòn | Lưng (giáp), Da/màng |
+| Dễ Bị Chú Ý | Kẻ địch trong tầm 20 m bị thu hút về phía bạn | Da/màng, Tuyến |
+| Lạ Vùng | Vào vùng mới thì 15 giây đầu tầm nhìn hẹp 15% | Mắt, Hô hấp |
+| Dạ Dày Kén | Ăn thức ăn lạ lần đầu thì hấp thụ chậm hơn 30% trong 20 giây | Tiêu hóa |
 
-Quy tắc chọn 3 Khuyết Điểm cho mỗi Lõi: không cùng trục với tác động chính của Lõi; Nhân Thích Nghi không dùng nhóm Sợ-; Nhân Quang Hợp không dùng Hao Nền và Hồi Chậm (cùng trục năng lượng); Nhân Bám Dính không dùng Mô Nặng và Nhảy Thấp.
-
-Cần kiểm tra khi cài đặt: tổng bù từ nhiều cơ quan không vượt 70%; hai Khuyết Điểm cùng trục (trong cặp) không được chọn trùng.
+Cần kiểm tra khi cài đặt: tổng bù từ nhiều cơ quan không vượt 70%; hai Khuyết Điểm trong một cặp không cùng loại.
 
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
