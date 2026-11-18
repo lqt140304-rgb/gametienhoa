@@ -34,3 +34,4 @@ crashlytics-build.properties
 Thumbs.db
 *.slnx
 .superpowers/
+.venv-blender/
