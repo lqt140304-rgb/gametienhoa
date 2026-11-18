@@ -52,7 +52,7 @@ Phong cách: ba thẻ dọc kiểu gel trong suốt, có biểu tượng quả c
   +------------+  +------------+  +------------+
   |    (o)     |  |    (o)     |  |    (o)     |
   | Màng Thẩm  |  | Nhân Ngụy  |  | Nhân Con   |   tên ở trên
-  | Thấm       |  | Sắc        |  | Bạc        |
+  | Thấu       |  | Sắc        |  | Bạc        |
   | hút dưỡng  |  | hòa vào    |  | rơi nhiều  |   mô tả rút gọn ở dưới
   | chất       |  | nền        |  | đồ hơn     |
   +------------+  +------------+  +------------+
