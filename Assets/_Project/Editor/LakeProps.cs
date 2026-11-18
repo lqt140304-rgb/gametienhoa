@@ -60,7 +60,22 @@ namespace Evolve.EditorTools
                 return 0f;
             }
 
-            bool Blocked(float x, float z) => !PropPlacement.Allowed(x, z, WaterDepth, ZoneLayout.DistanceToPath, keepClear, 6f);
+            // Same exclusions as the vegetation builder: the spawn pool, deep pockets, landmark pillars and food.
+            var solids = new List<Bounds>();
+            foreach (var t in Object.FindObjectsByType<Transform>())
+            {
+                if (t.name.StartsWith("Deep Pocket")) solids.Add(new Bounds(t.position, new Vector3(16f, 16f, 16f)));
+                if (t.name.StartsWith("Landmark ")) solids.Add(new Bounds(t.position, new Vector3(11f, 1f, 11f)));
+            }
+            foreach (var n in Object.FindObjectsByType<Nutrient>()) solids.Add(new Bounds(n.transform.position, new Vector3(6f, 6f, 6f)));
+
+            bool Blocked(float x, float z)
+            {
+                if (x * x + z * z < 18f * 18f) return true; // the life pool and its spawn ring
+                foreach (var b in solids)
+                    if (x >= b.min.x && x <= b.max.x && z >= b.min.z && z <= b.max.z) return true;
+                return !PropPlacement.Allowed(x, z, WaterDepth, ZoneLayout.DistanceToPath, keepClear, 6f);
+            }
 
             var areas = new List<Area> { new Area { Name = "Core", Rect = new Rect(-60f, -60f, 120f, 120f), Count = 40, Sizes = new Vector2(0.3f, 1.6f) } };
             var sizes = new[] { new Vector2(0.6f, 3.2f), new Vector2(0.3f, 1.6f), new Vector2(0.3f, 1.0f), new Vector2(0.6f, 2.4f) };

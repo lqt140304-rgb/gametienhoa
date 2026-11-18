@@ -79,7 +79,7 @@ def main():
         kit.export_fbx([obj, col], os.path.join(args.out, obj.name + ".fbx"))
         if args.previews:
             os.makedirs(args.previews, exist_ok=True)
-            for angle in ("front", "top"):
+            for angle in ("front", "side", "top"):
                 kit.render_preview([obj, col], os.path.join(args.previews, "%s_%s.png" % (obj.name, angle)), angle)
         print("%s: %d tris, collider %d tris" % (obj.name, kit.tri_count(obj), kit.tri_count(col)))
 

@@ -24,6 +24,15 @@ namespace Evolve.EditorTools
             importer.importLights = false;
         }
 
+        const string RockMaterial = "Assets/_Project/Materials/Rock_VC.mat";
+
+        // Props come with painted vertex colours (stone and moss); URP Lit ignores them, so use the vertex-colour shader.
+        Material OnAssignMaterialModel(Material material, Renderer renderer)
+        {
+            if (!assetPath.StartsWith(Folder)) return null;
+            return AssetDatabase.LoadAssetAtPath<Material>(RockMaterial);
+        }
+
         void OnPostprocessModel(GameObject root)
         {
             if (!assetPath.StartsWith(Folder)) return;
