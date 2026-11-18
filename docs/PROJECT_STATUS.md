@@ -376,3 +376,13 @@ Checklist: (1) Console sạch, Test Runner xanh (có `WaterLookTests`); (2) ch�
 - Hạn chế: hình dạng là bản đầu (cung rễ trơn, mũ nấm bán cầu đơn giản); ảnh xem trước ở `docs/art/previews/` (không vào git).
 
 Checklist: (1) Console sạch, Test Runner xanh; (2) chạy menu: các object cũ biến mất, bản Blender xuất hiện đúng chỗ (03 khúc gỗ, 04 cụm nấm, 06 cung rễ); (3) chui qua khúc gỗ được từ hai đầu; (4) nấm lớn: chạm thân bị chặn, đi dưới mũ cao không bị chặn; (5) đi qua cung rễ vào khu 06 với slime cỡ tối đa; (6) chạy menu hai lần: không nhân đôi; (7) FPS bằng PerfOverlay; (8) đèn nấm còn; (9) chụp ảnh gửi tôi.
+
+
+## 20. Không khí riêng từng khu (sương và hạt): trạng thái và danh sách kiểm tra
+
+- `ZoneAtmosphere` (trên camera, thêm lúc chạy cùng `UnderwaterTint` khi cảnh là hồ) trộn mượt sương và hạt theo mức ảnh hưởng của 6 khu (`ZoneLayout.Influence`); số liệu từng khu ở `ZoneAtmosphereMath.Zones` (01 xanh ngọc nhạt 160 m, 02 nâu ấm 70 m, 03 nâu cam đục 55 m, 04 tím nhạt 90 m, 05 trắng xanh lạnh 120 m, 06 xám đỏ sẫm 40 m).
+- Sương: `FogMode.Linear`; chưa có mắt thì sương đen và tầm nhìn 80 m (như `MonochromeVision`), có mắt thì màu theo khu; khi camera dưới nước thì nhường cho `UnderwaterTint`.
+- Hạt: ba hệ hạt (rơi, bay lên, trôi) đi theo camera, **tối đa 150 hạt**, mỗi lần chỉ một nhóm phát (theo khu trội nhất), tắt khi chưa có mắt hoặc dưới nước. **Phím F8** bật tắt hạt.
+- Hạn chế: chưa có lớp sương sát đất; hạt xuyên vật thể gần camera; hình hạt là chấm mờ (chưa có hình riêng như cánh hoa, lá).
+
+Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`); (2) đi qua 6 khu: màu sương và hạt khác nhau, ranh giới mượt; (3) chưa có mắt: sương đen, không thấy hạt xa; có mắt (phím V): sương có màu khu; (4) lặn xuống hố sâu rồi nổi lên: sương trở về đúng khu, không kẹt xanh ngọc; (5) F8 bật tắt hạt; (6) FPS bằng PerfOverlay không giảm quá 3%; (7) chụp ảnh từng khu gửi tôi.
