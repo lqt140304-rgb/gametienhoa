@@ -206,7 +206,7 @@ Khuyết Điểm vĩnh viễn, không xoá được, **không kèm lợi ích b�
 | Lạ Vùng | Vào vùng mới thì 15 giây đầu tầm nhìn hẹp 15% | Mắt, Hô hấp |
 | Dạ Dày Kén | Ăn thức ăn lạ lần đầu thì hấp thụ chậm hơn 30% trong 20 giây | Tiêu hóa |
 
-Mỗi Khuyết Điểm có biểu tượng cố định trên HUD và mô tả khi rê chuột. Ràng buộc cài đặt: tổng bù từ nhiều cơ quan không vượt 70%; hai Khuyết Điểm trong một cặp không cùng loại; Nhân Thích Nghi không dùng nhóm Sợ-; Nhân Quang Hợp không dùng Hao Nền hay Hồi Chậm; Nhân Bám Dính không dùng Bám Bùn, Run Rẩy.
+Mỗi Khuyết Điểm có biểu tượng cố định trên HUD và mô tả khi rê chuột. Ràng buộc cài đặt: tổng bù từ nhiều cơ quan không vượt 70%; hai Khuyết Điểm trong một cặp không cùng loại; Nhân Bám Dính không dùng Bám Bùn, Run Rẩy. (Kho chỉ có đúng 12 Khuyết Điểm trong bảng; các Khuyết Điểm kiểu trừ số của bản nháp đầu như Hao Nền, Hồi Chậm, Mô Nặng, Nhảy Thấp và nhóm Sợ- đã bỏ.)
 
 ## 10. Việc để người cài đặt quyết
 - Cấu trúc ScriptableObject cho Lõi, Khuyết Điểm và bộ thẻ; cách tách dữ liệu và logic để thêm Lõi mới chỉ cần thêm một tệp.
@@ -224,3 +224,13 @@ Mỗi Khuyết Điểm có biểu tượng cố định trên HUD và mô tả k
 ## 12. Hợp nhất với các tài liệu khác (làm sau khi duyệt)
 - Tài liệu gameplay V1.1: bỏ mục 5.4 (2 ô chủ động), ghi 6 ô = Q + 5; "thiên phú chủ động" = Dị Năng (ô A = Q); Lõi (thiên phú bị động) gắn lõi sống; cập nhật mục 10 và mục 14 câu 1.
 - `docs/GAME_DESIGN.md` mục 3 (Tạo nhân vật): Dị Năng đổi được bằng dụng cụ; Thiên Phú bị động đổi tên **Lõi**; Khuyết Điểm chọn theo Lõi; chống trùng; 12 Lõi nháp.
+
+## 13. Quyết định của Claude sau khi người đọc kiểm tra (chờ bạn xem)
+Người đọc độc lập hỏi 8 câu; các câu không cần ý kiến thêm mình đã quyết như sau (bạn sửa được):
+1. **Giai đoạn đầu cài đặt = một lát cắt dọc**: khung dữ liệu (ScriptableObject Lõi, Khuyết Điểm), màn hình chọn kiểu TFT, phát thẻ và đồng bộ co-op, cộng **3 Lõi** ít phụ thuộc hệ thống (Nhân Con Bạc, Nhân Giữ Gốc, Nhân Quen Đất) và **vài Khuyết Điểm** dễ làm (Đói Sớm, Run Rẩy, Luống Cuống, Dạ Dày Kén). Các Lõi còn lại làm khi hệ thống phụ thuộc xuất hiện.
+2. **Hệ thống nền:** nhiều Lõi cần hệ chưa có trong repo (phân loại sát thương môi trường, hất văng, nhịp nảy, AI kẻ địch có phát hiện và đánh hơi, vùng tối). Vùng tia sáng đã có trong dữ liệu bản đồ (`ZoneLayout.LightShafts`). Mỗi Lõi và Khuyết Điểm khi cài đặt ghi rõ nó cần hệ nào; hệ nào chưa có thì Lõi đó hoãn, không làm giả.
+3. **Cơ quan bù:** `OrganSlot` trong code hiện chỉ có 4 vị trí (Eyes, Legs, Skin, Back), chưa phải 12 vị trí giải phẫu của tài liệu V1.1. Tạm ánh xạ: Chân → Legs; Mắt, Cảm quan phụ → Eyes; Da/màng → Skin; Lưng → Back. Vị trí chưa có (Tuyến, Tiêu hóa, Hô hấp, Đuôi, Vây/cánh) thì Khuyết Điểm đó **chưa bù được** cho đến khi có vị trí tương ứng. Mỗi cơ quan đúng vị trí bù tối đa **35%** theo độ nguyên vẹn (liên tục, không bật tắt); tổng tối đa 70%.
+4. **Quyền quyết định co-op:** sát thương, rơi đồ, chết và khóa Lõi do **host quyết định**; trạng thái chỉ ảnh hưởng chính mình (tốc độ, chuỗi nảy, điểm quen đường) tính tại máy người chơi, host chỉ kiểm tra giới hạn. Người cài đặt kiểm tra `PlayerNetState` hiện có; nếu chuyển động đang hoàn toàn do máy khách quyết thì việc host kiểm tra thành một hạng mục riêng, làm sau lát cắt đầu.
+5. **Chơi một mình và vào trễ:** chơi một mình qua cùng màn chọn (máy phát thẻ cho chính mình, không cần chống trùng). Người vào trễ chọn ngay khi vào, trước khi xuất hiện trong thế giới, từ các thẻ còn lại. Xác nhận là cuối cùng, không quay lại đổi. Người rời phòng thì Lõi của họ trả về kho.
+6. **Cơ chế Lõi ở mục 8** là spec chuẩn để cài đặt; số liệu là số tạm. Khung dữ liệu cài trước, cơ chế từng Lõi cài sau.
+8. **Dị Năng:** ô Q đã tách khỏi 5 ô cơ quan trong mã (`SkillBar`). Repo mới có vài `AbilitySO` (`ChargeAbility`, `BurstDashAbility`, `SpikeBurstAbility`), chưa đủ kho 37; viết kho Dị Năng nằm ngoài phạm vi này, lát cắt đầu rút từ các Dị Năng đang có. Dị Năng trùng giữa người chơi tạm cho phép.
