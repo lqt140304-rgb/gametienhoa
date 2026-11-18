@@ -265,12 +265,18 @@ namespace Evolve.EditorTools
                 new Color(1.00f, 0.45f, 0.30f)    // 06 weak red embers
             };
             var perZone = new int[ZoneLayout.Zones.Length];
-            var plants = Object.FindObjectsByType<Nutrient>();
-            int step = 0;
+            var plants = new List<Nutrient>(Object.FindObjectsByType<Nutrient>());
+            plants.Sort((a, b) =>   // a fixed order, so every run places the same lights
+            {
+                int c = a.transform.position.x.CompareTo(b.transform.position.x);
+                return c != 0 ? c : a.transform.position.z.CompareTo(b.transform.position.z);
+            });
+            var placed = new List<Vector3>();
             foreach (var plant in plants)
             {
-                step++;
-                if (step % 3 != 0) continue; // every third plant: a few, spread out
+                // only glowing plants (not meat or plain food)
+                int kind = new SerializedObject(plant).FindProperty("foodKind").enumValueIndex;
+                if (kind < (int)Evolve.Survival.FoodKind.GlowMoss) continue;
                 Vector3 pos = plant.transform.position;
                 int zone = -1;
                 float best = 0.5f;
@@ -279,7 +285,11 @@ namespace Evolve.EditorTools
                     float inf = ZoneLayout.Influence(i, pos.x, pos.z);
                     if (inf > best) { best = inf; zone = i; }
                 }
-                if (zone < 0 || perZone[zone] >= MaxZoneLights) continue;
+                if (zone < 0 || zone == 1 || perZone[zone] >= MaxZoneLights) continue;   // 02 is the darkest zone: no plant lights
+                bool crowded = false;
+                foreach (var q in placed) if ((q - pos).sqrMagnitude < 10f * 10f) { crowded = true; break; }
+                if (crowded) continue;                                                      // spread out: at least 10 m apart
+                placed.Add(pos);
                 perZone[zone]++;
                 var go = new GameObject("Zone Glow " + (zone + 1));
                 go.transform.SetParent(root, false);
@@ -297,11 +307,13 @@ namespace Evolve.EditorTools
             var exit = new GameObject("Daylight at the way out");
             exit.transform.SetParent(root, false);
             Vector2 gate = ZoneLayout.NorthEntry;
-            exit.transform.position = new Vector3(gate.x, LakeGround.GroundY(gate.x, gate.y) + 6f, gate.y - 6f);
+            exit.transform.position = new Vector3(gate.x, LakeGround.GroundY(gate.x, gate.y) + 8f, gate.y);
+            exit.transform.rotation = Quaternion.Euler(25f, 180f, 0f);   // aimed south, into the cave and over area 06
             var day = exit.AddComponent<Light>();
-            day.type = LightType.Point;
+            day.type = LightType.Spot;
+            day.spotAngle = 70f;
             day.color = new Color(1f, 0.85f, 0.6f);
-            day.range = 40f;
+            day.range = 70f;
             day.intensity = 2f;
             day.shadows = LightShadows.None;
             exit.AddComponent<LightByVision>().AlwaysOnWhenSighted = true;

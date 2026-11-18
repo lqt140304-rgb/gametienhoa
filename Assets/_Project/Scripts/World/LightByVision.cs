@@ -17,9 +17,13 @@ namespace Evolve.World
 
         Light lamp;
         float baseIntensity;
-        MonochromeVision vision;
+        static MonochromeVision sharedVision;   // one lookup for all lights, retried at most once a second
+        static float nextVisionLookup;
         Transform cam;
         float nextCamLookup;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { sharedVision = null; nextVisionLookup = 0f; }
 
         void Awake()
         {
@@ -29,13 +33,17 @@ namespace Evolve.World
 
         void Update()
         {
-            if (vision == null) vision = FindAnyObjectByType<MonochromeVision>();
+            if (sharedVision == null && Time.unscaledTime >= nextVisionLookup)
+            {
+                nextVisionLookup = Time.unscaledTime + 1f;
+                sharedVision = FindAnyObjectByType<MonochromeVision>();
+            }
             if (cam == null && Time.unscaledTime >= nextCamLookup)
             {
                 nextCamLookup = Time.unscaledTime + 1f;
                 if (Camera.main != null) cam = Camera.main.transform;
             }
-            float sight = vision != null ? Mathf.Clamp01(vision.Sight) : 1f;
+            float sight = sharedVision != null ? Mathf.Clamp01(sharedVision.Sight) : 1f;
             bool near = AlwaysOnWhenSighted || cam == null || (cam.position - transform.position).sqrMagnitude < FarDistance * FarDistance;
             lamp.enabled = near && sight > 0.01f;
             lamp.intensity = baseIntensity * sight;

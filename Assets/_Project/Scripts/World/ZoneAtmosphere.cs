@@ -137,11 +137,12 @@ namespace Evolve.World
                 RenderSettings.fogStartDistance = 0f;
                 RenderSettings.fogEndDistance = ZoneAtmosphereMath.FogEndFor(Current, sight);
                 RenderSettings.fogColor = ZoneAtmosphereMath.FogColorFor(Current, sight);
-                if (ControlsAmbient)
-                {
-                    RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat; // black without eyes, the zone's dusk ambient with them
-                    RenderSettings.ambientLight = ZoneAtmosphereMath.AmbientFor(Current, sight);
-                }
+            }
+            if (ControlsAmbient)
+            {
+                // also under water (nothing else writes it there): black without eyes, the zone's dusk ambient with them
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight = ZoneAtmosphereMath.AmbientFor(Current, sight);
             }
             UpdateParticles(sight, under);
         }
