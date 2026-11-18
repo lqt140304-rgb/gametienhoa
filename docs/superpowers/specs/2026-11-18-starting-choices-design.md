@@ -183,6 +183,8 @@ Cần kiểm tra khi cài đặt: chia thẻ bằng seed của host, gửi cho t
 ```
 Thẻ đang xem phóng lớn, hiện mô tả luật, giới hạn, ví dụ tình huống. Với Lõi nặng, ba lựa chọn Khuyết Điểm hiện dạng cặp. Có nút xem lại cả hai trước khi xác nhận. Người chơi xem được bộ thẻ của mình từ màn hình tải.
 
+Ảnh tham khảo phong cách thẻ Lõi (do người thiết kế cung cấp): `docs/art/core-picker-reference.webp`. Hướng: ba thẻ dọc kiểu gel trong suốt, có biểu tượng quả cầu, tên và một dòng mô tả; **gọn và tinh tế hơn** ảnh mẫu, theo kiểu menu chọn lõi của TFT (thẻ nhỏ gọn, rê chuột thì nổi lên và hiện chi tiết). Tên Lõi trong ảnh (Tích Trữ, Đàn Hồi, Cộng Sinh) chỉ là minh họa, không thuộc danh sách chính thức.
+
 ## Đối chiếu với tài liệu gameplay V1.1 (cần sửa khi hợp nhất)
 - Mục 5.4 (hai ô chủ động): **bỏ**. Thanh kỹ năng có **6 ô: Q (Dị Năng) + 5 ô từ cơ quan và class**, khớp hotbar hiện tại trong code.
 - Từ "thiên phú": **Dị Năng** là thiên phú chủ động (phím Q); **Lõi** là thiên phú bị động. Ô A trong tài liệu V1.1 = Q.
