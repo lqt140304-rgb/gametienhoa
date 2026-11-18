@@ -25,8 +25,8 @@ namespace Evolve.EditorTools
     {
         const string Root = "Assets/_Project";
         const string DressedName = "Lake Landmarks (Dressed)";
-        /// <summary>Gap of the cave's slit: the widest slime that fits a Root Shelter (UnderrootLakeBuilder.ShelterGap).</summary>
-        const float SlitWidth = 1.35f, SlitHeight = 1.1f;
+        /// <summary>Gap of the cave's slit, as in the concept art: 0.9 m wide, 0.7 m high (a slime 0.6 m across fits, a grown one up to scale 1.4 too).</summary>
+        const float SlitWidth = 0.9f, SlitHeight = 0.7f;
 
         [MenuItem("Evolve/Dress Lake: Landmarks")]
         public static void Dress()

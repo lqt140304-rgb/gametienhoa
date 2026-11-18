@@ -32,8 +32,8 @@ namespace Evolve.EditorTools
 
         /// <summary>Largest body scale that fits a Root Shelter (BodySize.ScaleFor(5) = 1.3; 6 organs = 1.36 does not fit).</summary>
         const float ShelterMaxScale = 1.3f;
-        /// <summary>Shelter entrance/interior width: real slime base diameter × max scale + 5 cm = 1.0 × 1.3 + 0.05 = 1.35 m.</summary>
-        static readonly float ShelterGap = P.SlimeRadius * 2f * ShelterMaxScale + 0.05f;
+        /// <summary>Shelter entrance/interior width: real slime base diameter × max scale + 5 cm (0.6 × 1.3 + 0.05 = 0.83 m).</summary>
+        static readonly float ShelterGap = P.SlimeRadius * P.SlimeScale * 2f * ShelterMaxScale + 0.05f;
 
         [MenuItem("Evolve/Build Underroot Lake")]
         public static void Build()
