@@ -136,7 +136,7 @@ namespace Evolve.World
                 mine.Add((p, myId));
                 if (Mathf.Abs(p.x) >= Rim || Mathf.Abs(p.y) >= Rim) break;
                 if (pts.Count > 1 && ZoneLayout.InsideCave(p.x, p.y, 4f)) { pts.RemoveAt(pts.Count - 1); mine.RemoveAt(mine.Count - 1); break; }   // never into the Great Hall
-                if (length > 0f && TooClose(p, others, parent, fork)) break;   // never cross another rib (it stops where it meets one)
+                if (length > 0f && TooClose(p, others, parent, fork)) { pts.RemoveAt(pts.Count - 1); mine.RemoveAt(mine.Count - 1); break; }   // never cross another rib: it stops BEFORE the point that got too close
                 ang += 0.012f * Mathf.Sin(length * 0.03f + wander);
                 p += new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * Step;
                 p = new Vector2(Mathf.Clamp(p.x, -Rim, Rim), Mathf.Clamp(p.y, -Rim, Rim));
