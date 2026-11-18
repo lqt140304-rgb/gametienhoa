@@ -11,6 +11,8 @@ namespace Evolve.World
         public Color FogColor;
         /// <summary>Fog end distance (m) for a character with eyes.</summary>
         public float FogEnd;
+        /// <summary>Ambient light of the zone with full sight (dusk-dim; the darker the deeper under the roots).</summary>
+        public Color Ambient;
         public ParticleKind Particles;
         public Color ParticleColor;
         /// <summary>Particles alive at once in the 30 m box around the camera = Density x 10 (5 = about 50).</summary>

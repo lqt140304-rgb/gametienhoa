@@ -405,3 +405,13 @@ Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`); (2)
 - Hạn chế: nặng máy (mục tiêu FPS giảm không quá 15%); vùng xa hơn 120 m không có bóng nên sáng đều (sương theo khu che); bóng của mức chi tiết xa của mái thô hơn.
 
 Checklist: (1) Console sạch, Test Runner xanh (`DappledSunMathTests`); (2) chạy menu trong scene `Underroot_Lake`, rồi Ctrl+S; (3) mảng sáng dưới các kẽ mái và 9 lỗ sáng, vùng khác tối, mảng sáng trôi chậm; (4) chưa có mắt: đen trắng, tối, chỉ sáng quanh người; có mắt (V): thấy mảng sáng; (5) đo FPS bằng PerfOverlay, F9 tắt bóng thì FPS hồi lại (ghi số trước và sau); (6) Restore Lake Sun trả về như cũ; (7) chụp ảnh gửi tôi.
+
+
+## 23. Ánh sáng ba lớp hoàng hôn (giai đoạn 1 của trần vòm): trạng thái và danh sách kiểm tra
+
+- **Ba lớp:** (1) đèn sinh học nhẹ có màu theo khu cạnh cây phát quang (mỗi khu tối đa 6 đèn, chỉ bật trong 60 m quanh camera) cùng đèn nấm; (2) mặt trời dịu (cường độ 0,6, ấm hơn) lọt qua kẽ mái; (3) đèn ấm ở lối vào phía bắc (`ZoneLayout.NorthEntry`), nhìn thấy từ xa.
+- **Ambient hoàng hôn theo khu** (`ZoneAtmosphere` ghi mỗi frame, nhân với thị lực): 02 (0,08) tối nhất, 03, 04, 01, 05, 06 (0,20) sáng nhất. Chưa có mắt: ambient đen; thị lực dở dang: nội suy từ đen lên ambient khu.
+- Mọi đèn sống (`LightByVision`) nhân cường độ với thị lực nên chưa có mắt vẫn đen trắng, tối, chỉ sáng quanh người. Đèn sinh học và đèn lối ra do menu **Evolve → Dress Lake: Light and Water Look** đặt (chạy lại menu này để có đèn mới); mặt trời do **Dress Lake: Dappled Sun** (chạy lại để lấy cường độ 0,6).
+- Giai đoạn 2 (vòm và trụ rễ rìa) và 3 (vật thể treo) sẽ làm sau khi duyệt giai đoạn này; plan `docs/superpowers/plans/2026-11-18-vault-and-light.md`.
+
+Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`, `DappledSunMathTests`); (2) chạy lại **Dress Lake: Light and Water Look** rồi **Dress Lake: Dappled Sun** trong scene `Underroot_Lake`, bấm Ctrl+S; (3) chưa có mắt: đen trắng, tối, chỉ sáng quanh người; (4) có mắt (phím V): hoàng hôn dịu, khu 06 sáng nhất, khu 02 tối nhất; (5) cạnh cây phát quang có vầng sáng màu theo khu; (6) mảng sáng mặt trời dịu hơn trước; (7) phía bắc, gần lối vào có ánh sáng ấm; (8) FPS bằng `PerfOverlay`; (9) chụp ảnh từng khu gửi tôi.

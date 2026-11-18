@@ -23,6 +23,7 @@ namespace Evolve.EditorTools
         const string BackupPath = Root + "/Settings/LakeLookBackup.json";
         const string LakeScenePath = Root + "/Scenes/Underroot_Lake.unity";
         const int MaxGlowLights = 24;
+        const int MaxZoneLights = 6;
         const string WaterShaderName = "Evolve/LakeWater";
         const string LitShaderName = "Universal Render Pipeline/Lit";
 
@@ -247,10 +248,63 @@ namespace Evolve.EditorTools
                     l.range = 6f + 3f * (float)rnd.NextDouble();
                     l.intensity = 1.2f + 0.8f * (float)rnd.NextDouble();
                     l.shadows = LightShadows.None;
+                    go.AddComponent<LightByVision>(); // dark without eyes, far ones off
                     made++;
                 }
             }
             if (made == 0) Debug.Log("Không thấy nấm khổng lồ (Giant Caps) nên không đặt đèn nấm.");
+
+            // the living glow of each zone: a few soft coloured lights next to its glowing plants
+            var zoneColours = new[]
+            {
+                new Color(0.30f, 0.90f, 0.85f),   // 01 teal pods
+                new Color(1.00f, 0.80f, 0.50f),   // 02 old warm dust (rare)
+                new Color(1.00f, 0.65f, 0.25f),   // 03 amber
+                new Color(0.70f, 0.40f, 1.00f),   // 04 violet spores
+                new Color(0.80f, 0.95f, 1.00f),   // 05 cold white
+                new Color(1.00f, 0.45f, 0.30f)    // 06 weak red embers
+            };
+            var perZone = new int[ZoneLayout.Zones.Length];
+            var plants = Object.FindObjectsByType<Nutrient>();
+            int step = 0;
+            foreach (var plant in plants)
+            {
+                step++;
+                if (step % 3 != 0) continue; // every third plant: a few, spread out
+                Vector3 pos = plant.transform.position;
+                int zone = -1;
+                float best = 0.5f;
+                for (int i = 0; i < ZoneLayout.Zones.Length; i++)
+                {
+                    float inf = ZoneLayout.Influence(i, pos.x, pos.z);
+                    if (inf > best) { best = inf; zone = i; }
+                }
+                if (zone < 0 || perZone[zone] >= MaxZoneLights) continue;
+                perZone[zone]++;
+                var go = new GameObject("Zone Glow " + (zone + 1));
+                go.transform.SetParent(root, false);
+                go.transform.position = pos + Vector3.up * 0.7f;
+                var lamp = go.AddComponent<Light>();
+                lamp.type = LightType.Point;
+                lamp.color = zoneColours[zone];
+                lamp.range = 6f + 3f * (float)rnd.NextDouble();
+                lamp.intensity = 0.8f + 0.6f * (float)rnd.NextDouble();
+                lamp.shadows = LightShadows.None;
+                go.AddComponent<LightByVision>();
+            }
+
+            // the daylight at the hunter's way in (north): warm, seen from far, brightest on the side of area 06
+            var exit = new GameObject("Daylight at the way out");
+            exit.transform.SetParent(root, false);
+            Vector2 gate = ZoneLayout.NorthEntry;
+            exit.transform.position = new Vector3(gate.x, LakeGround.GroundY(gate.x, gate.y) + 6f, gate.y - 6f);
+            var day = exit.AddComponent<Light>();
+            day.type = LightType.Point;
+            day.color = new Color(1f, 0.85f, 0.6f);
+            day.range = 40f;
+            day.intensity = 2f;
+            day.shadows = LightShadows.None;
+            exit.AddComponent<LightByVision>().AlwaysOnWhenSighted = true;
         }
 
         static void DestroyByName(string name)
