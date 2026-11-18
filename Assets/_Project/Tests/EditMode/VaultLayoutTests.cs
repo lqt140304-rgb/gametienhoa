@@ -57,6 +57,28 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void Ribs_DoNotIntersectBeyondForks_ProductionSeedToo()
+        {
+            foreach (int seed in new[] { 5, 11 })
+            {
+                var ribs = VaultLayout.Ribs(seed, Ceiling);
+                for (int i = 0; i < ribs.Length; i++)
+                    for (int j = i + 1; j < ribs.Length; j++)
+                    {
+                        if (ribs[i].Level != 0 || ribs[j].Level != 0) continue;
+                        foreach (var a in Flat(ribs[i]))
+                            foreach (var b in Flat(ribs[j]))
+                            {
+                                if (Vector2.Distance(a, ZoneLayout.RootFoot.Center) < 40f && Vector2.Distance(b, ZoneLayout.RootFoot.Center) < 40f) continue;
+                                if (Vector2.Distance(a, ZoneLayout.LakeCenter) < 30f && Vector2.Distance(b, ZoneLayout.LakeCenter) < 30f) continue;
+                                Assert.GreaterOrEqual(Vector2.Distance(a, b), 4f, $"seed {seed}: main ribs {i} and {j} touch");
+                            }
+                    }
+                foreach (var r in ribs) foreach (var p in r.Points) Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.z, 2f), $"seed {seed}: a rib enters the hall");
+            }
+        }
+
+        [Test]
         public void Ribs_DoNotIntersectBeyondForks()
         {
             var ribs = VaultLayout.Ribs(5, Ceiling);
@@ -68,6 +90,7 @@ namespace Evolve.Tests.EditMode
                         foreach (var b in Flat(ribs[j]))
                         {
                             if (Vector2.Distance(a, ZoneLayout.RootFoot.Center) < 40f && Vector2.Distance(b, ZoneLayout.RootFoot.Center) < 40f) continue; // they start side by side at the hall
+                            if (Vector2.Distance(a, ZoneLayout.LakeCenter) < 30f && Vector2.Distance(b, ZoneLayout.LakeCenter) < 30f) continue;       // and the lake's at the lake
                             Assert.GreaterOrEqual(Vector2.Distance(a, b), 4f, $"main ribs {i} and {j} touch");
                         }
                 }
@@ -76,9 +99,13 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void VaultHeight_IsNotFlat()
         {
+            // not the corners (where the dome itself falls away): the bays must make the difference
+            float lake = VaultLayout.VaultHeight(ZoneLayout.LakeCenter.x, ZoneLayout.LakeCenter.y, Ceiling(ZoneLayout.LakeCenter.x, ZoneLayout.LakeCenter.y));
+            float mulch = VaultLayout.VaultHeight(ZoneLayout.Humus.Center.x, ZoneLayout.Humus.Center.y, Ceiling(ZoneLayout.Humus.Center.x, ZoneLayout.Humus.Center.y));
+            Assert.GreaterOrEqual(lake - mulch, 6f, "high bell over the lake, low over the mulch bank");
             float min = float.MaxValue, max = float.MinValue;
-            for (float x = -240f; x <= 240f; x += 20f)
-                for (float z = -240f; z <= 240f; z += 20f)
+            for (float x = -180f; x <= 180f; x += 20f)
+                for (float z = -180f; z <= 180f; z += 20f)
                 {
                     float h = VaultLayout.VaultHeight(x, z, Ceiling(x, z));
                     min = Mathf.Min(min, h);
@@ -97,6 +124,18 @@ namespace Evolve.Tests.EditMode
                     float b = VaultLayout.VaultHeight(x + 2f, z, Ceiling(x + 2f, z));
                     Assert.LessOrEqual(Mathf.Abs(a - b), 1.6f, $"a step at {x},{z}");
                 }
+        }
+
+        [Test]
+        public void VaultHeight_StaysAboveTheHallDome()
+        {
+            var c = ZoneLayout.RootFoot.Center;
+            float need = ZoneLayout.ZoneLevels[1] + ZoneLayout.CaveHeight + 4f;
+            foreach (var d in new[] { new Vector2(0, 0), new Vector2(10, 0), new Vector2(-12, 8), new Vector2(0, -14) })
+            {
+                float h = VaultLayout.VaultHeight(c.x + d.x, c.y + d.y, Ceiling(c.x + d.x, c.y + d.y));
+                Assert.GreaterOrEqual(h, need - 0.01f, $"vault under the hall's dome at {d}");
+            }
         }
 
         [Test]

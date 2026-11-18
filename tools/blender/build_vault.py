@@ -21,7 +21,7 @@ import kit_common as kit  # noqa: E402
 
 SEGMENT_LENGTH = 12.0
 ENTRY_RADIUS = 1.0
-EXIT_RADIUS = 0.8
+EXIT_RADIUS = 1.0   # straight pieces keep their radius: the taper comes from scaling each piece to its rib's radius, so joins have no step
 FORK_RATIO = 0.6
 BEND_DEGREES = 25.0
 BARK_DARK = (0.05, 0.035, 0.025)
