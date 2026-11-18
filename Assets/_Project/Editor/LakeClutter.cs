@@ -96,13 +96,13 @@ namespace Evolve.EditorTools
                     float bank = Mathf.Clamp01(1f - Mathf.Abs(dw - 3.2f) / 3.2f);                       // the water's margin
                     float wild = 0.25f + 0.6f * macro;
 
-                    Put(maps, firstOf, Kind.Grass, x, z, onTrail * (wild * (1f - 0.8f * leaf) + 0.9f * moss) * 7f, 1);
-                    Put(maps, firstOf, Kind.Reeds, x, z, onTrail * bank * bank * (0.4f + macro2) * 6f, 2);
+                    Put(maps, firstOf, Kind.Grass, x, z, onTrail * (wild * (1f - 0.8f * leaf) + 0.9f * moss) * 16f, 1);
+                    Put(maps, firstOf, Kind.Reeds, x, z, onTrail * bank * bank * (0.4f + macro2) * 10f, 2);
                     Put(maps, firstOf, Kind.Fern, x, z, onTrail * (0.8f * moss + 0.9f * roots + 0.15f * macro) * 3.5f, 3);
                     Put(maps, firstOf, Kind.MossClump, x, z, onTrail * (1.2f * moss + 0.2f * macro2) * 2.5f, 4);
-                    Put(maps, firstOf, Kind.Pebbles, x, z, (0.35f * Mathf.Clamp01((macro2 - 0.5f) * 3f) + 1.1f * bank * macro2 + 0.5f * d[(int)Plant.LimestoneRock]) * 3.5f, 5);
-                    Put(maps, firstOf, Kind.Twigs, x, z, onTrail * (0.3f * wild + 0.8f * leaf + 0.6f * roots) * 2.5f, 6);
-                    Put(maps, firstOf, Kind.Leaves, x, z, (1.6f * leaf + 0.15f * macro) * 4f, 7);
+                    Put(maps, firstOf, Kind.Pebbles, x, z, (0.35f * Mathf.Clamp01((macro2 - 0.5f) * 3f) + 1.1f * bank * macro2 + 0.5f * d[(int)Plant.LimestoneRock]) * 6f, 5);
+                    Put(maps, firstOf, Kind.Twigs, x, z, onTrail * (0.3f * wild + 0.8f * leaf + 0.6f * roots) * 5f, 6);
+                    Put(maps, firstOf, Kind.Leaves, x, z, (1.6f * leaf + 0.15f * macro) * 8f, 7);
                     Put(maps, firstOf, Kind.MiniMushrooms, x, z, onTrail * (1.4f * (d[(int)Plant.SmallCream] + d[(int)Plant.CreamMushroom]) + 0.5f * d[(int)Plant.EarFungus]) * 2.2f, 8);
                     Put(maps, firstOf, Kind.Bush, x, z, onTrail * (0.6f * moss + 0.3f * wild * macro) * 0.55f, 9);
                     Put(maps, firstOf, Kind.RootNub, x, z, onTrail * (1.3f * roots + 0.12f * wild) * 1.6f, 10);
@@ -132,7 +132,7 @@ namespace Evolve.EditorTools
             int n = Variants(kind);
             float each = amount / n;
             for (int v = 0; v < n; v++)
-                maps[firstOf[(int)kind] + v][z, x] = Mathf.Clamp(Mathf.FloorToInt(each + Hash(x, z, salt * 11 + v)), 0, 12);
+                maps[firstOf[(int)kind] + v][z, x] = Mathf.Clamp(Mathf.FloorToInt(each + Hash(x, z, salt * 11 + v)), 0, 16);
         }
 
         static float Hash(int x, int y, int s)
@@ -196,11 +196,11 @@ namespace Evolve.EditorTools
             };
             switch (kind)   // size ranges (a multiple of the model, built at its natural size)
             {
-                case Kind.Grass: proto.minWidth = 0.75f; proto.maxWidth = 1.4f; proto.minHeight = 0.7f; proto.maxHeight = 1.5f; break;
+                case Kind.Grass: proto.minWidth = 1.1f; proto.maxWidth = 1.9f; proto.minHeight = 1.0f; proto.maxHeight = 2.2f; break;
                 case Kind.Reeds: proto.minWidth = 0.8f; proto.maxWidth = 1.3f; proto.minHeight = 0.75f; proto.maxHeight = 1.4f; break;
                 case Kind.Fern: proto.minWidth = 0.7f; proto.maxWidth = 1.5f; proto.minHeight = 0.7f; proto.maxHeight = 1.4f; break;
                 case Kind.Bush: proto.minWidth = 0.7f; proto.maxWidth = 1.6f; proto.minHeight = 0.7f; proto.maxHeight = 1.6f; break;
-                default: proto.minWidth = 0.7f; proto.maxWidth = 1.5f; proto.minHeight = 0.7f; proto.maxHeight = 1.5f; break;
+                default: proto.minWidth = 1.2f; proto.maxWidth = 2.2f; proto.minHeight = 1.2f; proto.maxHeight = 2.2f; break;
             }
             return proto;
         }
