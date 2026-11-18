@@ -134,7 +134,7 @@ namespace Evolve.EditorTools
             mat.EnableKeyword("_NORMALMAP");
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.SetOverrideTag("RenderType", "Transparent");
-            mat.renderQueue = (int)RenderQueue.Transparent + 20; // after the gel: what is under the surface shows through the water, tinted
+            mat.renderQueue = (int)RenderQueue.Transparent - 2; // just BEFORE the slime's gel (queue Transparent), so a swimming slime is never washed out by the water over it (LakeLook sets the same)
             if (emission.maxColorComponent > 0.001f)
             {
                 mat.EnableKeyword("_EMISSION");
