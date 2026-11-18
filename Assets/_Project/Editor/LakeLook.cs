@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Evolve.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -19,26 +20,36 @@ namespace Evolve.EditorTools
         const string VolumeName = "Lake Post Process (Dressed)";
         const string LightsName = "Lake Look Lights (Dressed)";
         const string ProfilePath = Root + "/Settings/LakeLook.asset";
-        const string BackupKey = "Evolve.LakeLook.Backup";
+        const string BackupPath = Root + "/Settings/LakeLookBackup.json";
+        const string LakeScenePath = Root + "/Scenes/Underroot_Lake.unity";
+        const int MaxGlowLights = 24;
         const string WaterShaderName = "Evolve/LakeWater";
         const string LitShaderName = "Universal Render Pipeline/Lit";
 
         [System.Serializable]
         class Backup
         {
-            public bool depthTexture;
+            public bool saved;
             public bool fog;
             public int fogMode;
             public float fogDensity;
             public Color fogColor, ambientSky, ambientEquator, ambientGround;
             public int ambientMode;
-            public bool saved;
+            public bool postProcessing;
+            public string[] urpAssetPaths = new string[0];
+            public bool[] urpDepthTexture = new bool[0];
         }
 
         [MenuItem("Evolve/Dress Lake: Light and Water Look")]
         public static void Dress()
         {
-            SaveBackupOnce();
+            if (EditorSceneManager.GetActiveScene().path != LakeScenePath)
+            {
+                Debug.LogWarning("Mở scene Underroot_Lake trước (menu này chỉ đổi cảnh hồ, không đổi Prototype_01).");
+                return;
+            }
+            var backup = LoadBackup();
+            if (!backup.saved) SaveBackup();
             SetupUrp();
             SetupAtmosphere();
             SetupPostProcess();
@@ -53,43 +64,75 @@ namespace Evolve.EditorTools
         [MenuItem("Evolve/Restore Lake Look (undo)")]
         public static void Restore()
         {
-            var json = EditorPrefs.GetString(BackupKey, "");
-            if (!string.IsNullOrEmpty(json))
+            var b = LoadBackup();
+            if (b.saved)
             {
-                var b = JsonUtility.FromJson<Backup>(json);
-                if (b.saved)
+                RenderSettings.fog = b.fog;
+                RenderSettings.fogMode = (FogMode)b.fogMode;
+                RenderSettings.fogDensity = b.fogDensity;
+                RenderSettings.fogColor = b.fogColor;
+                RenderSettings.ambientMode = (AmbientMode)b.ambientMode;
+                RenderSettings.ambientSkyColor = b.ambientSky;
+                RenderSettings.ambientEquatorColor = b.ambientEquator;
+                RenderSettings.ambientGroundColor = b.ambientGround;
+                for (int i = 0; i < b.urpAssetPaths.Length; i++)
                 {
-                    RenderSettings.fog = b.fog;
-                    RenderSettings.fogMode = (FogMode)b.fogMode;
-                    RenderSettings.fogDensity = b.fogDensity;
-                    RenderSettings.fogColor = b.fogColor;
-                    RenderSettings.ambientMode = (AmbientMode)b.ambientMode;
-                    RenderSettings.ambientSkyColor = b.ambientSky;
-                    RenderSettings.ambientEquatorColor = b.ambientEquator;
-                    RenderSettings.ambientGroundColor = b.ambientGround;
-                    if (GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
-                    {
-                        urp.supportsCameraDepthTexture = b.depthTexture;
-                        EditorUtility.SetDirty(urp);
-                    }
+                    var urp = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(b.urpAssetPaths[i]);
+                    if (urp == null) continue;
+                    urp.supportsCameraDepthTexture = b.urpDepthTexture[i];
+                    EditorUtility.SetDirty(urp);
                 }
+                var cam = Camera.main;
+                if (cam != null) cam.GetUniversalAdditionalCameraData().renderPostProcessing = b.postProcessing;
             }
             DestroyByName(VolumeName);
             DestroyByName(LightsName);
+            AssetDatabase.DeleteAsset(ProfilePath);
             var lit = Shader.Find(LitShaderName);
             foreach (var n in new[] { "Lake_WaterClean", "Lake_WaterDirty" })
             {
                 var mat = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/{n}.mat");
-                if (mat != null && lit != null) { mat.shader = lit; EditorUtility.SetDirty(mat); }
+                if (mat == null || lit == null) continue;
+                Color shallow = mat.HasProperty("_ShallowColor") ? mat.GetColor("_ShallowColor") : Color.white;
+                var bump = mat.HasProperty("_BumpMap") ? mat.GetTexture("_BumpMap") : null;
+                mat.shader = lit;
+                mat.SetColor("_BaseColor", shallow);
+                if (bump != null) mat.SetTexture("_BumpMap", bump);
+                mat.renderQueue = (int)RenderQueue.Transparent + 20;
+                EditorUtility.SetDirty(mat);
             }
-            EditorPrefs.DeleteKey(BackupKey);
+            AssetDatabase.DeleteAsset(BackupPath);
             AssetDatabase.SaveAssets();
-            Debug.Log("Đã trả ánh sáng và nước về như trước (chạy lại Dress Lake: Water nếu nước còn lạ).");
+            var scene = EditorSceneManager.GetActiveScene();
+            if (scene.IsValid()) EditorSceneManager.MarkSceneDirty(scene);
+            Debug.Log("Đã trả ánh sáng và nước về như trước (chạy lại Dress Lake: Water nếu nước còn lạ). Bấm Ctrl+S để lưu scene.");
         }
 
-        static void SaveBackupOnce()
+        static Backup LoadBackup()
         {
-            if (!string.IsNullOrEmpty(EditorPrefs.GetString(BackupKey, ""))) return; // keep the very first state
+            if (!File.Exists(BackupPath)) return new Backup();
+            var b = JsonUtility.FromJson<Backup>(File.ReadAllText(BackupPath));
+            return b ?? new Backup();
+        }
+
+        static IEnumerable<UniversalRenderPipelineAsset> AllUrpAssets()
+        {
+            var seen = new HashSet<UniversalRenderPipelineAsset>();
+            if (GraphicsSettings.defaultRenderPipeline is UniversalRenderPipelineAsset d && seen.Add(d)) yield return d;
+            for (int i = 0; i < QualitySettings.names.Length; i++)
+                if (QualitySettings.GetRenderPipelineAssetAt(i) is UniversalRenderPipelineAsset q && seen.Add(q)) yield return q;
+        }
+
+        static void SaveBackup()
+        {
+            var paths = new List<string>();
+            var flags = new List<bool>();
+            foreach (var urp in AllUrpAssets())
+            {
+                paths.Add(AssetDatabase.GetAssetPath(urp));
+                flags.Add(urp.supportsCameraDepthTexture);
+            }
+            var cam = Camera.main;
             var b = new Backup
             {
                 saved = true,
@@ -101,19 +144,25 @@ namespace Evolve.EditorTools
                 ambientSky = RenderSettings.ambientSkyColor,
                 ambientEquator = RenderSettings.ambientEquatorColor,
                 ambientGround = RenderSettings.ambientGroundColor,
-                depthTexture = GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset u && u.supportsCameraDepthTexture
+                postProcessing = cam != null && cam.GetUniversalAdditionalCameraData().renderPostProcessing,
+                urpAssetPaths = paths.ToArray(),
+                urpDepthTexture = flags.ToArray()
             };
-            EditorPrefs.SetString(BackupKey, JsonUtility.ToJson(b));
+            PrototypeSceneBuilder.EnsureFolder(Root + "/Settings");
+            File.WriteAllText(BackupPath, JsonUtility.ToJson(b, true));
+            AssetDatabase.ImportAsset(BackupPath);
         }
 
         static void SetupUrp()
         {
-            if (GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
+            int n = 0;
+            foreach (var urp in AllUrpAssets())
             {
                 urp.supportsCameraDepthTexture = true; // the water shader reads the scene depth
                 EditorUtility.SetDirty(urp);
+                n++;
             }
-            else Debug.LogWarning("Không tìm thấy URP asset: nước sẽ không mờ dần theo độ sâu.");
+            if (n == 0) Debug.LogWarning("Không tìm thấy URP asset: nước sẽ không mờ dần theo độ sâu.");
         }
 
         static void SetupAtmosphere()
@@ -137,15 +186,15 @@ namespace Evolve.EditorTools
             AssetDatabase.CreateAsset(profile, ProfilePath);
 
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(0.9f);
-            bloom.intensity.Override(0.5f);
-            bloom.scatter.Override(0.6f);
+            bloom.threshold.Override(WaterLook.BloomThreshold);
+            bloom.intensity.Override(WaterLook.BloomIntensity);
+            bloom.scatter.Override(WaterLook.BloomScatter);
             var colour = profile.Add<ColorAdjustments>(true);
-            colour.contrast.Override(8f);
-            colour.saturation.Override(10f);
+            colour.contrast.Override(WaterLook.Contrast);
+            colour.saturation.Override(WaterLook.Saturation);
             var vignette = profile.Add<Vignette>(true);
-            vignette.intensity.Override(0.25f);
-            vignette.smoothness.Override(0.4f);
+            vignette.intensity.Override(WaterLook.VignetteIntensity);
+            vignette.smoothness.Override(WaterLook.VignetteSmoothness);
             var tone = profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
@@ -174,7 +223,8 @@ namespace Evolve.EditorTools
         {
             var mat = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/{name}.mat");
             if (mat == null) { Debug.LogWarning("Chưa có material " + name + " (chạy Dress Lake: Water trước)."); return; }
-            Color shallow = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : new Color(0.25f, 0.84f, 0.82f, 0.5f);
+            Color shallow = mat.shader == shader && mat.HasProperty("_ShallowColor") ? mat.GetColor("_ShallowColor")
+                : mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : new Color(0.25f, 0.84f, 0.82f, 0.5f);
             var bump = mat.HasProperty("_BumpMap") ? mat.GetTexture("_BumpMap") : null;
             if (mat.shader != shader) mat.shader = shader;
             mat.SetColor("_ShallowColor", shallow);
@@ -198,13 +248,13 @@ namespace Evolve.EditorTools
                 Color c = Color.white;
                 var mat = r.sharedMaterial;
                 if (mat != null) c = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : mat.color;
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < 4 && made < MaxGlowLights; i++)
                 {
                     var go = new GameObject("Glow");
                     go.transform.SetParent(root, false);
                     go.transform.position = new Vector3(
                         Mathf.Lerp(b.min.x, b.max.x, (float)rnd.NextDouble()),
-                        b.max.y * 0.9f,
+                        Mathf.Lerp(b.min.y, b.max.y, 0.85f),
                         Mathf.Lerp(b.min.z, b.max.z, (float)rnd.NextDouble()));
                     var l = go.AddComponent<Light>();
                     l.type = LightType.Point;

@@ -33,6 +33,7 @@ Shader "Evolve/LakeWater"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_fog
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
@@ -55,7 +56,7 @@ Shader "Evolve/LakeWater"
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; };
-            struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; };
+            struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; float fogFactor : TEXCOORD1; };
 
             Varyings vert(Attributes i)
             {
@@ -63,6 +64,7 @@ Shader "Evolve/LakeWater"
                 VertexPositionInputs p = GetVertexPositionInputs(i.positionOS.xyz);
                 o.positionCS = p.positionCS;
                 o.positionWS = p.positionWS;
+                o.fogFactor = ComputeFogFactor(p.positionCS.z);
                 return o;
             }
 
@@ -74,6 +76,8 @@ Shader "Evolve/LakeWater"
                 float sceneEye = LinearEyeDepth(rawDepth, _ZBufferParams);
                 float surfaceEye = i.positionCS.w;
                 float depth = max(0.0, sceneEye - surfaceEye);
+                // no usable depth (texture off, or nothing behind the water): treat it as one metre of water instead of vanishing
+                if (rawDepth == UNITY_RAW_FAR_CLIP_VALUE || sceneEye <= surfaceEye + 0.0001) depth = 1.0;
 
                 // ripples: two normal map layers drifting in different directions
                 float2 uv = i.positionWS.xz / max(0.1, _RippleSize);
@@ -102,6 +106,7 @@ Shader "Evolve/LakeWater"
 
                 // soft edge: transparent exactly where the water touches ground
                 col.a *= saturate(depth / max(0.01, _EdgeSoft));
+                col.rgb = MixFog(col.rgb, i.fogFactor);
                 return col;
             }
             ENDHLSL

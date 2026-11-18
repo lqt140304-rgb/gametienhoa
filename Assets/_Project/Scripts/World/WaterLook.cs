@@ -10,6 +10,11 @@ namespace Evolve.World
         public static readonly Color AmbientGround = new Color(0.04f, 0.06f, 0.05f, 1f);
         public static readonly Color FogColor = new Color(0.05f, 0.09f, 0.09f, 1f);
 
+        // Post-processing values (kept in safe ranges by WaterLookTests: the cave must stay dark but readable, no blown highlights).
+        public const float BloomThreshold = 0.9f, BloomIntensity = 0.5f, BloomScatter = 0.6f;
+        public const float Contrast = 8f, Saturation = 10f;
+        public const float VignetteIntensity = 0.25f, VignetteSmoothness = 0.4f;
+
         const float FogMin = 0.002f, FogMax = 0.03f;
 
         /// <summary>0 at the surface, 1 at <paramref name="fadeDistance"/> metres deep (smoothstep).</summary>

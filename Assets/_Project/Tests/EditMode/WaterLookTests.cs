@@ -63,5 +63,15 @@ namespace Evolve.Tests.EditMode
                 Assert.AreEqual(1f, c.a, 1e-5f);
             }
         }
+
+        [Test]
+        public void PostProcessValuesStayInSafeRanges()
+        {
+            Assert.GreaterOrEqual(WaterLook.BloomThreshold, 0.8f);
+            Assert.LessOrEqual(WaterLook.BloomIntensity, 1f);
+            Assert.LessOrEqual(Mathf.Abs(WaterLook.Contrast), 20f);
+            Assert.LessOrEqual(Mathf.Abs(WaterLook.Saturation), 20f);
+            Assert.LessOrEqual(WaterLook.VignetteIntensity, 0.35f);
+        }
     }
 }
