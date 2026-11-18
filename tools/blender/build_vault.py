@@ -30,6 +30,8 @@ LICHEN = (0.16, 0.20, 0.10)
 GLOW = (0.20, 0.42, 0.30)
 
 LAST_EXITS = []
+_GLOW_SPOTS = []     # centres of luminous nodules (painted pale green)
+_MOSS_SPOTS = []     # centres of moss cushions
 
 
 def _smooth(a, b, x):
@@ -101,6 +103,8 @@ def _root(bm, path, radii, off, cap_end=False, strands=3, turns=1):
     _tube(bm, path, core, 18, off, rough=1.3, cap_end=cap_end)
     for k in range(strands):
         _strand(bm, path, radii, off, 2 * math.pi * k / strands, turns, 0.60, 0.40, cap_end=cap_end)
+    for k in range(3):   # finer strands wound the other way over the top: the weave of a real root
+        _strand(bm, path, radii, off, math.pi / 3 + 2 * math.pi * k / 3, -2, 0.80, 0.16, segs=8, cap_end=cap_end)
 
 
 def _straight_path(n=24, wiggle=0.15, rng=None):
@@ -120,11 +124,11 @@ def _tendrils(bm, path, radii, rng, off, count):
         _, nrm, bn = kit.ring_frame(path, i)
         out = (nrm * math.cos(a) + bn * math.sin(a))
         base = p + out * radii[i] * 0.85
-        ln = rng.uniform(1.0, 3.2)
+        ln = rng.uniform(1.2, 3.0)
         tip = base + out * rng.uniform(0.2, 0.7) + Vector((rng.uniform(-0.6, 0.6), rng.uniform(-0.4, 0.4), -ln))
         mid = (base + tip) * 0.5 + out * 0.25
-        r0 = rng.uniform(0.07, 0.16)
-        rings = kit.tube_rings(bm, [base, mid, tip], [r0, r0 * 0.7, 0.015], 6)
+        r0 = rng.uniform(0.12, 0.24)
+        rings = kit.tube_rings(bm, [base, mid, tip], [r0, r0 * 0.75, 0.03], 7)
         kit.bridge_rings(bm, rings)
         kit.cap_ring(bm, rings[-1])
 
@@ -141,7 +145,14 @@ def _paint(obj, off):
         lichen = max(0.0, n1 - 0.58) * 2.2 * (0.4 + 0.6 * max(0.0, nr.z))
         base = _mix(base, LICHEN, min(1.0, lichen))
         glow = max(0.0, noise.noise(co * 1.6 + off * 2.0) - 0.62) * 3.0 * max(0.0, -nr.z)   # faint luminous lichen on the underside
-        return _mix(base, GLOW, min(0.8, glow))
+        col = _mix(base, GLOW, min(0.8, glow))
+        for c, sz in _GLOW_SPOTS:
+            if (co - c).length < sz * 1.15:
+                return (0.45, 0.95, 0.75)      # a luminous nodule
+        for c, sz in _MOSS_SPOTS:
+            if (co - c).length < sz * 1.15:
+                return (0.045, 0.11, 0.035)     # a moss cushion
+        return col
 
     kit.paint(obj, colour)
 
@@ -150,10 +161,43 @@ def _mix(a, b, t):
     return tuple(a[i] * (1 - t) + b[i] * t for i in range(3))
 
 
+def _surface_detail(bm, path, radii, rng, off, fibres=10, nodules=8):
+    """Fine fibres running along the surface, moss cushions and a few luminous nodules (only away from the mouths)."""
+    n = len(path)
+    for _ in range(fibres):
+        i0 = rng.randint(3, n - 9)
+        ln = rng.randint(4, 6)
+        th0 = rng.uniform(0, 2 * math.pi)
+        pts, rr = [], []
+        for j in range(ln):
+            i = i0 + j
+            _, nrm, bn = kit.ring_frame(path, i)
+            th = th0 + 0.5 * j
+            pts.append(path[i] + (nrm * math.cos(th) + bn * math.sin(th)) * radii[i] * 0.96)
+            rr.append(0.035 * radii[i] * (1.0 - 0.7 * j / (ln - 1)) + 0.012)
+        rings = kit.tube_rings(bm, pts, rr, 5)
+        kit.bridge_rings(bm, rings)
+        kit.cap_ring(bm, rings[-1])
+    for k in range(nodules):
+        i = rng.randint(3, n - 4)
+        glow = k % 3 == 0
+        a = rng.uniform(math.pi * 1.1, math.pi * 1.9) if glow else rng.uniform(-0.6, math.pi + 0.6)   # glow underneath, moss on top and sides
+        _, nrm, bn = kit.ring_frame(path, i)
+        out = nrm * math.cos(a) + bn * math.sin(a)
+        c = path[i] + out * radii[i] * (0.98 if glow else 0.92)
+        res = bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=4, radius=1.0)
+        sz = rng.uniform(0.10, 0.22) if glow else rng.uniform(0.25, 0.55)
+        bmesh.ops.scale(bm, vec=(sz, sz, sz * (1.0 if glow else 0.45)), verts=res["verts"])
+        bmesh.ops.translate(bm, vec=c, verts=res["verts"])
+        (_GLOW_SPOTS if glow else _MOSS_SPOTS).append((c, sz))
+
+
 def build_segment(kind, seed):
     """Return (display, collider_or_None). kind: 'straight', 'bend', 'fork', 'tip', 'foot'. Fills LAST_EXITS."""
     global LAST_EXITS
     LAST_EXITS = []
+    del _GLOW_SPOTS[:]
+    del _MOSS_SPOTS[:]
     rng = random.Random(seed * 7 + len(kind))
     off = Vector((rng.uniform(0, 60), rng.uniform(0, 60), rng.uniform(0, 60)))
     bm = bmesh.new()
@@ -163,6 +207,7 @@ def build_segment(kind, seed):
         path = _straight_path(rng=rng)
         _root(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), off)
         _tendrils(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), rng, off, 6)
+        _surface_detail(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), rng, off)
         LAST_EXITS = [(path[-1], Vector((1, 0, 0)), EXIT_RADIUS)]
     elif kind == "bend":
         n = 24
@@ -171,6 +216,7 @@ def build_segment(kind, seed):
         path = [Vector((rc * math.sin(ang * i / (n - 1)), rc * (1 - math.cos(ang * i / (n - 1))), 0.0)) for i in range(n)]
         _root(bm, path, _radii(n, ENTRY_RADIUS, EXIT_RADIUS), off)
         _tendrils(bm, path, _radii(n, ENTRY_RADIUS, EXIT_RADIUS), rng, off, 6)
+        _surface_detail(bm, path, _radii(n, ENTRY_RADIUS, EXIT_RADIUS), rng, off)
         LAST_EXITS = [(path[-1], Vector((math.cos(ang), math.sin(ang), 0)), EXIT_RADIUS)]
     elif kind == "fork":
         path = _straight_path(wiggle=0.1, rng=rng)
@@ -182,11 +228,13 @@ def build_segment(kind, seed):
         rb = _radii(16, EXIT_RADIUS * 0.95, EXIT_RADIUS * FORK_RATIO)
         _root(bm, bp, rb, off * 1.7)
         _tendrils(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), rng, off, 4)
+        _surface_detail(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), rng, off, fibres=6, nodules=5)
         LAST_EXITS = [(path[-1], Vector((1, 0, 0)), EXIT_RADIUS), (bp[-1], d, EXIT_RADIUS * FORK_RATIO)]
     elif kind == "tip":
         path = _straight_path(n=20, wiggle=0.25, rng=rng)
         radii = [ENTRY_RADIUS * (1.0 - 0.8 * (i / 19) ** 0.8) for i in range(20)]
         _root(bm, path, radii, off, cap_end=True)
+        _surface_detail(bm, path, radii, rng, off, fibres=5, nodules=4)
     elif kind == "foot":
         n = 24
         path = []

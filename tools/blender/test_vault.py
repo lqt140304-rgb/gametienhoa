@@ -32,7 +32,7 @@ for kind, count in bv.KINDS:
         kit.new_scene()
         obj, col = bv.build_segment(kind, seed)
         tris = kit.tri_count(obj)
-        check(tris <= (9000 if kind == "fork" else 6500), "%s %d has %d tris" % (kind, seed, tris))
+        check(tris <= (11000 if kind == "fork" else 8000), "%s %d has %d tris" % (kind, seed, tris))
         # entry mouth: radius 1.0, centred on the axis
         pts = [v.co for v in obj.data.vertices if -0.4 <= v.co.x <= 0.4]   # the whole first ring (its plane is almost x = 0)
         check(len(pts) >= 8, "%s %d: no entry ring" % (kind, seed))
