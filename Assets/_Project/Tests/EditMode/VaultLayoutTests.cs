@@ -186,5 +186,18 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(a.Length, b.Length);
             for (int i = 0; i < a.Length; i++) Assert.AreEqual(a[i].Points[0], b[i].Points[0]);
         }
+
+        [Test]
+        public void Ribs_ManySeedsNeverThrow()
+        {
+            for (int seed = 0; seed < 40; seed++)
+            {
+                var ribs = VaultLayout.Ribs(seed, Ceiling);
+                Assert.Greater(ribs.Length, 0);
+                foreach (var r in ribs) Assert.GreaterOrEqual(r.Points.Length, 2);
+                VaultLayout.Slots(seed, ribs);
+                VaultLayout.FootPoints(ribs);
+            }
+        }
     }
 }
