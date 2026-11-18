@@ -475,3 +475,12 @@ Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Gr
 - Hạn chế: cỏ không đổ bóng; đo FPS (số lượng lá lớn); chưa nhìn được trong Unity.
 
 Checklist: (1) Console sạch, Test Runner xanh (`GrassMathTests`); (2) Dress Lake: Grass, Ctrl+S; (3) Play, đi vào cỏ: lá rẽ sang hai bên và đứng dậy sau khi đi qua; (4) cỏ dày quanh hồ, thưa dần ra xa, đường mòn trống; (5) FPS không tụt quá 15%.
+
+## 29. Thực vật và quặng hấp thụ được: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Forage** (bước 21/23 của Rebuild Lake; hoàn tác: Restore Lake Forage). Thêm 10 loại hấp thụ được, mỗi loại có `FoodKind` và công thức dưỡng chất riêng (`Survival/FoodProfile`): **thực vật** (rải theo khu): súng nước (Tinh Chất Sống), bồn bồn (Mỡ Nhờn), dương xỉ đắng (Huyết Thiết và Tinh Chất Sống), nấm mỡ (Mỡ Nhờn), củ rễ ngọt (Sợi Nhầy), hoa băng (Tinh Vôi và Tinh Chất Sống); **quặng**: tinh thạch vôi (Tinh Vôi 1,3), quặng sắt (Huyết Thiết 1,3), muối khoáng (Tinh Vôi), thạch anh phát sáng (Huyết Thiết và Tinh Chất Sống, có phần phát sáng tách riêng). Mô hình Blender: `tools/blender/build_forage.py`, test `test_forage.py`.
+- Là các `Nutrient` thường (hình cầu trigger + mô hình), nên ăn, mọc lại và đồng bộ co-op dùng đúng cơ chế cũ. Thực vật 14 đơn vị, hấp thụ 5/giây, mọc lại sau 150 giây; **quặng** 24 đơn vị, hấp thụ chậm 2,5/giây, hình thành lại sau 600 giây. Mỗi khu 34 cái: 01 súng nước (mặt nước nông) và bồn bồn ở bờ, muối; 02 củ rễ ngọt, quặng sắt; 03 nấm mỡ, dương xỉ; 04 dương xỉ, thạch anh; 05 hoa băng, tinh thạch vôi, quặng sắt; 06 quặng sắt, tinh thạch vôi, củ rễ.
+- **Giới hạn đồng bộ co-op nâng từ 400 lên 1000 cục thức ăn** (`World/FoodSyncLimit`, gói tin 4096 byte); cảnh báo ở Console nếu vượt. Cả hai máy phải cùng scene (đã chạy Forage).
+- Hạn chế: chưa có tên và biểu tượng riêng trong giao diện; quặng chưa có va chạm cứng (đi xuyên qua, hấp thụ khi chạm); thú chưa ăn các loại mới.
+
+Checklist: (1) Console sạch, Test Runner xanh (`FoodProfilesWiringTests`); (2) Reinstall Blender Props, Dress Lake: Forage, Ctrl+S; (3) Play: đứng trên một cái thì thanh dưỡng chất tương ứng tăng đúng loại; (4) quặng ăn chậm và mọc lại rất lâu; (5) hai máy co-op thấy cùng thức ăn (không có cảnh báo lệch).
