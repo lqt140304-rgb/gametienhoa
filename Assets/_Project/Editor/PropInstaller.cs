@@ -18,7 +18,9 @@ namespace Evolve.EditorTools
         {
             "Log_Hollow", "Mushroom_Giant_0", "Mushroom_Giant_1", "Mushroom_Giant_2",
             "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch",
-            "Cliff_0", "Cliff_1", "Cliff_2", "Cliff_3", "HangRoot_0", "HangRoot_1", "HangRoot_2", "HangRoot_3"
+            "Cliff_0", "Cliff_1", "Cliff_2", "Cliff_3", "HangRoot_0", "HangRoot_1", "HangRoot_2", "HangRoot_3",
+            "Rib_Straight_0", "Rib_Straight_1", "Rib_Straight_2", "Rib_Bend_0", "Rib_Bend_1", "Rib_Bend_2", "Rib_Fork_0", "Rib_Fork_1",
+            "Rib_Tip_0", "Rib_Tip_1", "Rib_Foot_0", "Rib_Foot_1"
         };
 
         [MenuItem("Evolve/Install Blender Rocks")]
