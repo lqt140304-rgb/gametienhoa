@@ -174,5 +174,78 @@ namespace Evolve.World
             }
             return list;
         }
+
+        // ---------------------------------------------------------------- the class houses
+
+        /// <summary>The house of one of the eight treefolk classes (see <see cref="Evolve.Civilization.TreefolkClass"/>).</summary>
+        public struct ClassHouse
+        {
+            public Evolve.Civilization.TreefolkClass Class;
+            public Vector2 Position;
+            public float Yaw;        // degrees about y turning the building's local +x (its door, its front) toward the hall
+        }
+
+        public const float ClassHouseSpacing = 14f;
+
+        /// <summary>
+        /// Where each class has its house. Not a ring and not evenly spaced: every class looks for the site that suits it
+        /// (Dưỡng Thể by the water, Xạ Thể and Năng Thể on high ground, Đấu Thể in front of the hall's door, Quần Thể on open
+        /// ground to the south, Cấu Thể to the north, Liệp Thể hidden away from the paths, Dã Thể on the far edge), among
+        /// dry, level, off-trail sites outside the village, at least <see cref="ClassHouseSpacing"/> apart. A little seeded
+        /// noise breaks ties, so the layout never looks mechanical. Deterministic.
+        /// </summary>
+        public static ClassHouse[] ClassHouses()
+        {
+            Vector2 c = HallCenter;
+            var houses = Houses();
+            var sites = new System.Collections.Generic.List<Vector2>();
+            for (int x = -196; x <= -90; x += 4)
+                for (int z = -90; z <= 62; z += 4)
+                {
+                    var p = new Vector2(x, z);
+                    if (ZoneLayout.InsideCave(p.x, p.y, 9f)) continue;
+                    if (ZoneLayout.DepthAt(p.x, p.y) > 0f || ZoneLayout.DistanceToWater(p.x, p.y) < 6f) continue;
+                    if (ZoneLayout.DistanceToPath(p.x, p.y) < 5f || ZoneLayout.DistanceToLine(p, ZoneLayout.TunnelLine) < 8f) continue;
+                    if (Mathf.Abs(p.x) > 192f || Mathf.Abs(p.y) > 190f) continue;
+                    if (ZoneLayout.Influence(1, p.x, p.y) < 0.08f) continue;
+                    bool free = true;
+                    foreach (var h in houses) if (Vector2.Distance(p, h.Position) < h.Radius + 7f) { free = false; break; }
+                    if (!free) continue;
+                    float h0 = TerrainShape.HeightAt(p.x + 5f, p.y, TerrainSeed), h1 = TerrainShape.HeightAt(p.x - 5f, p.y, TerrainSeed);
+                    float h2 = TerrainShape.HeightAt(p.x, p.y + 5f, TerrainSeed), h3 = TerrainShape.HeightAt(p.x, p.y - 5f, TerrainSeed);
+                    if (Mathf.Max(Mathf.Max(h0, h1), Mathf.Max(h2, h3)) - Mathf.Min(Mathf.Min(h0, h1), Mathf.Min(h2, h3)) > 1.6f) continue;
+                    sites.Add(p);
+                }
+
+            // each class: how much it likes a site (higher is better), in the order the classes pick
+            var order = new (Evolve.Civilization.TreefolkClass cls, System.Func<Vector2, float> like)[]
+            {
+                (Evolve.Civilization.TreefolkClass.DuongThe, p => -ZoneLayout.DistanceToWater(p.x, p.y)),
+                (Evolve.Civilization.TreefolkClass.XaThe, p => TerrainShape.HeightAt(p.x, p.y, TerrainSeed) + 0.02f * p.x),
+                (Evolve.Civilization.TreefolkClass.NangThe, p => TerrainShape.HeightAt(p.x, p.y, TerrainSeed) - 0.01f * p.y),
+                (Evolve.Civilization.TreefolkClass.DauThe, p => -Mathf.Abs(Mathf.Atan2(p.y - c.y, p.x - c.x) * Mathf.Rad2Deg) - 0.3f * Vector2.Distance(p, c)),
+                (Evolve.Civilization.TreefolkClass.QuanThe, p => -p.y - 0.1f * Vector2.Distance(p, c)),
+                (Evolve.Civilization.TreefolkClass.CauThe, p => p.y + 0.05f * Vector2.Distance(p, c)),
+                (Evolve.Civilization.TreefolkClass.LiepThe, p => -p.x - 0.5f * Vector2.Distance(p, c) + 0.3f * ZoneLayout.DistanceToPath(p.x, p.y)),
+                (Evolve.Civilization.TreefolkClass.DaThe, p => Vector2.Distance(p, c)),
+            };
+            var result = new System.Collections.Generic.List<ClassHouse>();
+            foreach (var (cls, like) in order)
+            {
+                bool found = false; float best = float.MinValue; Vector2 at = default;
+                foreach (var p in sites)
+                {
+                    bool near = false;
+                    foreach (var r in result) if (Vector2.Distance(r.Position, p) < ClassHouseSpacing) { near = true; break; }
+                    if (near) continue;
+                    float v = like(p) + ZoneLayout.Noise(p.x * 0.2f + 11f, p.y * 0.2f + 7f) * 3f;
+                    if (!found || v > best) { found = true; best = v; at = p; }
+                }
+                if (!found) continue;
+                Vector2 to = c - at;
+                result.Add(new ClassHouse { Class = cls, Position = at, Yaw = -Mathf.Atan2(to.y, to.x) * Mathf.Rad2Deg });
+            }
+            return result.ToArray();
+        }
     }
 }

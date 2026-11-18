@@ -88,6 +88,29 @@ namespace Evolve.EditorTools
                 t.Post = pos;
             }
 
+            // the eight class masters, one at the door of each class house
+            int next = 24;
+            foreach (var ch in CityLayout.ClassHouses())
+            {
+                float yawRad = -ch.Yaw * Mathf.Deg2Rad;
+                Vector2 front = new Vector2(Mathf.Cos(yawRad), Mathf.Sin(yawRad));
+                Vector2 step = ch.Position + front * 5f;
+                var go = new GameObject("Treefolk Master " + TreefolkClasses.Name(ch.Class));
+                go.transform.SetParent(root, false);
+                go.transform.position = At(step.x, step.y);
+                go.transform.rotation = Quaternion.Euler(0f, -Mathf.Atan2(-front.y, -front.x) * Mathf.Rad2Deg, 0f);
+                go.AddComponent<MeshFilter>().sharedMesh = TreefolkMesh.Build(900 + next, 1.5f);
+                go.AddComponent<MeshRenderer>().sharedMaterial = guardBark;
+                go.AddComponent<Rigidbody>().isKinematic = true;
+                var col = go.AddComponent<CapsuleCollider>();
+                col.height = 1.5f; col.radius = 0.34f; col.center = new Vector3(0f, 0.75f, 0f);
+                var t = go.AddComponent<Treefolk>();
+                t.Kind = Treefolk.Role.Citizen;
+                t.Index = next++;
+                t.ClassId = TreefolkClasses.Name(ch.Class);
+                t.Post = go.transform.position;
+            }
+
             // root walls that close the door and the slit (hidden until a hated player comes near)
             var gateMat = LakeGround.OpaqueMaterial("Lake_CanopyBark", new Color(0.24f, 0.17f, 0.11f), 0.12f, false);
             float floor = tribe.CaveCenter.y;

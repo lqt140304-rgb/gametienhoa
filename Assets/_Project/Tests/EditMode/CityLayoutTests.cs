@@ -103,6 +103,64 @@ namespace Evolve.Tests.EditMode
             }
         }
 
+        [Test] public void EveryClassHasItsOwnHouseOnAGoodSite()
+        {
+            var cls = CityLayout.ClassHouses();
+            Assert.AreEqual(8, cls.Length, "one house per class");
+            var seen = new System.Collections.Generic.HashSet<Evolve.Civilization.TreefolkClass>();
+            var houses = CityLayout.Houses();
+            for (int i = 0; i < cls.Length; i++)
+            {
+                var p = cls[i].Position;
+                Assert.IsTrue(seen.Add(cls[i].Class), "no class twice");
+                Assert.AreEqual(0f, ZoneLayout.DepthAt(p.x, p.y), "dry");
+                Assert.GreaterOrEqual(ZoneLayout.DistanceToPath(p.x, p.y), 5f);
+                Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.y, 9f), "outside the village round the hall");
+                foreach (var h in houses) Assert.GreaterOrEqual(Vector2.Distance(p, h.Position), h.Radius + 7f, "clear of the huts");
+                for (int j = i + 1; j < cls.Length; j++) Assert.GreaterOrEqual(Vector2.Distance(p, cls[j].Position), CityLayout.ClassHouseSpacing);
+            }
+        }
+
+        [Test] public void ClassHousesAreNotARingOrEvenlySpaced()
+        {
+            var cls = CityLayout.ClassHouses();
+            var angles = new System.Collections.Generic.List<float>();
+            float rMin = float.MaxValue, rMax = 0f;
+            foreach (var h in cls)
+            {
+                Vector2 d = h.Position - CityLayout.HallCenter;
+                angles.Add(Mathf.Repeat(Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, 360f));
+                rMin = Mathf.Min(rMin, d.magnitude); rMax = Mathf.Max(rMax, d.magnitude);
+            }
+            Assert.GreaterOrEqual(rMax - rMin, 12f, "near and far, not all at one distance");
+            angles.Sort();
+            float sum = 0f, sum2 = 0f;
+            for (int i = 0; i < angles.Count; i++)
+            {
+                float gap = (angles[(i + 1) % angles.Count] - angles[i] + 360f) % 360f;
+                sum += gap; sum2 += gap * gap;
+            }
+            float mean = sum / angles.Count, sd = Mathf.Sqrt(Mathf.Max(0f, sum2 / angles.Count - mean * mean));
+            Assert.GreaterOrEqual(sd, 8f, "angular gaps differ");
+        }
+
+        [Test] public void ClassHousesFaceTheHallAndSuitTheirClass()
+        {
+            var cls = CityLayout.ClassHouses();
+            float waterDuong = 0f, waterOthers = 0f; int n = 0; float hDuong = 0f, hXa = 0f, hAvg = 0f;
+            foreach (var h in cls)
+            {
+                float w = ZoneLayout.DistanceToWater(h.Position.x, h.Position.y);
+                float ht = TerrainShape.HeightAt(h.Position.x, h.Position.y, CityLayout.TerrainSeed);
+                if (h.Class == Evolve.Civilization.TreefolkClass.DuongThe) { waterDuong = w; hDuong = ht; }
+                else { waterOthers += w; n++; }
+                if (h.Class == Evolve.Civilization.TreefolkClass.XaThe) hXa = ht;
+                hAvg += ht;
+            }
+            Assert.LessOrEqual(waterDuong, waterOthers / n, "Dưỡng Thể lives nearest the water");
+            Assert.GreaterOrEqual(hXa, hAvg / cls.Length, "Xạ Thể lives on high ground");
+        }
+
         [Test] public void TheTunnelStartsOutsideTheEnlargedHall()
         {
             foreach (var p in ZoneLayout.TunnelLine) Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.y, 3f));

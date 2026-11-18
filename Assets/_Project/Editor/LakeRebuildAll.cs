@@ -18,18 +18,19 @@ namespace Evolve.EditorTools
         {
             var steps = new (string name, Action run)[]
             {
-                ("1/12 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
-                ("2/12 Nước (Dress Lake: Water)", LakeWater.Dress),
-                ("3/12 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
-                ("4/12 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
-                ("5/12 Quần xã thực vật (Dress Lake: Plant Communities)", LakeCommunities.Dress),
-                ("6/12 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
-                ("7/12 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
-                ("8/12 Mái lưới rễ (Dress Lake: Root Canopy)", LakeCanopy.Dress),
-                ("9/12 Điểm nhấn các khu (Dress Lake: Landmarks)", LakeLandmarks.Dress),
-                ("10/12 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
-                ("11/12 Thành phố người cây (Dress Lake: Treefolk City)", LakeTreefolkCity.Dress),
-                ("12/12 Người cây (Dress Lake: Treefolk)", LakeTreefolk.Dress),
+                ("1/13 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
+                ("2/13 Nước (Dress Lake: Water)", LakeWater.Dress),
+                ("3/13 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
+                ("4/13 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
+                ("5/13 Quần xã thực vật (Dress Lake: Plant Communities)", LakeCommunities.Dress),
+                ("6/13 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
+                ("7/13 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
+                ("8/13 Mái lưới rễ (Dress Lake: Root Canopy)", LakeCanopy.Dress),
+                ("9/13 Điểm nhấn các khu (Dress Lake: Landmarks)", LakeLandmarks.Dress),
+                ("10/13 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
+                ("11/13 Thành phố người cây (Dress Lake: Treefolk City)", LakeTreefolkCity.Dress),
+                ("12/13 Nhà các class (Dress Lake: Class Houses)", LakeClassHouses.Dress),
+                ("13/13 Người cây (Dress Lake: Treefolk)", LakeTreefolk.Dress),
             };
             try
             {

@@ -49,7 +49,7 @@ namespace Evolve.Civilization
         Vector3 goal;
         bool hasGoal;
         Vector3 replicaPos; float replicaYaw;
-        static GUIStyle markStyle;
+        static GUIStyle markStyle, classStyle;
 
         void Awake()
         {
@@ -204,7 +204,17 @@ namespace Evolve.Civilization
 
         void OnGUI()
         {
-            if (!Alarmed || IsDead || Event.current.type != EventType.Repaint) return;
+            if (Event.current.type != EventType.Repaint || IsDead) return;
+            if (!string.IsNullOrEmpty(ClassId) && Camera.main != null && (transform.position - Camera.main.transform.position).sqrMagnitude < 14f * 14f)
+            {
+                Vector3 sp = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 2.2f);
+                if (sp.z > 0f)
+                {
+                    if (classStyle == null) classStyle = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(1f, 0.88f, 0.55f) } };
+                    GUI.Label(new Rect(sp.x - 80f, Screen.height - sp.y - 12f, 160f, 24f), ClassId, classStyle);
+                }
+            }
+            if (!Alarmed) return;
             var cam = Camera.main;
             if (cam == null) return;
             Vector3 head = transform.position + Vector3.up * 1.8f;
