@@ -20,6 +20,7 @@ namespace Evolve.Player
         /// <summary>Speed factor from a core (Nhân Quen Đất): 1 = none. Written by PlayerTraits.</summary>
         [System.NonSerialized] public float TraitSpeed = 1f;
         float frozenUntil;
+        Evolve.Traits.PlayerTraits traitsComp;
         Vector3 steer;
         const float SteerRate = 6f;   // how fast the movement direction can change when Luống Cuống slows it (full reversal in about a third of a second at normal)
 
@@ -71,7 +72,8 @@ namespace Evolve.Player
             rb.freezeRotation = true;
             stats = GetComponent<SurvivalStats>();
             organs = GetComponent<OrganHost>();
-            if (GetComponent<Evolve.Traits.PlayerTraits>() == null) gameObject.AddComponent<Evolve.Traits.PlayerTraits>();
+            traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
+            if (traitsComp == null) traitsComp = gameObject.AddComponent<Evolve.Traits.PlayerTraits>();
             col = GetComponent<Collider>();
             sphere = col as SphereCollider;
             capsule = col as CapsuleCollider;
@@ -147,7 +149,7 @@ namespace Evolve.Player
             UpdateBodyScale();
             Vector3 dir = GetMoveDirection();
             if (Time.time < frozenUntil) dir = Vector3.zero;   // Run Rẩy
-            var traits = GetComponent<Evolve.Traits.PlayerTraits>();
+            var traits = traitsComp;
             float turn = traits != null ? Evolve.Traits.FlawRules.TurnRateMultiplier(stats.State.Health / Mathf.Max(1f, stats.State.MaxHealth), traits.FlawStrength(Evolve.Traits.FlawRules.LuongCuong)) : 1f;
             if (turn < 0.999f) { steer = Vector3.MoveTowards(steer, dir, SteerRate * turn * Time.fixedDeltaTime); dir = steer; }   // Luống Cuống: steering is sluggish
             else steer = dir;
