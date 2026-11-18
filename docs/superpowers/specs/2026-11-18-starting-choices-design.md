@@ -40,7 +40,24 @@ Nguyên tắc: **Lõi tự chạy, đổi một luật của cơ thể; Dị Nă
 Đã duyệt: **Nhân Quen Đất** (đi lại một đường nhiều lần thì nhanh hơn trên đường đó).
 Đã duyệt: **Nhân Thích Nghi** (chịu lặp lại một loại sát thương môi trường thì kháng loại đó tăng dần, hết bị tác động thì giảm; Khuyết Điểm không dùng nhóm Sợ-).
 Đã duyệt: **Nhân Giữ Gốc** = khi chết **không mất cơ quan đang trang bị** (không áp dụng cho vật phẩm mang theo hay kho). Quyết định của Claude, chờ phản hồi: không áp dụng ở lần chết thứ 3 (hết mạng); Khuyết Điểm nặng hơn mức thường, kiểu cộng hai Khuyết Điểm nhẹ.
-Đã chỉnh lại theo phản hồi: Nhân Phát Quang thành Nhân Quang Hợp; Nhân Bám Dính thành luật không bị hất văng khi đứng vững. Chờ duyệt.
+Đã chỉnh lại theo phản hồi: Nhân Phát Quang thành Nhân Quang Hợp; Nhân Bám Dính thành luật không bị hất văng khi đứng vững. Đã duyệt.
+
+## Cơ chế chi tiết của Lõi (bản nháp mẫu, chưa duyệt)
+Mỗi Lõi sẽ được mô tả theo cùng khuôn: kích hoạt khi nào, giới hạn, tương tác (cơ quan, đồng đội, boss), đồng bộ co-op, số liệu tạm. Hai mẫu đầu:
+
+**Nhân Quen Đất**
+- Kích hoạt: mỗi lần đi qua một đoạn đường (ô lưới khoảng 4 m) thì tăng điểm "quen" của đoạn đó.
+- Hiệu ứng: điểm quen cao thì tốc độ trên đoạn đó tăng tối đa +15% (số tạm).
+- Giới hạn: điểm quen giảm dần khi bỏ đoạn đường nhiều phút; không cộng dồn khi đứng yên; không tác dụng trong nước sâu.
+- Tương tác: đồng đội không chia sẻ điểm quen; ghi theo từng người; lưu theo ván.
+- Co-op: tính toán tại máy mỗi người, host chỉ kiểm tra tốc độ tối đa.
+
+**Nhân Giữ Gốc**
+- Kích hoạt: khi chết ở lần thứ 1 hoặc 2.
+- Hiệu ứng: cơ quan đang trang bị không bị mất, vẫn gắn vào thân sau hồi sinh.
+- Giới hạn: không áp dụng lần chết thứ 3; không bảo vệ vật phẩm mang theo hay kho; cơ quan đã hỏng vẫn hỏng.
+- Tương tác: không đổi hình phạt mất mạng; lõi này cộng hai Khuyết Điểm nhẹ.
+- Co-op: host quyết định lúc chết, gửi kết quả cho mọi người.
 
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
