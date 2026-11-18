@@ -34,7 +34,8 @@ namespace Evolve.World
         {
             lamp = GetComponent<Light>();
             baseIntensity = lamp.intensity;
-            phase = (GetInstanceID() & 255) * 0.1f;   // lights breathe out of step
+            var pos = transform.position;
+            phase = Mathf.Abs(pos.x * 12.9898f + pos.z * 78.233f) % 6.2832f;   // lights breathe out of step
         }
 
         void Update()
