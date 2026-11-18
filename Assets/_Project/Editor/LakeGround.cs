@@ -9,7 +9,7 @@ namespace Evolve.EditorTools
 {
     /// <summary>
     /// Dresses the ground around the lake. Menu: Evolve -> Dress Lake: Ground.
-    /// Moss patches and grass along the shores and scattered over the flat ground, rocks with a moss cap, and winding
+    /// Moss patches and grass along the shores and scattered over the flat ground, and winding
     /// mud paths between the pool and the other areas. Everything is visual only (no colliders), made of a few combined
     /// meshes under one object, and it is safe to run again (it replaces its own work). It reads the ponds from the scene
     /// (WaterSurface) and the ground height by ray, so it keeps working when the terrain changes.
@@ -68,35 +68,7 @@ namespace Evolve.EditorTools
                 AddCombined(root, "Humus Mud", parts, MudPatchMaterial());
             }
 
-            // ---- rocks (with moss caps) ----
-            var rocks = new List<Mesh>();
-            var caps = new List<Mesh>();
-            for (int v = 0; v < 6; v++) { rocks.Add(GroundMeshes.Rock(500 + v, out var cap)); caps.Add(cap); }
-            var rockInstances = new List<CombineInstance>();
-            var capInstances = new List<CombineInstance>();
-            void PlaceRock(Vector2 p, float size)
-            {
-                if (Wet(ponds, p)) return;
-                int variant = rnd.Next(rocks.Count);
-                var rot = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
-                var scale = new Vector3(size * (0.8f + (float)rnd.NextDouble() * 0.5f), size * (0.7f + (float)rnd.NextDouble() * 0.6f), size * (0.8f + (float)rnd.NextDouble() * 0.5f));
-                var m = Matrix4x4.TRS(new Vector3(p.x, GroundY(p.x, p.y), p.y), rot, scale);
-                rockInstances.Add(new CombineInstance { mesh = rocks[variant], transform = m });
-                capInstances.Add(new CombineInstance { mesh = caps[variant], transform = m });
-            }
-            foreach (var pond in ponds)
-            {
-                var outline = pond.WorldOutline;
-                for (int k = 0; k < outline.Length; k += 5)
-                {
-                    if (rnd.NextDouble() > 0.5) continue;
-                    Vector2 p = outline[k] + Outward(outline, k) * (0.6f + (float)rnd.NextDouble() * 2.4f);
-                    PlaceRock(p, 0.35f + (float)rnd.NextDouble() * 0.75f);
-                    if (rnd.NextDouble() < 0.4) PlaceRock(p + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * 1.6f, 0.2f + (float)rnd.NextDouble() * 0.35f);
-                }
-            }
-            AddCombined(root, "Rocks", rockInstances, OpaqueMaterial("Lake_Rock", new Color(0.40f, 0.41f, 0.39f), 0.15f, false));
-            AddCombined(root, "Rock Moss", capInstances, OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
+            // (no rocks here: the rocks, root arches, logs and big mushrooms are modelled in Blender and placed by their own tool)
 
             // ---- grass tufts (three greens) ----
             var tufts = new List<Vector3>[] { new List<Vector3>(), new List<Vector3>(), new List<Vector3>() };
