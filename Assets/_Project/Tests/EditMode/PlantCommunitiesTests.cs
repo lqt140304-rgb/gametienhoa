@@ -78,6 +78,16 @@ namespace Evolve.Tests.EditMode
             Assert.Less(low / (float)n, 0.95f, "but there are clusters");
         }
 
+        [Test] public void DensityAllMatchesTheSingleDensities()
+        {
+            var p = ZoneLayout.Spore.Center + new Vector2(6f, -3f);
+            var all = PlantCommunities.DensityAll(p.x, p.y);
+            Assert.AreEqual(PlantCommunities.PlantCount, all.Length);
+            for (int i = 0; i < all.Length; i++) Assert.AreEqual(PlantCommunities.Density((Plant)i, p.x, p.y), all[i], 1e-5f);
+            var soft = PlantCommunities.DensityAll(p.x, p.y, 0.5f);
+            foreach (float v in soft) { Assert.GreaterOrEqual(v, 0f); Assert.LessOrEqual(v, 1f); }
+        }
+
         [Test] public void SameSpotSamePlant()
         {
             Assert.AreEqual(PlantCommunities.Pick(100f, 90f, 0.3), PlantCommunities.Pick(100f, 90f, 0.3));
