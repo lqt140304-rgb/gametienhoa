@@ -17,7 +17,8 @@ namespace Evolve.EditorTools
         static readonly string[] LandmarkNames =
         {
             "Log_Hollow", "Mushroom_Giant_0", "Mushroom_Giant_1", "Mushroom_Giant_2",
-            "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch"
+            "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch",
+            "Cliff_0", "Cliff_1", "Cliff_2", "Cliff_3", "HangRoot_0", "HangRoot_1", "HangRoot_2", "HangRoot_3"
         };
 
         [MenuItem("Evolve/Install Blender Rocks")]
@@ -46,7 +47,16 @@ namespace Evolve.EditorTools
             return true;
         }
 
-        static int Ensure(string[] names)
+        [MenuItem("Evolve/Reinstall Blender Props (overwrite)")]
+        public static void ReinstallMenu()
+        {
+            var all = new System.Collections.Generic.List<string>(LandmarkNames);
+            for (int i = 0; i < Count; i++) all.Add("Rock_" + i);
+            int n = Ensure(all.ToArray(), true);
+            Debug.Log($"Đã ghi đè {n} file FBX vật thể Blender từ tools/blender/out. Chạy lại Dress Lake: Props và Landmark Props.");
+        }
+
+        static int Ensure(string[] names, bool overwrite = false)
         {
             string projectRoot = Path.GetDirectoryName(Application.dataPath);
             Directory.CreateDirectory(Path.Combine(projectRoot, Folder));
@@ -54,7 +64,7 @@ namespace Evolve.EditorTools
             foreach (var name in names)
             {
                 string target = Path.Combine(projectRoot, Folder, name + ".fbx");
-                if (File.Exists(target)) continue;
+                if (File.Exists(target) && !overwrite) continue;
                 string source = Path.Combine(projectRoot, SourceFolder, name + ".fbx.b64");
                 if (!File.Exists(source)) { Debug.LogWarning("Thiếu file nguồn " + source); continue; }
                 File.WriteAllBytes(target, System.Convert.FromBase64String(File.ReadAllText(source).Trim()));

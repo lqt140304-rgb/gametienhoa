@@ -386,3 +386,12 @@ Checklist: (1) Console sạch, Test Runner xanh; (2) chạy menu: các object c�
 - Hạn chế: chưa có lớp sương sát đất; hạt xuyên vật thể gần camera; hình hạt là chấm mờ (chưa có hình riêng như cánh hoa, lá).
 
 Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`); (2) đi qua 6 khu: màu sương và hạt khác nhau, ranh giới mượt; (3) chưa có mắt: sương đen, không thấy hạt xa; có mắt (phím V): sương có màu khu; (4) lặn xuống hố sâu rồi nổi lên: sương trở về đúng khu, không kẹt xanh ngọc; (5) F8 bật tắt hạt; (6) FPS bằng PerfOverlay không giảm quá 3%; (7) chụp ảnh từng khu gửi tôi.
+
+
+## 21. Vật thể Blender đợt 3 (nấm và cung rễ chi tiết hơn, vách rìa, rễ buông mái) và khu 03
+
+- Nấm: thân có rãnh sợi, vòng váy, chân chống; mũ dày có mép lượn sóng, đốm trắng và nếp dưới mũ. Cung rễ: 14 rễ chồng lớp (vài rễ xoắn), rễ bò chân, rễ rủ chia nhánh. Khúc gỗ sáng hơn để tách khỏi nền nâu.
+- Mới: `Cliff_0..3` (tấm đá vôi phân lớp 28 × 16 m, va chạm hộp 12 mặt) đặt quanh rìa hang (trừ lối vào của kẻ săn mồi) và `HangRoot_0..3` (rễ rủ từ mái, không va chạm, khoảng 90 cây). Menu **Evolve → Dress Lake: Landmark Props** đặt cả hai. Rễ rủ tránh hang lớn và tia sáng; dài tối đa 14 m, cách đất ≥ 5 m.
+- Khu 03: sương xám ấm hơn (đỡ nâu), tầm nhìn 75 m, hạt lá mờ và nhỏ hơn (số hạt 3).
+- Cập nhật FBX: menu **Evolve → Reinstall Blender Props (overwrite)** ghi đè từ `tools/blender/out/*.fbx.b64` (menu Install chỉ ghi file còn thiếu).
+- Checklist: (1) Console sạch; (2) Evolve → Reinstall Blender Props (overwrite), rồi Dress Lake: Landmark Props; (3) nấm khu 04 có mũ đốm và váy; cung rễ khu 06 nhiều rễ; (4) vách quanh rìa liền khối, lối vào phía bắc còn mở; (5) rễ rủ trên mái, không che tia sáng; (6) khu 03: gỗ dễ nhìn, hạt bớt chói; (7) FPS bằng PerfOverlay; (8) chụp ảnh gửi tôi.

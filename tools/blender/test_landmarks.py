@@ -60,4 +60,22 @@ check(gap >= 2.2, "arch clear gap %.2f m" % gap)
 check(kit.tri_count(arch) <= 10000, "arch tris %d" % kit.tri_count(arch))
 check(kit.tri_count(col) <= 300, "arch collider tris %d" % kit.tri_count(col))
 check(min(v.co.z for v in arch.data.vertices) > -0.05, "arch below ground")
-print("OK: log, 3 mushrooms, root arch")
+# ---- rim cliff
+for seed in (20, 21):
+    kit.new_scene()
+    cliff, col = bl.build_cliff(seed)
+    w, d, h = kit.bounds(cliff)
+    check(near(w, 28.0, 0.1) and near(h, 16.0, 0.1), "cliff %.1f x %.1f x %.1f" % (w, d, h))
+    check(2.5 <= d <= 9.0, "cliff depth %.2f" % d)
+    check(kit.tri_count(cliff) <= 8500, "cliff tris %d" % kit.tri_count(cliff))
+    check(kit.tri_count(col) <= 20, "cliff collider tris %d" % kit.tri_count(col))
+    check(min(v.co.z for v in cliff.data.vertices) > -0.05, "cliff below ground")
+
+# ---- hanging root
+kit.new_scene()
+(root,) = bl.build_hang_root(40)
+w, d, h = kit.bounds(root)
+check(near(h, 10.0, 0.15), "hang root length %.2f" % h)
+check(max(v.co.z for v in root.data.vertices) <= 0.45, "hang root top above the roof anchor")
+check(kit.tri_count(root) <= 2500, "hang root tris %d" % kit.tri_count(root))
+print("OK: log, 3 mushrooms, root arch, cliff, hanging root")

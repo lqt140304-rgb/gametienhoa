@@ -200,3 +200,8 @@ Nguồn số liệu: mọi con số (tốc độ khát, lượng uống, ngưỡ
 - Cân bằng nhiệt độ, độ ẩm, đói và nguồn thức ăn.
 
 Mọi thay đổi thiết kế cần được cập nhật tại đây trước khi triển khai lớn.
+
+
+## Nơi trú ẩn và nghỉ [ĐÃ CHỐT HƯỚNG 2026-11-18]
+
+- Nơi trú ẩn và nơi nghỉ của người chơi sẽ nằm trong **các ngôi làng** (như làng người cây hiện có: những nhà gốc rễ quanh Đại Sảnh, trong đó ba nhà là nơi trú cho slime), không còn là các khe rễ rời rạc ngoài bãi. Chi tiết (nhiều làng, làng nào ở khu nào, luật nghỉ) sẽ bàn khi làm bước sinh tồn tiếp theo. Việc "đổi cơ thể chỉ ở nơi trú" đã bỏ từ 0.5e, nên nơi trú hiện chỉ làm nhiệm vụ ẩn nấp, giảm căng thẳng và hồi phục bệnh.
