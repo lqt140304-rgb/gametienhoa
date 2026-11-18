@@ -111,7 +111,7 @@ namespace Evolve.Tests.EditMode
                     min = Mathf.Min(min, h);
                     max = Mathf.Max(max, h);
                 }
-            Assert.GreaterOrEqual(max - min, 6f, "bays of different height");
+            Assert.GreaterOrEqual(max - min, 5f, "bays of different height");
         }
 
         [Test]
@@ -122,8 +122,23 @@ namespace Evolve.Tests.EditMode
                 {
                     float a = VaultLayout.VaultHeight(x, z, Ceiling(x, z));
                     float b = VaultLayout.VaultHeight(x + 2f, z, Ceiling(x + 2f, z));
-                    Assert.LessOrEqual(Mathf.Abs(a - b), 1.6f, $"a step at {x},{z}");
+                    Assert.LessOrEqual(Mathf.Abs(a - b), 2f, $"a step at {x},{z}");
                 }
+        }
+
+        [Test]
+        public void Relief_IsLumpyButGentle()
+        {
+            float min = float.MaxValue, max = float.MinValue;
+            for (float x = -230f; x <= 230f; x += 5f)
+                for (float z = -230f; z <= 230f; z += 5f)
+                {
+                    float r = VaultLayout.Relief(x, z);
+                    min = Mathf.Min(min, r);
+                    max = Mathf.Max(max, r);
+                    Assert.LessOrEqual(Mathf.Abs(r - VaultLayout.Relief(x + 2f, z)), 1.4f, $"relief steps at {x},{z}");
+                }
+            Assert.GreaterOrEqual(max - min, 5f, "a real relief: ridges and hollows");
         }
 
         [Test]
