@@ -103,7 +103,7 @@ Mỗi Lõi sẽ được mô tả theo cùng khuôn: kích hoạt khi nào, gi�
 
 **Nhân Con Bạc**
 - Kích hoạt: mỗi lượt rơi chiến lợi phẩm của chính người này (cơ quan từ quái, đồ từ rương, kể cả boss).
-- Hiệu ứng: tăng tỉ lệ rơi (tạm +12% tương đối, ví dụ 10% lên 11,2%; với boss chỉ +6%).
+- Hiệu ứng: tăng tỉ lệ rơi **theo bậc cơ quan** (tăng tương đối, số tạm): D +20% · C +16% · B +12% · A +8% · S +4% (bậc S là đề xuất của Claude, chờ duyệt). Bậc càng hiếm thì tăng càng ít. Với boss áp dụng một nửa mức theo bậc.
 - Giới hạn: có trần, không bao giờ đạt chắc chắn; không tăng bậc cơ quan; chỉ áp cho lượt của người đó.
 - Tương tác: Khuyết Điểm của Lõi này nặng hơn mức thường (cộng hai Khuyết Điểm nhẹ).
 - Co-op: host lăn xúc xắc rơi cho từng người; hiệu ứng nhẹ báo khi đồ hiếm rơi nhờ Lõi này.
