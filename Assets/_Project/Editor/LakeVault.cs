@@ -64,6 +64,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, PropsName);
             DestroyChild(parent, RimName);
             DestroyChild(parent, CollarName);
+            DestroyChild(parent, "Vault Sky Windows");   // an earlier version drew sky discs behind the holes; removed on request
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
