@@ -17,6 +17,7 @@ namespace Evolve.Traits
         string[] flawIds = NoFlaws;
         OrganHost organs;
         Evolve.Player.SlimeController slime;
+        Evolve.Survival.SurvivalStats stats;
         readonly FamiliarityGrid familiarity = new FamiliarityGrid();
         readonly List<(OrganSlot slot, float integrity)> worn = new List<(OrganSlot, float)>();
 
@@ -28,11 +29,35 @@ namespace Evolve.Traits
         {
             organs = GetComponent<OrganHost>();
             slime = GetComponent<Evolve.Player.SlimeController>();
+            stats = GetComponent<Evolve.Survival.SurvivalStats>();
+        }
+
+        void OnEnable()
+        {
+            if (stats == null) stats = GetComponent<Evolve.Survival.SurvivalStats>();
+            if (stats != null) stats.State.Damaged += OnDamaged;
+        }
+
+        void OnDisable()
+        {
+            if (stats != null) stats.State.Damaged -= OnDamaged;
+        }
+
+        // Run Rẩy: a hit freezes the body for a moment.
+        void OnDamaged(float amount)
+        {
+            if (slime != null && HasFlaw(FlawRules.RunRay)) slime.FreezeFor(FlawRules.HitFreezeSeconds(FlawStrength(FlawRules.RunRay)));
         }
 
         // Nhân Quen Đất: the ground under the player becomes familiar; swimming is not covered.
         void Update()
         {
+            if (stats != null)
+            {
+                var state = stats.State;
+                state.HungerBurnMultiplier = FlawRules.HungerBurnMultiplier(FlawStrength(FlawRules.DoiSom));
+                state.AbsorbFlawStrength = FlawStrength(FlawRules.DaDayKen);
+            }
             if (slime == null) return;
             if (!HasCore("core.quen_dat") || slime.IsSwimming) { slime.TraitSpeed = 1f; return; }
             var p = new Vector2(transform.position.x, transform.position.z);

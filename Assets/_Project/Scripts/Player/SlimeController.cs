@@ -19,6 +19,15 @@ namespace Evolve.Player
         [System.NonSerialized] public float SpeedScale = 1f;
         /// <summary>Speed factor from a core (Nhân Quen Đất): 1 = none. Written by PlayerTraits.</summary>
         [System.NonSerialized] public float TraitSpeed = 1f;
+        float frozenUntil;
+        Vector3 steer;
+        const float SteerRate = 6f;   // how fast the movement direction can change when Luống Cuống slows it (full reversal in about a third of a second at normal)
+
+        /// <summary>Run Rẩy: the body stops and cannot hop for this many seconds.</summary>
+        public void FreezeFor(float seconds)
+        {
+            if (seconds > 0f) frozenUntil = Mathf.Max(frozenUntil, Time.time + seconds);
+        }
         /// <summary>In water at least SwimLogic.SwimDepth deep: no gravity, Space rises, Ctrl dives.</summary>
         public bool IsSwimming { get; private set; }
         /// <summary>In shallower water: walks, but slower.</summary>
@@ -137,6 +146,11 @@ namespace Evolve.Player
             if (stats.State.IsDead) return;
             UpdateBodyScale();
             Vector3 dir = GetMoveDirection();
+            if (Time.time < frozenUntil) dir = Vector3.zero;   // Run Rẩy
+            var traits = GetComponent<Evolve.Traits.PlayerTraits>();
+            float turn = traits != null ? Evolve.Traits.FlawRules.TurnRateMultiplier(stats.State.Health / Mathf.Max(1f, stats.State.MaxHealth), traits.FlawStrength(Evolve.Traits.FlawRules.LuongCuong)) : 1f;
+            if (turn < 0.999f) { steer = Vector3.MoveTowards(steer, dir, SteerRate * turn * Time.fixedDeltaTime); dir = steer; }   // Luống Cuống: steering is sluggish
+            else steer = dir;
             stats.IsMoving = dir.sqrMagnitude > 0.01f;
 
             // Sprinting burns food (see SurvivalState.Tick); impossible when starving.
