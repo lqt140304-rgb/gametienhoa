@@ -33,6 +33,8 @@ for kind, count in bv.KINDS:
         obj, col = bv.build_segment(kind, seed)
         tris = kit.tri_count(obj)
         check(tris <= (11000 if kind == "fork" else 8000), "%s %d has %d tris" % (kind, seed, tris))
+        check(bv.LAST_LOD is not None and bv.LAST_LOD.name == obj.name + "_LOD1", "%s %d has no LOD1" % (kind, seed))
+        check(kit.tri_count(bv.LAST_LOD) <= 900, "LOD1 of %s has %d tris" % (kind, kit.tri_count(bv.LAST_LOD)))
         # entry mouth: radius 1.0, centred on the axis
         pts = [v.co for v in obj.data.vertices if -0.4 <= v.co.x <= 0.4]   # the whole first ring (its plane is almost x = 0)
         check(len(pts) >= 8, "%s %d: no entry ring" % (kind, seed))

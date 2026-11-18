@@ -30,6 +30,8 @@ LICHEN = (0.16, 0.20, 0.10)
 GLOW = (0.20, 0.42, 0.30)
 
 LAST_EXITS = []
+PATHS = []          # (path, radii) of every root tube of the last piece, for the low-detail copy
+LAST_LOD = None     # the low-detail copy of the last piece (object named <piece>_LOD1)
 _GLOW_SPOTS = []     # centres of luminous nodules (painted pale green)
 _MOSS_SPOTS = []     # centres of moss cushions
 
@@ -99,6 +101,7 @@ def _strand(bm, path, radii, off, phase, turns, offset, rad, segs=10, cap_end=Fa
 
 def _root(bm, path, radii, off, cap_end=False, strands=3, turns=1):
     """A root as a twisted cable: a core and three strands winding round it (envelope radius = radii[i], so mouths match)."""
+    PATHS.append((list(path), list(radii), cap_end))
     core = [0.66 * r for r in radii]
     _tube(bm, path, core, 18, off, rough=1.3, cap_end=cap_end)
     for k in range(strands):
@@ -196,6 +199,9 @@ def build_segment(kind, seed):
     """Return (display, collider_or_None). kind: 'straight', 'bend', 'fork', 'tip', 'foot'. Fills LAST_EXITS."""
     global LAST_EXITS
     LAST_EXITS = []
+    global LAST_LOD
+    LAST_LOD = None
+    del PATHS[:]
     del _GLOW_SPOTS[:]
     del _MOSS_SPOTS[:]
     rng = random.Random(seed * 7 + len(kind))
@@ -249,6 +255,11 @@ def build_segment(kind, seed):
     name = "Rib_%s_%d" % (kind.capitalize(), seed)
     obj = kit.finish_object(bm, name, kit.vertex_color_material("Prop_VC"))
     _paint(obj, off)
+    lbm = bmesh.new()   # low-detail copy: one plain rilled tube per root, about 5% of the triangles
+    for lp, lr, lcap in PATHS:
+        _tube(lbm, lp, [0.9 * r for r in lr], 10, off, rough=0.8, cap_end=lcap)
+    LAST_LOD = kit.finish_object(lbm, name + "_LOD1", kit.vertex_color_material("Prop_VC"))
+    _paint(LAST_LOD, off)
     if kind == "foot":
         cbm = bmesh.new()
         lowest = min(v.co.z for v in obj.data.vertices)
@@ -273,12 +284,14 @@ def main():
         for seed in range(count):
             kit.new_scene()
             obj, col = build_segment(kind, seed)
-            objs = [obj] + ([col] if col else [])
+            objs = [obj, LAST_LOD] + ([col] if col else [])
             kit.export_fbx(objs, os.path.join(args.out, obj.name + ".fbx"))
             if args.previews and seed == 0:
                 os.makedirs(args.previews, exist_ok=True)
-                kit.render_preview(objs, os.path.join(args.previews, obj.name + "_front.png"), "front", 2.4)
-                kit.render_preview(objs, os.path.join(args.previews, obj.name + "_top.png"), "top", 2.4)
+                LAST_LOD.hide_render = True
+                shown = [obj] + ([col] if col else [])
+                kit.render_preview(shown, os.path.join(args.previews, obj.name + "_front.png"), "front", 2.4)
+                kit.render_preview(shown, os.path.join(args.previews, obj.name + "_top.png"), "top", 2.4)
             print(obj.name, kit.tri_count(obj))
 
 
