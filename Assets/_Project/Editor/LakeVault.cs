@@ -27,6 +27,7 @@ namespace Evolve.EditorTools
         const string RibsName = "Vault Ribs";
         const string OldHangingRoots = "Hanging Roots";          // 28 plain smooth cylinders from the scene builder
         const string SkyName = "Vault Sky Windows";             // a patch of sky behind each light hole
+        const string RimName = "Vault Rim Roots";               // Blender roots that replace the straight code-built rim roots
         const string PropsName = "Vault Hanging Props";          // long roots, curtains, glow pods, stalactites by zone
         const string PillarsName = "Vault Pillars";              // Blender replacements for the three smooth "Landmark" columns
         const string HangingName = "Vault Hanging Roots";       // their Blender replacement
@@ -62,6 +63,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, PillarsName);
             DestroyChild(parent, PropsName);
             DestroyChild(parent, SkyName);
+            DestroyChild(parent, RimName);
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
@@ -74,8 +76,9 @@ namespace Evolve.EditorTools
             int props = PlaceHangingProps(parent, ribs, slots, ceiling);
             props += PlaceBones(parent, ribs, slots, ceiling);
             int windows = BuildSkyWindows(parent, ceiling);
+            int rim = ReplaceRimRoots(parent, ceiling);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá), {windows} ô trời qua các lỗ sáng. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
+            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá), {windows} ô trời qua các lỗ sáng, {rim} rễ rìa Blender thay rễ thẳng cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
 
         [MenuItem("Evolve/Restore Lake Canopy (undo)")]
@@ -92,6 +95,8 @@ namespace Evolve.EditorTools
             DestroyChild(parent, PillarsName);
             DestroyChild(parent, PropsName);
             DestroyChild(parent, SkyName);
+            DestroyChild(parent, RimName);
+            SetRim(true);
             SetOldCylinders(true);
             SetPillars(true);
             old.name = NewRoof;
@@ -239,6 +244,54 @@ namespace Evolve.EditorTools
                 }
             }
             SetOldCylinders(false);
+            return made;
+        }
+
+        // ------------------------------------------------------------------ the rim roots
+
+        static void SetRim(bool visible)
+        {
+            var rim = GameObject.Find("Rim Roots");   // the code-built straight roots (LakeCanopy); only their renderers go, the object stays
+            if (rim == null) return;
+            foreach (var r in rim.GetComponentsInChildren<Renderer>(true)) r.enabled = visible;
+        }
+
+        /// <summary>Hide the straight, smooth rim roots and hang Blender roots (thick at the roof, tapering, with side roots) from the vault down the wall
+        /// in three rows, each stretched to reach the ground, in varied widths and leans. The hunter's way in on the north side stays open.</summary>
+        static int ReplaceRimRoots(Transform canopy, Func<float, float, float> ceiling)
+        {
+            var prefabs = new List<GameObject>();
+            for (int i = 0; i < 4; i++) { var p = Load("HangRoot_" + i); if (p != null) prefabs.Add(p); }
+            if (prefabs.Count == 0 || GameObject.Find("Rim Roots") == null) return 0;
+            var parent = new GameObject(RimName).transform;
+            parent.SetParent(canopy, false);
+            var rnd = new System.Random(Seed + 131);
+            float[] rows = { 206f, 220f, 234f };
+            float[] spacing = { 17f, 14f, 12f };
+            int made = 0;
+            for (int row = 0; row < rows.Length; row++)
+            {
+                float d = rows[row];
+                for (float s = -d; s < d; s += spacing[row])
+                    for (int side = 0; side < 4; side++)
+                    {
+                        float along = s + ((float)rnd.NextDouble() - 0.5f) * spacing[row] * 0.7f;
+                        Vector2 p = side == 0 ? new Vector2(along, d) : side == 1 ? new Vector2(along, -d) : side == 2 ? new Vector2(d, along) : new Vector2(-d, along);
+                        if (side == 0 && Mathf.Abs(p.x - ZoneLayout.NorthEntry.x) < 20f) continue;
+                        float roof = VaultLayout.VaultHeight(p.x, p.y, ceiling(p.x, p.y));
+                        float ground = LakeGround.GroundY(p.x, p.y) - 0.6f;
+                        float h = roof - ground;
+                        if (h < 4f) continue;
+                        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[rnd.Next(prefabs.Count)], parent);
+                        go.transform.position = new Vector3(p.x, roof + 0.4f, p.y);
+                        go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                        float w = (row == 0 ? 2.2f : row == 1 ? 2.8f : 3.4f) * (0.7f + 0.6f * (float)rnd.NextDouble());
+                        go.transform.localScale = new Vector3(w, (h + 0.4f) / 10f, w);
+                        foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                        made++;
+                    }
+            }
+            SetRim(false);
             return made;
         }
 
