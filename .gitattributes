@@ -22,3 +22,6 @@
 *.wav   filter=lfs diff=lfs merge=lfs -text
 *.mp3   filter=lfs diff=lfs merge=lfs -text
 *.ogg   filter=lfs diff=lfs merge=lfs -text
+
+# Terrain data is a BINARY serialized file, not YAML: never convert its line endings (that corrupts it).
+Assets/_Project/Terrain/*.asset binary

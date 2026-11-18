@@ -15,9 +15,11 @@ Game sinh tồn tiến hóa co-op 4–8 người. Mỗi người khởi đầu b
 
 ## 3. Tạo nhân vật [ĐÃ CHỐT]
 
-1. **Dị Năng chủ động:** rút ngẫu nhiên 1 (chấp nhận yếu/mạnh, hardcore).
-2. **Thiên Phú bị động:** nhìn 3 lựa chọn ngẫu nhiên, chọn 1.
-3. **Khiếm Khuyết:** nhìn 3 lựa chọn ngẫu nhiên, chọn 1; **vĩnh viễn và không thể xóa**. Có thể phát triển cơ quan để bù đắp nhưng khi cơ quan hỏng điểm yếu vẫn tồn tại.
+1. **Dị Năng** (kỹ năng chủ động, phím **Q**): rút **ngẫu nhiên** (chấp nhận yếu/mạnh, hardcore); đổi lại được bằng một dụng cụ đặc biệt (chưa thiết kế). Là "thiên phú chủ động" của tài liệu cũ.
+2. **Lõi** (tên mới của Thiên Phú bị động): phát **3 thẻ riêng, không trùng giữa người chơi** ở màn hình tải, chọn 1. Lõi **tự chạy**, đổi một luật của cơ thể (không phải nút bấm). Đổi lại được, trả giá bằng một trang bị hiếm (chưa thiết kế).
+3. **Khuyết Điểm:** chọn 1 trong 3 lựa chọn **theo chủ đề của Lõi đã chọn** (Lõi nặng: 3 cặp hai Khuyết Điểm). Là **luật xấu tự chạy**, gây phiền chứ không gây đau; **vĩnh viễn, không xóa được**, cơ quan đúng vị trí giải phẫu bù tối đa 70%.
+
+Thanh kỹ năng có **6 ô**: Q (Dị Năng) + 5 ô từ cơ quan và class. Chi tiết, danh sách 12 Lõi và 12 Khuyết Điểm: `docs/superpowers/specs/2026-11-18-starting-choices-design.md`.
 
 **[ĐỀ XUẤT]** Kho Dị Năng chủ động v2.0 gồm 15 C, 12 B, 6 A và 4 S. Các bậc SS, SSS chưa phát triển. Tỷ lệ rút, hiệu ứng chi tiết và cân bằng chưa duyệt.
 

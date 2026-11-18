@@ -109,6 +109,17 @@ namespace Evolve.Survival
         public Func<float, float> FoodFilter;
         public event Action Died;
 
+        // Flaws (Khuyết Điểm), set by PlayerTraits; the defaults change nothing.
+        /// <summary>Đói Sớm: multiplies how fast hunger burns.</summary>
+        [NonSerialized] public float HungerBurnMultiplier = 1f;
+        /// <summary>Dạ Dày Kén: how strongly the sluggish stomach is felt (0 = no such flaw).</summary>
+        [NonSerialized] public float AbsorbFlawStrength;
+        /// <summary>Raised with the amount whenever a hit from outside lands (Run Rẩy listens).</summary>
+        public event Action<float> Damaged;
+        [NonSerialized] float clock;
+        [NonSerialized] float lastNewFoodAt = -1e6f;
+        [NonSerialized] System.Collections.Generic.HashSet<string> eatenFoods;
+
         /// <summary>Give back all lives (start of a run).</summary>
         public void ResetLives()
         {
@@ -137,6 +148,7 @@ namespace Evolve.Survival
         public void Tick(float dt, SurvivalConfig cfg, bool isMoving, bool isSprinting)
         {
             if (IsDead) return;
+            clock += dt;
 
             // Thirst (only where enabled).
             if (ThirstEnabled)
@@ -169,7 +181,7 @@ namespace Evolve.Survival
 
             // Metabolism only burns food while active; resting costs nothing.
             float burn = (isMoving ? cfg.HungerDecayPerSec : 0f) + (isSprinting ? cfg.SprintHungerPerSec : 0f);
-            Hunger = Clamp(Hunger - burn * dt, MaxHunger);
+            Hunger = Clamp(Hunger - burn * HungerBurnMultiplier * dt, MaxHunger);
 
             // Energy comes back even while moving, just slower than when resting. Not while starving.
             if (Hunger > 0f)
@@ -238,6 +250,14 @@ namespace Evolve.Survival
         public void Feed(float nutrition, FoodProfile profile)
         {
             if (IsDead) return;
+            // Dạ Dày Kén: a food never eaten before makes the stomach sluggish for a while.
+            if (AbsorbFlawStrength > 0f)
+            {
+                eatenFoods ??= new System.Collections.Generic.HashSet<string>();
+                string key = $"{profile.Of(NutrientKind.Protein)}|{profile.Of(NutrientKind.Calcium)}|{profile.Of(NutrientKind.Iron)}|{profile.Of(NutrientKind.Fat)}|{profile.Of(NutrientKind.Vitamin)}";
+                if (eatenFoods.Add(key)) lastNewFoodAt = clock;
+                nutrition *= Evolve.Traits.FlawRules.AbsorbMultiplier(clock - lastNewFoodAt, AbsorbFlawStrength);
+            }
             float eaten = nutrition;
             if (FoodFilter != null) nutrition = FoodFilter(nutrition);
             Hunger = Clamp(Hunger + nutrition, MaxHunger);
@@ -347,6 +367,7 @@ namespace Evolve.Survival
         public void Damage(float amount)
         {
             if (IsDead || Invulnerable) return;
+            if (amount > 0f) Damaged?.Invoke(amount);
             if (Config != null && amount > 0f) Stress = StressClamp(Stress + amount * Config.StressPerDamage);
             if (amount >= DiseaseRules.HitMinDamage) TryInfect(DiseaseKind.RottenGel, DiseaseRules.HitChance); // an infected wound
             ApplyDamage(amount * NutrientEffects.DamageTakenMultiplier(Nutrient(NutrientKind.Calcium))); // brittle bones: hits hurt more

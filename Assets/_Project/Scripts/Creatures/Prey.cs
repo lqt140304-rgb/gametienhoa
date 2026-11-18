@@ -226,7 +226,7 @@ namespace Evolve.Creatures
         /// <summary>Roll the drop table, skipping organs the catcher already owns.</summary>
         OrganSO PickDrop(OrganHost host)
         {
-            if (drops != null) return drops.Roll(o => host != null && host.Has(o));
+            if (drops != null) return drops.Roll(o => host != null && host.Has(o), host != null ? Evolve.Traits.LuckRules.ForCatcher(drops, host.gameObject) : 1f);
             if (dropTable == null) return null;
             var options = new List<OrganSO>();
             foreach (var o in dropTable)

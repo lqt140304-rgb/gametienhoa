@@ -277,7 +277,7 @@ namespace Evolve.Creatures
             {
                 NetWorld.Feed(by, nutrition, FoodProfiles.For(FoodKind.PredatorMeat));
                 var host = by.GetComponent<OrganHost>();
-                var drop = drops != null ? drops.Roll(o => host != null && host.Has(o)) : null;
+                var drop = drops != null ? drops.Roll(o => host != null && host.Has(o), Evolve.Traits.LuckRules.ForCatcher(drops, by.gameObject)) : null;
                 if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.25f, transform.position.z));
             }
             Debug.Log($"{name} bị hạ gục");

@@ -17,6 +17,18 @@ namespace Evolve.Player
         [SerializeField] float crawlSpeed = 1f;
         /// <summary>Speed multiplier set by other systems (1 = normal).</summary>
         [System.NonSerialized] public float SpeedScale = 1f;
+        /// <summary>Speed factor from a core (Nhân Quen Đất): 1 = none. Written by PlayerTraits.</summary>
+        [System.NonSerialized] public float TraitSpeed = 1f;
+        float frozenUntil;
+        Evolve.Traits.PlayerTraits traitsComp;
+        Vector3 steer;
+        const float SteerRate = 6f;   // how fast the movement direction can change when Luống Cuống slows it (full reversal in about a third of a second at normal)
+
+        /// <summary>Run Rẩy: the body stops and cannot hop for this many seconds.</summary>
+        public void FreezeFor(float seconds)
+        {
+            if (seconds > 0f) frozenUntil = Mathf.Max(frozenUntil, Time.time + seconds);
+        }
         /// <summary>In water at least SwimLogic.SwimDepth deep: no gravity, Space rises, Ctrl dives.</summary>
         public bool IsSwimming { get; private set; }
         /// <summary>In shallower water: walks, but slower.</summary>
@@ -60,6 +72,8 @@ namespace Evolve.Player
             rb.freezeRotation = true;
             stats = GetComponent<SurvivalStats>();
             organs = GetComponent<OrganHost>();
+            traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
+            if (traitsComp == null) traitsComp = gameObject.AddComponent<Evolve.Traits.PlayerTraits>();
             col = GetComponent<Collider>();
             sphere = col as SphereCollider;
             capsule = col as CapsuleCollider;
@@ -89,7 +103,7 @@ namespace Evolve.Player
                 else if (stats.State.IsCorpse && !NetWorld.CoopActive && KeyPressed.Y()) NewRun();
                 return;
             }
-            if (!IsSwimming && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
+            if (!IsSwimming && !stats.Frozen && Time.time >= frozenUntil && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
                 float k = Mathf.Sqrt(Mathf.Clamp(transform.lossyScale.y, 0.3f, 1.5f));   // a smaller slime hops proportionally lower (height grows with speed squared)
@@ -132,8 +146,14 @@ namespace Evolve.Player
         void FixedUpdate()
         {
             if (stats.State.IsDead) return;
+            if (stats.Frozen) { rb.linearVelocity = Vector3.zero; return; }   // the pre-game picking space: the body stays where it is
             UpdateBodyScale();
             Vector3 dir = GetMoveDirection();
+            if (Time.time < frozenUntil) dir = Vector3.zero;   // Run Rẩy
+            var traits = traitsComp;
+            float turn = traits != null ? Evolve.Traits.FlawRules.TurnRateMultiplier(stats.State.Health / Mathf.Max(1f, stats.State.MaxHealth), traits.FlawStrength(Evolve.Traits.FlawRules.LuongCuong)) : 1f;
+            if (turn < 0.999f) { steer = Vector3.MoveTowards(steer, dir, Evolve.Traits.FlawRules.SteerRate(turn, SteerRate) * Time.fixedDeltaTime); dir = steer; }   // Luống Cuống: steering is sluggish
+            else steer = dir;
             stats.IsMoving = dir.sqrMagnitude > 0.01f;
 
             // Sprinting burns food (see SurvivalState.Tick); impossible when starving.
@@ -143,7 +163,7 @@ namespace Evolve.Player
             Vector3 v = rb.linearVelocity;
             float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
             UpdateWater();
-            float speed = crawlSpeed * organSpeed * SpeedScale * (IsSprinting ? sprintMultiplier : 1f)
+            float speed = crawlSpeed * organSpeed * SpeedScale * TraitSpeed * (IsSprinting ? sprintMultiplier : 1f)
                 * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f);
             if (IsSwimming)
             {
