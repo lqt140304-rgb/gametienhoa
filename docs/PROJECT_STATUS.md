@@ -415,3 +415,13 @@ Checklist: (1) Console sạch, Test Runner xanh (`DappledSunMathTests`); (2) ch�
 - Giai đoạn 2 (vòm và trụ rễ rìa) và 3 (vật thể treo) sẽ làm sau khi duyệt giai đoạn này; plan `docs/superpowers/plans/2026-11-18-vault-and-light.md`.
 
 Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`, `DappledSunMathTests`); (2) chạy lại **Dress Lake: Light and Water Look** rồi **Dress Lake: Dappled Sun** trong scene `Underroot_Lake`, bấm Ctrl+S; (3) chưa có mắt: đen trắng, tối, chỉ sáng quanh người; (4) có mắt (phím V): hoàng hôn dịu, khu 06 sáng nhất, khu 02 tối nhất; (5) cạnh cây phát quang có vầng sáng màu theo khu; (6) mảng sáng mặt trời dịu hơn trước; (7) phía bắc, gần lối vào có ánh sáng ấm; (8) FPS bằng `PerfOverlay`; (9) chụp ảnh từng khu gửi tôi.
+
+
+## 24. Vòm rễ và sườn rễ (giai đoạn 2 của trần vòm): trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Root Vault** (bước 10/19 của Rebuild Lake, sau Root Canopy; chạy lại được): **vòm nhiều khoang** (cao trên hồ và khu 04, thấp trên khu 02 và 03, hốc lõm và gờ nhô xuống, nhiễu nhẹ), có lỗ sáng ở 9 chỗ `LightShafts` và khoảng 40 khe hẹp, đổ bóng thật; **sườn rễ** từ mép Đại sảnh (cội) tỏa ra, chia nhánh và nhánh con, thêm 3 sườn từ hồ; mỗi sườn ghép từ các đoạn rễ cáp xoắn Blender (`Rib_*`, hai mức chi tiết, LOD tự dựng), đầu sườn là `Rib_Tip`, sườn chính chạm rìa hạ thành **chân chống** `Rib_Foot` có va chạm.
+- **Kết hợp bản cũ:** rễ lớn leo vách của `LakeCanopy` ("Rim Roots") **được giữ**, chân chống mới đứng giữa chúng; mái lưới rễ cũ và tấm đất phẳng ("Ceiling Earth") bị **ẩn** (không xóa); **Evolve → Restore Lake Canopy (undo)** trả lại.
+- Cần chạy **Reinstall Blender Props (overwrite)** trước để có FBX `Rib_*`; thiếu thì menu cảnh báo và giữ nguyên mái cũ. Chạy lại **Dress Lake: Dappled Sun** sau khi dựng vòm để mái mới đổ bóng (Rebuild đã đặt đúng thứ tự).
+- Hạn chế: số đoạn rễ lớn (khoảng 900 đoạn, tự đổi sang bản đơn giản khi xa); hình dạng bản đầu; đoạn rẽ nhánh `Rib_Fork` và đoạn cong `Rib_Bend` chưa dùng (nhánh bắt đầu chen vào thân sườn mẹ); khi nối, mối giữa hai đoạn có thể lộ ra nhẹ.
+
+Checklist: (1) Console sạch, Test Runner xanh (`VaultLayoutTests`); (2) **Reinstall Blender Props (overwrite)**; (3) Dress Lake: Root Vault, rồi Dress Lake: Dappled Sun, Ctrl+S; (4) nhìn lên: trần không phẳng, có khoang cao thấp và hốc; sườn rễ chạy từ phía Đại sảnh ra, chia nhánh; (5) mảng sáng qua lỗ và khe; (6) chân chống ở rìa chạm đất giữa các tấm vách; (7) khu 06 gần lối vào còn thoáng; (8) FPS bằng PerfOverlay; (9) Restore Lake Canopy trả mái cũ; (10) chụp ảnh nhìn lên từ vài khu gửi tôi.

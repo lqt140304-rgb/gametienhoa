@@ -65,7 +65,7 @@ namespace Evolve.EditorTools
             sun.color = DappledSunMath.SunColor;
             sun.intensity = DappledSunMath.Intensity;
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 1f;
+            sun.shadowStrength = DappledSunMath.ShadowStrength;
 
             // the roof blocks it
             foreach (var r in roofRenderers) r.shadowCastingMode = ShadowCastingMode.On;
@@ -162,6 +162,8 @@ namespace Evolve.EditorTools
             so.FindProperty("m_ShadowCascadeCount").intValue = cascades;
             so.FindProperty("m_MainLightShadowmapResolution").intValue = resolution;
             so.FindProperty("m_SoftShadowsSupported").boolValue = soft;
+            var quality = so.FindProperty("m_SoftShadowQuality");   // 3 = High: the softest edge (guarded: the field name may differ between URP versions)
+            if (quality != null && soft && quality.propertyType == SerializedPropertyType.Enum) quality.enumValueIndex = Mathf.Min(quality.enumDisplayNames.Length - 1, 2);
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(urp);
         }
