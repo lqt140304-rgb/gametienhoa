@@ -450,3 +450,11 @@ Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Ro
 - ~~Bầu trời qua các lỗ sáng~~ **Đã bỏ theo yêu cầu chủ dự án (2026-11-18):** lỗ sáng lại chỉ thấy mặt trong tối của mái hang. Chạy lại Root Vault sẽ không tạo đĩa trời nữa; đĩa cũ (`Vault Sky Windows`) bị xóa khi dựng lại.
 - **Rễ rìa:** `Dress Lake: Root Vault` ẩn (chỉ tắt renderer) "Rim Roots" thẳng nhẵn của `LakeCanopy` và treo rễ Blender (`HangRoot_*`, dày ở mái, thon dần, có rễ phụ) từ vòm xuống đất theo ba hàng quanh vách (khoảng 12 đến 17 m một cây, bề rộng đổi ngẫu nhiên); cửa vào phía bắc vẫn để trống. `Restore Lake Canopy` bật lại rễ cũ.
 - **Mép lỗ sáng tròn mịn:** vỏ vòm cắt lỗ theo từng ô 4 m nên mép bị bậc thang, góc vuông. `Dress Lake: Root Vault` thêm một vành đất dày hơi gồ ghề (ống uốn thành vòng, bán kính ống khoảng 1,9 m) quanh mỗi trong 9 lỗ, bám theo độ cao trần, che mép bậc thang để miệng lỗ tròn mềm. Khe sáng hẹp chưa có vành.
+
+## 26. Ánh sáng thực tế hơn, bớt cảm giác nhựa: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Realism** (bước 20/20 của Rebuild Lake; hoàn tác: **Restore Lake Realism**): (1) hậu xử lý điện ảnh trên volume `LakeLook`: tonemapping ACES, tương phản +12, phơi sáng +0,2, hạt phim mỏng 0,22 (độ bão hòa vẫn do `MonochromeVision`); (2) **SSAO** (tối ở khe và chỗ tiếp xúc) thêm vào mọi renderer URP; (3) mọi vật liệu URP Lit trong `Materials` (trừ nước, tinh thể, đèn, vật phát sáng) bớt bóng: độ bóng ≤ 0,1, tắt điểm sáng phản chiếu và phản xạ môi trường (sao lưu ở `Settings/LakeRealismBackup.json`).
+- Shader `Evolve/RockVertexColor` (đá, rễ, khối Blender) có thêm: mảng màu và hạt nhiễu 3D theo vị trí thế giới (không hai chỗ giống nhau), pháp tuyến nhám theo nhiễu (ánh sáng bắt các gờ nhỏ), ambient tối hơn ở mặt nghiêng hoặc hướng xuống.
+- Hạn chế: đất địa hình và các vật liệu Lit khác chưa có vân chi tiết (đây là việc của lớp nền); SSAO tốn FPS (kiểm bằng PerfOverlay); `Rebuild Lake` bước 18 dựng lại volume nên chạy lại bước 20 sau đó.
+
+Checklist: (1) Console sạch; (2) Dress Lake: Realism, rồi Ctrl+S; (3) cảnh bớt bóng nhựa, đá và rễ có vân, khe tối hơn; (4) FPS không tụt quá 15%; (5) Restore Lake Realism trả lại như cũ.
