@@ -129,6 +129,30 @@ Mỗi Lõi sẽ được mô tả theo cùng khuôn: kích hoạt khi nào, gi�
 - Tương tác: Khuyết Điểm không dùng Mô Nặng hoặc Nhảy Thấp.
 - Co-op: host quyết định hất văng, kiểm tra điều kiện đứng vững.
 
+## Kho Khuyết Điểm chi tiết (bản nháp)
+Quy ước chung (số liệu tạm):
+- Khuyết Điểm vĩnh viễn, không xoá được. Cơ quan đúng vị trí giải phẫu có thể **bù tối đa 70%** tác động; còn 30% luôn ở lại. Cơ quan hỏng hoặc mất thì phần bù mất theo.
+- Mỗi Khuyết Điểm có một biểu tượng cố định trên HUD và mô tả khi rê chuột. Tác động phải **nhìn thấy được**, không ẩn.
+- Lõi "nặng hơn" (Nhân Con Bạc, Nhân Giữ Gốc): mỗi lựa chọn là **một cặp hai Khuyết Điểm** thay vì một.
+- Trục: Sống còn (máu, đói, năng lượng) · Cảm giác · Vận động · Môi trường.
+
+| Khuyết Điểm | Trục | Tác động (tạm) | Cơ quan bù được (vị trí) | Tín hiệu cho người chơi |
+|---|---|---|---|---|
+| Thân Dễ Vỡ | Sống còn | Máu tối đa −12% | Lưng (giáp), Da/màng | Thanh máu ngắn hơn, viền thanh đổi màu |
+| Hồi Chậm | Sống còn | Hồi năng lượng chậm −25% | Tuyến, Tiêu hóa | Thanh năng lượng hồi chậm, đồng hồ hiện |
+| Đói Nhanh | Sống còn | Độ no tụt nhanh hơn +20% | Tiêu hóa | Thanh no tụt nhanh, báo đói sớm hơn |
+| Hao Nền | Sống còn | Năng lượng nền hao thêm +15% | Tiêu hóa, Hô hấp | Năng lượng không tăng khi đứng yên |
+| Cảm Giác Cùn | Cảm giác | Tầm cảm nhận (vòng nhìn) ngắn lại −25% | Mắt, Cảm quan phụ | Vòng nhìn nhỏ hơn, nền mờ sớm hơn |
+| Mô Nặng | Vận động | Tốc độ di chuyển −8% | Chân, Vây/cánh, Đuôi | Slime ngồi thấp hơn, trườn chậm |
+| Nhảy Thấp | Vận động | Cú nảy thấp và ngắn hơn −20% | Chân, Đuôi | Cú nảy thấp, hiệu ứng nảy yếu |
+| Sợ Nhiệt | Môi trường | Nhận thêm sát thương nhiệt +30% | Da/màng | Biểu tượng lửa gạch, viền đỏ khi gần nguồn nóng |
+| Sợ Lạnh | Môi trường | Nhận thêm sát thương lạnh +30% | Da/màng | Biểu tượng tuyết gạch, thân run khi lạnh |
+| Sợ Độc | Môi trường | Nhận thêm sát thương độc +30% | Tuyến, Hô hấp | Biểu tượng độc gạch, thân tái khi trúng độc |
+
+Quy tắc chọn 3 Khuyết Điểm cho mỗi Lõi: không cùng trục với tác động chính của Lõi; Nhân Thích Nghi không dùng nhóm Sợ-; Nhân Quang Hợp không dùng Hao Nền và Hồi Chậm (cùng trục năng lượng); Nhân Bám Dính không dùng Mô Nặng và Nhảy Thấp.
+
+Cần kiểm tra khi cài đặt: tổng bù từ nhiều cơ quan không vượt 70%; hai Khuyết Điểm cùng trục (trong cặp) không được chọn trùng.
+
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
 
