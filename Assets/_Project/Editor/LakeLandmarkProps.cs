@@ -24,7 +24,8 @@ namespace Evolve.EditorTools
             if (!PropInstaller.LandmarksPresent()) { Debug.LogWarning("Thiếu FBX điểm nhấn trong " + ModelFolder + " (xem tools/blender/out): giữ bản dựng bằng code."); return; }
 
             // load every model first: only when all of them are there do the code-built versions go
-            var all = new[] { "Log_Hollow", "Mushroom_Giant_0", "Mushroom_Giant_1", "Mushroom_Giant_2", "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch" };
+            var all = new[] { "Log_Hollow", "Mushroom_Giant_0", "Mushroom_Giant_1", "Mushroom_Giant_2", "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch",
+                "Cliff_0", "Cliff_1", "Cliff_2", "Cliff_3", "HangRoot_0", "HangRoot_1", "HangRoot_2", "HangRoot_3" };
             foreach (var name in all)
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + name + ".fbx") == null)
                 {
@@ -80,9 +81,66 @@ namespace Evolve.EditorTools
             float yaw = -Mathf.Atan2(side.y, side.x) * Mathf.Rad2Deg; // the arch spans its local X axis: point that along `side`
             Place("RootArch", root, at, Quaternion.Euler(0f, yaw, 0f), 1f, -0.1f, ref count);
 
+            PlaceRimCliffs(root, ref count);
+            PlaceHangingRoots(root, ref count);
+
             var scene = EditorSceneManager.GetActiveScene();
             if (scene.IsValid()) EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log($"Điểm nhấn Blender: đã thay khúc gỗ, nấm khổng lồ và cung rễ bằng {count} vật thể. Bấm Ctrl+S để lưu scene.");
+        }
+
+        // ---- the cave rim: slabs of layered limestone standing in the cliff skin all round, except at the hunter's way in ----
+        static void PlaceRimCliffs(Transform root, ref int count)
+        {
+            var parent = new GameObject("Rim Cliffs").transform;
+            parent.SetParent(root, false);
+            var rnd = new System.Random(8080);
+            const float step = 28f, edge = 243f;
+            Vector2 gate = ZoneLayout.NorthEntry;
+            int made = 0;
+            for (float t = -238f; t <= 238f; t += step)
+                for (int side = 0; side < 4; side++)
+                {
+                    Vector2 p = side == 0 ? new Vector2(t, edge) : side == 1 ? new Vector2(t, -edge) : side == 2 ? new Vector2(edge, t) : new Vector2(-edge, t);
+                    if (Vector2.Distance(p, gate) < 24f) continue; // keep the way in open
+                    float yaw = side < 2 ? 0f : 90f;
+                    var go = Place("Cliff_" + rnd.Next(4), parent, p, Quaternion.Euler(0f, yaw, 0f), 1f, -5f, ref count);
+                    if (go != null) { go.transform.localScale = new Vector3(1f, 0.8f, 1f); made++; }
+                }
+            Debug.Log("Vách rìa Blender: " + made + " tấm.");
+        }
+
+        // ---- roots hanging from the roof (no collision: they are up in the dark) ----
+        static void PlaceHangingRoots(Transform root, ref int count)
+        {
+            var parent = new GameObject("Hanging Roots").transform;
+            parent.SetParent(root, false);
+            var rnd = new System.Random(7070);
+            int made = 0;
+            for (int i = 0; i < 90; i++)
+            {
+                float x = ((float)rnd.NextDouble() - 0.5f) * 440f, z = ((float)rnd.NextDouble() - 0.5f) * 440f;
+                float yaw = (float)rnd.NextDouble() * 360f;
+                int variant = rnd.Next(4);
+                if (ZoneLayout.InsideCave(x, z, 6f)) continue;
+                bool inShaft = false;
+                foreach (var s in ZoneLayout.LightShafts) if (Vector2.Distance(new Vector2(x, z), s) < 8f) { inShaft = true; break; }
+                if (inShaft) continue;
+                float ceiling = LakeLayout.CeilingY(x, z, 28f);
+                float ground = LakeGround.GroundY(x, z);
+                float room = ceiling - ground - 5f;   // hang down to 5 m above the ground at most
+                if (room < 5f) continue;
+                float k = Mathf.Clamp(Mathf.Min(14f, room) / 10f, 0.5f, 1.6f);
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "HangRoot_" + variant + ".fbx");
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+                go.transform.position = new Vector3(x, ceiling + 0.3f, z);
+                go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                go.transform.localScale = Vector3.one * k;
+                foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, (StaticEditorFlags)(-1));
+                made++;
+                count++;
+            }
+            Debug.Log("Rễ buông mái Blender: " + made + " cây.");
         }
 
         static GameObject Place(string model, Transform parent, Vector2 xz, Quaternion rotation, float scale, float sink, ref int count, float? absoluteY = null)
