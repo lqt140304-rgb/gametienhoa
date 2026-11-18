@@ -152,6 +152,17 @@ Nguyên tắc: Khuyết Điểm là **luật xấu tự chạy**, gây phiền c
 
 Cần kiểm tra khi cài đặt: tổng bù từ nhiều cơ quan không vượt 70%; hai Khuyết Điểm trong một cặp không cùng loại.
 
+## Màn hình chọn đầu game (đã chốt: cách B, cùng lúc, giữ chỗ)
+Luồng mỗi người: (1) nhận Dị Năng ngẫu nhiên, chỉ xem; (2) chọn Lõi trong 3 lá ngẫu nhiên; (3) chọn Khuyết Điểm trong 3 lựa chọn theo Lõi đã chọn (Lõi nặng: 3 cặp); (4) xác nhận rồi vào game.
+
+Co-op:
+- Mọi người chọn **cùng lúc**. Lõi nào đã được ai chọn thì **khóa ngay** cho người khác.
+- **Ai bấm nhanh hơn thì được.** Host không quyết định bằng ý muốn; host chỉ là máy nhận thông điệp, ai gửi chọn đến trước theo thứ tự nhận thì được. Người đến sau thấy Lõi đó mờ đi và chọn lại trong các Lõi còn lại.
+- Lá bài mỗi người nhìn là ngẫu nhiên, loại trừ các Lõi đã bị khóa; nếu còn ít hơn 3 thì hiện số còn lại.
+- Kho 12 Lõi đủ cho phòng 8 người, nhưng người chọn sau có ít lựa chọn hơn.
+
+Cần kiểm tra khi cài đặt: độ trễ mạng có thể làm người bấm trước nhưng gửi đến sau thua; chấp nhận vì kết quả luôn thống nhất trên host và mọi máy.
+
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
 
