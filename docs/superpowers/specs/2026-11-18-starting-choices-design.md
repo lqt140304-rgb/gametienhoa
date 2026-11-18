@@ -27,12 +27,18 @@ Kho Khuyết Điểm dùng chung (số liệu tạm): Thân Dễ Vỡ (máu tố
 | Nhân Phản Chấn | Bị đánh trúng thì tích lực, đòn kế tiếp mạnh hơn | Mô Nặng · Đói Nhanh · Sợ Nhiệt |
 | Nhân Cộng Sinh | Ở gần đồng đội thì cả hai hồi máu nhanh hơn | Cảm Giác Cùn · Hồi Chậm · Sợ Độc |
 | Nhân Ăn Mòn | Chạm vật hữu cơ thì tiết dịch ăn dần, hút thêm dinh dưỡng | Thân Dễ Vỡ · Nhảy Thấp · Cảm Giác Cùn |
-| Nhân Tích Bào | Hấp thụ xong tích bào tử, nhả ra làm chậm kẻ địch | Nhảy Thấp · Đói Nhanh · Hồi Chậm |
 | Nhân Bám Dính | Bám vách và trần, trườn lên cao | Sợ Nhiệt · Thân Dễ Vỡ · Mô Nặng |
-| Nhân Dò Rung | Mặt đất rung báo vị trí sinh vật gần | Thân Dễ Vỡ · Hao Nền · Mô Nặng |
 | Nhân Dự Trữ | Khi no thì tích mỡ, về sau đói chậm lại | Nhảy Thấp · Sợ Lạnh · Mô Nặng |
-| Nhân Tái Cấu | Máu thấp thì tự co nhỏ lại, khó bị trúng | Hồi Chậm · Đói Nhanh · Cảm Giác Cùn |
 | Nhân Phát Quang | Phát sáng soi bóng tối, thu hút sinh vật nhỏ làm mồi | Thân Dễ Vỡ · Hao Nền · Sợ Độc |
+
+Đã bỏ khỏi danh sách theo phản hồi: Nhân Dò Rung và Nhân Tái Cấu (vô dụng), Nhân Tích Bào (giống kỹ năng bấm hơn là Lõi).
+Nguyên tắc: **Lõi tự chạy, đổi một luật của cơ thể; Dị Năng mới là thứ bấm nút.**
+
+Đã duyệt thêm:
+- **Nhân Con Bạc**: tăng **tỉ lệ rơi** cơ quan từ quái và đồ từ rương (không tăng bậc). Chỉ áp dụng cho lượt rơi của chính người đó, host quyết định. Khuyết Điểm gợi ý: Thân Dễ Vỡ · Đói Nhanh · Hao Nền. (Có áp dụng cho boss không: chưa chốt, Claude đề xuất không.)
+
+Đề xuất thay thế, **chờ duyệt**: Nhân Quen Đất (đi lại một đường nhiều lần thì nhanh hơn trên đường đó), Nhân Mô Đệm (cơ quan sắp hỏng thì sát thương chuyển sang dưỡng chất dự trữ), Nhân Học Vị (hấp thụ loài mới lần đầu thì nhận thêm EXP, nhớ mùi loài đó).
+Cần kiểm tra thêm: Nhân Phát Quang và Nhân Bám Dính có giống hành động bấm nút không.
 
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
