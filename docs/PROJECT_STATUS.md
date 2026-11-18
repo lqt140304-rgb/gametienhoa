@@ -334,7 +334,7 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 
 - Gắn hoặc hấp thụ cơ quan là học bản mẫu; bản mẫu giữ khi cơ quan tan, bị tháo hoặc khi chết (trong phiên chơi, chưa lưu file; không đồng bộ co-op).
 - Menu G có mục "Bản mẫu đã học": mô phỏng lại tốn EXP bằng EXP hấp thụ cùng bậc (số đề xuất); ô đã có cơ quan thì cơ quan cũ bị thay (mất).
-- Gắn, thay, tháo chỉ ở trong nơi trú khi scene có `ShelterZone`; `Prototype_01` không đổi.
+- Gắn, thay, tháo và mô phỏng lại cơ quan **ở bất cứ đâu** (chủ dự án chọn bỏ luật nơi trú; spec 6.8.3 không áp dụng).
 - Chưa làm: vật liệu gel riêng cho cơ quan (hiện dùng `SlimeGelTint` sẵn có, thiếu chất chỉ co nhỏ tới 70%), vỏ riêng cho bản sao rơi, hành động bậc B, hình gel khác biệt từng loại (0.5f).
 
 ## 15. Danh sách kiểm tra thủ công 0.5e (cho chủ dự án)
@@ -342,9 +342,66 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các test `OrganBlueprintTests`.
 
 1. Hấp thụ một cơ quan rơi (F) rồi mở menu G: mục "Bản mẫu đã học" hiện nút của nó.
-2. Ngoài nơi trú (Hồ Khởi Sinh): bấm E lên cơ quan rơi hoặc "Tháo cơ quan" thì có thông báo "Chỉ đổi cơ thể được khi ở nơi trú", không mất gì.
-3. Trong nơi trú: gắn, thay, tháo và "Mô phỏng lại" đều chạy; mô phỏng lại trừ đúng EXP; thiếu EXP thì báo và không trừ.
+2. Ở bất cứ đâu: gắn (E), thay, tháo cơ quan đều chạy.
+3. "Mô phỏng lại" chạy ở mọi nơi, trừ đúng EXP; thiếu EXP thì báo và không trừ.
 4. Cơ quan tan vì thiếu chất: bản mẫu vẫn còn trong danh sách.
 5. Chết hết mạng, chơi lại: bản mẫu còn; cơ quan đã rơi theo luật 50%.
 6. Cơ quan đói chất co nhỏ dần (vật liệu gel riêng chưa làm).
-7. `Prototype_01` (không có nơi trú): gắn và tháo ở đâu cũng được như cũ.
+7. `Prototype_01`: gắn và tháo như cũ.
+
+
+## 17. Bộ vật thể Blender, bước 1 (nhóm đá): trạng thái và danh sách kiểm tra
+
+- Dây chuyền: `tools/blender/` (`bpy` 5.3 chạy không giao diện) dựng 6 tảng đá (0,3 → 3,2 m, 1.280 mặt, va chạm 80 mặt, rêu phủ mặt hướng lên), xuất FBX vào `Assets/_Project/Models/Underroot/` và ảnh xem trước vào `docs/art/previews/`. Lệnh ở `tools/blender/README.md`.
+- Unity: `Editor/PropImportPostprocessor.cs` gắn Mesh Collider từ mesh `_COL`; `Scripts/World/PropPlacement.cs` (luật đặt, có test); menu **Evolve → Dress Lake: Props** (cũng là bước 8/8 của Rebuild Lake) đặt tối đa 500 đá theo bệ sinh cảnh, tránh nước nông, đường mòn, nơi trú, tổ, điểm xuất hiện.
+- **FBX và PNG không nằm trong git của phiên này:** repo dùng Git LFS và proxy của môi trường chặn tải LFS. FBX và ảnh được gửi qua chat; có thể chạy lại script trên máy bạn để tạo lại (cần `pip install bpy`).
+- Chưa làm: gỡ đá dựng bằng code trong `LakeGround` (chờ bạn duyệt hình, rồi báo phiên trang trí), các nhóm vật thể khác. Menu Props đã đọc `ZoneLayout.Zones` của bản đồ 500 m (phiên trang trí làm), bỏ qua phần trong hang lớn (cave), nước (đáy dưới mực nước) và đường mòn.
+
+Checklist: (1) thả 6 FBX vào `Assets/_Project/Models/Underroot/`, Console sạch, Test Runner xanh (`PropNamingTests`, `PropPlacementTests`); (2) chọn `Rock_3.fbx`: có Mesh Collider, chiều lớn nhất khoảng 1,6 m (cao khoảng 0,75 m); đá hiện màu xám có rêu xanh phủ mặt trên (shader `Evolve/RockVertexColor`, vật liệu `Rock_VC`; nếu thấy xám trơn thì báo tôi); (3) chạy Evolve → Dress Lake: Props hai lần, số đá như nhau; (4) đá nằm trên mặt đất, không trong nước, không chắn đường mòn; (5) slime chạm đá: dừng lại và đi vòng, không rung; (6) FPS bằng PerfOverlay; (7) chụp ảnh trong Unity gửi cho tôi.
+
+
+## 18. Ánh sáng và nước đẹp hơn: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Light and Water Look** (cũng là bước 15/15 của Rebuild Lake): bật Depth Texture của URP; dựng Volume hậu xử lý (chỉ Bloom và Vignette nhẹ; màu, sương, ambient do MonochromeVision lo) lưu ở `Settings/LakeLook.asset`; khoảng 24 đèn điểm không bóng cho nấm khổng lồ; đổi hai material nước sang shader `Evolve/LakeWater` (màu và độ mờ theo độ sâu, mép nước mờ dần, bọt nơi nước chạm đáy).
+- **Evolve → Restore Lake Look (undo)** trả mọi thứ về như trước (sương, ambient, depth texture, shader nước về URP Lit, xóa Volume và đèn).
+- Hạn chế: không phản chiếu thật (chỉ viền sáng và vệt nắng), shader viết tay chưa biên dịch thử, sương áp cho cả scene (dưới nước `UnderwaterTint` vẫn ghi đè), chỉ bản đồ hồ 500 m (menu đã gắn vào Rebuild Lake).
+
+Checklist: (1) Console sạch, Test Runner xanh (có `WaterLookTests`); (2) chạy menu: nước không hồng hay đen; (3) mép nước mờ dần, vùng sâu đậm hơn, bọt ở chỗ nước chạm đá và bờ; (4) vũng khu 03 vẫn vàng lục; (5) có sương, ambient xanh lục, Bloom và Vignette không làm tối hoặc cháy; (6) nấm phát sáng chiếu lên đất; (7) bơi xuống hố: `UnderwaterTint` vẫn chạy, ra khỏi nước sương trở lại; (8) FPS bằng PerfOverlay không giảm quá 15%; (9) Restore trả về như cũ; (10) chụp ảnh trong Unity gửi cho tôi.
+
+
+## 19. Điểm nhấn Blender (khúc gỗ mục, nấm khổng lồ, cung rễ): trạng thái và danh sách kiểm tra
+
+- `tools/blender/build_landmarks.py` dựng: `Log_Hollow` (gỗ rỗng 9 m, hai đầu hở, va chạm là ống rỗng), `Mushroom_Giant_0..2` (7 / 5,5 / 4,5 m, mũ tên `Giant Caps_N`, va chạm chỉ ở thân), `Mushroom_Small_0..3`, `RootArch` (khe giữa ≥ 2,2 m, cao 8 m, va chạm hai chân). FBX cài từ `tools/blender/out/*.fbx.b64` (menu **Evolve → Install Blender Rocks** hoặc tự động).
+- Menu **Evolve → Dress Lake: Landmark Props** (bước 15/16 của Rebuild Lake, trước Light and Water Look): xoá "03 Rotting Log", "04 Giant Mushrooms", "06 Root Arch" của `LakeLandmarks` và đặt bản Blender ở cùng chỗ. Thiếu FBX thì giữ bản cũ. Không sửa `LakeLandmarks.cs`.
+- Hạn chế: hình dạng là bản đầu (cung rễ trơn, mũ nấm bán cầu đơn giản); ảnh xem trước ở `docs/art/previews/` (không vào git).
+
+Checklist: (1) Console sạch, Test Runner xanh; (2) chạy menu: các object cũ biến mất, bản Blender xuất hiện đúng chỗ (03 khúc gỗ, 04 cụm nấm, 06 cung rễ); (3) chui qua khúc gỗ được từ hai đầu; (4) nấm lớn: chạm thân bị chặn, đi dưới mũ cao không bị chặn; (5) đi qua cung rễ vào khu 06 với slime cỡ tối đa; (6) chạy menu hai lần: không nhân đôi; (7) FPS bằng PerfOverlay; (8) đèn nấm còn; (9) chụp ảnh gửi tôi.
+
+
+## 20. Không khí riêng từng khu (sương và hạt): trạng thái và danh sách kiểm tra
+
+- `ZoneAtmosphere` (trên camera, thêm lúc chạy cùng `UnderwaterTint` khi cảnh là hồ) trộn mượt sương và hạt theo mức ảnh hưởng của 6 khu (`ZoneLayout.Influence`); số liệu từng khu ở `ZoneAtmosphereMath.Zones` (01 xanh ngọc nhạt 160 m, 02 nâu ấm 70 m, 03 nâu cam đục 55 m, 04 tím nhạt 90 m, 05 trắng xanh lạnh 120 m, 06 xám đỏ sẫm 40 m).
+- Sương: `FogMode.Linear`; chưa có mắt thì sương đen và tầm nhìn 80 m (như `MonochromeVision`), có mắt thì màu theo khu; khi camera dưới nước thì nhường cho `UnderwaterTint`.
+- Hạt: ba hệ hạt (rơi, bay lên, trôi) đi theo camera, **tối đa 150 hạt (thực tế mỗi lần một nhóm phát, khoảng 20–50 hạt tùy khu, vòng đời 4–6 s)**, theo khu trội nhất, tắt khi chưa có mắt hoặc dưới nước. **Phím F8** bật tắt hạt.
+- Hạn chế: chưa có lớp sương sát đất; hạt xuyên vật thể gần camera; hình hạt là chấm mờ (chưa có hình riêng như cánh hoa, lá).
+
+Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`); (2) đi qua 6 khu: màu sương và hạt khác nhau, ranh giới mượt; (3) chưa có mắt: sương đen, không thấy hạt xa; có mắt (phím V): sương có màu khu; (4) lặn xuống hố sâu rồi nổi lên: sương trở về đúng khu, không kẹt xanh ngọc; (5) F8 bật tắt hạt; (6) FPS bằng PerfOverlay không giảm quá 3%; (7) chụp ảnh từng khu gửi tôi.
+
+
+## 21. Vật thể Blender đợt 3 (nấm và cung rễ chi tiết hơn, vách rìa, rễ buông mái) và khu 03
+
+- Nấm: thân có rãnh sợi, vòng váy, chân chống; mũ dày có mép lượn sóng, đốm trắng và nếp dưới mũ. Cung rễ: 14 rễ chồng lớp (vài rễ xoắn), rễ bò chân, rễ rủ chia nhánh. Khúc gỗ sáng hơn để tách khỏi nền nâu.
+- Mới: `Cliff_0..3` (tấm đá vôi phân lớp 28 × 16 m, va chạm hộp 12 mặt) đặt quanh rìa hang (trừ lối vào của kẻ săn mồi) và `HangRoot_0..3` (rễ rủ từ mái, không va chạm, khoảng 90 cây). Menu **Evolve → Dress Lake: Landmark Props** đặt cả hai. Rễ rủ tránh hang lớn và tia sáng; dài tối đa 14 m, cách đất ≥ 5 m.
+- Khu 03: sương xám ấm hơn (đỡ nâu), tầm nhìn 75 m, hạt lá mờ và nhỏ hơn (số hạt 3).
+- Cập nhật FBX: menu **Evolve → Reinstall Blender Props (overwrite)** ghi đè từ `tools/blender/out/*.fbx.b64` (menu Install chỉ ghi file còn thiếu).
+- Checklist: (1) Console sạch; (2) Evolve → Reinstall Blender Props (overwrite), rồi Dress Lake: Landmark Props; (3) nấm khu 04 có mũ đốm và váy; cung rễ khu 06 nhiều rễ; (4) vách quanh rìa liền khối, lối vào phía bắc còn mở; (5) rễ rủ trên mái, không che tia sáng; (6) khu 03: gỗ dễ nhìn, hạt bớt chói; (7) FPS bằng PerfOverlay; (8) chụp ảnh gửi tôi.
+
+
+## 22. Ánh sáng lọt qua kẽ rễ (mặt trời đổ bóng của mái): trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Dappled Sun** (bước 17/17 của Rebuild Lake, chỉ ở scene `Underroot_Lake`): đèn chính gần thẳng đứng (72°), ấm nhạt, cường độ 1,8, bóng mềm; mái rễ (Lake Canopy → Roof) đổ bóng nên ánh sáng chỉ lọt qua kẽ rễ và 9 lỗ sáng; ambient xanh lục rất tối (0,06; 0,08; 0,08); mọi URP asset: tầm bóng 120 m, 4 tầng, bản đồ 2048, bóng mềm. `DappledSun` lắc đèn ±2,5° (chu kỳ 70 s) cho mảng sáng trôi; `ShadowToggle`: **phím F9** bật tắt bóng của mái (so FPS).
+- **Evolve → Restore Lake Sun (undo)** trả lại đèn, ambient, URP và mái như trước (sao lưu ở `Settings/LakeSunBackup.json`, chỉ ghi lần Dress đầu).
+- Không đổi `MonochromeVision` (chưa có mắt vẫn đen trắng, tối, chỉ sáng quanh người; cường độ đèn do nó nhân lại), `ZoneAtmosphere` (sương mỏng theo khu).
+- Hạn chế: nặng máy (mục tiêu FPS giảm không quá 15%); vùng xa hơn 120 m không có bóng nên sáng đều (sương theo khu che); bóng của mức chi tiết xa của mái thô hơn.
+
+Checklist: (1) Console sạch, Test Runner xanh (`DappledSunMathTests`); (2) chạy menu trong scene `Underroot_Lake`, rồi Ctrl+S; (3) mảng sáng dưới các kẽ mái và 9 lỗ sáng, vùng khác tối, mảng sáng trôi chậm; (4) chưa có mắt: đen trắng, tối, chỉ sáng quanh người; có mắt (V): thấy mảng sáng; (5) đo FPS bằng PerfOverlay, F9 tắt bóng thì FPS hồi lại (ghi số trước và sau); (6) Restore Lake Sun trả về như cũ; (7) chụp ảnh gửi tôi.

@@ -14,7 +14,7 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 | **0.6a: Khu 480 m** | Khu lớn 480 × 480 m (đi ngang ~8 phút), địa hình Unity Terrain đồi và vách rìa, mái hang vòm, rễ buông, 4 cột mốc, ranh giới cứng; vùng lõi 130 × 130 m vẫn phẳng. 0.6b: chia vùng quần thể theo vi sinh cảnh, sinh vật đi theo cao độ. 0.6c: rải thực vật dọc đường | Khu có đủ rộng để khám phá chưa, đi 8 phút có thú vị không? |
 | **0.5c: Dinh dưỡng** | 5 chất kiểu slime (Sợi Nhầy, Tinh Vôi, Huyết Thiết, Mỡ Nhờn, Tinh Chất Sống); thiếu thì cơ quan yếu dần | Thức ăn có còn là lựa chọn có ý nghĩa không? |
 | **0.5d: Bệnh tật** | 2–3 bệnh (nước đọng, thối gel, mờ bào tử), lây trong co-op | Hậu quả của lựa chọn sai có đủ rõ không? |
-| **0.5e: Gel mô phỏng cơ quan** (đã làm: bản mẫu, đổi ở nơi trú, co nhỏ khi thiếu chất; còn mở: vỏ gel riêng, hành động bậc B → 0.5f) | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
+| **0.5e: Gel mô phỏng cơ quan** (đã làm: bản mẫu, co nhỏ khi thiếu chất; còn mở: vỏ gel riêng, hành động bậc B → 0.5f) | Cơ quan là gel mô phỏng hình dạng; chết thì gel tan, rơi bản sao bản mẫu | Cảm giác cơ thể slime có đúng không? |
 | **Sau đó** | Thêm vùng, Dị Năng, cơ quan; thay hình khối tạm bằng model Blender | — |
 
 ## Nguyên tắc
@@ -80,3 +80,13 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Code 0.5d: **đã code, chưa biên dịch/chạy thử**: 3 bệnh (`Survival/DiseaseKind`, `DiseaseRules`; Nhiễm Nước Đọng, Thối Gel, Mờ Bào Tử), nguồn lây (nước bẩn, xác thối, vết thương, đám bào tử `SporeZone`, người bệnh ở gần `ContagionSensor`), triệu chứng trong `SurvivalState`, dòng "Bệnh:" trên HUD, màu thân ngả xanh vàng, byte bệnh trong `PlayerNetState` (plan `docs/superpowers/plans/2026-11-17-0.5d-disease.md`)
 - [ ] Biên dịch và chạy thử 0.5d theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 14
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
+
+- [x] Bộ vật thể Blender bước 1: dây chuyền và 6 tảng đá có va chạm (chờ duyệt hình; `docs/superpowers/specs/2026-11-18-blender-props-kit-design.md`)
+
+- [x] Ánh sáng và nước đẹp hơn (`LakeLook`, shader `LakeWater`; chờ duyệt hình trong Unity)
+
+- [x] Điểm nhấn Blender: khúc gỗ mục, nấm khổng lồ, cung rễ có va chạm (chờ duyệt hình trong Unity)
+
+- [x] Không khí riêng từng khu: sương và hạt theo khu, tối đa 150 hạt (chờ duyệt trong Unity)
+
+- [x] Ánh sáng lọt qua kẽ rễ (mặt trời đổ bóng của mái, F9 bật tắt; chờ duyệt FPS và hình trong Unity)

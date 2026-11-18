@@ -525,17 +525,16 @@ namespace Evolve.Survival
         /// <summary>Learned blueprints without an organ: simulate again for EXP, only where the body may be reshaped.</summary>
         void DrawBlueprints(float x,float y,float w)
         {
-            if(!string.IsNullOrEmpty(interactor.Notice)){blueprintNotice=interactor.Notice;interactor.Notice="";}
             organs.GetSpareBlueprints(spareBlueprints);
             if(spareBlueprints.Count==0){if(blueprintNotice.Length>0)Label(new Rect(x,y,w,28),blueprintNotice,small);return;}
-            Label(new Rect(x,y,w,22),blueprintNotice.Length>0?blueprintNotice:$"Bản mẫu đã học ({spareBlueprints.Count}) · mô phỏng lại tốn EXP",small);
+            Label(new Rect(x,y,w,22),blueprintNotice.Length>0?blueprintNotice:$"Bản mẫu đã học ({spareBlueprints.Count}) · mô phỏng lại tốn EXP, ở đâu cũng được",small);
             for(int i=0;i<spareBlueprints.Count&&i<2;i++)
             {
                 var bp=spareBlueprints[i];float bw=w/2f-4;
                 if(Button(new Rect(x+i*(bw+8),y+24,bw,34),$"{bp.DisplayName} · {OrganRules.ResimulateCost(bp.Tier):0} EXP"))
                 {
-                    var result=organs.TryResimulate(bp,interactor.CanReshapeNow);
-                    blueprintNotice=result==ResimulateResult.Ok?"":result==ResimulateResult.NoExp?"Chưa đủ EXP tiến hóa.":interactor.CanReshapeNow?"Không mô phỏng được (ô đã có cơ quan hoặc thiếu chất).":OrganRules.ReshapeBlockedMessage;
+                    var result=organs.TryResimulate(bp);
+                    blueprintNotice=result==ResimulateResult.Ok?"":result==ResimulateResult.NoExp?"Chưa đủ EXP tiến hóa.":"Không mô phỏng được (thiếu chất hoặc cơ thể đã chết).";
                 }
             }
         }

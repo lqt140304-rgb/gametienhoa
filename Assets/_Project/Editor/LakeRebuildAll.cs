@@ -18,20 +18,24 @@ namespace Evolve.EditorTools
         {
             var steps = new (string name, Action run)[]
             {
-                ("1/14 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
-                ("2/14 Nước (Dress Lake: Water)", LakeWater.Dress),
-                ("3/14 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
-                ("4/14 Chi tiết 3D mặt đất (Dress Lake: Ground Clutter)", LakeClutter.Dress),
-                ("5/14 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
-                ("6/14 Quần xã thực vật (Dress Lake: Plant Communities)", LakeCommunities.Dress),
-                ("7/14 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
-                ("8/14 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
-                ("9/14 Mái lưới rễ (Dress Lake: Root Canopy)", LakeCanopy.Dress),
-                ("10/14 Điểm nhấn các khu (Dress Lake: Landmarks)", LakeLandmarks.Dress),
-                ("11/14 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
-                ("12/14 Thành phố người cây (Dress Lake: Treefolk City)", LakeTreefolkCity.Dress),
-                ("13/14 Nhà các class (Dress Lake: Class Houses)", LakeClassHouses.Dress),
-                ("14/14 Người cây (Dress Lake: Treefolk)", LakeTreefolk.Dress),
+                ("1/18 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
+                ("2/18 Nước (Dress Lake: Water)", LakeWater.Dress),
+                ("3/18 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
+                ("4/18 Chi tiết 3D mặt đất (Dress Lake: Ground Clutter)", LakeClutter.Dress),
+                ("5/18 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
+                ("6/18 Quần xã thực vật (Dress Lake: Plant Communities)", LakeCommunities.Dress),
+                ("7/18 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
+                ("8/18 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
+                ("9/18 Mái lưới rễ (Dress Lake: Root Canopy)", LakeCanopy.Dress),
+                ("10/18 Điểm nhấn các khu (Dress Lake: Landmarks)", LakeLandmarks.Dress),
+                ("11/18 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
+                ("12/18 Thành phố người cây (Dress Lake: Treefolk City)", LakeTreefolkCity.Dress),
+                ("13/18 Nhà các class (Dress Lake: Class Houses)", LakeClassHouses.Dress),
+                ("14/18 Người cây (Dress Lake: Treefolk)", LakeTreefolk.Dress),
+                ("15/18 Vật thể Blender (Dress Lake: Props)", LakeProps.Dress),
+                ("16/18 Điểm nhấn Blender (Dress Lake: Landmark Props)", LakeLandmarkProps.Dress),
+                ("17/18 Ánh sáng và nước (Dress Lake: Light and Water Look)", LakeLook.Dress),
+                ("18/18 Mặt trời lọt kẽ rễ (Dress Lake: Dappled Sun)", LakeSun.Dress),
             };
             try
             {

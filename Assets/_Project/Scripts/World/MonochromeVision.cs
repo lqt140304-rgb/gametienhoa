@@ -38,6 +38,10 @@ namespace Evolve.World
         [SerializeField] float eyesFogEnd = 120f;
         [SerializeField] Color fogColor = new Color(0.08f, 0.08f, 0.08f);
 
+        // Read by the Evolve/LakeWater shader: without eyes the water is only visible near the character (and in a scan).
+        static readonly int BlindId = Shader.PropertyToID("_EvolveBlind");
+        static readonly int SightCenterId = Shader.PropertyToID("_EvolveSightCenter");
+
         static readonly Color LightColor = new Color(0.85f, 0.95f, 1f);
 
         ColorAdjustments color;
@@ -96,6 +100,7 @@ namespace Evolve.World
             RenderSettings.ambientLight = origAmbient;
             RenderSettings.reflectionIntensity = origReflection;
             if (cam != null) cam.backgroundColor = origBackground;
+            Shader.SetGlobalFloat(BlindId, 0f); // the water shader shows normally again
             if (sightLight != null) Destroy(sightLight.gameObject);
             if (scanLight != null) Destroy(scanLight.gameObject);
         }
@@ -108,6 +113,9 @@ namespace Evolve.World
         {
             if (Evolve.Survival.KeyPressed.V()) SetSight(sight >= 1f ? 0f : 1f);
             UpdateScan();
+            Transform carrier = host != null ? host.transform : transform;
+            Vector3 p = carrier.position;
+            Shader.SetGlobalVector(SightCenterId, new Vector4(p.x, p.y, p.z, Mathf.Max(blindSightRadius, RevealDistance())));
         }
 
         /// <summary>0 = blind, 1 = full colour vision; above 1 (levelled eyes) only extends view range.</summary>
@@ -167,6 +175,7 @@ namespace Evolve.World
         {
             float c = Mathf.Clamp01(sight);
             if (color != null) color.saturation.value = Mathf.Lerp(-100f, 0f, c);
+            Shader.SetGlobalFloat(BlindId, 1f - c);
 
             // Daylight and ambient fade out as sight goes to 0; the player's own light fades in.
             if (sun != null) sun.intensity = Mathf.Lerp(0f, sunBase, c);
@@ -184,7 +193,9 @@ namespace Evolve.World
             {
                 restoredSky = false;
                 RenderSettings.ambientMode = AmbientMode.Flat;
-                RenderSettings.ambientLight = Color.Lerp(Color.black, new Color(0.45f, 0.45f, 0.45f), c);
+                // never brighter than the scene's own ambient: with a dark cave (Dappled Sun) a growing eye must not light it up and then snap dark
+                var cap = new Color(Mathf.Min(0.45f, origAmbient.r), Mathf.Min(0.45f, origAmbient.g), Mathf.Min(0.45f, origAmbient.b));
+                RenderSettings.ambientLight = Color.Lerp(Color.black, cap, c);
             }
             RenderSettings.reflectionIntensity = Mathf.Lerp(0f, origReflection, c);
             if (cam != null) cam.backgroundColor = Color.Lerp(Color.black, origBackground, c);
