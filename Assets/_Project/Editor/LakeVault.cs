@@ -28,6 +28,7 @@ namespace Evolve.EditorTools
         const string OldHangingRoots = "Hanging Roots";          // 28 plain smooth cylinders from the scene builder
         const string SkyName = "Vault Sky Windows";             // a patch of sky behind each light hole
         const string RimName = "Vault Rim Roots";               // Blender roots that replace the straight code-built rim roots
+        const string CollarName = "Vault Hole Collars";         // soft earthy lips round the light holes (hide the stepped edge of the shell)
         const string PropsName = "Vault Hanging Props";          // long roots, curtains, glow pods, stalactites by zone
         const string PillarsName = "Vault Pillars";              // Blender replacements for the three smooth "Landmark" columns
         const string HangingName = "Vault Hanging Roots";       // their Blender replacement
@@ -64,6 +65,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, PropsName);
             DestroyChild(parent, SkyName);
             DestroyChild(parent, RimName);
+            DestroyChild(parent, CollarName);
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
@@ -77,6 +79,7 @@ namespace Evolve.EditorTools
             props += PlaceBones(parent, ribs, slots, ceiling);
             int windows = BuildSkyWindows(parent, ceiling);
             int rim = ReplaceRimRoots(parent, ceiling);
+            BuildHoleCollars(parent, ceiling);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá), {windows} ô trời qua các lỗ sáng, {rim} rễ rìa Blender thay rễ thẳng cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
@@ -96,6 +99,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, PropsName);
             DestroyChild(parent, SkyName);
             DestroyChild(parent, RimName);
+            DestroyChild(parent, CollarName);
             SetRim(true);
             SetOldCylinders(true);
             SetPillars(true);
@@ -245,6 +249,57 @@ namespace Evolve.EditorTools
             }
             SetOldCylinders(false);
             return made;
+        }
+
+        // ------------------------------------------------------------------ soft lips round the holes
+
+        /// <summary>The shell's holes are cut cell by cell, which leaves a stepped, square-cornered edge. Round each hole with a thick, slightly lumpy earthy lip
+        /// (a tube bent into a ring that follows the roof height), so the opening reads as a smooth round mouth.</summary>
+        static void BuildHoleCollars(Transform canopy, Func<float, float, float> ceiling)
+        {
+            var parent = new GameObject(CollarName).transform;
+            parent.SetParent(canopy, false);
+            var earth = LakeGround.OpaqueMaterial("Lake_VaultEarth", new Color(0.08f, 0.065f, 0.05f), 0.05f, true);
+            const int ring = 72, around = 10;
+            int index = 0;
+            foreach (var sh in ZoneLayout.LightShafts)
+            {
+                var verts = new List<Vector3>();
+                var tris = new List<int>();
+                float seed = 17f * (++index);
+                for (int i = 0; i < ring; i++)
+                {
+                    float a = i * Mathf.PI * 2f / ring;
+                    float wob = (Mathf.PerlinNoise(Mathf.Cos(a) * 1.7f + seed, Mathf.Sin(a) * 1.7f + seed) - 0.5f) * 1.0f;   // the ring itself wanders a little
+                    float r = HoleRadius + 0.3f + wob;
+                    float x = sh.x + Mathf.Cos(a) * r, z = sh.y + Mathf.Sin(a) * r;
+                    float y = VaultLayout.VaultHeight(x, z, ceiling(x, z)) + 0.5f;
+                    float tube = 1.9f + 0.7f * (Mathf.PerlinNoise(Mathf.Cos(a) * 3.1f + seed + 40f, Mathf.Sin(a) * 3.1f + seed + 40f) - 0.5f) * 2f;
+                    for (int k = 0; k < around; k++)
+                    {
+                        float b = k * Mathf.PI * 2f / around;
+                        float radial = Mathf.Cos(b) * tube, vertical = Mathf.Sin(b) * tube * 0.9f;
+                        verts.Add(new Vector3(x + Mathf.Cos(a) * radial, y + vertical, z + Mathf.Sin(a) * radial));
+                    }
+                }
+                for (int i = 0; i < ring; i++)
+                    for (int k = 0; k < around; k++)
+                    {
+                        int a0 = i * around + k, a1 = i * around + (k + 1) % around;
+                        int b0 = ((i + 1) % ring) * around + k, b1 = ((i + 1) % ring) * around + (k + 1) % around;
+                        tris.Add(a0); tris.Add(b0); tris.Add(a1);
+                        tris.Add(a1); tris.Add(b0); tris.Add(b1);
+                    }
+                var mesh = new Mesh { name = "Hole Collar", indexFormat = IndexFormat.UInt16 };
+                mesh.SetVertices(verts); mesh.SetTriangles(tris, 0);
+                mesh.RecalculateNormals(); mesh.RecalculateBounds();
+                var go = new GameObject("Hole Collar " + index);
+                go.transform.SetParent(parent, false);
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = earth;
+                mr.shadowCastingMode = ShadowCastingMode.On;
+            }
         }
 
         // ------------------------------------------------------------------ the rim roots
