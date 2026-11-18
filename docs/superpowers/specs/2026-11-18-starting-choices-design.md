@@ -157,7 +157,8 @@ Khi vào game, ở **màn hình tải**, host phát cho mỗi người một **b
 
 Luồng mỗi người: (1) xem Dị Năng; (2) chọn 1 Lõi trong bộ thẻ của mình; (3) chọn Khuyết Điểm trong 3 lựa chọn theo Lõi (Lõi nặng: 3 cặp); (4) xác nhận rồi vào game.
 
-Số thẻ mỗi người = nhỏ hơn của 3 và (số Lõi trong kho chia số người chơi, làm tròn xuống), tối thiểu 2. Với kho 12 Lõi: 1–4 người nhận 3 thẻ; 5–6 người nhận 2 thẻ; 7–8 người cần kho ít nhất 14 Lõi để mỗi người có 2 thẻ, và 24 Lõi để mỗi người có 3 thẻ.
+Mỗi người luôn nhận **3 thẻ Lõi**. Người thiết kế sẽ bổ sung thêm Lõi sau để kho đủ lớn (24 Lõi thì phòng 8 người có 3 thẻ không trùng).
+Quy tắc tạm khi kho còn nhỏ (hiện 12 Lõi, phòng 5 người trở lên không đủ 3 thẻ riêng): ưu tiên chia không trùng; khi hết Lõi chưa chia thì cho phép **trùng thẻ giữa các người** ở bước nhận. Chống trùng vẫn giữ ở bước chọn: Lõi đã có người xác nhận thì bị khóa. Người xác nhận sau (theo thứ tự host nhận) thấy thẻ đó mờ đi và được **thay bằng một thẻ khác chưa bị khóa** (còn ít nhất một lựa chọn vì kho 12 lớn hơn số người tối đa là 8). Khi kho đạt 24 Lõi thì không còn trùng, không cần thay.
 
 Cần kiểm tra khi cài đặt: chia thẻ bằng seed của host, gửi cho từng máy; người vào trễ hoặc rời phòng thì thẻ của họ được trả lại kho và chia lại.
 
