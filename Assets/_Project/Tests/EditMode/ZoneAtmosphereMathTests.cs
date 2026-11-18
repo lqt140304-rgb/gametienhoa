@@ -116,5 +116,47 @@ namespace Evolve.Tests.EditMode
             foreach (var z in ZoneAtmosphereMath.Zones)
                 Assert.LessOrEqual(ZoneAtmosphereMath.ParticleBudget(1f, z.Density), 50f, "one group emits at a time, 50 particles at most each");
         }
+
+        static float Bright(Color c) => (c.r + c.g + c.b) / 3f;
+
+        [Test]
+        public void Ambient_OrderMatchesTheBrief()
+        {
+            var z = ZoneAtmosphereMath.Zones; // 01..06
+            Assert.Less(Bright(z[1].Ambient), Bright(z[2].Ambient), "02 darker than 03");
+            Assert.Less(Bright(z[2].Ambient), Bright(z[3].Ambient), "03 darker than 04");
+            Assert.Less(Bright(z[3].Ambient), Bright(z[0].Ambient), "04 darker than 01");
+            Assert.Less(Bright(z[0].Ambient), Bright(z[4].Ambient), "01 darker than 05");
+            Assert.Less(Bright(z[4].Ambient), Bright(z[5].Ambient), "05 darker than 06");
+        }
+
+        [Test]
+        public void Ambient_AllAreDuskDim()
+        {
+            foreach (var p in ZoneAtmosphereMath.Zones)
+                foreach (var v in new[] { p.Ambient.r, p.Ambient.g, p.Ambient.b })
+                {
+                    Assert.LessOrEqual(v, 0.25f);
+                    Assert.GreaterOrEqual(v, 0.05f);
+                }
+        }
+
+        [Test]
+        public void Blend_InterpolatesAmbient()
+        {
+            var w = new float[6];
+            w[1] = 0.5f; w[5] = 0.5f;
+            var p = ZoneAtmosphereMath.Blend(w);
+            Assert.AreEqual((ZoneAtmosphereMath.Zones[1].Ambient.g + ZoneAtmosphereMath.Zones[5].Ambient.g) * 0.5f, p.Ambient.g, 1e-4f);
+        }
+
+        [Test]
+        public void AmbientFor_BlindIsBlackSightedIsZone()
+        {
+            var p = ZoneAtmosphereMath.Zones[3];
+            Assert.AreEqual(0f, ZoneAtmosphereMath.AmbientFor(p, 0f).g, 1e-5f);
+            Assert.AreEqual(p.Ambient.g, ZoneAtmosphereMath.AmbientFor(p, 1f).g, 1e-5f);
+            Assert.AreEqual(p.Ambient.g * 0.5f, ZoneAtmosphereMath.AmbientFor(p, 0.5f).g, 1e-5f);
+        }
     }
 }
