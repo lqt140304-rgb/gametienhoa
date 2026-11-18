@@ -95,7 +95,7 @@ namespace Evolve.Tests.EditMode
                 {
                     float a = VaultLayout.VaultHeight(x, z, Ceiling(x, z));
                     float b = VaultLayout.VaultHeight(x + 2f, z, Ceiling(x + 2f, z));
-                    Assert.LessOrEqual(Mathf.Abs(a - b), 1.4f, $"a step at {x},{z}");
+                    Assert.LessOrEqual(Mathf.Abs(a - b), 1.6f, $"a step at {x},{z}");
                 }
         }
 

@@ -126,7 +126,7 @@ namespace Evolve.World
                 pts.Add(new Vector3(p.x, y, p.y));
                 mine.Add(p);
                 if (Mathf.Abs(p.x) >= Rim || Mathf.Abs(p.y) >= Rim) break;
-                if (level > 0 && length > Step * 2 && TooClose(p, others, fork, level)) break;   // never cross another rib
+                if ((level > 0 || !float.IsNaN(fork.x)) && length > Step * 2 && TooClose(p, others, fork, level)) break;   // never cross another rib (the lake's ribs stop where they meet one)
                 ang += 0.012f * Mathf.Sin(length * 0.03f + wander);
                 p += new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * Step;
                 p = new Vector2(Mathf.Clamp(p.x, -Rim, Rim), Mathf.Clamp(p.y, -Rim, Rim));
