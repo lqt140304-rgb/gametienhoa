@@ -14,9 +14,10 @@ namespace Evolve.World
         public const int ShadowCascades = 4;
         public const int ShadowResolution = 2048;
         public const float ReflectionIntensity = 0.3f;
+        public const float ShadowStrength = 0.65f;   // not pitch black: the shadow of a big root must not look like a cut
 
         public static readonly Color AmbientColor = new Color(0.06f, 0.08f, 0.08f, 1f);
-        public static readonly Color SunColor = new Color(1f, 0.88f, 0.65f, 1f);
+        public static readonly Color SunColor = new Color(1f, 0.93f, 0.80f, 1f);   // warm, but not so yellow that the green ground turns olive
 
         /// <summary>(pitch, yaw) of the sun at a time: the base angles swayed slowly so the patches of light drift. Period 0 or less: no sway.</summary>
         public static Vector2 Angles(float elevation, float yaw, float time, float amplitude, float period)
