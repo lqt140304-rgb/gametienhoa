@@ -12,7 +12,7 @@ namespace Evolve.Creatures
     /// Needs a kinematic Rigidbody and a non-trigger collider.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class Prey : MonoBehaviour
+    public class Prey : MonoBehaviour, IDamageable
     {
         static readonly List<Prey> active = new List<Prey>();
         public static IReadOnlyList<Prey> Active => active;

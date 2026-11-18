@@ -57,23 +57,15 @@ namespace Evolve.Abilities
             foreach (var c in Physics.OverlapSphere(transform.position, CreatureRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
             {
                 if (ownerRoot != null && c.transform.IsChildOf(ownerRoot)) continue;
-                var predatorHit = c.GetComponentInParent<Predator>();
-                if (predatorHit != null) { predatorHit.TakeDamage(damage, owner); Destroy(gameObject); return; }
-                var preyHit = c.GetComponentInParent<Prey>();
-                if (preyHit != null) { preyHit.TakeDamage(damage, owner); Destroy(gameObject); return; }
+                var target = c.GetComponentInParent<IDamageable>();   // prey, predators, treefolk…
+                if (target != null) { target.TakeDamage(damage, owner); Destroy(gameObject); return; }
             }
 
             if (Physics.SphereCast(transform.position, Radius, direction, out RaycastHit hit, step + 0.05f,
                     Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
                 && !(ownerRoot != null && hit.transform.IsChildOf(ownerRoot)))
             {
-                var predator = hit.collider.GetComponentInParent<Predator>();
-                if (predator != null) predator.TakeDamage(damage, owner);
-                else
-                {
-                    var prey = hit.collider.GetComponentInParent<Prey>();
-                    if (prey != null) prey.TakeDamage(damage, owner);
-                }
+                hit.collider.GetComponentInParent<IDamageable>()?.TakeDamage(damage, owner);
                 Destroy(gameObject);
                 return;
             }

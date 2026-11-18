@@ -26,6 +26,10 @@ namespace Evolve.Survival
         public static Action<int, float> ReportCreatureHit;
         public static Action<int> ReportPickupTaken;
         public static Action<string, Vector3> RequestPickupSpawn;
+        /// <summary>A hit on a treefolk (it lives on the host): its index and the damage.</summary>
+        public static Action<int, float> ReportTreefolkHit;
+        /// <summary>The local player made an offering at a tribe's atonement stone (the host decides).</summary>
+        public static Action<int> ReportOffering;
 
         // host -> one remote player
         public static Action<SurvivalStats, float, Vector3> BiteRemote;

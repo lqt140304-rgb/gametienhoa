@@ -80,6 +80,7 @@ namespace Evolve.Net
             go.AddComponent<CoopManager>();
             go.AddComponent<WorldSync>();
             go.AddComponent<RescueController>();
+            go.AddComponent<TreefolkSync>();
             go.AddComponent<CoopMenu>();
         }
 
@@ -183,6 +184,7 @@ namespace Evolve.Net
             else messaging.RegisterNamedMessageHandler(DownMessage, OnDown);
             GetComponent<WorldSync>()?.RegisterMessages(messaging, nm.IsServer);
             GetComponent<RescueController>()?.RegisterMessages(messaging);
+            GetComponent<TreefolkSync>()?.RegisterMessages(messaging, nm.IsServer);
         }
 
         // ---------------------------------------------------------------- per frame

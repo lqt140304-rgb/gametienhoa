@@ -27,31 +27,61 @@ namespace Evolve.EditorTools
             PrototypeSceneBuilder.EnsureFolder(Root + "/Terrain");
             WaterSurface.Refresh();
 
-            var mud = Tiling(Root + "/Models/LakeMud.png", 128, (u, v) =>
+            var mud = Tiling(Root + "/Models/LakeMud_v2.png", 128, (u, v) =>
             {
                 float big = LakeWater.TileableNoise(u * 5f, v * 5f, 5, 5);
                 float mid = LakeWater.TileableNoise(u * 13f, v * 13f, 13, 13);
                 float fine = LakeWater.TileableNoise(u * 40f, v * 40f, 40, 40);
                 float tone = 0.65f + 0.25f * big + 0.2f * mid * (0.6f + 0.4f * fine);
-                var c = new Color(0.30f, 0.24f, 0.20f) * tone;
+                var c = new Color(0.40f, 0.29f, 0.20f) * tone;   // warm brown mud
+                if (LakeWater.TileableNoise(u * 48f, v * 48f, 48, 48) > 0.9f) c = Color.Lerp(c, new Color(0.62f, 0.34f, 0.12f), 0.6f);   // fallen-leaf specks
                 // a few lighter pebbles
                 if (LakeWater.TileableNoise(u * 64f, v * 64f, 64, 64) > 0.93f) c = Color.Lerp(c, new Color(0.55f, 0.53f, 0.50f), 0.7f);
                 c.a = 1f;
                 return c;
             });
-            var moss = Tiling(Root + "/Models/LakeGroundMoss.png", 128, (u, v) =>
+            var moss = Tiling(Root + "/Models/LakeGroundMoss_v2.png", 128, (u, v) =>
             {
                 float big = LakeWater.TileableNoise(u * 6f, v * 6f, 6, 6);
                 float fine = LakeWater.TileableNoise(u * 36f, v * 36f, 36, 36);
-                var c = Color.Lerp(new Color(0.14f, 0.28f, 0.10f), new Color(0.34f, 0.52f, 0.20f), 0.25f + 0.55f * big * (0.7f + 0.3f * fine));
+                var c = Color.Lerp(new Color(0.18f, 0.26f, 0.09f), new Color(0.40f, 0.50f, 0.19f), 0.25f + 0.55f * big * (0.7f + 0.3f * fine));
+                c.a = 1f;
+                return c;
+            });
+            var litter = Tiling(Root + "/Models/LakeLeafLitter.png", 128, (u, v) =>
+            {
+                float big = LakeWater.TileableNoise(u * 7f, v * 7f, 7, 7);
+                float fine = LakeWater.TileableNoise(u * 44f, v * 44f, 44, 44);
+                var c = Color.Lerp(new Color(0.33f, 0.20f, 0.10f), new Color(0.58f, 0.36f, 0.15f), 0.3f + 0.5f * big * (0.6f + 0.4f * fine));
+                if (fine > 0.8f) c = Color.Lerp(c, new Color(0.22f, 0.14f, 0.08f), 0.5f);
+                c.a = 1f;
+                return c;
+            });
+            var stone = Tiling(Root + "/Models/LakeLimestone.png", 128, (u, v) =>
+            {
+                float big = LakeWater.TileableNoise(u * 4f, v * 4f, 4, 4);
+                float fine = LakeWater.TileableNoise(u * 30f, v * 30f, 30, 30);
+                var c = new Color(0.62f, 0.60f, 0.53f) * (0.75f + 0.2f * big + 0.12f * fine);
+                if (LakeWater.TileableNoise(u * 12f, v * 12f, 12, 12) > 0.72f) c = Color.Lerp(c, new Color(0.30f, 0.40f, 0.20f), 0.45f);   // moss in the hollows
+                c.a = 1f;
+                return c;
+            });
+            var trampled = Tiling(Root + "/Models/LakeTrampledMud.png", 128, (u, v) =>
+            {
+                float big = LakeWater.TileableNoise(u * 5f, v * 5f, 5, 5);
+                float fine = LakeWater.TileableNoise(u * 38f, v * 38f, 38, 38);
+                var c = new Color(0.22f, 0.16f, 0.12f) * (0.7f + 0.3f * big + 0.15f * fine);
                 c.a = 1f;
                 return c;
             });
             var mudLayer = Layer(Root + "/Terrain/Lake_Mud.terrainlayer", mud, 7f);
             var mossLayer = Layer(Root + "/Terrain/Lake_Moss.terrainlayer", moss, 5f);
+            var litterLayer = Layer(Root + "/Terrain/Lake_LeafLitter.terrainlayer", litter, 6f);
+            var stoneLayer = Layer(Root + "/Terrain/Lake_Limestone.terrainlayer", stone, 9f);
+            var trampledLayer = Layer(Root + "/Terrain/Lake_TrampledMud.terrainlayer", trampled, 7f);
 
             var data = terrain.terrainData;
-            data.terrainLayers = new[] { mudLayer, mossLayer };
+            data.terrainLayers = new[] { mudLayer, mossLayer, litterLayer, stoneLayer, trampledLayer };
 
             // Where the water is: a coarse map of "near water" (so moss gathers along the shores).
             Vector3 origin = terrain.transform.position, size = data.size;
@@ -74,7 +104,7 @@ namespace Evolve.EditorTools
                 }
 
             int res = data.alphamapResolution;
-            var maps = new float[res, res, 2];
+            var maps = new float[res, res, 5];
             for (int z = 0; z < res; z++)
                 for (int x = 0; x < res; x++)
                 {
@@ -83,14 +113,28 @@ namespace Evolve.EditorTools
                     float patches = Mathf.SmoothStep(0.55f, 0.80f, Mathf.PerlinNoise(wx * 0.035f + 11f, wz * 0.035f + 5f));
                     float edge = Sample(nearWater, fx, fz, near);
                     float w = Mathf.Clamp01(patches * 0.7f + edge * 0.45f);   // mud shows between the moss patches
-                    maps[z, x, 0] = 1f - w;
-                    maps[z, x, 1] = w;
+                    // each area tints its own ground (blending where areas meet): the root foot mossier, the humus bed
+                    // leaf-littered, the water vein pale limestone, the hunting edge dark trampled mud
+                    float rootFoot = ZoneLayout.Influence(1, wx, wz), humus = ZoneLayout.Influence(2, wx, wz);
+                    float vein = ZoneLayout.Influence(4, wx, wz), edgeZone = ZoneLayout.Influence(5, wx, wz);
+                    float mossW = Mathf.Clamp01(w + 0.5f * rootFoot);
+                    float litterW = humus * 0.85f;
+                    float stoneW = vein * 0.8f;
+                    float trampledW = edgeZone * 0.8f;
+                    float rest = Mathf.Max(0f, 1f - Mathf.Max(litterW, Mathf.Max(stoneW, trampledW)));
+                    float m0 = (1f - mossW) * rest, m1 = mossW * rest;
+                    float sum = m0 + m1 + litterW + stoneW + trampledW;
+                    maps[z, x, 0] = m0 / sum;
+                    maps[z, x, 1] = m1 / sum;
+                    maps[z, x, 2] = litterW / sum;
+                    maps[z, x, 3] = stoneW / sum;
+                    maps[z, x, 4] = trampledW / sum;
                 }
             data.SetAlphamaps(0, 0, maps);
 
             // Cheaper: fewer triangles in the distance, no shadows from the ground itself.
-            terrain.heightmapPixelError = 12f;
-            terrain.basemapDistance = 160f;
+            terrain.heightmapPixelError = 8f;     // the terrain's own level of detail: fine near, coarse far
+            terrain.basemapDistance = 200f;
             terrain.drawInstanced = true;
             terrain.shadowCastingMode = ShadowCastingMode.Off;
 

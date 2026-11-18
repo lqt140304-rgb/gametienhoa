@@ -29,11 +29,11 @@ namespace Evolve.World
         public const int MaxPoints = 380;
         public const float MinSpacing = 6f;
         /// <summary>Half side of the planted square, by max(|x|, |z|); keeps plants off the rim cliffs.</summary>
-        public const float Reach = 205f;
+        public const float Reach = 220f;
         public const float PathReach = 12f;
         const int Candidates = 6000;
 
-        static readonly Pad[] Pads = { ZoneLayout.RootFoot, ZoneLayout.Humus, ZoneLayout.Spore, ZoneLayout.HuntEdge };
+        static readonly Pad[] Pads = ZoneLayout.Biomes;
         static readonly float[] PadDensity = { 0.35f, 0.9f, 0.7f, 0.15f };
         static readonly VegetationKind[] PadKind =
         {
@@ -46,12 +46,12 @@ namespace Evolve.World
             float d = Mathf.Max(Mathf.Abs(x), Mathf.Abs(z));
             if (d > Reach) return 0f;
 
+            if (ZoneLayout.DepthAt(x, z) > 0f) return 0f; // nothing grows in the water
             float best = 0.04f; // the wild
-            if (d <= WorldScale.CoreHalf) best = 0.4f;
             if (ZoneLayout.DistanceToPath(x, z) <= PathReach) best = 1f;
             var p = new Vector2(x, z);
             for (int i = 0; i < Pads.Length; i++)
-                if (Vector2.Distance(p, Pads[i].Center) <= Pads[i].Radius) best = Mathf.Max(best, PadDensity[i]);
+                if (Pads[i].DistanceOutside(p) <= 0f) best = Mathf.Max(best, PadDensity[i]);
             return best;
         }
 
@@ -61,7 +61,7 @@ namespace Evolve.World
             if (ZoneLayout.DistanceToPath(x, z) <= PathReach) return VegetationKind.GlowMoss;
             var p = new Vector2(x, z);
             for (int i = 0; i < Pads.Length; i++)
-                if (Vector2.Distance(p, Pads[i].Center) <= Pads[i].Radius) return PadKind[i];
+                if (Pads[i].DistanceOutside(p) <= 0f) return PadKind[i];
             return VegetationKind.GlowMoss;
         }
 

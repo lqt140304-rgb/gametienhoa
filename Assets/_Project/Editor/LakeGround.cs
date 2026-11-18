@@ -31,7 +31,7 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(DressedName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(DressedName).transform;
-            root.gameObject.AddComponent<DetailCulling>();   // only what is near the camera is drawn
+            root.gameObject.AddComponent<DetailCulling>().ShowDistance = 400f;   // small shore details; the open ground has its own LOD
 
             var rnd = new System.Random(2024);
             var ponds = new List<WaterSurface>(WaterSurface.All);
@@ -49,11 +49,7 @@ namespace Evolve.EditorTools
                     AddMoss(mossInstances, p, 0.9f + (float)rnd.NextDouble() * 1.2f, ++seed, ponds);
                 }
             }
-            foreach (var p in LakeLayout.Scatter(9, rnd))    // over the core and every biome pad of the layout
-            {
-                if (Wet(ponds, p)) continue;
-                AddMoss(mossInstances, p, 1.6f + (float)rnd.NextDouble() * 1.5f, ++seed, ponds);
-            }
+            // (moss over the open ground comes from the plant communities: Dress Lake: Plant Communities)
             AddCombined(root, "Moss", mossInstances, MossMaterial());
 
             // The humus bed's flat dark rectangle becomes a soft, uneven patch of dark mud (no straight edges).
@@ -99,8 +95,6 @@ namespace Evolve.EditorTools
                     if (rnd.NextDouble() < 0.4) PlaceRock(p + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * 1.6f, 0.2f + (float)rnd.NextDouble() * 0.35f);
                 }
             }
-            foreach (var p in LakeLayout.Scatter(26, rnd))
-                PlaceRock(p, 0.4f + (float)rnd.NextDouble() * 1.1f);
             AddCombined(root, "Rocks", rockInstances, OpaqueMaterial("Lake_Rock", new Color(0.40f, 0.41f, 0.39f), 0.15f, false));
             AddCombined(root, "Rock Moss", capInstances, OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
 
@@ -118,9 +112,7 @@ namespace Evolve.EditorTools
                     for (int j = 0; j < 2; j++)
                         PlaceTuft(outline[k] + Outward(outline, k) * (0.9f + (float)rnd.NextDouble() * 4.5f) + RandomOffset(rnd, 0.8f));
             }
-            foreach (var p in LakeLayout.Scatter(260, rnd))
-                PlaceTuft(p);
-            var grassColors = new[] { new Color(0.32f, 0.58f, 0.22f), new Color(0.42f, 0.68f, 0.26f), new Color(0.26f, 0.48f, 0.24f) };
+            var grassColors = new[] { new Color(0.36f, 0.50f, 0.20f), new Color(0.46f, 0.58f, 0.24f), new Color(0.30f, 0.42f, 0.18f) };
             for (int g = 0; g < 3; g++)
             {
                 var buckets = new Dictionary<(int, int), List<Vector3>>();
@@ -137,6 +129,42 @@ namespace Evolve.EditorTools
                     AddMesh(holder, $"Grass {g} {bucket.Key.Item1},{bucket.Key.Item2}", GroundMeshes.Tufts(bucket.Value, 900 + g, 0.45f), grassMaterial);
             }
 
+            // (fallen leaves come from the plant communities)
+
+            // ---- gel nurseries on the shore of the Life Pool: translucent domes with a glowing amber core ----
+            var domes = new List<CombineInstance>();
+            var cores = new List<CombineInstance>();
+            var coreBlob = FloraMeshes.Blob();
+            foreach (var pond in ponds)
+            {
+                if (pond == null || pond.name != LakeWater.LakeName) continue;
+                var outline = pond.WorldOutline;
+                for (int k = 0; k < outline.Length; k += 7)
+                {
+                    if (rnd.NextDouble() > 0.55) continue;
+                    Vector2 anchor = outline[k] + Outward(outline, k) * (0.4f + (float)rnd.NextDouble() * 1.4f);
+                    if (ZoneLayout.Influence(0, anchor.x, anchor.y) < 0.5f) continue;   // only on the Life Shallows' shore
+                    int count = 1 + rnd.Next(3);
+                    for (int i = 0; i < count; i++)
+                    {
+                        Vector2 np = anchor + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * 1.8f;
+                        if (Wet(ponds, np)) continue;
+                        float radius = (i == 0 ? 0.45f : 0.25f) + (float)rnd.NextDouble() * 0.25f;
+                        float y = GroundY(np.x, np.y);
+                        var profile = new List<Vector2>
+                        {
+                            new Vector2(0f, radius * 0.62f), new Vector2(0.55f * radius, radius * 0.56f), new Vector2(0.85f * radius, radius * 0.34f),
+                            new Vector2(1.0f * radius, radius * 0.12f), new Vector2(1.06f * radius, 0f)
+                        };
+                        var dome = FloraMeshes.Lathe(profile, 14, radius * 0.3f, 6000 + domes.Count, 0.06f);
+                        domes.Add(new CombineInstance { mesh = dome, transform = Matrix4x4.TRS(new Vector3(np.x, y - 0.02f, np.y), Quaternion.identity, Vector3.one) });
+                        cores.Add(new CombineInstance { mesh = coreBlob, transform = Matrix4x4.TRS(new Vector3(np.x, y + radius * 0.22f, np.y), Quaternion.identity, new Vector3(radius * 0.5f, radius * 0.4f, radius * 0.5f)) });
+                    }
+                }
+            }
+            AddCombined(root, "Gel Nursery", domes, LakeWater.TranslucentMaterial("Lake_GelDome", null, new Color(0.72f, 0.86f, 0.50f, 0.5f), Color.black, 0.92f, (int)RenderQueue.Transparent + 1));
+            AddCombined(root, "Gel Nursery Cores", cores, OpaqueMaterial("Lake_GelCoreSpot", new Color(0.95f, 0.62f, 0.18f), 0.4f, false, new Color(0.9f, 0.5f, 0.12f)));
+
             // ---- mud paths from the pool to the other areas ----
             var ribbons = new List<CombineInstance>();
             int pathSeed = 7;
@@ -148,7 +176,7 @@ namespace Evolve.EditorTools
                 void Flush()
                 {
                     if (run.Count >= 3)
-                        ribbons.Add(new CombineInstance { mesh = GroundMeshes.Ribbon(run, 0.9f, ++pathSeed, GroundY, 0.015f), transform = Matrix4x4.identity });
+                        ribbons.Add(new CombineInstance { mesh = GroundMeshes.Ribbon(run, 1.6f, ++pathSeed, GroundY, 0.015f), transform = Matrix4x4.identity });
                     run = new List<Vector2>();
                 }
                 foreach (var p in line)
@@ -209,7 +237,7 @@ namespace Evolve.EditorTools
         // ---------------------------------------------------------------- placing helpers
 
         /// <summary>Under water: on a pond, or in a hollow of the ground lower than the water level. Nothing is placed there.</summary>
-        internal static bool Wet(List<WaterSurface> ponds, Vector2 p) => OnWater(ponds, p) || GroundY(p.x, p.y) < -0.04f;
+        internal static bool Wet(List<WaterSurface> ponds, Vector2 p) => OnWater(ponds, p) || ZoneLayout.DepthAt(p.x, p.y) > 0f;   // not by height: the sinkhole is dry land below the lake level
 
         internal static bool OnWater(List<WaterSurface> ponds, Vector2 p)
         {
@@ -245,10 +273,36 @@ namespace Evolve.EditorTools
         static void AddMoss(List<CombineInstance> list, Vector2 p, float radius, int seed, List<WaterSurface> ponds)
         {
             var outline = WaterOutline.Make(radius * 2f, radius * 2f, true, seed, radius * 0.35f, 28);
-            var mesh = WaterMeshes.Organic(outline, 1.2f);
-            // Moss never grows over water: drop the part of the patch that lies on a pond.
-            WaterMeshes.RemoveTriangles(mesh, c => OnWater(ponds, new Vector2(p.x + c.x, p.y + c.z)));
-            list.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.TRS(new Vector3(p.x, GroundY(p.x, p.y) + 0.03f, p.y), Quaternion.identity, Vector3.one) });
+            var mesh = Drape(WaterMeshes.Organic(outline, 0.5f), Matrix4x4.Translate(new Vector3(p.x, 0f, p.y)), 0.03f, ponds);
+            if (mesh != null) list.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.identity });
+        }
+
+        /// <summary>
+        /// Lays a flat ground decal onto the terrain: every vertex (after <paramref name="placement"/>) is moved to the ground
+        /// height right under it plus <paramref name="lift"/>, so moss, mud and leaves follow every bump instead of floating
+        /// or sinking; triangles over water are dropped (nothing spreads onto a pond). World-space result, or null if
+        /// nothing is left.
+        /// </summary>
+        internal static Mesh Drape(Mesh flat, Matrix4x4 placement, float lift, List<WaterSurface> ponds = null)
+        {
+            var terrain = Terrain.activeTerrain;
+            var verts = flat.vertices;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                var w = placement.MultiplyPoint3x4(verts[i]);
+                float ground = terrain != null ? terrain.SampleHeight(w) + terrain.transform.position.y : GroundY(w.x, w.z);
+                verts[i] = new Vector3(w.x, ground + lift, w.z);
+            }
+            var mesh = new Mesh { name = flat.name + " (draped)" };
+            mesh.vertices = verts;
+            var uv = flat.uv;
+            if (uv.Length == verts.Length) mesh.uv = uv;
+            mesh.triangles = flat.triangles;
+            WaterMeshes.RemoveTriangles(mesh, c => ZoneLayout.DepthAt(c.x, c.z) > 0f || (ponds != null && OnWater(ponds, new Vector2(c.x, c.z))));
+            if (mesh.triangles.Length == 0) return null;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         /// <summary>Size of one decoration chunk (m). Each chunk is its own mesh, so the camera can skip what it does not see.</summary>
@@ -294,12 +348,12 @@ namespace Evolve.EditorTools
 
         // ---------------------------------------------------------------- materials
 
-        static Material MossMaterial()
+        internal static Material MossMaterial()
         {
-            var tex = LakeWater.PaintedTexture(Root + "/Models/MossPatch.png", 64, 64, (u, v) =>
+            var tex = LakeWater.PaintedTexture(Root + "/Models/MossPatch_v2.png", 64, 64, (u, v) =>
             {
                 float n = LakeWater.TileableNoise(u * 8f, v * 8f, 8, 8);
-                var colour = Color.Lerp(new Color(0.16f, 0.34f, 0.12f), new Color(0.46f, 0.72f, 0.26f), n);
+                var colour = Color.Lerp(new Color(0.18f, 0.26f, 0.09f), new Color(0.42f, 0.52f, 0.20f), n);
                 float d = new Vector2(u - 0.5f, v - 0.5f).magnitude * 2f;      // 0 centre .. 1 edge
                 colour.a = Mathf.SmoothStep(1f, 0.45f, d) * (0.75f + 0.25f * n);
                 return colour;
@@ -307,7 +361,7 @@ namespace Evolve.EditorTools
             return LakeWater.TranslucentMaterial("Lake_Moss", tex, Color.white, Color.black, 0.05f, (int)RenderQueue.Transparent - 20);
         }
 
-        static Material MudPatchMaterial()
+        internal static Material MudPatchMaterial()
         {
             var tex = LakeWater.PaintedTexture(Root + "/Models/MudPatch.png", 64, 64, (u, v) =>
             {
@@ -328,7 +382,7 @@ namespace Evolve.EditorTools
                 float mottled = 0.7f + 0.3f * LakeWater.TileableNoise(u * 9f, v * 3f, 9, 3);
                 return new Color(1f, 1f, 1f, across * mottled);
             });
-            return LakeWater.TranslucentMaterial("Lake_MudPath", tex, new Color(0.24f, 0.17f, 0.12f, 0.95f), Color.black, 0.05f, (int)RenderQueue.Transparent - 18);
+            return LakeWater.TranslucentMaterial("Lake_MudPath", tex, new Color(0.36f, 0.26f, 0.17f, 0.95f), Color.black, 0.05f, (int)RenderQueue.Transparent - 18);
         }
 
         internal static Material OpaqueMaterial(string name, Color color, float smoothness, bool doubleSided, Color emission = default)

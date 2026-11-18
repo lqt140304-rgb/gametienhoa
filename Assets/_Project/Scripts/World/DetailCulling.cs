@@ -32,6 +32,7 @@ namespace Evolve.World
             public Glow Glow;
             public float BaseIntensity;
             public Color BaseColor, BaseEmission;
+            public bool HideWhenBlind;   // glowing bits (mushroom spots): their plain colour would still show in the dark
         }
 
         readonly List<Entry> entries = new List<Entry>();
@@ -59,6 +60,7 @@ namespace Evolve.World
                 {
                     entry.Glow = Glow.Emissive;
                     entry.BaseEmission = mat.GetColor("_EmissionColor");
+                    entry.HideWhenBlind = mat.name.Contains("Spot");
                 }
                 entries.Add(entry);
             }
@@ -117,7 +119,7 @@ namespace Evolve.World
                     e.Renderer.SetPropertyBlock(block);
                     break;
                 case Glow.Emissive:
-                    e.Renderer.enabled = show;
+                    e.Renderer.enabled = show && (seen || !e.HideWhenBlind);
                     block.Clear();
                     block.SetColor("_EmissionColor", e.BaseEmission * fade);
                     e.Renderer.SetPropertyBlock(block);

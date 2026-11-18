@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Evolve.World
 {
-    public enum WaterShape { Rect, Disc, Stream }
+    public enum WaterShape { Rect, Disc, Stream, Outline }
 
     /// <summary>
     /// A calm, gently moving pond: a mesh built in code that fills a winding shoreline (WaterOutline), whose vertices
@@ -28,6 +28,9 @@ namespace Evolve.World
         public float StreamHalfWidth = 3f;
         [Tooltip("How much the stream's width wanders (0 = constant)")]
         public float StreamWobble = 0.25f;
+        [Header("Outline (Shape = Outline)")]
+        [Tooltip("The shoreline itself, in this object's own space (x, z), counter-clockwise or clockwise")]
+        public Vector2[] OutlinePoints;
         public float WaveHeight = 0.03f;
         public float WaveSpeed = 1f;
 
@@ -100,6 +103,14 @@ namespace Evolve.World
                 for (int i = 0; i < localOutline.Length; i++) worldOutline[i] = localOutline[i] + o;
                 return;
             }
+            if (Shape == WaterShape.Outline && OutlinePoints != null && OutlinePoints.Length >= 3)
+            {
+                localOutline = (Vector2[])OutlinePoints.Clone();
+                worldOutline = new Vector2[localOutline.Length];
+                var o = new Vector2(transform.position.x, transform.position.z);
+                for (int i = 0; i < localOutline.Length; i++) worldOutline[i] = localOutline[i] + o;
+                return;
+            }
             bool disc = Shape == WaterShape.Disc;
             float width = disc ? Size.x * 2f : Size.x, depth = disc ? Size.x * 2f : Size.y;
             int samples = Mathf.Clamp(Mathf.RoundToInt(WaterOutline.PerimeterEstimate(width, depth, disc) / Mathf.Max(0.3f, Cell)), 24, 220);
@@ -151,7 +162,7 @@ namespace Evolve.World
         MaterialPropertyBlock block;
         Vector2 offset;
         float clock, nextUpdate, nextCullCheck;
-        bool culled;
+        bool culled, still;
 
         void OnEnable()
         {
@@ -295,19 +306,22 @@ namespace Evolve.World
             if (dirty) FlushAll();
             if (mesh == null) return;
 
-            // Far from the camera: do not animate and do not draw (the whole zone is much bigger than what is in view).
+            // Far from the camera (> 200 m) the water stays still but is still drawn (the whole map can be seen from above);
+            // only beyond the far clip distance is it hidden.
             if (Time.time >= nextCullCheck)
             {
                 nextCullCheck = Time.time + 0.3f;
                 var cam = Camera.main;
-                bool far = cam != null && Vector3.Distance(cam.transform.position, transform.position + mesh.bounds.center) - mesh.bounds.extents.magnitude > 170f;
-                if (far != culled)
+                float distance = cam != null ? Vector3.Distance(cam.transform.position, transform.position + mesh.bounds.center) - mesh.bounds.extents.magnitude : 0f;
+                still = distance > 200f;
+                bool hide = distance > 700f;
+                if (hide != culled)
                 {
-                    culled = far;
+                    culled = hide;
                     foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = !culled;
                 }
             }
-            if (culled) return;
+            if (culled || still) return;
             float dt = Time.deltaTime;
             clock += dt * WaveSpeed;
 
@@ -320,10 +334,14 @@ namespace Evolve.World
             if (Time.time < nextUpdate) return;
             nextUpdate = Time.time + 0.05f;
             float t = clock;
+            var origin = new Vector2(transform.position.x, transform.position.z);
             for (int i = 0; i < basePos.Length; i++)
             {
                 Vector3 p = basePos[i];
-                float y = Mathf.Sin(p.x * 0.9f + t * 1.3f) + 0.6f * Mathf.Sin(p.z * 1.3f - t * 1.1f + 1.7f) + 0.4f * Mathf.Sin((p.x + p.z) * 0.6f + t * 0.7f);
+                // Waves depend on the WORLD position, so two ponds that overlap rise and fall exactly together
+                // (no ridge where they meet).
+                float wx = p.x + origin.x, wz = p.z + origin.y;
+                float y = Mathf.Sin(wx * 0.9f + t * 1.3f) + 0.6f * Mathf.Sin(wz * 1.3f - t * 1.1f + 1.7f) + 0.4f * Mathf.Sin((wx + wz) * 0.6f + t * 0.7f);
                 p.y = y * WaveHeight;
                 work[i] = p;
             }

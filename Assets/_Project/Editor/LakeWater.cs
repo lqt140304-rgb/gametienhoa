@@ -27,9 +27,7 @@ namespace Evolve.EditorTools
             EnsureFolders();
             var normal = RippleNormalMap();
             var clean = WaterMaterial("Lake_WaterClean", new Color(0.25f, 0.84f, 0.82f, 0.5f), normal, 0.3f, new Color(0.02f, 0.10f, 0.10f));
-            var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.38f, 0.44f, 0.24f, 0.78f), normal, 0.18f, Color.black);
-            var deep = WaterMaterial("Lake_WaterDeep", new Color(0.04f, 0.22f, 0.34f, 0.88f), normal, 0.22f, new Color(0.0f, 0.03f, 0.05f));
-
+            var dirty = WaterMaterial("Lake_WaterDirty", new Color(0.52f, 0.56f, 0.22f, 0.8f), normal, 0.18f, Color.black);
             foamMaterial = FoamMaterial();
             bankMaterial = BankMaterial();
             seedCounter = 0;
@@ -37,189 +35,50 @@ namespace Evolve.EditorTools
             // Take back anything a previous run made, so running the menu twice never stacks surfaces.
             foreach (var old in Object.FindObjectsByType<WaterSurface>())
                 if (old.name == DressedName) Object.DestroyImmediate(old.gameObject);
+            var oldRoot = GameObject.Find(LayoutRootName);
+            if (oldRoot != null) Object.DestroyImmediate(oldRoot);
 
             int made = 0;
 
-            // 1) Every shallow water zone: a surface as big as its trigger box, at the water level.
-            foreach (var zone in Object.FindObjectsByType<WaterZone>())
-            {
-                var box = zone.GetComponent<BoxCollider>();
-                if (box == null) continue;
-                Bounds b = box.bounds;
-                HideFlatVisuals(zone.transform);
-                float longSide = Mathf.Max(b.size.x, b.size.z), shortSide = Mathf.Min(b.size.x, b.size.z);
-                if (longSide >= 20f && longSide >= shortSide * 4f)
-                {
-                    // A long thin zone is a stream: it winds like a real one (the trigger box stays straight).
-                    bool alongX = b.size.x >= b.size.z;
-                    Vector2 a = alongX ? new Vector2(b.min.x, b.center.z) : new Vector2(b.center.x, b.min.z);
-                    Vector2 e = alongX ? new Vector2(b.max.x, b.center.z) : new Vector2(b.center.x, b.max.z);
-                    float halfWidth = Mathf.Clamp(shortSide * 0.5f, 2f, 3.5f);
-                    var world = GroundMeshes.WindingLine(a, e, 900 + made, 4f, 2f, 50f);   // very long, slow bends so the two banks never cross
-                    var centre = new Vector2(b.center.x, b.center.z);
-                    var local = new Vector2[world.Length];
-                    for (int i = 0; i < world.Length; i++) local[i] = world[i] - centre;
-                    var go = MakeSurface(zone.transform, new Vector3(b.center.x, 0.06f, b.center.z), WaterShape.Stream,
-                        new Vector2(longSide, halfWidth * 2f), zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
-                    var s = go.GetComponent<WaterSurface>();
-                    s.StreamPath = local;
-                    s.StreamHalfWidth = halfWidth;
-                    made++;
-                    // The upstream end opens into a round spring pool (the source), instead of ending in a point.
-                    LakeLayout.StreamEnds(a, e, out Vector2 source, out Vector2 flow);
-                    float poolRadius = Mathf.Max(4.5f, halfWidth * 1.9f);
-                    MakeSurface(zone.transform, new Vector3(source.x, 0.06f, source.y), WaterShape.Disc, new Vector2(poolRadius, 0f),
-                        zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
-                    made++;
-                    continue;
-                }
-                MakeSurface(zone.transform, new Vector3(b.center.x, 0.06f, b.center.z), WaterShape.Rect,
-                    new Vector2(b.size.x, b.size.z), zone.Clean ? clean : dirty, zone.Clean ? 0.03f : 0.015f);
-                made++;
-            }
+            // 1) The layout's water (World/ZoneLayout): the lake (its south bay is the Life Shallows), the winding stream,
+            //    its two deep pools and the humus bed's dirty puddle. The terrain is already carved to their depths.
+            var root = new GameObject(LayoutRootName).transform;
+            made += Shoreline(root, LakeName, ZoneLayout.LakeShore(640), clean);   // about one point per metre: smooth joins
+            made += Shoreline(root, StreamName, ZoneLayout.StreamShore(), clean);
+            for (int i = 0; i < ZoneLayout.PoolCenters.Length; i++)
+                made += Shoreline(root, "Deep Pool " + (i + 1), ZoneLayout.PoolShore(i, 128), clean);
+            float puddleLevel = TerrainShape.HeightAt(ZoneLayout.PuddleCenter.x, ZoneLayout.PuddleCenter.y, 1337) + ZoneLayout.PuddleDepth + ZoneLayout.WaterLevel;   // down in the sinkhole
+            var puddle = MakeSurface(root, new Vector3(ZoneLayout.PuddleCenter.x, puddleLevel, ZoneLayout.PuddleCenter.y),
+                WaterShape.Disc, new Vector2(ZoneLayout.PuddleRadius, 0f), dirty, 0.01f);
+            puddle.name = "Vung Nuoc Dong";
+            made++;
 
-            // 2) The life pool (a big disc where the slimes appear).
-            var pool = GameObject.Find("Pool Water");
-            if (pool != null)
-            {
-                float radius = pool.transform.lossyScale.x * 0.5f;
-                var r = pool.GetComponent<Renderer>();
-                if (r != null) r.enabled = false;
-                MakeSurface(pool.transform.parent != null ? pool.transform.parent : pool.transform,
-                    new Vector3(pool.transform.position.x, 0.05f, pool.transform.position.z), WaterShape.Disc, new Vector2(radius, 0f), clean, 0.03f);
-                made++;
-            }
+            // 2) The flat stand-in boxes of the water zones stay hidden (the surfaces above replace them).
+            foreach (var zone in Object.FindObjectsByType<WaterZone>()) HideFlatVisuals(zone.transform);
 
-            // 3) Deep pockets: dark, deeper water instead of the black disc.
-            var deepPockets = new List<(Vector2 centre, float radius, Transform root)>();
-            foreach (var t in Object.FindObjectsByType<Transform>())
-            {
-                if (!t.name.StartsWith("Deep Pocket")) continue;
-                var darkness = t.Find("Darkness");
-                float radius = 5f;
-                if (darkness != null)
-                {
-                    radius = darkness.lossyScale.x * 0.5f;
-                    var r = darkness.GetComponent<Renderer>();
-                    if (r != null) r.enabled = false;
-                }
-                MakeSurface(t, new Vector3(t.position.x, 0.04f, t.position.z), WaterShape.Disc, new Vector2(radius, 0f), deep, 0.02f);
-                made++;
-                deepPockets.Add((new Vector2(t.position.x, t.position.z), radius, t));
-            }
-
-            // 4) Deep means deep: dig a real basin in the terrain under each deep pocket (when the zone has a terrain),
-            //    and add darker, nearly opaque layers toward the middle so the water looks like it goes down.
-            var terrain = Object.FindAnyObjectByType<Terrain>();
-            var abyss = WaterMaterial("Lake_WaterAbyss", new Color(0.01f, 0.07f, 0.12f, 0.5f), normal, 0.1f, Color.black);
-            foreach (var pocket in deepPockets)
-            {
-                if (terrain != null) CarveBasin(terrain, pocket.centre, pocket.radius);
-                for (int ring = 0; ring < 3; ring++)
-                {
-                    float r = pocket.radius * (0.8f - ring * 0.25f);
-                    var disc = new GameObject("Depth (Dressed)");
-                    disc.transform.SetParent(pocket.root, true);
-                    disc.transform.position = new Vector3(pocket.centre.x, 0.07f + ring * 0.004f, pocket.centre.y);
-                    disc.AddComponent<MeshFilter>().sharedMesh = WaterMeshes.Disc(r, 1.25f);
-                    var renderer = disc.AddComponent<MeshRenderer>();
-                    renderer.sharedMaterial = abyss;
-                    renderer.shadowCastingMode = ShadowCastingMode.Off;
-                    renderer.receiveShadows = false;
-                }
-            }
-            // 5) Shallow water is a hollow too: the slime wades IN it (about half its body under the surface) instead of
-            //    standing on top of a film of water. The ponds already know their shores, so each hollow follows its pond.
-            if (terrain != null)
-            {
-                WaterSurface.Refresh();
-                foreach (var pond in WaterSurface.All)
-                {
-                    if (pond == null || (pond.transform.parent != null && pond.transform.parent.name.StartsWith("Deep Pocket"))) continue;
-                    var material = pond.GetComponent<MeshRenderer>().sharedMaterial;
-                    float hollow = material != null && material.name == "Lake_WaterDirty" ? 0.25f : pond.Shape == WaterShape.Stream ? 0.5f : 0.65f;
-                    CarveHollow(terrain, pond, hollow);
-                }
-                AssetDatabase.SaveAssets();
-            }
-
+            WaterSurface.Refresh(); // the shapes were set after the components woke up
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
             Debug.Log($"Đã dựng {made} mặt nước. Bấm Ctrl+S để lưu scene. (Nước chỉ chuyển động khi Play.)");
         }
 
-        /// <summary>
-        /// Lowers the terrain into a round bowl (about 2.5 m deep in the middle) under a deep pocket, steep at the
-        /// water's edge, so the deep water is a real hollow and not a flat disc. Only changes the heights near the pocket.
-        /// </summary>
-        static void CarveBasin(Terrain terrain, Vector2 centre, float waterRadius)
-        {
-            var data = terrain.terrainData;
-            Vector3 origin = terrain.transform.position, size = data.size;
-            int res = data.heightmapResolution;
-            float cell = size.x / (res - 1);
-            float reach = waterRadius + 3f;
-            int x0 = Mathf.Clamp(Mathf.FloorToInt((centre.x - reach - origin.x) / cell), 0, res - 1);
-            int x1 = Mathf.Clamp(Mathf.CeilToInt((centre.x + reach - origin.x) / cell), 0, res - 1);
-            int z0 = Mathf.Clamp(Mathf.FloorToInt((centre.y - reach - origin.z) / cell), 0, res - 1);
-            int z1 = Mathf.Clamp(Mathf.CeilToInt((centre.y + reach - origin.z) / cell), 0, res - 1);
-            int w = x1 - x0 + 1, h = z1 - z0 + 1;
-            if (w < 2 || h < 2) return;
-            var heights = data.GetHeights(x0, z0, w, h);
-            const float depth = 2.5f;
-            for (int j = 0; j < h; j++)
-                for (int i = 0; i < w; i++)
-                {
-                    var p = new Vector2(origin.x + (x0 + i) * cell, origin.z + (z0 + j) * cell);
-                    float t = Vector2.Distance(p, centre) / (waterRadius + 2f);
-                    if (t >= 1f) continue;
-                    float bowl = Mathf.Pow(1f - t * t, 1.5f);
-                    float worldY = Mathf.Min(origin.y + heights[j, i] * size.y, -depth * bowl);   // from the flat ground: running again does not dig deeper
-                    heights[j, i] = Mathf.Clamp01((worldY - origin.y) / size.y);
-                }
-            data.SetHeights(x0, z0, heights);
-            EditorUtility.SetDirty(data);
-            var collider = terrain.GetComponent<TerrainCollider>();
-            if (collider != null) collider.terrainData = data;   // refresh the physics shape
-        }
+        const string LayoutRootName = "Lake Water (Dressed)";
+        /// <summary>Name of the lake surface (the gel nursery is built on its shore near the Life Shallows).</summary>
+        internal const string LakeName = "Lake";
+        internal const string StreamName = "Khe Thuy Mach";
 
-        /// <summary>
-        /// Digs the terrain under a pond: `depth` metres in the middle, shelving up to the shore over about 3 m. Always
-        /// measured from the flat ground (y = 0), so running it again does not dig deeper.
-        /// </summary>
-        static void CarveHollow(Terrain terrain, WaterSurface pond, float depth)
+        /// <summary>A pond whose shore is the given world outline.</summary>
+        static int Shoreline(Transform parent, string name, Vector2[] world, Material mat)
         {
-            var data = terrain.terrainData;
-            Vector3 origin = terrain.transform.position, size = data.size;
-            int res = data.heightmapResolution;
-            float cell = size.x / (res - 1);
-            var outline = pond.WorldOutline;
-            Vector2 min = outline[0], max = outline[0];
-            foreach (var p in outline) { min = Vector2.Min(min, p); max = Vector2.Max(max, p); }
-            int x0 = Mathf.Clamp(Mathf.FloorToInt((min.x - 1f - origin.x) / cell), 0, res - 1);
-            int x1 = Mathf.Clamp(Mathf.CeilToInt((max.x + 1f - origin.x) / cell), 0, res - 1);
-            int z0 = Mathf.Clamp(Mathf.FloorToInt((min.y - 1f - origin.z) / cell), 0, res - 1);
-            int z1 = Mathf.Clamp(Mathf.CeilToInt((max.y + 1f - origin.z) / cell), 0, res - 1);
-            int w = x1 - x0 + 1, h = z1 - z0 + 1;
-            if (w < 2 || h < 2) return;
-            var heights = data.GetHeights(x0, z0, w, h);
-            const float shelf = 3f;
-            for (int j = 0; j < h; j++)
-                for (int i = 0; i < w; i++)
-                {
-                    var p = new Vector2(origin.x + (x0 + i) * cell, origin.z + (z0 + j) * cell);
-                    if (!pond.ContainsWorld(p)) continue;
-                    float best = float.MaxValue;
-                    for (int k = 0; k < outline.Length; k++) best = Mathf.Min(best, Vector2.SqrMagnitude(outline[k] - p));
-                    float inside = Mathf.Sqrt(best);
-                    float dig = depth * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(inside / shelf));
-                    float worldY = Mathf.Min(origin.y + heights[j, i] * size.y, -dig);   // from the flat ground, never deeper than asked
-                    heights[j, i] = Mathf.Clamp01((worldY - origin.y) / size.y);
-                }
-            data.SetHeights(x0, z0, heights);
-            EditorUtility.SetDirty(data);
-            var collider = terrain.GetComponent<TerrainCollider>();
-            if (collider != null) collider.terrainData = data;
+            Vector2 centre = Vector2.zero;
+            foreach (var p in world) centre += p;
+            centre /= world.Length;
+            var go = MakeSurface(parent, new Vector3(centre.x, ZoneLayout.WaterLevel, centre.y), WaterShape.Outline, Vector2.one, mat, 0.02f);
+            go.name = name;
+            var local = new Vector2[world.Length];
+            for (int i = 0; i < world.Length; i++) local[i] = world[i] - centre;
+            go.GetComponent<WaterSurface>().OutlinePoints = local;
+            return 1;
         }
 
         static Material foamMaterial, bankMaterial; // set once per run (the menu is not re-entrant)
@@ -275,7 +134,7 @@ namespace Evolve.EditorTools
             mat.EnableKeyword("_NORMALMAP");
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.SetOverrideTag("RenderType", "Transparent");
-            mat.renderQueue = (int)RenderQueue.Transparent - 10; // water is drawn before the gel and the glass-like things above it
+            mat.renderQueue = (int)RenderQueue.Transparent + 20; // after the gel: what is under the surface shows through the water, tinted
             if (emission.maxColorComponent > 0.001f)
             {
                 mat.EnableKeyword("_EMISSION");
