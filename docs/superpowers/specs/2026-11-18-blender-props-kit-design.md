@@ -103,3 +103,11 @@ Mỗi bước là một PR riêng.
 - Chi tiết dựng mesh trong Blender (modifier, nhiễu, bevel), số mặt cuối, số biến thể.
 - Cách tạo màu và độ nhám bề mặt (vertex color, ảnh sinh code).
 - Ngưỡng khoảng cách đặt vật và mật độ từng khu sau khi đo FPS.
+
+## 8. Các quyết định Claude tự đặt sau khi người làm đọc thử (chủ dự án kiểm)
+
+1. **Phong cách [ĐỀ XUẤT]:** bán thực, vẽ tay kiểu fantasy huyền bí và phát quang như các ảnh concept chủ dự án đã gửi (khu 03–06 và bản đồ), không phải ảnh chụp thật. Khối dày, có vết rêu và mốc, các mảng sáng ở nấm và rêu.
+2. **Thú không va chạm với vật thể [ĐỀ XUẤT]:** `Prey` và `Predator` di chuyển kinematic theo `GroundHeight.Follow` nên sẽ xuyên đá, gỗ. Ở bản đầu chấp nhận; né vật cản cho thú là việc riêng sau này. Slime và va chạm với vật thể là có thật.
+3. **Slime đi vòng, không leo lên vật lớn [ĐỀ XUẤT]:** vật lớn dựng vách dốc, không thành bậc; đá nhỏ dưới 0,3 m là bậc bước qua được. Khe và vòm trên lối đi rộng ít nhất 2,2 m (đủ cho slime cỡ tối đa, `BodyScale` 1,5, đường kính khoảng 1,5 m); khe nơi trú vẫn 1,35 m.
+3b. Kiểm "không kẹt": slime to nhất đi qua mọi vòm và khe trên đường mòn; đá không chắn lối đường mòn.
+4. **Nhịp duyệt [ĐỀ XUẤT]:** duyệt ảnh render và va chạm sau bước 1 (nhóm đá). Sau đó các nhóm còn lại làm theo lô, chủ dự án duyệt theo lô, sửa sau.
