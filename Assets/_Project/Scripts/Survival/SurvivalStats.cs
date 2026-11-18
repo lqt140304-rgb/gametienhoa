@@ -25,6 +25,23 @@ namespace Evolve.Survival
         public bool IsRemote { get; set; }
         public ulong RemoteClientId { get; set; }
 
+        bool frozen;
+        /// <summary>
+        /// The player is in the pre-game picking space: no stat ticks, and out of <see cref="All"/> so no creature or region
+        /// targets or counts them. Cleared when the choices are made and survival begins.
+        /// </summary>
+        public bool Frozen
+        {
+            get => frozen;
+            set
+            {
+                if (frozen == value) return;
+                frozen = value;
+                if (value) all.Remove(this);
+                else if (isActiveAndEnabled && !all.Contains(this)) all.Add(this);
+            }
+        }
+
         void Awake()
         {
             if (config == null) config = ScriptableObject.CreateInstance<SurvivalConfig>();
@@ -35,12 +52,12 @@ namespace Evolve.Survival
             state.Died += () => Debug.Log(state.IsCorpse ? $"{name} died (out of lives)" : $"{name} died ({state.Lives} lives left)");
         }
 
-        void OnEnable() => all.Add(this);
+        void OnEnable() { if (!frozen) all.Add(this); }
         void OnDisable() => all.Remove(this);
 
         void Update()
         {
-            if (IsRemote) return;
+            if (IsRemote || frozen) return;
             state.Tick(Time.deltaTime, config, IsMoving, IsSprinting);
         }
     }

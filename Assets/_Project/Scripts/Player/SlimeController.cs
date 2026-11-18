@@ -103,7 +103,7 @@ namespace Evolve.Player
                 else if (stats.State.IsCorpse && !NetWorld.CoopActive && KeyPressed.Y()) NewRun();
                 return;
             }
-            if (!IsSwimming && Time.time >= frozenUntil && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
+            if (!IsSwimming && !stats.Frozen && Time.time >= frozenUntil && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
                 float k = Mathf.Sqrt(Mathf.Clamp(transform.lossyScale.y, 0.3f, 1.5f));   // a smaller slime hops proportionally lower (height grows with speed squared)
@@ -146,6 +146,7 @@ namespace Evolve.Player
         void FixedUpdate()
         {
             if (stats.State.IsDead) return;
+            if (stats.Frozen) { rb.linearVelocity = Vector3.zero; return; }   // the pre-game picking space: the body stays where it is
             UpdateBodyScale();
             Vector3 dir = GetMoveDirection();
             if (Time.time < frozenUntil) dir = Vector3.zero;   // Run Rẩy

@@ -229,7 +229,7 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Code mới ở `Assets/_Project/Scripts/Traits/` (dữ liệu `CoreSO`/`FlawSO`/`TraitSeed`, chia thẻ `CardDealer`/`TraitRoom`, bù cơ quan `FlawCompensation`, hiệu ứng `LuckRules`, `DeathLossRules`, `FamiliarityGrid`, `FlawRules`, màn hình chọn `TraitPicker`) và `Scripts/Net/TraitsSync.cs` (co-op).
 - Đã cài hiệu ứng: 3 Lõi (**Nhân Con Bạc, Nhân Giữ Gốc, Nhân Quen Đất**) và 4 Khuyết Điểm (**Đói Sớm, Run Rẩy, Luống Cuống, Dạ Dày Kén**). 9 Lõi và 8 Khuyết Điểm còn lại chỉ là dữ liệu, hiện được trong thẻ kèm dòng "chưa có hiệu ứng".
 - Để dùng: chạy menu **Evolve → Create Traits** một lần (tạo 24 asset trong `Resources/Traits`), rồi vào Play: màn hình chọn hiện ra (1–3 chọn, Tab chi tiết, Enter tiếp, Esc bỏ qua). Test: `Assets/_Project/Tests/EditMode/Trait*Tests.cs`, `CardDealerTests`, `FlawCompensationTests`, `LuckRulesTests`, `DeathLossRulesTests`, `FamiliarityGridTests`, `FlawRulesTests`.
-- Giới hạn đã biết: chưa chạy test hay game; Nhân Con Bạc chưa áp cho boss hay rương (chưa có); Luống Cuống làm chậm đổi hướng di chuyển (slime không có xoay); báo đói sớm của Đói Sớm chưa làm; màn chọn mở ngay khi vào cảnh, chưa có màn hình tải thật; phím 1–5 của thanh kỹ năng vẫn nhận lúc đang chọn.
+- Giới hạn đã biết: chưa chạy test hay game; Nhân Con Bạc chưa áp cho boss hay rương (chưa có); Luống Cuống làm chậm đổi hướng di chuyển (slime không có xoay); báo đói sớm của Đói Sớm chưa làm; màn chọn là một "căn phòng riêng" phủ kín màn hình (không phải một scene riêng): trong lúc chọn người chơi bị đóng băng, bất tử, không bị quái nhắm tới (`SurvivalStats.Frozen`), không trừ chỉ số, HUD bị che và chặn; sinh tồn chỉ bắt đầu sau khi chọn xong hoặc bỏ qua.
 
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 

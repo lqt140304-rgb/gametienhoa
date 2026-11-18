@@ -234,3 +234,6 @@ Người đọc độc lập hỏi 8 câu; các câu không cần ý kiến thê
 5. **Chơi một mình và vào trễ:** chơi một mình qua cùng màn chọn (máy phát thẻ cho chính mình, không cần chống trùng). Người vào trễ chọn ngay khi vào, trước khi xuất hiện trong thế giới, từ các thẻ còn lại. Xác nhận là cuối cùng, không quay lại đổi. Người rời phòng thì Lõi của họ trả về kho.
 6. **Cơ chế Lõi ở mục 8** là spec chuẩn để cài đặt; số liệu là số tạm. Khung dữ liệu cài trước, cơ chế từng Lõi cài sau.
 8. **Dị Năng:** ô Q đã tách khỏi 5 ô cơ quan trong mã (`SkillBar`). Repo mới có vài `AbilitySO` (`ChargeAbility`, `BurstDashAbility`, `SpikeBurstAbility`), chưa đủ kho 37; viết kho Dị Năng nằm ngoài phạm vi này, lát cắt đầu rút từ các Dị Năng đang có. Dị Năng trùng giữa người chơi tạm cho phép.
+
+## 14. Không gian chọn riêng (yêu cầu bổ sung, đã cài)
+Trong lúc chọn Lõi và Khuyết Điểm, người chơi ở một **không gian riêng** trước khi vào bản đồ: màn hình phủ kín một căn phòng chỉ có các ô chọn, mọi menu khác bị ẩn và bị chặn. Người chơi **không thể bị nhắm làm mục tiêu và không mất chỉ số** (đóng băng, bất tử, không tính vào danh sách mục tiêu của quái, trong co-op không gửi trạng thái nên người khác chưa thấy). Chỉ khi chọn xong (hoặc bỏ qua) mới vào bản đồ chính và bắt đầu sinh tồn như bình thường. Cài đặt bằng một lớp phủ, chưa phải một scene riêng.

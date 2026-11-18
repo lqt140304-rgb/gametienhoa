@@ -232,6 +232,7 @@ namespace Evolve.Net
             s = default;
             if (localStats == null) FindLocalPlayer();
             if (localStats == null) return false;
+            if (localStats.Frozen) return false;   // still picking the starting traits: not in the shared world yet
 
             var st = localStats.State;
             s.Name = PlayerName;

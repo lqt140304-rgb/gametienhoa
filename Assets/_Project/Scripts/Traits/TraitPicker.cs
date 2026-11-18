@@ -38,12 +38,13 @@ namespace Evolve.Traits
         }
 
         void OnEnable() { TraitNet.HandReceived += OnHandReceived; TraitNet.ResultReceived += OnResultReceived; }
-        void OnDisable() { TraitNet.HandReceived -= OnHandReceived; TraitNet.ResultReceived -= OnResultReceived; }
+        void OnDisable() { TraitNet.HandReceived -= OnHandReceived; TraitNet.ResultReceived -= OnResultReceived; EndSpace(); }
 
         static Mode CurrentMode() => TraitNet.IsClient ? Mode.Client : TraitNet.HostHand != null ? Mode.Host : Mode.Solo;
 
         void Update()
         {
+            SyncSpace();
             if (player == null)
             {
                 if (Time.unscaledTime < nextFind) return;
@@ -63,6 +64,45 @@ namespace Evolve.Traits
             // (Re)start whenever idle, or when the room type changed before anything was confirmed (solo -> host/client).
             var now = CurrentMode();
             if (phase == Phase.Idle || (now != mode && chosenCore == null)) Begin(now);
+        }
+
+        /// <summary>
+        /// The pre-game space: while traits are still to be chosen (and there are traits to choose), the player's body is frozen,
+        /// invulnerable and out of every creature's reach, no stat ticks, and the other menus are blocked. It ends the moment the
+        /// choice is made (or skipped): survival starts as usual.
+        /// </summary>
+        void SyncSpace()
+        {
+            bool want = !skipped && TraitCatalog.Cores.Count > 0 && (player == null || player.CoreId == null);
+            if (want)
+            {
+                if (player == null) player = TraitNet.Local;
+                var stats = player != null ? player.GetComponent<Evolve.Survival.SurvivalStats>() : null;
+                if (!freezing && stats != null)
+                {
+                    frozenStats = stats;
+                    prevInvulnerable = stats.State.Invulnerable;
+                    prevExternalMenu = Evolve.Survival.SurvivalHUD.ExternalMenuOpen;
+                    stats.State.Invulnerable = true;
+                    stats.Frozen = true;
+                    Evolve.Survival.SurvivalHUD.ExternalMenuOpen = true;
+                    freezing = true;
+                }
+            }
+            else EndSpace();
+        }
+
+        void EndSpace()
+        {
+            if (!freezing) return;
+            freezing = false;
+            if (frozenStats != null)
+            {
+                frozenStats.Frozen = false;
+                frozenStats.State.Invulnerable = prevInvulnerable;
+            }
+            Evolve.Survival.SurvivalHUD.ExternalMenuOpen = prevExternalMenu;
+            frozenStats = null;
         }
 
         void Begin(Mode m)
@@ -106,6 +146,9 @@ namespace Evolve.Traits
         string[] pendingFlaws = new string[0];
         string pendingCore;
         float escArmedUntil;
+        bool freezing;          // the pre-game space is on: body frozen, invulnerable, out of every creature's reach, HUD hidden
+        bool prevInvulnerable, prevExternalMenu;
+        Evolve.Survival.SurvivalStats frozenStats;
         bool tabDown;          // Tab is held: the OS repeats KeyDown while it is, and only the first one may toggle the detail
         float lastTabDownAt;
 
@@ -138,13 +181,18 @@ namespace Evolve.Traits
         {
             if (phase == Phase.Idle || phase == Phase.Done) return;
             Setup();
+            GUI.depth = -10000;   // on top of every other menu
             var e = Event.current;
             if (e.type == EventType.KeyUp && e.keyCode == KeyCode.Tab) tabDown = false;
             if (e.type == EventType.KeyDown) HandleKey(e);
 
             float w = Screen.width, h = Screen.height;
-            GUI.color = new Color(0.02f, 0.05f, 0.1f, 0.78f);
+            // A room of its own: fully opaque, so the world and its HUD are not seen while choosing.
+            GUI.color = new Color(0.015f, 0.035f, 0.075f, 1f);
             GUI.DrawTexture(new Rect(0, 0, w, h), pixel);
+            GUI.color = new Color(0.1f, 0.25f, 0.45f, 0.18f);
+            float glow = Mathf.Max(w, h) * 1.1f;
+            GUI.DrawTexture(new Rect(w / 2f - glow / 2f, h / 2f - glow / 2f, glow, glow), disc);   // soft light in the middle
             GUI.color = Color.white;
 
             if (phase == Phase.Waiting || phase == Phase.Sent)
