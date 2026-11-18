@@ -52,6 +52,7 @@ namespace Evolve.EditorTools
                     float yaw = (float)rnd.NextDouble() * 360f, size = (float)rnd.NextDouble();
                     var plant = PlantCommunities.Pick(px, pz, roll);
                     if (plant == null) continue;
+                    if (plant == Plant.WetMoss || plant == Plant.ThickMoss || plant == Plant.BareMud) continue;   // these are painted into the terrain, not laid as patches
                     if (TerrainShape.HeightAt(px, pz, 1337) > 15f) continue;   // up the rim cliffs
                     bool flat = plant == Plant.WetMoss || plant == Plant.ThickMoss || plant == Plant.Clover || plant == Plant.LeafLitter
                                 || plant == Plant.BareMud || plant == Plant.TrackMark;

@@ -13,12 +13,10 @@ namespace Evolve.EditorTools
     ///  02 Chân Rễ Cổ Thụ: the ancient root cave, a solid dome 12 m high wrapped in great roots, with a wide door toward the
     ///     lake and a narrow slit to the north that only a slime fits through; warm humus inside.
     ///  The root tunnel along the trail from the cave's side down into the sinkhole (03).
-    ///  03 Bãi Mùn Rễ: a great hollow rotting log a slime can crawl through, bracket fungus and leaf drifts round it.
-    ///  04 Vườn Bào Tử: a cluster of giant cream mushrooms (up to ~7 m) on the plateau.
+    ///  (03's rotting log, 04's giant mushrooms and 06's root arch are modelled in Blender: see LandmarkLayout for where they go.)
     ///  The root bridge from the plateau (04) over the low ground to the ridge (06).
     ///  05 Khe Thủy Mạch: pale limestone boulders lining the gorge walls, small rapids of rocks and foam in the stream,
     ///     a ring of mossy limestone round each deep pool.
-    ///  06 Rìa Săn Mồi: the root tunnel arch (4 m wide, 8 m high) where the hunter's way in leaves the ridge.
     /// Run again to rebuild.
     /// </summary>
     public static class LakeLandmarks
@@ -45,15 +43,12 @@ namespace Evolve.EditorTools
             GelBanks(root);
             RootCave(root, earth, bark);
             RootTunnel(root, earth, bark);
-            RottingLog(root);
-            GiantMushrooms(root);
             RootBridge(root, bark);
             WaterVein(root);
-            RootArch(root);
 
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
-            Debug.Log("Đã dựng điểm nhấn cả 6 khu: bờ ổ gel, hang rễ, đường hầm, khúc gỗ mục, cụm nấm khổng lồ, cầu rễ, khe đá vôi và vòm rễ lối vào. Bấm Ctrl+S để lưu scene.");
+            Debug.Log("Đã dựng điểm nhấn: bờ ổ gel, hang rễ, đường hầm, cầu rễ và khe đá vôi (khúc gỗ mục, cụm nấm khổng lồ và cung rễ lối vào do bộ vật thể Blender đảm nhiệm). Bấm Ctrl+S để lưu scene.");
         }
 
         // ---------------------------------------------------------------- 01: gel nursery banks
@@ -258,108 +253,6 @@ namespace Evolve.EditorTools
             LakeGround.AddCombined(parent, "Tunnel Ribs", ribs, bark);
         }
 
-        // ---------------------------------------------------------------- 03: the rotting log
-
-        static void RottingLog(Transform root)
-        {
-            var parent = new GameObject("03 Rotting Log").transform;
-            parent.SetParent(root, false);
-            Vector2 c = LandmarkLayout.LogCenter;
-            Vector2 dir = new Vector2(Mathf.Cos(LandmarkLayout.LogAngle * Mathf.Deg2Rad), Mathf.Sin(LandmarkLayout.LogAngle * Mathf.Deg2Rad));
-            float r = LandmarkLayout.LogRadius, len = LandmarkLayout.LogLength;
-            var path = new Vector3[10];
-            for (int k = 0; k < path.Length; k++)
-            {
-                float t = k / (float)(path.Length - 1) - 0.5f;
-                Vector2 p = c + dir * t * len + new Vector2(-dir.y, dir.x) * Mathf.Sin(t * 2.4f) * 0.4f;
-                path[k] = new Vector3(p.x, LakeGround.GroundY(p.x, p.y) + r * 0.82f, p.y);   // sunk a little into the humus
-            }
-            // a hollow shell: the inside is open at both ends, so a slime can crawl through
-            var shell = RootMeshes.RootTube(path, r, r * 0.92f, 3030, 0.12f, 16);
-            var logMat = LakeGround.OpaqueMaterial("Lake_LogBarkInside", new Color(0.30f, 0.20f, 0.13f), 0.1f, true);
-            var go = new GameObject("Hollow Log");
-            go.transform.SetParent(parent, false);
-            go.AddComponent<MeshFilter>().sharedMesh = shell;
-            var mr = go.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = logMat;
-            go.AddComponent<MeshCollider>().sharedMesh = shell;
-            go.isStatic = true;
-
-            // bracket fungus in shelves along its back, two broken branch stubs, moss on top
-            var rnd = new System.Random(3031);
-            var blob = FloraMeshes.Blob();
-            var fungus = new List<CombineInstance>();
-            var moss = new List<CombineInstance>();
-            for (int k = 1; k < path.Length - 1; k++)
-            {
-                Vector3 side = Vector3.Cross(path[k + 1] - path[k - 1], Vector3.up).normalized * (rnd.NextDouble() < 0.5 ? 1f : -1f);
-                for (int f = 0; f < 3; f++)
-                    fungus.Add(new CombineInstance { mesh = blob, transform = Matrix4x4.TRS(path[k] + side * r * 0.95f + Vector3.up * (0.1f + f * 0.22f - 0.25f),
-                        Quaternion.LookRotation(side), new Vector3(0.55f - f * 0.1f, 0.08f, 0.38f)) });
-                moss.Add(new CombineInstance { mesh = blob, transform = Matrix4x4.TRS(path[k] + Vector3.up * r * 0.88f, Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f), new Vector3(1.3f, 0.28f, 1.0f)) });
-            }
-            var stubs = new List<CombineInstance>();
-            foreach (int k in new[] { 3, 6 })
-            {
-                Vector3 up = (Vector3.up + Vector3.Cross(path[k + 1] - path[k - 1], Vector3.up).normalized * 0.6f).normalized;
-                var branch = new[] { path[k] + up * r * 0.6f, path[k] + up * (r + 0.9f), path[k] + up * (r + 1.7f) + Vector3.up * 0.3f };
-                stubs.Add(new CombineInstance { mesh = RootMeshes.RootTube(branch, 0.32f, 0.18f, 3040 + k, 0.2f, 8), transform = Matrix4x4.identity });
-            }
-            LakeGround.AddCombined(parent, "Bracket Fungus", fungus, LakeGround.OpaqueMaterial("Lake_EarFungus", new Color(0.78f, 0.60f, 0.38f), 0.25f, false));
-            LakeGround.AddCombined(parent, "Log Moss", moss, LakeGround.OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
-            LakeGround.AddCombined(parent, "Branch Stubs", stubs, logMat);
-        }
-
-        // ---------------------------------------------------------------- 04: giant mushrooms
-
-        static void GiantMushrooms(Transform root)
-        {
-            var parent = new GameObject("04 Giant Mushrooms").transform;
-            parent.SetParent(root, false);
-            Vector2 c = LandmarkLayout.GiantMushrooms;
-            var rnd = new System.Random(4040);
-            var stalks = new List<CombineInstance>();
-            var caps = new[] { new List<CombineInstance>(), new List<CombineInstance>(), new List<CombineInstance>() };
-            void Mushroom(Vector2 p, float height, int colour, bool solid)
-            {
-                FloraMeshes.Mushroom(4100 + stalks.Count, height, out var stalk, out var cap, out _);
-                float y = LakeGround.GroundY(p.x, p.y) - 0.05f;
-                var m = Matrix4x4.TRS(new Vector3(p.x, y, p.y), Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f), Vector3.one);
-                stalks.Add(new CombineInstance { mesh = stalk, transform = m });
-                caps[colour].Add(new CombineInstance { mesh = cap, transform = m });
-                if (!solid) return;
-                var col = new GameObject("Stalk Collider").AddComponent<CapsuleCollider>();   // the big ones are solid to bump into
-                col.transform.SetParent(parent, false);
-                col.transform.position = new Vector3(p.x, y + height * 0.38f, p.y);
-                col.radius = height * 0.075f * 1.3f;
-                col.height = height * 0.76f;
-            }
-            Mushroom(c, 7f, 0, true);
-            Mushroom(c + new Vector2(6.5f, 2.5f), 5.5f, 1, true);
-            Mushroom(c + new Vector2(-3f, 6f), 4.5f, 2, true);
-            for (int i = 0; i < 14; i++)
-            {
-                float a = (float)rnd.NextDouble() * Mathf.PI * 2f, d = 5f + (float)rnd.NextDouble() * 10f;
-                Vector2 p = c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d;
-                if (ZoneLayout.DistanceToPath(p.x, p.y) < ZoneLayout.PathWidth) continue;
-                float h = i < 5 ? 2f + (float)rnd.NextDouble() * 1.5f : 0.8f + (float)rnd.NextDouble() * 1.2f;
-                Mushroom(p, h, rnd.Next(3), h > 2f);
-            }
-            var capColours = new[] { new Color(0.94f, 0.89f, 0.74f), new Color(0.88f, 0.70f, 0.42f), new Color(0.80f, 0.72f, 0.58f) };
-            LakeGround.AddCombined(parent, "Giant Stalks", stalks, LakeGround.OpaqueMaterial("Lake_MushroomStalk", new Color(0.93f, 0.89f, 0.78f), 0.3f, false));
-            for (int k = 0; k < 3; k++)
-                LakeGround.AddCombined(parent, "Giant Caps " + k, caps[k], LakeGround.OpaqueMaterial("Lake_MushroomCap" + k, capColours[k], 0.45f, false, capColours[k] * 0.10f));
-            var glow = new GameObject("Under-cap Glow");
-            glow.transform.SetParent(parent, false);
-            glow.transform.position = new Vector3(c.x, LakeGround.GroundY(c.x, c.y) + 3f, c.y);
-            var l = glow.AddComponent<Light>();
-            l.type = LightType.Point;
-            l.range = 16f;
-            l.intensity = 0.9f;
-            l.color = new Color(1f, 0.9f, 0.62f);
-            l.shadows = LightShadows.None;
-        }
-
         // ---------------------------------------------------------------- the root bridge 04 -> 06
 
         static void RootBridge(Transform root, Material bark)
@@ -475,52 +368,6 @@ namespace Evolve.EditorTools
             LakeGround.AddCombined(parent, "Limestone", stone, LakeGround.OpaqueMaterial("Lake_Limestone", new Color(0.74f, 0.72f, 0.64f), 0.2f, false));
             LakeGround.AddCombined(parent, "Limestone Moss", moss, LakeGround.OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
             LakeGround.AddCombined(parent, "Rapids Foam", foam, LakeWater.TranslucentMaterial("Lake_RapidsFoam", null, new Color(0.95f, 1f, 1f, 0.55f), Color.black, 0.6f, (int)RenderQueue.Transparent + 22));
-        }
-
-        // ---------------------------------------------------------------- 06: the root tunnel arch
-
-        static void RootArch(Transform root)
-        {
-            var parent = new GameObject("06 Root Arch").transform;
-            parent.SetParent(root, false);
-            // where the hunter's way in leaves the ridge, just before the rim cliff
-            Vector2 from = ZoneLayout.HuntEdge.Center, to = ZoneLayout.NorthEntry;
-            Vector2 dir = (to - from).normalized, side = new Vector2(-dir.y, dir.x);
-            Vector2 at = from + dir * Mathf.Min(Vector2.Distance(from, to) - 20f, 40f);
-            const float width = 4f, height = 8f;
-            var rnd = new System.Random(6066);
-            var roots = new List<CombineInstance>();
-            for (int i = 0; i < 6; i++)
-            {
-                float spread = ((float)rnd.NextDouble() - 0.5f) * 1.6f, lean = ((float)rnd.NextDouble() - 0.5f) * 2f;
-                Vector2 l = at + side * (width * 0.5f + 0.9f + (float)rnd.NextDouble() * 0.8f) + dir * spread;
-                Vector2 r = at - side * (width * 0.5f + 0.9f + (float)rnd.NextDouble() * 0.8f) + dir * spread;
-                var a = new Vector3(l.x, LakeGround.GroundY(l.x, l.y), l.y);
-                var b = new Vector3(r.x, LakeGround.GroundY(r.x, r.y), r.y);
-                var path = RootMeshes.ArchPath(a, b, height + 0.6f * i * 0.3f + (float)rnd.NextDouble() * 0.8f, 6070 + i, 0.8f, 18, 0.8f);
-                for (int k = 0; k < path.Length; k++) path[k] += new Vector3(dir.x, 0f, dir.y) * lean * Mathf.Sin(k / (float)(path.Length - 1) * Mathf.PI);
-                float radius = i < 2 ? 0.9f : 0.45f + (float)rnd.NextDouble() * 0.3f;
-                roots.Add(new CombineInstance { mesh = RootMeshes.RootTube(path, radius * 1.3f, radius, 6080 + i, 0.25f, 9), transform = Matrix4x4.identity });
-            }
-            // thin roots hanging from the top of the arch like a curtain
-            var top = new Vector3(at.x, LakeGround.GroundY(at.x, at.y) + height, at.y);
-            for (int i = 0; i < 9; i++)
-            {
-                Vector3 start = top + new Vector3(side.x, 0f, side.y) * (((float)rnd.NextDouble() - 0.5f) * width * 0.9f) + Vector3.down * 0.4f;
-                var hang = RootMeshes.BranchPath(start, Vector3.down, 2f + (float)rnd.NextDouble() * 3f, 0.3f, 6090 + i, 6);
-                roots.Add(new CombineInstance { mesh = RootMeshes.RootTube(hang, 0.09f, 0.03f, 6100 + i, 0.2f, 5), transform = Matrix4x4.identity });
-            }
-            LakeGround.AddCombined(parent, "Arch Roots", roots, LakeGround.OpaqueMaterial("Lake_DarkRoot", new Color(0.16f, 0.12f, 0.09f), 0.1f, false));
-            // the two legs are solid
-            foreach (float s in new[] { 1f, -1f })
-            {
-                Vector2 leg = at + side * s * (width * 0.5f + 1.2f);
-                var col = new GameObject("Arch Leg").AddComponent<CapsuleCollider>();
-                col.transform.SetParent(parent, false);
-                col.transform.position = new Vector3(leg.x, LakeGround.GroundY(leg.x, leg.y) + 2.5f, leg.y);
-                col.radius = 1f;
-                col.height = 5f;
-            }
         }
     }
 }

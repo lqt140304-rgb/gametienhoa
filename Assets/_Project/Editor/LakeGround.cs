@@ -9,7 +9,7 @@ namespace Evolve.EditorTools
 {
     /// <summary>
     /// Dresses the ground around the lake. Menu: Evolve -> Dress Lake: Ground.
-    /// Moss patches and grass along the shores and scattered over the flat ground, rocks with a moss cap, and winding
+    /// Moss patches and grass along the shores and scattered over the flat ground, and winding
     /// mud paths between the pool and the other areas. Everything is visual only (no colliders), made of a few combined
     /// meshes under one object, and it is safe to run again (it replaces its own work). It reads the ponds from the scene
     /// (WaterSurface) and the ground height by ray, so it keeps working when the terrain changes.
@@ -36,21 +36,7 @@ namespace Evolve.EditorTools
             var rnd = new System.Random(2024);
             var ponds = new List<WaterSurface>(WaterSurface.All);
 
-            // ---- moss patches ----
-            var mossInstances = new List<CombineInstance>();
-            int seed = 100;
-            foreach (var pond in ponds)
-            {
-                var outline = pond.WorldOutline;
-                for (int k = 0; k < outline.Length; k += 10)
-                {
-                    Vector2 p = outline[k] + Outward(outline, k) * (1.5f + (float)rnd.NextDouble() * 3f);
-                    if (Wet(ponds, p)) continue;
-                    AddMoss(mossInstances, p, 0.9f + (float)rnd.NextDouble() * 1.2f, ++seed, ponds);
-                }
-            }
-            // (moss over the open ground comes from the plant communities: Dress Lake: Plant Communities)
-            AddCombined(root, "Moss", mossInstances, MossMaterial());
+            // (moss, mud and trails are painted into the terrain itself now: Dress Lake: Terrain; flat decals looked like patches)
 
             // The humus bed's flat dark rectangle becomes a soft, uneven patch of dark mud (no straight edges).
             var humusBed = GameObject.Find("Humus Ground");
@@ -68,35 +54,7 @@ namespace Evolve.EditorTools
                 AddCombined(root, "Humus Mud", parts, MudPatchMaterial());
             }
 
-            // ---- rocks (with moss caps) ----
-            var rocks = new List<Mesh>();
-            var caps = new List<Mesh>();
-            for (int v = 0; v < 6; v++) { rocks.Add(GroundMeshes.Rock(500 + v, out var cap)); caps.Add(cap); }
-            var rockInstances = new List<CombineInstance>();
-            var capInstances = new List<CombineInstance>();
-            void PlaceRock(Vector2 p, float size)
-            {
-                if (Wet(ponds, p)) return;
-                int variant = rnd.Next(rocks.Count);
-                var rot = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
-                var scale = new Vector3(size * (0.8f + (float)rnd.NextDouble() * 0.5f), size * (0.7f + (float)rnd.NextDouble() * 0.6f), size * (0.8f + (float)rnd.NextDouble() * 0.5f));
-                var m = Matrix4x4.TRS(new Vector3(p.x, GroundY(p.x, p.y), p.y), rot, scale);
-                rockInstances.Add(new CombineInstance { mesh = rocks[variant], transform = m });
-                capInstances.Add(new CombineInstance { mesh = caps[variant], transform = m });
-            }
-            foreach (var pond in ponds)
-            {
-                var outline = pond.WorldOutline;
-                for (int k = 0; k < outline.Length; k += 5)
-                {
-                    if (rnd.NextDouble() > 0.5) continue;
-                    Vector2 p = outline[k] + Outward(outline, k) * (0.6f + (float)rnd.NextDouble() * 2.4f);
-                    PlaceRock(p, 0.35f + (float)rnd.NextDouble() * 0.75f);
-                    if (rnd.NextDouble() < 0.4) PlaceRock(p + new Vector2((float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f) * 1.6f, 0.2f + (float)rnd.NextDouble() * 0.35f);
-                }
-            }
-            AddCombined(root, "Rocks", rockInstances, OpaqueMaterial("Lake_Rock", new Color(0.40f, 0.41f, 0.39f), 0.15f, false));
-            AddCombined(root, "Rock Moss", capInstances, OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
+            // (no rocks here: the rocks, root arches, logs and big mushrooms are modelled in Blender and placed by their own tool)
 
             // ---- grass tufts (three greens) ----
             var tufts = new List<Vector3>[] { new List<Vector3>(), new List<Vector3>(), new List<Vector3>() };
@@ -165,31 +123,9 @@ namespace Evolve.EditorTools
             AddCombined(root, "Gel Nursery", domes, LakeWater.TranslucentMaterial("Lake_GelDome", null, new Color(0.72f, 0.86f, 0.50f, 0.5f), Color.black, 0.92f, (int)RenderQueue.Transparent + 1));
             AddCombined(root, "Gel Nursery Cores", cores, OpaqueMaterial("Lake_GelCoreSpot", new Color(0.95f, 0.62f, 0.18f), 0.4f, false, new Color(0.9f, 0.5f, 0.12f)));
 
-            // ---- mud paths from the pool to the other areas ----
-            var ribbons = new List<CombineInstance>();
-            int pathSeed = 7;
-            foreach (var trail in TrailLines())
-            {
-                Vector2 a = trail[0], b = trail[trail.Length - 1];
-                var line = GroundMeshes.WindingLine(a, b, ++pathSeed, Mathf.Min(3.5f, Vector2.Distance(a, b) * 0.06f), 1.5f);
-                var run = new List<Vector2>();
-                void Flush()
-                {
-                    if (run.Count >= 3)
-                        ribbons.Add(new CombineInstance { mesh = GroundMeshes.Ribbon(run, 1.6f, ++pathSeed, GroundY, 0.015f), transform = Matrix4x4.identity });
-                    run = new List<Vector2>();
-                }
-                foreach (var p in line)
-                {
-                    if (Wet(ponds, p)) Flush(); else run.Add(p);
-                }
-                Flush();
-            }
-            AddCombined(root, "Mud Paths", ribbons, PathMaterial());
-
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
-            Debug.Log("Đã trang trí mặt đất (rêu, đá, cỏ, đường mòn). Bấm Ctrl+S để lưu scene. Chạy lại menu này sẽ làm lại từ đầu.");
+            Debug.Log("Đã trang trí mặt đất (cỏ, bờ ổ gel). Bấm Ctrl+S để lưu scene. Chạy lại menu này sẽ làm lại từ đầu.");
         }
 
         /// <summary>
