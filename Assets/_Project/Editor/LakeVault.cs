@@ -26,6 +26,7 @@ namespace Evolve.EditorTools
         const string EarthSheet = "Ceiling Earth";
         const string RibsName = "Vault Ribs";
         const string OldHangingRoots = "Hanging Roots";          // 28 plain smooth cylinders from the scene builder
+        const string SkyName = "Vault Sky Windows";             // a patch of sky behind each light hole
         const string PropsName = "Vault Hanging Props";          // long roots, curtains, glow pods, stalactites by zone
         const string PillarsName = "Vault Pillars";              // Blender replacements for the three smooth "Landmark" columns
         const string HangingName = "Vault Hanging Roots";       // their Blender replacement
@@ -60,6 +61,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, HangingName);
             DestroyChild(parent, PillarsName);
             DestroyChild(parent, PropsName);
+            DestroyChild(parent, SkyName);
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
@@ -71,8 +73,9 @@ namespace Evolve.EditorTools
             hanging += ReplacePillars(parent);
             int props = PlaceHangingProps(parent, ribs, slots, ceiling);
             props += PlaceBones(parent, ribs, slots, ceiling);
+            int windows = BuildSkyWindows(parent, ceiling);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá). Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
+            Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá), {windows} ô trời qua các lỗ sáng. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
 
         [MenuItem("Evolve/Restore Lake Canopy (undo)")]
@@ -88,6 +91,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, HangingName);
             DestroyChild(parent, PillarsName);
             DestroyChild(parent, PropsName);
+            DestroyChild(parent, SkyName);
             SetOldCylinders(true);
             SetPillars(true);
             old.name = NewRoof;
@@ -235,6 +239,62 @@ namespace Evolve.EditorTools
                 }
             }
             SetOldCylinders(false);
+            return made;
+        }
+
+        // ------------------------------------------------------------------ sky through the holes
+
+        /// <summary>Behind each light hole the dark dome would show; instead hang a disc of dusk sky (stars, thin cloud) just under the dome, unlit and unfogged,
+        /// so looking up through a hole you see the sky. The vault shell hides everything of the disc except what the hole shows.</summary>
+        static int BuildSkyWindows(Transform canopy, Func<float, float, float> ceiling)
+        {
+            var tex = LakeWater.PaintedTexture(Root + "/Models/VaultSky.png", 256, 256, (u, v) =>
+            {
+                float cloud = LakeWater.TileableNoise(u * 7f, v * 7f, 7, 7) * 0.6f + LakeWater.TileableNoise(u * 19f, v * 19f, 19, 19) * 0.4f;
+                var top = new Color(0.07f, 0.10f, 0.24f);
+                var low = new Color(0.30f, 0.20f, 0.32f);
+                var c = Color.Lerp(top, low, Mathf.SmoothStep(0f, 1f, v));
+                c = Color.Lerp(c, new Color(0.55f, 0.50f, 0.65f), Mathf.Clamp01((cloud - 0.5f) * 2.2f) * 0.55f);
+                float h = Mathf.Abs(Mathf.Sin(u * 12.9898f * 50f + v * 78.233f * 50f) * 43758.5453f) % 1f;
+                if (h > 0.994f && cloud < 0.55f) c = Color.Lerp(c, Color.white, 0.9f);
+                c.a = 1f;
+                return c;
+            });
+            var shader = Shader.Find("Sprites/Default");   // unlit, ignores fog and the vision colour fade
+            var mat = new Material(shader) { name = "Lake_VaultSky", mainTexture = tex };
+            AssetDatabase.DeleteAsset(Root + "/Materials/Lake_VaultSky.mat");
+            AssetDatabase.CreateAsset(mat, Root + "/Materials/Lake_VaultSky.mat");
+            var parent = new GameObject(SkyName).transform;
+            parent.SetParent(canopy, false);
+            int made = 0;
+            const float radius = 24f;
+            const int segs = 32;
+            foreach (var sh in ZoneLayout.LightShafts)
+            {
+                float y = ceiling(sh.x, sh.y) - 0.5f;
+                var verts = new List<Vector3> { new Vector3(sh.x, y, sh.y) };
+                var uvs = new List<Vector2> { new Vector2((sh.x + 250f) / 500f, (sh.y + 250f) / 500f) };
+                var tris = new List<int>();
+                for (int i = 0; i < segs; i++)
+                {
+                    float a = i * Mathf.PI * 2f / segs;
+                    float px = sh.x + Mathf.Cos(a) * radius, pz = sh.y + Mathf.Sin(a) * radius;
+                    verts.Add(new Vector3(px, y, pz));
+                    uvs.Add(new Vector2(Mathf.Clamp01((px + 250f) / 500f), Mathf.Clamp01((pz + 250f) / 500f)));
+                    tris.Add(0); tris.Add(1 + (i + 1) % segs); tris.Add(1 + i);
+                }
+                var mesh = new Mesh { name = "Sky Window" };
+                mesh.SetVertices(verts); mesh.SetUVs(0, uvs); mesh.SetTriangles(tris, 0);
+                mesh.RecalculateBounds();
+                var go = new GameObject("Sky Window " + made);
+                go.transform.SetParent(parent, false);
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = mat;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = false;
+                made++;
+            }
             return made;
         }
 
