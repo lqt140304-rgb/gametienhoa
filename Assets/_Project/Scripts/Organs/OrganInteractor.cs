@@ -46,7 +46,17 @@ namespace Evolve.Organs
         {
             Current = null;
             BodyMenuOpen = false;
-            if (!stats.State.IsCorpse) DropAllOnDeath();
+            if (stats.State.IsCorpse) return;
+            // Nhân Giữ Gốc: the worn organs stay on the body through the first two deaths.
+            var traits = GetComponent<Evolve.Traits.PlayerTraits>();
+            if (Evolve.Traits.DeathLossRules.KeepsEquippedOrgans(traits != null && traits.HasCore(Evolve.Traits.DeathLossRules.CoreId), stats.State.Lives))
+            {
+                LastDeathKept = host.Count;
+                LastDeathLost = 0;
+                DroppedOnDeath?.Invoke(0, 0);   // nothing fell off, nothing was lost
+                return;
+            }
+            DropAllOnDeath();
         }
 
         /// <summary>Every organ falls off where the body is; each is lost with deathLossChance.</summary>
