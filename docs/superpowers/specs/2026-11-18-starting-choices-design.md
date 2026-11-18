@@ -37,7 +37,8 @@ Nguyên tắc: **Lõi tự chạy, đổi một luật của cơ thể; Dị Nă
 Đã duyệt thêm:
 - **Nhân Con Bạc**: tăng **tỉ lệ rơi** cơ quan từ quái và đồ từ rương (không tăng bậc). Chỉ áp dụng cho lượt rơi của chính người đó, host quyết định. Khuyết Điểm gợi ý: Thân Dễ Vỡ · Đói Nhanh · Hao Nền. **Áp dụng cả cho boss** (đã duyệt). Bù lại, Khuyết Điểm của Lõi này **nặng hơn các Lõi khác** (mức số liệu cao hơn); vẫn tuân luật 3 (không làm người chơi thua chắc). Cần giới hạn: tăng tỉ lệ rơi có trần để không chắc chắn lấy hết cơ quan hiếm của boss.
 
-Đề xuất thay thế, **chờ duyệt**: Nhân Quen Đất (đi lại một đường nhiều lần thì nhanh hơn trên đường đó), Nhân Mô Đệm (cơ quan sắp hỏng thì sát thương chuyển sang dưỡng chất dự trữ), Nhân Học Vị (hấp thụ loài mới lần đầu thì nhận thêm EXP, nhớ mùi loài đó).
+Đã duyệt: **Nhân Quen Đất** (đi lại một đường nhiều lần thì nhanh hơn trên đường đó).
+Làm lại, **chờ duyệt**: thay Nhân Mô Đệm bằng **Nhân Giữ Gốc** (mỗi lần chết, một cơ quan không bị mất); thay Nhân Học Vị bằng **Nhân Thích Nghi** (chịu lặp lại một loại sát thương môi trường thì kháng loại đó tăng dần, hết bị tác động thì giảm; Khuyết Điểm của Lõi này không dùng nhóm Sợ-).
 Cần kiểm tra thêm: Nhân Phát Quang và Nhân Bám Dính có giống hành động bấm nút không.
 
 ## Đề xuất của Claude, chưa được duyệt
