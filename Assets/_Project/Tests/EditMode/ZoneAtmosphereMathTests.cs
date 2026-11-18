@@ -83,8 +83,19 @@ namespace Evolve.Tests.EditMode
         {
             var p = ZoneAtmosphereMath.Zones[3];
             Assert.AreEqual(Color.black.r, ZoneAtmosphereMath.FogColorFor(p, 0f).r, 1e-5f);
-            Assert.AreEqual(p.FogColor.b, ZoneAtmosphereMath.FogColorFor(p, 1f).b, 1e-5f);
-            Assert.AreEqual(p.FogColor.b * 0.5f, ZoneAtmosphereMath.FogColorFor(p, 0.5f).b, 1e-5f);
+            var tint = ZoneAtmosphereMath.Desaturate(p.FogColor);
+            Assert.AreEqual(tint.b, ZoneAtmosphereMath.FogColorFor(p, 1f).b, 1e-5f);
+            Assert.AreEqual(tint.b * 0.5f, ZoneAtmosphereMath.FogColorFor(p, 0.5f).b, 1e-5f);
+        }
+
+        [Test]
+        public void Desaturate_KeepsBrightnessAndLowersSpread()
+        {
+            var c = new Color(0.25f, 0.12f, 0.30f);
+            var d = ZoneAtmosphereMath.Desaturate(c);
+            float lumC = c.r * 0.30f + c.g * 0.59f + c.b * 0.11f, lumD = d.r * 0.30f + d.g * 0.59f + d.b * 0.11f;
+            Assert.AreEqual(lumC, lumD, 1e-5f);
+            Assert.Less(Mathf.Max(d.r, d.g, d.b) - Mathf.Min(d.r, d.g, d.b), Mathf.Max(c.r, c.g, c.b) - Mathf.Min(c.r, c.g, c.b));
         }
 
         [Test]

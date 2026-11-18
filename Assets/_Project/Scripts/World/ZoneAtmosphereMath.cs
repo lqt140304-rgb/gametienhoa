@@ -8,6 +8,8 @@ namespace Evolve.World
         /// <summary>Never more than this many particles at once (the owner asked for few, to avoid lag).</summary>
         public const int MaxParticles = 150;
         public const float BlindFogEnd = 80f;
+        /// <summary>How much of each fog colour's tint is washed out toward grey (0 = full colour, 1 = grey). Raise it for subtler zones.</summary>
+        public const float FogDesaturation = 0.45f;
 
         static AtmosphereProfile P(Color fog, float end, ParticleKind kind, Color particle, float density, float size, float speed)
             => new AtmosphereProfile { FogColor = fog, FogEnd = end, Particles = kind, ParticleColor = particle, Density = density, Size = size, Speed = speed };
@@ -59,7 +61,14 @@ namespace Evolve.World
         }
 
         /// <summary>Fog colour: black without eyes (the world is dark), the zone's colour with them.</summary>
-        public static Color FogColorFor(AtmosphereProfile p, float sight) => Color.Lerp(Color.black, p.FogColor, Mathf.Clamp01(sight));
+        public static Color FogColorFor(AtmosphereProfile p, float sight) => Color.Lerp(Color.black, Desaturate(p.FogColor), Mathf.Clamp01(sight));
+
+        /// <summary>The colour with <see cref="FogDesaturation"/> of its tint washed out toward its own grey (same brightness).</summary>
+        public static Color Desaturate(Color c)
+        {
+            float grey = c.r * 0.30f + c.g * 0.59f + c.b * 0.11f;
+            return Color.Lerp(c, new Color(grey, grey, grey, c.a), FogDesaturation);
+        }
 
         /// <summary>Fog end distance: 80 m blind, the zone's own with eyes, stretched by levelled eyes (sight above 1).</summary>
         public static float FogEndFor(AtmosphereProfile p, float sight)
