@@ -484,3 +484,11 @@ Checklist: (1) Console sạch, Test Runner xanh (`GrassMathTests`); (2) Dress La
 - Hạn chế: chưa có tên và biểu tượng riêng trong giao diện; quặng chưa có va chạm cứng (đi xuyên qua, hấp thụ khi chạm); thú chưa ăn các loại mới.
 
 Checklist: (1) Console sạch, Test Runner xanh (`FoodProfilesWiringTests`); (2) Reinstall Blender Props, Dress Lake: Forage, Ctrl+S; (3) Play: đứng trên một cái thì thanh dưỡng chất tương ứng tăng đúng loại; (4) quặng ăn chậm và mọc lại rất lâu; (5) hai máy co-op thấy cùng thức ăn (không có cảnh báo lệch).
+
+## 30. Nước thật hơn: trạng thái và danh sách kiểm tra
+
+- Shader `Evolve/LakeWater` viết lại phần tô màu (giữ nguyên tên thuộc tính cũ): **khúc xạ** (thấy đáy hồ qua mặt nước, bị gợn sóng bẻ cong, đọc từ URP "Opaque Texture"); **hấp thụ ánh sáng theo độ sâu** kiểu Beer-Lambert (đỏ mất trước nên nước sâu xanh lục, nước đục nâu lục); **vân sáng tụ quang (caustics)** chuyển động trên đáy nước nông; **phản chiếu Fresnel** (yếu khi nhìn thẳng xuống, mạnh ở góc xiên gần bờ) từ môi trường, ambient và một tông tối của hang; **ánh lấp lánh** từ mặt trời và mọi đèn gần (nấm, tinh thể sáng in vệt lên nước); ba lớp gợn sóng (một lớp sóng chậm rộng, hai lớp mịn); bọt ở bờ lởm chởm, động; mép mờ, ẩn khi mù như cũ.
+- Menu **Evolve → Dress Lake: Water Realism** (bước 24/24 của Rebuild Lake; chạy sau Light and Water Look): bật **Opaque Texture** (và Depth Texture) trên mọi URP asset, đặt tham số mới cho các vật liệu nước (`_Absorb`, `_Refract`, `_ReflectTint`, `_CausticStrength`, `_GlintStrength`): nước sạch trong và xanh ngọc, vũng đọng đục.
+- Hạn chế: nước vẫn phẳng (chỉ pháp tuyến gợn, chưa có sóng nhô thật); không phản chiếu chính xác vật thể (không có phản xạ phẳng theo màn hình); nếu Opaque Texture tắt thì nước ra đen; đèn phụ chỉ tính trong giới hạn của URP; shader mới chưa được biên dịch hay thấy trong Unity.
+
+Checklist: (1) Console sạch (không lỗi shader); (2) Dress Lake: Water Realism, Ctrl+S; (3) thấy đáy hồ và vân sáng chuyển động ở chỗ nông, nước sâu xanh lục sẫm; (4) nhìn xiên gần bờ thấy phản chiếu, đứng gần nấm sáng thấy vệt sáng trên nước; (5) chưa có mắt vẫn không thấy nước; (6) FPS không tụt quá 10%.
