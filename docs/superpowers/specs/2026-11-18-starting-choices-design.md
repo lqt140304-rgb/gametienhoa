@@ -59,6 +59,76 @@ Mỗi Lõi sẽ được mô tả theo cùng khuôn: kích hoạt khi nào, gi�
 - Tương tác: không đổi hình phạt mất mạng; lõi này cộng hai Khuyết Điểm nhẹ.
 - Co-op: host quyết định lúc chết, gửi kết quả cho mọi người.
 
+**Màng Thẩm Thấu**
+- Kích hoạt: đứng yên (di chuyển dưới 0,3 m/s) trong nước nông hoặc trên rêu ẩm.
+- Hiệu ứng: hút dưỡng chất dần, tương đương một phần nhỏ nguồn ăn (tạm 1,5% độ no mỗi giây); khi ngồi thấm thì ngừng hao độ no.
+- Giới hạn: không hoạt động trong nước sâu khi đang bơi; tối đa lấy đầy 60% thanh no, phần còn lại phải ăn thật; bị đánh thì ngắt 3 giây.
+- Tương tác: cơ quan tiêu hóa không đổi; tia sáng gắt không cộng thêm.
+- Co-op: tính tại máy từng người, host kiểm tra tốc độ tăng độ no tối đa.
+
+**Nhân Thần Tốc**
+- Kích hoạt: mỗi cú nảy chạm đất đúng nhịp (bấm nảy trong khoảng 0,3–0,6 giây sau lần chạm trước).
+- Hiệu ứng: mỗi nảy đúng nhịp cộng một cấp chuỗi; mỗi cấp +4% tốc độ, tối đa 5 cấp (tạm +20%).
+- Giới hạn: nảy sai nhịp hoặc đứng yên quá 1 giây thì mất chuỗi; không hoạt động khi bơi hoặc bám vách.
+- Tương tác: cơ quan vận động cộng bình thường; chuỗi không tăng sát thương.
+- Co-op: chuỗi là trạng thái tại máy người chơi; host kiểm tra tốc độ tối đa cho phép.
+
+**Nhân Ngụy Sắc**
+- Kích hoạt: đứng yên 2 giây.
+- Hiệu ứng: màu thân dần hòa với nền; kẻ địch phải lại gần hơn mới phát hiện (tạm giảm 60% tầm phát hiện).
+- Giới hạn: di chuyển, tấn công hoặc bị đánh thì mất ngụy trang ngay; không hiệu quả ở nền quá sáng (tia sáng gắt) hoặc quá lạ màu.
+- Tương tác: kẻ địch có khứu giác vẫn đánh hơi được; đồng đội không bị ảnh hưởng.
+- Co-op: trạng thái ngụy trang do host đồng bộ để AI kẻ địch dùng chung một nguồn.
+
+**Nhân Phản Chấn**
+- Kích hoạt: nhận sát thương từ đòn trúng thân.
+- Hiệu ứng: tích điểm lực theo lượng sát thương nhận; đòn tấn công kế tiếp mạnh hơn theo điểm tích (tạm +25% ở mức đầy).
+- Giới hạn: điểm lực tối đa 3 lần tích; mất sau 6 giây không đánh; sát thương môi trường (độc, nhiệt) không tích.
+- Tương tác: cộng với giáp nhưng giáp càng cao thì tích càng ít (vì sát thương nhận ít).
+- Co-op: host tính điểm lực khi tính sát thương để tránh lệch.
+
+**Nhân Cộng Sinh**
+- Kích hoạt: có đồng đội trong bán kính 8 m.
+- Hiệu ứng: cả hai hồi máu nhanh hơn (tạm +40% tốc độ hồi); người có Lõi này mạnh hơn khi nhiều người cùng đứng gần.
+- Giới hạn: tối đa 3 đồng đội tính vào; đồng đội không có Lõi vẫn được hưởng hồi nhanh nhưng yếu hơn (một nửa); không có tác dụng khi chơi một mình.
+- Tương tác: không chồng với hồi máu của cơ quan; lấy mức cao hơn.
+- Co-op: host tính khoảng cách giữa người chơi mỗi 0,5 giây.
+
+**Nhân Ăn Mòn**
+- Kích hoạt: chạm hoặc bao phủ vật hữu cơ (xác, thực vật, nấm).
+- Hiệu ứng: tiết dịch làm vật hữu cơ phân hủy nhanh hơn, hút thêm dưỡng chất (tạm +30%).
+- Giới hạn: chỉ vật hữu cơ; không tác dụng với vật cứng hoặc sinh vật còn sống; chỉ tính một lần cho mỗi vật.
+- Tương tác: cộng với tuyến axit nhưng không chồng cùng loại dịch.
+- Co-op: host quyết định lượng hút khi nhiều người cùng ăn một xác, chia theo thời gian.
+
+**Nhân Con Bạc**
+- Kích hoạt: mỗi lượt rơi chiến lợi phẩm của chính người này (cơ quan từ quái, đồ từ rương, kể cả boss).
+- Hiệu ứng: tăng tỉ lệ rơi (tạm +20% tương đối, ví dụ 10% lên 12%).
+- Giới hạn: có trần, không bao giờ đạt chắc chắn; không tăng bậc cơ quan; chỉ áp cho lượt của người đó.
+- Tương tác: Khuyết Điểm của Lõi này nặng hơn mức thường (cộng hai Khuyết Điểm nhẹ).
+- Co-op: host lăn xúc xắc rơi cho từng người; hiệu ứng nhẹ báo khi đồ hiếm rơi nhờ Lõi này.
+
+**Nhân Thích Nghi**
+- Kích hoạt: chịu liên tục một loại sát thương môi trường (độc, nhiệt, lạnh, axit).
+- Hiệu ứng: kháng loại đó tăng dần theo thời gian chịu (tạm +4% mỗi 5 giây).
+- Giới hạn: kháng tối đa 40%; giữ kháng của một loại tại một thời điểm; hết bị tác động 60 giây thì giảm dần về 0.
+- Tương tác: Khuyết Điểm của Lõi này không dùng nhóm Sợ-; cộng với kháng từ cơ quan nhưng tổng không vượt 70%.
+- Co-op: tính tại host khi tính sát thương môi trường.
+
+**Nhân Quang Hợp**
+- Kích hoạt: đứng hoặc đi trong tia sáng xuyên rễ (vùng LightShaft của bản đồ).
+- Hiệu ứng: hồi năng lượng dần (tạm 3 điểm mỗi giây).
+- Giới hạn: không hoạt động khi bị che (dưới nước sâu); thân có ngụy trang không cản; không cộng khi có cơ quan hồi năng lượng cùng lúc (lấy mức cao).
+- Tương tác: Khuyết Điểm không dùng Hao Nền để tránh cùng trục.
+- Co-op: mỗi người tính riêng; tia sáng là một phần bản đồ nên không cần đồng bộ thêm.
+
+**Nhân Bám Dính**
+- Kích hoạt: đứng vững hoặc đi chậm (dưới 40% tốc độ tối đa).
+- Hiệu ứng: miễn nhiễm hất văng và đẩy lùi; leo dốc không mất tốc.
+- Giới hạn: khi chạy hết tốc độ thì mất miễn nhiễm; không áp dụng với hiệu ứng làm choáng hoặc trói; đòn hất cực mạnh của boss vẫn đẩy được một đoạn ngắn.
+- Tương tác: Khuyết Điểm không dùng Mô Nặng hoặc Nhảy Thấp.
+- Co-op: host quyết định hất văng, kiểm tra điều kiện đứng vững.
+
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
 
