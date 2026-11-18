@@ -52,7 +52,16 @@ namespace Evolve.EditorTools
             {
                 firstOf[(int)k] = protos.Count;
                 int n = Variants(k);
-                for (int v = 0; v < n; v++) { protos.Add(MakePrototype(k, v)); index.Add(new Proto { Kind = k, Variant = v }); }
+                for (int v = 0; v < n; v++)
+                {
+                    try { protos.Add(MakePrototype(k, v)); }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[Clutter] Lỗi khi tạo mẫu {k} #{v}: {e.GetType().Name}: {e.Message}\n{e.StackTrace}");
+                        throw;   // stops the step; the message above names the kind
+                    }
+                    index.Add(new Proto { Kind = k, Variant = v });
+                }
             }
             var data = terrain.terrainData;
             data.SetDetailResolution(Res, 16);
@@ -100,7 +109,12 @@ namespace Evolve.EditorTools
                 }
             }
             EditorUtility.ClearProgressBar();
-            for (int i = 0; i < maps.Length; i++) data.SetDetailLayer(0, 0, i, maps[i]);
+            for (int i = 0; i < maps.Length; i++)
+            {
+                data.SetDetailLayer(0, 0, i, maps[i]);
+                int filled = 0; foreach (int c in maps[i]) if (c > 0) filled++;
+                Debug.Log($"[Clutter] {index[i].Kind} #{index[i].Variant}: {filled} ô có vật");
+            }
 
             terrain.detailObjectDistance = 85f;      // drawn only this close to the camera
             terrain.detailObjectDensity = 0.9f;
