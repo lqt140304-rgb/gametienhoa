@@ -90,7 +90,7 @@ Mỗi Lõi sẽ được mô tả theo cùng khuôn: kích hoạt khi nào, gi�
 **Nhân Cộng Sinh**
 - Kích hoạt: có đồng đội trong bán kính 8 m.
 - Hiệu ứng: cả hai hồi máu nhanh hơn (tạm +40% tốc độ hồi); người có Lõi này mạnh hơn khi nhiều người cùng đứng gần.
-- Giới hạn: tối đa 3 đồng đội tính vào; đồng đội không có Lõi vẫn được hưởng hồi nhanh nhưng yếu hơn (một nửa); không có tác dụng khi chơi một mình.
+- Giới hạn: tối đa 3 đồng đội tính vào; đồng đội không có Lõi vẫn được hưởng hồi nhanh nhưng yếu hơn (một nửa); khi chơi một mình hoặc không có ai trong 8 m thì vẫn được hồi nhanh nhẹ (tạm +10%, bằng một phần tư mức gần đồng đội).
 - Tương tác: không chồng với hồi máu của cơ quan; lấy mức cao hơn.
 - Co-op: host tính khoảng cách giữa người chơi mỗi 0,5 giây.
 
@@ -103,7 +103,7 @@ Mỗi Lõi sẽ được mô tả theo cùng khuôn: kích hoạt khi nào, gi�
 
 **Nhân Con Bạc**
 - Kích hoạt: mỗi lượt rơi chiến lợi phẩm của chính người này (cơ quan từ quái, đồ từ rương, kể cả boss).
-- Hiệu ứng: tăng tỉ lệ rơi (tạm +20% tương đối, ví dụ 10% lên 12%).
+- Hiệu ứng: tăng tỉ lệ rơi (tạm +12% tương đối, ví dụ 10% lên 11,2%; với boss chỉ +6%).
 - Giới hạn: có trần, không bao giờ đạt chắc chắn; không tăng bậc cơ quan; chỉ áp cho lượt của người đó.
 - Tương tác: Khuyết Điểm của Lõi này nặng hơn mức thường (cộng hai Khuyết Điểm nhẹ).
 - Co-op: host lăn xúc xắc rơi cho từng người; hiệu ứng nhẹ báo khi đồ hiếm rơi nhờ Lõi này.
