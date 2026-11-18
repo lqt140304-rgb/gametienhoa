@@ -70,6 +70,7 @@ namespace Evolve.EditorTools
             int hanging = ReplaceHangingCylinders(parent);
             hanging += ReplacePillars(parent);
             int props = PlaceHangingProps(parent, ribs, slots, ceiling);
+            props += PlaceBones(parent, ribs, slots, ceiling);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá). Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
@@ -315,6 +316,56 @@ namespace Evolve.EditorTools
                 made++;
             }
             Debug.Log($"Vật treo trên vòm: {made}, {lights} đèn túi.");
+            return made;
+        }
+
+        /// <summary>A few dragon skulls and ribcages held up in the dark by root cables, far apart, high above the ground, clear of the hall, light holes, slits and ribs.
+        /// Teal eye lights (at most 6, dark without eyes).</summary>
+        static int PlaceBones(Transform canopy, RibPath[] ribs, Vector2[] slots, Func<float, float, float> ceiling)
+        {
+            var parent = new GameObject("Dragon Bones").transform;
+            parent.SetParent(canopy.Find(PropsName), false);
+            var ribPoints = new List<Vector2>();
+            foreach (var r in ribs) foreach (var q in r.Points) ribPoints.Add(new Vector2(q.x, q.z));
+            var placed = new List<Vector2>();
+            var rnd = new System.Random(Seed + 97);
+            string[] names = { "DragonSkull_0", "DragonSkull_1", "DragonRibcage_0", "DragonSkull_1", "DragonSkull_0", "DragonRibcage_0" };
+            int made = 0, lights = 0;
+            for (int attempt = 0; attempt < 4000 && made < 8; attempt++)
+            {
+                float x = ((float)rnd.NextDouble() - 0.5f) * 2f * 200f, z = ((float)rnd.NextDouble() - 0.5f) * 2f * 200f;
+                var p = new Vector2(x, z);
+                if (ZoneLayout.InsideCave(x, z, 14f)) continue;
+                bool clear = true;
+                foreach (var sh in ZoneLayout.LightShafts) if (Vector2.Distance(p, sh) < 16f) { clear = false; break; }
+                if (clear) foreach (var sl in slots) if (Vector2.Distance(p, sl) < 14f) { clear = false; break; }
+                if (clear) foreach (var q in ribPoints) if (Vector2.Distance(p, q) < 10f) { clear = false; break; }
+                if (clear) foreach (var o in placed) if (Vector2.Distance(p, o) < 45f) { clear = false; break; }
+                if (!clear) continue;
+                float roof = VaultLayout.VaultHeight(x, z, ceiling(x, z));
+                float ground = LakeGround.GroundY(x, z);
+                if (roof - ground < 17f) continue;   // the bones hang 9 m below the anchor: keep 8 m clear above the ground
+                string name = names[made % names.Length];
+                var prefab = Load(name);
+                if (prefab == null) continue;
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+                go.transform.position = new Vector3(x, roof + 0.3f, z);
+                go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                if (name.StartsWith("DragonSkull") && lights < 6)
+                {
+                    var lg = new GameObject("Eye Light");
+                    lg.transform.SetParent(go.transform, false);
+                    lg.transform.position = go.transform.position + go.transform.right * 1f + Vector3.down * 7.3f;
+                    var l = lg.AddComponent<Light>();
+                    l.type = LightType.Point; l.color = new Color(0.35f, 1f, 0.85f); l.range = 12f; l.intensity = 2f; l.shadows = LightShadows.None;
+                    lg.AddComponent<LightByVision>();
+                    lights++;
+                }
+                placed.Add(p);
+                made++;
+            }
+            Debug.Log($"Xương rồng treo: {made} ({lights} đèn mắt).");
             return made;
         }
 

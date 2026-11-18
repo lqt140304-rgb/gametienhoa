@@ -435,3 +435,5 @@ Checklist: (1) Console sạch, Test Runner xanh (`VaultLayoutTests`); (2) **Rein
 - Cần **Reinstall Blender Props (overwrite)** để có FBX mới; thiếu FBX thì rễ buông cũ được giữ.
 
 Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Root Vault, Ctrl+S; (3) không còn cột đen tròn nhẵn, không còn gai khổng lồ trên sườn rễ; (4) mỗi khu có vật treo đúng tính cách, độ dài rễ tạo tầng; (5) túi sáng chỉ thấy khi có mắt; (6) FPS không tụt rõ.
+
+- **Xương rồng treo (fantasy, thêm vào giai đoạn 3):** `DragonSkull_0..1` (sọ rồng dài 7 đến 9 m, sừng cong, răng, mắt phát sáng ngọc là đối tượng riêng `Eye Glow_N`) và `DragonRibcage_0` (lồng ngực rồng 8 m), treo bằng cáp rễ (`tools/blender/build_bones.py`, test `test_bones.py`). `Dress Lake: Root Vault` đặt tối đa 8 cái cách nhau ≥ 45 m, cao hơn đất ≥ 8 m, tránh Đại sảnh, lỗ và khe sáng, sườn rễ; tối đa 6 đèn mắt xanh ngọc (tắt khi chưa có mắt). Cần Reinstall Blender Props (overwrite) trước.
