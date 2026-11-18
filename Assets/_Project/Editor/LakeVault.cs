@@ -234,7 +234,8 @@ namespace Evolve.EditorTools
                     else if (last) prefab = prefabs[rnd.Next(2) == 0 ? 3 : 5];   // Tip_0 / Tip_1
                     else prefab = prefabs[rnd.Next(3)];                           // Straight_0..2
                     var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, holder);
-                    Orient(go, pos, tangent, radius, isFoot ? (pos.y - LakeGround.GroundY(pos.x, pos.z)) : 0f);
+                    // the last piece (a tip) is shortened to what is left of the rib, so it never reaches past its end
+                    Orient(go, pos, tangent, radius, isFoot ? (pos.y - LakeGround.GroundY(pos.x, pos.z)) : 0f, last && !isFoot ? Mathf.Clamp(remaining / PieceLength, 0.3f, 1f) : 1f);
                     if (isFoot) LakeProps.EnsureCollision(go, false);
                     pieces++;
                     s += PieceLength - 0.6f;   // overlap a little so the joins are hidden
@@ -253,7 +254,7 @@ namespace Evolve.EditorTools
 
         /// <summary>Puts a rib piece at pos running along tangent: its mouth (the thick end) at pos, its length axis along the tangent, its up axis up.
         /// The FBX axes are measured from the mesh itself (which end is thicker, which axis is long) so the import's axis conversion does not matter.</summary>
-        static void Orient(GameObject go, Vector3 pos, Vector3 tangent, float radius, float footDrop)
+        static void Orient(GameObject go, Vector3 pos, Vector3 tangent, float radius, float footDrop, float length = 1f)
         {
             DetectAxes(go, out Vector3 fwdLocal, out Vector3 upLocal, out int fwdAxis, out int upAxis);
             Vector3 up = Vector3.up;
@@ -264,7 +265,7 @@ namespace Evolve.EditorTools
             go.transform.rotation = to * Quaternion.Inverse(from);
             go.transform.position = pos;
             var scale = Vector3.one * radius;
-            scale[fwdAxis] = 1f;                                         // the length stays 12 m, only the thickness follows the rib
+            scale[fwdAxis] = length;                                     // the length stays 12 m (shorter for the last piece), only the thickness follows the rib
             if (footDrop > 0f) scale[upAxis] = Mathf.Max(radius, footDrop / 7.2f);   // a foot reaches down to the ground
             go.transform.localScale = scale;
         }
@@ -286,26 +287,14 @@ namespace Evolve.EditorTools
             }
             var ext = hi - lo;
             fwdAxis = ext.x >= ext.y && ext.x >= ext.z ? 0 : ext.y >= ext.z ? 1 : 2;
-            // the thick end (the mouth) is the entry: the end where the cross-section is wider
-            float a = lo[fwdAxis], b = hi[fwdAxis], span = b - a;
-            float widthLo = Lateral(pts, fwdAxis, a, a + span * 0.12f), widthHi = Lateral(pts, fwdAxis, b - span * 0.12f, b);
-            float sign = widthLo >= widthHi ? 1f : -1f;
+            // the pivot is the mouth (the piece starts at its origin and runs away from it): the mesh lies on the exit side of the origin
+            float meanAlong = 0f;
+            foreach (var p in pts) meanAlong += p[fwdAxis];
+            meanAlong /= Mathf.Max(1, pts.Count);
+            float sign = meanAlong >= 0f ? 1f : -1f;
             fwd = Vector3.zero; fwd[fwdAxis] = sign;
             upAxis = fwdAxis == 1 ? 2 : 1;       // Blender's up axis comes out as Y in Unity
             up = Vector3.zero; up[upAxis] = 1f;
-        }
-
-        static float Lateral(List<Vector3> pts, int axis, float from, float to)
-        {
-            float m = 0f;
-            foreach (var p in pts)
-                if (p[axis] >= from && p[axis] <= to)
-                {
-                    float l = 0f;
-                    for (int k = 0; k < 3; k++) if (k != axis) l = Mathf.Max(l, Mathf.Abs(p[k]));
-                    m = Mathf.Max(m, l);
-                }
-            return m;
         }
 
         // ------------------------------------------------------------------ helpers
