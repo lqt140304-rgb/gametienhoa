@@ -18,13 +18,14 @@ namespace Evolve.EditorTools
         {
             var steps = new (string name, Action run)[]
             {
-                ("1/7 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
-                ("2/7 Nước (Dress Lake: Water)", LakeWater.Dress),
-                ("3/7 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
-                ("4/7 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
-                ("5/7 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
-                ("6/7 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
-                ("7/7 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
+                ("1/8 Dựng scene hồ (Build Underroot Lake)", UnderrootLakeBuilder.Build),
+                ("2/8 Nước (Dress Lake: Water)", LakeWater.Dress),
+                ("3/8 Nền địa hình (Dress Lake: Terrain)", LakeTerrain.Dress),
+                ("4/8 Mặt đất (Dress Lake: Ground)", LakeGround.Dress),
+                ("5/8 Suối nguồn (Dress Lake: Spring)", LakeSpring.Dress),
+                ("6/8 Nấm và dây leo (Dress Lake: Mushrooms and Vines)", LakeFlora.Dress),
+                ("7/8 Rễ và ánh sáng (Dress Lake: Roots and Light)", LakeRootsLight.Dress),
+                ("8/8 Vật thể Blender (Dress Lake: Props)", LakeProps.Dress),
             };
             try
             {

@@ -340,3 +340,13 @@ Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các 
 5. Chết hết mạng, chơi lại: bản mẫu còn; cơ quan đã rơi theo luật 50%.
 6. Cơ quan đói chất co nhỏ dần (vật liệu gel riêng chưa làm).
 7. `Prototype_01`: gắn và tháo như cũ.
+
+
+## 17. Bộ vật thể Blender, bước 1 (nhóm đá): trạng thái và danh sách kiểm tra
+
+- Dây chuyền: `tools/blender/` (`bpy` 5.3 chạy không giao diện) dựng 6 tảng đá (0,3 → 3,2 m, 1.280 mặt, va chạm 80 mặt, rêu phủ mặt hướng lên), xuất FBX vào `Assets/_Project/Models/Underroot/` và ảnh xem trước vào `docs/art/previews/`. Lệnh ở `tools/blender/README.md`.
+- Unity: `Editor/PropImportPostprocessor.cs` gắn Mesh Collider từ mesh `_COL`; `Scripts/World/PropPlacement.cs` (luật đặt, có test); menu **Evolve → Dress Lake: Props** (cũng là bước 8/8 của Rebuild Lake) đặt tối đa 500 đá theo bệ sinh cảnh, tránh nước nông, đường mòn, nơi trú, tổ, điểm xuất hiện.
+- **FBX và PNG không nằm trong git của phiên này:** repo dùng Git LFS và proxy của môi trường chặn tải LFS. FBX và ảnh được gửi qua chat; có thể chạy lại script trên máy bạn để tạo lại (cần `pip install bpy`).
+- Chưa làm: gỡ đá dựng bằng code trong `LakeGround` (chờ bạn duyệt hình, rồi báo phiên trang trí), dùng bảng 500 m của 0.6d (menu hiện dùng `ZoneLayout.Biomes` của khu 480 m), các nhóm vật thể khác.
+
+Checklist: (1) thả 6 FBX vào `Assets/_Project/Models/Underroot/`, Console sạch, Test Runner xanh (`PropNamingTests`, `PropPlacementTests`); (2) chọn `Rock_3.fbx`: có Mesh Collider, đá 1,6 m thật sự cao khoảng 1,6 m; (3) chạy Evolve → Dress Lake: Props hai lần, số đá như nhau; (4) đá nằm trên mặt đất, không trong nước, không chắn đường mòn; (5) slime chạm đá: dừng lại và đi vòng, không rung; (6) FPS bằng PerfOverlay; (7) chụp ảnh trong Unity gửi cho tôi.

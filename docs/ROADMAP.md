@@ -80,3 +80,5 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [x] Code 0.5d: **đã code, chưa biên dịch/chạy thử**: 3 bệnh (`Survival/DiseaseKind`, `DiseaseRules`; Nhiễm Nước Đọng, Thối Gel, Mờ Bào Tử), nguồn lây (nước bẩn, xác thối, vết thương, đám bào tử `SporeZone`, người bệnh ở gần `ContagionSensor`), triệu chứng trong `SurvivalState`, dòng "Bệnh:" trên HUD, màu thân ngả xanh vàng, byte bệnh trong `PlayerNetState` (plan `docs/superpowers/plans/2026-11-17-0.5d-disease.md`)
 - [ ] Biên dịch và chạy thử 0.5d theo danh sách kiểm tra ở `PROJECT_STATUS.md` mục 14
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
+
+- [x] Bộ vật thể Blender bước 1: dây chuyền và 6 tảng đá có va chạm (chờ duyệt hình; `docs/superpowers/specs/2026-11-18-blender-props-kit-design.md`)
