@@ -129,7 +129,7 @@ namespace Evolve.EditorTools
             {
                 if (f.sharedMesh == null || !PropNaming.IsCollider(f.gameObject.name)) continue;
                 hasCollider = true;
-                var mc = f.GetComponent<MeshCollider>() ?? f.gameObject.AddComponent<MeshCollider>();
+                var mc = ColliderOn(f.gameObject);
                 mc.sharedMesh = f.sharedMesh;
                 mc.convex = false;
                 var r = f.GetComponent<Renderer>();
@@ -139,7 +139,7 @@ namespace Evolve.EditorTools
                 foreach (var f in filters)
                 {
                     if (f.sharedMesh == null) continue;
-                    var mc = f.GetComponent<MeshCollider>() ?? f.gameObject.AddComponent<MeshCollider>();
+                    var mc = ColliderOn(f.gameObject);
                     mc.sharedMesh = f.sharedMesh;
                     mc.convex = false;
                 }
@@ -151,6 +151,9 @@ namespace Evolve.EditorTools
                 Debug.Log("Cấu trúc đá mẫu " + go.name + ": " + string.Join("; ", names) + (hasCollider ? "" : " [KHÔNG thấy mesh _COL: dùng chính mesh đá làm va chạm]"));
             }
         }
+
+        // `??` bypasses Unity's own null check (GetComponent returns a fake null in the Editor), so use TryGetComponent.
+        static MeshCollider ColliderOn(GameObject go) => go.TryGetComponent<MeshCollider>(out var existing) ? existing : go.AddComponent<MeshCollider>();
 
         static float NominalSize(int variant) => new[] { 0.3f, 0.6f, 1.0f, 1.6f, 2.4f, 3.2f }[Mathf.Clamp(variant, 0, 5)];
     }
