@@ -1,5 +1,4 @@
 using Evolve.Organs;
-using Evolve.World;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -7,19 +6,6 @@ namespace Evolve.Tests.EditMode
 {
     public class OrganBlueprintTests
     {
-        [Test]
-        public void CanReshape_AnywhereWhenWorldHasNoShelter() => Assert.IsTrue(OrganRules.CanReshape(false, false, false));
-
-        [Test]
-        public void CanReshape_RequiresShelterWhenWorldHasOne()
-        {
-            Assert.IsFalse(OrganRules.CanReshape(true, false, false));
-            Assert.IsTrue(OrganRules.CanReshape(true, true, false));
-        }
-
-        [Test]
-        public void CanReshape_NeverWhenDead() => Assert.IsFalse(OrganRules.CanReshape(false, false, true));
-
         [Test]
         public void ResimulateCost_EqualsAbsorbExp()
         {
@@ -44,18 +30,6 @@ namespace Evolve.Tests.EditMode
             Assert.IsFalse(b.Learn(null));
             Assert.IsFalse(b.Learn(""));
             Assert.AreEqual(0, b.Names.Count);
-        }
-
-        [Test]
-        public void ShelterZone_AnyActiveTracksEnabledZones()
-        {
-            Assert.IsFalse(ShelterZone.AnyActive);
-            ShelterZone.Track(true);
-            Assert.IsTrue(ShelterZone.AnyActive);
-            ShelterZone.Track(false);
-            Assert.IsFalse(ShelterZone.AnyActive);
-            ShelterZone.Track(false); // double exit stays at zero
-            Assert.IsFalse(ShelterZone.AnyActive);
         }
 
         static (GameObject go, OrganHost host, Evolve.Survival.SurvivalStats stats, OrganSO organ) Body()
@@ -83,7 +57,7 @@ namespace Evolve.Tests.EditMode
         public void Resimulate_UnknownRefused()
         {
             var (go, host, _, organ) = Body();
-            Assert.AreEqual(ResimulateResult.Unknown, host.TryResimulate(organ, true));
+            Assert.AreEqual(ResimulateResult.Unknown, host.TryResimulate(organ));
             Object.DestroyImmediate(go); Object.DestroyImmediate(organ);
         }
 
@@ -93,7 +67,7 @@ namespace Evolve.Tests.EditMode
             var (go, host, stats, organ) = Body();
             host.Learn(organ);
             stats.State.EvolutionExp = 1f;
-            Assert.AreEqual(ResimulateResult.NoExp, host.TryResimulate(organ, true));
+            Assert.AreEqual(ResimulateResult.NoExp, host.TryResimulate(organ));
             Assert.AreEqual(1f, stats.State.EvolutionExp);
             Assert.IsFalse(host.Has(organ));
             Object.DestroyImmediate(go); Object.DestroyImmediate(organ);
@@ -106,22 +80,11 @@ namespace Evolve.Tests.EditMode
             host.Learn(organ);
             float cost = OrganRules.ResimulateCost(organ.Tier);
             stats.State.EvolutionExp = cost + 5f;
-            Assert.AreEqual(ResimulateResult.Ok, host.TryResimulate(organ, true));
+            Assert.AreEqual(ResimulateResult.Ok, host.TryResimulate(organ));
             Assert.AreEqual(5f, stats.State.EvolutionExp, 1e-4f);
             Assert.IsTrue(host.Has(organ));
             Object.DestroyImmediate(go); Object.DestroyImmediate(organ);
         }
 
-        [Test]
-        public void Resimulate_BlockedOutsideShelterWhenWorldHasShelter()
-        {
-            var (go, host, stats, organ) = Body();
-            ShelterZone.Track(true);
-            host.Learn(organ);
-            stats.State.EvolutionExp = 999f;
-            Assert.AreEqual(ResimulateResult.Blocked, host.TryResimulate(organ, false));
-            Assert.AreEqual(999f, stats.State.EvolutionExp);
-            ShelterZone.Track(false); Object.DestroyImmediate(go); Object.DestroyImmediate(organ);
-        }
     }
 }

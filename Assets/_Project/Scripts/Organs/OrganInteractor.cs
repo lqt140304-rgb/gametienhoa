@@ -21,14 +21,6 @@ namespace Evolve.Organs
         OrganHost host;
         SurvivalStats stats;
 
-        Evolve.World.ShelterSensor shelter;
-
-        /// <summary>Changing the body is only allowed in a shelter when the world has any.</summary>
-        public bool CanReshapeNow => OrganRules.CanReshape(Evolve.World.ShelterZone.AnyActive,
-            shelter != null && shelter.InShelter, stats != null && stats.State.IsDead);
-        /// <summary>Short message for the HUD (empty = none); cleared by the HUD after showing.</summary>
-        public string Notice { get; set; } = "";
-
         public OrganPickup Current { get; private set; }
         public bool BodyMenuOpen { get; private set; }
         /// <summary>Result of the last death drop: organs left on the ground / destroyed.</summary>
@@ -42,7 +34,6 @@ namespace Evolve.Organs
         {
             host = GetComponent<OrganHost>();
             stats = GetComponent<SurvivalStats>();
-            shelter = GetComponent<Evolve.World.ShelterSensor>();
         }
 
         void OnEnable() { if (stats != null) stats.State.Died += OnDied; }
@@ -105,7 +96,6 @@ namespace Evolve.Organs
             string effect = $"{o.Description}\nCần {o.GrowthExpRequired:0} EXP tiến hóa để phát triển (đang có {host.Exp:0}).";
             if (o.GrantedAbility != null)
                 effect += $"\nKỹ năng: {o.GrantedAbility.DisplayName} (mở ở Lv{o.AbilityUnlockLevel}).";
-            if (!CanReshapeNow) effect += "\nChỉ lắp được ở nơi trú (F hấp thụ thì làm ở đâu cũng được).";
             switch (CurrentCheck)
             {
                 case AttachCheck.Ok:
@@ -143,7 +133,6 @@ namespace Evolve.Organs
         public void Drop(OrganSO organ)
         {
             if (organ == null || !host.Has(organ)) return;
-            if (!CanReshapeNow) { Notice = OrganRules.ReshapeBlockedMessage; return; }
             host.Detach(organ.Slot);
             SpawnDropped(organ);
         }
@@ -190,7 +179,6 @@ namespace Evolve.Organs
             }
 
             if (!KeyPressed.E()) return;
-            if (!CanReshapeNow) { Notice = OrganRules.ReshapeBlockedMessage; return; }
             switch (CurrentCheck)
             {
                 case AttachCheck.Ok:

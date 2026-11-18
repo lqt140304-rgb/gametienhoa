@@ -334,7 +334,7 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 
 - Gắn hoặc hấp thụ cơ quan là học bản mẫu; bản mẫu giữ khi cơ quan tan, bị tháo hoặc khi chết (trong phiên chơi, chưa lưu file; không đồng bộ co-op).
 - Menu G có mục "Bản mẫu đã học": mô phỏng lại tốn EXP bằng EXP hấp thụ cùng bậc (số đề xuất); ô đã có cơ quan thì cơ quan cũ bị thay (mất).
-- Gắn, thay, tháo chỉ ở trong nơi trú khi scene có `ShelterZone`; `Prototype_01` không đổi.
+- Gắn, thay, tháo và mô phỏng lại cơ quan **ở bất cứ đâu** (chủ dự án chọn bỏ luật nơi trú; spec 6.8.3 không áp dụng).
 - Chưa làm: vật liệu gel riêng cho cơ quan (hiện dùng `SlimeGelTint` sẵn có, thiếu chất chỉ co nhỏ tới 70%), vỏ riêng cho bản sao rơi, hành động bậc B, hình gel khác biệt từng loại (0.5f).
 
 ## 15. Danh sách kiểm tra thủ công 0.5e (cho chủ dự án)
@@ -342,9 +342,19 @@ Lưu ý: scene đã lưu từ trước **không tự có** sensor mới và `Bod
 Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các test `OrganBlueprintTests`.
 
 1. Hấp thụ một cơ quan rơi (F) rồi mở menu G: mục "Bản mẫu đã học" hiện nút của nó.
-2. Ngoài nơi trú (Hồ Khởi Sinh): bấm E lên cơ quan rơi hoặc "Tháo cơ quan" thì có thông báo "Chỉ đổi cơ thể được khi ở nơi trú", không mất gì.
-3. Trong nơi trú: gắn, thay, tháo và "Mô phỏng lại" đều chạy; mô phỏng lại trừ đúng EXP; thiếu EXP thì báo và không trừ.
+2. Ở bất cứ đâu: gắn (E), thay, tháo cơ quan đều chạy.
+3. "Mô phỏng lại" chạy ở mọi nơi, trừ đúng EXP; thiếu EXP thì báo và không trừ.
 4. Cơ quan tan vì thiếu chất: bản mẫu vẫn còn trong danh sách.
 5. Chết hết mạng, chơi lại: bản mẫu còn; cơ quan đã rơi theo luật 50%.
 6. Cơ quan đói chất co nhỏ dần (vật liệu gel riêng chưa làm).
-7. `Prototype_01` (không có nơi trú): gắn và tháo ở đâu cũng được như cũ.
+7. `Prototype_01`: gắn và tháo như cũ.
+
+
+## 17. Bộ vật thể Blender, bước 1 (nhóm đá): trạng thái và danh sách kiểm tra
+
+- Dây chuyền: `tools/blender/` (`bpy` 5.3 chạy không giao diện) dựng 6 tảng đá (0,3 → 3,2 m, 1.280 mặt, va chạm 80 mặt, rêu phủ mặt hướng lên), xuất FBX vào `Assets/_Project/Models/Underroot/` và ảnh xem trước vào `docs/art/previews/`. Lệnh ở `tools/blender/README.md`.
+- Unity: `Editor/PropImportPostprocessor.cs` gắn Mesh Collider từ mesh `_COL`; `Scripts/World/PropPlacement.cs` (luật đặt, có test); menu **Evolve → Dress Lake: Props** (cũng là bước 8/8 của Rebuild Lake) đặt tối đa 500 đá theo bệ sinh cảnh, tránh nước nông, đường mòn, nơi trú, tổ, điểm xuất hiện.
+- **FBX và PNG không nằm trong git của phiên này:** repo dùng Git LFS và proxy của môi trường chặn tải LFS. FBX và ảnh được gửi qua chat; có thể chạy lại script trên máy bạn để tạo lại (cần `pip install bpy`).
+- Chưa làm: gỡ đá dựng bằng code trong `LakeGround` (chờ bạn duyệt hình, rồi báo phiên trang trí), các nhóm vật thể khác. Menu Props đã đọc `ZoneLayout.Zones` của bản đồ 500 m (phiên trang trí làm), bỏ qua phần trong hang lớn (cave), nước (đáy dưới mực nước) và đường mòn.
+
+Checklist: (1) thả 6 FBX vào `Assets/_Project/Models/Underroot/`, Console sạch, Test Runner xanh (`PropNamingTests`, `PropPlacementTests`); (2) chọn `Rock_3.fbx`: có Mesh Collider, chiều lớn nhất khoảng 1,6 m (cao khoảng 0,75 m); đá hiện màu xám có rêu xanh phủ mặt trên (shader `Evolve/RockVertexColor`, vật liệu `Rock_VC`; nếu thấy xám trơn thì báo tôi); (3) chạy Evolve → Dress Lake: Props hai lần, số đá như nhau; (4) đá nằm trên mặt đất, không trong nước, không chắn đường mòn; (5) slime chạm đá: dừng lại và đi vòng, không rung; (6) FPS bằng PerfOverlay; (7) chụp ảnh trong Unity gửi cho tôi.
