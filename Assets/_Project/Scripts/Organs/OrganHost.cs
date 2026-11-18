@@ -128,6 +128,16 @@ namespace Evolve.Organs
         /// <summary>The organ currently in a slot, or null.</summary>
         public OrganSO GetInSlot(OrganSlot slot) => organs.TryGetValue(slot, out var e) ? e.Organ : null;
 
+        /// <summary>
+        /// The worn organs as (slot, integrity 0..1) pairs, for flaw compensation. Integrity is 1 minus the organ's Decay
+        /// (the body's full integrity/trauma system is still only a design, docs/BIOLOGICAL_INTEGRITY.md).
+        /// </summary>
+        public void GetWorn(List<(OrganSlot slot, float integrity)> into)
+        {
+            into.Clear();
+            foreach (var e in order) into.Add((e.Organ.Slot, Mathf.Clamp01(1f - e.Decay)));
+        }
+
         public int Count => organs.Count;
         /// <summary>Owned organs in the order they were attached.</summary>
         public List<OrganSO> OrganList => order.ConvertAll(e => e.Organ);

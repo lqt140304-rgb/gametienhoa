@@ -60,6 +60,7 @@ namespace Evolve.Player
             rb.freezeRotation = true;
             stats = GetComponent<SurvivalStats>();
             organs = GetComponent<OrganHost>();
+            if (GetComponent<Evolve.Traits.PlayerTraits>() == null) gameObject.AddComponent<Evolve.Traits.PlayerTraits>();
             col = GetComponent<Collider>();
             sphere = col as SphereCollider;
             capsule = col as CapsuleCollider;
