@@ -96,7 +96,7 @@ namespace Evolve.EditorTools
                     float bank = Mathf.Clamp01(1f - Mathf.Abs(dw - 3.2f) / 3.2f);                       // the water's margin
                     float wild = 0.25f + 0.6f * macro;
 
-                    Put(maps, firstOf, Kind.Grass, x, z, (0.5f + 0.5f * onTrail) * ((0.55f + 0.45f * macro) * (1f - 0.3f * leaf) + 0.9f * moss) * 28f, 1);
+                    Put(maps, firstOf, Kind.Grass, x, z, (0.5f + 0.5f * onTrail) * ((0.55f + 0.45f * macro) * (1f - 0.3f * leaf) + 0.9f * moss) * 28f * (1f - 0.85f * GrassMath.Density(wx, wz)), 1);   // the 3D grass carpet (Dress Lake: Grass) takes over near the water
                     Put(maps, firstOf, Kind.Reeds, x, z, onTrail * bank * bank * (0.4f + macro2) * 10f, 2);
                     Put(maps, firstOf, Kind.Fern, x, z, onTrail * (0.8f * moss + 0.9f * roots + 0.15f * macro) * 3.5f, 3);
                     Put(maps, firstOf, Kind.MossClump, x, z, onTrail * (1.2f * moss + 0.2f * macro2) * 2.5f, 4);
