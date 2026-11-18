@@ -76,13 +76,7 @@ namespace Evolve.EditorTools
             RenderSettings.reflectionIntensity = DappledSunMath.ReflectionIntensity;
 
             foreach (var urp in AllUrpAssets())
-            {
-                urp.shadowDistance = DappledSunMath.ShadowDistance;
-                urp.shadowCascadeCount = DappledSunMath.ShadowCascades;
-                urp.mainLightShadowmapResolution = DappledSunMath.ShadowResolution;
-                urp.supportsSoftShadows = true;
-                EditorUtility.SetDirty(urp);
-            }
+                SetShadows(urp, DappledSunMath.ShadowDistance, DappledSunMath.ShadowCascades, DappledSunMath.ShadowResolution, true);
 
             if (!sun.TryGetComponent<DappledSun>(out _)) sun.gameObject.AddComponent<DappledSun>();
             if (!sun.TryGetComponent<ShadowToggle>(out var toggle)) toggle = sun.gameObject.AddComponent<ShadowToggle>();
@@ -97,6 +91,11 @@ namespace Evolve.EditorTools
         [MenuItem("Evolve/Restore Lake Sun (undo)")]
         public static void Restore()
         {
+            if (EditorSceneManager.GetActiveScene().path != ScenePath)
+            {
+                Debug.LogWarning("Mở scene Underroot_Lake trước khi trả lại mặt trời (không đổi cảnh khác).");
+                return;
+            }
             var b = Load();
             var sun = FindSun();
             if (b.saved)
@@ -116,11 +115,7 @@ namespace Evolve.EditorTools
                 {
                     var urp = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(b.urpPaths[i]);
                     if (urp == null) continue;
-                    urp.shadowDistance = b.urpDistance[i];
-                    urp.shadowCascadeCount = b.urpCascades[i];
-                    urp.mainLightShadowmapResolution = b.urpResolution[i];
-                    urp.supportsSoftShadows = b.urpSoft[i];
-                    EditorUtility.SetDirty(urp);
+                    SetShadows(urp, b.urpDistance[i], b.urpCascades[i], b.urpResolution[i], b.urpSoft[i]);
                 }
                 var canopy = GameObject.Find(CanopyName);
                 if (canopy != null)
@@ -159,6 +154,27 @@ namespace Evolve.EditorTools
             return list;
         }
 
+        // URP's own setters are not all public (supportsSoftShadows has an internal setter): write the serialized fields instead.
+        static void SetShadows(UniversalRenderPipelineAsset urp, float distance, int cascades, int resolution, bool soft)
+        {
+            var so = new SerializedObject(urp);
+            so.FindProperty("m_ShadowDistance").floatValue = distance;
+            so.FindProperty("m_ShadowCascadeCount").intValue = cascades;
+            so.FindProperty("m_MainLightShadowmapResolution").intValue = resolution;
+            so.FindProperty("m_SoftShadowsSupported").boolValue = soft;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(urp);
+        }
+
+        static void GetShadows(UniversalRenderPipelineAsset urp, out float distance, out int cascades, out int resolution, out bool soft)
+        {
+            var so = new SerializedObject(urp);
+            distance = so.FindProperty("m_ShadowDistance").floatValue;
+            cascades = so.FindProperty("m_ShadowCascadeCount").intValue;
+            resolution = so.FindProperty("m_MainLightShadowmapResolution").intValue;
+            soft = so.FindProperty("m_SoftShadowsSupported").boolValue;
+        }
+
         static IEnumerable<UniversalRenderPipelineAsset> AllUrpAssets()
         {
             var seen = new HashSet<UniversalRenderPipelineAsset>();
@@ -191,10 +207,11 @@ namespace Evolve.EditorTools
             foreach (var urp in AllUrpAssets())
             {
                 b.urpPaths.Add(AssetDatabase.GetAssetPath(urp));
-                b.urpDistance.Add(urp.shadowDistance);
-                b.urpCascades.Add(urp.shadowCascadeCount);
-                b.urpResolution.Add(urp.mainLightShadowmapResolution);
-                b.urpSoft.Add(urp.supportsSoftShadows);
+                GetShadows(urp, out float dist, out int cascades, out int res, out bool soft);
+                b.urpDistance.Add(dist);
+                b.urpCascades.Add(cascades);
+                b.urpResolution.Add(res);
+                b.urpSoft.Add(soft);
             }
             foreach (var r in roof)
             {

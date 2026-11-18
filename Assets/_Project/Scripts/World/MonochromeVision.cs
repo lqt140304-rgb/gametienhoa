@@ -193,7 +193,9 @@ namespace Evolve.World
             {
                 restoredSky = false;
                 RenderSettings.ambientMode = AmbientMode.Flat;
-                RenderSettings.ambientLight = Color.Lerp(Color.black, new Color(0.45f, 0.45f, 0.45f), c);
+                // never brighter than the scene's own ambient: with a dark cave (Dappled Sun) a growing eye must not light it up and then snap dark
+                var cap = new Color(Mathf.Min(0.45f, origAmbient.r), Mathf.Min(0.45f, origAmbient.g), Mathf.Min(0.45f, origAmbient.b));
+                RenderSettings.ambientLight = Color.Lerp(Color.black, cap, c);
             }
             RenderSettings.reflectionIntensity = Mathf.Lerp(0f, origReflection, c);
             if (cam != null) cam.backgroundColor = Color.Lerp(Color.black, origBackground, c);
