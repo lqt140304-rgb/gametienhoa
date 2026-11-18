@@ -72,6 +72,37 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(3, shelters);
         }
 
+        [Test] public void PathsLeadFromEveryDoorstepRoundTheRingToTheHallDoor()
+        {
+            var houses = CityLayout.Houses();
+            var paths = CityLayout.HousePaths();
+            Assert.AreEqual(houses.Length, paths.Count);
+            for (int i = 0; i < paths.Count; i++)
+            {
+                var path = paths[i];
+                Assert.AreEqual(CityLayout.DoorStep(houses[i]), path[0]);
+                Assert.Less(Vector2.Distance(path[path.Length - 1], CityLayout.DoorAt), 5f, "ends at the hall door");
+                for (int k = 0; k < path.Length; k++)
+                {
+                    Assert.AreEqual(0f, ZoneLayout.DepthAt(path[k].x, path[k].y), "path on dry land");
+                    if (k == 0) continue;
+                    foreach (var h in houses) Assert.GreaterOrEqual(Vector2.Distance(path[k], h.Position), h.Radius + 0.4f, "the path does not run through a hut");
+                }
+            }
+        }
+
+        [Test] public void StatuesStandBetweenTheHutsAndOutOfTheWay()
+        {
+            var statues = CityLayout.Statues();
+            Assert.GreaterOrEqual(statues.Count, 5);
+            foreach (var (p, _) in statues)
+            {
+                Assert.AreEqual(0f, ZoneLayout.DepthAt(p.x, p.y));
+                Assert.GreaterOrEqual(ZoneLayout.DistanceToPath(p.x, p.y), 3f);
+                foreach (var h in CityLayout.Houses()) Assert.GreaterOrEqual(Vector2.Distance(p, h.Position), h.Radius + 2.5f);
+            }
+        }
+
         [Test] public void TheTunnelStartsOutsideTheEnlargedHall()
         {
             foreach (var p in ZoneLayout.TunnelLine) Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.y, 3f));

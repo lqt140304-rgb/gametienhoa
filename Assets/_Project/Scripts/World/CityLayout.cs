@@ -115,5 +115,64 @@ namespace Evolve.World
             float yaw = -h.Yaw * Mathf.Deg2Rad;
             return h.Position + new Vector2(Mathf.Cos(yaw), Mathf.Sin(yaw)) * (h.Radius + 0.8f);
         }
+
+        // ---------------------------------------------------------------- the village between the huts
+
+        /// <summary>Offset (m) beyond the hall's wall of the paved ring that circles it.</summary>
+        public const float RingOffset = 3.5f;
+
+        /// <summary>A point on the paved ring round the hall at <paramref name="degrees"/> (0 = east, counter-clockwise).</summary>
+        public static Vector2 RingPoint(float degrees)
+        {
+            float a = degrees * Mathf.Deg2Rad;
+            return HallCenter + new Vector2(Mathf.Cos(a) * (CaveRadiusX + RingOffset), Mathf.Sin(a) * (CaveRadiusZ + RingOffset));
+        }
+
+        /// <summary>Angle (degrees, -180..180) on the ring of the point nearest to <paramref name="p"/>.</summary>
+        public static float RingAngle(Vector2 p)
+        {
+            Vector2 d = p - HallCenter;
+            return Mathf.Atan2(d.y / CaveRadiusZ, d.x / CaveRadiusX) * Mathf.Rad2Deg;
+        }
+
+        /// <summary>
+        /// The flagstone path from every house's doorstep in to the ring and round it to the door of the hall (east):
+        /// one polyline per house, about one point per 1.5 m.
+        /// </summary>
+        public static System.Collections.Generic.List<Vector2[]> HousePaths()
+        {
+            var paths = new System.Collections.Generic.List<Vector2[]>();
+            foreach (var h in Houses())
+            {
+                var pts = new System.Collections.Generic.List<Vector2> { DoorStep(h) };
+                float from = RingAngle(h.Position);
+                pts.Add(RingPoint(from));
+                float step = from > 0f ? -3f : 3f;           // the short way round to the east
+                for (float a = from + step; from > 0f ? a > 0f : a < 0f; a += step) pts.Add(RingPoint(a));
+                pts.Add(RingPoint(0f));
+                pts.Add(DoorAt + new Vector2(3f, 0f));
+                paths.Add(pts.ToArray());
+            }
+            return paths;
+        }
+
+        /// <summary>Carved statues standing on the ring between the huts (yaw degrees faces them toward the hall).</summary>
+        public static System.Collections.Generic.List<(Vector2 position, float yaw)> Statues()
+        {
+            var list = new System.Collections.Generic.List<(Vector2, float)>();
+            var houses = Houses();
+            for (float a = -150f; a <= 150f; a += 15f)
+            {
+                if (Mathf.Abs(a) < 25f) continue;
+                Vector2 p = RingPoint(a) + (RingPoint(a) - HallCenter).normalized * 2.2f;   // just outside the paving
+                bool clear = ZoneLayout.DepthAt(p.x, p.y) <= 0f && ZoneLayout.DistanceToPath(p.x, p.y) >= 3f;
+                foreach (var h in houses) if (Vector2.Distance(p, h.Position) < h.Radius + 2.5f) clear = false;
+                foreach (var (q, _) in list) if (Vector2.Distance(p, q) < 12f) clear = false;
+                if (!clear) continue;
+                Vector2 to = HallCenter - p;
+                list.Add((p, -Mathf.Atan2(to.y, to.x) * Mathf.Rad2Deg));
+            }
+            return list;
+        }
     }
 }
