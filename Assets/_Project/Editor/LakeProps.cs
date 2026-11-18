@@ -50,44 +50,46 @@ namespace Evolve.EditorTools
             foreach (var d in Object.FindObjectsByType<Den>()) keepClear.Add(new Vector2(d.transform.position.x, d.transform.position.z));
             foreach (var t in Object.FindObjectsByType<Transform>())
                 if (t.name.StartsWith("Spawn Point")) keepClear.Add(new Vector2(t.position.x, t.position.z));
-            var waters = new List<Bounds>();
-            foreach (var w in Object.FindObjectsByType<WaterZone>()) waters.Add(w.GetComponent<Collider>().bounds);
-
             float WaterDepth(float x, float z)
             {
-                foreach (var b in waters)
-                    if (x >= b.min.x - 1f && x <= b.max.x + 1f && z >= b.min.z - 1f && z <= b.max.z + 1f) return 1f; // any shallow zone or its shore: keep clear
-                return 0f;
+                float ground = terrain.SampleHeight(new Vector3(x, 0f, z)) + terrain.transform.position.y;
+                return Mathf.Max(0f, ZoneLayout.WaterLevel - ground); // lake, stream, pools and puddle are carved into the terrain
             }
 
-            // Same exclusions as the vegetation builder: the spawn pool, deep pockets, landmark pillars and food.
+            // Same exclusions as the vegetation builder: landmark pillars and food; never inside the Great Hall (cave).
             var solids = new List<Bounds>();
             foreach (var t in Object.FindObjectsByType<Transform>())
-            {
-                if (t.name.StartsWith("Deep Pocket")) solids.Add(new Bounds(t.position, new Vector3(16f, 16f, 16f)));
                 if (t.name.StartsWith("Landmark ")) solids.Add(new Bounds(t.position, new Vector3(11f, 1f, 11f)));
-            }
             foreach (var n in Object.FindObjectsByType<Nutrient>()) solids.Add(new Bounds(n.transform.position, new Vector3(6f, 6f, 6f)));
 
             bool Blocked(float x, float z)
             {
-                if (x * x + z * z < 18f * 18f) return true; // the life pool and its spawn ring
+                if (ZoneLayout.InsideCave(x, z, 4f)) return true;
                 foreach (var b in solids)
                     if (x >= b.min.x && x <= b.max.x && z >= b.min.z && z <= b.max.z) return true;
                 return !PropPlacement.Allowed(x, z, WaterDepth, ZoneLayout.DistanceToPath, keepClear, 6f);
             }
 
-            var areas = new List<Area> { new Area { Name = "Core", Rect = new Rect(-60f, -60f, 120f, 120f), Count = 40, Sizes = new Vector2(0.3f, 1.6f) } };
-            var sizes = new[] { new Vector2(0.6f, 3.2f), new Vector2(0.3f, 1.6f), new Vector2(0.3f, 1.0f), new Vector2(0.6f, 2.4f) };
-            for (int i = 0; i < ZoneLayout.Biomes.Length; i++)
+            // One area per map zone (01..06), the zone's core rectangle plus a 15 m margin; sizes follow each zone's character.
+            var sizes = new[]
             {
-                var pad = ZoneLayout.Biomes[i];
-                float e = ZoneLayout.ContentExtent;
+                new Vector2(0.3f, 1.6f), // 01 life shallows: small polished stones
+                new Vector2(0.6f, 3.2f), // 02 ancient root cave: big boulders
+                new Vector2(0.3f, 1.6f), // 03 root mulch bank
+                new Vector2(0.3f, 1.0f), // 04 spore garden: few, small
+                new Vector2(0.6f, 2.4f), // 05 water vein gorge
+                new Vector2(0.6f, 3.2f)  // 06 predator edge
+            };
+            var areas = new List<Area>();
+            for (int i = 0; i < ZoneLayout.Zones.Length; i++)
+            {
+                var z = ZoneLayout.Zones[i];
+                const float margin = 15f;
                 areas.Add(new Area
                 {
-                    Name = pad.Name,
-                    Rect = new Rect(pad.Center.x - e, pad.Center.y - e, e * 2f, e * 2f),
-                    Count = 60,
+                    Name = z.Name,
+                    Rect = new Rect(z.Center.x - z.Size.x * 0.5f - margin, z.Center.y - z.Size.y * 0.5f - margin, z.Size.x + margin * 2f, z.Size.y + margin * 2f),
+                    Count = 80,
                     Sizes = sizes[i % sizes.Length]
                 });
             }
@@ -110,7 +112,7 @@ namespace Evolve.EditorTools
                 }
             }
             EditorSceneManager.MarkSceneDirty(root.scene);
-            Debug.Log($"Vật thể Blender: {total} tảng đá trong {areas.Count} vùng.");
+            Debug.Log($"Vật thể Blender: {total} tảng đá trong {areas.Count} khu.");
         }
 
         static float NominalSize(int variant) => new[] { 0.3f, 0.6f, 1.0f, 1.6f, 2.4f, 3.2f }[Mathf.Clamp(variant, 0, 5)];

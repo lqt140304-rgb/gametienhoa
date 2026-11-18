@@ -1,3 +1,5 @@
+> **ĐÃ LỖI THỜI (2026-11-18):** bản đồ 500 m đã do phiên trang trí làm xong trong `main`; xem `2026-11-17-lake-map-500m-design.md`.
+
 # Bàn giao bản đồ 500 m (bước A đã chốt, mục 5–12 cho phiên trang trí)
 
 > Ngày: 2026-11-17 · Nhãn: **[ĐÃ CHỐT]** chủ dự án quyết; **[ĐỀ XUẤT]** Claude đề xuất.
