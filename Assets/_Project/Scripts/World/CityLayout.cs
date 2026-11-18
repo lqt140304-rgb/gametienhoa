@@ -93,7 +93,7 @@ namespace Evolve.World
                 if (ZoneLayout.DistanceToLine(p, ZoneLayout.TunnelLine) < 6f) continue;
                 if (Mathf.Abs(TerrainShape.HeightAt(p.x, p.y, TerrainSeed)) > 2.2f || Mathf.Abs(p.x) > 190f || Mathf.Abs(p.y) > 190f) continue;
                 bool crowded = false;
-                foreach (var h in list) if (Vector2.Distance(h.Position, p) < 7.5f) { crowded = true; break; }
+                foreach (var h in list) if (Vector2.Distance(h.Position, p) < 10.2f) { crowded = true; break; }
                 if (crowded) continue;
                 Vector2 to = c - p;
                 list.Add(new House
@@ -185,7 +185,7 @@ namespace Evolve.World
             public float Yaw;        // degrees about y turning the building's local +x (its door, its front) toward the hall
         }
 
-        public const float ClassHouseSpacing = 14f;
+        public const float ClassHouseSpacing = 24f;
 
         /// <summary>
         /// Where each class has its house. Not a ring and not evenly spaced: every class looks for the site that suits it
@@ -199,17 +199,17 @@ namespace Evolve.World
             Vector2 c = HallCenter;
             var houses = Houses();
             var sites = new System.Collections.Generic.List<Vector2>();
-            for (int x = -196; x <= -90; x += 4)
-                for (int z = -90; z <= 62; z += 4)
+            for (int x = -196; x <= -60; x += 4)
+                for (int z = -100; z <= 90; z += 4)
                 {
                     var p = new Vector2(x, z);
-                    if (ZoneLayout.InsideCave(p.x, p.y, 9f)) continue;
+                    if (ZoneLayout.InsideCave(p.x, p.y, 13f)) continue;
                     if (ZoneLayout.DepthAt(p.x, p.y) > 0f || ZoneLayout.DistanceToWater(p.x, p.y) < 6f) continue;
                     if (ZoneLayout.DistanceToPath(p.x, p.y) < 5f || ZoneLayout.DistanceToLine(p, ZoneLayout.TunnelLine) < 8f) continue;
                     if (Mathf.Abs(p.x) > 192f || Mathf.Abs(p.y) > 190f) continue;
-                    if (ZoneLayout.Influence(1, p.x, p.y) < 0.08f) continue;
+                    if (ZoneLayout.Influence(1, p.x, p.y) < 0.03f) continue;
                     bool free = true;
-                    foreach (var h in houses) if (Vector2.Distance(p, h.Position) < h.Radius + 7f) { free = false; break; }
+                    foreach (var h in houses) if (Vector2.Distance(p, h.Position) < h.Radius + 11f) { free = false; break; }
                     if (!free) continue;
                     float h0 = TerrainShape.HeightAt(p.x + 5f, p.y, TerrainSeed), h1 = TerrainShape.HeightAt(p.x - 5f, p.y, TerrainSeed);
                     float h2 = TerrainShape.HeightAt(p.x, p.y + 5f, TerrainSeed), h3 = TerrainShape.HeightAt(p.x, p.y - 5f, TerrainSeed);

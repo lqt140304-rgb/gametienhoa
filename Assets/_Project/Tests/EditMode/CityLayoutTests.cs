@@ -54,7 +54,7 @@ namespace Evolve.Tests.EditMode
         [Test] public void HousesStandRoundTheHall()
         {
             var houses = CityLayout.Houses();
-            Assert.GreaterOrEqual(houses.Length, 10);
+            Assert.GreaterOrEqual(houses.Length, 8);
             Assert.LessOrEqual(houses.Length, CityLayout.MaxHouses);
             int shelters = 0;
             for (int i = 0; i < houses.Length; i++)
@@ -67,7 +67,7 @@ namespace Evolve.Tests.EditMode
                 var step = CityLayout.DoorStep(houses[i]);
                 Assert.Less(Vector2.Distance(step, CityLayout.HallCenter), Vector2.Distance(p, CityLayout.HallCenter), "the door faces the hall");
                 if (houses[i].Shelter) shelters++;
-                for (int j = i + 1; j < houses.Length; j++) Assert.GreaterOrEqual(Vector2.Distance(p, houses[j].Position), 7.5f);
+                for (int j = i + 1; j < houses.Length; j++) Assert.GreaterOrEqual(Vector2.Distance(p, houses[j].Position), 10f, "huts do not touch");
             }
             Assert.AreEqual(3, shelters);
         }
@@ -115,8 +115,8 @@ namespace Evolve.Tests.EditMode
                 Assert.IsTrue(seen.Add(cls[i].Class), "no class twice");
                 Assert.AreEqual(0f, ZoneLayout.DepthAt(p.x, p.y), "dry");
                 Assert.GreaterOrEqual(ZoneLayout.DistanceToPath(p.x, p.y), 5f);
-                Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.y, 9f), "outside the village round the hall");
-                foreach (var h in houses) Assert.GreaterOrEqual(Vector2.Distance(p, h.Position), h.Radius + 7f, "clear of the huts");
+                Assert.IsFalse(ZoneLayout.InsideCave(p.x, p.y, 13f), "outside the village round the hall");
+                foreach (var h in houses) Assert.GreaterOrEqual(Vector2.Distance(p, h.Position), h.Radius + 11f, "clear of the huts");
                 for (int j = i + 1; j < cls.Length; j++) Assert.GreaterOrEqual(Vector2.Distance(p, cls[j].Position), CityLayout.ClassHouseSpacing);
             }
         }

@@ -9,16 +9,18 @@ using UnityEngine.Rendering;
 namespace Evolve.EditorTools
 {
     /// <summary>
-    /// Evolve → Dress Lake: Class Houses. One building for each of the eight treefolk classes, on the sites chosen by
-    /// CityLayout.ClassHouses, each with its own architecture (none is a round village hut) and its own surroundings:
-    ///  Đấu Thể   a square stone fort: crenellated walls, a gate, two round corner towers, a keep, banners, a drill yard.
-    ///  Liệp Thể  a hunter's cabin on four tall stilts, reached by a long ramp, under a camouflage net, with trophies.
-    ///  Năng Thể  a three-tier stone temple ringed by pillars, a crystal spire on top and stones floating round it.
-    ///  Quần Thể  a long vaulted barn open at the front, its pen, a bell post and a feeding trough.
-    ///  Dưỡng Thể an open pavilion on a stone floor under a roof of great petals, a healing spring in the middle, herb beds.
-    ///  Xạ Thể    a tall root tower with a spiral stair round it, a lookout platform and roof, and an archery range.
-    ///  Cấu Thể   a glasshouse of translucent gel on a stone ring, ribbed with roots, full of vats and jars.
-    ///  Dã Thể    a conical hide tent, a fire pit, a lean-to, a map post, a hammock and a pile of gear.
+    /// Evolve → Dress Lake: Class Houses. The treefolk are tree people who live in hollow trunks, root hollows and carved
+    /// stone like dwarves, so every class house is a great carved trunk (ridged bark, root buttresses, a leafy crown, a
+    /// dwarf-style stone doorway with a carved lintel, amber-lit windows, a band of glowing runes) shaped and furnished for
+    /// its class, standing alone on its own plot (CityLayout keeps the plots well apart):
+    ///  Đấu Thể   a wide squat bastion-trunk behind a stockade of carved shield-posts, with warrior statues and a drill yard.
+    ///  Liệp Thể  a tall thin dead tree with an antlered crown, a nest in its branches, trophies and a camouflage net.
+    ///  Năng Thể  a twisted spire-tree veined with glowing crystal, ringed by rune obelisks, stones floating round it.
+    ///  Quần Thể  a mother-tree with burrow doors round its foot and a corral of great root arches.
+    ///  Dưỡng Thể a flowering tree under a canopy of huge petals, a healing spring at its roots and herb beds.
+    ///  Xạ Thể    a very tall trunk with a stair carved round it up to a nest platform, and an archery range.
+    ///  Cấu Thể   a trunk with big amber-resin windows, stone stills joined by root pipes, gel vats and jar shelves.
+    ///  Dã Thể    a huge hollow fallen log, open at one end, with a camp in front of it.
     /// Run again to rebuild.
     /// </summary>
     public static class LakeClassHouses
@@ -27,7 +29,7 @@ namespace Evolve.EditorTools
 
         class Kit
         {
-            public Material Bark, Stone, Wood, Amber, Moss, DarkWood, Cloth;
+            public Material Bark, Stone, Wood, Amber, Moss, DarkWood, Cloth, Trunk;
             public Mesh Blob;
             public Transform Parent;
             public readonly List<CombineInstance> BarkParts = new List<CombineInstance>();
@@ -38,6 +40,22 @@ namespace Evolve.EditorTools
             public readonly List<CombineInstance> DarkParts = new List<CombineInstance>();
             public readonly List<CombineInstance> ClothParts = new List<CombineInstance>();
             public int Seed = 20000;
+        }
+
+        /// <summary>A house's frame: where it stands, which way it faces, and a way to find points on its trunk.</summary>
+        class Frame
+        {
+            public Vector3 At, Fwd, Side;
+            public float Yaw;
+            public System.Func<float, float, Vector3> Local;
+            public System.Func<float, float> Radius;   // trunk radius at height y (standing trunks)
+
+            /// <summary>A world point on the trunk at <paramref name="degrees"/> round it (0 = the front) and height <paramref name="y"/>, pushed out by <paramref name="push"/>.</summary>
+            public Vector3 Surface(float degrees, float y, float push)
+            {
+                float a = degrees * Mathf.Deg2Rad, r = Radius(y) + push;
+                return At + Quaternion.Euler(0f, Yaw, 0f) * new Vector3(Mathf.Cos(a) * r, y, Mathf.Sin(a) * r);
+            }
         }
 
         [MenuItem("Evolve/Dress Lake: Class Houses")]
@@ -52,12 +70,13 @@ namespace Evolve.EditorTools
             var kit = new Kit
             {
                 Bark = LakeGround.OpaqueMaterial("Lake_CanopyBark", new Color(0.24f, 0.17f, 0.11f), 0.12f, false),
+                Trunk = LakeGround.OpaqueMaterial("Lake_TrunkBark", new Color(0.30f, 0.21f, 0.13f), 0.1f, true),
                 Stone = LakeGround.OpaqueMaterial("Lake_Limestone", new Color(0.74f, 0.72f, 0.64f), 0.2f, false),
                 Wood = LakeGround.OpaqueMaterial("Lake_PetrifiedWood", new Color(0.46f, 0.36f, 0.26f), 0.35f, false),
                 DarkWood = LakeGround.OpaqueMaterial("Lake_DarkRoot", new Color(0.16f, 0.12f, 0.09f), 0.1f, false),
                 Amber = LakeGround.OpaqueMaterial("Lake_AmberLampSpot", new Color(0.95f, 0.62f, 0.18f), 0.6f, false, new Color(1.2f, 0.62f, 0.14f)),
                 Moss = LakeGround.MossMaterial(),
-                Cloth = LakeGround.OpaqueMaterial("Lake_Cloth", new Color(0.62f, 0.2f, 0.16f), 0.1f, true),
+                Cloth = LakeGround.OpaqueMaterial("Lake_Cloth", new Color(0.55f, 0.22f, 0.14f), 0.1f, true),
                 Blob = FloraMeshes.Blob(),
             };
             var houses = CityLayout.ClassHouses();
@@ -66,14 +85,12 @@ namespace Evolve.EditorTools
                 var parent = new GameObject(TreefolkClasses.Name(h.Class)).transform;
                 parent.SetParent(root, false);
                 kit.Parent = parent;
-                Build(parent, kit, h);
-                // each house's loose pieces are combined per house, so a house is one handful of meshes
+                Build(kit, h);
                 Flush(parent, kit);
             }
-
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
-            Debug.Log($"Đã dựng {houses.Length} nhà của các class người cây, mỗi nhà một kiến trúc riêng. Bấm Ctrl+S để lưu scene.");
+            Debug.Log($"Đã dựng {houses.Length} nhà của các class người cây (thân cây khoét rỗng, cửa đá kiểu người lùn, rune phát sáng). Bấm Ctrl+S để lưu scene.");
         }
 
         static void Flush(Transform parent, Kit kit)
@@ -87,7 +104,7 @@ namespace Evolve.EditorTools
             LakeGround.AddCombined(parent, "Cloth", kit.ClothParts, kit.Cloth); kit.ClothParts.Clear();
         }
 
-        // ---------------------------------------------------------------- small helpers
+        // ---------------------------------------------------------------- helpers
 
         static Vector3 OnGround(float x, float z) => new Vector3(x, LakeGround.GroundY(x, z), z);
 
@@ -97,21 +114,19 @@ namespace Evolve.EditorTools
         static void Ball(List<CombineInstance> list, Kit kit, Vector3 at, Vector3 size, float yaw = 0f) =>
             list.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(at, Quaternion.Euler(0f, yaw, 0f), size) });
 
-        /// <summary>A solid box (with a collider) centred at <paramref name="centre"/>, turned by <paramref name="yaw"/>.</summary>
-        static GameObject Box(Kit kit, string name, Vector3 centre, Vector3 size, float yaw, Material mat, float pitch = 0f)
+        static GameObject Box(Kit kit, string name, Vector3 centre, Vector3 size, float yaw, Material mat)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
             go.transform.SetParent(kit.Parent, false);
             go.transform.position = centre;
-            go.transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+            go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             go.transform.localScale = size;
             go.GetComponent<Renderer>().sharedMaterial = mat;
             go.isStatic = true;
             return go;
         }
 
-        /// <summary>A solid upright cylinder (closed, with a mesh collider): a pillar, a tower, a tier.</summary>
         static GameObject Drum(Kit kit, string name, Vector3 baseAt, float radius, float height, Material mat)
         {
             var mesh = CaveMeshes.Disc(radius, height, 28);
@@ -125,19 +140,26 @@ namespace Evolve.EditorTools
             return go;
         }
 
-        static GameObject Solid(Kit kit, string name, Mesh mesh, Vector3 at, float yaw, Material mat, bool collide = true)
+        static GameObject Solid(Kit kit, string name, Mesh mesh, Vector3 at, Quaternion rot, Material mat)
         {
             var go = new GameObject(name);
             go.transform.SetParent(kit.Parent, false);
             go.transform.position = at;
-            go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            go.transform.rotation = rot;
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = go.AddComponent<MeshRenderer>();
             mr.sharedMaterial = mat;
             mr.shadowCastingMode = ShadowCastingMode.TwoSided;
-            if (collide) go.AddComponent<MeshCollider>().sharedMesh = mesh;
+            go.AddComponent<MeshCollider>().sharedMesh = mesh;
             go.isStatic = true;
             return go;
+        }
+
+        static void Capsule(Kit kit, Vector3 centre, float radius, float height)
+        {
+            var col = new GameObject("Collider").AddComponent<CapsuleCollider>();
+            col.transform.SetParent(kit.Parent, false);
+            col.transform.position = centre; col.radius = radius; col.height = height;
         }
 
         static void PointLight(Kit kit, Vector3 at, Color color, float range, float intensity)
@@ -149,91 +171,6 @@ namespace Evolve.EditorTools
             l.type = LightType.Point; l.range = range; l.intensity = intensity; l.color = color; l.shadows = LightShadows.None;
         }
 
-        // ---------------------------------------------------------------- one building per class
-
-        static void Build(Transform parent, Kit kit, CityLayout.ClassHouse h)
-        {
-            Vector2 pos = h.Position;
-            float yaw = h.Yaw;
-            var sign = parent.gameObject.AddComponent<ClassHouseSign>();
-            sign.Class = h.Class;
-            Quaternion rot = Quaternion.Euler(0f, yaw, 0f);
-            Vector3 fwd = rot * Vector3.right, side = rot * Vector3.forward;   // the front (+x local) and the sides (+z local)
-            Vector3 at = OnGround(pos.x, pos.y);
-            sign.transform.position = at;
-            Vector3 Local(float x, float z) { var p = at + fwd * x + side * z; return OnGround(p.x, p.z); }
-            switch (h.Class)
-            {
-                case TreefolkClass.DauThe: Fort(kit, at, yaw, fwd, side, Local); sign.Height = 8f; break;
-                case TreefolkClass.LiepThe: Stilts(kit, at, yaw, fwd, side, Local); sign.Height = 7f; break;
-                case TreefolkClass.NangThe: Temple(kit, at, yaw, fwd, side, Local); sign.Height = 9f; break;
-                case TreefolkClass.QuanThe: Barn(kit, at, yaw, fwd, side, Local); sign.Height = 6.5f; break;
-                case TreefolkClass.DuongThe: Pavilion(kit, at, yaw, fwd, side, Local); sign.Height = 6f; break;
-                case TreefolkClass.XaThe: Tower(kit, at, yaw, fwd, side, Local); sign.Height = 12f; break;
-                case TreefolkClass.CauThe: Glasshouse(kit, at, yaw, fwd, side, Local); sign.Height = 6f; break;
-                default: Tent(kit, at, yaw, fwd, side, Local); sign.Height = 6f; break;
-            }
-        }
-
-        // ---- Đấu Thể: the fort -----------------------------------------------------------------------
-
-        static void Fort(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
-        {
-            const float half = 4.4f, wallH = 3.4f, thick = 0.9f;
-            // four walls of stone blocks: the front (+x) has a gate 1.8 m wide
-            Box(kit, "Wall Back", L(-half, 0f) + Vector3.up * wallH * 0.5f, new Vector3(thick, wallH, half * 2f), yaw, kit.Stone);
-            Box(kit, "Wall Left", L(0f, -half) + Vector3.up * wallH * 0.5f, new Vector3(half * 2f, wallH, thick), yaw, kit.Stone);
-            Box(kit, "Wall Right", L(0f, half) + Vector3.up * wallH * 0.5f, new Vector3(half * 2f, wallH, thick), yaw, kit.Stone);
-            float gate = 0.9f, seg = half - gate;
-            Box(kit, "Wall Front L", L(half, -(gate + seg * 0.5f)) + Vector3.up * wallH * 0.5f, new Vector3(thick, wallH, seg), yaw, kit.Stone);
-            Box(kit, "Wall Front R", L(half, gate + seg * 0.5f) + Vector3.up * wallH * 0.5f, new Vector3(thick, wallH, seg), yaw, kit.Stone);
-            Box(kit, "Gate Lintel", L(half, 0f) + Vector3.up * (wallH - 0.55f), new Vector3(thick + 0.2f, 1.1f, gate * 2f + 0.6f), yaw, kit.Stone);
-            // crenellations along every wall top
-            for (float t = -half; t <= half; t += 1.5f)
-            {
-                foreach (var (x, z) in new[] { (-half, t), (t, -half), (t, half) })
-                    Box(kit, "Merlon", L(x, z) + Vector3.up * (wallH + 0.35f), new Vector3(0.7f, 0.7f, 0.7f), yaw, kit.Stone);
-                if (Mathf.Abs(t) > gate + 0.4f) Box(kit, "Merlon", L(half, t) + Vector3.up * (wallH + 0.35f), new Vector3(0.7f, 0.7f, 0.7f), yaw, kit.Stone);
-            }
-            // two round corner towers at the front, taller, with conical roofs and a banner each
-            foreach (float z in new[] { -half, half })
-            {
-                Vector3 b = L(half, z);
-                Drum(kit, "Tower", b - Vector3.up * 0.3f, 1.4f, 5.6f, kit.Stone);
-                Ball(kit.MossParts, kit, b + Vector3.up * 6.3f, new Vector3(2.0f, 1.5f, 2.0f));
-                Tube(kit.WoodParts, kit, new[] { b + Vector3.up * 6.8f, b + Vector3.up * 8.6f }, 0.06f, 0.05f, 4, 0f);
-                kit.ClothParts.Add(new CombineInstance { mesh = Quad(1.2f, 0.9f), transform = Matrix4x4.TRS(b + Vector3.up * 8.2f + side * 0.6f * Mathf.Sign(z), Quaternion.Euler(0f, yaw, 0f), Vector3.one) });
-            }
-            // the keep inside: a raised block with a little stair and amber windows
-            Box(kit, "Keep", L(-1.6f, 0f) + Vector3.up * 2.4f, new Vector3(3.0f, 4.8f, 3.4f), yaw, kit.Wood);
-            for (int i = 0; i < 3; i++) Box(kit, "Keep Step", L(0.2f + i * 0f, 0f) + Vector3.up * (0.12f + 0.24f * (2 - i)) - fwd * (0.0f - 0.35f * i), new Vector3(0.6f, 0.24f + 0.24f * (2 - i), 1.2f), yaw, kit.Stone);
-            for (int i = 0; i < 3; i++) Ball(kit.GlowParts, kit, L(-0.1f, -1f + i) + Vector3.up * 3.4f, new Vector3(0.12f, 0.45f, 0.3f), yaw);
-            // outside: a short palisade of stakes either side of the gate, drill dummies and a weapon rack
-            for (int i = 0; i < 8; i++)
-            {
-                float z = (i < 4 ? -1f : 1f) * (2.4f + (i % 4) * 0.55f);
-                Vector3 b = L(half + 2.4f, z);
-                Tube(kit.WoodParts, kit, new[] { b - Vector3.up * 0.2f, b + fwd * 0.15f + Vector3.up * 1.3f, b + fwd * 0.3f + Vector3.up * 2.3f }, 0.17f, 0.04f, 6, 0.1f);
-            }
-            for (int i = 0; i < 3; i++)
-            {
-                Vector3 p = L(half + 5.5f, -4f + i * 4f);
-                Tube(kit.WoodParts, kit, new[] { p - Vector3.up * 0.2f, p + Vector3.up * 1.0f, p + Vector3.up * 1.7f }, 0.13f, 0.1f, 6);
-                Tube(kit.WoodParts, kit, new[] { p + Vector3.up * 1.25f - side * 0.55f, p + Vector3.up * 1.25f + side * 0.55f }, 0.07f, 0.07f, 5);
-                Ball(kit.MossParts, kit, p + Vector3.up * 1.85f, new Vector3(0.3f, 0.3f, 0.3f));
-            }
-            Vector3 rack = L(half + 3.5f, 5.4f);
-            Tube(kit.WoodParts, kit, new[] { rack, rack + Vector3.up * 1.5f }, 0.1f, 0.09f, 6);
-            Tube(kit.WoodParts, kit, new[] { rack + side * 1.6f, rack + side * 1.6f + Vector3.up * 1.5f }, 0.1f, 0.09f, 6);
-            for (int i = 0; i < 6; i++)
-            {
-                Vector3 b = rack + side * (0.15f + i * 0.26f);
-                Tube(kit.WoodParts, kit, new[] { b + Vector3.up * 0.1f, b + Vector3.up * 1.0f + fwd * 0.15f, b + Vector3.up * 2.1f + fwd * 0.25f }, 0.04f, 0.02f, 4, 0f);
-            }
-            PointLight(kit, L(half + 1f, 0f) + Vector3.up * 3.2f, new Color(1f, 0.7f, 0.4f), 14f, 1.2f);
-        }
-
-        /// <summary>A flat double-sided cloth quad facing sideways (for banners).</summary>
         static Mesh Quad(float w, float h)
         {
             var m = new Mesh { name = "Cloth" };
@@ -244,362 +181,562 @@ namespace Evolve.EditorTools
             return m;
         }
 
-        // ---- Liệp Thể: the stilt cabin ------------------------------------------------------------------
+        // ---------------------------------------------------------------- the carved trunk house
 
-        static void Stilts(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
+        /// <summary>
+        /// A hollow standing trunk: a flared foot, a tapering ridged shaft, a doorway on the front (+x) framed in carved
+        /// dwarf-style stonework with a lintel plaque and glowing runes, round amber-lit windows, root buttresses splaying at
+        /// the foot and (optionally) a crown of moss and branches. The inside is open (walkable) through the door.
+        /// </summary>
+        static Frame Trunk(Kit kit, CityLayout.ClassHouse h, float baseR, float topR, float height, float doorW, float doorH, float[] windowDegrees, float windowY, bool crown = true, int buttresses = 5)
         {
-            const float floor = 3.2f;
-            // four tall stilts, braced, carrying a floor
-            foreach (var (x, z) in new[] { (-1.8f, -1.8f), (-1.8f, 1.8f), (1.8f, -1.8f), (1.8f, 1.8f) })
+            Quaternion rot = Quaternion.Euler(0f, h.Yaw, 0f);
+            Vector3 at = OnGround(h.Position.x, h.Position.y);
+            var f = new Frame { At = at, Yaw = h.Yaw, Fwd = rot * Vector3.right, Side = rot * Vector3.forward };
+            f.Local = (x, z) => { var p = at + f.Fwd * x + f.Side * z; return OnGround(p.x, p.z); };
+            const float flare = 0.45f;
+            f.Radius = y => Mathf.Lerp(baseR, topR, Mathf.Pow(Mathf.Clamp01(y / height), 0.85f)) * (1f + flare * Mathf.Exp(-Mathf.Max(0f, y) * 1.1f));
+
+            // the shaft: a lathe from below the ground up to the rim
+            var profile = new List<Vector2>();
+            foreach (float py in new[] { -0.4f, 0.2f, 0.7f, 1.5f, height * 0.25f, height * 0.5f, height * 0.75f, height })
+                profile.Add(new Vector2(f.Radius(Mathf.Max(0f, py)), py));
+            var shaft = FloraMeshes.Lathe(profile, 48, height * 0.5f, ++kit.Seed, 0.025f);
+            float doorHalf = doorW * 0.5f, straight = doorH * 0.62f, cap = doorH - straight;
+            WaterMeshes.RemoveTriangles(shaft, v =>
             {
-                Vector3 b = L(x, z);
-                Tube(kit.DarkParts, kit, new[] { b - Vector3.up * 0.5f, b + Vector3.up * floor * 0.5f + fwd * 0.08f, b + Vector3.up * (floor + 0.2f) }, 0.28f, 0.2f, 8, 0.2f);
-                var col = new GameObject("Stilt").AddComponent<CapsuleCollider>();
-                col.transform.SetParent(kit.Parent, false);
-                col.transform.position = b + Vector3.up * floor * 0.5f; col.radius = 0.3f; col.height = floor;
+                float ang = Mathf.Atan2(v.z, v.x) * Mathf.Rad2Deg;
+                float rr = Mathf.Sqrt(v.x * v.x + v.z * v.z);
+                // the doorway: straight sides, a round top
+                if (Mathf.Abs(ang) < 40f && v.y > -0.2f)
+                {
+                    float across = Mathf.Sin(ang * Mathf.Deg2Rad) * rr;
+                    if (v.y <= straight) { if (Mathf.Abs(across) < doorHalf) return true; }
+                    else { float e = (v.y - straight) / cap, fz = across / doorHalf; if (e * e + fz * fz < 1f) return true; }
+                }
+                // round windows
+                if (windowDegrees != null)
+                    foreach (float wd in windowDegrees)
+                    {
+                        float da = Mathf.DeltaAngle(ang, wd) * Mathf.Deg2Rad * rr, dy = v.y - windowY;
+                        if (da * da + dy * dy < 0.36f * 0.36f) return true;
+                    }
+                return false;
+            });
+            Solid(kit, "Trunk", shaft, at, rot, kit.Trunk);
+
+            // bark ridges: roots running up the shaft, merging into it (never across the door or a window)
+            for (int i = 0; i < 12; i++)
+            {
+                float deg = i * 30f + 11f;
+                if (Mathf.Abs(Mathf.DeltaAngle(deg, 0f)) < 38f) continue;
+                bool nearWindow = false;
+                if (windowDegrees != null) foreach (float wd in windowDegrees) if (Mathf.Abs(Mathf.DeltaAngle(deg, wd)) < 12f) nearWindow = true;
+                if (nearWindow) continue;
+                var path = new Vector3[8];
+                for (int k = 0; k < path.Length; k++)
+                {
+                    float y = Mathf.Lerp(-0.2f, height * 0.97f, k / 7f);
+                    path[k] = f.Surface(deg + 4f * Mathf.Sin(k * 1.3f + i), y, -0.1f);
+                }
+                Tube(kit.BarkParts, kit, path, 0.3f, 0.18f, 7, 0.3f);
             }
-            Tube(kit.DarkParts, kit, new[] { L(-1.8f, -1.8f) + Vector3.up * 1.0f, L(1.8f, 1.8f) + Vector3.up * 2.0f }, 0.07f, 0.07f, 5, 0.1f);
-            Tube(kit.DarkParts, kit, new[] { L(1.8f, -1.8f) + Vector3.up * 1.0f, L(-1.8f, 1.8f) + Vector3.up * 2.0f }, 0.07f, 0.07f, 5, 0.1f);
-            Vector3 centre = at + Vector3.up * floor;
-            Box(kit, "Floor", centre + Vector3.up * 0.1f, new Vector3(4.6f, 0.25f, 4.6f), yaw, kit.DarkWood);
-            // cabin walls (a gap for the door at the front), an A-frame roof, a veranda
-            Box(kit, "Wall Back", L(-1.9f, 0f) + Vector3.up * (floor + 1.3f), new Vector3(0.25f, 2.4f, 4.0f), yaw, kit.DarkWood);
-            Box(kit, "Wall Left", L(0f, -1.9f) + Vector3.up * (floor + 1.3f), new Vector3(3.8f, 2.4f, 0.25f), yaw, kit.DarkWood);
-            Box(kit, "Wall Right", L(0f, 1.9f) + Vector3.up * (floor + 1.3f), new Vector3(3.8f, 2.4f, 0.25f), yaw, kit.DarkWood);
-            Box(kit, "Wall Front L", L(1.9f, -1.35f) + Vector3.up * (floor + 1.3f), new Vector3(0.25f, 2.4f, 1.3f), yaw, kit.DarkWood);
-            Box(kit, "Wall Front R", L(1.9f, 1.35f) + Vector3.up * (floor + 1.3f), new Vector3(0.25f, 2.4f, 1.3f), yaw, kit.DarkWood);
-            Box(kit, "Roof Left", L(0f, -1.15f) + Vector3.up * (floor + 3.0f), new Vector3(4.6f, 0.2f, 2.6f), yaw, kit.DarkWood, 0f).transform.rotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(-32f, 0f, 0f);
-            Box(kit, "Roof Right", L(0f, 1.15f) + Vector3.up * (floor + 3.0f), new Vector3(4.6f, 0.2f, 2.6f), yaw, kit.DarkWood, 0f).transform.rotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(32f, 0f, 0f);
-            Box(kit, "Veranda", L(3.1f, 0f) + Vector3.up * (floor + 0.1f), new Vector3(1.8f, 0.2f, 3.2f), yaw, kit.DarkWood);
-            // a long ramp up from the ground to the veranda
-            Vector3 rampLow = L(10.6f, 0f), rampHigh = L(3.9f, 0f) + Vector3.up * (floor + 0.1f);
-            Vector3 mid = (rampLow + rampHigh) * 0.5f;
-            Vector3 rampDir = (rampHigh - rampLow).normalized;
-            var ramp = Box(kit, "Ramp", mid, new Vector3(1.6f, 0.2f, Vector3.Distance(rampLow, rampHigh)), yaw, kit.DarkWood);
-            ramp.transform.rotation = Quaternion.LookRotation(rampDir, Vector3.up);   // its long axis runs up the slope
-            // a camouflage net of thin roots draped from the roof to the ground, and trophies on the veranda rail
-            var rnd = new System.Random((int)(at.x * 7f + at.z * 13f));
+            // buttress roots splaying out over the ground, thick where they leave the trunk
+            for (int i = 0; i < buttresses; i++)
+            {
+                float deg = 40f + i * (280f / Mathf.Max(1, buttresses - 1)) + 8f * Mathf.Sin(i * 2.3f);
+                var path = new Vector3[8];
+                Vector3 root0 = f.Surface(deg, 0f, 0f);
+                Vector3 outward = root0 - at; outward.y = 0f; outward.Normalize();
+                for (int k = 0; k < path.Length; k++)
+                {
+                    float t = k / 7f;
+                    Vector3 p = root0 + outward * (baseR * Mathf.Lerp(0f, 1.7f, t));
+                    p.y = LakeGround.GroundY(p.x, p.z) + Mathf.Lerp(1.8f, -0.25f, Mathf.Sqrt(t));
+                    path[k] = p;
+                }
+                Tube(kit.BarkParts, kit, path, 0.75f, 0.2f, 8, 0.25f);
+            }
+
+            // the carved stone doorway: two jambs, a lintel with a carved plaque, a threshold slab, lanterns and runes
+            Vector3 doorBase = f.Surface(0f, 0f, 0.05f);
+            foreach (float s in new[] { -1f, 1f })
+                Box(kit, "Jamb", doorBase + f.Side * s * (doorHalf + 0.2f) + Vector3.up * (straight * 0.5f) + f.Fwd * 0.1f, new Vector3(0.7f, straight + 0.2f, 0.4f), h.Yaw, kit.Stone);
+            Box(kit, "Lintel", doorBase + Vector3.up * (doorH + 0.15f) + f.Fwd * 0.1f, new Vector3(0.7f, 0.5f, doorW + 1.1f), h.Yaw, kit.Stone);
+            Box(kit, "Plaque", doorBase + Vector3.up * (doorH + 0.9f) + f.Fwd * 0.18f, new Vector3(0.3f, 0.9f, doorW * 0.8f + 0.4f), h.Yaw, kit.Stone);
+            Box(kit, "Threshold", doorBase + f.Fwd * 0.6f + Vector3.up * 0.05f, new Vector3(1.4f, 0.2f, doorW + 1.4f), h.Yaw, kit.Stone);
+            for (int i = 0; i < 5; i++)   // carved runes on the plaque
+                Ball(kit.GlowParts, kit, doorBase + Vector3.up * (doorH + 0.9f) + f.Fwd * 0.36f + f.Side * ((i - 2) * (doorW * 0.8f + 0.2f) / 5f), new Vector3(0.05f, 0.4f, 0.1f), h.Yaw);
+            Ball(kit.GlowParts, kit, doorBase + f.Side * (doorHalf + 0.85f) + Vector3.up * 1.8f + f.Fwd * 0.2f, new Vector3(0.22f, 0.3f, 0.22f));
+            Ball(kit.GlowParts, kit, doorBase - f.Side * (doorHalf + 0.85f) + Vector3.up * 1.8f + f.Fwd * 0.2f, new Vector3(0.22f, 0.3f, 0.22f));
+            // a band of runes carved all round the shaft
+            for (int i = 0; i < 20; i++)
+            {
+                float deg = i * 18f + 9f;
+                if (Mathf.Abs(Mathf.DeltaAngle(deg, 0f)) < 36f) continue;
+                Ball(kit.GlowParts, kit, f.Surface(deg, height * 0.42f, 0.02f), new Vector3(0.05f, 0.34f, 0.1f), h.Yaw - deg);
+            }
+            // amber glass behind each window
+            if (windowDegrees != null)
+                foreach (float wd in windowDegrees) Ball(kit.GlowParts, kit, f.Surface(wd, windowY, -0.45f), new Vector3(0.4f, 0.55f, 0.4f));
+
+            if (crown)
+            {
+                // a crown: a mossy mound and branches curving out and up, with leaf clumps at their tips
+                Vector3 top = at + Vector3.up * height;
+                Ball(kit.MossParts, kit, top + Vector3.up * 0.2f, new Vector3(topR * 2.1f, 0.9f, topR * 2.1f));
+                for (int i = 0; i < 7; i++)
+                {
+                    float a = i * Mathf.PI * 2f / 7f + 0.4f;
+                    Vector3 dir = rot * new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    var path = new[] { top, top + dir * topR * 1.3f + Vector3.up * 0.9f, top + dir * topR * 2.9f + Vector3.up * 1.2f, top + dir * topR * 4.0f + Vector3.up * 2.2f };
+                    Tube(kit.BarkParts, kit, path, topR * 0.4f, 0.1f, 7, 0.3f);
+                    Ball(kit.MossParts, kit, path[3] + Vector3.up * 0.3f, new Vector3(1.5f, 0.9f, 1.5f));
+                }
+            }
+            return f;
+        }
+
+        // ---------------------------------------------------------------- one house per class
+
+        static void Build(Kit kit, CityLayout.ClassHouse h)
+        {
+            switch (h.Class)
+            {
+                case TreefolkClass.DauThe: Bastion(kit, h); break;
+                case TreefolkClass.LiepThe: DeadTree(kit, h); break;
+                case TreefolkClass.NangThe: SpireTree(kit, h); break;
+                case TreefolkClass.QuanThe: MotherTree(kit, h); break;
+                case TreefolkClass.DuongThe: BloomTree(kit, h); break;
+                case TreefolkClass.XaThe: WatchTree(kit, h); break;
+                case TreefolkClass.CauThe: ResinTree(kit, h); break;
+                default: HollowLog(kit, h); break;
+            }
+        }
+
+        /// <summary>A carved statue of a treefolk (plinth, trunk body, head, an arm, an optional lamp), facing the front.</summary>
+        static void Statue(Kit kit, Vector3 at, float yaw, float scale, bool lamp, bool shield)
+        {
+            Quaternion rot = Quaternion.Euler(0f, yaw, 0f);
+            Vector3 side = rot * Vector3.forward, fwd = rot * Vector3.right;
+            Drum(kit, "Plinth", at - Vector3.up * 0.2f, 0.9f * scale, 0.6f * scale, kit.Stone);
+            Tube(kit.StoneParts, kit, new[] { at + Vector3.up * 0.3f * scale, at + Vector3.up * 1.4f * scale, at + Vector3.up * 2.4f * scale }, 0.5f * scale, 0.32f * scale, 10, 0.1f);
+            Ball(kit.StoneParts, kit, at + Vector3.up * 2.8f * scale, new Vector3(0.6f, 0.65f, 0.6f) * scale);
+            Tube(kit.StoneParts, kit, new[] { at + Vector3.up * 2.1f * scale + side * 0.25f * scale, at + Vector3.up * 2.6f * scale + side * 0.7f * scale, at + Vector3.up * 3.2f * scale + side * 0.8f * scale }, 0.13f * scale, 0.09f * scale, 6, 0.1f);
+            if (lamp) Ball(kit.GlowParts, kit, at + Vector3.up * 3.45f * scale + side * 0.8f * scale, new Vector3(0.3f, 0.4f, 0.3f) * scale);
+            if (shield) Ball(kit.StoneParts, kit, at + Vector3.up * 1.7f * scale + fwd * 0.45f * scale - side * 0.3f * scale, new Vector3(0.12f, 0.9f, 0.7f) * scale, yaw);
+            Capsule(kit, at + Vector3.up * 1.3f * scale, 0.6f * scale, 2.6f * scale);
+        }
+
+        // ---- Đấu Thể --------------------------------------------------------------------------------
+
+        static void Bastion(Kit kit, CityLayout.ClassHouse h)
+        {
+            var f = Trunk(kit, h, 4.2f, 3.6f, 4.6f, 2.0f, 2.6f, new[] { 55f, -55f, 125f, -125f }, 2.6f, false, 6);
+            // the crown is a ring of notched stumps (a battlement of wood) with a banner on each side
+            Vector3 top = f.At + Vector3.up * 4.6f;
+            for (int i = 0; i < 12; i++)
+            {
+                float a = i * Mathf.PI * 2f / 12f;
+                Vector3 p = top + f.Fwd * Mathf.Cos(a) * 3.45f + f.Side * Mathf.Sin(a) * 3.45f;
+                Tube(kit.BarkParts, kit, new[] { p - Vector3.up * 0.3f, p + Vector3.up * 0.8f, p + Vector3.up * 1.1f }, 0.34f, 0.26f, 7, 0.2f);
+            }
+            foreach (float s in new[] { -1f, 1f })
+            {
+                Vector3 b = f.Surface(s * 38f, 0f, 0.4f);
+                Tube(kit.WoodParts, kit, new[] { b - Vector3.up * 0.2f, b + Vector3.up * 4.6f, b + Vector3.up * 6.6f }, 0.16f, 0.07f, 6, 0.1f);
+                kit.ClothParts.Add(new CombineInstance { mesh = Quad(1.5f, 2.4f), transform = Matrix4x4.TRS(b + Vector3.up * 6.4f + f.Side * 0.8f * s, Quaternion.Euler(0f, f.Yaw, 0f), Vector3.one) });
+            }
+            // a stockade of carved posts (each with a shield) in an arc round the front, open at the door
+            for (int i = 0; i < 17; i++)
+            {
+                float a = Mathf.Lerp(-95f, 95f, i / 16f);
+                if (Mathf.Abs(a) < 20f) continue;
+                Vector3 b = f.Local(Mathf.Cos(a * Mathf.Deg2Rad) * 8.2f, Mathf.Sin(a * Mathf.Deg2Rad) * 8.2f);
+                Vector3 outward = f.Fwd * Mathf.Cos(a * Mathf.Deg2Rad) + f.Side * Mathf.Sin(a * Mathf.Deg2Rad);
+                Tube(kit.WoodParts, kit, new[] { b - Vector3.up * 0.3f, b + outward * 0.1f + Vector3.up * 1.6f, b + outward * 0.25f + Vector3.up * 2.9f }, 0.26f, 0.08f, 7, 0.15f);
+                if (i % 2 == 0) Ball(kit.StoneParts, kit, b + Vector3.up * 1.7f + outward * 0.28f, new Vector3(0.1f, 0.8f, 0.6f), f.Yaw - a);
+            }
+            Statue(kit, f.Local(6f, -2.8f), f.Yaw + 180f, 1.6f, false, true);
+            Statue(kit, f.Local(6f, 2.8f), f.Yaw + 180f, 1.6f, false, true);
+            for (int i = 0; i < 3; i++)   // drill dummies and the weapon rack in the yard
+            {
+                Vector3 p = f.Local(11.2f, -4.5f + i * 4.5f);
+                Tube(kit.WoodParts, kit, new[] { p - Vector3.up * 0.2f, p + Vector3.up * 1.0f, p + Vector3.up * 1.8f }, 0.15f, 0.11f, 6);
+                Tube(kit.WoodParts, kit, new[] { p + Vector3.up * 1.3f - f.Side * 0.6f, p + Vector3.up * 1.3f + f.Side * 0.6f }, 0.07f, 0.07f, 5);
+                Ball(kit.MossParts, kit, p + Vector3.up * 1.95f, new Vector3(0.32f, 0.32f, 0.32f));
+            }
+            Vector3 rack = f.Local(9.5f, 7.5f);
+            Tube(kit.WoodParts, kit, new[] { rack, rack + Vector3.up * 1.6f }, 0.11f, 0.1f, 6);
+            Tube(kit.WoodParts, kit, new[] { rack + f.Side * 1.8f, rack + f.Side * 1.8f + Vector3.up * 1.6f }, 0.11f, 0.1f, 6);
+            for (int i = 0; i < 6; i++)
+            {
+                Vector3 b = rack + f.Side * (0.2f + i * 0.28f);
+                Tube(kit.WoodParts, kit, new[] { b + Vector3.up * 0.1f, b + Vector3.up * 1.0f + f.Fwd * 0.15f, b + Vector3.up * 2.2f + f.Fwd * 0.25f }, 0.04f, 0.02f, 4, 0f);
+            }
+            PointLight(kit, f.Local(5f, 0f) + Vector3.up * 3.2f, new Color(1f, 0.7f, 0.4f), 14f, 1.2f);
+        }
+
+        // ---- Liệp Thể -------------------------------------------------------------------------------
+
+        static void DeadTree(Kit kit, CityLayout.ClassHouse h)
+        {
+            var f = Trunk(kit, h, 1.8f, 1.2f, 9.5f, 1.2f, 1.8f, new[] { 90f, -90f }, 3.4f, false, 6);
+            Vector3 top = f.At + Vector3.up * 9.5f;
+            Quaternion rot = Quaternion.Euler(0f, f.Yaw, 0f);
+            // an antlered crown: dead branches forking upward, a nest platform wedged in the trunk below
+            for (int i = 0; i < 6; i++)
+            {
+                float a = i * Mathf.PI * 2f / 6f + 0.3f;
+                Vector3 dir = rot * new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                var path = new[] { top - Vector3.up * 0.4f, top + dir * 1.0f + Vector3.up * 1.4f, top + dir * 2.0f + Vector3.up * 3.2f, top + dir * 1.6f + Vector3.up * 4.8f };
+                Tube(kit.DarkParts, kit, path, 0.34f, 0.07f, 6, 0.3f);
+                Tube(kit.DarkParts, kit, new[] { path[2], path[2] + dir * 0.9f + Vector3.up * 1.3f, path[2] + dir * 1.4f + Vector3.up * 2.4f }, 0.14f, 0.04f, 5, 0.3f);
+            }
+            var nest = CaveMeshes.Disc(2.3f, 0.3f, 20);
+            var ng = new GameObject("Nest");
+            ng.transform.SetParent(kit.Parent, false);
+            ng.transform.position = f.At + Vector3.up * 7.0f;
+            ng.AddComponent<MeshFilter>().sharedMesh = nest;
+            ng.AddComponent<MeshRenderer>().sharedMaterial = kit.DarkWood;
+            ng.AddComponent<MeshCollider>().sharedMesh = nest;
+            for (int i = 0; i < 14; i++)
+            {
+                float a = i / 14f * Mathf.PI * 2f;
+                Vector3 b = f.At + Vector3.up * 7.3f + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 2.1f;
+                Tube(kit.DarkParts, kit, new[] { b, b + Vector3.up * 0.9f }, 0.07f, 0.04f, 4, 0.2f);
+            }
+            // a camouflage net and trophies: teeth and claws on strings from a branch by the door
+            var rnd = new System.Random((int)(f.At.x * 7f + f.At.z * 13f));
             for (int i = 0; i < 12; i++)
             {
                 float a = i / 12f * Mathf.PI * 2f + (float)rnd.NextDouble() * 0.3f;
-                Vector3 top = L(Mathf.Cos(a) * 1.2f, Mathf.Sin(a) * 1.2f) + Vector3.up * (floor + 3.5f);
-                Vector3 b = L(Mathf.Cos(a) * 4.6f, Mathf.Sin(a) * 4.6f);
-                if (Vector3.Dot((b - at).normalized, fwd) > 0.75f) continue;   // keep the ramp clear
-                Tube(kit.DarkParts, kit, new[] { top, Vector3.Lerp(top, b, 0.5f) + Vector3.up * 0.6f, b }, 0.06f, 0.03f, 5, 0.3f);
+                if (Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, 0f)) < 35f) continue;
+                Vector3 dir = rot * new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                Vector3 start = f.At + Vector3.up * 8.6f + dir * 1.0f, end = OnGround(f.At.x + dir.x * 5.8f, f.At.z + dir.z * 5.8f);
+                Tube(kit.DarkParts, kit, new[] { start, Vector3.Lerp(start, end, 0.5f) + Vector3.up * 1.4f, end }, 0.06f, 0.03f, 5, 0.3f);
             }
-            for (int i = 0; i < 7; i++)
+            Vector3 post = f.Local(3.6f, -1.8f);
+            Tube(kit.DarkParts, kit, new[] { post - Vector3.up * 0.2f, post + Vector3.up * 2.0f, post + Vector3.up * 2.5f + f.Side * 1.8f }, 0.13f, 0.08f, 6);
+            for (int i = 0; i < 8; i++)
             {
-                Vector3 hang = L(3.9f, -1.4f + i * 0.45f) + Vector3.up * (floor + 1.4f);
+                Vector3 hang = post + Vector3.up * 2.45f + f.Side * (0.4f + i * 0.2f);
                 Tube(kit.WoodParts, kit, new[] { hang, hang - Vector3.up * (0.5f + 0.15f * (i % 3)) }, 0.012f, 0.012f, 4, 0f);
                 Ball(kit.StoneParts, kit, hang - Vector3.up * (0.55f + 0.15f * (i % 3)), new Vector3(0.05f, 0.14f, 0.05f));
             }
-            Ball(kit.GlowParts, kit, L(2.0f, 1.9f) + Vector3.up * (floor + 2.4f), new Vector3(0.14f, 0.2f, 0.14f));   // one small dim lantern
+            Vector3 boulder = f.Local(2.5f, 4.4f);   // a boulder scarred with claw marks
+            Ball(kit.StoneParts, kit, boulder + Vector3.up * 0.55f, new Vector3(1.6f, 1.1f, 1.3f), 15f);
+            for (int i = 0; i < 3; i++) Ball(kit.WoodParts, kit, boulder + Vector3.up * 0.95f + f.Side * (i * 0.22f - 0.22f) - f.Fwd * 0.6f, new Vector3(0.03f, 0.45f, 0.03f), f.Yaw);
         }
 
-        // ---- Năng Thể: the temple ----------------------------------------------------------------------
+        // ---- Năng Thể -------------------------------------------------------------------------------
 
-        static void Temple(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
+        static void SpireTree(Kit kit, CityLayout.ClassHouse h)
         {
-            var radii = new[] { 4.4f, 3.2f, 2.1f };
-            float y = 0f;
-            for (int i = 0; i < radii.Length; i++)
-            {
-                Drum(kit, "Tier " + i, at + Vector3.up * (y - 0.4f), radii[i], 1.4f, kit.Stone);
-                y += 1.0f;
-            }
-            // steps up the front, tier by tier: four steps of 0.25 m each (a slime can climb them)
-            for (int tier = 0; tier < 3; tier++)
-                for (int st = 0; st < 4; st++)
-                {
-                    float baseY = tier * 1.0f, topY = baseY + 0.25f * (st + 1);
-                    float x = radii[tier] + 0.35f * (3 - st) - 0.1f;
-                    Box(kit, "Step", L(x, 0f) + Vector3.up * ((baseY - 0.3f + topY) * 0.5f), new Vector3(0.36f, topY - baseY + 0.3f, 1.6f), yaw, kit.Stone);
-                }
-            // six pillars ringed round the base tier, with amber caps
-            for (int i = 0; i < 6; i++)
-            {
-                float a = i / 6f * Mathf.PI * 2f + 0.5f;
-                if (Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, 0f)) < 28f) continue;
-                Vector3 p = L(Mathf.Cos(a) * 6.2f, Mathf.Sin(a) * 6.2f);
-                Drum(kit, "Pillar", p - Vector3.up * 0.3f, 0.38f, 4.2f, kit.Stone);
-                Ball(kit.GlowParts, kit, p + Vector3.up * 4.1f, new Vector3(0.5f, 0.5f, 0.5f));
-            }
-            // the crystal spire on the top tier, and stones floating round it
+            var f = Trunk(kit, h, 2.6f, 1.5f, 8.0f, 1.4f, 2.0f, new[] { 70f, -70f, 150f, -150f }, 4.6f, false, 5);
+            Vector3 top = f.At + Vector3.up * 8.0f;
             var crystalMat = LakeGround.OpaqueMaterial("Lake_CrystalSpot", new Color(0.35f, 0.85f, 0.9f), 0.8f, false, new Color(0.25f, 1.0f, 1.1f));
+            // a vein of glowing crystal spiralling up the trunk
+            var vein = new Vector3[18];
+            for (int k = 0; k < vein.Length; k++)
+            {
+                float t = k / 17f, deg = 40f + t * 760f;
+                vein[k] = f.Surface(deg, 0.6f + t * 7.0f, 0.12f);
+            }
+            var veinParts = new List<CombineInstance> { new CombineInstance { mesh = RootMeshes.RootTube(vein, 0.18f, 0.12f, ++kit.Seed, 0.15f, 6), transform = Matrix4x4.identity } };
             var crystals = new List<CombineInstance>();
             var rnd = new System.Random(77);
-            Vector3 top = at + Vector3.up * 3.0f;
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 9; i++)
             {
-                float a = i * Mathf.PI * 2f / 7f;
-                float len = i == 0 ? 4.6f : 1.8f + (float)rnd.NextDouble() * 1.2f;
-                Vector3 b = i == 0 ? top : top + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 0.8f;
-                Quaternion lean = i == 0 ? Quaternion.identity : Quaternion.Euler(Mathf.Sin(a) * 20f, 0f, -Mathf.Cos(a) * 20f);
-                crystals.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(b + lean * Vector3.up * len * 0.5f, lean, new Vector3(0.45f, len, 0.45f)) });
+                float a = i * Mathf.PI * 2f / 9f;
+                float len = i == 0 ? 5.4f : 2.0f + (float)rnd.NextDouble() * 1.4f;
+                Vector3 b = i == 0 ? top : top + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 0.9f;
+                Quaternion lean = i == 0 ? Quaternion.identity : Quaternion.Euler(Mathf.Sin(a) * 22f, 0f, -Mathf.Cos(a) * 22f);
+                crystals.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(b + lean * Vector3.up * len * 0.5f, lean, new Vector3(0.5f, len, 0.5f)) });
             }
             LakeGround.AddCombined(kit.Parent, "Crystals", crystals, crystalMat);
+            LakeGround.AddCombined(kit.Parent, "Crystal Vein", veinParts, crystalMat);
             for (int i = 0; i < 9; i++)
             {
                 float a = i * Mathf.PI * 2f / 9f + 0.3f;
-                Ball(kit.StoneParts, kit, top + new Vector3(Mathf.Cos(a) * 2.8f, 1.2f + 0.9f * Mathf.Sin(i * 1.9f) + 1.2f, Mathf.Sin(a) * 2.8f), Vector3.one * (0.22f + 0.1f * (i % 3)));
+                Ball(kit.StoneParts, kit, top + new Vector3(Mathf.Cos(a) * 3.2f, 0.6f + 0.9f * Mathf.Sin(i * 1.9f) + 1.4f, Mathf.Sin(a) * 3.2f), Vector3.one * (0.24f + 0.1f * (i % 3)));
             }
-            PointLight(kit, top + Vector3.up * 3.5f, new Color(0.45f, 0.95f, 1f), 16f, 1.6f);
+            // a ring of rune obelisks round the tree, each topped with a glowing cap, and a carved rune circle on the ground
+            for (int i = 0; i < 7; i++)
+            {
+                float a = i / 7f * Mathf.PI * 2f + 0.2f;
+                if (Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, 0f)) < 24f) continue;
+                Vector3 p = f.Local(Mathf.Cos(a) * 8.5f, Mathf.Sin(a) * 8.5f);
+                float oy = f.Yaw - a * Mathf.Rad2Deg;
+                Box(kit, "Obelisk", p + Vector3.up * 1.6f, new Vector3(0.7f, 3.4f, 0.7f), oy, kit.Stone);
+                Ball(kit.GlowParts, kit, p + Vector3.up * 3.55f, new Vector3(0.5f, 0.6f, 0.5f));
+                for (int k = 0; k < 4; k++) Ball(kit.GlowParts, kit, p + Vector3.up * (0.7f + k * 0.6f) + (Quaternion.Euler(0f, oy, 0f) * Vector3.right) * 0.38f, new Vector3(0.04f, 0.25f, 0.2f), oy);
+            }
+            for (int i = 0; i < 36; i++)
+            {
+                float a = i / 36f * Mathf.PI * 2f;
+                if (Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, 0f)) < 14f) continue;
+                Vector3 p = f.Local(Mathf.Cos(a) * 6.0f, Mathf.Sin(a) * 6.0f);
+                Ball(kit.GlowParts, kit, p + Vector3.up * 0.05f, new Vector3(0.16f, 0.03f, 0.05f), f.Yaw - a * Mathf.Rad2Deg + 90f);
+            }
+            PointLight(kit, top + Vector3.up * 3.5f, new Color(0.45f, 0.95f, 1f), 18f, 1.7f);
         }
 
-        // ---- Quần Thể: the barn ------------------------------------------------------------------------
+        // ---- Quần Thể -------------------------------------------------------------------------------
 
-        static void Barn(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
+        static void MotherTree(Kit kit, CityLayout.ClassHouse h)
         {
-            // a long vault (a tunnel of earth and wood) lying along the front axis, open at the front end
-            var path = new List<Vector3>();
-            for (int i = 0; i <= 8; i++) path.Add(L(-4f + i, 0f));
-            var vault = CaveMeshes.ArchTunnel(path, 5.2f, 3.6f, 14);
-            var mat = LakeGround.OpaqueMaterial("Lake_BarnWood", new Color(0.4f, 0.3f, 0.2f), 0.1f, true);
-            Solid(kit, "Barn Vault", vault, Vector3.zero, 0f, mat);
-            Box(kit, "Back Wall", L(-4.3f, 0f) + Vector3.up * 1.6f, new Vector3(0.4f, 3.4f, 5.2f), yaw, kit.Wood);
-            // ribs of wood along the vault, a ridge beam with crossed horns at the front
-            for (int i = 0; i <= 8; i += 2)
+            var f = Trunk(kit, h, 3.4f, 2.4f, 5.5f, 1.5f, 2.0f, new[] { 80f, -80f }, 3.6f, true, 7);
+            // three burrow doors round the foot of the trunk, small arches with a stone lintel, each with a hay bed outside
+            foreach (float deg in new[] { 105f, 180f, -105f })
             {
-                var rib = new Vector3[9];
-                for (int k = 0; k < rib.Length; k++) { float t = k / 8f * Mathf.PI; rib[k] = L(-4f + i, 0f) + side * Mathf.Cos(t) * 2.7f + Vector3.up * (Mathf.Sin(t) * 3.7f - (k == 0 || k == 8 ? 0.5f : 0f)); }
-                Tube(kit.WoodParts, kit, rib, 0.16f, 0.14f, 6, 0.08f);
+                Vector3 b = f.Surface(deg, 0f, 0.15f);
+                Vector3 dir = b - f.At; dir.y = 0f; dir.Normalize();
+                Vector3 sd = Vector3.Cross(Vector3.up, dir);
+                float by = Mathf.Atan2(-dir.z, dir.x) * Mathf.Rad2Deg;
+                Box(kit, "Burrow Lintel", b + Vector3.up * 1.2f + dir * 0.05f, new Vector3(0.5f, 0.3f, 1.5f), by, kit.Stone);
+                foreach (float s in new[] { -1f, 1f }) Box(kit, "Burrow Jamb", b + sd * s * 0.65f + Vector3.up * 0.55f + dir * 0.05f, new Vector3(0.45f, 1.1f, 0.35f), by, kit.Stone);
+                Ball(kit.GlowParts, kit, b + Vector3.up * 0.5f - dir * 0.2f, new Vector3(0.22f, 0.18f, 0.22f));
+                Ball(kit.MossParts, kit, b + dir * 1.6f + Vector3.up * 0.15f, new Vector3(1.6f, 0.4f, 1.1f));
             }
-            Tube(kit.WoodParts, kit, new[] { L(-4f, 0f) + Vector3.up * 3.75f, L(4.6f, 0f) + Vector3.up * 3.75f }, 0.14f, 0.14f, 6, 0.05f);
-            Tube(kit.WoodParts, kit, new[] { L(4.6f, 0f) + Vector3.up * 3.6f, L(5.5f, 0f) + Vector3.up * 5.0f + side * 0.7f }, 0.09f, 0.04f, 5);
-            Tube(kit.WoodParts, kit, new[] { L(4.6f, 0f) + Vector3.up * 3.6f, L(5.5f, 0f) + Vector3.up * 5.0f - side * 0.7f }, 0.09f, 0.04f, 5);
-            // the pen in front: a round fence of posts and rails, with three dens inside
-            for (int i = 0; i < 18; i++)
+            // a corral of great root arches enclosing the yard in front
+            for (int i = 0; i < 7; i++)
             {
-                float a = i / 18f * Mathf.PI * 2f, an = (i + 1) / 18f * Mathf.PI * 2f;
-                Vector3 b = L(10.5f + Mathf.Cos(a) * 4.8f, Mathf.Sin(a) * 4.8f), nb = L(10.5f + Mathf.Cos(an) * 4.8f, Mathf.Sin(an) * 4.8f);
-                if (Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, 180f)) < 22f) continue;   // the pen's gate faces the barn
-                Tube(kit.WoodParts, kit, new[] { b - Vector3.up * 0.2f, b + Vector3.up * 1.2f }, 0.1f, 0.08f, 5);
-                Tube(kit.WoodParts, kit, new[] { b + Vector3.up * 0.5f, nb + Vector3.up * 0.5f }, 0.045f, 0.045f, 4, 0f);
-                Tube(kit.WoodParts, kit, new[] { b + Vector3.up * 0.95f, nb + Vector3.up * 0.95f }, 0.045f, 0.045f, 4, 0f);
+                float a = Mathf.Lerp(-110f, 110f, i / 6f);
+                if (Mathf.Abs(a) < 22f) continue;
+                Vector3 c = f.Local(Mathf.Cos(a * Mathf.Deg2Rad) * 11f + 3f, Mathf.Sin(a * Mathf.Deg2Rad) * 10f);
+                Vector3 tang = (Quaternion.Euler(0f, f.Yaw, 0f) * new Vector3(-Mathf.Sin(a * Mathf.Deg2Rad), 0f, Mathf.Cos(a * Mathf.Deg2Rad))).normalized;
+                Vector3 p0 = c - tang * 1.5f, p1 = c + tang * 1.5f;
+                p0.y = LakeGround.GroundY(p0.x, p0.z); p1.y = LakeGround.GroundY(p1.x, p1.z);
+                Tube(kit.BarkParts, kit, RootMeshes.ArchPath(p0, p1, 2.6f, ++kit.Seed, 0.5f, 10, 0.5f), 0.4f, 0.28f, 8, 0.25f);
+                Ball(kit.MossParts, kit, (p0 + p1) * 0.5f + Vector3.up * 2.4f, new Vector3(1.4f, 0.5f, 0.8f));
             }
             for (int i = 0; i < 3; i++)
             {
                 float a = i * 2.1f + 0.4f;
-                Vector3 m = L(10.5f + Mathf.Cos(a) * 2.2f, Mathf.Sin(a) * 2.2f);
-                Ball(kit.MossParts, kit, m, new Vector3(1.5f, 0.6f, 1.3f), i * 40f);
-                Ball(kit.GlowParts, kit, m + Vector3.up * 0.15f - fwd * 0.6f, new Vector3(0.2f, 0.16f, 0.2f));
+                Vector3 m = f.Local(8f + Mathf.Cos(a) * 2.6f, Mathf.Sin(a) * 2.6f);
+                Ball(kit.MossParts, kit, m, new Vector3(1.7f, 0.7f, 1.4f), i * 40f);
+                Ball(kit.GlowParts, kit, m + Vector3.up * 0.2f - f.Fwd * 0.7f, new Vector3(0.2f, 0.16f, 0.2f));
             }
-            Vector3 bell = L(6.5f, -4.2f);
-            Tube(kit.WoodParts, kit, new[] { bell - Vector3.up * 0.2f, bell + Vector3.up * 2.6f, bell + Vector3.up * 3.1f + side * 0.7f }, 0.14f, 0.08f, 6);
-            Ball(kit.StoneParts, kit, bell + Vector3.up * 2.75f + side * 0.7f, new Vector3(0.4f, 0.5f, 0.4f));
-            Tube(kit.WoodParts, kit, new[] { L(6.2f, 4.0f) + Vector3.up * 0.3f, L(7.6f, 4.0f) + Vector3.up * 0.3f }, 0.32f, 0.3f, 8, 0.05f);
-            for (int i = 0; i < 4; i++) Ball(kit.MossParts, kit, L(-2.5f + i * 1.6f, 1.6f) + Vector3.up * 0.3f, new Vector3(1.2f, 0.5f, 0.9f), i * 30f);   // hay inside
+            Vector3 bell = f.Local(5.5f, -5f);
+            Tube(kit.WoodParts, kit, new[] { bell - Vector3.up * 0.2f, bell + Vector3.up * 3.0f, bell + Vector3.up * 3.6f + f.Side * 0.8f }, 0.17f, 0.09f, 6);
+            Ball(kit.StoneParts, kit, bell + Vector3.up * 3.15f + f.Side * 0.8f, new Vector3(0.5f, 0.6f, 0.5f));
+            Tube(kit.WoodParts, kit, new[] { f.Local(5.2f, 5.2f) + Vector3.up * 0.35f, f.Local(6.9f, 5.2f) + Vector3.up * 0.35f }, 0.38f, 0.34f, 8, 0.05f);
         }
 
-        // ---- Dưỡng Thể: the petal pavilion ------------------------------------------------------------
+        // ---- Dưỡng Thể ------------------------------------------------------------------------------
 
-        static void Pavilion(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
+        static void BloomTree(Kit kit, CityLayout.ClassHouse h)
         {
-            Drum(kit, "Floor", at - Vector3.up * 0.35f, 4.4f, 0.65f, kit.Stone);
+            var f = Trunk(kit, h, 3.0f, 2.0f, 5.2f, 1.4f, 1.9f, new[] { 75f, -75f, 160f, -160f }, 3.2f, false, 6);
+            Vector3 top = f.At + Vector3.up * 5.2f;
             var petals = LakeGround.OpaqueMaterial("Lake_PetalSpot", new Color(0.78f, 0.95f, 0.78f), 0.3f, true, new Color(0.08f, 0.25f, 0.12f));
             var petalParts = new List<CombineInstance>();
-            // six slender pillars and a roof of eight great petals meeting in a bud
-            for (int i = 0; i < 6; i++)
+            // a canopy of huge petals opening from the top, with a glowing bud, and vines hanging from their tips
+            for (int i = 0; i < 9; i++)
             {
-                float a = i / 6f * Mathf.PI * 2f;
-                Vector3 b = at + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 3.9f;
-                Tube(kit.BarkParts, kit, new[] { b - Vector3.up * 0.2f, b + Vector3.up * 2.0f + new Vector3(-Mathf.Cos(a), 0f, -Mathf.Sin(a)) * 0.2f, b + Vector3.up * 4.0f + new Vector3(-Mathf.Cos(a), 0f, -Mathf.Sin(a)) * 0.9f }, 0.24f, 0.16f, 8, 0.2f);
-            }
-            for (int i = 0; i < 8; i++)
-            {
-                float a = i / 8f * Mathf.PI * 2f;
+                float a = i / 9f * Mathf.PI * 2f;
                 Vector3 dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
-                Quaternion tilt = Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(-28f, 0f, 0f);
-                petalParts.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(at + Vector3.up * 4.9f + dir * 2.1f, Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(-24f, 0f, 0f), new Vector3(1.9f, 0.14f, 4.4f)) });
+                petalParts.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(top + dir * 2.6f + Vector3.up * 1.4f, Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(-32f, 0f, 0f), new Vector3(2.1f, 0.14f, 5.2f)) });
+                var vine = FloraMeshes.VinePath(top + dir * 5.0f + Vector3.up * 0.4f, 2.4f + 0.5f * (i % 3), 22000 + i, 0.2f, 7);
+                Tube(kit.MossParts, kit, vine, 0.05f, 0.025f, 4, 0f);
             }
-            petalParts.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(at + Vector3.up * 5.9f, Quaternion.identity, new Vector3(1.4f, 1.8f, 1.4f)) });
+            petalParts.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(top + Vector3.up * 2.4f, Quaternion.identity, new Vector3(1.6f, 2.2f, 1.6f)) });
             LakeGround.AddCombined(kit.Parent, "Petals", petalParts, petals);
-            // the healing spring in the middle
+            Ball(kit.GlowParts, kit, top + Vector3.up * 2.5f, new Vector3(0.9f, 1.2f, 0.9f));
+            // the healing spring among the roots in front, in a ring of stones, and glowing herb beds
+            Vector3 spring = f.Local(6.0f, -4.6f);
             var water = LakeWater.TranslucentMaterial("Lake_HealingWater", null, new Color(0.45f, 1f, 0.85f, 0.6f), new Color(0.05f, 0.25f, 0.2f), 0.9f, (int)RenderQueue.Transparent + 2);
             var disc = new GameObject("Healing Spring");
             disc.transform.SetParent(kit.Parent, false);
-            disc.transform.position = at + Vector3.up * 0.42f;
-            disc.AddComponent<MeshFilter>().sharedMesh = WaterMeshes.Disc(1.5f, 0.4f);
+            disc.transform.position = spring + Vector3.up * 0.12f;
+            disc.AddComponent<MeshFilter>().sharedMesh = WaterMeshes.Disc(1.8f, 0.4f);
             disc.AddComponent<MeshRenderer>().sharedMaterial = water;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 12; i++)
             {
-                float a = i * Mathf.PI * 2f / 10f;
-                Ball(kit.StoneParts, kit, at + new Vector3(Mathf.Cos(a) * 1.65f, 0.4f, Mathf.Sin(a) * 1.65f), new Vector3(0.42f, 0.3f, 0.36f), i * 36f);
+                float a = i * Mathf.PI * 2f / 12f;
+                Ball(kit.StoneParts, kit, spring + new Vector3(Mathf.Cos(a) * 2.0f, 0.15f, Mathf.Sin(a) * 2.0f), new Vector3(0.5f, 0.34f, 0.42f), i * 30f);
             }
-            // glowing herb beds all round the outside, and lanterns hanging from the petals
             var herbs = LakeGround.OpaqueMaterial("Lake_HerbSpot", new Color(0.45f, 0.95f, 0.65f), 0.4f, false, new Color(0.18f, 0.7f, 0.4f));
             var stalks = new List<CombineInstance>(); var capsList = new List<CombineInstance>();
             var rnd = new System.Random(88);
-            for (int i = 0; i < 24; i++)
+            for (int i = 0; i < 26; i++)
             {
-                float a = (float)rnd.NextDouble() * Mathf.PI * 2f, d = 5.6f + (float)rnd.NextDouble() * 3.2f;
-                Vector3 p = at + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * d; p.y = LakeGround.GroundY(p.x, p.z);
-                FloraMeshes.Mushroom(21000 + i, 0.4f + (float)rnd.NextDouble() * 0.6f, out var st, out var cp, out _);
+                float a = (float)rnd.NextDouble() * Mathf.PI * 2f, d = 5.2f + (float)rnd.NextDouble() * 4.5f;
+                Vector3 p = f.At + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * d; p.y = LakeGround.GroundY(p.x, p.z);
+                FloraMeshes.Mushroom(21000 + i, 0.4f + (float)rnd.NextDouble() * 0.7f, out var st, out var cp, out _);
                 stalks.Add(new CombineInstance { mesh = st, transform = Matrix4x4.Translate(p) });
                 capsList.Add(new CombineInstance { mesh = cp, transform = Matrix4x4.Translate(p) });
             }
             LakeGround.AddCombined(kit.Parent, "Herb Stalks", stalks, LakeGround.OpaqueMaterial("Lake_MushroomStalk", new Color(0.93f, 0.89f, 0.78f), 0.3f, false));
             LakeGround.AddCombined(kit.Parent, "Herb Caps", capsList, herbs);
-            for (int i = 0; i < 8; i++)
-            {
-                float a = i / 8f * Mathf.PI * 2f + 0.2f;
-                Vector3 top = at + Vector3.up * 4.6f + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 3.2f;
-                Tube(kit.WoodParts, kit, new[] { top, top - Vector3.up * 1.0f }, 0.012f, 0.012f, 4, 0f);
-                Ball(kit.GlowParts, kit, top - Vector3.up * 1.1f, new Vector3(0.2f, 0.28f, 0.2f));
-            }
-            PointLight(kit, at + Vector3.up * 3f, new Color(0.7f, 1f, 0.8f), 12f, 1.2f);
+            Statue(kit, f.Local(7.5f, 3.4f), f.Yaw + 180f, 1.2f, true, false);   // a carved healer holding a lamp
+            PointLight(kit, top + Vector3.up * 2f, new Color(0.7f, 1f, 0.8f), 14f, 1.3f);
         }
 
-        // ---- Xạ Thể: the tower ---------------------------------------------------------------------------
+        // ---- Xạ Thể ---------------------------------------------------------------------------------
 
-        static void Tower(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
+        static void WatchTree(Kit kit, CityLayout.ClassHouse h)
         {
-            const float platform = 8.0f;
-            // a great trunk, wide at the foot, with a spiral stair winding round it
-            var trunk = new Vector3[8];
-            for (int k = 0; k < trunk.Length; k++) trunk[k] = at + Vector3.up * Mathf.Lerp(-0.5f, platform, k / 7f) + new Vector3(Mathf.Sin(k * 0.8f) * 0.12f, 0f, Mathf.Cos(k * 0.8f) * 0.12f);
-            Tube(kit.BarkParts, kit, trunk, 1.7f, 1.0f, 12, 0.2f);
-            var col = new GameObject("Trunk").AddComponent<CapsuleCollider>();
-            col.transform.SetParent(kit.Parent, false);
-            col.transform.position = at + Vector3.up * platform * 0.5f; col.radius = 1.4f; col.height = platform + 1f;
-            const int steps = 30;
+            const float height = 10.5f;
+            var f = Trunk(kit, h, 2.5f, 1.5f, height, 1.3f, 1.9f, new[] { 80f, -80f, 150f }, 4.0f, false, 6);
+            Vector3 top = f.At + Vector3.up * height;
+            // a stair carved round the outside of the trunk, step after step, up to a nest platform in the crown
+            const int steps = 34;
             for (int i = 0; i < steps; i++)
             {
-                float t = i / (float)steps, a = t * Mathf.PI * 2f * 2.2f;
-                Vector3 p = at + new Vector3(Mathf.Cos(a) * 2.5f, 0.3f + t * (platform - 0.3f), Mathf.Sin(a) * 2.5f);
-                p.y += Mathf.Max(0f, LakeGround.GroundY(at.x, at.z) - at.y);
-                var mesh = CaveMeshes.Disc(0.95f, 0.22f, 10);
+                float t = i / (float)steps, deg = 20f + t * 720f;
+                float y = 0.35f + t * (height - 0.9f);
+                Vector3 p = f.Surface(deg, y, 0.9f);
+                var mesh = CaveMeshes.Disc(1.05f, 0.24f, 10);
                 var go = new GameObject("Stair Step");
                 go.transform.SetParent(kit.Parent, false);
-                go.transform.position = p - Vector3.up * 0.2f;
-                go.transform.rotation = Quaternion.Euler(0f, -a * Mathf.Rad2Deg, 0f);
+                go.transform.position = p - Vector3.up * 0.22f;
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 go.AddComponent<MeshRenderer>().sharedMaterial = kit.Wood;
                 go.AddComponent<MeshCollider>().sharedMesh = mesh;
                 go.isStatic = true;
             }
-            var plat = CaveMeshes.Disc(3.4f, 0.35f, 28);
+            var plat = CaveMeshes.Disc(3.6f, 0.35f, 28);
             var pg = new GameObject("Lookout Platform");
             pg.transform.SetParent(kit.Parent, false);
-            pg.transform.position = at + Vector3.up * (platform - 0.1f);
+            pg.transform.position = top - Vector3.up * 0.1f;
             pg.AddComponent<MeshFilter>().sharedMesh = plat;
             pg.AddComponent<MeshRenderer>().sharedMaterial = kit.Wood;
             pg.AddComponent<MeshCollider>().sharedMesh = plat;
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < 18; i++)
             {
-                float a = i / 16f * Mathf.PI * 2f;
-                Vector3 b = at + Vector3.up * (platform + 0.25f) + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 3.2f;
-                Tube(kit.WoodParts, kit, new[] { b, b + Vector3.up * 1.1f }, 0.06f, 0.05f, 4, 0f);
+                float a = i / 18f * Mathf.PI * 2f;
+                Vector3 b = top + Vector3.up * 0.25f + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 3.4f;
+                Tube(kit.WoodParts, kit, new[] { b, b + Vector3.up * 1.2f }, 0.07f, 0.06f, 4, 0f);
             }
-            for (int i = 0; i < 4; i++)   // four roof posts and a mossy conical roof, a lantern under it
+            for (int i = 0; i < 5; i++)   // branches curving over the platform like a roof, with leaf clumps
             {
-                float a = i * Mathf.PI * 0.5f + 0.4f;
-                Vector3 b = at + Vector3.up * (platform + 0.25f) + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 2.7f;
-                Tube(kit.WoodParts, kit, new[] { b, b + Vector3.up * 3.0f }, 0.1f, 0.08f, 5);
+                float a = i * Mathf.PI * 2f / 5f;
+                Vector3 dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                var path = new[] { top + Vector3.up * 0.3f, top + dir * 1.2f + Vector3.up * 2.4f, top + dir * 3.4f + Vector3.up * 3.6f, top + dir * 5.2f + Vector3.up * 3.0f };
+                Tube(kit.BarkParts, kit, path, 0.34f, 0.1f, 7, 0.3f);
+                Ball(kit.MossParts, kit, path[2] + Vector3.up * 0.4f, new Vector3(2.4f, 0.8f, 2.4f));
             }
-            Ball(kit.MossParts, kit, at + Vector3.up * (platform + 3.7f), new Vector3(6.4f, 1.3f, 6.4f));
-            Tube(kit.WoodParts, kit, new[] { at + Vector3.up * (platform + 4.2f), at + Vector3.up * (platform + 6.2f) }, 0.07f, 0.05f, 4, 0f);
-            kit.ClothParts.Add(new CombineInstance { mesh = Quad(1.4f, 1.0f), transform = Matrix4x4.TRS(at + Vector3.up * (platform + 5.9f) + side * 0.7f, Quaternion.Euler(0f, yaw, 0f), Vector3.one) });
-            Ball(kit.GlowParts, kit, at + Vector3.up * (platform + 2.6f), new Vector3(0.3f, 0.4f, 0.3f));
-            // the archery range in front: a row of targets 10 to 20 m out, and a rack of bows
+            Ball(kit.GlowParts, kit, top + Vector3.up * 2.8f, new Vector3(0.3f, 0.4f, 0.3f));
+            // the archery range in front: targets 10 to 20 m out on carved posts, and a rack of bows
             for (int i = 0; i < 4; i++)
             {
-                Vector3 p = L(10f + i * 3.5f, -4f + i * 2.6f);
-                Tube(kit.WoodParts, kit, new[] { p - Vector3.up * 0.1f, p + Vector3.up * 1.1f }, 0.05f, 0.05f, 4, 0f);
-                Ball(kit.StoneParts, kit, p + Vector3.up * 1.15f, new Vector3(0.1f, 0.85f, 0.85f), yaw + 180f);
-                Ball(kit.GlowParts, kit, p + Vector3.up * 1.15f - fwd * 0.07f, new Vector3(0.05f, 0.25f, 0.25f), yaw + 180f);
+                Vector3 p = f.Local(10f + i * 3.4f, -4f + i * 2.6f);
+                Tube(kit.WoodParts, kit, new[] { p - Vector3.up * 0.1f, p + Vector3.up * 1.2f }, 0.07f, 0.06f, 5, 0f);
+                Ball(kit.StoneParts, kit, p + Vector3.up * 1.25f, new Vector3(0.12f, 0.95f, 0.95f), f.Yaw + 180f);
+                Ball(kit.GlowParts, kit, p + Vector3.up * 1.25f - f.Fwd * 0.08f, new Vector3(0.05f, 0.28f, 0.28f), f.Yaw + 180f);
             }
-            Vector3 rack = L(5f, 3.8f);
-            Tube(kit.WoodParts, kit, new[] { rack, rack + Vector3.up * 1.3f }, 0.08f, 0.07f, 5);
-            Tube(kit.WoodParts, kit, new[] { rack + side * 1.8f, rack + side * 1.8f + Vector3.up * 1.3f }, 0.08f, 0.07f, 5);
+            Vector3 rack = f.Local(5.5f, 4.2f);
+            Tube(kit.WoodParts, kit, new[] { rack, rack + Vector3.up * 1.4f }, 0.09f, 0.08f, 5);
+            Tube(kit.WoodParts, kit, new[] { rack + f.Side * 2.0f, rack + f.Side * 2.0f + Vector3.up * 1.4f }, 0.09f, 0.08f, 5);
             for (int i = 0; i < 4; i++)
             {
                 var bow = new Vector3[5];
-                for (int k = 0; k < 5; k++) { float t = k / 4f; bow[k] = rack + side * (0.25f + i * 0.4f) + Vector3.up * (0.1f + t * 1.1f) + fwd * Mathf.Sin(t * Mathf.PI) * 0.2f; }
-                Tube(kit.WoodParts, kit, bow, 0.025f, 0.025f, 4, 0f);
+                for (int k = 0; k < 5; k++) { float t = k / 4f; bow[k] = rack + f.Side * (0.3f + i * 0.45f) + Vector3.up * (0.1f + t * 1.2f) + f.Fwd * Mathf.Sin(t * Mathf.PI) * 0.22f; }
+                Tube(kit.WoodParts, kit, bow, 0.028f, 0.028f, 4, 0f);
             }
         }
 
-        // ---- Cấu Thể: the glasshouse --------------------------------------------------------------------
+        // ---- Cấu Thể --------------------------------------------------------------------------------
 
-        static void Glasshouse(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
+        static void ResinTree(Kit kit, CityLayout.ClassHouse h)
         {
-            const float r = 3.9f, H = 3.9f;
-            var glass = LakeWater.TranslucentMaterial("Lake_GlasshouseGel", null, new Color(0.7f, 0.95f, 0.9f, 0.32f), new Color(0.02f, 0.08f, 0.07f), 0.95f, (int)RenderQueue.Transparent + 3);
-            // a translucent dome with a doorway at the front, on a ring of stones, ribbed with roots
-            var shell = CaveMeshes.Shell(r, r * 0.9f, H, 40, 14, 31000, 0f);
-            WaterMeshes.RemoveTriangles(shell, v => v.x > 0f && Mathf.Abs(v.z) < 0.75f && v.y < 1.9f);
-            var go = Solid(kit, "Glass Dome", shell, at - Vector3.up * 0.15f, yaw, glass);
-            go.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
-            for (int i = 0; i < 28; i++)
+            var f = Trunk(kit, h, 3.2f, 2.3f, 5.6f, 1.4f, 1.9f, null, 0f, true, 5);
+            // big arched windows glazed with amber resin (translucent), a row round the trunk
+            var resin = LakeWater.TranslucentMaterial("Lake_AmberResin", null, new Color(0.95f, 0.65f, 0.2f, 0.55f), new Color(0.35f, 0.18f, 0.02f), 0.9f, (int)RenderQueue.Transparent + 3);
+            var panes = new List<CombineInstance>();
+            foreach (float deg in new[] { 70f, -70f, 140f, -140f, 180f })
             {
-                float a = i / 28f * Mathf.PI * 2f;
-                if (Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, 0f)) < 14f) continue;
-                Ball(kit.StoneParts, kit, L(Mathf.Cos(a) * (r + 0.1f), Mathf.Sin(a) * r * 0.9f) + Vector3.up * 0.2f, new Vector3(0.55f, 0.4f, 0.5f), i * 25f);
+                Vector3 c = f.Surface(deg, 2.9f, 0.06f);
+                Vector3 outward = c - f.At; outward.y = 0f; outward.Normalize();
+                Quaternion look = Quaternion.LookRotation(-outward, Vector3.up);
+                panes.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(c, look, new Vector3(1.0f, 1.5f, 0.12f)) });
+                var arch = new Vector3[7];
+                Vector3 across = Vector3.Cross(Vector3.up, outward);
+                for (int k = 0; k < arch.Length; k++) { float t = k / 6f * Mathf.PI; arch[k] = c + across * Mathf.Cos(t) * 0.62f + Vector3.up * (Mathf.Sin(t) * 0.9f - 0.2f) + outward * 0.1f; }
+                Tube(kit.StoneParts, kit, arch, 0.1f, 0.1f, 6, 0.05f);
             }
-            for (int m = 0; m < 8; m++)
-            {
-                float a0 = m / 8f * Mathf.PI * 2f;
-                if (Mathf.Abs(Mathf.DeltaAngle(a0 * Mathf.Rad2Deg, 0f)) < 24f) continue;
-                var rib = new Vector3[8];
-                for (int k = 0; k < rib.Length; k++)
-                {
-                    float t = k / 7f * Mathf.PI * 0.5f;
-                    rib[k] = L(Mathf.Cos(a0) * r * Mathf.Cos(t) * 1.01f, Mathf.Sin(a0) * r * 0.9f * Mathf.Cos(t) * 1.01f) + Vector3.up * (H * Mathf.Sin(t) * 1.01f - 0.1f);
-                }
-                Tube(kit.BarkParts, kit, rib, 0.16f, 0.1f, 6, 0.1f);
-            }
-            // inside: gel vats on stone plinths with glowing cores, root tubes up into the dome, a bench of jars
+            LakeGround.AddCombined(kit.Parent, "Resin Panes", panes, resin);
+            // a stone chimney, and tall stone stills joined by root pipes
+            Vector3 chim = f.Surface(-150f, 0f, 0.5f);
+            Drum(kit, "Chimney", chim - Vector3.up * 0.3f, 0.7f, 7.4f, kit.Stone);
+            Ball(kit.GlowParts, kit, chim + Vector3.up * 7.2f, new Vector3(0.5f, 0.3f, 0.5f));
             var gel = LakeWater.TranslucentMaterial("Lake_GelDome", null, new Color(0.72f, 0.86f, 0.50f, 0.5f), Color.black, 0.92f, (int)RenderQueue.Transparent + 1);
             var cores = LakeGround.OpaqueMaterial("Lake_GelCoreSpot", new Color(0.95f, 0.62f, 0.18f), 0.4f, false, new Color(0.9f, 0.5f, 0.12f));
             var vats = new List<CombineInstance>(); var coreParts = new List<CombineInstance>();
+            Vector3 prev = default;
             for (int i = 0; i < 5; i++)
             {
-                float a = i / 5f * Mathf.PI * 2f + 1.2f;
-                Vector3 p = L(Mathf.Cos(a) * 1.8f - 0.6f, Mathf.Sin(a) * 1.7f);
-                float rad = 0.6f + 0.12f * (i % 3);
-                Tube(kit.StoneParts, kit, new[] { p - Vector3.up * 0.2f, p + Vector3.up * 0.55f }, rad * 0.9f, rad * 0.85f, 10, 0f);
-                var profile = new List<Vector2> { new Vector2(0f, rad * 1.6f), new Vector2(0.55f * rad, rad * 1.5f), new Vector2(0.95f * rad, rad * 0.9f), new Vector2(rad, rad * 0.25f), new Vector2(rad * 0.95f, 0f) };
-                vats.Add(new CombineInstance { mesh = FloraMeshes.Lathe(profile, 14, rad * 0.5f, 23000 + i, 0.04f), transform = Matrix4x4.Translate(p + Vector3.up * 0.55f) });
-                coreParts.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(p + Vector3.up * (0.55f + rad * 0.7f), Quaternion.identity, Vector3.one * rad * 0.7f) });
-                Tube(kit.BarkParts, kit, new[] { p + Vector3.up * (0.55f + rad * 1.5f), p + Vector3.up * 2.4f, at + Vector3.up * (H - 0.3f) }, 0.06f, 0.04f, 5, 0.3f);
+                Vector3 p = f.Local(5.8f + (i % 2) * 2.4f, -5f + i * 2.5f);
+                float rad = 0.75f + 0.12f * (i % 3);
+                Drum(kit, "Plinth", p - Vector3.up * 0.2f, rad * 0.95f, 0.8f, kit.Stone);
+                var profile = new List<Vector2> { new Vector2(0f, rad * 1.7f), new Vector2(0.55f * rad, rad * 1.6f), new Vector2(0.95f * rad, rad * 0.95f), new Vector2(rad, rad * 0.25f), new Vector2(rad * 0.95f, 0f) };
+                vats.Add(new CombineInstance { mesh = FloraMeshes.Lathe(profile, 14, rad * 0.5f, 23000 + i, 0.04f), transform = Matrix4x4.Translate(p + Vector3.up * 0.6f) });
+                coreParts.Add(new CombineInstance { mesh = kit.Blob, transform = Matrix4x4.TRS(p + Vector3.up * (0.6f + rad * 0.75f), Quaternion.identity, Vector3.one * rad * 0.75f) });
+                if (i > 0) Tube(kit.BarkParts, kit, new[] { prev + Vector3.up * 1.7f, Vector3.Lerp(prev, p, 0.5f) + Vector3.up * 2.4f, p + Vector3.up * 1.7f }, 0.07f, 0.07f, 5, 0.1f);
+                prev = p;
             }
             LakeGround.AddCombined(kit.Parent, "Gel Vats", vats, gel);
             LakeGround.AddCombined(kit.Parent, "Vat Cores", coreParts, cores);
-            // outside: planters of glowing mushrooms along the front, a rain barrel
-            for (int i = 0; i < 6; i++)
-            {
-                Vector3 p = L(r + 1.4f + (i % 2) * 0.6f, -2.5f + i * 1.0f);
-                FloraMeshes.Mushroom(24000 + i, 0.4f + 0.1f * (i % 3), out var st, out var cp, out _);
-                kit.WoodParts.Add(new CombineInstance { mesh = st, transform = Matrix4x4.Translate(p) });
-                kit.GlowParts.Add(new CombineInstance { mesh = cp, transform = Matrix4x4.Translate(p) });
-            }
-            Drum(kit, "Barrel", L(2f, r + 1.5f) - Vector3.up * 0.1f, 0.5f, 1.0f, kit.Wood);
-            PointLight(kit, at + Vector3.up * 2f, new Color(0.7f, 1f, 0.85f), 12f, 1.3f);
+            Vector3 shelf = f.Local(3.8f, 5.6f);   // a shelf of jars
+            Tube(kit.WoodParts, kit, new[] { shelf + Vector3.up * 1.0f - f.Side * 1.4f, shelf + Vector3.up * 1.0f + f.Side * 1.4f }, 0.22f, 0.22f, 6, 0f);
+            Tube(kit.WoodParts, kit, new[] { shelf - f.Side * 1.4f, shelf - f.Side * 1.4f + Vector3.up * 1.0f }, 0.1f, 0.1f, 5);
+            Tube(kit.WoodParts, kit, new[] { shelf + f.Side * 1.4f, shelf + f.Side * 1.4f + Vector3.up * 1.0f }, 0.1f, 0.1f, 5);
+            for (int i = 0; i < 7; i++) Ball(kit.GlowParts, kit, shelf + Vector3.up * 1.4f + f.Side * (-1.2f + i * 0.4f), new Vector3(0.17f, 0.28f, 0.17f));
+            PointLight(kit, f.At + Vector3.up * 3f + f.Fwd * 3f, new Color(1f, 0.7f, 0.3f), 14f, 1.3f);
         }
 
-        // ---- Dã Thể: the hide tent and its camp -----------------------------------------------------------
+        // ---- Dã Thể ---------------------------------------------------------------------------------
 
-        static void Tent(Kit kit, Vector3 at, float yaw, Vector3 fwd, Vector3 side, System.Func<float, float, Vector3> L)
+        static void HollowLog(Kit kit, CityLayout.ClassHouse h)
         {
-            var canvas = LakeGround.OpaqueMaterial("Lake_TentCanvas", new Color(0.82f, 0.72f, 0.5f), 0.05f, true);
-            // a cone of stretched hide with a door flap, poles crossing out of the top
-            var profile = new List<Vector2> { new Vector2(3.4f, -0.1f), new Vector2(3.3f, 0.4f), new Vector2(2.6f, 1.4f), new Vector2(1.6f, 2.6f), new Vector2(0.7f, 3.5f), new Vector2(0.1f, 4.2f) };
-            var cone = FloraMeshes.Lathe(profile, 18, 1.5f, 32000, 0.03f);
-            WaterMeshes.RemoveTriangles(cone, v => v.x > 0f && Mathf.Abs(v.z) < 0.7f && v.y < 2.0f);
-            Solid(kit, "Tent", cone, at, yaw, canvas);
-            Tube(kit.WoodParts, kit, new[] { at + Vector3.up * 2.4f + side * -1.0f, at + Vector3.up * 5.4f + side * 0.3f }, 0.08f, 0.05f, 5);
-            Tube(kit.WoodParts, kit, new[] { at + Vector3.up * 2.4f + side * 1.0f, at + Vector3.up * 5.4f + side * -0.3f }, 0.08f, 0.05f, 5);
-            for (int i = 0; i < 8; i++)   // stakes and ropes round the skirt
+            // a huge hollow log lying along the front axis: open at the front end, sealed at the back; carved door-posts and runes
+            Quaternion rot = Quaternion.Euler(0f, h.Yaw, 0f);
+            Vector3 at = OnGround(h.Position.x, h.Position.y);
+            Vector3 fwd = rot * Vector3.right, side = rot * Vector3.forward;
+            System.Func<float, float, Vector3> L = (x, z) => { var p = at + fwd * x + side * z; return OnGround(p.x, p.z); };
+            const float r = 2.5f, len = 10f;
+            var profile = new List<Vector2>();
+            for (int i = 0; i <= 8; i++) profile.Add(new Vector2(r * (1f + 0.08f * Mathf.Sin(i * 1.1f)), i / 8f * len));
+            var tube = FloraMeshes.Lathe(profile, 28, len * 0.5f, ++kit.Seed, 0.035f);
+            // laid on its side: the lathe's top end (y = len) becomes the front (+x), its axis r above the ground
+            Quaternion lie = rot * Quaternion.Euler(0f, 0f, -90f);
+            Vector3 start = L(-len * 0.35f, 0f) + Vector3.up * (r * 0.92f);
+            Solid(kit, "Hollow Log", tube, start, lie, kit.Trunk);
+            Vector3 mouth = start + fwd * len;
+            // the sealed back, runes ringed round the open mouth, bark ridges along the log, a mossy top, broken branch stubs
+            Ball(kit.WoodParts, kit, start + fwd * 0.2f, new Vector3(0.7f, r * 2.0f, r * 2.0f), h.Yaw);
+            for (int i = 0; i < 14; i++)
             {
-                float a = i / 8f * Mathf.PI * 2f;
-                if (Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, 0f)) < 30f) continue;
-                Vector3 s = L(Mathf.Cos(a) * 4.6f, Mathf.Sin(a) * 4.6f);
-                Tube(kit.WoodParts, kit, new[] { s - Vector3.up * 0.1f, s + Vector3.up * 0.5f }, 0.05f, 0.04f, 4, 0f);
-                Tube(kit.WoodParts, kit, new[] { s + Vector3.up * 0.45f, L(Mathf.Cos(a) * 3.0f, Mathf.Sin(a) * 3.0f) + Vector3.up * 1.4f }, 0.015f, 0.015f, 4, 0f);
+                float a = i / 14f * Mathf.PI * 2f;
+                if (Mathf.Sin(a) < -0.7f) continue;
+                Vector3 c = mouth + side * Mathf.Cos(a) * (r + 0.1f) + Vector3.up * Mathf.Sin(a) * (r + 0.1f);
+                Ball(kit.GlowParts, kit, c - fwd * 0.2f, new Vector3(0.1f, 0.36f, 0.08f), h.Yaw);
             }
-            // the camp in front: a fire pit, a lean-to, a map post, a pile of gear and a hammock
-            Vector3 fire = L(7.5f, -0.5f);
+            for (int i = 0; i < 9; i++)
+            {
+                float a = (i / 9f - 0.5f) * Mathf.PI * 1.5f;
+                var path = new Vector3[6];
+                for (int k = 0; k < path.Length; k++) path[k] = start + fwd * (k / 5f * len) + side * Mathf.Sin(a) * r + Vector3.up * Mathf.Cos(a) * r;
+                Tube(kit.BarkParts, kit, path, 0.28f, 0.2f, 7, 0.25f);
+            }
+            Ball(kit.MossParts, kit, start + fwd * len * 0.5f + Vector3.up * (r * 0.95f), new Vector3(len * 0.8f, 0.55f, r * 1.1f), h.Yaw + 90f);
+            for (int i = 0; i < 4; i++)
+            {
+                float sgn = i % 2 == 0 ? 1f : -1f;
+                Vector3 b = start + fwd * (2f + i * 2.3f) + Vector3.up * r * 0.9f + side * 0.9f * sgn;
+                Tube(kit.BarkParts, kit, new[] { b, b + Vector3.up * 1.2f + side * 0.6f * sgn, b + Vector3.up * 2.0f + side * 0.9f * sgn }, 0.22f, 0.07f, 6, 0.3f);
+            }
+            foreach (float s in new[] { -1f, 1f })   // carved door-posts at the mouth
+            {
+                Vector3 p = mouth + side * s * (r + 0.7f);
+                p.y = LakeGround.GroundY(p.x, p.z);
+                Statue(kit, p + fwd * 0.8f, h.Yaw + 180f, 1.0f, true, false);
+            }
+            // the camp in front: fire pit with a warm light, lean-to, map post, gear pile, hammock
+            float cx = len * 0.65f;
+            Vector3 fire = L(cx + 3.5f, -0.5f);
             for (int i = 0; i < 9; i++)
             {
                 float a = i * Mathf.PI * 2f / 9f;
@@ -608,26 +745,26 @@ namespace Evolve.EditorTools
             Ball(kit.GlowParts, kit, fire + Vector3.up * 0.2f, new Vector3(0.7f, 0.3f, 0.7f));
             for (int i = 0; i < 3; i++) Tube(kit.WoodParts, kit, new[] { fire + new Vector3(Mathf.Cos(i * 2.1f), 0.15f, Mathf.Sin(i * 2.1f)) * 0.7f, fire + Vector3.up * 0.5f }, 0.07f, 0.05f, 4, 0f);
             PointLight(kit, fire + Vector3.up * 1.0f, new Color(1f, 0.6f, 0.25f), 12f, 1.4f);
-            Vector3 a0 = L(5.5f, -4.5f), a1 = L(5.5f, -7.5f);
-            Tube(kit.WoodParts, kit, new[] { a0 - Vector3.up * 0.2f, a0 + Vector3.up * 2.0f }, 0.1f, 0.09f, 5);
-            Tube(kit.WoodParts, kit, new[] { a1 - Vector3.up * 0.2f, a1 + Vector3.up * 2.0f }, 0.1f, 0.09f, 5);
+            Vector3 a0 = L(cx + 2.5f, -4.8f), a1 = L(cx + 2.5f, -7.8f);
+            Tube(kit.WoodParts, kit, new[] { a0 - Vector3.up * 0.2f, a0 + Vector3.up * 2.2f }, 0.12f, 0.1f, 5);
+            Tube(kit.WoodParts, kit, new[] { a1 - Vector3.up * 0.2f, a1 + Vector3.up * 2.2f }, 0.12f, 0.1f, 5);
             for (int i = 0; i < 5; i++)
             {
                 Vector3 e = Vector3.Lerp(a0, a1, i / 4f);
-                Tube(kit.BarkParts, kit, new[] { e + Vector3.up * 2.0f, e + fwd * 2.4f + Vector3.up * 0.3f }, 0.08f, 0.06f, 5, 0.1f);
+                Tube(kit.BarkParts, kit, new[] { e + Vector3.up * 2.2f, e + fwd * 2.6f + Vector3.up * 0.3f }, 0.09f, 0.06f, 5, 0.1f);
             }
-            Ball(kit.MossParts, kit, L(6.8f, -6.0f) + Vector3.up * 1.2f, new Vector3(2.4f, 0.25f, 3.6f), yaw);
-            Vector3 map = L(5.0f, 4.2f);
-            Tube(kit.WoodParts, kit, new[] { map - Vector3.up * 0.2f, map + Vector3.up * 2.2f }, 0.09f, 0.08f, 5);
-            Ball(kit.StoneParts, kit, map + Vector3.up * 1.8f - fwd * 0.12f, new Vector3(0.06f, 0.7f, 0.9f), yaw + 180f);
-            Vector3 pile = L(2.5f, 6.0f);
-            for (int i = 0; i < 5; i++) Ball(kit.WoodParts, kit, pile + new Vector3(Mathf.Sin(i * 2.2f) * 0.5f, 0.2f + 0.18f * (i % 3), Mathf.Cos(i * 1.7f) * 0.5f), new Vector3(0.5f, 0.3f, 0.4f), i * 55f);
-            Vector3 h0 = L(9.5f, 3.5f), h1 = L(9.5f, 7.0f);
-            Tube(kit.WoodParts, kit, new[] { h0 - Vector3.up * 0.2f, h0 + Vector3.up * 1.8f }, 0.11f, 0.09f, 5);
-            Tube(kit.WoodParts, kit, new[] { h1 - Vector3.up * 0.2f, h1 + Vector3.up * 1.8f }, 0.11f, 0.09f, 5);
+            Ball(kit.MossParts, kit, L(cx + 3.8f, -6.3f) + Vector3.up * 1.3f, new Vector3(2.6f, 0.28f, 3.8f), h.Yaw);
+            Vector3 map = L(cx + 2.0f, 4.4f);
+            Tube(kit.WoodParts, kit, new[] { map - Vector3.up * 0.2f, map + Vector3.up * 2.4f }, 0.1f, 0.09f, 5);
+            Ball(kit.StoneParts, kit, map + Vector3.up * 1.9f - fwd * 0.13f, new Vector3(0.07f, 0.8f, 1.0f), h.Yaw + 180f);
+            Vector3 pile = L(cx + 0.5f, 6.4f);
+            for (int i = 0; i < 6; i++) Ball(kit.WoodParts, kit, pile + new Vector3(Mathf.Sin(i * 2.2f) * 0.55f, 0.2f + 0.2f * (i % 3), Mathf.Cos(i * 1.7f) * 0.55f), new Vector3(0.55f, 0.32f, 0.44f), i * 55f);
+            Vector3 h0 = L(cx + 6.5f, 3.5f), h1 = L(cx + 6.5f, 7.2f);
+            Tube(kit.WoodParts, kit, new[] { h0 - Vector3.up * 0.2f, h0 + Vector3.up * 2.0f }, 0.12f, 0.1f, 5);
+            Tube(kit.WoodParts, kit, new[] { h1 - Vector3.up * 0.2f, h1 + Vector3.up * 2.0f }, 0.12f, 0.1f, 5);
             var sling = new Vector3[7];
-            for (int i = 0; i < sling.Length; i++) { float t = i / 6f; sling[i] = Vector3.Lerp(h0 + Vector3.up * 1.6f, h1 + Vector3.up * 1.6f, t) - Vector3.up * 0.7f * Mathf.Sin(t * Mathf.PI); }
-            Tube(kit.MossParts, kit, sling, 0.2f, 0.2f, 6, 0.05f);
+            for (int i = 0; i < sling.Length; i++) { float t = i / 6f; sling[i] = Vector3.Lerp(h0 + Vector3.up * 1.8f, h1 + Vector3.up * 1.8f, t) - Vector3.up * 0.8f * Mathf.Sin(t * Mathf.PI); }
+            Tube(kit.MossParts, kit, sling, 0.22f, 0.22f, 6, 0.05f);
         }
     }
 }
