@@ -82,3 +82,5 @@ Mỗi giai đoạn kết thúc bằng một bản **chơi thử được**. Ch�
 - [ ] Chốt các câu hỏi trong `docs/GDD.md`
 
 - [x] Bộ vật thể Blender bước 1: dây chuyền và 6 tảng đá có va chạm (chờ duyệt hình; `docs/superpowers/specs/2026-11-18-blender-props-kit-design.md`)
+
+- [x] Ánh sáng và nước đẹp hơn (`LakeLook`, shader `LakeWater`; chờ duyệt hình trong Unity)

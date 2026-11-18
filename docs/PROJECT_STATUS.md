@@ -358,3 +358,12 @@ Dựng lại cả hai scene trước. Chạy Test Runner (EditMode): thêm các 
 - Chưa làm: gỡ đá dựng bằng code trong `LakeGround` (chờ bạn duyệt hình, rồi báo phiên trang trí), các nhóm vật thể khác. Menu Props đã đọc `ZoneLayout.Zones` của bản đồ 500 m (phiên trang trí làm), bỏ qua phần trong hang lớn (cave), nước (đáy dưới mực nước) và đường mòn.
 
 Checklist: (1) thả 6 FBX vào `Assets/_Project/Models/Underroot/`, Console sạch, Test Runner xanh (`PropNamingTests`, `PropPlacementTests`); (2) chọn `Rock_3.fbx`: có Mesh Collider, chiều lớn nhất khoảng 1,6 m (cao khoảng 0,75 m); đá hiện màu xám có rêu xanh phủ mặt trên (shader `Evolve/RockVertexColor`, vật liệu `Rock_VC`; nếu thấy xám trơn thì báo tôi); (3) chạy Evolve → Dress Lake: Props hai lần, số đá như nhau; (4) đá nằm trên mặt đất, không trong nước, không chắn đường mòn; (5) slime chạm đá: dừng lại và đi vòng, không rung; (6) FPS bằng PerfOverlay; (7) chụp ảnh trong Unity gửi cho tôi.
+
+
+## 18. Ánh sáng và nước đẹp hơn: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Light and Water Look** (cũng là bước 15/15 của Rebuild Lake): bật Depth Texture của URP; đặt ambient ba tầng xanh lục tối và sương mũ 2 (tầm nhìn khoảng 220 m, `WaterLook`); dựng Volume hậu xử lý (Bloom, tương phản +8, bão hòa +10, Vignette 0,25, Tonemapping ACES) lưu ở `Settings/LakeLook.asset`; khoảng 24 đèn điểm không bóng cho nấm khổng lồ; đổi hai material nước sang shader `Evolve/LakeWater` (màu và độ mờ theo độ sâu, mép nước mờ dần, bọt nơi nước chạm đáy).
+- **Evolve → Restore Lake Look (undo)** trả mọi thứ về như trước (sương, ambient, depth texture, shader nước về URP Lit, xóa Volume và đèn).
+- Hạn chế: không phản chiếu thật (chỉ viền sáng và vệt nắng), shader viết tay chưa biên dịch thử, sương áp cho cả scene (dưới nước `UnderwaterTint` vẫn ghi đè), chỉ bản đồ hồ 500 m (menu đã gắn vào Rebuild Lake).
+
+Checklist: (1) Console sạch, Test Runner xanh (có `WaterLookTests`); (2) chạy menu: nước không hồng hay đen; (3) mép nước mờ dần, vùng sâu đậm hơn, bọt ở chỗ nước chạm đá và bờ; (4) vũng khu 03 vẫn vàng lục; (5) có sương, ambient xanh lục, Bloom và Vignette không làm tối hoặc cháy; (6) nấm phát sáng chiếu lên đất; (7) bơi xuống hố: `UnderwaterTint` vẫn chạy, ra khỏi nước sương trở lại; (8) FPS bằng PerfOverlay không giảm quá 15%; (9) Restore trả về như cũ; (10) chụp ảnh trong Unity gửi cho tôi.
