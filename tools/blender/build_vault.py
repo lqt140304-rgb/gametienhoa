@@ -127,10 +127,10 @@ def _tendrils(bm, path, radii, rng, off, count):
         _, nrm, bn = kit.ring_frame(path, i)
         out = (nrm * math.cos(a) + bn * math.sin(a))
         base = p + out * radii[i] * 0.85
-        ln = rng.uniform(1.2, 3.0)
+        ln = rng.uniform(0.5, 1.3)   # short: the piece is scaled up on thick ribs, long tendrils would become spikes
         tip = base + out * rng.uniform(0.2, 0.7) + Vector((rng.uniform(-0.6, 0.6), rng.uniform(-0.4, 0.4), -ln))
         mid = (base + tip) * 0.5 + out * 0.25
-        r0 = rng.uniform(0.12, 0.24)
+        r0 = rng.uniform(0.10, 0.20)
         rings = kit.tube_rings(bm, [base, mid, tip], [r0, r0 * 0.75, 0.03], 7)
         kit.bridge_rings(bm, rings)
         kit.cap_ring(bm, rings[-1])
@@ -212,7 +212,7 @@ def build_segment(kind, seed):
     if kind == "straight":
         path = _straight_path(rng=rng)
         _root(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), off)
-        _tendrils(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), rng, off, 6)
+        _tendrils(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), rng, off, 4)
         _surface_detail(bm, path, _radii(len(path), ENTRY_RADIUS, EXIT_RADIUS), rng, off)
         LAST_EXITS = [(path[-1], Vector((1, 0, 0)), EXIT_RADIUS)]
     elif kind == "bend":
@@ -221,7 +221,7 @@ def build_segment(kind, seed):
         rc = SEGMENT_LENGTH / ang
         path = [Vector((rc * math.sin(ang * i / (n - 1)), rc * (1 - math.cos(ang * i / (n - 1))), 0.0)) for i in range(n)]
         _root(bm, path, _radii(n, ENTRY_RADIUS, EXIT_RADIUS), off)
-        _tendrils(bm, path, _radii(n, ENTRY_RADIUS, EXIT_RADIUS), rng, off, 6)
+        _tendrils(bm, path, _radii(n, ENTRY_RADIUS, EXIT_RADIUS), rng, off, 4)
         _surface_detail(bm, path, _radii(n, ENTRY_RADIUS, EXIT_RADIUS), rng, off)
         LAST_EXITS = [(path[-1], Vector((math.cos(ang), math.sin(ang), 0)), EXIT_RADIUS)]
     elif kind == "fork":
