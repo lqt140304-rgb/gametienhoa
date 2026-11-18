@@ -301,18 +301,24 @@ namespace Evolve.EditorTools
         /// so looking up through a hole you see the sky. The vault shell hides everything of the disc except what the hole shows.</summary>
         static int BuildSkyWindows(Transform canopy, Func<float, float, float> ceiling)
         {
-            var tex = LakeWater.PaintedTexture(Root + "/Models/VaultSky.png", 256, 256, (u, v) =>
+            // tileable (it repeats every 40 m on the discs): deep blue to teal by slow noise, thin cloud bands, a few bright stars
+            var tex = LakeWater.PaintedTexture(Root + "/Models/VaultSky2.png", 256, 256, (u, v) =>
             {
-                float cloud = LakeWater.TileableNoise(u * 7f, v * 7f, 7, 7) * 0.6f + LakeWater.TileableNoise(u * 19f, v * 19f, 19, 19) * 0.4f;
-                var top = new Color(0.07f, 0.10f, 0.24f);
-                var low = new Color(0.30f, 0.20f, 0.32f);
-                var c = Color.Lerp(top, low, Mathf.SmoothStep(0f, 1f, v));
-                c = Color.Lerp(c, new Color(0.55f, 0.50f, 0.65f), Mathf.Clamp01((cloud - 0.5f) * 2.2f) * 0.55f);
-                float h = Mathf.Abs(Mathf.Sin(u * 12.9898f * 50f + v * 78.233f * 50f) * 43758.5453f) % 1f;
-                if (h > 0.994f && cloud < 0.55f) c = Color.Lerp(c, Color.white, 0.9f);
+                float slow = LakeWater.TileableNoise(u * 3f, v * 3f, 3, 3);
+                float cloud = LakeWater.TileableNoise(u * 8f, v * 8f, 8, 8) * 0.55f + LakeWater.TileableNoise(u * 20f, v * 20f, 20, 20) * 0.45f;
+                var c = Color.Lerp(new Color(0.05f, 0.09f, 0.26f), new Color(0.20f, 0.32f, 0.48f), Mathf.SmoothStep(0.25f, 0.8f, slow));
+                c = Color.Lerp(c, new Color(0.62f, 0.55f, 0.75f), Mathf.Clamp01((cloud - 0.52f) * 3f) * 0.6f);
+                int px = Mathf.FloorToInt(u * 256f), py = Mathf.FloorToInt(v * 256f);
+                float h = Mathf.Abs(Mathf.Sin((px / 2) * 12.9898f + (py / 2) * 78.233f) * 43758.5453f) % 1f;   // a star is 2 x 2 pixels
+                if (h > 0.985f && cloud < 0.6f) c = Color.Lerp(c, Color.white, 0.95f);
                 c.a = 1f;
                 return c;
             });
+            if (tex != null)
+            {
+                var importer = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex));
+                if (importer != null && importer.wrapModeV != TextureWrapMode.Repeat) { importer.wrapModeV = TextureWrapMode.Repeat; importer.SaveAndReimport(); }
+            }
             var shader = Shader.Find("Sprites/Default");   // unlit, ignores fog and the vision colour fade
             var mat = new Material(shader) { name = "Lake_VaultSky", mainTexture = tex };
             AssetDatabase.DeleteAsset(Root + "/Materials/Lake_VaultSky.mat");
@@ -326,14 +332,14 @@ namespace Evolve.EditorTools
             {
                 float y = ceiling(sh.x, sh.y) - 0.5f;
                 var verts = new List<Vector3> { new Vector3(sh.x, y, sh.y) };
-                var uvs = new List<Vector2> { new Vector2((sh.x + 250f) / 500f, (sh.y + 250f) / 500f) };
+                var uvs = new List<Vector2> { new Vector2(sh.x / 40f, sh.y / 40f) };
                 var tris = new List<int>();
                 for (int i = 0; i < segs; i++)
                 {
                     float a = i * Mathf.PI * 2f / segs;
                     float px = sh.x + Mathf.Cos(a) * radius, pz = sh.y + Mathf.Sin(a) * radius;
                     verts.Add(new Vector3(px, y, pz));
-                    uvs.Add(new Vector2(Mathf.Clamp01((px + 250f) / 500f), Mathf.Clamp01((pz + 250f) / 500f)));
+                    uvs.Add(new Vector2(px / 40f, pz / 40f));
                     tris.Add(0); tris.Add(1 + (i + 1) % segs); tris.Add(1 + i);
                 }
                 var mesh = new Mesh { name = "Sky Window" };
