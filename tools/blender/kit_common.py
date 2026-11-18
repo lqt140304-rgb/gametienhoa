@@ -102,7 +102,12 @@ def render_preview(objects, path, angle, distance=3.2):
     for o in list(scene.collection.objects):
         if o.type in {"CAMERA", "LIGHT"} or o.name.startswith("_preview"):
             bpy.data.objects.remove(o, do_unlink=True)
-    size = max(max(bounds(o)) for o in objects if not o.name.endswith("_COL"))
+    shown = [o for o in objects if not o.name.endswith("_COL")]
+    size = max(max(bounds(o)) for o in shown)
+    pts = [o.matrix_world @ v.co for o in shown for v in o.data.vertices]
+    lo = mathutils.Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
+    hi = mathutils.Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    centre = (lo + hi) * 0.5
     ground = bpy.data.meshes.new("_preview_ground")
     gobj = bpy.data.objects.new("_preview_ground", ground)
     link(gobj)
@@ -110,6 +115,7 @@ def render_preview(objects, path, angle, distance=3.2):
     bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=size * 3)
     bm.to_mesh(ground)
     bm.free()
+    gobj.location = mathutils.Vector((centre.x, centre.y, min(0.0, lo.z - 0.05) if lo.z < -0.5 else 0.0))
     sun = bpy.data.objects.new("_preview_sun", bpy.data.lights.new("sun", "SUN"))
     sun.data.energy = 3.0
     sun.rotation_euler = (math.radians(50), math.radians(10), math.radians(35))
@@ -117,9 +123,10 @@ def render_preview(objects, path, angle, distance=3.2):
     cam = bpy.data.objects.new("_preview_cam", bpy.data.cameras.new("cam"))
     link(cam)
     d = size * distance
-    pos = {"front": (0, -d, size * 0.5), "side": (d, 0, size * 0.5), "top": (0, 0.001, d * 1.1)}[angle]
+    offs = {"front": (0, -d, size * 0.15), "side": (d, 0, size * 0.15), "top": (0, 0.001, d * 1.1)}[angle]
+    pos = centre + mathutils.Vector(offs)
     cam.location = pos
-    direction = -mathutils.Vector(pos) + mathutils.Vector((0, 0, size * 0.3))
+    direction = centre - pos
     cam.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
     scene.camera = cam
     for o in objects:
