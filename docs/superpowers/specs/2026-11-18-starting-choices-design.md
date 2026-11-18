@@ -11,6 +11,29 @@ Trạng thái: **đang thảo luận**, chưa phải thiết kế hoàn chỉnh.
 - **Lõi theo cơ chế** (đổi cách chơi), không thuần số liệu. **Khuyết Điểm** là khuyết điểm thật, **không kèm lợi ích nhỏ**. Lõi cho lợi thế rõ, Khuyết Điểm là mặt trái cùng chủ đề (hướng ví dụ: Màng Thẩm Thấu, Nhân Thần Tốc).
 - **Cách chọn = C (nối tiếp):** chọn Lõi trước, sau đó chọn Khuyết Điểm trong 3 cái **cùng chủ đề với Lõi đã chọn**.
 
+## Luật viết Khuyết Điểm (đã duyệt)
+1. Khuyết Điểm đánh vào **một trục khác**, không đánh vào tình huống Lõi phát huy.
+2. Lõi + Khuyết Điểm vẫn là **lợi ròng**: bỏ Khuyết Điểm đi thì Lõi vẫn rõ là tốt.
+3. Khuyết Điểm **làm người chơi để ý**, không làm họ thua; không biến mất sau cấp 20, không phạt nặng mọi trận.
+
+## Danh sách Lõi đầu tiên (bản nháp, chưa duyệt)
+Kho Khuyết Điểm dùng chung (số liệu tạm): Thân Dễ Vỡ (máu tối đa thấp hơn), Hồi Chậm (hồi năng lượng chậm), Đói Nhanh, Cảm Giác Cùn (tầm cảm nhận ngắn), Mô Nặng (di chuyển chậm hơn chút), Nhảy Thấp, Sợ Nhiệt, Sợ Lạnh, Sợ Độc, Hao Nền (năng lượng hao nền nhiều hơn).
+
+| Lõi | Cơ chế | 3 Khuyết Điểm (chọn 1) |
+|---|---|---|
+| Màng Thẩm Thấu | Đứng yên trong nước hoặc rêu thì hút dưỡng chất dần | Thân Dễ Vỡ · Cảm Giác Cùn · Sợ Nhiệt |
+| Nhân Thần Tốc | Nảy đúng nhịp liên tiếp thì tăng tốc theo chuỗi | Hao Nền · Thân Dễ Vỡ · Sợ Độc |
+| Nhân Ngụy Sắc | Đứng yên vài giây thì hòa vào nền | Hồi Chậm · Sợ Lạnh · Đói Nhanh |
+| Nhân Phản Chấn | Bị đánh trúng thì tích lực, đòn kế tiếp mạnh hơn | Mô Nặng · Đói Nhanh · Sợ Nhiệt |
+| Nhân Cộng Sinh | Ở gần đồng đội thì cả hai hồi máu nhanh hơn | Cảm Giác Cùn · Hồi Chậm · Sợ Độc |
+| Nhân Ăn Mòn | Chạm vật hữu cơ thì tiết dịch ăn dần, hút thêm dinh dưỡng | Thân Dễ Vỡ · Nhảy Thấp · Cảm Giác Cùn |
+| Nhân Tích Bào | Hấp thụ xong tích bào tử, nhả ra làm chậm kẻ địch | Nhảy Thấp · Đói Nhanh · Hồi Chậm |
+| Nhân Bám Dính | Bám vách và trần, trườn lên cao | Sợ Nhiệt · Thân Dễ Vỡ · Mô Nặng |
+| Nhân Dò Rung | Mặt đất rung báo vị trí sinh vật gần | Thân Dễ Vỡ · Hao Nền · Mô Nặng |
+| Nhân Dự Trữ | Khi no thì tích mỡ, về sau đói chậm lại | Nhảy Thấp · Sợ Lạnh · Mô Nặng |
+| Nhân Tái Cấu | Máu thấp thì tự co nhỏ lại, khó bị trúng | Hồi Chậm · Đói Nhanh · Cảm Giác Cùn |
+| Nhân Phát Quang | Phát sáng soi bóng tối, thu hút sinh vật nhỏ làm mồi | Thân Dễ Vỡ · Hao Nền · Sợ Độc |
+
 ## Đề xuất của Claude, chưa được duyệt
 - Chống trùng dùng chung kho Lõi cả phòng; cần khoảng 12–16 Lõi lúc đầu (phòng 8 người cần ≥ 24 nếu không cho nhìn lại sau khi người khác chọn).
 
