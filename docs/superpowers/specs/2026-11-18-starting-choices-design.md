@@ -39,7 +39,7 @@ Nguyên tắc: **Lõi tự chạy, đổi một luật của cơ thể; Dị Nă
 
 Đã duyệt: **Nhân Quen Đất** (đi lại một đường nhiều lần thì nhanh hơn trên đường đó).
 Đã duyệt: **Nhân Thích Nghi** (chịu lặp lại một loại sát thương môi trường thì kháng loại đó tăng dần, hết bị tác động thì giảm; Khuyết Điểm không dùng nhóm Sợ-).
-Sửa, **chờ duyệt**: **Nhân Giữ Gốc** = khi chết **không mất đồ** (người chơi chỉ có 3 mạng nên không quá mạnh). Còn cần chốt: "đồ" gồm những gì, có áp dụng ở lần chết thứ 3 không, Khuyết Điểm nặng hơn mức thường hay không.
+Đã duyệt: **Nhân Giữ Gốc** = khi chết **không mất cơ quan đang trang bị** (không áp dụng cho vật phẩm mang theo hay kho). Quyết định của Claude, chờ phản hồi: không áp dụng ở lần chết thứ 3 (hết mạng); Khuyết Điểm nặng hơn mức thường, kiểu cộng hai Khuyết Điểm nhẹ.
 Cần kiểm tra thêm: Nhân Phát Quang và Nhân Bám Dính có giống hành động bấm nút không.
 
 ## Đề xuất của Claude, chưa được duyệt
