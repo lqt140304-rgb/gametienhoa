@@ -108,11 +108,47 @@ namespace Evolve.EditorTools
                     go.transform.rotation = Quaternion.Euler(0f, s.YawDegrees, 0f);
                     float k = s.Size / Mathf.Max(0.01f, NominalSize(s.Variant));
                     go.transform.localScale = Vector3.one * k;
+                    EnsureCollision(go, total == 0);
                     total++;
                 }
             }
             EditorSceneManager.MarkSceneDirty(root.scene);
             Debug.Log($"Vật thể Blender: {total} tảng đá trong {areas.Count} khu.");
+        }
+
+        /// <summary>
+        /// Makes sure the placed rock is solid whatever the import did: every "_COL" child gets a MeshCollider (and no renderer);
+        /// if the FBX has no collider mesh, the rock's own mesh becomes the collider (a rock must never be walkable-through).
+        /// </summary>
+        static void EnsureCollision(GameObject go, bool log)
+        {
+            var filters = go.GetComponentsInChildren<MeshFilter>(true);
+            bool hasCollider = false;
+            foreach (var f in filters)
+            {
+                if (f.sharedMesh == null || !PropNaming.IsCollider(f.gameObject.name)) continue;
+                hasCollider = true;
+                var mc = f.GetComponent<MeshCollider>() ?? f.gameObject.AddComponent<MeshCollider>();
+                mc.sharedMesh = f.sharedMesh;
+                mc.convex = false;
+                var r = f.GetComponent<Renderer>();
+                if (r != null) r.enabled = false; // the simplified collider mesh is never drawn
+            }
+            if (!hasCollider)
+                foreach (var f in filters)
+                {
+                    if (f.sharedMesh == null) continue;
+                    var mc = f.GetComponent<MeshCollider>() ?? f.gameObject.AddComponent<MeshCollider>();
+                    mc.sharedMesh = f.sharedMesh;
+                    mc.convex = false;
+                }
+            foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, (StaticEditorFlags)(-1));
+            if (log)
+            {
+                var names = new List<string>();
+                foreach (var f in filters) names.Add($"{f.gameObject.name} ({(f.sharedMesh != null ? f.sharedMesh.triangles.Length / 3 : 0)} mặt, {(f.GetComponent<Renderer>() != null && f.GetComponent<Renderer>().enabled ? "vẽ" : "không vẽ")}, {(f.GetComponent<Collider>() != null ? "có va chạm" : "không va chạm")})");
+                Debug.Log("Cấu trúc đá mẫu " + go.name + ": " + string.Join("; ", names) + (hasCollider ? "" : " [KHÔNG thấy mesh _COL: dùng chính mesh đá làm va chạm]"));
+            }
         }
 
         static float NominalSize(int variant) => new[] { 0.3f, 0.6f, 1.0f, 1.6f, 2.4f, 3.2f }[Mathf.Clamp(variant, 0, 5)];
