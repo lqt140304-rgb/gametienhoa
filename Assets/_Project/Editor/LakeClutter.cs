@@ -96,7 +96,7 @@ namespace Evolve.EditorTools
                     float bank = Mathf.Clamp01(1f - Mathf.Abs(dw - 3.2f) / 3.2f);                       // the water's margin
                     float wild = 0.25f + 0.6f * macro;
 
-                    Put(maps, firstOf, Kind.Grass, x, z, onTrail * (wild * (1f - 0.8f * leaf) + 0.9f * moss) * 16f, 1);
+                    Put(maps, firstOf, Kind.Grass, x, z, (0.3f + 0.7f * onTrail) * ((0.3f + 0.7f * macro) * (1f - 0.4f * leaf) + 0.9f * moss) * 18f, 1);
                     Put(maps, firstOf, Kind.Reeds, x, z, onTrail * bank * bank * (0.4f + macro2) * 10f, 2);
                     Put(maps, firstOf, Kind.Fern, x, z, onTrail * (0.8f * moss + 0.9f * roots + 0.15f * macro) * 3.5f, 3);
                     Put(maps, firstOf, Kind.MossClump, x, z, onTrail * (1.2f * moss + 0.2f * macro2) * 2.5f, 4);
