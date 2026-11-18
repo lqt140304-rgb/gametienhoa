@@ -12,8 +12,7 @@ namespace Evolve.World
 
         // Post-processing values (kept in safe ranges by WaterLookTests: the cave must stay dark but readable, no blown highlights).
         public const float BloomThreshold = 0.9f, BloomIntensity = 0.5f, BloomScatter = 0.6f;
-        public const float Contrast = 8f, Saturation = 10f;
-        public const float VignetteIntensity = 0.25f, VignetteSmoothness = 0.4f;
+        public const float VignetteIntensity = 0.2f, VignetteSmoothness = 0.4f;
 
         const float FogMin = 0.002f, FogMax = 0.03f;
 

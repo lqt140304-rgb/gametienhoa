@@ -32,6 +32,7 @@ namespace Evolve.EditorTools
         {
             var terrain = Terrain.activeTerrain;
             if (terrain == null) { Debug.LogWarning("Không có Terrain trong scene: bỏ qua bước vật thể Blender."); return; }
+            PropInstaller.EnsureRocks(); // writes Rock_N.fbx from the tools/blender/out text copies when missing
             var prefabs = new List<GameObject>();
             for (int i = 0; i < 6; i++)
             {
