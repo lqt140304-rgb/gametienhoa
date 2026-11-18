@@ -90,7 +90,8 @@ namespace Evolve.Player
             if (!IsSwimming && ReadHop() && IsGrounded() && stats.State.TrySpendEnergy(stats.Config.HopEnergyCost))
             {
                 Vector3 dir = GetMoveDirection();
-                rb.AddForce(Vector3.up * hopForce + dir * hopForward, ForceMode.VelocityChange);
+                float k = Mathf.Sqrt(Mathf.Clamp(transform.lossyScale.y, 0.3f, 1.5f));   // a smaller slime hops proportionally lower (height grows with speed squared)
+                rb.AddForce(Vector3.up * hopForce * k + dir * hopForward * k, ForceMode.VelocityChange);
                 squashTarget = 1f; // eased in (see AnimateVisual), never an instant jump
             }
             AnimateVisual();

@@ -22,7 +22,10 @@ namespace Evolve.World
 
         void LateUpdate()
         {
-            bool now = SwimLogic.IsUnderwater(transform.position.y, ZoneLayout.WaterLevel, under);
+            Vector3 eye = transform.position;
+            // only over real water: the sinkhole and the gorge floor lie below the lake's level but are dry
+            bool overWater = ZoneLayout.CleanDepthAt(eye.x, eye.z) > 0f;
+            bool now = overWater && SwimLogic.IsUnderwater(eye.y, ZoneLayout.WaterLevel, under);
             if (now == under) return;
             under = now;
             if (under)

@@ -32,8 +32,8 @@ namespace Evolve.EditorTools
 
         /// <summary>Largest body scale that fits a Root Shelter (BodySize.ScaleFor(5) = 1.3; 6 organs = 1.36 does not fit).</summary>
         const float ShelterMaxScale = 1.3f;
-        /// <summary>Shelter entrance/interior width: real slime base diameter × max scale + 5 cm = 1.0 × 1.3 + 0.05 = 1.35 m.</summary>
-        static readonly float ShelterGap = P.SlimeRadius * 2f * ShelterMaxScale + 0.05f;
+        /// <summary>Shelter entrance/interior width: real slime base diameter × max scale + 5 cm (0.6 × 1.3 + 0.05 = 0.83 m).</summary>
+        static readonly float ShelterGap = P.SlimeRadius * P.SlimeScale * 2f * ShelterMaxScale + 0.05f;
 
         [MenuItem("Evolve/Build Underroot Lake")]
         public static void Build()
@@ -136,7 +136,7 @@ namespace Evolve.EditorTools
             // ---- Chân Rễ Cổ Thụ (north): 3 U-shaped root shelters (gap 1.35 m, ShelterZone inside), cool 18°C ----
             var roots = new GameObject("Chan Re Co Thu (Ancient Roots)").transform;
             Zone(roots, new Vector3(ZoneLayout.RootFoot.Center.x, 3f, ZoneLayout.RootFoot.Center.y), new Vector3(50f, 6f, 16f), 18f, "Chân Rễ Cổ Thụ");
-            for (int i = 0; i < 3; i++) Shelter(roots, new Vector3(ZoneLayout.RootFoot.Center.x - 16f + i * 16f, 0f, ZoneLayout.RootFoot.Center.y), root);
+            // (the slime shelters of this area are three of the treefolk's houses: Dress Lake: Treefolk City)
 
             // ---- Bãi Mùn Rễ (east): warm 26°C, 6 nutrients, 2 D dens ----
             var humusRoot = new GameObject("Bai Mun Re (Humus Bed)").transform;
@@ -465,7 +465,7 @@ namespace Evolve.EditorTools
         static void BuildLandmarks()
         {
             var parent = new GameObject("Landmarks").transform;
-            AddLandmark(parent, "RootFoot", Outward(ZoneLayout.RootFoot), new Color(0.32f, 0.22f, 0.14f));
+            // (no pillar for the Root Foot: the Great Hall is its landmark)
             AddLandmark(parent, "Humus", Outward(ZoneLayout.Humus), new Color(0.3f, 0.2f, 0.08f));
             AddLandmark(parent, "Spore", Outward(ZoneLayout.Spore), new Color(0.45f, 0.3f, 0.55f));
             AddLandmark(parent, "HuntEdge", Outward(ZoneLayout.HuntEdge), new Color(0.5f, 0.15f, 0.12f));

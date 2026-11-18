@@ -242,6 +242,12 @@ namespace Evolve.EditorTools
 
         /// <summary>Slime collider radius at BodyScale 1 (base diameter = 2 × this). Shelter gaps are sized from it.</summary>
         internal const float SlimeRadius = 0.5f;
+        /// <summary>
+        /// The whole slime (body, organs, collider) is built at this scale: 0.6 makes its base 0.6 m across, as in the concept
+        /// art (its collider radius is 0.5 before the scale). Lower it to shrink the slime, raise it to grow it; the camera,
+        /// the cave doors and the shelters follow, but run Evolve → Build Underroot Lake again after changing it.
+        /// </summary>
+        internal const float SlimeScale = 0.6f;
 
         /// <summary>Slime player + follow camera (Camera.main) + vision volume + HUD. Returns the slime.</summary>
         internal static GameObject CreatePlayer(SharedAssets shared, Vector3 position)
@@ -249,6 +255,7 @@ namespace Evolve.EditorTools
             // Slime
             var slime = new GameObject("Slime");
             slime.transform.position = position;
+            slime.transform.localScale = Vector3.one * SlimeScale;
             slime.AddComponent<SphereCollider>().radius = SlimeRadius;
             var rb = slime.AddComponent<Rigidbody>();
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -289,6 +296,14 @@ namespace Evolve.EditorTools
             cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;
             var follow = cam.gameObject.AddComponent<ThirdPersonCamera>();
             Set(follow, "target", slime.transform);
+            var followSo = new SerializedObject(follow);   // the camera sits closer to a smaller slime
+            followSo.FindProperty("distance").floatValue = 6f * Mathf.Max(0.5f, SlimeScale);
+            followSo.FindProperty("minDistance").floatValue = 2f * SlimeScale;
+            followSo.FindProperty("maxDistance").floatValue = 12f * Mathf.Max(0.5f, SlimeScale);
+            followSo.FindProperty("aimDistance").floatValue = 4.5f * Mathf.Max(0.5f, SlimeScale);
+            followSo.FindProperty("targetOffset").vector3Value = new Vector3(0f, 0.5f * SlimeScale, 0f);
+            followSo.FindProperty("eyeHeight").floatValue = 0.45f * SlimeScale;
+            followSo.ApplyModifiedPropertiesWithoutUndo();
             Set(controller, "cameraTransform", cam.transform);
 
             // Vision (global volume + fog)

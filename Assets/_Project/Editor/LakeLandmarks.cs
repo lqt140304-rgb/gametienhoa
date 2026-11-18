@@ -16,14 +16,17 @@ namespace Evolve.EditorTools
     ///  03 Bãi Mùn Rễ: a great hollow rotting log a slime can crawl through, bracket fungus and leaf drifts round it.
     ///  04 Vườn Bào Tử: a cluster of giant cream mushrooms (up to ~7 m) on the plateau.
     ///  The root bridge from the plateau (04) over the low ground to the ridge (06).
-    /// (05 and 06 come next.) Run again to rebuild.
+    ///  05 Khe Thủy Mạch: pale limestone boulders lining the gorge walls, small rapids of rocks and foam in the stream,
+    ///     a ring of mossy limestone round each deep pool.
+    ///  06 Rìa Săn Mồi: the root tunnel arch (4 m wide, 8 m high) where the hunter's way in leaves the ridge.
+    /// Run again to rebuild.
     /// </summary>
     public static class LakeLandmarks
     {
         const string Root = "Assets/_Project";
         const string DressedName = "Lake Landmarks (Dressed)";
-        /// <summary>Gap of the cave's slit: the widest slime that fits a Root Shelter (UnderrootLakeBuilder.ShelterGap).</summary>
-        const float SlitWidth = 1.35f, SlitHeight = 1.1f;
+        /// <summary>Gap of the cave's slit, as in the concept art: 0.9 m wide, 0.7 m high (a slime 0.6 m across fits, a grown one up to scale 1.4 too).</summary>
+        const float SlitWidth = 0.9f, SlitHeight = 0.7f;
 
         [MenuItem("Evolve/Dress Lake: Landmarks")]
         public static void Dress()
@@ -45,10 +48,12 @@ namespace Evolve.EditorTools
             RottingLog(root);
             GiantMushrooms(root);
             RootBridge(root, bark);
+            WaterVein(root);
+            RootArch(root);
 
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
-            Debug.Log("Đã dựng điểm nhấn khu 01 (bờ ổ gel), 02 (hang rễ), đường hầm sang hố 03, 03 (khúc gỗ mục), 04 (cụm nấm khổng lồ) và cầu rễ 04-06. Bấm Ctrl+S để lưu scene.");
+            Debug.Log("Đã dựng điểm nhấn cả 6 khu: bờ ổ gel, hang rễ, đường hầm, khúc gỗ mục, cụm nấm khổng lồ, cầu rễ, khe đá vôi và vòm rễ lối vào. Bấm Ctrl+S để lưu scene.");
         }
 
         // ---------------------------------------------------------------- 01: gel nursery banks
@@ -112,7 +117,7 @@ namespace Evolve.EditorTools
             Vector3 origin = new Vector3(c.x, floor - sink, c.y);
 
             // the shell, with a wide door toward the lake (east) and a hole to the north narrowed into a slit below
-            var shell = CaveMeshes.Shell(rx, rz, h, 72, 18, 202, 0.08f);
+            var shell = CaveMeshes.Shell(rx, rz, h, 120, 28, 202, 0.06f);
             WaterMeshes.RemoveTriangles(shell, v => v.x > 0f && Mathf.Abs(v.z) < 2.6f && v.y < sink + 3.6f);       // the door
             WaterMeshes.RemoveTriangles(shell, v => v.z > 0f && Mathf.Abs(v.x) < 1.6f && v.y < sink + 2.0f);       // the slit's hole
             var go = new GameObject("Cave Shell");
@@ -124,6 +129,20 @@ namespace Evolve.EditorTools
             mr.shadowCastingMode = ShadowCastingMode.TwoSided;
             go.AddComponent<MeshCollider>().sharedMesh = shell;   // solid: only the door and the slit lead in
             go.isStatic = true;
+
+            // the dome's layered skin: big overlapping bark plates over the smooth shell (not over the door, the slit or underground)
+            var plates = CaveMeshes.Shingles(rx, rz, h, 1.9f, 1.6f, 0.4f, 303,
+                c => c.y < sink + 0.4f
+                    || (c.x > rx * 0.65f && Mathf.Abs(c.z) < 6.5f && c.y < sink + 6f)
+                    || (c.z > rz * 0.65f && Mathf.Abs(c.x) < 4f && c.y < sink + 4f));
+            var plateGo = new GameObject("Cave Bark Plates");
+            plateGo.transform.SetParent(parent, false);
+            plateGo.transform.position = origin;
+            plateGo.AddComponent<MeshFilter>().sharedMesh = plates;
+            var plateRenderer = plateGo.AddComponent<MeshRenderer>();
+            plateRenderer.sharedMaterial = LakeTreefolkCity.ShingleMaterial();
+            plateRenderer.shadowCastingMode = ShadowCastingMode.TwoSided;
+            plateGo.isStatic = true;
 
             // the slit: root blocks narrow the hole to a gap only a slime fits through
             float wallZ = c.y + rz * Mathf.Cos(Mathf.Asin(Mathf.Clamp01(sink / h))) - 0.2f;
@@ -176,11 +195,11 @@ namespace Evolve.EditorTools
             if (humus != null) LakeGround.AddMesh(parent, "Humus Floor", humus, LakeGround.OpaqueMaterial("Lake_Humus", new Color(0.36f, 0.24f, 0.14f), 0.15f, false));
             var lightGo = new GameObject("Cave Glow");
             lightGo.transform.SetParent(parent, false);
-            lightGo.transform.position = new Vector3(c.x, floor + 4f, c.y);
+            lightGo.transform.position = new Vector3(c.x, floor + 9f, c.y);
             var l = lightGo.AddComponent<Light>();
             l.type = LightType.Point;
-            l.range = 20f;
-            l.intensity = 1.2f;
+            l.range = 50f;
+            l.intensity = 1.6f;
             l.color = new Color(1f, 0.72f, 0.42f);
             l.shadows = LightShadows.None;
         }
@@ -386,6 +405,121 @@ namespace Evolve.EditorTools
                 walk.transform.rotation = Quaternion.LookRotation(p1 - p0, Vector3.up);
                 walk.AddComponent<BoxCollider>().size = new Vector3(2.2f, 0.4f, Vector3.Distance(p0, p1) + 0.3f);
                 walk.isStatic = true;
+            }
+        }
+
+        // ---------------------------------------------------------------- 05: the limestone gorge
+
+        static void WaterVein(Transform root)
+        {
+            var parent = new GameObject("05 Limestone Gorge").transform;
+            parent.SetParent(root, false);
+            var rnd = new System.Random(5055);
+            var rocks = new List<(Mesh rock, Mesh moss)>();
+            for (int v = 0; v < 5; v++) rocks.Add((GroundMeshes.Rock(5060 + v, out var m, 0.8f), m));
+            var stone = new List<CombineInstance>();
+            var moss = new List<CombineInstance>();
+            void Rock(Vector3 at, Vector3 scale)
+            {
+                var r = rocks[rnd.Next(rocks.Count)];
+                var m = Matrix4x4.TRS(at, Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f), scale);
+                stone.Add(new CombineInstance { mesh = r.rock, transform = m });
+                moss.Add(new CombineInstance { mesh = r.moss, transform = m });
+            }
+
+            // boulders set into both walls of the gorge, along the stream where the gorge is
+            var line = ZoneLayout.StreamLine;
+            for (int i = 1; i < line.Length - 1; i++)
+            {
+                if (ZoneLayout.Influence(4, line[i].x, line[i].y) < 0.5f) continue;
+                Vector2 dir = (line[i + 1] - line[i - 1]).normalized, side = new Vector2(-dir.y, dir.x);
+                float hw = ZoneLayout.StreamHalfWidthAt(i / (float)(line.Length - 1));
+                foreach (float s in new[] { -1f, 1f })
+                    for (int k = 0; k < 2; k++)
+                    {
+                        Vector2 p = line[i] + side * s * (hw + 5f + k * 2.5f + (float)rnd.NextDouble() * 1.5f);
+                        if (ZoneLayout.DepthAt(p.x, p.y) > 0f || ZoneLayout.DistanceToPath(p.x, p.y) < ZoneLayout.PathWidth) continue;
+                        float size = 1.8f + (float)rnd.NextDouble() * 2.2f;
+                        Rock(new Vector3(p.x, LakeGround.GroundY(p.x, p.y) - size * 0.25f, p.y), new Vector3(size * 1.2f, size, size));
+                    }
+            }
+
+            // small rapids: a line of stones across the stream with white water round them, every so often
+            var foam = new List<CombineInstance>();
+            var foamMesh = WaterMeshes.Organic(WaterOutline.Make(2f, 2f, true, 5070, 0.4f, 24), 0.5f);
+            for (int i = 6; i < line.Length - 6; i += 9)
+            {
+                Vector2 dir = (line[i + 1] - line[i - 1]).normalized, side = new Vector2(-dir.y, dir.x);
+                float hw = ZoneLayout.StreamHalfWidthAt(i / (float)(line.Length - 1));
+                for (float o = -hw * 0.8f; o <= hw * 0.8f; o += 1.1f)
+                {
+                    Vector2 p = line[i] + side * o + dir * (float)(rnd.NextDouble() - 0.5);
+                    float size = 0.35f + (float)rnd.NextDouble() * 0.35f;
+                    Rock(new Vector3(p.x, -ZoneLayout.StreamDepth - 0.05f, p.y), new Vector3(size, size * 0.8f, size));
+                    foam.Add(new CombineInstance { mesh = foamMesh, transform = Matrix4x4.TRS(new Vector3(p.x, ZoneLayout.WaterLevel + 0.015f, p.y), Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f), Vector3.one * (0.6f + size)) });
+                }
+            }
+
+            // a ring of mossy limestone round each deep pool
+            for (int pool = 0; pool < ZoneLayout.PoolCenters.Length; pool++)
+            {
+                var shore = ZoneLayout.PoolShore(pool, 48);
+                for (int k = 0; k < shore.Length; k++)
+                {
+                    Vector2 p = shore[k] + (shore[k] - ZoneLayout.PoolCenters[pool]).normalized * (0.4f + (float)rnd.NextDouble() * 0.6f);
+                    if (ZoneLayout.CleanDepthAt(p.x, p.y) > ZoneLayout.StreamDepth + 0.01f) continue;   // never inside the pool itself
+                    float size = 0.6f + (float)rnd.NextDouble() * 0.9f;
+                    Rock(new Vector3(p.x, LakeGround.GroundY(p.x, p.y) - size * 0.3f, p.y), new Vector3(size * 1.2f, size * 0.7f, size));
+                }
+            }
+            LakeGround.AddCombined(parent, "Limestone", stone, LakeGround.OpaqueMaterial("Lake_Limestone", new Color(0.74f, 0.72f, 0.64f), 0.2f, false));
+            LakeGround.AddCombined(parent, "Limestone Moss", moss, LakeGround.OpaqueMaterial("Lake_RockMoss", new Color(0.30f, 0.50f, 0.22f), 0.1f, false));
+            LakeGround.AddCombined(parent, "Rapids Foam", foam, LakeWater.TranslucentMaterial("Lake_RapidsFoam", null, new Color(0.95f, 1f, 1f, 0.55f), Color.black, 0.6f, (int)RenderQueue.Transparent + 22));
+        }
+
+        // ---------------------------------------------------------------- 06: the root tunnel arch
+
+        static void RootArch(Transform root)
+        {
+            var parent = new GameObject("06 Root Arch").transform;
+            parent.SetParent(root, false);
+            // where the hunter's way in leaves the ridge, just before the rim cliff
+            Vector2 from = ZoneLayout.HuntEdge.Center, to = ZoneLayout.NorthEntry;
+            Vector2 dir = (to - from).normalized, side = new Vector2(-dir.y, dir.x);
+            Vector2 at = from + dir * Mathf.Min(Vector2.Distance(from, to) - 20f, 40f);
+            const float width = 4f, height = 8f;
+            var rnd = new System.Random(6066);
+            var roots = new List<CombineInstance>();
+            for (int i = 0; i < 6; i++)
+            {
+                float spread = ((float)rnd.NextDouble() - 0.5f) * 1.6f, lean = ((float)rnd.NextDouble() - 0.5f) * 2f;
+                Vector2 l = at + side * (width * 0.5f + 0.9f + (float)rnd.NextDouble() * 0.8f) + dir * spread;
+                Vector2 r = at - side * (width * 0.5f + 0.9f + (float)rnd.NextDouble() * 0.8f) + dir * spread;
+                var a = new Vector3(l.x, LakeGround.GroundY(l.x, l.y), l.y);
+                var b = new Vector3(r.x, LakeGround.GroundY(r.x, r.y), r.y);
+                var path = RootMeshes.ArchPath(a, b, height + 0.6f * i * 0.3f + (float)rnd.NextDouble() * 0.8f, 6070 + i, 0.8f, 18, 0.8f);
+                for (int k = 0; k < path.Length; k++) path[k] += new Vector3(dir.x, 0f, dir.y) * lean * Mathf.Sin(k / (float)(path.Length - 1) * Mathf.PI);
+                float radius = i < 2 ? 0.9f : 0.45f + (float)rnd.NextDouble() * 0.3f;
+                roots.Add(new CombineInstance { mesh = RootMeshes.RootTube(path, radius * 1.3f, radius, 6080 + i, 0.25f, 9), transform = Matrix4x4.identity });
+            }
+            // thin roots hanging from the top of the arch like a curtain
+            var top = new Vector3(at.x, LakeGround.GroundY(at.x, at.y) + height, at.y);
+            for (int i = 0; i < 9; i++)
+            {
+                Vector3 start = top + new Vector3(side.x, 0f, side.y) * (((float)rnd.NextDouble() - 0.5f) * width * 0.9f) + Vector3.down * 0.4f;
+                var hang = RootMeshes.BranchPath(start, Vector3.down, 2f + (float)rnd.NextDouble() * 3f, 0.3f, 6090 + i, 6);
+                roots.Add(new CombineInstance { mesh = RootMeshes.RootTube(hang, 0.09f, 0.03f, 6100 + i, 0.2f, 5), transform = Matrix4x4.identity });
+            }
+            LakeGround.AddCombined(parent, "Arch Roots", roots, LakeGround.OpaqueMaterial("Lake_DarkRoot", new Color(0.16f, 0.12f, 0.09f), 0.1f, false));
+            // the two legs are solid
+            foreach (float s in new[] { 1f, -1f })
+            {
+                Vector2 leg = at + side * s * (width * 0.5f + 1.2f);
+                var col = new GameObject("Arch Leg").AddComponent<CapsuleCollider>();
+                col.transform.SetParent(parent, false);
+                col.transform.position = new Vector3(leg.x, LakeGround.GroundY(leg.x, leg.y) + 2.5f, leg.y);
+                col.radius = 1f;
+                col.height = 5f;
             }
         }
     }

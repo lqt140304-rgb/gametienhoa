@@ -27,6 +27,30 @@ namespace Evolve.Tests.EditMode
             Assert.Greater(after, before * 0.9f);
         }
 
+        [Test] public void ShinglesLieJustOutsideTheDomeAndCanSkipADoor()
+        {
+            var all = CaveMeshes.Shingles(2f, 1.85f, 3f, 0.34f, 0.3f, 0.08f, 1, null);
+            Assert.Greater(all.vertexCount, 400);
+            foreach (var v in all.vertices)
+            {
+                Assert.IsFalse(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z));
+                float q = (v.x / 2f) * (v.x / 2f) + (v.y / 3f) * (v.y / 3f) + (v.z / 1.85f) * (v.z / 1.85f);
+                Assert.Greater(q, 0.97f, "never inside the dome");
+                Assert.Less(q, 1.2f, "never far outside it");
+            }
+            var noDoor = CaveMeshes.Shingles(2f, 1.85f, 3f, 0.34f, 0.3f, 0.08f, 1, c => c.x > 0f && Mathf.Abs(c.z) < 0.85f && c.y < 1.9f);
+            Assert.Less(noDoor.vertexCount, all.vertexCount);
+            foreach (var v in noDoor.vertices) Assert.IsFalse(v.x > 1.2f && Mathf.Abs(v.z) < 0.4f && v.y < 1.2f, "nothing across the doorway");
+        }
+
+        [Test] public void DiscIsASolidCylinder()
+        {
+            var mesh = CaveMeshes.Disc(4f, 0.25f, 32);
+            Assert.AreEqual(8f, mesh.bounds.size.x, 0.01f);
+            Assert.AreEqual(0.25f, mesh.bounds.size.y, 1e-4f);
+            Assert.AreEqual(0f, mesh.bounds.min.y, 1e-4f);
+        }
+
         [Test] public void TunnelArchesOverItsPath()
         {
             var path = new List<Vector3> { new Vector3(0f, 0f, 0f), new Vector3(0f, -1f, 10f), new Vector3(3f, -3f, 20f) };
