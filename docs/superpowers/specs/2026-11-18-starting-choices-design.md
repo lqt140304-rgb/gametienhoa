@@ -183,6 +183,8 @@ Cần kiểm tra khi cài đặt: chia thẻ bằng seed của host, gửi cho t
 ```
 Thẻ đang xem phóng lớn, hiện mô tả luật, giới hạn, ví dụ tình huống. Với Lõi nặng, ba lựa chọn Khuyết Điểm hiện dạng cặp. Có nút xem lại cả hai trước khi xác nhận. Người chơi xem được bộ thẻ của mình từ màn hình tải.
 
+Chi tiết thẻ (đã chốt): **tên Lõi ở trên, mô tả rút gọn ở dưới**; **bấm Tab để hiện chi tiết** (luật đầy đủ, giới hạn, 3 Khuyết Điểm đi kèm), không dùng rê chuột. Biểu tượng quả cầu **dùng tạm** (hình tròn đơn sắc theo chủ đề), làm bản chính thức sau.
+
 Ảnh tham khảo phong cách thẻ Lõi (do người thiết kế cung cấp): `docs/art/core-picker-reference.webp`. Hướng: ba thẻ dọc kiểu gel trong suốt, có biểu tượng quả cầu, tên và một dòng mô tả; **gọn và tinh tế hơn** ảnh mẫu, theo kiểu menu chọn lõi của TFT (thẻ nhỏ gọn, rê chuột thì nổi lên và hiện chi tiết). Tên Lõi trong ảnh (Tích Trữ, Đàn Hồi, Cộng Sinh) chỉ là minh họa, không thuộc danh sách chính thức.
 
 ## Đối chiếu với tài liệu gameplay V1.1 (cần sửa khi hợp nhất)
