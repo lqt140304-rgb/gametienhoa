@@ -283,10 +283,10 @@ namespace Evolve.EditorTools
                         float h = roof - ground;
                         if (h < 4f) continue;
                         var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[rnd.Next(prefabs.Count)], parent);
-                        go.transform.position = new Vector3(p.x, roof + 0.4f, p.y);
+                        go.transform.position = new Vector3(p.x, roof + 2.2f, p.y);   // its flat top sits well inside the roof shell, never under it
                         go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                         float w = (row == 0 ? 2.2f : row == 1 ? 2.8f : 3.4f) * (0.7f + 0.6f * (float)rnd.NextDouble());
-                        go.transform.localScale = new Vector3(w, (h + 0.4f) / 10f, w);
+                        go.transform.localScale = new Vector3(w, (h + 2.2f) / 10f, w);
                         foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
                         made++;
                     }
