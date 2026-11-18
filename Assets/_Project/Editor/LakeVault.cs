@@ -26,6 +26,7 @@ namespace Evolve.EditorTools
         const string EarthSheet = "Ceiling Earth";
         const string RibsName = "Vault Ribs";
         const string OldHangingRoots = "Hanging Roots";          // 28 plain smooth cylinders from the scene builder
+        const string PillarsName = "Vault Pillars";              // Blender replacements for the three smooth "Landmark" columns
         const string HangingName = "Vault Hanging Roots";       // their Blender replacement
         const int Seed = 11;
         const float Chunk = 64f;
@@ -56,6 +57,7 @@ namespace Evolve.EditorTools
             DestroyChild(parent, NewRoof);
             DestroyChild(parent, RibsName);
             DestroyChild(parent, HangingName);
+            DestroyChild(parent, PillarsName);
 
             Func<float, float, float> ceiling = MakeCeiling();
             var ribs = VaultLayout.Ribs(Seed, ceiling);
@@ -64,6 +66,7 @@ namespace Evolve.EditorTools
             int chunks = BuildShell(parent, ceiling, slots);
             int pieces = BuildRibs(parent, ribs, prefabs);
             int hanging = ReplaceHangingCylinders(parent);
+            hanging += ReplacePillars(parent);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
@@ -79,7 +82,9 @@ namespace Evolve.EditorTools
             DestroyChild(parent, NewRoof);
             DestroyChild(parent, RibsName);
             DestroyChild(parent, HangingName);
+            DestroyChild(parent, PillarsName);
             SetOldCylinders(true);
+            SetPillars(true);
             old.name = NewRoof;
             old.gameObject.SetActive(true);
             var earth = parent.Find(EarthSheet);
@@ -225,6 +230,64 @@ namespace Evolve.EditorTools
                 }
             }
             SetOldCylinders(false);
+            return made;
+        }
+
+        // ------------------------------------------------------------------ the three landmark pillars
+
+        static IEnumerable<Transform> OldPillars()
+        {
+            var lm = GameObject.Find("Landmarks");
+            if (lm == null) yield break;
+            foreach (Transform t in lm.transform) if (t.name.StartsWith("Landmark ")) yield return t;
+        }
+
+        /// <summary>Show or hide the smooth cylinders. Hidden ones stay as invisible colliders, narrowed to the width of the trunk that replaces them.</summary>
+        static void SetPillars(bool visible)
+        {
+            foreach (var t in OldPillars())
+            {
+                foreach (var r in t.GetComponentsInChildren<Renderer>(true)) r.enabled = visible;
+                var sc = t.localScale; t.localScale = new Vector3(visible ? 7f : 4f, sc.y, visible ? 7f : 4f);
+            }
+        }
+
+        /// <summary>Each landmark pillar becomes a trunk: one Blender root hung from the dome (thick at the top) and one standing from the ground
+        /// (thick at the foot), both stretched to meet in the middle.</summary>
+        static int ReplacePillars(Transform canopy)
+        {
+            var prefabs = new List<GameObject>();
+            for (int i = 0; i < 4; i++)
+            {
+                var p = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "HangRoot_" + i + ".fbx");
+                if (p != null) prefabs.Add(p);
+            }
+            if (prefabs.Count == 0) return 0;
+            var parent = new GameObject(PillarsName).transform;
+            parent.SetParent(canopy, false);
+            var rnd = new System.Random(Seed + 31);
+            int made = 0;
+            foreach (var t in OldPillars())
+            {
+                float x = t.position.x, z = t.position.z;
+                float ground = LakeGround.GroundY(x, z) - 1f;
+                float top = LakeLayout.CeilingY(x, z, 28f) + 0.5f;
+                float h = Mathf.Max(8f, top - ground);
+                for (int c = 0; c < 4; c++)
+                {
+                    bool fromTop = c % 2 == 0;
+                    float a = c * 1.57f + (float)rnd.NextDouble();
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[rnd.Next(prefabs.Count)], parent);
+                    go.transform.position = new Vector3(x + Mathf.Cos(a) * 0.7f, fromTop ? top : ground, z + Mathf.Sin(a) * 0.7f);
+                    var yaw = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                    go.transform.rotation = fromTop ? yaw : yaw * Quaternion.Euler(180f, 0f, 0f);   // the root hangs down from its origin; turn it over to stand
+                    float w = 2.6f - 0.4f * (c / 2);
+                    go.transform.localScale = new Vector3(w, h * 0.65f / 10f, w);
+                    foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, (StaticEditorFlags)(-1));
+                    made++;
+                }
+            }
+            SetPillars(false);
             return made;
         }
 
