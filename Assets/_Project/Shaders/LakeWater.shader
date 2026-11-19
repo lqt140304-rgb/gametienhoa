@@ -26,6 +26,13 @@ Shader "Evolve/LakeWater"
         _ReflectTint ("Reflection of the surroundings", Color) = (0.10, 0.17, 0.16, 1)
         _CausticStrength ("Caustics on the bed", Float) = 0.55
         _GlintStrength ("Glints from lights", Float) = 1.0
+        // fantasy (all off at 0, so the other lakes look as before)
+        _SparkleStrength ("Twinkling sparkles on the surface", Float) = 0
+        _SparkleScale ("Sparkles per metre", Float) = 2.4
+        _ShoreGlow ("Bioluminescent glow at the shore", Color) = (0, 0, 0, 1)
+        _BeamPool ("Pool of light under a beam: xyz centre, w radius", Vector) = (0, 0, 0, 0)
+        _BeamColor ("Beam pool colour", Color) = (1, 0.9, 0.65, 1)
+        _Shimmer ("Colour shimmer (drifting hue)", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -69,6 +76,12 @@ Shader "Evolve/LakeWater"
                 half4 _ReflectTint;
                 float _CausticStrength;
                 float _GlintStrength;
+                float _SparkleStrength;
+                float _SparkleScale;
+                half4 _ShoreGlow;
+                float4 _BeamPool;
+                half4 _BeamColor;
+                float _Shimmer;
             CBUFFER_END
 
             // set by MonochromeVision: 0 = full sight (default when unset), 1 = blind; centre + radius of the lit area around the character
@@ -98,6 +111,8 @@ Shader "Evolve/LakeWater"
                 float c = 1.0 - abs(v1 * 0.5 + v2 * 0.5);
                 return pow(saturate(c), 8.0);
             }
+
+            float hash21w(float2 p) { p = frac(p * float2(123.34, 456.21)); p += dot(p, p + 45.32); return frac(p.x * p.y); }
 
             half4 frag(Varyings i) : SV_Target
             {
@@ -165,6 +180,35 @@ Shader "Evolve/LakeWater"
                 LIGHT_LOOP_END
                 #endif
                 col += _Emission.rgb;
+
+                // ---- fantasy: a pool of light under the beam, twinkling sparkles, a glowing shore and a slowly drifting hue
+                float pool = 0.0;
+                if (_BeamPool.w > 0.0)
+                {
+                    float bd = distance(i.positionWS.xz, _BeamPool.xz) / _BeamPool.w;
+                    pool = smoothstep(1.0, 0.1, bd);
+                    float ring = 0.5 + 0.5 * sin(bd * 20.0 - _Time.y * 2.4);                     // slow rings spreading out from the middle
+                    float fine = Caustics(i.positionWS.xz * 2.2 + n.xz * 2.0, _Time.y * 1.4);
+                    col += _BeamColor.rgb * (pool * 0.5 + pool * pool * ring * 0.22 + pool * fine * 0.9);
+                }
+                if (_SparkleStrength > 0.0)
+                {
+                    float2 sp = i.positionWS.xz * _SparkleScale;
+                    float2 cellId = floor(sp);
+                    float hs = hash21w(cellId);
+                    float2 centre = float2(0.25 + 0.5 * hash21w(cellId + 7.7), 0.25 + 0.5 * hash21w(cellId + 3.1));
+                    float dist = length(frac(sp) - centre);
+                    float twinkle = pow(saturate(sin(_Time.y * (0.7 + hs * 1.8) + hs * 40.0)), 14.0);   // each sparkle flares now and then
+                    float spark = twinkle * smoothstep(0.12, 0.0, dist) * step(0.55, hs);
+                    col += half3(0.7, 1.0, 1.0) * spark * _SparkleStrength * (1.0 + pool * 3.0) * (0.45 + 0.55 * (1.0 - ndv));
+                }
+                float rim = exp(-depth * 2.6) * (0.6 + 0.4 * sin(_Time.y * 0.8 + i.positionWS.x * 0.55 + i.positionWS.z * 0.4));
+                col += _ShoreGlow.rgb * rim * saturate(_ShoreGlow.a);
+                if (_Shimmer > 0.0)
+                {
+                    float wave = 0.5 + 0.5 * sin(_Time.y * 0.22 + i.positionWS.x * 0.07 + i.positionWS.z * 0.05);
+                    col *= lerp(half3(1, 1, 1), lerp(half3(0.9, 1.1, 1.05), half3(1.3, 0.85, 1.3), wave), _Shimmer);   // teal drifting toward violet
+                }
 
                 // foam: ragged and moving, where the water is shallow (meets rocks and banks)
                 float foamNoise = saturate(0.55 + n1.x * 2.2 + n3.y * 1.5);

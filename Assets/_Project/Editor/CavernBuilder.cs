@@ -46,6 +46,7 @@ namespace Evolve.EditorTools
             BuildCeiling();
             BuildSkyAndSun();
             BuildBeam();
+            CavernMagic.Dress();    // enchanted light: dusty beam, pool of light and sparkles on the water, fireflies, spores
             BuildPlants();
             BuildOreAndRocks();
             CavernForage.Dress();   // what can be eaten: plants, mushrooms and four minerals

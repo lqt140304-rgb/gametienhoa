@@ -512,3 +512,16 @@ Checklist: (1) Console sạch (không lỗi shader); (2) Dress Lake: Water Reali
 - Test: `FloraManifestTests`, `FloraDownloadTests`, `SemiRealGradeTests` (chưa chạy trong Unity).
 
 Checklist: (1) Console sạch, Test Runner xanh; (2) Install Scanned Assets (cần mạng, vài phút); (3) Dress Lake: Scanned Flora Sample, Ctrl+S; (4) nhìn từ hai góc máy: chất lượng có tới mức bạn muốn không, lá không đen mặt sau, màu có hợp với phần còn lại không; (5) FPS tại góc máy ≥ 90.
+
+## 32. Ánh sáng huyền ảo và nước lung linh cho Hang Khởi Sinh: trạng thái và danh sách kiểm tra
+
+- Chủ dự án chuyển sang **bản đồ mới Hang Khởi Sinh** (cách tài sản quét tốn tài nguyên nên bỏ, sẽ làm cách đơn giản hơn sau); việc đầu: ánh sáng và nước huyền ảo hơn vì hiện chỉ có một chùm sáng mảnh chiếu vào mặt nước.
+- **Menu Evolve → Dress Cavern: Magic Light** (Build Slime Cavern cũng chạy nó; chạy lại được):
+  - **Chùm sáng** `Evolve/LightBeam`: thể tích ánh sáng trong không khí bụi, viền mềm (không còn ống tròn cứng), vệt đậm nhạt trôi chậm, hạt bụi lấp lánh, mờ dần ở gần nước; thêm 4 tia mảnh lọt qua mép lỗ.
+  - **Nước** `Evolve/LakeWater` (thuộc tính mới, mặc định tắt nên các hồ khác không đổi): vũng sáng dưới chùm có vòng sóng lan chậm và vân sáng tụ quang, lấp lánh nhấp nháy trên mặt, bờ phát quang xanh ngọc, sắc nước trôi từ xanh ngọc sang tím nhẹ.
+  - **Hạt sáng** `Evolve/GlowParticle` (cộng sáng, quầng mềm, nhấp nháy riêng từng hạt): bụi trong chùm sáng (300), đom đóm bay lang thang quanh bờ (110), đốm sáng mờ to bay lên màu ngọc, tím, hổ phách (90), ánh lấp lánh trên mặt hồ (170). Tổng khoảng 670 hạt, rẻ.
+  - **Không khí:** ambient và sương lạnh và xanh hơn một chút, Bloom mạnh hơn để các điểm sáng nở quầng.
+- Số liệu thuần (hướng chùm, vũng sáng, vòng đom đóm) ở `World/CavernMagicMath`, test `CavernMagicMathTests`.
+- Chưa biên dịch hay thấy trong Unity.
+
+Checklist: (1) Console sạch (không lỗi shader); (2) Evolve → Dress Cavern: Magic Light, Ctrl+S; (3) Play: chùm sáng mềm có bụi, đom đóm nhấp nháy quanh bờ, hồ lấp lánh và có vũng sáng dưới chùm; (4) FPS không tụt rõ; (5) nếu quá lòe loẹt hoặc quá tối, báo để chỉnh cường độ.
