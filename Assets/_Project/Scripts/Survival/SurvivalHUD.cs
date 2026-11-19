@@ -51,13 +51,13 @@ namespace Evolve.Survival
                     Toast($"Mở kỹ năng: {o.GrantedAbility.DisplayName}\n(phím {slot + 1}, từ {o.DisplayName})");
             if (organs != null)
             {
-                organs.Attached += o => Toast($"Mầm {o.DisplayName}: cần {o.GrowthExpRequired:0} EXP tiến hóa\n(G để đổ EXP hoặc đặt ưu tiên)");
-                organs.LeveledUp += (o, lv) => Toast($"{OrganTiers.Tag(o.Tier)} {o.DisplayName} lên cấp {lv}!");
-                organs.Completed += o => Toast($"Tiến hóa: {OrganTiers.Tag(o.Tier)} {o.DisplayName}!\n{o.Description}");
-                organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(rơi ra đất, nhặt lại phải nuôi từ đầu)");
+                organs.Attached += o => Toast($"Biến Hình: {OrganTiers.Tag(o.Tier)} {o.DisplayName}");
+                organs.LeveledUp += (o, lv) => Toast($"{OrganTiers.Tag(o.Tier)} {o.DisplayName} lên ★{lv}!");
+                organs.Completed += o => Toast($"{OrganTiers.Tag(o.Tier)} {o.DisplayName} đã thành hình\n{o.Description}");
+                organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(vẫn còn trong sổ Giải Mã, nặn lại ở hang trú)");
                 if (interactor != null) interactor.DroppedOnDeath += (kept, lost) =>
                 {
-                    if (kept + lost > 0) Toast($"Cơ quan rơi tại chỗ chết: còn {kept}, mất {lost}");
+                    if (lost > 0) Toast($"Xác đã mất: {lost} cơ quan tan theo");
                 };
             }
         }
@@ -95,9 +95,8 @@ namespace Evolve.Survival
                     GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Đã chết", dead);
                     dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
                     GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), $"Bấm R để hồi sinh (còn {s.Lives} mạng)", dead);
-                    if (interactor != null && interactor.LastDeathKept + interactor.LastDeathLost > 0)
-                        GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30),
-                            $"Cơ quan rơi tại chỗ chết: còn {interactor.LastDeathKept} trên đất, mất {interactor.LastDeathLost}. Quay lại để nhặt.", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30),
+                        "Túi Không Đáy đã rỗng. Cơ quan và những gì Giải Mã đã học vẫn còn.", dead);
                 }
             }
 
@@ -143,8 +142,7 @@ namespace Evolve.Survival
             var r = new Rect(Screen.width / 2f - 230, Screen.height - 320, 460, 190);
             var style = new GUIStyle(box) { alignment = TextAnchor.UpperCenter, fontSize = 15, wordWrap = true, richText = true };
             GUI.Box(r, $"<b><size=18>{title}</size></b>\n\n{body}", style);
-            string absorb = $"[F] Hấp thụ (+{interactor.CurrentAbsorbExp:0} EXP)";
-            string keys = accept != null ? $"[E] {accept}    {absorb}    [X] Bỏ qua" : $"{absorb}    [X] Bỏ qua";
+            string keys = accept != null ? $"[E] {accept}    [X] Bỏ qua" : "[X] Bỏ qua";
             var keyStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 16, fontStyle = FontStyle.Bold };
             GUI.Label(new Rect(r.x, r.yMax - 34, r.width, 26), keys, keyStyle);
         }

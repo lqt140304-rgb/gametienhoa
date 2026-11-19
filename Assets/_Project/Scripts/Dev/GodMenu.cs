@@ -126,10 +126,15 @@ namespace Evolve.DevTools
 
             Header("Cơ quan");
             growInstantly = GUILayout.Toggle(growInstantly, " Cho lớn đầy ngay khi nhận (Lv1)");
+            var slimeBody = player.GetComponent<Evolve.Swallow.SlimeBody>();
+            var swallower = player.GetComponent<Evolve.Swallow.Swallower>();
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"EXP tiến hóa: {s.EvolutionExp:0}", GUILayout.Width(140));
-            if (GUILayout.Button("+50 EXP")) s.AddExp(50f);
-            if (GUILayout.Button("+500 EXP")) s.AddExp(500f);
+            GUILayout.Label($"Khối: {(slimeBody != null ? slimeBody.Mass : 0f):0.#}", GUILayout.Width(140));
+            if (GUILayout.Button("+10 khối") && slimeBody != null) slimeBody.AddMass(10f);
+            if (GUILayout.Button("Học hết cơ quan") && swallower != null)
+                foreach (var o in AllOrgans())
+                    while (!swallower.Book.Knows(o))
+                        swallower.Book.Submit(new List<Evolve.Swallow.Gene> { new Evolve.Swallow.Gene(o, Evolve.Swallow.AnalysisRules.FromTier(o.Tier)) }, 1f, () => 0f);
             GUILayout.EndHorizontal();
             foreach (var o in AllOrgans())
             {
@@ -153,7 +158,7 @@ namespace Evolve.DevTools
             if (GUILayout.Button("Tháo hết (biến mất)") && host != null)
                 foreach (var o in host.OrganList) host.Detach(o.Slot);
             GUILayout.EndHorizontal();
-            if (GUILayout.Button("Thử luật chết: rơi hết cơ quan tại chỗ") && interactor != null) interactor.DropAllOnDeath();
+            if (GUILayout.Button("Thử luật mất xác: mất hết cơ quan đang gắn") && interactor != null) interactor.DropAllOnDeath();
 
             Header("Sinh vật");
             Vector3 front = player.transform.position + player.transform.forward * 3f + Vector3.right * 2f;
