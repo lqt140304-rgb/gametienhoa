@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Evolve.Traits
 {
     /// <summary>The beats of the birth scene (spec 2026-11-20-birth-scene-system-collapse-design 5.4). The draw is automatic: no step waits for the player.</summary>
-    public enum BirthStepKind { Disconnect, Pull, Form, GiftIntro, Gift, Fate, DealCore, RevealCore, DealFlaw, RevealFlaw, Slam, Stabilize }
+    public enum BirthStepKind { Disconnect, Pull, Form, GiftIntro, Gift, Fate, DealCore, RevealCore, DealFlaw, RevealFlaw, Slam, Stabilize, Showcase }
 
     /// <summary>One beat: what is on screen, what Tiếng Vọng says and how long it stays at least.</summary>
     public sealed class BirthStep

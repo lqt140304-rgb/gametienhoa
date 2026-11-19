@@ -35,6 +35,7 @@ namespace Evolve.Traits
                 new BirthStep { Kind = BirthStepKind.Disconnect, VoiceId = "echo.warn", MinSeconds = 6f,
                     Text = "CẢNH BÁO: ĐƯỜNG TRUYỀN KHÔNG ỔN ĐỊNH", VoiceText = "Cảnh báo. Đường truyền không ổn định." },
                 new BirthStep { Kind = BirthStepKind.Pull, VoiceId = "echo.pull", MinSeconds = 5f, Text = "Đang kéo linh hồn vào thế giới mới…", VoiceText = "Đang kéo linh hồn vào thế giới mới." },
+                Of(BirthStepKind.Form, "echo.linked", "Kết nối thành công. Đang đồng bộ linh hồn.", 4f),
                 Of(BirthStepKind.Form, "echo.born", "Xác nhận. Một linh hồn vừa chuyển sinh vào thế giới này.", 4.5f),
                 Of(BirthStepKind.Form, "echo.body", "Đang dựng cá thể. Chủng tộc: Slime. Hình thể: một khối nhầy nhỏ. Chưa có mắt. Chưa có chân.", 6f),
                 Of(BirthStepKind.GiftIntro, "echo.gift", "Ban tặng Ân Điển Khởi Sinh. Sáu năng lực nền tảng, mà mọi cá thể đều mang theo.", 5f),
@@ -54,7 +55,8 @@ namespace Evolve.Traits
             steps.Add(Of(BirthStepKind.DealFlaw, "echo.flaw", "Mỗi sức mạnh đều có cái giá. Số mệnh đang chọn cái giá của bạn.", 5f));
             steps.Add(new BirthStep { Kind = BirthStepKind.RevealFlaw, MinSeconds = 6f });
             steps.Add(new BirthStep { Kind = BirthStepKind.Slam, MinSeconds = 3f });
-            steps.Add(Of(BirthStepKind.Stabilize, "echo.stable", "Kết nối ổn định. Hãy sống sót.", 5f));
+            steps.Add(Of(BirthStepKind.Stabilize, "echo.stable", "Kết nối ổn định. Hãy sống sót.", 4f));
+            steps.Add(new BirthStep { Kind = BirthStepKind.Showcase, MinSeconds = 11f });
             return steps;
         }
 

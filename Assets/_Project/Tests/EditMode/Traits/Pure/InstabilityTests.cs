@@ -9,18 +9,8 @@ namespace Evolve.Tests.EditMode
     {
         [Test] public void Base_StartsHigh() => Assert.GreaterOrEqual(Instability.BaseFor(BirthStepKind.Disconnect, 0, 0f), 0.85f);
         [Test] public void Base_EndsAtZero() => Assert.AreEqual(0f, Instability.BaseFor(BirthStepKind.Stabilize, 0, 1f), 1e-5f);
+        [Test] public void Base_QuietAfterConnected() => Assert.LessOrEqual(Instability.BaseFor(BirthStepKind.DealCore, 0, 0.5f), 0.05f);
 
-        [Test]
-        public void Base_Stabilize_Decreases()
-        {
-            float prev = 1f;
-            for (float t = 0f; t <= 1f; t += 0.1f)
-            {
-                float v = Instability.BaseFor(BirthStepKind.Stabilize, 0, t);
-                Assert.LessOrEqual(v, prev + 1e-6f);
-                prev = v;
-            }
-        }
 
         [Test] public void Base_Gifts_Decrease() =>
             Assert.Greater(Instability.BaseFor(BirthStepKind.Gift, 0, 0f), Instability.BaseFor(BirthStepKind.Gift, 5, 1f));

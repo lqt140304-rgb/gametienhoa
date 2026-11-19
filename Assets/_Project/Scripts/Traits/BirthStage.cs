@@ -76,6 +76,7 @@ namespace Evolve.Traits
             var canvas = canvasGo.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.worldCamera = Cam;
+            canvas.overrideSorting = true; canvas.sortingOrder = 100;   // the UI is above the slime sprites, so the fade-out covers everything
             Canvas = canvasGo.GetComponent<RectTransform>();
             Canvas.sizeDelta = CanvasSize;
             Canvas.localPosition = new Vector3(0f, 0f, Distance);

@@ -21,20 +21,14 @@ namespace Evolve.Traits
             switch (kind)
             {
                 case BirthStepKind.Disconnect: return Lerp(0.95f, 0.90f, t01);
-                case BirthStepKind.Pull: return Lerp(0.90f, 0.80f, t01);
-                case BirthStepKind.Form: return Lerp(0.80f, 0.70f, t01);
-                case BirthStepKind.GiftIntro: return Lerp(0.70f, 0.65f, t01);
+                case BirthStepKind.Pull: return Lerp(0.90f, 0.35f, t01);
+                case BirthStepKind.Form: return Lerp(0.20f, 0f, t01);        // "connected": the noise is over after the opening
                 case BirthStepKind.Gift:
                     int g = Math.Max(0, Math.Min(5, giftIndex));
-                    return Lerp(0.65f - 0.15f * g / 6f, 0.65f - 0.15f * (g + 1) / 6f, t01);
-                case BirthStepKind.Fate: return 0.5f;
-                case BirthStepKind.DealCore: return Lerp(0.60f, 0.55f, t01);
-                case BirthStepKind.RevealCore: return Lerp(0.55f, 0.50f, t01);
-                case BirthStepKind.DealFlaw: return Lerp(0.60f, 0.55f, t01);
-                case BirthStepKind.RevealFlaw: return Lerp(0.55f, 0.50f, t01);
-                case BirthStepKind.Slam: return Lerp(0.50f, 0.45f, t01);
-                case BirthStepKind.Stabilize: return Lerp(0.45f, 0f, t01);
-                default: return 0.5f;
+                    return Lerp(0.04f, 0f, t01) * (6 - g) / 6f;
+                case BirthStepKind.Stabilize:
+                case BirthStepKind.Showcase: return 0f;
+                default: return 0.03f;
             }
         }
 
