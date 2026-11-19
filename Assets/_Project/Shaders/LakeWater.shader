@@ -87,6 +87,8 @@ Shader "Evolve/LakeWater"
             // set by MonochromeVision: 0 = full sight (default when unset), 1 = blind; centre + radius of the lit area around the character
             float _EvolveBlind;
             float4 _EvolveSightCenter;
+            float4 _EvolveWave;
+            float _EvolveWaveFade;
 
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; float fogFactor : TEXCOORD1; };
@@ -225,6 +227,11 @@ Shader "Evolve/LakeWater"
                 float near = _EvolveSightCenter.w > 0.0 ? saturate(1.0 - distance(i.positionWS, _EvolveSightCenter.xyz) / _EvolveSightCenter.w) : 0.0;
                 near = near * near * (3.0 - 2.0 * near);   // smooth, like every other thing that depends on sight
                 float visible = 1.0 - saturate(_EvolveBlind) * (1.0 - near * near);
+                if (_EvolveWave.w > 0.0 && _EvolveWaveFade > 0.0)       // the sound wave passing over the water
+                {
+                    float wx = (distance(i.positionWS, _EvolveWave.xyz) - _EvolveWave.w) / max(1.2, 0.1 * _EvolveWave.w);
+                    visible = max(visible, exp(-wx * wx) * _EvolveWaveFade);
+                }
                 result.rgb *= visible;
                 result.a *= visible;
                 return result;

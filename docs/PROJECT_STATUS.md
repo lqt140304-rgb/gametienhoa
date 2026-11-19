@@ -543,3 +543,12 @@ Checklist: (1) Console sạch, Test Runner xanh (`CavernFloraMathTests`); (2) Re
 - **Chi tiết hơn (đợt 2 của mục 33):** mô hình dựng kỹ hơn (lá thật dạng bầu dục thon cho dương xỉ, bụi, rễ, dây leo; sậy có lá dài cong và bông; rêu có cuống bào tử; nấm có vòng thân; dây leo có tua cuốn) và 6 loại **chi tiết mặt đất** mới: hoa chuông phát sáng 3 màu (ngọc, tím, hổ phách), thảm lá tam diệp, đống lá rụng, cành khô, cụm cuội, địa y. Mỗi loại 2 đến 3 kiểu; khoảng 1.300 vật; vẫn đặt theo luật môi trường `CavernFloraMath` (có test).
 
 - **LOD tắt (tạm):** `Visuals/LodSetting`: khi tắt LOD (mặc định lúc này), mọi mô hình giữ chi tiết đầy đủ ở mọi khoảng cách (`lodBias` 20, `maximumLODLevel` 0), texture ở độ phân giải đầy đủ, lọc dị hướng bật; texture nền hang giữ nét khắp hang (`basemapDistance` 1000 m). Bật lại LOD (nhẹ máy hơn) trong bảng **F10** (ô "Tắt LOD"); được nhớ giữa các lần chơi. Test `LodSettingTests`.
+
+## 34. Quét rung động là sóng âm, không phải quét ánh sáng: trạng thái và danh sách kiểm tra
+
+- Trước đây phím **C** ném một đèn lớn (cường độ 150) và mở rộng vòng nhìn thấy, nên mọi thứ trong bán kính sáng bừng, và đèn nhỏ quanh slime (cường độ 8) làm các vật thể Blender chói bất thường khi chưa có mắt.
+- Nay: **đèn quét tắt hẳn**; đèn quanh slime khi mù không bao giờ vượt 1,8 (`SonarWaveMath.MaxBlindLight`); lượng ánh sáng từ mỗi đèn phụ trong shader đá và cỏ bị chặn ở mức 3 để vật ở gần đèn không cháy sáng.
+- **Sóng âm** (`World/SonarWaveMath`, shader `Evolve/SonarShell`, `MonochromeVision.UpdateWave`): một **vỏ cầu mỏng** lan ra từ chỗ slime đứng lúc bấm C, không phát sáng gì, chỉ hiện thành **đường sáng xanh nhạt nơi vỏ cắt qua mặt đất và vật thể** (đọc độ sâu cảnh) cùng viền mờ. Chỉ những gì vòng sóng đang đi qua mới hiện (chùm sáng, hạt sáng, cỏ, đá Blender, nước; `EvolveWaveVisible` trong `EvolveSight.hlsl`), rồi tối lại. Sóng mờ dần sau khi tới bán kính tối đa. Hiệu ứng chạm vật (`VibrationSense` nháy màu theo loại) giữ nguyên.
+- Cần Depth Texture bật trong URP (hang đã bật). Chưa thấy trong Unity.
+
+Checklist: (1) Console sạch, Test Runner xanh (`SonarWaveMathTests`); (2) chưa có mắt: vật thể không còn sáng bất thường; (3) bấm C: một vòng sóng lan ra, các đường sáng quét qua mặt đất và vật thể, không có đèn lớn; (4) có mắt: không đổi.

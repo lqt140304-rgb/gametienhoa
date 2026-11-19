@@ -80,7 +80,7 @@ Shader "Evolve/RockVertexColor"
                 uint pixelLightCount = GetAdditionalLightsCount();
                 LIGHT_LOOP_BEGIN(pixelLightCount)
                     Light al = GetAdditionalLight(lightIndex, pw);
-                    extra += al.color * al.distanceAttenuation * saturate(dot(n, al.direction));   // every lamp lights what is near it, less and less with distance
+                    extra += al.color * min(al.distanceAttenuation, 3.0) * saturate(dot(n, al.direction));   // every lamp lights what is near it, less and less with distance
                 LIGHT_LOOP_END
                 #endif
                 half sight = EvolveSightVisible(pw);

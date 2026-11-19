@@ -82,7 +82,7 @@ Shader "Evolve/GrassBlade"
                 uint pixelLightCount = GetAdditionalLightsCount();
                 LIGHT_LOOP_BEGIN(pixelLightCount)
                     Light al = GetAdditionalLight(lightIndex, i.positionWS);
-                    extra += al.color * al.distanceAttenuation * saturate(dot(n, al.direction));   // every lamp lights what is near it, less and less with distance
+                    extra += al.color * min(al.distanceAttenuation, 3.0) * saturate(dot(n, al.direction));   // every lamp lights what is near it, less and less with distance
                 LIGHT_LOOP_END
                 #endif
                 half vary = 0.85 + 0.3 * frac(sin(dot(floor(i.positionWS.xz * 1.7), float2(12.9898, 78.233))) * 43758.5453);   // blade patches differ a little
