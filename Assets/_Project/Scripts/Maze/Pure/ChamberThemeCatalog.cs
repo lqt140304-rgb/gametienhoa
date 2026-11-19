@@ -174,7 +174,7 @@ namespace Evolve.Maze
                 new[] { "VaultStalactite_0", "Cliff_0" },
                 new[] { new ThemeForageItem("Forage_LimeCrystal", "Đá Vôi", FoodKind.LimeCrystal, isMineral: true) },
                 2,
-                new[] { "Wildlife_D_VeHoPhach", "Prey" }, 2,
+                new[] { "Prey_C", "Prey" }, 2,
                 Array.Empty<string>(), 0),
 
             [ChamberTheme.SealedDragonTomb] = new ChamberThemeProfile(
@@ -193,8 +193,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_IronNodule", "Quặng Sắt", FoodKind.IronNodule, isMineral: true)
                 },
                 3,
-                new[] { "Wildlife_C_LocMachRong" }, 1,
-                new[] { "Wildlife_B_GiapCotPhanSinh", "Wildlife_B_ToMauDaThe" }, 2),
+                new[] { "Prey_C" }, 1,
+                new[] { "Predator" }, 2),
 
             // ---------------- TẦNG NÔNG ----------------
             [ChamberTheme.LumaMushroomGrove] = new ChamberThemeProfile(
@@ -214,8 +214,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_MossClump", "Rêu Sáng", FoodKind.GlowMoss)
                 },
                 10,
-                new[] { "Wildlife_C_DaiNamGu", "Prey" }, 4,
-                new[] { "Wildlife_B_ReRinh", "Predator" }, 1),
+                new[] { "Prey_C", "Prey" }, 4,
+                new[] { "Predator" }, 1),
 
             [ChamberTheme.RootCanopy] = new ChamberThemeProfile(
                 ChamberTheme.RootCanopy,
@@ -233,8 +233,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_BitterFern", "Dương Xỉ Đắng", FoodKind.BitterFern)
                 },
                 10,
-                new[] { "Wildlife_C_TrungGoMach", "Prey" }, 4,
-                new[] { "Wildlife_B_ToMauCon", "Predator" }, 1),
+                new[] { "Prey" }, 4,
+                new[] { "Predator" }, 1),
 
             [ChamberTheme.DampReedHollow] = new ChamberThemeProfile(
                 ChamberTheme.DampReedHollow,
@@ -253,8 +253,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_MossClump", "Rêu Sáng", FoodKind.GlowMoss)
                 },
                 11,
-                new[] { "Wildlife_C_HamMunPhanTang", "Prey" }, 5,
-                new[] { "Wildlife_B_GiapMeHang" }, 1),
+                new[] { "Prey" }, 5,
+                new[] { "Predator" }, 1),
 
             [ChamberTheme.AmberPebbleGarden] = new ChamberThemeProfile(
                 ChamberTheme.AmberPebbleGarden,
@@ -272,8 +272,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_Quartz", "Thạch Anh Sáng", FoodKind.GlowQuartz, isMineral: true)
                 },
                 9,
-                new[] { "Wildlife_D_VeHoPhach", "Prey" }, 4,
-                new[] { "Wildlife_B_ReRinh" }, 1),
+                new[] { "Prey_C", "Prey" }, 4,
+                new[] { "Predator" }, 1),
 
             // ---------------- TẦNG GIỮA ----------------
             [ChamberTheme.LimestoneStalactite] = new ChamberThemeProfile(
@@ -292,8 +292,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_BitterFern", "Dương Xỉ Đắng", FoodKind.BitterFern)
                 },
                 7,
-                new[] { "Wildlife_C_HamMunPhanTang", "Prey" }, 3,
-                new[] { "Wildlife_B_GiapMeHang", "Wildlife_B_LiepAnhLonKhop" }, 2),
+                new[] { "Prey" }, 3,
+                new[] { "Predator" }, 2),
 
             [ChamberTheme.CrystalVein] = new ChamberThemeProfile(
                 ChamberTheme.CrystalVein,
@@ -312,8 +312,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_SaltCrust", "Muối Đá", FoodKind.SaltCrust, isMineral: true)
                 },
                 7,
-                new[] { "Wildlife_D_VeHoPhach" }, 3,
-                new[] { "Wildlife_B_LiepAnhLonKhop", "Wildlife_B_ReRinh" }, 2),
+                new[] { "Prey_C" }, 3,
+                new[] { "Predator" }, 2),
 
             [ChamberTheme.SporeCurtain] = new ChamberThemeProfile(
                 ChamberTheme.SporeCurtain,
@@ -331,8 +331,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_FatCap", "Nấm Mũ Dày", FoodKind.FatMushroom)
                 },
                 8,
-                new[] { "Wildlife_C_DaiNamGu", "Wildlife_B_ToMauCon" }, 3,
-                new[] { "Wildlife_B_ToMauDaThe", "Wildlife_B_ReRinh" }, 2),
+                new[] { "Prey_C", "Prey" }, 3,
+                new[] { "Predator" }, 2),
 
             [ChamberTheme.DeepRootTangle] = new ChamberThemeProfile(
                 ChamberTheme.DeepRootTangle,
@@ -350,8 +350,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_SweetRoot", "Cỏ Ngọt", FoodKind.SweetRoot)
                 },
                 7,
-                new[] { "Wildlife_C_TrungGoMach", "Wildlife_C_LocMachRong" }, 3,
-                new[] { "Wildlife_B_ToMauDaThe", "Wildlife_B_GiapMeHang" }, 2),
+                new[] { "Prey_C", "Prey" }, 3,
+                new[] { "Predator" }, 2),
 
             // ---------------- TẦNG SÂU ----------------
             [ChamberTheme.EmberBasalt] = new ChamberThemeProfile(
@@ -370,8 +370,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_IronNodule", "Quặng Sắt", FoodKind.IronNodule, isMineral: true)
                 },
                 4,
-                new[] { "Wildlife_C_LocMachRong" }, 2,
-                new[] { "Wildlife_B_GiapCotPhanSinh", "Wildlife_B_LiepAnhLonKhop" }, 2),
+                new[] { "Prey_C" }, 2,
+                new[] { "Predator" }, 2),
 
             [ChamberTheme.SaltAbyss] = new ChamberThemeProfile(
                 ChamberTheme.SaltAbyss,
@@ -389,8 +389,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_LimeCrystal", "Đá Vôi", FoodKind.LimeCrystal, isMineral: true)
                 },
                 4,
-                new[] { "Wildlife_C_HamMunPhanTang" }, 2,
-                new[] { "Wildlife_B_GiapCotPhanSinh", "Wildlife_B_ToMauDaThe" }, 3),
+                new[] { "Prey" }, 2,
+                new[] { "Predator" }, 3),
 
             [ChamberTheme.FossilBoneyard] = new ChamberThemeProfile(
                 ChamberTheme.FossilBoneyard,
@@ -408,8 +408,8 @@ namespace Evolve.Maze
                     new ThemeForageItem("Forage_IronNodule", "Quặng Sắt", FoodKind.IronNodule, isMineral: true)
                 },
                 4,
-                new[] { "Wildlife_C_TrungGoMach" }, 2,
-                new[] { "Wildlife_B_GiapMeHang", "Wildlife_B_GiapCotPhanSinh" }, 3)
+                new[] { "Prey_C" }, 2,
+                new[] { "Predator" }, 3)
         };
 
         public static ChamberThemeProfile Get(ChamberTheme theme)
