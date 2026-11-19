@@ -45,6 +45,17 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void ReworkedCores_NewNamesSameIds()
+        {
+            var tham = TraitSeed.Cores.First(c => c.Id == "core.con_bac");
+            var goc = TraitSeed.Cores.First(c => c.Id == "core.giu_goc");
+            Assert.AreEqual("Dòng Máu Tham Lam", tham.Name);
+            Assert.AreEqual("Dạ Dày Bất Diệt", goc.Name);
+            Assert.IsTrue(tham.Implemented && goc.Implemented);
+            Assert.IsTrue(tham.Detail.Contains("Giải Mã") && goc.Detail.Contains("Túi Không Đáy"));
+        }
+
+        [Test]
         public void FlawRulesFromSpec()
         {
             var bamDinh = TraitSeed.Cores.First(c => c.Id == "core.bam_dinh").Options.SelectMany(o => o).ToList();
