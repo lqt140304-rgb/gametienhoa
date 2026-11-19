@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Evolve.World;
 using UnityEngine;
 
 namespace Evolve.Maze
@@ -38,6 +39,16 @@ namespace Evolve.Maze
         {
             RebuildRuntimeLookup();
             ApplyActiveChambers();
+        }
+
+        void OnEnable() => GroundHeight.UseCustom(SampleActiveChamberGround);
+
+        void OnDisable() => GroundHeight.Reset();
+
+        float? SampleActiveChamberGround(float worldX, float worldZ)
+        {
+            var cur = CurrentChamber;
+            return cur != null ? cur.SampleGroundHeight(worldX, worldZ) : null;
         }
 
         public void RebuildRuntimeLookup()

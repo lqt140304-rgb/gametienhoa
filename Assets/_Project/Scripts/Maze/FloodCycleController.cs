@@ -141,14 +141,14 @@ namespace Evolve.Maze
             WaterField.Use(
                 (x, z) =>
                 {
-                    if (!inBirthCavern) return Mathf.Max(0f, waterLevel);
+                    if (!inBirthCavern) return Mathf.Max(0f, waterLevel - GroundHeight.At(x, z, 0f));
                     float lakeDepth = CavernLayout.DepthAt(x, z);
                     float floodDepth = Mathf.Max(0f, waterLevel - CavernLayout.GroundHeight(x, z));
                     return Mathf.Max(lakeDepth, floodDepth);
                 },
                 (x, z) =>
                 {
-                    if (!inBirthCavern) return Mathf.Max(0f, waterLevel);
+                    if (!inBirthCavern) return Mathf.Max(0f, waterLevel - GroundHeight.At(x, z, 0f));
                     float lakeDepth = CavernLayout.DepthAt(x, z);
                     float floodDepth = Mathf.Max(0f, waterLevel - CavernLayout.GroundHeight(x, z));
                     return Mathf.Max(lakeDepth, floodDepth);

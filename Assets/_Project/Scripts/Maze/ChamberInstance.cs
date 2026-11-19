@@ -16,6 +16,10 @@ namespace Evolve.Maze
         [SerializeField] bool keepAlwaysActive;
         [SerializeField] Transform arrivalPoint;
         [SerializeField] List<TunnelPortal> portals = new List<TunnelPortal>();
+        [SerializeField] int terrainSeed;
+        [SerializeField] float chamberRadius = MazeTerrainMath.DefaultChamberRadius;
+        [SerializeField] bool hasHighLedge = true;
+        [SerializeField] List<float> tunnelAnglesDeg = new List<float>();
 
         public int ChamberId => chamberId;
         public string ChamberName => chamberName;
@@ -33,6 +37,24 @@ namespace Evolve.Maze
             kind = chamberKind;
             keepAlwaysActive = alwaysActive;
             arrivalPoint = arrival;
+        }
+
+        public void ConfigureTerrain(int seed, float radius, bool highLedge, List<float> tunnelAngles)
+        {
+            terrainSeed = seed;
+            chamberRadius = radius;
+            hasHighLedge = highLedge;
+            tunnelAnglesDeg = tunnelAngles ?? new List<float>();
+        }
+
+        /// <summary>Tính độ cao mặt đất của khoang tại tọa độ thế giới (trả về null nếu nằm ngoài khoang này).</summary>
+        public float? SampleGroundHeight(float worldX, float worldZ)
+        {
+            if (kind == ChamberKind.BirthCavern) return null;
+            float lx = worldX - transform.position.x;
+            float lz = worldZ - transform.position.z;
+            if (lx * lx + lz * lz > (chamberRadius + 16f) * (chamberRadius + 16f)) return null;
+            return transform.position.y + MazeTerrainMath.GroundHeightAt(lx, lz, terrainSeed, chamberRadius, tunnelAnglesDeg, hasHighLedge);
         }
 
         public void RegisterPortal(TunnelPortal portal)
