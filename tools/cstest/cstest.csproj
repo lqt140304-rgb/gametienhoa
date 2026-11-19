@@ -20,5 +20,7 @@
     <Compile Include="../../Assets/_Project/Scripts/Survival/NutrientKind.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Swallow/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Swallow/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Player/BodySize.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/BodySizeTests.cs" />
   </ItemGroup>
 </Project>

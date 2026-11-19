@@ -57,6 +57,7 @@ namespace Evolve.Player
         public bool IsSprinting { get; private set; }
         SurvivalStats stats;
         OrganHost organs;
+        Evolve.Swallow.SlimeBody body;
         Vector3 baseScale = Vector3.one;
         float squash, squashTarget, wobbleAmp, airK, airTime, scaleK = 1f, fallSpeed;
         Evolve.Visuals.SlimeGelAnimator jellyAnimator;
@@ -68,7 +69,7 @@ namespace Evolve.Player
         bool layoutWater;                       // the scene is built from World/ZoneLayout (it has its water depths)
         Evolve.World.WaterSensor waterSensor;
 
-        /// <summary>Current body scale (smoothed toward BodySize.ScaleFor(organ count)). Applied to collider and visual.</summary>
+        /// <summary>Current body scale (smoothed toward BodySize.ScaleForMass(body mass)). Applied to collider and visual.</summary>
         public float BodyScale { get; private set; } = 1f;
         /// <summary>Collider diameter in world units at BodyScale 1 (cached in Awake).</summary>
         public float BaseDiameter { get; private set; } = 1f;
@@ -80,6 +81,7 @@ namespace Evolve.Player
             rb.freezeRotation = true;
             stats = GetComponent<SurvivalStats>();
             organs = GetComponent<OrganHost>();
+            body = GetComponent<Evolve.Swallow.SlimeBody>();
             traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
             if (traitsComp == null) traitsComp = gameObject.AddComponent<Evolve.Traits.PlayerTraits>();
             col = GetComponent<Collider>();
@@ -228,11 +230,11 @@ namespace Evolve.Player
 
         static float MaxAbs(Vector3 v) => Mathf.Max(Mathf.Abs(v.x), Mathf.Max(Mathf.Abs(v.y), Mathf.Abs(v.z)));
 
-        /// <summary>Smooth BodyScale toward the organ-count target, resize the collider from cached base values
+        /// <summary>Smooth BodyScale toward the body-mass target, resize the collider from cached base values
         /// and lift the body by the radius growth so it does not sink into the ground. No-op when settled.</summary>
         void UpdateBodyScale()
         {
-            float target = organs != null ? BodySize.ScaleFor(organs.Count) : 1f;
+            float target = body != null ? BodySize.ScaleForMass(body.Mass) : 1f;
             if (Mathf.Approximately(BodyScale, target)) return;
             float old = BodyScale;
             BodyScale = Mathf.MoveTowards(old, target, BodyScaleRate * Time.fixedDeltaTime);
