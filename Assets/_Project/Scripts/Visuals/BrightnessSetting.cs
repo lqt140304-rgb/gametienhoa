@@ -32,9 +32,9 @@ namespace Evolve.Visuals
         {
             brightness = BrightnessMath.Clamp(PlayerPrefs.GetFloat(PrefKey, BrightnessMath.Default));
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            color = profile.Add<ColorAdjustments>(true);
+            color = profile.Add<ColorAdjustments>(false);   // false: override nothing but what is set below, so the vision system keeps the saturation (no colour without eyes)
             color.postExposure.overrideState = true;
-            lgg = profile.Add<LiftGammaGain>(true);
+            lgg = profile.Add<LiftGammaGain>(false);
             lgg.gamma.overrideState = true;
             volume = gameObject.AddComponent<Volume>();
             volume.isGlobal = true;
