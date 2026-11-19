@@ -103,6 +103,9 @@ namespace Evolve.EditorTools
             };
 
             var data = new TerrainData { heightmapResolution = HeightRes };
+            string path = TerrainFolder + "/Cavern_Terrain.asset";
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(data, path);   // an asset FIRST: the alpha map textures made below then live inside it and are saved with it
             data.size = new Vector3(CavernLayout.Size, TerrainHeightY, CavernLayout.Size);
             var heights = new float[HeightRes, HeightRes];
             float cell = CavernLayout.Size / (HeightRes - 1), half = CavernLayout.Size * 0.5f;
@@ -130,9 +133,8 @@ namespace Evolve.EditorTools
                 }
             data.SetAlphamaps(0, 0, alpha);
 
-            string path = TerrainFolder + "/Cavern_Terrain.asset";
-            AssetDatabase.DeleteAsset(path);
-            AssetDatabase.CreateAsset(data, path);
+            EditorUtility.SetDirty(data);
+            AssetDatabase.SaveAssets();
             var go = Terrain.CreateTerrainGameObject(data);
             go.name = "Cavern Terrain";
             go.transform.position = new Vector3(-half, -BaseOffset, -half);
