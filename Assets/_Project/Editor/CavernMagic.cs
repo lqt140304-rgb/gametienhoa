@@ -37,6 +37,7 @@ namespace Evolve.EditorTools
             Water();
             Mood();
             LightsFollowSight();
+            BrightenPlants();
             AssetDatabase.SaveAssets();
             Debug.Log("Ánh sáng huyền ảo: chùm sáng có bụi và vệt trôi, hồ có vũng sáng, lấp lánh và bờ phát quang, đom đóm và bụi sáng bay quanh bờ. Ctrl+S để lưu scene.");
         }
@@ -278,10 +279,37 @@ namespace Evolve.EditorTools
             if (n > 0) Debug.Log($"{n} đèn của hang giờ mờ theo thị lực của slime.");
         }
 
+        /// <summary>The Blender plants are painted dark (made for a sunlit map) and came out black in the dim cave. They get a lifted copy of the vertex-colour
+        /// material: albedo x2.6 and a soft fill light, both fading with the slime's sight.</summary>
+        static void BrightenPlants()
+        {
+            var shader = Shader.Find("Evolve/RockVertexColor");
+            if (shader == null) return;
+            string path = Root + "/Materials/Cavern_PlantVC.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null) { mat = new Material(shader) { name = "Cavern_PlantVC" }; AssetDatabase.CreateAsset(mat, path); }
+            mat.shader = shader;
+            mat.SetColor("_Tint", new Color(2.6f, 2.6f, 2.6f, 1f));
+            mat.SetFloat("_Fill", 0.9f);
+            EditorUtility.SetDirty(mat);
+            int n = 0;
+            foreach (var nut in Object.FindObjectsByType<Nutrient>())
+                foreach (var r in nut.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (r.name.Contains("Glow")) continue;                                  // the luminous parts have their own tinted material
+                    var mats = r.sharedMaterials;
+                    bool changed = false;
+                    for (int i = 0; i < mats.Length; i++)
+                        if (mats[i] != null && mats[i].shader == shader && mats[i].GetFloat("_Glow") <= 0f && mats[i] != mat) { mats[i] = mat; changed = true; }
+                    if (changed) { r.sharedMaterials = mats; n++; }
+                }
+            if (n > 0) Debug.Log($"{n} phần cây trong hang đã được làm sáng lại (hết đen).");
+        }
+
         static void Mood()
         {
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.07f, 0.085f, 0.13f);          // a little more, and bluer: shapes stay readable
+            RenderSettings.ambientLight = new Color(0.15f, 0.18f, 0.25f);           // soft and blue: the cave is dim but its shapes and colours stay readable
             RenderSettings.fogColor = new Color(0.035f, 0.05f, 0.09f);
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(Root + "/Settings/CavernLook.asset");
             if (profile != null && profile.TryGet(out Bloom bloom))

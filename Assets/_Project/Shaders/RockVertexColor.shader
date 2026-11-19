@@ -2,7 +2,7 @@ Shader "Evolve/RockVertexColor"
 {
     // Simple URP lit shader whose albedo is the mesh's vertex colour (stone and moss painted in Blender).
     // Main light with shadows + ambient; additional lights are not sampled (keep it cheap and compile-safe).
-    Properties { _Tint ("Tint", Color) = (1,1,1,1) _Glow ("Glow (self-lit, fades with blindness)", Float) = 0 }
+    Properties { _Tint ("Tint", Color) = (1,1,1,1) _Glow ("Glow (self-lit, fades with blindness)", Float) = 0 _Fill ("Fill light (a soft light independent of the scene, fades with blindness)", Float) = 0 }
     SubShader
     {
         Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" "Queue"="Geometry" }
@@ -20,8 +20,9 @@ Shader "Evolve/RockVertexColor"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
                 half _Glow;
+                half _Fill;
             CBUFFER_END
-            float _EvolveBlind;   // set by MonochromeVision: 1 = no sight at all
+            #include "EvolveSight.hlsl"   // _EvolveBlind, _EvolveSightCenter and EvolveSightVisible
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; half4 color : COLOR; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 normalWS : TEXCOORD0; float4 shadowCoord : TEXCOORD1; float fogFactor : TEXCOORD2; float3 positionWS : TEXCOORD3; half4 color : COLOR; };
@@ -69,8 +70,9 @@ Shader "Evolve/RockVertexColor"
                 // large patches (0.6 m) and fine grain: no two spots the same, stone never one flat colour
                 float patch = vnoise(pw * 1.7) - 0.5, grain = fbm2(pw * 2.3) - 0.5;
                 albedo *= saturate(1.0 + patch * 0.55 + grain * 0.5);
-                half3 col = albedo * (direct + ambient);
-                col += albedo * _Glow * (1.0 - saturate(_EvolveBlind));   // luminous parts (mushroom caps, crystals, bulbs) shine only while you can see
+                half sight = EvolveSightVisible(pw);
+                half3 col = albedo * (direct + ambient + _Fill * sight);   // _Fill keeps dark-painted plants readable in a dim cave, only while they can be seen
+                col += albedo * _Glow * sight;   // luminous parts (mushroom caps, crystals, bulbs) shine only while you can see
                 col = MixFog(col, i.fogFactor); // far rocks fade into the fog like everything else
                 return half4(col, 1);
             }

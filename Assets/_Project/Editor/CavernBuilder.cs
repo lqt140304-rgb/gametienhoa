@@ -46,10 +46,10 @@ namespace Evolve.EditorTools
             BuildCeiling();
             BuildSkyAndSun();
             BuildBeam();
-            CavernMagic.Dress();    // enchanted light: dusty beam, pool of light and sparkles on the water, fireflies, spores
             BuildPlants();
             BuildOreAndRocks();
             CavernForage.Dress();   // what can be eaten: plants, mushrooms and four minerals
+            CavernMagic.Dress();    // enchanted light (after the plants and ore: it relights them and hooks the cave's lights to sight): dusty beam, pool of light and sparkles on the water, fireflies, spores
 
             var spawn = CavernLayout.SpawnPoint();
             var slime = P.CreatePlayer(shared, spawn);
