@@ -611,7 +611,7 @@ Spec `docs/superpowers/specs/2026-11-19-birth-scene-design.md` (mục 8 là bả
 - **Chạy một lần mỗi vòng chơi**; chết rồi hồi sinh không chạy lại. Con trỏ chuột được mở trong cảnh và trả lại như cũ.
 - **Hai Lõi làm lại:** *Dòng Máu Tham Lam* (×1,5 cơ hội Giải Mã cho gene Hiếm trở lên) và *Dạ Dày Bất Diệt* (hai lần chết đầu còn mạng thì giữ món trong Túi Không Đáy). `Id` giữ nguyên.
 - **Co-op:** mỗi người tự rút; client báo kết quả bằng tin `evolve.tr.pick`, máy chủ chỉ kiểm Lõi có tồn tại và Khuyết Điểm đúng một lựa chọn của nó. Đã bỏ `TraitRoom`, `CardDealer`, tin chia thẻ.
-- **Giọng Tiếng Vọng:** giọng **Hạnh** (ElevenLabs), đọc phẳng như máy, hiệu ứng hệ thống; 37 file trong `Assets/_Project/Resources/Voice/Echo/`. Cách tạo lại: `docs/art/echo-voice-lines.md`, `tools/voice/`.
+- **Giọng Tiếng Vọng:** giọng **Chi** (ElevenLabs, nữ giọng Bắc), đọc tự nhiên, 37 file trong `Assets/_Project/Resources/Voice/Echo/`. Cách tạo lại: `docs/art/echo-voice-lines.md`, `tools/voice/`.
 - Chưa làm: **Dị Tượng**, hiệu ứng cho 9 Lõi và 8 Khuyết Điểm còn ghi "chưa có hiệu ứng".
 - Test: `FateRollTests`, `BirthTests`, `TraitChoiceTests`, `DeathLossRulesTests`, `AnalysisBookTests` chạy ngoài Unity (`tools/cstest/run.sh`, 109 test xanh). Cần Unity: `TraitCatalogTests`, `TraitSeedTests`. **Cảnh vẽ bằng IMGUI chưa mở trong Unity: chưa biết có lỗi biên dịch hay hình có đẹp như tính toán không.**
 
