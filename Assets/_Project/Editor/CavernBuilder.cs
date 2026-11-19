@@ -42,6 +42,7 @@ namespace Evolve.EditorTools
 
             BuildTerrain();
             BuildWater();
+            BuildLook();
             BuildCeiling();
             BuildSkyAndSun();
             BuildBeam();
@@ -68,11 +69,14 @@ namespace Evolve.EditorTools
 
         static TerrainLayer Layer(string name, Color a, Color b, float tile)
         {
-            string texPath = $"{TerrainFolder}/Cavern_{name}.png", layerPath = $"{TerrainFolder}/Cavern_{name}.terrainlayer";
-            var tex = LakeWater.PaintedTexture(texPath, 128, 128, (u, v) =>
+            string texPath = $"{TerrainFolder}/Cavern_{name}_v2.png", layerPath = $"{TerrainFolder}/Cavern_{name}.terrainlayer";
+            var tex = LakeWater.PaintedTexture(texPath, 256, 256, (u, v) =>
             {
-                float n = LakeWater.TileableNoise(u * 8f, v * 8f, 8, 8) * 0.6f + LakeWater.TileableNoise(u * 32f, v * 32f, 32, 32) * 0.4f;
+                // four scales of noise (blotches, patches, grain, specks) so the ground is not a flat colour; a pebble speckle on top
+                float n = LakeWater.TileableNoise(u * 6f, v * 6f, 6, 6) * 0.4f + LakeWater.TileableNoise(u * 16f, v * 16f, 16, 16) * 0.3f
+                        + LakeWater.TileableNoise(u * 48f, v * 48f, 48, 48) * 0.2f + LakeWater.TileableNoise(u * 128f, v * 128f, 128, 128) * 0.1f;
                 var c = Color.Lerp(a, b, n);
+                if (LakeWater.TileableNoise(u * 90f + 5f, v * 90f + 9f, 90, 90) > 0.86f) c *= 0.6f;   // dark pebbles and pits
                 c.a = 1f;
                 return c;
             });
@@ -141,6 +145,7 @@ namespace Evolve.EditorTools
 
         static void BuildWater()
         {
+            if (BuildRealisticWater()) { MakeWaterZones(); return; }   // the project's own water shader: depth tint, ripples, foam, refraction
             var water = LakeWater.TranslucentMaterial("Cavern_Water", Texture2D.whiteTexture, new Color(0.10f, 0.40f, 0.46f, 0.78f), new Color(0.01f, 0.06f, 0.07f), 0.92f, (int)RenderQueue.Transparent);
             water.SetFloat("_Cull", 0f);
             EditorUtility.SetDirty(water);
@@ -165,7 +170,12 @@ namespace Evolve.EditorTools
             mr.sharedMaterial = water;
             mr.shadowCastingMode = ShadowCastingMode.Off;
 
-            // swimming reads CavernWater (WaterField); the trigger box makes the lake drinkable
+            MakeWaterZones();
+        }
+
+        /// <summary>Swimming reads CavernWater (WaterField); the trigger box makes the lake drinkable.</summary>
+        static void MakeWaterZones()
+        {
             var zones = new GameObject("Water Zones");   // the slime looks for this name to add its swim ripple, under-water tint and zone air
             zones.AddComponent<CavernWater>();
             var lake = new GameObject("Hồ Khởi Sinh");
@@ -179,6 +189,86 @@ namespace Evolve.EditorTools
             var wz = lake.AddComponent<WaterZone>();
             wz.Clean = true;
             wz.DisplayName = "Hồ Khởi Sinh";
+        }
+
+        /// <summary>The lake as a WaterSurface (animated shore, foam, bank) with the Evolve/LakeWater shader. False if the shader is missing: the plain surface is used.</summary>
+        static bool BuildRealisticWater()
+        {
+            var shader = Shader.Find("Evolve/LakeWater");
+            if (shader == null) return false;
+            string path = Root + "/Materials/Cavern_WaterLake.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null) { mat = new Material(shader) { name = "Cavern_WaterLake" }; AssetDatabase.CreateAsset(mat, path); }
+            mat.shader = shader;
+            mat.SetColor("_ShallowColor", new Color(0.2f, 0.62f, 0.62f, 0.5f));
+            mat.SetColor("_DeepColor", new Color(0.015f, 0.17f, 0.22f, 0.88f));
+            mat.SetFloat("_DeepDistance", 4.5f);
+            mat.SetTexture("_BumpMap", LakeWater.RippleNormalMap());
+            mat.renderQueue = (int)RenderQueue.Transparent - 2;   // just before the slime's gel, so a swimming slime is never washed out
+            EditorUtility.SetDirty(mat);
+
+            var go = new GameObject("Cavern Lake Surface");
+            go.transform.position = new Vector3(0f, CavernLayout.WaterLevel, 0f);
+            var surface = go.AddComponent<WaterSurface>();
+            surface.Shape = WaterShape.Outline;
+            surface.WaveHeight = 0.02f;
+            surface.FoamMaterial = LakeWater.FoamMaterial();
+            surface.BankMaterial = LakeWater.BankMaterial();
+            surface.Seed = 3;
+            const int points = 160;
+            var outline = new Vector2[points];
+            for (int i = 0; i < points; i++)
+            {
+                float a = i / (float)points * Mathf.PI * 2f, r = CavernLayout.LakeRadius(a) + 0.3f;
+                outline[i] = new Vector2(Mathf.Cos(a) * r, Mathf.Sin(a) * r);
+            }
+            surface.OutlinePoints = outline;
+            var mr = go.GetComponent<MeshRenderer>();
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = ShadowCastingMode.Off;
+            WaterSurface.Refresh();   // the shape was set after the component woke up
+
+            foreach (var urp in new[] { GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset })
+                if (urp != null) { urp.supportsCameraDepthTexture = true; EditorUtility.SetDirty(urp); }   // the water shader reads the scene depth
+            return true;
+        }
+
+        // ---------------------------------------------------------------- the film look
+
+        /// <summary>Post-processing like a photograph (ACES tone mapping, a little bloom, vignette and fine grain, more contrast) and ambient occlusion in the creases.</summary>
+        static void BuildLook()
+        {
+            const string profilePath = Root + "/Settings/CavernLook.asset";
+            AssetDatabase.DeleteAsset(profilePath);
+            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, profilePath);
+
+            var bloom = profile.Add<Bloom>(true);
+            bloom.threshold.Override(0.9f);
+            bloom.intensity.Override(0.7f);
+            bloom.scatter.Override(0.65f);
+            var vignette = profile.Add<Vignette>(true);
+            vignette.intensity.Override(0.3f);
+            vignette.smoothness.Override(0.5f);
+            var tone = profile.Add<Tonemapping>(true);
+            tone.mode.Override(TonemappingMode.ACES);
+            var grain = profile.Add<FilmGrain>(true);
+            grain.type.Override(FilmGrainLookup.Thin1);
+            grain.intensity.Override(0.2f);
+            grain.response.Override(0.8f);
+            var color = profile.Add<ColorAdjustments>(true);   // the vision volume owns saturation; this adds contrast and a touch of exposure
+            color.contrast.Override(12f);
+            color.postExposure.Override(0.15f);
+            foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
+            EditorUtility.SetDirty(profile);
+
+            var go = new GameObject("Cavern Look");
+            var volume = go.AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.priority = -10f;   // below the vision volume: MonochromeVision owns saturation, fog, ambient and daylight
+            volume.sharedProfile = profile;
+
+            LakeRealism.Ssao(true);   // dark creases and contact shadows (adds the feature to the URP renderer if it is not there)
         }
 
         // ---------------------------------------------------------------- roof, sky, sun

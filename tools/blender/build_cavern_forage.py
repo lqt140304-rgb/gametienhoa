@@ -31,6 +31,30 @@ def _vc(bm, name, fn):
     return o
 
 
+def _leaf(bm, base, direction, length, width, curl, rng, segs=5):
+    """A curved, tapered leaf blade (two-sided: a copy with reversed winding a hair above) growing from `base` along `direction` (+z is up)."""
+    d = Vector(direction).normalized()
+    side = Vector((-d.y, d.x, 0.0))
+    if side.length < 1e-4:
+        side = Vector((1.0, 0.0, 0.0))
+    side.normalize()
+    up = d.cross(side).normalized()
+    rows = []
+    for i in range(segs + 1):
+        t = i / segs
+        mid = Vector(base) + d * (length * t) + Vector((0, 0, -curl * length * t * t))        # the blade droops toward its tip
+        w = width * 0.5 * (math.sin(math.pi * min(1.0, t * 0.92 + 0.04)) ** 0.7) * (1.0 - 0.15 * t)
+        fold = up * (0.12 * w)                                                                   # the midrib stands a little proud
+        rows.append((mid + side * w, mid + fold, mid - side * w))
+    for flip in (False, True):
+        off = Vector((0, 0, 0.002 if flip else 0.0))
+        vr = [[bm.verts.new(tuple(v + off)) for v in row] for row in rows]
+        for i in range(segs):
+            for j in range(2):
+                quad = [vr[i][j], vr[i][j + 1], vr[i + 1][j + 1], vr[i + 1][j]]
+                bm.faces.new(quad[::-1] if flip else quad)
+
+
 def build_glow_moss():
     """Low clumps of soft moss with pale glowing spore bulbs on top."""
     rng = random.Random(21)
@@ -53,19 +77,20 @@ def build_ember_berry():
     """A small low bush: thin branches, flat leaves, and bright berries (the glowing part)."""
     rng = random.Random(22)
     bb, gb = bmesh.new(), bmesh.new()
-    for k in range(9):
-        a = k * TAU / 9 + rng.uniform(-0.2, 0.2)
+    for k in range(7):
+        a = k * TAU / 7 + rng.uniform(-0.2, 0.2)
         d = Vector((math.cos(a), math.sin(a), 0.0))
         reach = rng.uniform(0.25, 0.5)
         h = rng.uniform(0.45, 0.7)
         path = [Vector((0, 0, 0.02)), d * reach * 0.4 + Vector((0, 0, h * 0.55)), d * reach + Vector((0, 0, h))]
         gl._tube(bb, path, 0.02, 0.008, 4)
         side = Vector((-d.y, d.x, 0))
-        for i in (1, 2):
-            c = path[i]
+        for t in (0.35, 0.6, 0.85):                              # leaves in pairs all along the branch
+            c = path[0].lerp(path[1], min(1.0, t * 2.0)) if t < 0.5 else path[1].lerp(path[2], (t - 0.5) * 2.0)
             for sg in (1, -1):
-                gl._blob(bb, tuple(c + side * sg * 0.09), (0.13, 0.065, 0.02), 6, 3)
-                gl._blob(bb, tuple(c + d * 0.06 + Vector((0, 0, 0.05))), (0.1, 0.06, 0.02), 6, 3)
+                ld = (d * 0.5 + side * sg * 0.85 + Vector((0, 0, 0.3 + 0.25 * rng.random()))).normalized()
+                _leaf(bb, c, ld, rng.uniform(0.15, 0.23), rng.uniform(0.08, 0.12), 0.4, rng)
+        _leaf(bb, path[-1], (d * 0.6 + Vector((0, 0, 0.8))).normalized(), 0.18, 0.09, 0.3, rng)
         tip = path[-1]
         for j in range(2):
             gl._blob(gb, (tip.x + rng.uniform(-0.05, 0.05), tip.y + rng.uniform(-0.05, 0.05), tip.z + rng.uniform(-0.1, 0.0)), (0.042, 0.042, 0.042), 6, 4)

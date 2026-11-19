@@ -107,7 +107,7 @@ namespace Evolve.EditorTools
 
         // ------------------------------------------------------------------ ambient occlusion
 
-        static int Ssao(bool add)
+        internal static int Ssao(bool add)
         {
             int n = 0;
             var seen = new HashSet<ScriptableRendererData>();
