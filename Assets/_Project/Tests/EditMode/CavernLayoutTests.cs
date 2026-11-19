@@ -96,7 +96,7 @@ namespace Evolve.Tests.EditMode
             Assert.Less(hole.magnitude, CavernLayout.FloorRadius);
             Assert.Greater(hole.magnitude, CavernLayout.HoleRadius);
             Assert.IsTrue(CavernLayout.InHole(hole.x, hole.y));
-            Assert.IsFalse(CavernLayout.InHole(hole.x + 10f, hole.y));
+            Assert.IsFalse(CavernLayout.InHole(hole.x + CavernLayout.HoleRadius + 2f, hole.y));
         }
 
         [Test]
