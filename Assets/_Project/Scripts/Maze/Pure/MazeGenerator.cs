@@ -13,10 +13,6 @@ namespace Evolve.Maze
         public const int MaxChambers = 16;
         public const int DefaultChambers = 14;
 
-        static readonly string[] NongNames = { "Khoang Rêu Ẩm", "Khoang Rễ Sáng", "Khoang Suối Cạn", "Khoang Đá Cuội", "Khoang Nấm Lam" };
-        static readonly string[] GiuaNames = { "Khoang Vách Vôi", "Khoang Nước Rỉ", "Khoang Khe Hẹp", "Khoang Thạch Nhũ", "Khoang Rễ Sâu" };
-        static readonly string[] SauNames = { "Khoang Than Đá", "Khoang Hơi Nóng", "Khoang Vực Tối", "Khoang Đá Cổ", "Khoang Xương Đá" };
-
         public static MazeGraph Generate(int seed, int chamberCount = DefaultChambers)
         {
             if (chamberCount < MinChambers || chamberCount > MaxChambers)
@@ -59,27 +55,43 @@ namespace Evolve.Maze
             for (int i = 0; i < deadEndTarget && i < normalPool.Count; i++)
                 kinds[normalPool[i]] = ChamberKind.DeadEnd;
 
-            // 3. Tạo danh sách ChamberNode
+            // 3. Tạo danh sách ChamberNode với chủ đề đa dạng theo tầng sâu
+            var nongThemes = new List<ChamberTheme>(ChamberThemeCatalog.NongThemes);
+            var giuaThemes = new List<ChamberTheme>(ChamberThemeCatalog.GiuaThemes);
+            var sauThemes = new List<ChamberTheme>(ChamberThemeCatalog.SauThemes);
+            rng.Shuffle(nongThemes);
+            rng.Shuffle(giuaThemes);
+            rng.Shuffle(sauThemes);
+
             var chambers = new List<ChamberNode>(chamberCount);
-            int nongNameIdx = 0, giuaNameIdx = 0, sauNameIdx = 0;
+            int nongThemeIdx = 0, giuaThemeIdx = 0, sauThemeIdx = 0;
             int shelterNum = 1, deadEndNum = 1;
 
             for (int i = 0; i < chamberCount; i++)
             {
+                ChamberTheme theme = kinds[i] switch
+                {
+                    ChamberKind.BirthCavern => ChamberTheme.BirthLake,
+                    ChamberKind.SealedCavern => ChamberTheme.SealedDragonTomb,
+                    ChamberKind.Shelter => ChamberTheme.MossSanctuary,
+                    ChamberKind.DeadEnd => ChamberTheme.MirageDeadEnd,
+                    _ => depths[i] switch
+                    {
+                        ChamberDepth.Nong => nongThemes[nongThemeIdx++ % nongThemes.Count],
+                        ChamberDepth.Giua => giuaThemes[giuaThemeIdx++ % giuaThemes.Count],
+                        _ => sauThemes[sauThemeIdx++ % sauThemes.Count]
+                    }
+                };
+
                 string name = kinds[i] switch
                 {
                     ChamberKind.BirthCavern => "Hang Khởi Sinh",
                     ChamberKind.SealedCavern => "Khoang Phong Ấn",
                     ChamberKind.Shelter => $"Hang Trú #{shelterNum++}",
                     ChamberKind.DeadEnd => $"Lối Giả #{deadEndNum++}",
-                    _ => depths[i] switch
-                    {
-                        ChamberDepth.Nong => NongNames[nongNameIdx++ % NongNames.Length],
-                        ChamberDepth.Giua => GiuaNames[giuaNameIdx++ % GiuaNames.Length],
-                        _ => SauNames[sauNameIdx++ % SauNames.Length]
-                    }
+                    _ => ChamberThemeCatalog.Get(theme).DisplayName
                 };
-                chambers.Add(new ChamberNode(i, name, depths[i], kinds[i], hasHighLedge: true));
+                chambers.Add(new ChamberNode(i, name, depths[i], kinds[i], hasHighLedge: true, theme: theme));
             }
 
             // 4. Tạo đồ thị hầm nối các khoang chính (không phải DeadEnd)

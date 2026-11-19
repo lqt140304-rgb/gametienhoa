@@ -109,6 +109,32 @@ namespace Evolve.Tests.EditMode.Maze
             Assert.Throws<ArgumentOutOfRangeException>(() => MazeGenerator.Generate(1, 17));
         }
 
+        [Test]
+        public void Generate_AssignsDiverseThemesAcrossChambersAndCompleteProfiles()
+        {
+            var graph = MazeGenerator.Generate(2026, 14);
+            var distinctThemes = new HashSet<ChamberTheme>();
+
+            foreach (var c in graph.Chambers)
+            {
+                distinctThemes.Add(c.Theme);
+                var profile = ChamberThemeCatalog.Get(c.Theme);
+                Assert.IsNotNull(profile);
+                Assert.IsNotEmpty(profile.DisplayName);
+                Assert.Greater(profile.MainLightIntensity, 0f);
+                if (c.Kind == ChamberKind.Shelter)
+                    Assert.AreEqual(0, profile.PredatorCount, "Hang trú không được có kẻ săn mồi.");
+                if (c.Kind == ChamberKind.Normal)
+                {
+                    Assert.Greater(profile.FloorFloraModels.Count, 0, $"Khoang {c.Theme} phải có thảm thực vật riêng.");
+                    Assert.Greater(profile.ForageItems.Count, 0, $"Khoang {c.Theme} phải có thức ăn riêng.");
+                    Assert.Greater(profile.PreyPrefabs.Count, 0, $"Khoang {c.Theme} phải có con mồi riêng.");
+                }
+            }
+
+            Assert.GreaterOrEqual(distinctThemes.Count, 8, "Mê cung 14 khoang phải có ít nhất 8 chủ đề khác nhau.");
+        }
+
         static bool HasDepth(MazeGraph graph, ChamberDepth depth)
         {
             foreach (var c in graph.Chambers)

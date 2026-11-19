@@ -63,6 +63,33 @@ namespace Evolve.Maze
         PitchDark = 5
     }
 
+    /// <summary>Chủ đề sinh thái & môi trường của từng khoang (vách, ánh sáng, thực vật, thức ăn, loài quái).</summary>
+    public enum ChamberTheme
+    {
+        // Khoang đặc biệt
+        BirthLake = 0,
+        MossSanctuary = 1,
+        MirageDeadEnd = 2,
+        SealedDragonTomb = 3,
+
+        // Tầng Nông
+        LumaMushroomGrove = 10,
+        RootCanopy = 11,
+        DampReedHollow = 12,
+        AmberPebbleGarden = 13,
+
+        // Tầng Giữa
+        LimestoneStalactite = 20,
+        CrystalVein = 21,
+        SporeCurtain = 22,
+        DeepRootTangle = 23,
+
+        // Tầng Sâu
+        EmberBasalt = 30,
+        SaltAbyss = 31,
+        FossilBoneyard = 32
+    }
+
     /// <summary>Dữ liệu thuần một khoang trong đồ thị mê cung.</summary>
     public sealed class ChamberNode
     {
@@ -70,16 +97,24 @@ namespace Evolve.Maze
         public string Name { get; }
         public ChamberDepth Depth { get; }
         public ChamberKind Kind { get; }
+        public ChamberTheme Theme { get; }
         public bool HasHighLedge { get; }
         public int DangerTier => (int)Depth + 1;
 
-        public ChamberNode(int id, string name, ChamberDepth depth, ChamberKind kind, bool hasHighLedge = true)
+        public ChamberNode(
+            int id,
+            string name,
+            ChamberDepth depth,
+            ChamberKind kind,
+            bool hasHighLedge = true,
+            ChamberTheme theme = ChamberTheme.LumaMushroomGrove)
         {
             Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Depth = depth;
             Kind = kind;
             HasHighLedge = hasHighLedge;
+            Theme = theme;
         }
     }
 

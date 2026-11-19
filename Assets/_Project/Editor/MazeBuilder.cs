@@ -23,6 +23,9 @@ namespace Evolve.EditorTools
         [MenuItem("Evolve/Build Maze World (Step 3)")]
         public static void Build()
         {
+            PropInstaller.EnsureRocks();
+            PropInstaller.EnsureLandmarks();
+
             var old = GameObject.Find(WorldRootName);
             if (old != null) Object.DestroyImmediate(old);
 
@@ -31,11 +34,7 @@ namespace Evolve.EditorTools
 
             var rockMat = CavernMazeWall.LoadOrMakeRockMaterial();
             var darkMat = CavernMazeWall.LoadOrMakeDarkInteriorMaterial();
-            var nongMat = LoadOrMakeMat("Maze_Nong.mat", new Color(0.22f, 0.30f, 0.20f));
-            var giuaMat = LoadOrMakeMat("Maze_Giua.mat", new Color(0.20f, 0.24f, 0.30f));
-            var sauMat = LoadOrMakeMat("Maze_Sau.mat", new Color(0.18f, 0.12f, 0.13f));
             var mossMat = LoadOrMakeMossMat();
-            var boneMat = LoadOrMakeMat("Maze_Bone.mat", new Color(0.76f, 0.72f, 0.62f));
             var floodMat = LoadOrMakeFloodWaterMat();
 
             var instances = new List<ChamberInstance>(graph.Chambers.Count);
@@ -45,13 +44,6 @@ namespace Evolve.EditorTools
                 var node = graph.Chambers[i];
                 var (ox, oz) = MazeActivationRules.ComputeChamberOrigin(node.Id);
                 Vector3 origin = new Vector3(ox, 0f, oz);
-
-                Material floorMat = node.Depth switch
-                {
-                    ChamberDepth.Nong => nongMat,
-                    ChamberDepth.Giua => giuaMat,
-                    _ => sauMat
-                };
 
                 var chamberGo = new GameObject($"Khoang_{node.Id:00}_{node.Name}");
                 chamberGo.transform.SetParent(root.transform, false);
@@ -66,28 +58,43 @@ namespace Evolve.EditorTools
                 bool isBirth = node.Kind == ChamberKind.BirthCavern;
                 inst.Configure(node.Id, node.Name, node.Depth, node.Kind, alwaysActive: isBirth, arrival: arrival);
 
-                if (!isBirth)
+                var edges = graph.GetTunnels(node.Id);
+                var tunnelAngles = new List<float>(edges.Count);
+                for (int e = 0; e < edges.Count; e++)
                 {
-                    BuildModularChamberGeometry(chamberGo.transform, node, floorMat, rockMat, mossMat, boneMat);
+                    float angleDeg = isBirth ? (320f + e * 120f) % 360f : (e * (360f / Mathf.Max(1, edges.Count)) + 30f);
+                    tunnelAngles.Add(angleDeg);
                 }
 
+                if (!isBirth)
+                {
+                    MazeChamberDecorator.Decorate(chamberGo.transform, node, ChamberRadius, tunnelAngles, mossMat);
+                }
+
+                var profile = ChamberThemeCatalog.Get(node.Theme);
+                var mouthMat = isBirth
+                    ? rockMat
+                    : LakeGround.OpaqueMaterial(
+                        $"Maze_Wall_{node.Theme}",
+                        new Color(profile.WallColor.R, profile.WallColor.G, profile.WallColor.B),
+                        profile.WallSmoothness,
+                        true);
+
                 // Dựng các miệng hầm và TunnelPortal cho từng đường hầm nối với khoang này
-                var edges = graph.GetTunnels(node.Id);
                 float baseRadius = isBirth ? 35.5f : ChamberRadius;
                 for (int e = 0; e < edges.Count; e++)
                 {
                     var edge = edges[e];
                     int otherId = edge.OtherEnd(node.Id);
-                    float angleDeg = isBirth ? (320f + e * 120f) % 360f : (e * (360f / Mathf.Max(1, edges.Count)) + 30f);
                     BuildChamberTunnelEndpoint(
                         chamberGo.transform,
                         inst,
                         node,
                         otherId,
                         edge,
-                        angleDeg,
+                        tunnelAngles[e],
                         baseRadius,
-                        rockMat,
+                        mouthMat,
                         darkMat);
                 }
 
@@ -116,115 +123,6 @@ namespace Evolve.EditorTools
             EditorSceneManager.MarkSceneDirty(root.scene);
             Selection.activeGameObject = root;
             Debug.Log($"Maze World: đã dựng {graph.Chambers.Count} khoang (seed {DefaultSeed}), chỉ bật Hang Khởi Sinh và {graph.GetNeighborIds(0).Count} khoang kề.");
-        }
-
-        static void BuildModularChamberGeometry(
-            Transform parent,
-            ChamberNode node,
-            Material floorMat,
-            Material rockMat,
-            Material mossMat,
-            Material boneMat)
-        {
-            // 1. Sàn thấp (ngập khi lũ dâng 4.5m)
-            var floor = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            floor.name = "Sàn Thấp (Ngập Lũ)";
-            floor.transform.SetParent(parent, false);
-            floor.transform.localPosition = new Vector3(0f, -0.5f, 0f);
-            floor.transform.localScale = new Vector3(ChamberRadius * 2f, 0.5f, ChamberRadius * 2f);
-            if (floorMat != null) floor.GetComponent<Renderer>().sharedMaterial = floorMat;
-
-            // 2. Vách bao & Trần hang (tối dần theo tầng sâu)
-            const int wallSegments = 12;
-            for (int i = 0; i < wallSegments; i++)
-            {
-                float a = i * (360f / wallSegments) * Mathf.Deg2Rad;
-                Vector3 pos = new Vector3(Mathf.Cos(a) * (ChamberRadius + 1.5f), 6.5f, Mathf.Sin(a) * (ChamberRadius + 1.5f));
-                var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                wall.name = $"Vách_{i:00}";
-                wall.transform.SetParent(parent, false);
-                wall.transform.localPosition = pos;
-                wall.transform.localRotation = Quaternion.LookRotation(-new Vector3(pos.x, 0f, pos.z), Vector3.up);
-                wall.transform.localScale = new Vector3(11.5f, 14f, 2.5f);
-                if (rockMat != null) wall.GetComponent<Renderer>().sharedMaterial = rockMat;
-            }
-
-            var ceiling = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            ceiling.name = "Trần Khoang";
-            ceiling.transform.SetParent(parent, false);
-            ceiling.transform.localPosition = new Vector3(0f, 13.5f, 0f);
-            ceiling.transform.localScale = new Vector3(ChamberRadius * 2.2f, 0.8f, ChamberRadius * 2.2f);
-            if (rockMat != null) ceiling.GetComponent<Renderer>().sharedMaterial = rockMat;
-
-            // 3. Gờ cao an toàn (y = 5.5m) + dốc leo
-            if (node.HasHighLedge && node.Kind != ChamberKind.DeadEnd)
-            {
-                var ledge = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                ledge.name = "Gờ Cao An Toàn";
-                ledge.transform.SetParent(parent, false);
-                ledge.transform.localPosition = new Vector3(10f, 5.3f, 0f);
-                ledge.transform.localScale = new Vector3(7f, 0.6f, 7f);
-                if (rockMat != null) ledge.GetComponent<Renderer>().sharedMaterial = rockMat;
-
-                var ramp = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                ramp.name = "Dốc Lên Gờ Cao";
-                ramp.transform.SetParent(parent, false);
-                ramp.transform.localPosition = new Vector3(4.5f, 2.65f, 0f);
-                ramp.transform.localRotation = Quaternion.Euler(0f, 0f, 38f);
-                ramp.transform.localScale = new Vector3(8.5f, 0.5f, 3.2f);
-                if (rockMat != null) ramp.GetComponent<Renderer>().sharedMaterial = rockMat;
-            }
-
-            // 4. Chi tiết riêng theo loại khoang
-            if (node.Kind == ChamberKind.Shelter)
-            {
-                MazeShelterBuilder.BuildRealShelter(
-                    parent,
-                    "Hang Trú Trong Khoang",
-                    new Vector3(-7f, 0f, 7f),
-                    new Vector3(-1f, 0f, 1f),
-                    rockMat,
-                    mossMat,
-                    ledgeHeight: 5.6f);
-            }
-            else if (node.Kind == ChamberKind.DeadEnd)
-            {
-                var slope = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                slope.name = "Đường Dốc Lên Ngõ Cụt";
-                slope.transform.SetParent(parent, false);
-                slope.transform.localPosition = new Vector3(0f, 3.5f, 6f);
-                slope.transform.localRotation = Quaternion.Euler(-28f, 0f, 0f);
-                slope.transform.localScale = new Vector3(4.5f, 0.6f, 14f);
-                if (rockMat != null) slope.GetComponent<Renderer>().sharedMaterial = rockMat;
-            }
-            else if (node.Kind == ChamberKind.SealedCavern)
-            {
-                // Bộ xương rồng cổ đại gợi ý (mục 9.6)
-                for (int b = 0; b < 5; b++)
-                {
-                    var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    rib.name = $"Xương Rồng Cổ_{b}";
-                    rib.transform.SetParent(parent, false);
-                    rib.transform.localPosition = new Vector3(0f, 2.2f, -4f + b * 2.5f);
-                    rib.transform.localRotation = Quaternion.Euler(0f, 0f, 35f * (b % 2 == 0 ? 1 : -1));
-                    rib.transform.localScale = new Vector3(0.7f, 4.5f, 0.7f);
-                    if (boneMat != null) rib.GetComponent<Renderer>().sharedMaterial = boneMat;
-                }
-            }
-
-            // 5. Ánh sáng đặc trưng theo tầng sâu (càng sâu càng tối)
-            var light = new GameObject("Ánh Sáng Khoang").AddComponent<Light>();
-            light.transform.SetParent(parent, false);
-            light.transform.localPosition = new Vector3(0f, 10.5f, 0f);
-            light.type = LightType.Point;
-            light.range = 32f;
-            light.shadows = LightShadows.None;
-            (light.color, light.intensity) = node.Depth switch
-            {
-                ChamberDepth.Nong => (new Color(0.55f, 0.85f, 0.65f), 2.4f),
-                ChamberDepth.Giua => (new Color(0.45f, 0.65f, 0.90f), 1.6f),
-                _ => (new Color(0.85f, 0.38f, 0.30f), 1.1f)
-            };
         }
 
         static void BuildChamberTunnelEndpoint(
@@ -305,18 +203,6 @@ namespace Evolve.EditorTools
                 so.FindProperty("blockingCollider").objectReferenceValue = solidCol;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
-        }
-
-        static Material LoadOrMakeMat(string fileName, Color color)
-        {
-            string path = Root + "/Materials/" + fileName;
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m != null) return m;
-            m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            m.SetColor("_BaseColor", color);
-            m.SetFloat("_Smoothness", 0.12f);
-            AssetDatabase.CreateAsset(m, path);
-            return m;
         }
 
         static Material LoadOrMakeMossMat()
