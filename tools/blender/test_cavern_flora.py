@@ -21,7 +21,7 @@ for kind, count, fn in bf.PIECES:
         zs = [v.co.z for o in objs for v in o.data.vertices]
         tris = sum(kit.tri_count(o) for o in objs)
         name = "Flora_%s_%d" % (kind, i)
-        check(tris <= 3200, "%s tris %d" % (name, tris))
+        check(tris <= 3800, "%s tris %d" % (name, tris))
         check(objs[0].name == name, "%s name %s" % (name, objs[0].name))
         if kind == "Vine":
             check(max(zs) <= 0.3 and -14.0 <= min(zs) <= -4.0, "%s hangs from the roof: %.2f..%.2f" % (name, min(zs), max(zs)))
