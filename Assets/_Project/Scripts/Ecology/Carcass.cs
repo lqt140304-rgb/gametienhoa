@@ -19,6 +19,9 @@ namespace Evolve.Ecology
         static readonly Color HumusColor = new Color(0.30f, 0.20f, 0.10f);
 
         public CarcassDecay Decay { get; private set; } = new CarcassDecay();
+
+        /// <summary>Start over as a fresh carcass holding this much food (a spat-out stomach item).</summary>
+        public void ResetFood(float food) => Decay = new CarcassDecay(food: food);
         public CarcassStage Stage => Decay.Stage;
 
         Region region;
@@ -79,15 +82,24 @@ namespace Evolve.Ecology
 
         void OnTriggerStay(Collider other)
         {
-            if (Time.time < nextBite) return;
             if (Decay.Stage != CarcassStage.Fresh && Decay.Stage != CarcassStage.Rotten) return;
             var stats = other.GetComponentInParent<SurvivalStats>();
             if (stats == null || stats.State.IsDead || stats.IsRemote) return;
+            // A slime with Nuốt Chửng swallows the carcass on F (see Swallower) instead of biting it automatically.
+            var swallower = stats.GetComponent<Evolve.Swallow.Swallower>();
+            if (swallower != null) { swallower.Touch(this); return; }
+            if (Time.time < nextBite) return;
             nextBite = Time.time + BiteCooldown;
             bool rotten = Decay.Stage == CarcassStage.Rotten; // decided before eating; humus is not edible at all
             NetWorld.Feed(stats, Decay.Eat(BiteAmount), FoodProfiles.Carcass(rotten));
             if (rotten) stats.State.TryInfect(DiseaseKind.RottenGel, DiseaseRules.RottenBiteChance); // rotten meat can give Thối Gel
             if (Decay.FoodLeft <= 0.01f) Destroy(gameObject); // eaten up
+        }
+
+        void OnTriggerExit(Collider other)
+        {
+            var swallower = other.GetComponentInParent<Evolve.Swallow.Swallower>();
+            if (swallower != null) swallower.Untouch(this);
         }
     }
 }

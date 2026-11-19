@@ -26,6 +26,9 @@ namespace Evolve.Survival
         public static bool THeld() => Keyboard.current != null && Keyboard.current.tKey.isPressed;
         public static bool Tab() => Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame;
         public static bool TabHeld() => Keyboard.current != null && Keyboard.current.tabKey.isPressed;
+        public static bool B() => Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame;
+        /// <summary>F is being held (dissolve something too big to swallow whole).</summary>
+        public static bool FHeld() => Keyboard.current != null && Keyboard.current.fKey.isPressed;
         public static bool F3() => Keyboard.current != null && Keyboard.current.f3Key.wasPressedThisFrame;
         public static bool F4() => Keyboard.current != null && Keyboard.current.f4Key.wasPressedThisFrame;
         public static bool F6() => Keyboard.current != null && Keyboard.current.f6Key.wasPressedThisFrame;
@@ -56,6 +59,8 @@ namespace Evolve.Survival
         public static bool THeld() => Input.GetKey(KeyCode.T);
         public static bool Tab() => Input.GetKeyDown(KeyCode.Tab);
         public static bool TabHeld() => Input.GetKey(KeyCode.Tab);
+        public static bool B() => Input.GetKeyDown(KeyCode.B);
+        public static bool FHeld() => Input.GetKey(KeyCode.F);
         public static bool F3() => Input.GetKeyDown(KeyCode.F3);
         public static bool F4() => Input.GetKeyDown(KeyCode.F4);
         public static bool F6() => Input.GetKeyDown(KeyCode.F6);

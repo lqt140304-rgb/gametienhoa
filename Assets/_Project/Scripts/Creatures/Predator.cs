@@ -50,7 +50,12 @@ namespace Evolve.Creatures
 
         [Header("Reward")]
         [SerializeField] float nutrition = 35f;
+        [Tooltip("Its genome: the organs Giải Mã can learn from its carcass (read from this drop table)")]
         [SerializeField] DropTableSO drops;
+        [Tooltip("Body mass: a slime swallows the carcass whole if this is at most 80% of its own mass, else dissolves it")]
+        [SerializeField] float bodyMass = 15f;
+        [Tooltip("Pack leader (con đầu đàn): only leaders carry legendary genes")]
+        [SerializeField] bool isLeader;
 
         public Vector3 HomeCenter { get; set; }
         public float HomeRadius { get; set; } = 12f;
@@ -273,18 +278,21 @@ namespace Evolve.Creatures
             if (Health > 0f) return;
 
             dead = true;
-            if (by != null)
-            {
+            // A slime with Nuốt Chửng swallows the carcass (F) to learn from it; anyone else is fed on the spot as before.
+            if (by != null && !Evolve.Swallow.SwallowRules.ShouldUseStomach(by.IsRemote, by.GetComponent<Evolve.Swallow.Swallower>() != null))
                 NetWorld.Feed(by, nutrition, FoodProfiles.For(FoodKind.PredatorMeat));
-                var host = by.GetComponent<OrganHost>();
-                var drop = drops != null ? drops.Roll(o => host != null && host.Has(o), Evolve.Traits.LuckRules.ForCatcher(drops, by.gameObject)) : null;
-                if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.25f, transform.position.z));
-            }
             Debug.Log($"{name} bị hạ gục");
             Killed?.Invoke(this);
             bool hasEc = TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec);
             if (hasEc) ec.NotifyKilled();
-            Evolve.Ecology.Carcass.Spawn(new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.2f, transform.position.z), 1.5f, hasEc ? ec.Region : null);
+            var carcass = Evolve.Ecology.Carcass.Spawn(new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.2f, transform.position.z), 1.5f, hasEc ? ec.Region : null);
+            if (carcass != null)
+            {
+                var sample = carcass.gameObject.AddComponent<Evolve.Swallow.CarcassSample>();
+                sample.Genes = Evolve.Swallow.Genome.From(drops, isLeader);
+                sample.Mass = bodyMass;
+                sample.Label = name.Replace("(Clone)", "").Trim();
+            }
             Destroy(gameObject);
         }
     }

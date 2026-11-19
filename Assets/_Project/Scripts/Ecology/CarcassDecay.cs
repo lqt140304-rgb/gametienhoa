@@ -22,6 +22,8 @@ namespace Evolve.Ecology
         }
 
         public CarcassStage Stage { get; private set; } = CarcassStage.Fresh;
+        /// <summary>Minutes since death (sets how fresh a swallowed sample is).</summary>
+        public float ElapsedMinutes => elapsed;
         public float FoodLeft { get; private set; }
 
         /// <summary>Food handed to the region when the carcass is Gone (leftover food + 10). 0 before that.</summary>
