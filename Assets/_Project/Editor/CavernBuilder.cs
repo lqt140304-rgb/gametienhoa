@@ -81,6 +81,20 @@ namespace Evolve.EditorTools
                 c.a = 1f;
                 return c;
             });
+            // the ground repeats this texture across the whole floor: it must wrap on BOTH axes (PaintedTexture clamps one), or every tile edge shows as a dark line
+            if (AssetImporter.GetAtPath(texPath) is TextureImporter imp
+                && (imp.wrapModeU != TextureWrapMode.Repeat || imp.wrapModeV != TextureWrapMode.Repeat || imp.anisoLevel < 8 || !imp.mipmapEnabled))
+            {
+                imp.wrapMode = TextureWrapMode.Repeat;
+                imp.wrapModeU = TextureWrapMode.Repeat;
+                imp.wrapModeV = TextureWrapMode.Repeat;
+                imp.mipmapEnabled = true;
+                imp.filterMode = FilterMode.Trilinear;
+                imp.anisoLevel = 8;
+                imp.alphaIsTransparency = false;
+                imp.SaveAndReimport();
+                tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+            }
             var layer = AssetDatabase.LoadAssetAtPath<TerrainLayer>(layerPath);
             if (layer == null)
             {
