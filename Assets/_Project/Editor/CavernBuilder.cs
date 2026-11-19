@@ -349,7 +349,10 @@ namespace Evolve.EditorTools
             var rnd = new System.Random(25);
             var rockParts = new List<CombineInstance>();
             var mossParts = new List<CombineInstance>();
-            AddRocks(CavernLayout.Scatter(25, 1500, CavernLayout.RockDensity), rnd, rocks, mosses, rockParts, mossParts, 0.4f, 1.4f);
+            var blender = BlenderRocks();   // the rocks modelled in Blender (tools/blender/build_rocks.py); the code rocks are only the fallback
+            var scatter = CavernLayout.Scatter(25, 1500, CavernLayout.RockDensity);
+            if (blender != null) PlaceBlenderRocks(scatter, rnd, blender, root, 0, 3, 0.6f, 1.3f);
+            else AddRocks(scatter, rnd, rocks, mosses, rockParts, mossParts, 0.4f, 1.4f);
 
             // the ore sites: a big rock under each (the crystals themselves are food, see CavernForage), a few glowing ones lighting the cave
             var sites = CavernForageData.PlaceOre();
@@ -357,7 +360,8 @@ namespace Evolve.EditorTools
             for (int i = 0; i < sites.Count; i++)
             {
                 var p = sites[i].pos;
-                AddRocks(new List<Vector3> { p }, rnd, rocks, mosses, rockParts, mossParts, 1.2f, 1.9f);
+                if (blender != null) PlaceBlenderRocks(new List<Vector3> { p }, rnd, blender, root, 3, 5, 0.9f, 1.2f);
+                else AddRocks(new List<Vector3> { p }, rnd, rocks, mosses, rockParts, mossParts, 1.2f, 1.9f);
                 if (sites[i].spec.Id == "quartz" && lights < 8)
                 {
                     lights++;
@@ -374,6 +378,30 @@ namespace Evolve.EditorTools
             }
             LakeGround.AddCombined(root, "Rocks", rockParts, rockMat);
             LakeGround.AddCombined(root, "Rock Moss", mossParts, mossMat);
+        }
+
+        /// <summary>The six Blender rocks (Rock_0 .. Rock_5, from small to big), installed from tools/blender/out if missing; null if they are not there.</summary>
+        static GameObject[] BlenderRocks()
+        {
+            PropInstaller.EnsureRocks();
+            var list = new GameObject[6];
+            for (int i = 0; i < list.Length; i++)
+            {
+                list[i] = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Models/Underroot/Rock_{i}.fbx");
+                if (list[i] == null) return null;
+            }
+            return list;
+        }
+
+        static void PlaceBlenderRocks(IList<Vector3> positions, System.Random rnd, GameObject[] prefabs, Transform parent, int firstSize, int lastSize, float minScale, float maxScale)
+        {
+            foreach (var p in positions)
+            {
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[rnd.Next(firstSize, lastSize + 1)], parent);
+                go.transform.position = p + Vector3.down * 0.05f;
+                go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                go.transform.localScale = Vector3.one * Mathf.Lerp(minScale, maxScale, (float)rnd.NextDouble());
+            }
         }
 
         static void AddRocks(IList<Vector3> positions, System.Random rnd, Mesh[] rocks, Mesh[] mosses, List<CombineInstance> rockParts, List<CombineInstance> mossParts, float minScale, float maxScale)

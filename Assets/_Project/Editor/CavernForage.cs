@@ -17,6 +17,21 @@ namespace Evolve.EditorTools
     public static class CavernForage
     {
         const string RootName = "Cavern Forage";
+        const string ModelFolder = "Assets/_Project/Models/Underroot/";
+
+        // The Blender model of each kind (tools/blender/build_forage.py and build_cavern_forage.py); the code meshes below are only the fallback.
+        static readonly Dictionary<string, string> BlenderModel = new Dictionary<string, string>
+        {
+            { "reed", "Forage_Cattail" }, { "lily", "Forage_WaterLily" }, { "moss", "Forage_MossClump" }, { "sweet", "Forage_SweetRoot" },
+            { "fern", "Forage_BitterFern" }, { "berry", "Forage_EmberBerry" }, { "fatcap", "Forage_FatMushroom" }, { "pod", "Forage_SporePod" },
+            { "quartz", "Forage_Quartz" }, { "lime", "Forage_LimeCrystal" }, { "iron", "Forage_IronNodule" }, { "salt", "Forage_SaltCrust" },
+        };
+
+        // the colour of the self-lit parts (objects whose name contains "Glow") of the kinds that have them
+        static readonly Dictionary<string, Color> GlowTint = new Dictionary<string, Color>
+        {
+            { "moss", new Color(0.35f, 1f, 0.45f) }, { "berry", new Color(1f, 0.55f, 0.15f) }, { "pod", new Color(0.3f, 0.9f, 0.95f) }, { "quartz", new Color(0.5f, 0.9f, 1f) },
+        };
 
         [MenuItem("Evolve/Dress Cavern: Forage")]
         public static void Dress()
@@ -24,16 +39,23 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(RootName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(RootName).transform;
+            PropInstaller.EnsureLandmarks();   // writes any missing Blender FBX (including the Forage_* ones) from tools/blender/out
+            var prefabs = new Dictionary<string, GameObject>();
+            foreach (var kv in BlenderModel)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + kv.Value + ".fbx");
+                if (prefab != null) prefabs[kv.Key] = prefab;
+            }
+            int fromBlender = 0, fromCode = 0;
 
             var rnd = new System.Random(5151);
             var meshes = new Dictionary<string, (Mesh mesh, Material[] mats)[]>();
-            foreach (var spec in CavernForageData.Specs) meshes[spec.Id] = Variants(spec, rnd);
+            foreach (var spec in CavernForageData.Specs) if (!prefabs.ContainsKey(spec.Id)) meshes[spec.Id] = Variants(spec, rnd);   // code meshes only where a Blender model is missing
 
             var all = CavernForageData.PlaceAll();
             var perKind = new Dictionary<string, int>();
             foreach (var (pos, spec) in all)
             {
-                var variant = meshes[spec.Id][rnd.Next(meshes[spec.Id].Length)];
                 var go = new GameObject(spec.Name);
                 go.transform.SetParent(root, false);
                 go.transform.position = pos;
@@ -51,23 +73,59 @@ namespace Evolve.EditorTools
                 so.FindProperty("respawnSeconds").floatValue = spec.Respawn;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                var visual = new GameObject("Visual");
-                visual.transform.SetParent(go.transform, false);
-                if (spec.Mineral) visual.transform.localPosition = new Vector3(0f, 0.35f, 0f);   // crystals stand on top of the rock under them
-                visual.AddComponent<MeshFilter>().sharedMesh = variant.mesh;
-                var mr = visual.AddComponent<MeshRenderer>();
-                mr.sharedMaterials = variant.mats;
-                mr.shadowCastingMode = ShadowCastingMode.Off;
+                if (prefabs.TryGetValue(spec.Id, out var model))
+                {
+                    var visualModel = (GameObject)PrefabUtility.InstantiatePrefab(model, go.transform);
+                    visualModel.transform.localPosition = spec.Mineral ? new Vector3(0f, 0.2f, 0f) : Vector3.zero;   // crystals stand a little above the rock under them
+                    visualModel.transform.localRotation = Quaternion.identity;
+                    foreach (var t in visualModel.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, 0);   // it shrinks as it is absorbed
+                    if (GlowTint.TryGetValue(spec.Id, out var tint))
+                    {
+                        var glow = GlowMat(spec.Id, tint);
+                        if (glow != null) foreach (var r in visualModel.GetComponentsInChildren<Renderer>(true)) if (r.name.Contains("Glow")) r.sharedMaterial = glow;
+                    }
+                    fromBlender++;
+                }
+                else
+                {
+                    var variant = meshes[spec.Id][rnd.Next(meshes[spec.Id].Length)];
+                    var visual = new GameObject("Visual");
+                    visual.transform.SetParent(go.transform, false);
+                    if (spec.Mineral) visual.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+                    visual.AddComponent<MeshFilter>().sharedMesh = variant.mesh;
+                    var mr = visual.AddComponent<MeshRenderer>();
+                    mr.sharedMaterials = variant.mats;
+                    mr.shadowCastingMode = ShadowCastingMode.Off;
+                    fromCode++;
+                }
                 perKind[spec.Id] = perKind.TryGetValue(spec.Id, out int c) ? c + 1 : 1;
             }
             var summary = new List<string>();
             foreach (var kv in perKind) summary.Add($"{kv.Key} {kv.Value}");
             EditorSceneManager.MarkAllScenesDirty();
             AssetDatabase.SaveAssets();
-            Debug.Log($"Thức ăn trong hang: {all.Count} cái ({string.Join(", ", summary)}). Ctrl+S để lưu scene.");
+            Debug.Log($"Thức ăn trong hang: {all.Count} cái ({string.Join(", ", summary)}); mô hình Blender {fromBlender}, mô hình dự phòng bằng code {fromCode}. Ctrl+S để lưu scene.");
         }
 
-        // ---------------------------------------------------------------- the looks of each kind
+        static Material GlowMat(string id, Color tint)
+        {
+            string path = $"Assets/_Project/Materials/Cavern_Glow_{id}.mat";
+            var shader = Shader.Find("Evolve/RockVertexColor");
+            if (shader == null) return null;
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(shader) { name = "Cavern_Glow_" + id };
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.shader = shader;
+            mat.SetColor("_Tint", new Color(tint.r, tint.g, tint.b, 1f));
+            mat.SetFloat("_Glow", 1.5f);
+            EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
+        // ---------------------------------------------------------------- the looks of each kind (fallback when a Blender model is missing)
 
         static Material M(string name, Color color, Color emission = default, float smooth = 0.1f, bool twoSided = true) =>
             LakeGround.OpaqueMaterial("Cavern_" + name, color, smooth, twoSided, emission);

@@ -27,7 +27,8 @@ namespace Evolve.EditorTools
             "LumaShroom_0", "LumaShroom_1", "LumaShroom_2", "CrystalCluster_0", "CrystalCluster_1", "CrystalCluster_2",
             "BulbPlant_0", "BulbPlant_1", "RootStub_0", "RootStub_1",
             "Forage_WaterLily", "Forage_Cattail", "Forage_BitterFern", "Forage_FatMushroom", "Forage_SweetRoot", "Forage_IceBloom",
-            "Forage_LimeCrystal", "Forage_IronNodule", "Forage_SaltCrust", "Forage_Quartz"
+            "Forage_LimeCrystal", "Forage_IronNodule", "Forage_SaltCrust", "Forage_Quartz",
+            "Forage_MossClump", "Forage_EmberBerry", "Forage_SporePod"
         };
 
         [MenuItem("Evolve/Bản đồ cũ (Underroot)/Install Blender Rocks")]

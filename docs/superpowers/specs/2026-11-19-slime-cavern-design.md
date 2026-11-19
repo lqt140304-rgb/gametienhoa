@@ -53,5 +53,6 @@ Yêu cầu của chủ dự án: **không phải loại cỏ nào cũng ăn đư
 
 - Cả năm chất dinh dưỡng đều là chất chính của ít nhất một loại. Khoáng chất cho nhiều hơn mỗi lần ăn (24), hấp thụ chậm hơn, và 10 phút mới mọc lại; cây cho ít hơn (8 đến 18), hấp thụ nhanh, mọc lại sau 2 phút rưỡi.
 - Khoảng 130 cái ăn được, cách nhau ít nhất 2,2 m, dưới giới hạn đồng bộ co-op (1000). Menu **Evolve → Dress Cavern: Forage** chạy lại được riêng.
+- **Mô hình làm bằng Blender** (theo yêu cầu): 9 loại dùng `Forage_*` có sẵn (`build_forage.py`), 3 loại mới (`Forage_MossClump`, `Forage_EmberBerry`, `Forage_SporePod`, `build_cavern_forage.py`) và 6 tảng đá `Rock_0..5` dựng bằng Blender; phần phát sáng là object riêng có chữ `Glow`, mỗi loại có chất liệu phát sáng riêng của hang. Mô hình bằng code chỉ là dự phòng khi thiếu FBX. Thảm cỏ nhỏ (hàng nghìn nhúm) và nấm trang trí vẫn là mesh dựng bằng code, vì quá nhiều và quá nhỏ để làm từng cái trong Blender.
 - Chưa làm: gợi ý nhìn thấy loại nào ăn được (người chơi phải thử), loại độc hại.
 
