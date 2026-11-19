@@ -72,7 +72,7 @@ namespace Evolve.World
             if (depth > 0f) return -depth;
             float d = r - LakeRadius(Angle(x, z));
             float bump = (ZoneLayout.Noise(x / 9f + 40f, z / 9f + 17f) - 0.5f) * 0.8f;
-            float h = 0.12f + 0.9f * Smooth01(d / 14f) + bump * Smooth01(d / 4f);
+            float h = 0.12f * Smooth01(d / 1.5f) + 0.9f * Smooth01(d / 14f) + bump * Smooth01(d / 4f);   // starts at the water's level: no little cliff along the shore
             float rw = r + 8f * (ZoneLayout.Noise(x / 14f + 3f, z / 14f + 9f) - 0.5f);   // the wall's foot wanders by about 4 m
             float wall = WallHeight * Smooth01((rw - FloorRadius) / (WallTopRadius - FloorRadius));
             return Mathf.Max(h, wall);

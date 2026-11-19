@@ -22,7 +22,7 @@ namespace Evolve.EditorTools
         const string ShallowTag = "ShallowWater";
         const float BaseOffset = 9f;          // the lake bed is 8 m under the water: the terrain starts 9 m below the water level
         const float TerrainHeightY = 44f;     // 9 + the 30 m wall + headroom
-        const int HeightRes = 257;            // 0.5 m cells over 128 m
+        const int HeightRes = 513;            // 0.25 m cells over 128 m: a smooth shoreline
         const int AlphaRes = 128;
 
         [MenuItem("Evolve/Build Slime Cavern (new map)")]
@@ -137,7 +137,7 @@ namespace Evolve.EditorTools
             go.name = "Cavern Terrain";
             go.transform.position = new Vector3(-half, -BaseOffset, -half);
             var terrain = go.GetComponent<Terrain>();
-            terrain.heightmapPixelError = 3f;
+            terrain.heightmapPixelError = 1f;   // no coarse terrain LOD: it made big triangular teeth along the curved shore
             terrain.basemapDistance = 150f;
             terrain.drawInstanced = true;
         }
