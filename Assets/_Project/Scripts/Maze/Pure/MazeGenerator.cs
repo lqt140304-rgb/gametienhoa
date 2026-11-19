@@ -136,41 +136,7 @@ namespace Evolve.Maze
                 AddEdge(a, b, size, sAB, sBA, obs);
             }
 
-            // Đảm bảo mọi khoang chính đều có ít nhất 2 hầm (Birth và Sealed hiện có 1)
-            for (int i = 0; i < backbone.Count; i++)
-            {
-                int a = backbone[i];
-                if (degree[a] >= 2) continue;
-
-                int candidate = FindPartner(ref rng, a, backbone, degree, pairSet, maxDegree: 2, chambers);
-                if (candidate < 0)
-                    candidate = FindPartner(ref rng, a, backbone, degree, pairSet, maxDegree: 3, chambers);
-                if (candidate >= 0)
-                {
-                    var (size, sAB, sBA, obs) = RollEdgeAttributes(ref rng, chambers[a], chambers[candidate], isBackbone: false);
-                    AddEdge(a, candidate, size, sAB, sBA, obs);
-                }
-            }
-
-            // Thêm các nhánh rẽ phụ để đa số khoang có 2-3 hầm (tăng tính mê cung)
-            var shuffledMain = new List<int>(backbone);
-            rng.Shuffle(shuffledMain);
-            for (int i = 0; i < shuffledMain.Count; i++)
-            {
-                int a = shuffledMain[i];
-                if (degree[a] >= 3) continue;
-                // Khoảng 50% khoang có thêm hầm thứ 3 (nhưng chừa chỗ cho DeadEnd gắn vào)
-                if (rng.NextFloat() > 0.55f) continue;
-
-                int partner = FindPartner(ref rng, a, backbone, degree, pairSet, maxDegree: 2, chambers);
-                if (partner >= 0)
-                {
-                    var (size, sAB, sBA, obs) = RollEdgeAttributes(ref rng, chambers[a], chambers[partner], isBackbone: false);
-                    AddEdge(a, partner, size, sAB, sBA, obs);
-                }
-            }
-
-            // 5. Gắn các Lối Giả (ngõ cụt dẫn lên cao) vào khoang chính có bậc < 3
+            // 4b. Gắn toàn bộ Lối Giả (ngõ cụt dẫn lên cao) trước tiên để luôn có host còn trống bậc < 3
             for (int i = 0; i < deadEnds.Count; i++)
             {
                 int deadId = deadEnds[i];
@@ -178,8 +144,38 @@ namespace Evolve.Maze
                 if (host >= 0)
                 {
                     TunnelSize size = rng.NextFloat() < 0.4f ? TunnelSize.Small : TunnelSize.Medium;
-                    // Lối giả luôn dẫn lên cao (Up) từ khoang chính -> lừa người chơi tưởng là đường lên mặt đất
                     AddEdge(host, deadId, size, TunnelSlope.Up, TunnelSlope.Down, ObstacleKind.None);
+                }
+            }
+
+            // 4c. Đảm bảo mọi khoang chính đều có ít nhất 2 hầm (Birth và Sealed lúc mới tạo backbone chỉ có 1)
+            for (int i = 0; i < backbone.Count; i++)
+            {
+                int a = backbone[i];
+                if (degree[a] >= 2) continue;
+
+                int candidate = FindPartner(ref rng, a, backbone, degree, pairSet, maxDegree: 2, chambers);
+                if (candidate >= 0)
+                {
+                    var (size, sAB, sBA, obs) = RollEdgeAttributes(ref rng, chambers[a], chambers[candidate], isBackbone: false);
+                    AddEdge(a, candidate, size, sAB, sBA, obs);
+                }
+            }
+
+            // 4d. Thêm các nhánh rẽ phụ để đa số khoang có 2-3 hầm (giữ tối đa bậc 3)
+            var shuffledMain = new List<int>(backbone);
+            rng.Shuffle(shuffledMain);
+            for (int i = 0; i < shuffledMain.Count; i++)
+            {
+                int a = shuffledMain[i];
+                if (degree[a] >= 3) continue;
+                if (rng.NextFloat() > 0.55f) continue;
+
+                int partner = FindPartner(ref rng, a, backbone, degree, pairSet, maxDegree: 2, chambers);
+                if (partner >= 0)
+                {
+                    var (size, sAB, sBA, obs) = RollEdgeAttributes(ref rng, chambers[a], chambers[partner], isBackbone: false);
+                    AddEdge(a, partner, size, sAB, sBA, obs);
                 }
             }
 
@@ -247,15 +243,17 @@ namespace Evolve.Maze
         {
             var sameDepth = new List<int>();
             var any = new List<int>();
+            var fallback = new List<int>();
             for (int i = 0; i < backbone.Count; i++)
             {
                 int id = backbone[i];
                 if (degree[id] >= 3) continue;
+                fallback.Add(id);
                 if (chambers[id].Kind == ChamberKind.Shelter || chambers[id].Kind == ChamberKind.SealedCavern) continue;
                 any.Add(id);
                 if (chambers[id].Depth == preferredDepth) sameDepth.Add(id);
             }
-            var pool = sameDepth.Count > 0 ? sameDepth : any;
+            var pool = sameDepth.Count > 0 ? sameDepth : (any.Count > 0 ? any : fallback);
             if (pool.Count == 0) return -1;
             return pool[rng.Range(0, pool.Count)];
         }

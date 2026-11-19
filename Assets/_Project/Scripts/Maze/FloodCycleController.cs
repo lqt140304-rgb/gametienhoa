@@ -104,7 +104,7 @@ namespace Evolve.Maze
             if (floodWaterSurface != null)
             {
                 var p = floodWaterSurface.position;
-                var manager = FindFirstObjectByType<MazeWorldManager>();
+                var manager = FindAnyObjectByType<MazeWorldManager>();
                 if (manager != null && manager.CurrentChamber != null)
                 {
                     var origin = manager.CurrentChamber.transform.position;
@@ -135,7 +135,7 @@ namespace Evolve.Maze
 
         void ApplyWaterField(float waterLevel)
         {
-            var manager = FindFirstObjectByType<MazeWorldManager>();
+            var manager = FindAnyObjectByType<MazeWorldManager>();
             bool inBirthCavern = manager == null || manager.CurrentChamberId == 0;
 
             WaterField.Use(
@@ -166,7 +166,7 @@ namespace Evolve.Maze
                 return;
             }
 
-            var sensor = FindFirstObjectByType<ShelterSensor>();
+            var sensor = FindAnyObjectByType<ShelterSensor>();
             if (sensor == null) return;
 
             if (!FloodCycleRules.IsCaughtByFlood(sensor.transform.position.y, sensor.InShelter, snap, cfg))
@@ -196,7 +196,7 @@ namespace Evolve.Maze
         {
             if (washCooldown > 0f || !snap.IsFloodActive) return;
 
-            var sensor = FindFirstObjectByType<ShelterSensor>();
+            var sensor = FindAnyObjectByType<ShelterSensor>();
             if (sensor == null) return;
 
             float playerY = sensor.transform.position.y;
@@ -225,7 +225,7 @@ namespace Evolve.Maze
                 if (lost > 0f) body.TrySpend(lost);
             }
 
-            var manager = FindFirstObjectByType<MazeWorldManager>();
+            var manager = FindAnyObjectByType<MazeWorldManager>();
             if (manager != null && manager.Graph != null)
             {
                 int fromId = manager.CurrentChamberId;
@@ -244,7 +244,7 @@ namespace Evolve.Maze
 
         Vector3 FindLowestDrainPosition(Vector3 fallbackPos)
         {
-            var manager = FindFirstObjectByType<MazeWorldManager>();
+            var manager = FindAnyObjectByType<MazeWorldManager>();
             var chamber = manager != null ? manager.CurrentChamber : null;
             if (chamber == null || chamber.Portals.Count == 0)
                 return fallbackPos + Vector3.forward * 6f;

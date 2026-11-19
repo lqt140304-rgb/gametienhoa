@@ -42,7 +42,7 @@ namespace Evolve.Maze
             var body = other.GetComponentInParent<SlimeBody>();
             if (body == null) return;
 
-            var manager = FindFirstObjectByType<MazeWorldManager>();
+            var manager = FindAnyObjectByType<MazeWorldManager>();
             if (manager == null) return;
 
             lastTeleportTime = Time.time;
