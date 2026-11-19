@@ -8,8 +8,8 @@ using UnityEngine.Rendering;
 namespace Evolve.EditorTools
 {
     /// <summary>
-    /// Dựng mesh địa hình tự nhiên (gò đồi, lòng trũng, đồi trú lũ, vách bao), vòm trần kín 360 độ
-    /// và vòm hầm đá hữu cơ (CaveMeshes.ArchTunnel + đá tự nhiên) — không dùng Cube/Cylinder thô.
+    /// Dựng mesh địa hình tự nhiên quy mô lớn (đường kính 150m), vòm trần kín 360 độ
+    /// và miệng hang đồ sộ thông thoáng (không lấp, không khối hộp thô, không vật thể lơ lửng).
     /// </summary>
     public static class MazeTerrainMesh
     {
@@ -23,8 +23,8 @@ namespace Evolve.EditorTools
             IReadOnlyList<float> tunnelAnglesDeg,
             Material floorMat)
         {
-            const int grid = 72;
-            float outer = chamberRadius + 6f;
+            const int grid = 96;
+            float outer = chamberRadius + 8f;
             float cell = (outer * 2f) / grid;
 
             var verts = new List<Vector3>((grid + 1) * (grid + 1));
@@ -37,12 +37,12 @@ namespace Evolve.EditorTools
                     float lz = -outer + zi * cell;
                     float y = MazeTerrainMath.GroundHeightAt(lx, lz, 1000 + node.Id * 73, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
                     verts.Add(new Vector3(lx, y, lz));
-                    uvs.Add(new Vector2(lx / 6f, lz / 6f));
+                    uvs.Add(new Vector2(lx / 8f, lz / 8f));
                 }
             }
 
             var tris = new List<int>(grid * grid * 6);
-            float maxR2 = (outer + 1.5f) * (outer + 1.5f);
+            float maxR2 = (outer + 2f) * (outer + 2f);
             for (int zi = 0; zi < grid; zi++)
             {
                 for (int xi = 0; xi < grid; xi++)
@@ -83,8 +83,8 @@ namespace Evolve.EditorTools
             float chamberRadius,
             Material wallMat)
         {
-            const int grid = 56;
-            float outer = chamberRadius + 8f;
+            const int grid = 72;
+            float outer = chamberRadius + 10f;
             float cell = (outer * 2f) / grid;
 
             var verts = new List<Vector3>((grid + 1) * (grid + 1));
@@ -97,14 +97,13 @@ namespace Evolve.EditorTools
                     float lz = -outer + zi * cell;
                     float r = Mathf.Sqrt(lx * lx + lz * lz);
                     float y = MazeTerrainMath.CeilingHeightAt(lx, lz, 1000 + chamberId * 73, chamberRadius);
-                    // Kéo mép ngoài cùng xuống dưới đỉnh vách bao (22m -> 15m) để khép kín 100% không hở kẽ
-                    if (r > chamberRadius * 0.96f)
+                    if (r > chamberRadius * 0.94f)
                     {
-                        float t = Mathf.Clamp01((r - chamberRadius * 0.96f) / 8f);
-                        y = Mathf.Lerp(y, 14f, t);
+                        float t = Mathf.Clamp01((r - chamberRadius * 0.94f) / 10f);
+                        y = Mathf.Lerp(y, 18f, t);
                     }
                     verts.Add(new Vector3(lx, y, lz));
-                    uvs.Add(new Vector2(lx / 6f, lz / 6f));
+                    uvs.Add(new Vector2(lx / 8f, lz / 8f));
                 }
             }
 
@@ -122,7 +121,6 @@ namespace Evolve.EditorTools
                     int b = a + 1;
                     int c = a + (grid + 1);
                     int d = c + 1;
-                    // Pháp tuyến hướng xuống lòng hang
                     tris.Add(a); tris.Add(b); tris.Add(c);
                     tris.Add(b); tris.Add(d); tris.Add(c);
                 }
@@ -140,12 +138,14 @@ namespace Evolve.EditorTools
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = go.AddComponent<MeshRenderer>();
             mr.sharedMaterial = wallMat;
-            // Chặn toàn bộ ánh sáng mặt trời từ bên ngoài chiếu lọt vào khoang
             mr.shadowCastingMode = ShadowCastingMode.TwoSided;
             return go;
         }
 
-        /// <summary>Dựng miệng hầm dạng vòm đá hữu cơ (ArchTunnel + đá tảng viền cửa + lối đi uốn nhẹ), không dùng Cube.</summary>
+        /// <summary>
+        /// Dựng miệng hang đồ sộ, thông thoáng 100% (lòng hang đi thẳng trên mặt đất tự nhiên,
+        /// đá viền tách sang hai bên mép ngoài và cắm sâu xuống đất, không chặn hay lấp cửa).
+        /// </summary>
         public static Transform BuildNaturalTunnelMouth(
             Transform parent,
             string name,
@@ -168,52 +168,57 @@ namespace Evolve.EditorTools
             mouth.transform.position = pos;
             mouth.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
 
-            float length = 9.5f;
+            const float length = 6.2f;
             var path = new List<Vector3>
             {
-                new Vector3(0f, 0f, -0.8f),
-                new Vector3(0f, 0f, 2.5f),
-                new Vector3(0.45f, 0f, 6.0f),
-                new Vector3(0.95f, 0f, length)
+                new Vector3(0f, -0.45f, -0.6f),
+                new Vector3(0f, -0.45f, 2.2f),
+                new Vector3(0f, -0.45f, length)
             };
 
-            // 1. Vòm hang cong tự nhiên (CaveMeshes.ArchTunnel)
+            // 1. Vòm hang cong lớn (ArchTunnel rỗng lòng, chân cắm sâu -0.95m xuống đất)
             var archGo = new GameObject("Vòm Đá Đường Hầm");
             archGo.transform.SetParent(mouth.transform, false);
-            var archMesh = CaveMeshes.ArchTunnel(path, width, height, 10);
+            var archMesh = CaveMeshes.ArchTunnel(path, width, height, 12);
             archGo.AddComponent<MeshFilter>().sharedMesh = archMesh;
             var archMr = archGo.AddComponent<MeshRenderer>();
             archMr.sharedMaterial = rockMat;
             archMr.shadowCastingMode = ShadowCastingMode.TwoSided;
-            archGo.AddComponent<MeshCollider>().sharedMesh = archMesh;
 
-            // 2. Nền dốc đá để đi lại trong hầm (dùng Disc dẹt / lưới dốc thay Cube)
-            var floorPathGo = new GameObject("Nền Đá Lối Hầm");
-            floorPathGo.transform.SetParent(mouth.transform, false);
-            floorPathGo.transform.localPosition = new Vector3(0.3f, -0.35f, length * 0.45f);
-            var floorDisc = CaveMeshes.Disc(Mathf.Max(width * 0.75f, length * 0.58f), 0.35f, 16);
-            floorPathGo.AddComponent<MeshFilter>().sharedMesh = floorDisc;
-            floorPathGo.AddComponent<MeshRenderer>().sharedMaterial = rockMat;
-            floorPathGo.AddComponent<MeshCollider>().sharedMesh = floorDisc;
-
-            // 3. Màn tối sâu cuối đoạn khuất hầm
+            // 2. Màn tối sâu cuối hầm (chỉ là hình ảnh, không collider cản đường)
             var darkGo = new GameObject("Bóng Tối Sâu Hầm");
             darkGo.transform.SetParent(mouth.transform, false);
-            darkGo.transform.localPosition = new Vector3(0.95f, height * 0.5f, length - 0.5f);
+            darkGo.transform.localPosition = new Vector3(0f, height * 0.42f, length - 0.8f);
             darkGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            var darkDisc = CaveMeshes.Disc(Mathf.Max(width, height) * 0.65f, 0.25f, 12);
+            var darkDisc = CaveMeshes.Disc(Mathf.Max(width, height) * 0.56f, 0.25f, 14);
             darkGo.AddComponent<MeshFilter>().sharedMesh = darkDisc;
             darkGo.AddComponent<MeshRenderer>().sharedMaterial = darkMat;
 
-            // 4. Đá tảng tự nhiên ôm hai bên cửa hầm cho ăn khớp với vách đá
-            PlaceFramingBoulder(mouth.transform, new Vector3(-(width * 0.55f + 0.6f), 0.2f, 0.3f), width * 0.45f + 0.8f, seed + 1, rockMat);
-            PlaceFramingBoulder(mouth.transform, new Vector3(width * 0.55f + 0.6f, 0.2f, 0.3f), width * 0.45f + 0.8f, seed + 2, rockMat);
-            PlaceFramingBoulder(mouth.transform, new Vector3(0f, height + 0.4f, 0.5f), width * 0.5f + 0.9f, seed + 3, rockMat);
+            // 3. Đá viền đặt TÁCH hẳn sang 2 mép ngoài (không lấn vào lòng cửa hang) và cắm chân sâu xuống đất
+            float sideOffset = width * 0.65f + 1.35f;
+            PlaceFramingBoulder(mouth.transform, new Vector3(-sideOffset, -0.7f, 0.6f), 1.45f, seed + 1, rockMat, disableCollider: true);
+            PlaceFramingBoulder(mouth.transform, new Vector3(sideOffset, -0.7f, 0.6f), 1.45f, seed + 2, rockMat, disableCollider: true);
+
+            // 4. Đèn hắt ấm nhẹ ở đỉnh vòm giúp người chơi nhận biết rõ miệng hang từ xa
+            var gateLight = new GameObject("Ánh Sáng Cửa Hang").AddComponent<Light>();
+            gateLight.transform.SetParent(mouth.transform, false);
+            gateLight.transform.localPosition = new Vector3(0f, height * 0.72f, 0.8f);
+            gateLight.type = LightType.Point;
+            gateLight.range = 14f;
+            gateLight.color = new Color(0.55f, 0.90f, 0.85f);
+            gateLight.intensity = 1.6f;
+            gateLight.shadows = LightShadows.None;
 
             return mouth.transform;
         }
 
-        public static void PlaceFramingBoulder(Transform parent, Vector3 localPos, float scale, int seed, Material fallbackRockMat)
+        public static void PlaceFramingBoulder(
+            Transform parent,
+            Vector3 localPos,
+            float scale,
+            int seed,
+            Material fallbackRockMat,
+            bool disableCollider = false)
         {
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + $"Rock_{Mathf.Abs(seed) % 5}.fbx");
             if (fbx != null)
@@ -223,6 +228,11 @@ namespace Evolve.EditorTools
                 go.transform.localPosition = localPos;
                 go.transform.localRotation = Quaternion.Euler(0f, (seed * 73) % 360, 0f);
                 go.transform.localScale = Vector3.one * scale;
+                if (disableCollider)
+                {
+                    foreach (var c in go.GetComponentsInChildren<Collider>(true))
+                        Object.DestroyImmediate(c);
+                }
                 return;
             }
 
@@ -235,7 +245,6 @@ namespace Evolve.EditorTools
             rockGo.AddComponent<MeshRenderer>().sharedMaterial = fallbackRockMat;
         }
 
-        /// <summary>Tạo vật liệu đá/đất có texture vân sần sùi (Cavern_Rock_v3.png / Cavern_Mud_v3.png) thay vì màu phẳng.</summary>
         public static Material TexturedSurfaceMaterial(string name, Color tint, float smoothness, bool twoSided, string texFile = "Cavern_Rock_v3.png", Color emission = default)
         {
             var mat = LakeGround.OpaqueMaterial(name, tint, smoothness, twoSided, emission);

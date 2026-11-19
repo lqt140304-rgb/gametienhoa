@@ -87,23 +87,25 @@ namespace Evolve.Tests.EditMode.Maze
             float radius = MazeTerrainMath.DefaultChamberRadius;
             int seed = 1200;
 
-            Assert.GreaterOrEqual(radius, 45f, "Khoang mới phải rộng >= 45m (lớn hơn Hang Khởi Sinh).");
+            Assert.GreaterOrEqual(radius, 75f, "Khoang mới phải rộng >= 75m bán kính (150m đường kính).");
 
             var (hx, hz) = MazeTerrainMath.GetHighLedgeCenter(radius, angles, seed);
             float hillY = MazeTerrainMath.GroundHeightAt(hx, hz, seed, radius, angles, hasHighLedge: true);
-            Assert.GreaterOrEqual(hillY, 5.5f, "Phải có đồi trú lũ tự nhiên cao hơn đỉnh lũ.");
+            Assert.GreaterOrEqual(hillY, 5.5f, "Phải có dãy đồi tự nhiên cao.");
 
             float centerY = MazeTerrainMath.GroundHeightAt(0f, 0f, seed, radius, angles, hasHighLedge: true);
             Assert.Less(centerY, 1.0f);
 
-            float gapX = (float)System.Math.Cos(30f * System.Math.PI / 180f) * 39f;
-            float gapZ = (float)System.Math.Sin(30f * System.Math.PI / 180f) * 39f;
+            // Tại cửa hầm (góc 30 độ, bán kính 58m), vách mở khe thấp rộng rãi để đi qua được
+            float gapX = (float)System.Math.Cos(30f * System.Math.PI / 180f) * 58f;
+            float gapZ = (float)System.Math.Sin(30f * System.Math.PI / 180f) * 58f;
             float gapY = MazeTerrainMath.GroundHeightAt(gapX, gapZ, seed, radius, angles, hasHighLedge: true);
-            Assert.Less(gapY, 2.0f, "Cửa hầm phải được mở khe thấp trên vách.");
+            Assert.Less(gapY, 2.0f, "Cửa hầm phải được mở khe thấp thông thoáng trên vách.");
 
-            float wallY = MazeTerrainMath.GroundHeightAt(0f, 49f, seed, radius, angles, hasHighLedge: true);
-            float ceilEdgeY = MazeTerrainMath.CeilingHeightAt(0f, 49f, seed, radius);
-            Assert.GreaterOrEqual(wallY, 18f);
+            // Tại vách kín (góc 90 độ, bán kính 78m), tường dâng cao 30m và trần hạ xuống khép kín
+            float wallY = MazeTerrainMath.GroundHeightAt(0f, 78f, seed, radius, angles, hasHighLedge: true);
+            float ceilEdgeY = MazeTerrainMath.CeilingHeightAt(0f, 78f, seed, radius);
+            Assert.GreaterOrEqual(wallY, 24f);
             Assert.LessOrEqual(ceilEdgeY, wallY + 2f);
         }
     }

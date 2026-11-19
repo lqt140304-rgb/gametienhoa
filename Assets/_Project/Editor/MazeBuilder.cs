@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Evolve.Maze;
+using Evolve.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -8,9 +9,9 @@ namespace Evolve.EditorTools
 {
     /// <summary>
     /// Evolve -> Build Maze World (Step 3).
-    /// Dựng thế giới mê cung 14 khoang mô-đun trong cùng scene (cách nhau 250m), nối Hang Khởi Sinh tại (0,0,0),
-    /// gắn hoán đổi ẩn giữa hầm, kích thước hầm/chướng ngại, Hang Trú thật và Chu Kỳ Lũ.
-    /// Chạy lại được nhiều lần mà không làm hỏng scene.
+    /// Dựng thế giới mê cung 14 khoang quy mô lớn (đường kính 150m, cách nhau 360m),
+    /// miệng hang rộng rãi không bị lấp, bỏ phần nước lũ và chỗ trú lơ lửng.
+    /// Chạy lại được nhiều lần sạch sẽ mà không làm hỏng scene.
     /// </summary>
     public static class MazeBuilder
     {
@@ -26,6 +27,10 @@ namespace Evolve.EditorTools
             PropInstaller.EnsureRocks();
             PropInstaller.EnsureLandmarks();
 
+            // Dọn cả Cavern Maze Wall cũ (nếu có) để không bị 2 bộ miệng hang trùng nhau
+            var oldWall = GameObject.Find("Cavern Maze Wall");
+            if (oldWall != null) Object.DestroyImmediate(oldWall);
+
             var old = GameObject.Find(WorldRootName);
             if (old != null) Object.DestroyImmediate(old);
 
@@ -35,7 +40,6 @@ namespace Evolve.EditorTools
             var rockMat = CavernMazeWall.LoadOrMakeRockMaterial();
             var darkMat = CavernMazeWall.LoadOrMakeDarkInteriorMaterial();
             var mossMat = LoadOrMakeMossMat();
-            var floodMat = LoadOrMakeFloodWaterMat();
 
             var instances = new List<ChamberInstance>(graph.Chambers.Count);
 
@@ -56,16 +60,21 @@ namespace Evolve.EditorTools
                 var tunnelAngles = new List<float>(edges.Count);
                 for (int e = 0; e < edges.Count; e++)
                 {
-                    float angleDeg = isBirth ? (320f + e * 120f) % 360f : (e * (360f / Mathf.Max(1, edges.Count)) + 30f);
+                    float angleDeg = isBirth ? (315f + e * 115f) % 360f : (e * (360f / Mathf.Max(1, edges.Count)) + 30f);
                     tunnelAngles.Add(angleDeg);
                 }
 
                 var arrival = new GameObject("ArrivalPoint").transform;
                 arrival.SetParent(chamberGo.transform, false);
-                float arrivalY = isBirth
-                    ? 0.6f
-                    : MazeTerrainMath.GroundHeightAt(0f, 0f, terrainSeed, ChamberRadius, tunnelAngles, node.HasHighLedge) + 0.6f;
-                arrival.localPosition = new Vector3(0f, arrivalY, 0f);
+                if (isBirth)
+                {
+                    arrival.position = CavernLayout.SpawnPoint();
+                }
+                else
+                {
+                    float arrivalY = MazeTerrainMath.GroundHeightAt(0f, 0f, terrainSeed, ChamberRadius, tunnelAngles, node.HasHighLedge) + 0.8f;
+                    arrival.localPosition = new Vector3(0f, arrivalY, 0f);
+                }
 
                 var inst = chamberGo.AddComponent<ChamberInstance>();
                 inst.Configure(node.Id, node.Name, node.Depth, node.Kind, alwaysActive: isBirth, arrival: arrival);
@@ -82,8 +91,8 @@ namespace Evolve.EditorTools
                     ? rockMat
                     : MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallTint, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
 
-                // Dựng các miệng hầm và TunnelPortal cho từng đường hầm nối với khoang này
-                float baseRadius = isBirth ? 35.5f : 38.5f;
+                // Đặt miệng hang ở vùng đất phẳng trước chân vách (27.5m ở Hang Khởi Sinh, 56m ở khoang 75m)
+                float baseRadius = isBirth ? 27.5f : 56.0f;
                 for (int e = 0; e < edges.Count; e++)
                 {
                     var edge = edges[e];
@@ -105,28 +114,14 @@ namespace Evolve.EditorTools
                 instances.Add(inst);
             }
 
-            // Gắn MazeWorldManager
+            // Gắn MazeWorldManager (chỉ bật khoang hiện tại và các khoang kề)
             var manager = root.AddComponent<MazeWorldManager>();
             manager.Configure(DefaultSeed, DefaultChambers, instances);
             manager.ApplyActiveChambers();
 
-            // Gắn FloodCycleController + mặt nước lũ toàn cục di chuyển theo người chơi/khoang
-            var floodWater = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            floodWater.name = "Mặt Nước Lũ (Flood Water)";
-            Object.DestroyImmediate(floodWater.GetComponent<Collider>());
-            floodWater.transform.SetParent(root.transform, false);
-            floodWater.transform.position = new Vector3(0f, 0.06f, 0f);
-            floodWater.transform.localScale = new Vector3(16f, 1f, 16f);
-            if (floodMat != null) floodWater.GetComponent<Renderer>().sharedMaterial = floodMat;
-
-            var flood = root.AddComponent<FloodCycleController>();
-            var so = new SerializedObject(flood);
-            so.FindProperty("floodWaterSurface").objectReferenceValue = floodWater.transform;
-            so.ApplyModifiedPropertiesWithoutUndo();
-
             EditorSceneManager.MarkSceneDirty(root.scene);
             Selection.activeGameObject = root;
-            Debug.Log($"Maze World: đã dựng {graph.Chambers.Count} khoang (seed {DefaultSeed}), chỉ bật Hang Khởi Sinh và {graph.GetNeighborIds(0).Count} khoang kề.");
+            Debug.Log($"Maze World: đã dựng {graph.Chambers.Count} khoang (bán kính {ChamberRadius}m = đường kính {ChamberRadius * 2f}m, bỏ nước lũ & chỗ trú), chỉ bật Hang Khởi Sinh và {graph.GetNeighborIds(0).Count} khoang kề.");
         }
 
         static void BuildChamberTunnelEndpoint(
@@ -146,14 +141,15 @@ namespace Evolve.EditorTools
             float gx = Mathf.Cos(rad) * radius;
             float gz = Mathf.Sin(rad) * radius;
             float baseY = node.Kind == ChamberKind.BirthCavern
-                ? 0.3f
+                ? CavernLayout.GroundHeight(gx, gz) - 0.1f
                 : MazeTerrainMath.GroundHeightAt(gx, gz, terrainSeed, ChamberRadius, tunnelAngles, node.HasHighLedge) - 0.1f;
 
+            // Miệng hang rộng rãi đồ sộ để slime đi vào mượt 100% không bị lấp hay vướng
             (float width, float height) = edge.Size switch
             {
-                TunnelSize.Small => (1.15f, 1.05f),
-                TunnelSize.Medium => (2.5f, 2.3f),
-                _ => (4.2f, 3.6f)
+                TunnelSize.Small => (4.6f, 4.2f),
+                TunnelSize.Medium => (6.8f, 5.8f),
+                _ => (9.5f, 7.8f)
             };
 
             var mouth = MazeTerrainMesh.BuildNaturalTunnelMouth(
@@ -168,47 +164,23 @@ namespace Evolve.EditorTools
                 darkMat,
                 seed: edge.Id * 31 + node.Id);
 
-            // Điểm xuất hiện khi từ khoang đích bước sang khoang này
+            // Điểm xuất hiện khi từ khoang đích bước ra (đứng ngay trước cửa hang rộng)
             var exitPoint = new GameObject("ExitSpawnPoint").transform;
             exitPoint.SetParent(mouth, false);
-            exitPoint.localPosition = new Vector3(0f, 0.6f, -2.6f);
+            exitPoint.localPosition = new Vector3(0f, 0.8f, -4.0f);
             exitPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
 
-            // Cổng hoán đổi ẩn đặt sâu trong đoạn hầm khuất uốn cong (x = +0.55f, z = +6.4m)
+            // Cổng hoán đổi đặt ngay trong lòng cửa hang (z = +2.4m), thông thoáng không có collider cản
             var portalGo = new GameObject("TunnelPortal");
             portalGo.transform.SetParent(mouth, false);
-            portalGo.transform.localPosition = new Vector3(0.55f, height * 0.5f, 6.4f);
+            portalGo.transform.localPosition = new Vector3(0f, height * 0.45f, 2.4f);
             var portalCol = portalGo.AddComponent<BoxCollider>();
             portalCol.isTrigger = true;
-            portalCol.size = new Vector3(width, height, 1.8f);
+            portalCol.size = new Vector3(width * 0.85f, height * 0.85f, 2.8f);
 
             var portal = portalGo.AddComponent<TunnelPortal>();
             portal.Configure(node.Id, targetChamberId, edge.Id, exitPoint);
             inst.RegisterPortal(portal);
-
-            // Bộ kiểm tra kích thước khe & chướng ngại tự nhiên ở cửa hầm (z = +1.2m)
-            if (edge.Size != TunnelSize.Large || edge.Obstacle != ObstacleKind.None)
-            {
-                var blockGo = new GameObject("Cửa Chắn Hầm");
-                blockGo.transform.SetParent(mouth, false);
-                blockGo.transform.localPosition = new Vector3(0f, height * 0.5f, 1.2f);
-                var solidCol = blockGo.AddComponent<BoxCollider>();
-                solidCol.isTrigger = false;
-                solidCol.size = new Vector3(width, height, 0.4f);
-
-                var checkGo = new GameObject("Kiểm Tra Điều Kiện Hầm");
-                checkGo.transform.SetParent(mouth, false);
-                checkGo.transform.localPosition = new Vector3(0f, height * 0.5f, 0.5f);
-                var triggerCol = checkGo.AddComponent<BoxCollider>();
-                triggerCol.isTrigger = true;
-                triggerCol.size = new Vector3(width + 1.4f, height + 1.0f, 2.4f);
-
-                var passage = checkGo.AddComponent<TunnelPassage>();
-                passage.Configure(edge.Size, edge.Obstacle);
-                var so = new SerializedObject(passage);
-                so.FindProperty("blockingCollider").objectReferenceValue = solidCol;
-                so.ApplyModifiedPropertiesWithoutUndo();
-            }
         }
 
         static Material LoadOrMakeMossMat()
@@ -221,19 +193,6 @@ namespace Evolve.EditorTools
             m.SetFloat("_Smoothness", 0.15f);
             m.EnableKeyword("_EMISSION");
             m.SetColor("_EmissionColor", new Color(0.12f, 0.5f, 0.2f));
-            AssetDatabase.CreateAsset(m, path);
-            return m;
-        }
-
-        static Material LoadOrMakeFloodWaterMat()
-        {
-            const string path = Root + "/Materials/Maze_FloodWater.mat";
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m != null) return m;
-            m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            m.SetColor("_BaseColor", new Color(0.12f, 0.34f, 0.42f, 0.72f));
-            m.SetFloat("_Smoothness", 0.85f);
-            m.SetFloat("_Surface", 1f); // Transparent
             AssetDatabase.CreateAsset(m, path);
             return m;
         }

@@ -33,6 +33,15 @@ namespace Evolve.Maze
         public ChamberEncounterKind Kind => kind;
         public EncounterSituationSnapshot CurrentSnapshot => currentSnapshot;
 
+        /// <summary>Nhảy ngay tới pha Active của tình huống (dùng trong Menu God F1 để test nhanh).</summary>
+        public void DebugTriggerNow()
+        {
+            if (kind == ChamberEncounterKind.None) return;
+            float targetPhaseTime = ChamberEncounterRules.CalmSeconds + ChamberEncounterRules.TelegraphSeconds + 0.2f;
+            phaseOffsetSeconds = targetPhaseTime - Time.time;
+            lastPhase = EncounterPhase.Telegraph;
+        }
+
         public void Configure(
             ChamberEncounterKind encounterKind,
             float offsetSeconds,

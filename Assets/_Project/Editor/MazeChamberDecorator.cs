@@ -9,8 +9,9 @@ using UnityEngine;
 namespace Evolve.EditorTools
 {
     /// <summary>
-    /// Trang trí từng khoang rộng (>= 45m) với địa hình gò đồi tự nhiên, vòm trần kín 360 độ,
-    /// thảm thực vật bám đúng mặt đất/trần, thức ăn, sinh vật và Kỳ Ngộ / Bẫy riêng của khoang.
+    /// Trang trí từng khoang quy mô lớn (150m đường kính) theo chủ đề riêng:
+    /// địa hình gò đồi thung lũng đa tầng, vòng vách đá đại cảnh, quần thể kiến trúc trung tâm đặc trưng,
+    /// thảm thực vật bám chặt mặt đất (0% lơ lửng), thức ăn, sinh vật và Tình Huống Môi Trường Động.
     /// </summary>
     public static class MazeChamberDecorator
     {
@@ -29,9 +30,8 @@ namespace Evolve.EditorTools
             int seed = 1000 + node.Id * 73;
             var rnd = new System.Random(10007 + node.Id * 919);
 
-            // Nhân màu lên nhẹ để kết hợp đẹp với texture đá/đất thật (tránh bị tối đen khi không có ánh nắng trời)
-            Color floorColor = Color.Lerp(ToColor(profile.FloorColor), Color.white, 0.38f);
-            Color wallColor = Color.Lerp(ToColor(profile.WallColor), Color.white, 0.35f);
+            Color floorColor = Color.Lerp(ToColor(profile.FloorColor), Color.white, 0.36f);
+            Color wallColor = Color.Lerp(ToColor(profile.WallColor), Color.white, 0.34f);
             Color mainLightColor = ToColor(profile.MainLightColor);
             Color accentLightColor = ToColor(profile.AccentLightColor);
 
@@ -40,14 +40,15 @@ namespace Evolve.EditorTools
             var wallMat = MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallColor, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
             var glowMat = LakeGround.OpaqueMaterial($"Maze_Glow_{node.Theme}", accentLightColor, 0.25f, false, accentLightColor * 1.15f);
 
-            // 1. Địa hình gò đồi + đồi trú lũ + vách bao mở khe hầm + vòm trần kín 360 độ
+            // 1. Địa hình đồi thung lũng 150m + vách bao mở khe hầm + vòm trần kín 360 độ
             MazeTerrainMesh.BuildFloorAndWalls(parent, node, chamberRadius, tunnelAnglesDeg, floorMat);
             MazeTerrainMesh.BuildClosedCeiling(parent, node.Id, chamberRadius, wallMat);
 
-            // 2. Chi tiết kiến trúc đặc trưng (Hang Trú trên đỉnh đồi tự nhiên / Bộ xương cổ Long ở Khoang Phong Ấn)
-            BuildSpecialLandmarks(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, mossMat, accentLightColor);
+            // 2. Vòng vách đá đại cảnh + Quần thể kiến trúc khổng lồ đặc trưng cho từng chủ đề
+            BuildGrandPerimeterCliffs(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, rnd);
+            BuildGrandThemeLandmarks(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, mossMat, glowMat, accentLightColor);
 
-            // 3. Thảm thực vật, cỏ mềm, đá tảng và nhũ đá/rễ bám chặt đúng cao độ đất/trần
+            // 3. Thảm thực vật, cỏ mềm, đá tảng cắm chặt chân xuống mặt đất
             PlacePropsAndFlora(parent, node, seed, chamberRadius, tunnelAnglesDeg, profile, floorColor, wallMat, glowMat, rnd);
 
             // 4. Thức ăn (Nutrient) & Sinh vật & Ánh sáng đa tầng
@@ -55,11 +56,51 @@ namespace Evolve.EditorTools
             PlaceCreatures(parent, node, chamberRadius, profile, rnd);
             var lights = BuildChamberLighting(parent, profile, mainLightColor, accentLightColor);
 
-            // 5. Kỳ Ngộ Tình Huống Môi Trường Động (trực quan với tán nấm trú / tinh thể chắn / mạch phun / lồng xương)
-            PlaceEncounterOrTrap(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, lights);
+            // 5. Tình Huống Môi Trường Động gắn với chủ đề
+            PlaceEncounterSituation(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, lights);
         }
 
-        static void BuildSpecialLandmarks(
+        static void BuildGrandPerimeterCliffs(
+            Transform parent,
+            ChamberNode node,
+            int seed,
+            float chamberRadius,
+            IReadOnlyList<float> tunnelAnglesDeg,
+            Material wallMat,
+            System.Random rnd)
+        {
+            var cliffGroup = new GameObject("Vách Đá Đại Cảnh").transform;
+            cliffGroup.SetParent(parent, false);
+
+            const int count = 16;
+            for (int i = 0; i < count; i++)
+            {
+                float angleDeg = i * (360f / count) + (float)rnd.NextDouble() * 10f;
+                if (IsNearAnyAngle(angleDeg, tunnelAnglesDeg, 22f)) continue;
+
+                float rad = angleDeg * Mathf.Deg2Rad;
+                float dist = chamberRadius * 0.80f; // ~60m, nằm ngay chân vách bao
+                float cx = Mathf.Cos(rad) * dist;
+                float cz = Mathf.Sin(rad) * dist;
+                float cy = MazeTerrainMath.GroundHeightAt(cx, cz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
+
+                var cliffFbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + $"Cliff_{i % 4}.fbx");
+                if (cliffFbx != null)
+                {
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(cliffFbx, cliffGroup);
+                    go.name = $"VáchĐá_{i:00}";
+                    go.transform.localPosition = new Vector3(cx, cy - 2.6f, cz); // Cắm sâu chân -2.6m vào sườn vách
+                    go.transform.localRotation = Quaternion.LookRotation(-new Vector3(cx, 0f, cz), Vector3.up) * Quaternion.Euler(0f, (float)(rnd.NextDouble() - 0.5) * 35f, 0f);
+                    go.transform.localScale = new Vector3(1.5f, Mathf.Lerp(1.3f, 2.1f, (float)rnd.NextDouble()), 1.5f);
+                }
+                else
+                {
+                    MazeTerrainMesh.PlaceFramingBoulder(cliffGroup, new Vector3(cx, cy - 1.5f, cz), 5.5f, seed + i, wallMat);
+                }
+            }
+        }
+
+        static void BuildGrandThemeLandmarks(
             Transform parent,
             ChamberNode node,
             int seed,
@@ -67,42 +108,106 @@ namespace Evolve.EditorTools
             IReadOnlyList<float> tunnelAnglesDeg,
             Material wallMat,
             Material mossMat,
+            Material glowMat,
             Color accentColor)
         {
-            if (node.Kind == ChamberKind.Shelter)
-            {
-                var (hx, hz) = MazeTerrainMath.GetHighLedgeCenter(chamberRadius, tunnelAnglesDeg, seed);
-                float hy = MazeTerrainMath.GroundHeightAt(hx, hz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
-                Vector3 hillPos = new Vector3(hx, hy - 0.15f, hz);
-                Vector3 toCenter = new Vector3(-hx, 0f, -hz).normalized;
+            var landmarkGroup = new GameObject("Đại Cảnh Chủ Đề").transform;
+            landmarkGroup.SetParent(parent, false);
 
-                MazeShelterBuilder.BuildRealShelter(
-                    parent,
-                    "Hang Trú Trong Khoang",
-                    hillPos,
-                    -toCenter,
-                    wallMat,
-                    mossMat,
-                    ledgeHeight: 0f,
-                    placeOnNaturalHill: true);
-            }
-            else if (node.Kind == ChamberKind.SealedCavern)
+            switch (node.Theme)
             {
-                float ySkull = MazeTerrainMath.GroundHeightAt(0f, 6f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
-                float yRibs = MazeTerrainMath.GroundHeightAt(0f, -2f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
-                var skull = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "DragonSkull_0.fbx");
-                var ribs = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "DragonRibcage_0.fbx");
-                if (skull != null && ribs != null)
-                {
-                    var s = (GameObject)PrefabUtility.InstantiatePrefab(skull, parent);
-                    s.transform.localPosition = new Vector3(0f, ySkull + 0.15f, 6f);
-                    s.transform.localScale = Vector3.one * 1.65f;
+                case ChamberTheme.LumaMushroomGrove:
+                case ChamberTheme.SporeCurtain:
+                    // Rừng đại thụ nấm khổng lồ vây quanh thung lũng giữa hang
+                    PlaceGroundedModel(landmarkGroup, "Mushroom_Giant_0", -6f, 4f, 3.6f, 25f, 0.5f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "Mushroom_Giant_1", 9f, -5f, 3.1f, 110f, 0.5f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "Mushroom_Giant_2", -12f, -10f, 2.8f, 210f, 0.5f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "LumaShroom_0", 2f, 12f, 2.6f, 45f, 0.3f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
 
-                    var r = (GameObject)PrefabUtility.InstantiatePrefab(ribs, parent);
-                    r.transform.localPosition = new Vector3(0f, yRibs + 0.05f, -2f);
-                    r.transform.localScale = Vector3.one * 1.65f;
-                }
+                case ChamberTheme.RootCanopy:
+                case ChamberTheme.DeepRootTangle:
+                    // Cung rễ đại thụ khổng lồ & thân gỗ mục làm đường hầm tự nhiên
+                    PlaceGroundedModel(landmarkGroup, "RootArch", 0f, 0f, 2.4f, 35f, 0.8f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "Log_Hollow", 12f, -9f, 1.9f, -40f, 0.6f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "RootArch", -16f, 11f, 2.0f, 125f, 0.8f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
+
+                case ChamberTheme.DampReedHollow:
+                case ChamberTheme.MossSanctuary:
+                    // Hồ nước rêu cạn tự nhiên ở vùng trũng giữa khoang + thảm lau/nấm
+                    float poolY = MazeTerrainMath.GroundHeightAt(0f, 0f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
+                    var poolGo = new GameObject("Hồ Nước Rêu Cạn");
+                    poolGo.transform.SetParent(landmarkGroup, false);
+                    poolGo.transform.localPosition = new Vector3(0f, poolY + 0.08f, 0f);
+                    poolGo.AddComponent<MeshFilter>().sharedMesh = CaveMeshes.Disc(13.5f, 0.06f, 24);
+                    var poolMat = LakeGround.OpaqueMaterial("Maze_ShallowPool", new Color(0.14f, 0.42f, 0.48f), 0.78f, false, accentColor * 0.25f);
+                    poolGo.AddComponent<MeshRenderer>().sharedMaterial = poolMat;
+                    PlaceGroundedModel(landmarkGroup, "Mushroom_Giant_0", -14f, 6f, 2.2f, 40f, 0.4f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
+
+                case ChamberTheme.CrystalVein:
+                case ChamberTheme.SaltAbyss:
+                    // Rừng trụ tinh thể khổng lồ mọc lên từ lòng đất
+                    PlaceGroundedModel(landmarkGroup, "CrystalCluster_0", -8f, 7f, 4.2f, 20f, 0.7f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "CrystalCluster_1", 10f, -6f, 3.8f, 130f, 0.7f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "CrystalCluster_2", 3f, 15f, 3.4f, 250f, 0.7f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
+
+                case ChamberTheme.LimestoneStalactite:
+                    // Măng đá và cụm thạch nhũ lớn vươn lên giữa hẻm đá
+                    PlaceGroundedModel(landmarkGroup, "Cliff_2", -12f, 8f, 1.3f, 65f, 2.2f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "Cliff_3", 14f, -10f, 1.2f, 210f, 2.2f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "CrystalCluster_0", 0f, -14f, 2.8f, 90f, 0.6f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
+
+                case ChamberTheme.EmberBasalt:
+                    // Vòng đá bazan cháy đỏ và cụm cầu nhiệt ở vùng trũng
+                    PlaceGroundedModel(landmarkGroup, "Cliff_3", -11f, -8f, 1.35f, 30f, 2.2f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "Cliff_1", 11f, 9f, 1.35f, 195f, 2.2f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "BulbPlant_1", 0f, 5f, 2.6f, 0f, 0.3f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
+
+                case ChamberTheme.FossilBoneyard:
+                case ChamberTheme.SealedDragonTomb:
+                    // Đại sảnh xương Cổ Long khổng lồ
+                    PlaceGroundedModel(landmarkGroup, "DragonSkull_0", 0f, 10f, 2.6f, 180f, 0.5f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "DragonRibcage_0", 0f, -2f, 2.7f, 0f, 0.4f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "Rib_Bend_0", -14f, 4f, 2.4f, 45f, 0.8f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "Rib_Fork_0", 14f, -4f, 2.4f, -135f, 0.8f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
+
+                default:
+                    PlaceGroundedModel(landmarkGroup, "Cliff_0", -10f, 8f, 1.15f, 50f, 2.0f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    PlaceGroundedModel(landmarkGroup, "CrystalCluster_1", 10f, -8f, 2.6f, 120f, 0.6f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
+                    break;
             }
+        }
+
+        static GameObject PlaceGroundedModel(
+            Transform parent,
+            string modelName,
+            float lx,
+            float lz,
+            float scale,
+            float yawDeg,
+            float sinkMeters,
+            int seed,
+            float chamberRadius,
+            IReadOnlyList<float> tunnelAnglesDeg,
+            bool hasHighLedge,
+            Material glowMat)
+        {
+            var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + modelName + ".fbx");
+            if (fbx == null) return null;
+
+            float ly = MazeTerrainMath.GroundHeightAt(lx, lz, seed, chamberRadius, tunnelAnglesDeg, hasHighLedge);
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(fbx, parent);
+            go.transform.localPosition = new Vector3(lx, ly - sinkMeters, lz);
+            go.transform.localRotation = Quaternion.Euler(0f, yawDeg, 0f);
+            go.transform.localScale = Vector3.one * scale;
+            ApplyGlowTint(go, glowMat);
+            return go;
         }
 
         static void PlacePropsAndFlora(
@@ -119,83 +224,49 @@ namespace Evolve.EditorTools
         {
             var floraGroup = new GameObject("Thảm Thực Vật & Đá").transform;
             floraGroup.SetParent(parent, false);
-            float usableRadius = chamberRadius * 0.78f;
+            float usableRadius = chamberRadius * 0.74f; // ~55.5m
 
-            // 1. Thảm thực vật / tinh thể / xương đặc trưng
+            // 1. Thảm thực vật mặt đất (nhấn chân nhẹ -0.18m để không bao giờ lơ lửng trên dốc nghiêng)
             if (profile.FloorFloraModels.Count > 0)
             {
-                int propCount = node.Depth == ChamberDepth.Nong ? 48 : (node.Depth == ChamberDepth.Giua ? 34 : 24);
-                var tuftPoints = new List<Vector3>(60);
+                int propCount = node.Depth == ChamberDepth.Nong ? 75 : (node.Depth == ChamberDepth.Giua ? 55 : 40);
+                var tuftPoints = new List<Vector3>(80);
 
                 for (int i = 0; i < propCount; i++)
                 {
                     string modelName = profile.FloorFloraModels[rnd.Next(profile.FloorFloraModels.Count)];
                     var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + modelName + ".fbx");
-                    if (!TryPickFloorPoint(usableRadius, 4.5f, tunnelAnglesDeg, rnd, out float lx, out float lz)) continue;
+                    if (!TryPickFloorPoint(usableRadius, 5.5f, tunnelAnglesDeg, rnd, out float lx, out float lz)) continue;
 
                     float ly = MazeTerrainMath.GroundHeightAt(lx, lz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
                     if (prefab != null)
                     {
                         var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, floraGroup);
-                        go.transform.localPosition = new Vector3(lx, ly - 0.06f, lz);
+                        go.transform.localPosition = new Vector3(lx, ly - 0.18f, lz);
                         go.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
-                        go.transform.localScale = Vector3.one * Mathf.Lerp(0.9f, 1.65f, (float)rnd.NextDouble());
+                        go.transform.localScale = Vector3.one * Mathf.Lerp(1.0f, 1.85f, (float)rnd.NextDouble());
                         ApplyGlowTint(go, glowMat);
                     }
-                    tuftPoints.Add(new Vector3(lx, ly - 0.02f, lz));
+                    tuftPoints.Add(new Vector3(lx, ly - 0.04f, lz));
                 }
 
-                // Thêm bụi cỏ mềm tự nhiên ở tầng Nông & Giữa
                 if (node.Depth != ChamberDepth.Sau && tuftPoints.Count > 0)
                 {
                     var grassMat = LakeGround.OpaqueMaterial($"Maze_Grass_{node.Theme}", Color.Lerp(floorColor, new Color(0.20f, 0.45f, 0.18f), 0.65f), 0.05f, true);
                     var tuftsGo = new GameObject("Thảm Cỏ Hang");
                     tuftsGo.transform.SetParent(floraGroup, false);
-                    tuftsGo.AddComponent<MeshFilter>().sharedMesh = GroundMeshes.Tufts(tuftPoints, seed + 19, 0.48f);
+                    tuftsGo.AddComponent<MeshFilter>().sharedMesh = GroundMeshes.Tufts(tuftPoints, seed + 19, 0.55f);
                     tuftsGo.AddComponent<MeshRenderer>().sharedMaterial = grassMat;
                 }
             }
 
-            // 2. Đá tảng tự nhiên rải trên mặt đất và chân vách tạo điểm nấp
-            for (int rIdx = 0; rIdx < 14; rIdx++)
+            // 2. Đá tảng lớn cắm sâu gốc -0.65m vào sườn đồi (tuyệt đối không lơ lửng)
+            for (int rIdx = 0; rIdx < 24; rIdx++)
             {
-                if (!TryPickFloorPoint(usableRadius, 6f, tunnelAnglesDeg, rnd, out float rx, out float rz)) continue;
+                if (!TryPickFloorPoint(usableRadius, 7f, tunnelAnglesDeg, rnd, out float rx, out float rz)) continue;
                 float ry = MazeTerrainMath.GroundHeightAt(rx, rz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
-                float rockScale = Mathf.Lerp(0.8f, 2.2f, (float)rnd.NextDouble());
-                MazeTerrainMesh.PlaceFramingBoulder(floraGroup, new Vector3(rx, ry - 0.25f, rz), rockScale, seed + rIdx * 13, wallMat);
-            }
-
-            // 3. Nhũ đá, rễ cây, dây leo bám CHẶT vào mặt trần (không bay lơ lửng)
-            if (profile.CeilingOrWallProps.Count > 0)
-            {
-                int ceilCount = 20;
-                for (int i = 0; i < ceilCount; i++)
-                {
-                    string modelName = profile.CeilingOrWallProps[rnd.Next(profile.CeilingOrWallProps.Count)];
-                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + modelName + ".fbx");
-                    if (prefab == null) continue;
-
-                    float angle = (float)rnd.NextDouble() * 360f;
-                    float rad = angle * Mathf.Deg2Rad;
-                    bool isFloorEdgeProp = modelName.StartsWith("Cliff") || modelName.StartsWith("RootStub");
-                    float dist = isFloorEdgeProp
-                        ? Mathf.Lerp(usableRadius * 0.85f, usableRadius * 1.02f, (float)rnd.NextDouble())
-                        : Mathf.Lerp(6f, usableRadius * 0.88f, (float)rnd.NextDouble());
-
-                    if (isFloorEdgeProp && IsNearAnyAngle(angle, tunnelAnglesDeg, 22f)) continue;
-
-                    float px = Mathf.Cos(rad) * dist;
-                    float pz = Mathf.Sin(rad) * dist;
-                    float py = isFloorEdgeProp
-                        ? MazeTerrainMath.GroundHeightAt(px, pz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) - 0.2f
-                        : MazeTerrainMath.CeilingHeightAt(px, pz, seed, chamberRadius) + 0.6f; // Cắm gốc sâu vào trần 0.6m
-
-                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, floraGroup);
-                    go.transform.localPosition = new Vector3(px, py, pz);
-                    go.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
-                    go.transform.localScale = Vector3.one * Mathf.Lerp(1.0f, 1.55f, (float)rnd.NextDouble());
-                    ApplyGlowTint(go, glowMat);
-                }
+                float rockScale = Mathf.Lerp(1.1f, 2.8f, (float)rnd.NextDouble());
+                MazeTerrainMesh.PlaceFramingBoulder(floraGroup, new Vector3(rx, ry - 0.65f, rz), rockScale, seed + rIdx * 13, wallMat);
             }
         }
 
@@ -213,14 +284,14 @@ namespace Evolve.EditorTools
 
             var forageGroup = new GameObject("Thức Ăn Trong Khoang").transform;
             forageGroup.SetParent(parent, false);
-            float usableRadius = chamberRadius * 0.74f;
+            float usableRadius = chamberRadius * 0.70f;
 
             for (int i = 0; i < profile.ForageCount; i++)
             {
                 var item = profile.ForageItems[i % profile.ForageItems.Count];
-                if (!TryPickFloorPoint(usableRadius, 4.0f, tunnelAnglesDeg, rnd, out float lx, out float lz)) continue;
+                if (!TryPickFloorPoint(usableRadius, 5.0f, tunnelAnglesDeg, rnd, out float lx, out float lz)) continue;
                 float ly = MazeTerrainMath.GroundHeightAt(lx, lz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
-                CreateNutrientObject(forageGroup, item, new Vector3(lx, ly, lz), glowMat, rnd);
+                CreateNutrientObject(forageGroup, item, new Vector3(lx, ly - 0.05f, lz), glowMat, rnd);
             }
         }
 
@@ -230,7 +301,7 @@ namespace Evolve.EditorTools
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPos;
             go.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
-            go.transform.localScale = Vector3.one * Mathf.Lerp(0.9f, 1.3f, (float)rnd.NextDouble());
+            go.transform.localScale = Vector3.one * Mathf.Lerp(0.95f, 1.35f, (float)rnd.NextDouble());
 
             var sc = go.AddComponent<SphereCollider>();
             sc.isTrigger = true;
@@ -249,7 +320,7 @@ namespace Evolve.EditorTools
             if (modelPrefab != null)
             {
                 var visual = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab, go.transform);
-                visual.transform.localPosition = item.IsMineral ? new Vector3(0f, 0.2f, 0f) : Vector3.zero;
+                visual.transform.localPosition = item.IsMineral ? new Vector3(0f, 0.1f, 0f) : Vector3.zero;
                 visual.transform.localRotation = Quaternion.identity;
                 foreach (var t in visual.GetComponentsInChildren<Transform>(true))
                     GameObjectUtility.SetStaticEditorFlags(t.gameObject, 0);
@@ -257,7 +328,7 @@ namespace Evolve.EditorTools
             }
         }
 
-        static void PlaceEncounterOrTrap(
+        static void PlaceEncounterSituation(
             Transform parent,
             ChamberNode node,
             int seed,
@@ -273,41 +344,40 @@ namespace Evolve.EditorTools
             var covers = new List<Transform>();
             var geysers = new List<Transform>();
 
-            float[] anchorAngles = { 35f, 155f, 275f };
+            float[] anchorAngles = { 45f, 165f, 285f };
             for (int i = 0; i < anchorAngles.Length; i++)
             {
                 float rad = anchorAngles[i] * Mathf.Deg2Rad;
-                float dist = node.Encounter == ChamberEncounterKind.ThermalGeyserSurge ? 10f : 15f;
+                float dist = node.Encounter == ChamberEncounterKind.ThermalGeyserSurge ? 16f : 22f;
                 float px = Mathf.Cos(rad) * dist;
                 float pz = Mathf.Sin(rad) * dist;
                 if (node.Encounter == ChamberEncounterKind.AncientDragonBreath)
                 {
-                    // Ở Khoang Phong Ấn, điểm trú là ngay trong lồng xương rồng ở giữa khoang
                     if (i > 0) continue;
                     px = 0f;
                     pz = -2f;
                 }
                 float py = MazeTerrainMath.GroundHeightAt(px, pz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
-                Vector3 localPos = new Vector3(px, py, pz);
+                Vector3 localPos = new Vector3(px, py - 0.15f, pz);
 
                 switch (node.Encounter)
                 {
                     case ChamberEncounterKind.AcidSporeRain:
-                        covers.Add(CreateFeatureMarker(situationGo.transform, $"Tán Nấm Trú Mưa_{i}", localPos, $"Mushroom_Giant_{i % 3}", 2.2f, new Color(0.35f, 0.95f, 0.65f), wallMat));
+                        covers.Add(CreateFeatureMarker(situationGo.transform, $"Tán Nấm Trú Mưa_{i}", localPos, $"Mushroom_Giant_{i % 3}", 2.6f, new Color(0.35f, 0.95f, 0.65f), wallMat));
                         break;
 
                     case ChamberEncounterKind.CrystalPulseStorm:
-                        covers.Add(CreateFeatureMarker(situationGo.transform, $"Tinh Thể Chắn Sóng_{i}", localPos, $"CrystalCluster_{i % 3}", 2.1f, new Color(0.35f, 0.85f, 1.0f), wallMat));
+                        covers.Add(CreateFeatureMarker(situationGo.transform, $"Tinh Thể Chắn Sóng_{i}", localPos, $"CrystalCluster_{i % 3}", 2.5f, new Color(0.35f, 0.85f, 1.0f), wallMat));
                         break;
 
                     case ChamberEncounterKind.ThermalGeyserSurge:
                         if (i < 2)
-                            geysers.Add(CreateFeatureMarker(situationGo.transform, $"Mạch Phun Ngầm_{i}", localPos, "BulbPlant_0", 1.7f, new Color(0.35f, 0.80f, 1.0f), wallMat));
+                            geysers.Add(CreateFeatureMarker(situationGo.transform, $"Mạch Phun Ngầm_{i}", localPos, "BulbPlant_0", 1.8f, new Color(0.35f, 0.80f, 1.0f), wallMat));
                         break;
 
                     case ChamberEncounterKind.AwakeningRoots:
                         if (i < 2)
-                            geysers.Add(CreateFeatureMarker(situationGo.transform, $"Gốc Rễ Thức Tỉnh_{i}", localPos, i == 0 ? "RootArch" : "Log_Hollow", 1.5f, new Color(0.55f, 1.0f, 0.45f), wallMat));
+                            geysers.Add(CreateFeatureMarker(situationGo.transform, $"Gốc Rễ Thức Tỉnh_{i}", localPos, i == 0 ? "RootArch" : "Log_Hollow", 1.6f, new Color(0.55f, 1.0f, 0.45f), wallMat));
                         break;
 
                     case ChamberEncounterKind.AncientDragonBreath:
@@ -349,11 +419,11 @@ namespace Evolve.EditorTools
 
             var l = new GameObject("Ánh Sáng Dấu Hiệu").AddComponent<Light>();
             l.transform.SetParent(go.transform, false);
-            l.transform.localPosition = new Vector3(0f, 1.8f, 0f);
+            l.transform.localPosition = new Vector3(0f, 2.2f, 0f);
             l.type = LightType.Point;
-            l.range = 10f;
+            l.range = 14f;
             l.color = lightColor;
-            l.intensity = 2.2f;
+            l.intensity = 2.4f;
             l.shadows = LightShadows.None;
             return go.transform;
         }
@@ -373,12 +443,12 @@ namespace Evolve.EditorTools
                 {
                     var spawnerGo = new GameObject($"Ổ Con Mồi ({preyName})");
                     spawnerGo.transform.SetParent(parent, false);
-                    spawnerGo.transform.localPosition = new Vector3(-8f, 0f, -6f);
+                    spawnerGo.transform.localPosition = new Vector3(-12f, 0f, -10f);
                     var so = new SerializedObject(spawnerGo.AddComponent<PreySpawner>());
                     so.FindProperty("prefab").objectReferenceValue = preyPrefab;
                     so.FindProperty("count").intValue = profile.PreyCount;
-                    so.FindProperty("radius").floatValue = chamberRadius * 0.55f;
-                    so.FindProperty("minDistanceFromCenter").floatValue = 2.0f;
+                    so.FindProperty("radius").floatValue = chamberRadius * 0.50f;
+                    so.FindProperty("minDistanceFromCenter").floatValue = 3.0f;
                     so.ApplyModifiedPropertiesWithoutUndo();
                 }
             }
@@ -391,11 +461,11 @@ namespace Evolve.EditorTools
                 {
                     var spawnerGo = new GameObject($"Lãnh Địa Quái Săn ({predName})");
                     spawnerGo.transform.SetParent(parent, false);
-                    spawnerGo.transform.localPosition = new Vector3(6f, 0f, 9f);
+                    spawnerGo.transform.localPosition = new Vector3(12f, 0f, 14f);
                     var so = new SerializedObject(spawnerGo.AddComponent<PredatorSpawner>());
                     so.FindProperty("prefab").objectReferenceValue = predPrefab;
                     so.FindProperty("count").intValue = profile.PredatorCount;
-                    so.FindProperty("radius").floatValue = chamberRadius * 0.50f;
+                    so.FindProperty("radius").floatValue = chamberRadius * 0.45f;
                     so.ApplyModifiedPropertiesWithoutUndo();
                 }
             }
@@ -407,27 +477,33 @@ namespace Evolve.EditorTools
             Color mainColor,
             Color accentColor)
         {
-            var list = new List<Light>(4);
+            var list = new List<Light>(5);
             var mainLight = new GameObject("Ánh Sáng Chính").AddComponent<Light>();
             mainLight.transform.SetParent(parent, false);
-            mainLight.transform.localPosition = new Vector3(0f, 17.5f, 0f);
+            mainLight.transform.localPosition = new Vector3(0f, 24f, 0f);
             mainLight.type = LightType.Point;
-            mainLight.range = 68f;
+            mainLight.range = 105f;
             mainLight.color = mainColor;
-            mainLight.intensity = profile.MainLightIntensity * 1.4f;
+            mainLight.intensity = profile.MainLightIntensity * 1.8f;
             mainLight.shadows = LightShadows.None;
             list.Add(mainLight);
 
-            Vector3[] accentOffsets = { new Vector3(-18f, 6.5f, 16f), new Vector3(18f, 7.0f, -16f), new Vector3(0f, 7.5f, 20f) };
+            Vector3[] accentOffsets =
+            {
+                new Vector3(-28f, 9f, 24f),
+                new Vector3(28f, 9f, -24f),
+                new Vector3(-24f, 9f, -28f),
+                new Vector3(24f, 9f, 28f)
+            };
             for (int i = 0; i < accentOffsets.Length; i++)
             {
                 var accent = new GameObject($"Ánh Sáng Điểm Nhấn_{i}").AddComponent<Light>();
                 accent.transform.SetParent(parent, false);
                 accent.transform.localPosition = accentOffsets[i];
                 accent.type = LightType.Point;
-                accent.range = 28f;
+                accent.range = 42f;
                 accent.color = accentColor;
-                accent.intensity = profile.AccentLightIntensity * 1.2f;
+                accent.intensity = profile.AccentLightIntensity * 1.4f;
                 accent.shadows = LightShadows.None;
                 list.Add(accent);
             }
@@ -465,7 +541,7 @@ namespace Evolve.EditorTools
             {
                 float angleDeg = (float)rnd.NextDouble() * 360f;
                 float r = Mathf.Lerp(minRadius, maxRadius, Mathf.Sqrt((float)rnd.NextDouble()));
-                if (r > maxRadius - 6f && IsNearAnyAngle(angleDeg, tunnelAnglesDeg, 20f)) continue;
+                if (r > maxRadius - 10f && IsNearAnyAngle(angleDeg, tunnelAnglesDeg, 22f)) continue;
                 localX = Mathf.Cos(angleDeg * Mathf.Deg2Rad) * r;
                 localZ = Mathf.Sin(angleDeg * Mathf.Deg2Rad) * r;
                 return true;
