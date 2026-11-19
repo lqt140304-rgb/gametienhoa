@@ -189,6 +189,38 @@ namespace Evolve.DevTools
             if (GUILayout.Button("Tới hoang mạc")) controller.Teleport(DesertCenter);
             if (GUILayout.Button("Về điểm xuất phát")) controller.Teleport(controller.SpawnPoint);
             GUILayout.EndHorizontal();
+
+            var mazeMgr = FindAnyObjectByType<Evolve.Maze.MazeWorldManager>();
+            if (mazeMgr != null && mazeMgr.Graph != null)
+            {
+                GUILayout.Space(2);
+                GUILayout.BeginHorizontal();
+                foreach (var c in mazeMgr.Graph.Chambers)
+                {
+                    if (c.Theme == Evolve.Maze.ChamberTheme.LumaMushroomGrove)
+                    {
+                        if (GUILayout.Button("Tới Rừng Nấm (Luma)"))
+                            mazeMgr.TeleportPlayerToChamber(controller.transform, c.Id);
+                    }
+                    else if (c.Theme == Evolve.Maze.ChamberTheme.CrystalVein)
+                    {
+                        if (GUILayout.Button("Tới Vực Thẳm Tinh Thể"))
+                            mazeMgr.TeleportPlayerToChamber(controller.transform, c.Id);
+                    }
+                }
+                GUILayout.EndHorizontal();
+            }
+#if UNITY_EDITOR
+            else
+            {
+                if (GUILayout.Button("⚡ Dựng Mê Cung ngay (Build Maze World)"))
+                {
+                    var type = System.Type.GetType("Evolve.EditorTools.MazeBuilder, Assembly-CSharp-Editor");
+                    var method = type?.GetMethod("Build", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    method?.Invoke(null, null);
+                }
+            }
+#endif
             var vision = FindAnyObjectByType<MonochromeVision>();
             if (vision != null && GUILayout.Button(vision.Sight >= 1f ? "Tắt mắt (đen trắng)" : "Bật mắt (có màu)"))
                 vision.SetSight(vision.Sight >= 1f ? 0f : 1f);

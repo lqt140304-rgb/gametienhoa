@@ -42,13 +42,39 @@ namespace Evolve.Maze
             if (manager == null || manager.Graph == null)
             {
                 GUILayout.Label("Chưa có Maze World trong scene.");
-                GUILayout.Label("Hãy chạy Evolve -> Build Maze World (Step 3).");
+                GUILayout.Label("Hãy bấm nút dưới hoặc Evolve -> Build Maze World (Step 3).");
+#if UNITY_EDITOR
+                if (GUILayout.Button("⚡ Dựng Mê Cung ngay (Build Maze World)", GUILayout.Height(36)))
+                {
+                    var type = System.Type.GetType("Evolve.EditorTools.MazeBuilder, Assembly-CSharp-Editor");
+                    var method = type?.GetMethod("Build", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    method?.Invoke(null, null);
+                }
+#endif
                 GUI.DragWindow();
                 return;
             }
 
             var player = FindLocalPlayerTransform();
             GUILayout.Label($"Đang ở: Khoang {manager.CurrentChamberId:00} — {manager.Graph.GetChamber(manager.CurrentChamberId).Name}");
+
+            // Phím tắt nhanh cho 2 khoang mẫu Handcrafted
+            GUILayout.Space(2);
+            GUILayout.BeginHorizontal();
+            GUI.enabled = player != null;
+            foreach (var ch in manager.Graph.Chambers)
+            {
+                if (ch.Theme == ChamberTheme.LumaMushroomGrove)
+                {
+                    if (GUILayout.Button("🍄 Rừng Nấm (Luma)", GUILayout.Height(26))) manager.TeleportPlayerToChamber(player, ch.Id);
+                }
+                else if (ch.Theme == ChamberTheme.CrystalVein)
+                {
+                    if (GUILayout.Button("💎 Vực Thẳm Tinh Thể", GUILayout.Height(26))) manager.TeleportPlayerToChamber(player, ch.Id);
+                }
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
 
             var curChamber = manager.CurrentChamber;
             var curEncounter = curChamber != null ? curChamber.GetComponentInChildren<ChamberEncounterZone>(true) : null;

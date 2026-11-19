@@ -199,7 +199,7 @@ namespace Evolve.Maze
             // ---------------- TẦNG NÔNG ----------------
             [ChamberTheme.LumaMushroomGrove] = new ChamberThemeProfile(
                 ChamberTheme.LumaMushroomGrove,
-                "Khoang Rừng Nấm Lam",
+                "Rừng Nấm Phát Sáng (Luma)",
                 new MazeColor(0.18f, 0.27f, 0.24f),
                 new MazeColor(0.20f, 0.26f, 0.28f),
                 0.14f, 0.15f,
@@ -297,7 +297,7 @@ namespace Evolve.Maze
 
             [ChamberTheme.CrystalVein] = new ChamberThemeProfile(
                 ChamberTheme.CrystalVein,
-                "Khoang Mạch Tinh Thể",
+                "Vực Thẳm Tinh Thể",
                 new MazeColor(0.14f, 0.19f, 0.26f),
                 new MazeColor(0.17f, 0.21f, 0.29f),
                 0.35f, 0.18f,

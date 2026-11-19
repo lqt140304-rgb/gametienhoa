@@ -63,6 +63,10 @@ namespace Evolve.Maze
             rng.Shuffle(giuaThemes);
             rng.Shuffle(sauThemes);
 
+            // Đảm bảo 2 khoang mẫu handcrafted (Luma & Crystal) luôn xuất hiện trong đồ thị
+            MoveToFront(nongThemes, ChamberTheme.LumaMushroomGrove);
+            MoveToFront(giuaThemes, ChamberTheme.CrystalVein);
+
             var chambers = new List<ChamberNode>(chamberCount);
             int nongThemeIdx = 0, giuaThemeIdx = 0, sauThemeIdx = 0;
             int shelterNum = 1, deadEndNum = 1;
@@ -194,7 +198,7 @@ namespace Evolve.Maze
             kinds[pool[rng.Range(0, pool.Count)]] = target;
         }
 
-        static void MoveToFront(List<int> list, int id)
+        static void MoveToFront<T>(List<T> list, T id)
         {
             int idx = list.IndexOf(id);
             if (idx > 0) (list[0], list[idx]) = (list[idx], list[0]);
