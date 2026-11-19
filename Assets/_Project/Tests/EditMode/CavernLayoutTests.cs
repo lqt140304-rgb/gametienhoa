@@ -54,6 +54,23 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void TheFloorRisesInPatchesButStaysWalkable()
+        {
+            float min = float.MaxValue, max = float.MinValue;
+            for (float x = -30f; x <= 30f; x += 1f)
+                for (float z = -30f; z <= 30f; z += 1f)
+                {
+                    if (CavernLayout.ShoreOffset(x, z) < 6f) continue;      // the dry floor beyond the shore
+                    float h = CavernLayout.GroundHeight(x, z);
+                    min = Mathf.Min(min, h); max = Mathf.Max(max, h);
+                    float slope = Mathf.Abs(CavernLayout.GroundHeight(x + 1f, z) - h);
+                    Assert.LessOrEqual(slope, 1.1f, $"too steep to walk at {x},{z}");
+                }
+            Assert.GreaterOrEqual(max - min, 1.2f, "real mounds, not a plain");
+            Assert.Greater(min, -0.01f, "no pits below the water level on the dry floor");
+        }
+
+        [Test]
         public void SpawnIsOnDryGroundBesideTheWater()
         {
             var p = CavernLayout.SpawnPoint();

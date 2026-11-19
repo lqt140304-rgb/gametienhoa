@@ -71,8 +71,11 @@ namespace Evolve.World
             float depth = DepthAt(x, z);
             if (depth > 0f) return -depth;
             float d = r - LakeRadius(Angle(x, z));
-            float bump = (ZoneLayout.Noise(x / 9f + 40f, z / 9f + 17f) - 0.5f) * 0.8f;
-            float h = 0.12f * Smooth01(d / 1.5f) + 0.9f * Smooth01(d / 14f) + bump * Smooth01(d / 4f);   // starts at the water's level: no little cliff along the shore
+            // the floor is not a plain: patches of mounds and low rises (up to about 2 m, a few metres to a dozen across) with flat ground between them and a little fine unevenness everywhere
+            float patch = Smooth01((ZoneLayout.Noise(x / 15f + 11f, z / 15f + 23f) - 0.46f) / 0.3f);
+            float mound = patch * (1.0f + 0.9f * ZoneLayout.Noise(x / 6f + 5f, z / 6f + 8f));
+            float fine = (ZoneLayout.Noise(x / 4.5f + 40f, z / 4.5f + 17f) - 0.5f) * 0.35f;
+            float h = 0.12f * Smooth01(d / 1.5f) + 0.9f * Smooth01(d / 14f) + (mound + fine) * Smooth01(d / 5f);   // starts at the water's level: no little cliff along the shore
             float rw = r + 8f * (ZoneLayout.Noise(x / 14f + 3f, z / 14f + 9f) - 0.5f);   // the wall's foot wanders by about 4 m
             float wall = WallHeight * Smooth01((rw - FloorRadius) / (WallTopRadius - FloorRadius));
             return Mathf.Max(h, wall);
