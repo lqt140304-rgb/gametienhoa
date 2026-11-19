@@ -585,3 +585,16 @@ Spec `docs/superpowers/specs/2026-11-19-reincarnation-survival-design.md`, plan 
 Checklist: (a) Console sạch; (b) đâm vào con mồi: nó vào bụng, B thấy món đang Phân tích; (c) đứng trong tổ: thanh chạy nhanh hơn rõ; (d) học được: có dòng Tiếng Vọng; (e) G ngoài tổ: nút khóa; trong tổ: Nặn trừ khối, cơ quan hiện lên người; (f) giết thú săn mồi, F vào xác (giữ F nếu to): vào bụng; (g) chết: bụng rỗng, cơ quan còn; (h) bụng đầy: có thông báo. Menu God (F1) có "+10 khối" và "Học hết cơ quan" để thử nhanh.
 
 - **Sinh vật và tổ tạm trong Hang Khởi Sinh** (`Editor/CavernLife`, menu `Evolve → Dress Cavern: Creatures + Shelter`, cũng chạy trong Build Slime Cavern): 2 ổ con mồi (7 con) trên bờ khô, 1 kẻ săn mồi phía đông bắc, một **tổ tạm** (vòng rêu sáng xanh có `ShelterZone`) phía tây nam gần chỗ xuất hiện. Spawner giờ đặt sinh vật **trên mặt đất** (`GroundHeight`), không còn ở độ cao cố định. Test `ShorePointIsDryAndTheRightDistanceFromTheWater`.
+
+## 37. Kỹ năng thay cho cơ quan: trạng thái và danh sách kiểm tra
+
+Spec mục 6.1, plan `docs/superpowers/plans/2026-11-19-skills-not-organs.md`. Sửa theo ý kiến sau khi chơi thử bước 1: slime **trơn**, không gắn cơ quan; gene học được là kỹ năng.
+
+- **Bị động** (`SkillRules.UseOf` = Passive: mắt, màng chịu nhiệt): luôn bật, **tối đa 3**, chỉ nặn hoặc tháo ở hang trú (tốn khối như cũ). Chỉ **mắt** hiện trên người.
+- **Chiêu chủ động** (gene có chiêu riêng, hoặc gene chân có tốc độ > 1): gắn phím **1–5 ở đâu cũng được**, không tốn khối. Học xong là dùng được ở ★1; ★3 là bản nâng cấp. Bảng **K** liệt kê chiêu đã học.
+  - **Phóng Gai** (gene Gai độc), **Lao Tới** (Chân giả cơ bắp, chiêu riêng thắng chiêu chạy), **Chạy Nước Rút** (Chân giả, Chân chạy): tốc độ ×(hệ số của chân) trong **4 / 5 / 6 giây** theo ★1 / ★2 / ★3, hồi chiêu 10 giây (×0,75 ở ★3), tốn 15 năng lượng. Hai lần chạy chồng nhau: lấy hệ số lớn hơn, kéo dài đến lúc muộn hơn, không nhân dồn (`SprintTimer`).
+  - **Bộ phận chỉ hiện lúc dùng** (`SkillVisuals`): mọc ra trong 0,15 giây, giữ suốt hiệu lực (gai 1 giây, chạy nước rút 4–6 giây), rồi thu vào trong 0,35 giây. Phản đòn của gai chỉ tính lúc gai đang hiện.
+- Hệ cơ quan: `OrganHost` chỉ giữ bị động; tốc độ, nhìn, chịu nhiệt tính từ bị động; cơ quan "chiêu" gắn tay (menu God) không có tác dụng thường trực.
+- Test: `SkillRulesTests` (chạy bằng `tools/cstest/run.sh`, 68 test xanh), `SculptTests` và `SkillBarMenuTests` (cần Unity). **Chưa mở trong Unity.**
+
+Checklist: (a) Console sạch; (b) bấm **K**: có chiêu đã học (sau khi Giải Mã xong gene Gai độc hoặc Chân); (c) gắn phím 1–5, bấm: gai trồi trên lưng, bắn, rồi tan vào thân, hồi chiêu hiện ở ô phím; (d) chân: bấm thì chân mọc ra, chạy nhanh khoảng 4 giây rồi thu vào; (e) **G**: chỉ thấy ô Mắt và Da, đủ 3 bị động thì báo; ngoài tổ nút Nặn khóa; (f) F1 có "Học chiêu" để thử nhanh; (g) chết rồi hồi sinh: chiêu đã học vẫn còn.
