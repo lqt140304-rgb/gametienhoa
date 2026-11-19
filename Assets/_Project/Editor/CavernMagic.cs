@@ -32,6 +32,7 @@ namespace Evolve.EditorTools
             var bokeh = GlowMaterial("Cavern_GlowBokeh", 1.2f, 0f, 1.6f);
 
             Beams(root);
+            Bounce(root);
             Particles(root, glow, glowBlink, bokeh);
             Water();
             Mood();
@@ -58,7 +59,16 @@ namespace Evolve.EditorTools
             {
                 main.GetComponent<MeshRenderer>().sharedMaterial = mat;
                 // the spot light's cone must not leave a circle with a hard edge on the floor and walls: all penumbra, no flat middle
-                foreach (var l in main.GetComponentsInChildren<Light>()) { l.innerSpotAngle = 0f; l.spotAngle = Mathf.Min(120f, l.spotAngle * 1.25f); }
+                foreach (var l in main.GetComponentsInChildren<Light>())
+                {
+                    // the main source spreads wide and softly, lighting the shore, the plants and the near walls, steady and gentle
+                    l.innerSpotAngle = 0f;
+                    l.spotAngle = 85f;
+                    l.range = CavernMagicMath.BeamHeight * 1.6f;
+                    l.intensity = 1.5f;
+                    l.color = new Color(1f, 0.93f, 0.78f);
+                    l.shadows = LightShadows.None;
+                }
             }
 
             // a few thinner rays through the rough edge of the hole, slightly different in angle, so the light is not one clean tube
@@ -90,6 +100,23 @@ namespace Evolve.EditorTools
             }
             AssetDatabase.DeleteAsset(Root + "/Materials/Cavern_BeamRay.mat");
             AssetDatabase.CreateAsset(rayMat, Root + "/Materials/Cavern_BeamRay.mat");
+        }
+
+        /// <summary>The beam lands on the water and the light bounces off it: one wide, soft, steady light over the pool that gently lifts the shore and everything
+        /// round it (warm from the beam, a little teal from the water). Low intensity and no flicker.</summary>
+        static void Bounce(Transform root)
+        {
+            var hit = CavernMagicMath.BeamHit;
+            var go = new GameObject("Beam Bounce Light");
+            go.transform.SetParent(root, false);
+            go.transform.position = new Vector3(hit.x, CavernLayout.WaterLevel + 2.5f, hit.z);
+            var l = go.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = new Color(0.78f, 0.92f, 0.88f);
+            l.range = 42f;
+            l.intensity = 1.1f;
+            l.shadows = LightShadows.None;
+            go.AddComponent<LightByVision>().AlwaysOnWhenSighted = true;   // fades with sight like every light, never culled by distance (the cave is small)
         }
 
         // ------------------------------------------------------------------ particles
