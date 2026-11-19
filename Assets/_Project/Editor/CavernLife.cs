@@ -79,16 +79,7 @@ namespace Evolve.EditorTools
                 ledgeHeight: 5.6f);
         }
 
-        static Material RockMaterial()
-        {
-            const string path = Root + "/Materials/Cavern_Rock.mat";
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m != null) return m;
-            m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            m.SetColor("_BaseColor", new Color(0.28f, 0.27f, 0.25f));
-            m.SetFloat("_Smoothness", 0.1f);
-            return m;
-        }
+        static Material RockMaterial() => CavernMazeWall.LoadOrMakeRockMaterial();
 
         static Material MossMaterial()
         {

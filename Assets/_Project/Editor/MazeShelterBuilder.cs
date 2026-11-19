@@ -1,14 +1,19 @@
+using System.Collections.Generic;
 using Evolve.World;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Evolve.EditorTools
 {
     /// <summary>
-    /// Dựng Hang Trú thật: hốc hang nhỏ nằm cao hơn mực lũ, có dốc dẫn lên, lối vào hẹp (chặn sinh vật lớn),
-    /// thảm rêu ẩm và ShelterZone bên trong (giữ nguyên cơ chế ShelterZone + ShelterSensor).
+    /// Dựng Hang Trú thật: hốc vòm đá tự nhiên (không dùng Cube) nằm cao hơn mực lũ,
+    /// lối vào hẹp giữa các tảng đá (chặn sinh vật lớn), thảm rêu ẩm, cỏ mọc và ShelterZone bên trong.
     /// </summary>
     public static class MazeShelterBuilder
     {
+        const string ModelFolder = "Assets/_Project/Models/Underroot/";
+
         public static GameObject BuildRealShelter(
             Transform parent,
             string name,
@@ -16,7 +21,8 @@ namespace Evolve.EditorTools
             Vector3 inwardDirection,
             Material rockMaterial,
             Material mossMaterial,
-            float ledgeHeight = 5.6f)
+            float ledgeHeight = 5.6f,
+            bool placeOnNaturalHill = false)
         {
             inwardDirection.y = 0f;
             if (inwardDirection.sqrMagnitude < 0.001f) inwardDirection = Vector3.forward;
@@ -24,32 +30,75 @@ namespace Evolve.EditorTools
 
             var shelterRoot = new GameObject(name);
             shelterRoot.transform.SetParent(parent, false);
-            shelterRoot.transform.position = groundFootPos + Vector3.up * ledgeHeight;
+            shelterRoot.transform.position = groundFootPos + Vector3.up * (placeOnNaturalHill ? 0f : ledgeHeight);
             shelterRoot.transform.rotation = Quaternion.LookRotation(inwardDirection, Vector3.up);
 
-            // 1. Nền đá gờ cao & dốc dẫn từ mặt đất lên cửa hang
-            CreateBlock(shelterRoot.transform, "Nền Hang Trú", new Vector3(0f, -0.25f, 1.5f), new Vector3(5.2f, 0.5f, 5.5f), Vector3.zero, rockMaterial);
-            CreateBlock(shelterRoot.transform, "Dốc Lên Hang Trú", new Vector3(0f, -ledgeHeight * 0.5f, -3.2f), new Vector3(2.4f, 0.5f, ledgeHeight * 1.45f), new Vector3(-38f, 0f, 0f), rockMaterial);
+            // 1. Nền đá tự nhiên hoặc gò đá bậc thang (khi đặt ở vách Hang Khởi Sinh)
+            if (!placeOnNaturalHill)
+            {
+                // Nền đá tròn tự nhiên làm bệ hang trú
+                var baseDisc = new GameObject("Nền Đá Hang Trú");
+                baseDisc.transform.SetParent(shelterRoot.transform, false);
+                baseDisc.transform.localPosition = new Vector3(0f, -0.4f, 1.5f);
+                var discMesh = CaveMeshes.Disc(4.2f, 0.45f, 14);
+                baseDisc.AddComponent<MeshFilter>().sharedMesh = discMesh;
+                baseDisc.AddComponent<MeshRenderer>().sharedMaterial = rockMaterial;
+                baseDisc.AddComponent<MeshCollider>().sharedMesh = discMesh;
 
-            // 2. Vách đá tạo hốc hang kín gió và lối vào hẹp (cửa rộng ~1.5 m, cao ~1.35 m -> quái to không lọt)
-            CreateBlock(shelterRoot.transform, "Vách Trái", new Vector3(-2.1f, 1.2f, 1.8f), new Vector3(1.0f, 2.6f, 4.4f), Vector3.zero, rockMaterial);
-            CreateBlock(shelterRoot.transform, "Vách Phải", new Vector3(2.1f, 1.2f, 1.8f), new Vector3(1.0f, 2.6f, 4.4f), Vector3.zero, rockMaterial);
-            CreateBlock(shelterRoot.transform, "Vách Sau", new Vector3(0f, 1.2f, 3.8f), new Vector3(5.2f, 2.6f, 0.8f), Vector3.zero, rockMaterial);
-            CreateBlock(shelterRoot.transform, "Mái Hang", new Vector3(0f, 2.6f, 1.8f), new Vector3(5.4f, 0.7f, 4.8f), new Vector3(6f, 0f, 0f), rockMaterial);
+                // Bậc đá tảng tự nhiên xếp tầng dẫn từ chân đồi lên cửa hang trú
+                for (int step = 0; step < 5; step++)
+                {
+                    float t = step / 4f;
+                    Vector3 stepPos = new Vector3(
+                        (step % 2 == 0 ? -0.35f : 0.35f),
+                        Mathf.Lerp(-ledgeHeight + 0.1f, -0.6f, t),
+                        Mathf.Lerp(-5.5f, -1.3f, t));
+                    MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, stepPos, 2.2f - 0.15f * step, 400 + step, rockMaterial);
+                }
 
-            // Hai trụ đá bóp hẹp cửa vào
-            CreateBlock(shelterRoot.transform, "Trụ Cửa Trái", new Vector3(-1.3f, 0.9f, -0.4f), new Vector3(1.1f, 1.9f, 0.8f), Vector3.zero, rockMaterial);
-            CreateBlock(shelterRoot.transform, "Trụ Cửa Phải", new Vector3(1.3f, 0.9f, -0.4f), new Vector3(1.1f, 1.9f, 0.8f), Vector3.zero, rockMaterial);
-            CreateBlock(shelterRoot.transform, "Mí Cửa Trên", new Vector3(0f, 1.85f, -0.4f), new Vector3(3.6f, 0.9f, 0.8f), Vector3.zero, rockMaterial);
+                // Tảng đá đỡ bên dưới hốc hang tránh cảm giác bay lơ lửng
+                MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, new Vector3(0f, -ledgeHeight * 0.55f, 1.8f), 4.8f, 499, rockMaterial);
+            }
 
-            // 3. Thảm rêu ẩm bên trong
-            var moss = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            moss.name = "Rêu Ẩm";
-            Object.DestroyImmediate(moss.GetComponent<Collider>());
-            moss.transform.SetParent(shelterRoot.transform, false);
-            moss.transform.localPosition = new Vector3(0f, 0.03f, 1.8f);
-            moss.transform.localScale = new Vector3(3.0f, 0.03f, 3.0f);
-            if (mossMaterial != null) moss.GetComponent<Renderer>().sharedMaterial = mossMaterial;
+            // 2. Vòm đá tự nhiên bao bọc hốc hang trú (CaveMeshes.Shell hai mặt + MeshCollider)
+            var shellGo = new GameObject("Vòm Đá Hang Trú");
+            shellGo.transform.SetParent(shelterRoot.transform, false);
+            shellGo.transform.localPosition = new Vector3(0f, -0.25f, 1.8f);
+            var shellMesh = CaveMeshes.Shell(3.2f, 3.4f, 2.8f, 18, 8, 303, 0.14f);
+            shellGo.AddComponent<MeshFilter>().sharedMesh = shellMesh;
+            var shellMr = shellGo.AddComponent<MeshRenderer>();
+            shellMr.sharedMaterial = rockMaterial;
+            shellMr.shadowCastingMode = ShadowCastingMode.TwoSided;
+
+            // Vòng đá tảng tự nhiên tạo vách sau và hẹp cửa vào (cửa hẹp ~1.4m rộng, 1.3m cao)
+            MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, new Vector3(-2.3f, 0.8f, 1.8f), 1.9f, 501, rockMaterial);
+            MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, new Vector3(2.3f, 0.8f, 1.8f), 1.9f, 502, rockMaterial);
+            MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, new Vector3(0f, 1.1f, 4.2f), 2.5f, 503, rockMaterial);
+            // Hai tảng đá bóp hẹp cửa vào -> quái lớn không chui lọt
+            MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, new Vector3(-1.35f, 0.65f, -0.6f), 1.25f, 504, rockMaterial);
+            MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, new Vector3(1.35f, 0.65f, -0.6f), 1.25f, 505, rockMaterial);
+            MazeTerrainMesh.PlaceFramingBoulder(shelterRoot.transform, new Vector3(0f, 2.0f, -0.55f), 1.45f, 506, rockMaterial);
+
+            // 3. Thảm rêu ẩm bên trong (ưu tiên FBX Flora_Moss hoặc Disc rêu mềm)
+            var mossFbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "Flora_Moss_0.fbx");
+            if (mossFbx != null)
+            {
+                for (int m = 0; m < 4; m++)
+                {
+                    float a = m * 90f * Mathf.Deg2Rad;
+                    var mossGo = (GameObject)PrefabUtility.InstantiatePrefab(mossFbx, shelterRoot.transform);
+                    mossGo.name = $"Rêu Hang Trú_{m}";
+                    mossGo.transform.localPosition = new Vector3(Mathf.Cos(a) * 0.9f, 0.02f, 1.8f + Mathf.Sin(a) * 0.9f);
+                    mossGo.transform.localRotation = Quaternion.Euler(0f, m * 75f, 0f);
+                    mossGo.transform.localScale = Vector3.one * 1.4f;
+                }
+            }
+
+            var mossBed = new GameObject("Thảm Rêu Ẩm");
+            mossBed.transform.SetParent(shelterRoot.transform, false);
+            mossBed.transform.localPosition = new Vector3(0f, 0.01f, 1.8f);
+            mossBed.AddComponent<MeshFilter>().sharedMesh = CaveMeshes.Disc(2.1f, 0.04f, 14);
+            mossBed.AddComponent<MeshRenderer>().sharedMaterial = mossMaterial;
 
             // 4. Ánh sáng dịu của rêu
             var light = new GameObject("Ánh Sáng Hang Trú").AddComponent<Light>();
@@ -57,8 +106,8 @@ namespace Evolve.EditorTools
             light.transform.localPosition = new Vector3(0f, 1.5f, 1.8f);
             light.type = LightType.Point;
             light.color = new Color(0.50f, 0.95f, 0.58f);
-            light.range = 6.5f;
-            light.intensity = 2.2f;
+            light.range = 7.5f;
+            light.intensity = 2.4f;
             light.shadows = LightShadows.None;
 
             // 5. Vùng kích hoạt ShelterZone (giữ nguyên cơ chế ShelterZone + ShelterSensor)
@@ -67,22 +116,11 @@ namespace Evolve.EditorTools
             zoneObj.transform.localPosition = new Vector3(0f, 0.9f, 1.8f);
             var col = zoneObj.AddComponent<BoxCollider>();
             col.isTrigger = true;
-            col.size = new Vector3(3.0f, 2.0f, 3.2f);
+            col.size = new Vector3(3.2f, 2.2f, 3.4f);
             var zone = zoneObj.AddComponent<ShelterZone>();
             zone.MaxBodyScale = 1.25f;
 
             return shelterRoot;
-        }
-
-        static void CreateBlock(Transform parent, string name, Vector3 localPos, Vector3 scale, Vector3 euler, Material mat)
-        {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = localPos;
-            go.transform.localScale = scale;
-            go.transform.localEulerAngles = euler;
-            if (mat != null) go.GetComponent<Renderer>().sharedMaterial = mat;
         }
     }
 }

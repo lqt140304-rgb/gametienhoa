@@ -18,7 +18,7 @@ namespace Evolve.EditorTools
         const string WorldRootName = "Maze World";
         const int DefaultSeed = 2026;
         const int DefaultChambers = 14;
-        const float ChamberRadius = 20f;
+        const float ChamberRadius = MazeTerrainMath.DefaultChamberRadius;
 
         [MenuItem("Evolve/Build Maze World (Step 3)")]
         public static void Build()
@@ -49,14 +49,8 @@ namespace Evolve.EditorTools
                 chamberGo.transform.SetParent(root.transform, false);
                 chamberGo.transform.position = origin;
 
-                var arrival = new GameObject("ArrivalPoint").transform;
-                arrival.SetParent(chamberGo.transform, false);
-                arrival.localPosition = new Vector3(0f, 0.6f, 0f);
-
-                var inst = chamberGo.AddComponent<ChamberInstance>();
-                // Khoang 0 (Hang Khởi Sinh) chỉ chứa phần cổng nối vì địa hình Hang Khởi Sinh đã có sẵn ở (0,0,0)
                 bool isBirth = node.Kind == ChamberKind.BirthCavern;
-                inst.Configure(node.Id, node.Name, node.Depth, node.Kind, alwaysActive: isBirth, arrival: arrival);
+                int terrainSeed = 1000 + node.Id * 73;
 
                 var edges = graph.GetTunnels(node.Id);
                 var tunnelAngles = new List<float>(edges.Count);
@@ -66,22 +60,30 @@ namespace Evolve.EditorTools
                     tunnelAngles.Add(angleDeg);
                 }
 
+                var arrival = new GameObject("ArrivalPoint").transform;
+                arrival.SetParent(chamberGo.transform, false);
+                float arrivalY = isBirth
+                    ? 0.6f
+                    : MazeTerrainMath.GroundHeightAt(0f, 0f, terrainSeed, ChamberRadius, tunnelAngles, node.HasHighLedge) + 0.6f;
+                arrival.localPosition = new Vector3(0f, arrivalY, 0f);
+
+                var inst = chamberGo.AddComponent<ChamberInstance>();
+                inst.Configure(node.Id, node.Name, node.Depth, node.Kind, alwaysActive: isBirth, arrival: arrival);
+                inst.ConfigureTerrain(terrainSeed, ChamberRadius, node.HasHighLedge, tunnelAngles);
+
                 if (!isBirth)
                 {
                     MazeChamberDecorator.Decorate(chamberGo.transform, node, ChamberRadius, tunnelAngles, mossMat);
                 }
 
                 var profile = ChamberThemeCatalog.Get(node.Theme);
+                Color wallTint = Color.Lerp(new Color(profile.WallColor.R, profile.WallColor.G, profile.WallColor.B), Color.white, 0.35f);
                 var mouthMat = isBirth
                     ? rockMat
-                    : LakeGround.OpaqueMaterial(
-                        $"Maze_Wall_{node.Theme}",
-                        new Color(profile.WallColor.R, profile.WallColor.G, profile.WallColor.B),
-                        profile.WallSmoothness,
-                        true);
+                    : MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallTint, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
 
                 // Dựng các miệng hầm và TunnelPortal cho từng đường hầm nối với khoang này
-                float baseRadius = isBirth ? 35.5f : ChamberRadius;
+                float baseRadius = isBirth ? 35.5f : 38.5f;
                 for (int e = 0; e < edges.Count; e++)
                 {
                     var edge = edges[e];
@@ -94,6 +96,8 @@ namespace Evolve.EditorTools
                         edge,
                         tunnelAngles[e],
                         baseRadius,
+                        terrainSeed,
+                        tunnelAngles,
                         mouthMat,
                         darkMat);
                 }
@@ -133,16 +137,17 @@ namespace Evolve.EditorTools
             TunnelEdge edge,
             float angleDeg,
             float radius,
+            int terrainSeed,
+            IReadOnlyList<float> tunnelAngles,
             Material rockMat,
             Material darkMat)
         {
-            var slope = edge.SlopeFrom(node.Id);
-            float baseY = slope switch
-            {
-                TunnelSlope.Up => 4.2f,    // hầm đi lên đặt cao hơn, khô ráo hơn
-                TunnelSlope.Down => 0.1f,  // hầm đi xuống ở tầng thấp, ngập trước khi lũ dâng
-                _ => 1.5f
-            };
+            float rad = angleDeg * Mathf.Deg2Rad;
+            float gx = Mathf.Cos(rad) * radius;
+            float gz = Mathf.Sin(rad) * radius;
+            float baseY = node.Kind == ChamberKind.BirthCavern
+                ? 0.3f
+                : MazeTerrainMath.GroundHeightAt(gx, gz, terrainSeed, ChamberRadius, tunnelAngles, node.HasHighLedge) - 0.1f;
 
             (float width, float height) = edge.Size switch
             {
@@ -151,7 +156,7 @@ namespace Evolve.EditorTools
                 _ => (4.2f, 3.6f)
             };
 
-            var mouth = CavernMazeWall.BuildTunnelMouthPreview(
+            var mouth = MazeTerrainMesh.BuildNaturalTunnelMouth(
                 parent,
                 $"Hầm_tới_Khoang_{targetChamberId:00}_{edge.Size}",
                 angleDeg,
@@ -160,18 +165,19 @@ namespace Evolve.EditorTools
                 width,
                 height,
                 rockMat,
-                darkMat);
+                darkMat,
+                seed: edge.Id * 31 + node.Id);
 
             // Điểm xuất hiện khi từ khoang đích bước sang khoang này
             var exitPoint = new GameObject("ExitSpawnPoint").transform;
             exitPoint.SetParent(mouth, false);
-            exitPoint.localPosition = new Vector3(0f, 0.6f, -2.2f);
+            exitPoint.localPosition = new Vector3(0f, 0.6f, -2.6f);
             exitPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
 
-            // Cổng hoán đổi ẩn đặt sâu trong đoạn hầm khuất (z = +5.8m)
+            // Cổng hoán đổi ẩn đặt sâu trong đoạn hầm khuất uốn cong (x = +0.55f, z = +6.4m)
             var portalGo = new GameObject("TunnelPortal");
             portalGo.transform.SetParent(mouth, false);
-            portalGo.transform.localPosition = new Vector3(0f, height * 0.5f, 5.8f);
+            portalGo.transform.localPosition = new Vector3(0.55f, height * 0.5f, 6.4f);
             var portalCol = portalGo.AddComponent<BoxCollider>();
             portalCol.isTrigger = true;
             portalCol.size = new Vector3(width, height, 1.8f);
