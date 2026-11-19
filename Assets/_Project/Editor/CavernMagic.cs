@@ -218,7 +218,13 @@ namespace Evolve.EditorTools
         static void Water()
         {
             var mat = AssetDatabase.LoadAssetAtPath<Material>(Root + "/Materials/Cavern_WaterLake.mat");
-            if (mat == null || !mat.HasProperty("_SparkleStrength")) { Debug.LogWarning("Chưa có vật liệu nước hang (Cavern_WaterLake) dùng shader LakeWater mới: bỏ qua phần nước."); return; }
+            var shader = Shader.Find("Evolve/LakeWater");
+            if (mat != null && shader != null && mat.shader != shader) mat.shader = shader;   // an older material still pointing at another shader
+            if (mat == null || !mat.HasProperty("_SparkleStrength"))
+            {
+                Debug.LogWarning("Scene hang này có mặt nước cũ (chưa có vật liệu Cavern_WaterLake dùng shader LakeWater): bỏ qua phần nước. Chạy Evolve → Build Slime Cavern (new map) để dựng lại hang với nước mới.");
+                return;
+            }
             mat.SetFloat("_SparkleStrength", 1.4f);
             mat.SetFloat("_SparkleScale", 2.4f);
             mat.SetColor("_ShoreGlow", new Color(0.06f, 0.55f, 0.6f, 1f));
