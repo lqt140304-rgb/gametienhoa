@@ -22,6 +22,9 @@ namespace Evolve.Organs
     {
         public const int MaxLevel = 3;
 
+        /// <summary>Passives (eyes included) are hidden: the body stays smooth. Flip to true to show their models again.</summary>
+        public const bool ShowsOnBody = false;
+
         [Tooltip("Max number of organs the body can hold (0 = unlimited, one per slot)")]
         [SerializeField] int maxOrgans = 0;
         [Tooltip("Extra effect per level above 1 (0.25 = Lv2 +25%, Lv3 +50%)")]
@@ -207,7 +210,7 @@ namespace Evolve.Organs
             if (organs.ContainsKey(organ.Slot)) Detach(organ.Slot);
 
             var entry = new Entry { Organ = organ, Level = Mathf.Clamp(level, 1, MaxLevel) };
-            if (organ.VisualPrefab != null && organ.GrantsSight)   // only eyes show on the body; other passives are felt, not seen
+            if (organ.VisualPrefab != null && ShowsOnBody)   // no passive shows on the body (spec 6.1): the slime stays smooth; eyes are felt as sight, not seen
             {
                 Transform parent = sockets.TryGetValue(organ.Slot, out var s) ? s : transform;
                 entry.Visual = Instantiate(organ.VisualPrefab, parent, false);

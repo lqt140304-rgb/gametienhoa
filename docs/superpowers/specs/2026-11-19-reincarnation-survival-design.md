@@ -110,7 +110,7 @@ Hai nguyên liệu trong Túi Không Đáy ghép thành một vật phẩm mạn
 
 Cơ thể slime **trơn, không gắn gì cố định**. Mỗi gene học được là một **kỹ năng**:
 
-- **Bị động** (mắt, màng chịu nhiệt…): luôn bật; tối đa **3**; chỉ nặn hoặc tháo ở **hang trú**, tốn khối như trên. Mắt luôn hiện trên người; bị động khác không hiện hình.
+- **Bị động** (mắt, màng chịu nhiệt…): luôn bật; tối đa **3**; chỉ nặn hoặc tháo ở **hang trú**, tốn khối như trên. Không bị động nào hiện hình, kể cả mắt (đổi ý sau chơi thử): thân slime luôn trơn.
 - **Chiêu chủ động** (phóng gai, chạy nước rút, lao tới…): gắn phím **1–5 ở bất cứ đâu**, không tốn gì. Mỗi lần dùng tốn năng lượng và có hồi chiêu. Bộ phận **chỉ hiện hình lúc vận chiêu**: mọc ra, dùng, rồi tan vào thân.
   - Gai phản đòn chỉ có tác dụng khi gai đang trồi.
   - Chân (chân giả, chân chạy) cho chiêu **Chạy Nước Rút**: ×tốc độ của loại đó trong vài giây.

@@ -590,7 +590,7 @@ Checklist: (a) Console sạch; (b) đâm vào con mồi: nó vào bụng, B th�
 
 Spec mục 6.1, plan `docs/superpowers/plans/2026-11-19-skills-not-organs.md`. Sửa theo ý kiến sau khi chơi thử bước 1: slime **trơn**, không gắn cơ quan; gene học được là kỹ năng.
 
-- **Bị động** (`SkillRules.UseOf` = Passive: mắt, màng chịu nhiệt): luôn bật, **tối đa 3**, chỉ nặn hoặc tháo ở hang trú (tốn khối như cũ). Chỉ **mắt** hiện trên người.
+- **Bị động** (`SkillRules.UseOf` = Passive: mắt, màng chịu nhiệt): luôn bật, **tối đa 3**, chỉ nặn hoặc tháo ở hang trú (tốn khối như cũ). **Không** bị động nào hiện trên người, kể cả mắt (`OrganHost.ShowsOnBody = false`).
 - **Chiêu chủ động** (gene có chiêu riêng, hoặc gene chân có tốc độ > 1): gắn phím **1–5 ở đâu cũng được**, không tốn khối. Học xong là dùng được ở ★1; ★3 là bản nâng cấp. Bảng **K** liệt kê chiêu đã học.
   - **Phóng Gai** (gene Gai độc), **Lao Tới** (Chân giả cơ bắp, chiêu riêng thắng chiêu chạy), **Chạy Nước Rút** (Chân giả, Chân chạy): tốc độ ×(hệ số của chân) trong **4 / 5 / 6 giây** theo ★1 / ★2 / ★3, hồi chiêu 10 giây (×0,75 ở ★3), tốn 15 năng lượng. Hai lần chạy chồng nhau: lấy hệ số lớn hơn, kéo dài đến lúc muộn hơn, không nhân dồn (`SprintTimer`).
   - **Bộ phận chỉ hiện lúc dùng** (`SkillVisuals`): mọc ra trong 0,15 giây, giữ suốt hiệu lực (gai 1 giây, chạy nước rút 4–6 giây), rồi thu vào trong 0,35 giây. Phản đòn của gai chỉ tính lúc gai đang hiện.
