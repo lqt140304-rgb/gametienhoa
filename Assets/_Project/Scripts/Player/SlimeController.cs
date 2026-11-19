@@ -58,6 +58,7 @@ namespace Evolve.Player
         SurvivalStats stats;
         OrganHost organs;
         Evolve.Swallow.SlimeBody body;
+        Evolve.Abilities.SprintBoost sprintBoost;
         Vector3 baseScale = Vector3.one;
         float squash, squashTarget, wobbleAmp, airK, airTime, scaleK = 1f, fallSpeed;
         Evolve.Visuals.SlimeGelAnimator jellyAnimator;
@@ -173,7 +174,9 @@ namespace Evolve.Player
             Vector3 v = rb.linearVelocity;
             float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
             UpdateWater();
-            float speed = crawlSpeed * organSpeed * SpeedScale * TraitSpeed * (IsSprinting ? sprintMultiplier : 1f)
+            if (sprintBoost == null) sprintBoost = GetComponent<Evolve.Abilities.SprintBoost>();   // added the first time Chạy Nước Rút is used
+            float skillSpeed = sprintBoost != null ? sprintBoost.Multiplier : 1f;
+            float speed = crawlSpeed * organSpeed * skillSpeed * SpeedScale * TraitSpeed * (IsSprinting ? sprintMultiplier : 1f)
                 * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f) * PlantDragScale;
             if (IsSwimming)
             {

@@ -24,7 +24,7 @@ namespace Evolve.Survival
             "Shift  Chạy nhanh (tốn thức ăn)\n" +
             "Space  Nảy (tốn năng lượng)\n" +
             "Q  Dùng Dị Năng\n" +
-            "1–5  Kỹ năng gắn cơ quan (cơ quan bậc B, Lv2)\n" +
+            "1–5  Chiêu đã học (K: gắn vào ô, đổi ở đâu cũng được)\n" +
             "Chuột: kỹ năng bắn/lao theo hướng con trỏ\nAlt  Chế độ ngắm: hồng tâm giữa màn hình,\n    camera lệch qua vai, kỹ năng theo hồng tâm\nF5  Góc nhìn thứ nhất (có hồng tâm)\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
@@ -35,7 +35,7 @@ namespace Evolve.Survival
             "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; bụng rỗng,\ncơ quan và những gì đã học vẫn còn)\n\n" +
             "Nuốt Chửng: chạm con mồi để nuốt sống;\nF vào xác để nuốt (giữ F nếu xác to hơn bạn).\n" +
             "B  Túi Không Đáy: tiêu hóa, phân tích, giữ, nhả.\nGiải Mã học cơ quan từ mẫu (nhanh ×4 trong tổ).\n" +
-            "G  Cơ thể (Biến Hình): nặn cơ quan đã học\nbằng khối, chỉ trong hang trú; tháo hoàn nửa khối.";
+            "G  Cơ thể: kỹ năng bị động (tối đa 3: mắt, màng...)\nnặn bằng khối, chỉ trong hang trú. Chiêu chủ động\n(gai, chân) chỉ hiện hình lúc dùng, rồi thu vào.";
 
         void Start()
         {
@@ -54,7 +54,7 @@ namespace Evolve.Survival
             }
             if (skills != null)
                 skills.SkillUnlocked += (o, slot) =>
-                    Toast($"Mở kỹ năng: {o.GrantedAbility.DisplayName}\n(phím {slot + 1}, từ {o.DisplayName})");
+                    Toast($"Học được kỹ năng: {skills.AbilityFor(o).DisplayName}\n(phím {slot + 1}, từ {o.DisplayName}; K để đổi ô)");
             if (organs != null)
             {
                 organs.Attached += o => Toast($"Biến Hình: {OrganTiers.Tag(o.Tier)} {o.DisplayName}");

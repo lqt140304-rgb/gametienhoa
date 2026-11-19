@@ -16,7 +16,8 @@ namespace Evolve.Survival
         float echoUntil;
         GUIStyle echoStyle, hintStyle;
 
-        static readonly OrganSlot[] BodySlots = { OrganSlot.Eyes, OrganSlot.Legs, OrganSlot.Skin, OrganSlot.Back };
+        // Passives only (spec 6.1): eyes and skin (heat membrane). Legs and back genes are active moves, on keys 1-5 (K).
+        static readonly OrganSlot[] BodySlots = { OrganSlot.Eyes, OrganSlot.Skin };
 
         Swallower SwallowerRef => swallowerRef != null ? swallowerRef : swallowerRef = stats != null ? stats.GetComponent<Swallower>() : null;
         SlimeBody BodyRef => bodyRef != null ? bodyRef : bodyRef = stats != null ? stats.GetComponent<SlimeBody>() : null;
@@ -110,7 +111,7 @@ namespace Evolve.Survival
         {
             if (organs == null) { Label(new Rect(30, 140, 900, 50), "Không có dữ liệu cơ quan."); return; }
             var book = organs.Book; var body = BodyRef; bool shelter = stats.State.InShelter;
-            Label(new Rect(25, 128, 320, 25), $"CƠ THỂ · khối {BodyMass:0.#}", small);
+            Label(new Rect(25, 128, 330, 25), $"BỊ ĐỘNG {organs.Count}/{SkillRules.MaxPassives} · khối {BodyMass:0.#}", small);
             for (int i = 0; i < BodySlots.Length; i++)
             {
                 var slot = BodySlots[i]; var o = organs.GetInSlot(slot);
@@ -135,7 +136,7 @@ namespace Evolve.Survival
             if (book != null)
                 foreach (var o in book.Known)
                 {
-                    if (o.Slot != chosenSlot || o == cur || rows >= 5) continue;
+                    if (o.Use != GeneUse.Passive || o.Slot != chosenSlot || o == cur || rows >= 5) continue;
                     var rarity = AnalysisRules.FromTier(o.Tier);
                     float cost = MassRules.SculptCost(rarity);
                     var prev = GUI.color; GUI.color = RarityColor(rarity);
@@ -154,12 +155,15 @@ namespace Evolve.Survival
                             SculptResult.Ok => "",
                             SculptResult.NoMass => $"Không đủ khối (cần {cost:0.#}, giữ tối thiểu {MassRules.MinMass:0}).",
                             SculptResult.NotInShelter => "Chỉ nặn lại cơ thể được trong hang trú.",
-                            _ => "Không nặn được (thiếu chất dinh dưỡng hoặc cơ thể không còn chỗ)."
+                            SculptResult.NotPassive => "Chiêu chủ động gắn phím ở bảng K, không nặn lên người.",
+                            _ => organs.Check(organ) == AttachCheck.NoRoom
+                                ? $"Đã đủ {SkillRules.MaxPassives} kỹ năng bị động: tháo bớt một cái."
+                                : "Không nặn được (thiếu chất dinh dưỡng)."
                         };
                     });
                     y += 44; rows++;
                 }
-            if (rows == 0) Label(new Rect(x, y, w, 50), "Chưa học được cấu trúc nào khác cho vị trí này.\nNuốt sinh vật có nó rồi để Giải Mã phân tích.", text);
+            if (rows == 0) Label(new Rect(x, y, w, 50), "Chưa học được kỹ năng bị động nào cho vị trí này.\nChiêu chủ động (gai, chạy nhanh...) ở bảng K, đổi ở đâu cũng được.", text);
             if (sculptNotice.Length > 0) Label(new Rect(x, 545, w, 26), sculptNotice, text);
         }
 

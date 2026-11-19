@@ -40,7 +40,11 @@ namespace Evolve.Organs
         [Tooltip("Organ level at which the skill unlocks (2 = Lv2); Lv3 upgrades it")]
         [Min(1)] public int AbilityUnlockLevel = 2;
 
-        [Header("Effects (at full growth)")]
+        /// <summary>What this gene is as a skill: a passive that is always on (eyes, heat membrane) or an active move on keys 1-5.</summary>
+        public Evolve.Swallow.GeneUse Use =>
+            Evolve.Swallow.SkillRules.UseOf(GrantedAbility != null, GrantsSight, HeatResistance, SpeedMultiplier, ContactDamage);
+
+        [Header("Effects (passives only; an active move's body part appears only while it is used)")]
         [Tooltip("Gives colour vision and long view range")]
         public bool GrantsSight;
         [Tooltip("Multiplies movement speed")]

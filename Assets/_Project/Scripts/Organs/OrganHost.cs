@@ -9,7 +9,7 @@ namespace Evolve.Organs
     public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom, LackNutrient }
 
     /// <summary>Result of asking Biến Hình to sculpt an organ.</summary>
-    public enum SculptResult { Ok, NotInShelter, Unknown, NoMass, Blocked }
+    public enum SculptResult { Ok, NotInShelter, Unknown, NoMass, Blocked, NotPassive }
 
     /// <summary>
     /// Holds the organs on the body (Biến Hình). Organs are learned by Giải Mã (AnalysisBook on the Swallower) and
@@ -51,8 +51,11 @@ namespace Evolve.Organs
         /// <summary>0 = blind, 1 = fully developed eyes, above 1 = levelled eyes (longer view).</summary>
         public float Sight { get; private set; }
         public bool HasSight => Sight >= 1f;
-        /// <summary>Damage dealt back to attackers (spikes).</summary>
-        public float ContactDamage { get; private set; }
+        /// <summary>Damage dealt back to attackers: passive thorns plus the spikes of an active move while they are out.</summary>
+        public float ContactDamage => passiveContact + (Visuals != null ? Visuals.ContactDamage : 0f);
+        float passiveContact;
+        /// <summary>Set by SkillVisuals when it is added to the body.</summary>
+        public Evolve.Abilities.SkillVisuals Visuals { get; set; }
         public float HeatResistance { get; private set; }
         public IEnumerable<OrganSO> Organs { get { foreach (var e in order) yield return e.Organ; } }
 
@@ -131,6 +134,7 @@ namespace Evolve.Organs
             bool lacks = st != null && !st.IsRemote && st.State.IsLacking(organ.EffectiveNutrient);
             if (organs.ContainsKey(organ.Slot)) return lacks ? AttachCheck.LackNutrient : AttachCheck.SlotOccupied;
             if (maxOrgans > 0 && organs.Count >= maxOrgans) return AttachCheck.NoRoom;
+            if (organs.Count >= Evolve.Swallow.SkillRules.MaxPassives) return AttachCheck.NoRoom;   // at most 3 passives
             return lacks ? AttachCheck.LackNutrient : AttachCheck.Ok;
         }
 
@@ -141,6 +145,7 @@ namespace Evolve.Organs
         public SculptResult TrySculpt(OrganSO organ, Evolve.Swallow.AnalysisBook book, Evolve.Swallow.SlimeBody body, bool inShelter)
         {
             if (organ == null) return SculptResult.Blocked;
+            if (organ.Use != Evolve.Swallow.GeneUse.Passive) return SculptResult.NotPassive;   // active moves go on keys 1-5 (SkillBar), not on the body
             if (!inShelter) return SculptResult.NotInShelter;
             if (book == null || !book.Knows(organ)) return SculptResult.Unknown;
             var check = Check(organ);
@@ -202,7 +207,7 @@ namespace Evolve.Organs
             if (organs.ContainsKey(organ.Slot)) Detach(organ.Slot);
 
             var entry = new Entry { Organ = organ, Level = Mathf.Clamp(level, 1, MaxLevel) };
-            if (organ.VisualPrefab != null)
+            if (organ.VisualPrefab != null && organ.GrantsSight)   // only eyes show on the body; other passives are felt, not seen
             {
                 Transform parent = sockets.TryGetValue(organ.Slot, out var s) ? s : transform;
                 entry.Visual = Instantiate(organ.VisualPrefab, parent, false);
@@ -323,6 +328,7 @@ namespace Evolve.Organs
             foreach (var e in order)
             {
                 ApplyVisual(e);
+                if (e.Organ.Use == Evolve.Swallow.GeneUse.Active) continue;   // an active move changes nothing while it rests
                 float k = Strength(e);
                 speed *= 1f + (e.Organ.SpeedMultiplier - 1f) * k;
                 if (e.Organ.GrantsSight) sight = Mathf.Max(sight, k);
@@ -336,7 +342,7 @@ namespace Evolve.Organs
             }
             SpeedMultiplier = speed;
             Sight = sight;
-            ContactDamage = contact;
+            passiveContact = contact;
             HeatResistance = heat;
             if (stats != null) stats.State.HeatResistance = heat;
             Changed?.Invoke();

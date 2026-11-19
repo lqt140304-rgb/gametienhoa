@@ -41,6 +41,7 @@ namespace Evolve.Tests.EditMode
         {
             var o = ScriptableObject.CreateInstance<OrganSO>();
             o.name = n; o.DisplayName = n; o.Tier = tier; o.Slot = slot;
+            o.HeatResistance = 1f;   // a passive (an organ with no move, no speed and no thorns would be nothing at all)
             made.Add(o);
             return o;
         }
@@ -115,6 +116,39 @@ namespace Evolve.Tests.EditMode
             Learn(o, 2);                                             // 3 more samples → ★2
             host.SyncStars(swallower.Book);
             Assert.AreEqual(2, host.GetLevel(o));
+        }
+
+        [Test]
+        public void Sculpt_ActiveMove_Refused()
+        {
+            var ability = ScriptableObject.CreateInstance<Evolve.Abilities.SpikeBurstAbility>(); made.Add(ability);
+            var o = Organ("Spikes", OrganTier.B, OrganSlot.Back); o.GrantedAbility = ability;
+            Learn(o);
+            Assert.AreEqual(SculptResult.NotPassive, host.TrySculpt(o, swallower.Book, body, true));
+            Assert.AreEqual(10f, body.Mass, 1e-4f);
+        }
+
+        [Test]
+        public void Passives_CapAt3()
+        {
+            body.SetMass(40f);
+            var a = Organ("A", OrganTier.C, OrganSlot.Eyes); var b = Organ("B", OrganTier.C, OrganSlot.Skin);
+            var c = Organ("C", OrganTier.C, OrganSlot.Back); var d = Organ("D", OrganTier.C, OrganSlot.Legs);
+            foreach (var o in new[] { a, b, c, d }) Learn(o);
+            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(a, swallower.Book, body, true));
+            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(b, swallower.Book, body, true));
+            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(c, swallower.Book, body, true));
+            Assert.AreEqual(AttachCheck.NoRoom, host.Check(d));
+            Assert.AreEqual(SculptResult.Blocked, host.TrySculpt(d, swallower.Book, body, true));
+            Assert.AreEqual(34f, body.Mass, 1e-4f);   // the refused fourth cost nothing
+        }
+
+        [Test]
+        public void ActiveOrganOnTheBody_ChangesNothing()
+        {
+            var o = Organ("Legs", OrganTier.C, OrganSlot.Legs); o.HeatResistance = 0f; o.SpeedMultiplier = 2f;
+            host.TryAttach(o);   // debug path: wearing a move's organ gives no permanent speed
+            Assert.AreEqual(1f, host.SpeedMultiplier, 1e-5f);
         }
 
         [Test]

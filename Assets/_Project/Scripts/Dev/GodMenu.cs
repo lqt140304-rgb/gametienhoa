@@ -141,12 +141,24 @@ namespace Evolve.DevTools
                 bool has = host != null && host.Has(o);
                 GUILayout.BeginHorizontal();
                 GUILayout.Label($"[{o.Tier}] {o.DisplayName} ({OrganInteractor.SlotName(o.Slot)})", GUILayout.Width(230));
-                GUI.enabled = host != null && !has;
-                if (GUILayout.Button(has ? "Đang có" : "Nhận"))
+                bool active = o.Use == Evolve.Swallow.GeneUse.Active;
+                bool learned = swallower != null && swallower.Book.Knows(o);
+                GUI.enabled = host != null && (active ? !learned : !has);
+                if (GUILayout.Button(active ? (learned ? "Đã học" : "Học chiêu") : (has ? "Đang có" : "Nhận bị động")))
                 {
-                    if (host.GetInSlot(o.Slot) != null) host.Detach(o.Slot);
-                    host.TryAttach(o);
-                    if (growInstantly) host.DebugGrowAll();
+                    if (active)
+                    {
+                        // an active move is learned, not worn: it appears in the skill menu (K) and on keys 1-5
+                        if (swallower != null)
+                            while (!swallower.Book.Knows(o))
+                                swallower.Book.Submit(new List<Evolve.Swallow.Gene> { new Evolve.Swallow.Gene(o, Evolve.Swallow.AnalysisRules.FromTier(o.Tier)) }, 1f, () => 0f);
+                    }
+                    else
+                    {
+                        if (host.GetInSlot(o.Slot) != null) host.Detach(o.Slot);
+                        host.TryAttach(o);
+                        if (growInstantly) host.DebugGrowAll();
+                    }
                 }
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();

@@ -257,7 +257,7 @@ namespace Evolve.Survival
             DrawSkillChip(new Rect(sx,sy,chipWidth,chipHeight),"Q",active!=null?active.DisplayName:null,caster!=null?caster.CooldownRemaining:0,active!=null?active.EnergyCost:0,active);
             for(int slot=0;slot<SkillBar.SlotCount;slot++)
             {
-                var o=skills!=null?skills.GetSlot(slot):null; var a=o!=null?o.GrantedAbility:null;
+                var o=skills!=null?skills.GetSlot(slot):null; var a=o!=null?skills.AbilityFor(o):null;
                 DrawSkillChip(new Rect(sx+(slot+1)*chipStep,sy,chipWidth,chipHeight),(slot+1).ToString(),a!=null?a.DisplayName:null,skills!=null?skills.CooldownRemaining(slot):0,a!=null?a.EnergyCost:0,a);
             }
             var sense=stats.GetComponent<VibrationSense>();
@@ -377,15 +377,15 @@ namespace Evolve.Survival
         {
             var result=new List<OrganSO>();
             if(organs==null||skills==null)return result;
-            foreach(var o in organs.OrganList)
-                if(skills.IsUnlocked(o)&&(!equippedOnly||skills.SlotOf(o)>=0)&&HudCatalog.Matches(o.GrantedAbility.DisplayName,o.DisplayName,skillQuery))result.Add(o);
+            foreach(var o in skills.Unlocked())
+                if((!equippedOnly||skills.SlotOf(o)>=0)&&HudCatalog.Matches(skills.AbilityFor(o).DisplayName,o.DisplayName,skillQuery))result.Add(o);
             return result;
         }
         void DrawSkillInventory()
         {
-            if(organs==null||skills==null){Label(new Rect(30,140,800,50),"Chưa có kỹ năng cơ quan.");return;}
-            var owned=organs.OrganList;
-            if(chosenSkill==null||!skills.IsUnlocked(chosenSkill))chosenSkill=owned.Find(o=>skills.IsUnlocked(o));
+            if(organs==null||skills==null){Label(new Rect(30,140,800,50),"Chưa có kỹ năng.");return;}
+            var owned=skills.Unlocked();
+            if(chosenSkill==null||!skills.IsUnlocked(chosenSkill))chosenSkill=owned.Count>0?owned[0]:null;
             Label(new Rect(26,126,340,25),"KHO KỸ NĂNG",small);
             GUI.SetNextControlName("CellularSkillSearch");
             var query=GUI.TextField(new Rect(26,158,230,34),skillQuery,input);
@@ -398,18 +398,18 @@ namespace Evolve.Survival
                 int index=skillPage*8+i;if(index>=list.Count)break;var o=list[index];
                 var r=new Rect(26+(i%2)*179,208+(i/2)*78,171,70);
                 int slot=skills.SlotOf(o);
-                if(Button(r,$"{o.GrantedAbility.DisplayName}\n{(slot<0?"Chưa gắn":$"Ô {slot+1}")}",chosenSkill==o))chosenSkill=o;
+                if(Button(r,$"{skills.AbilityFor(o).DisplayName}\n{(slot<0?"Chưa gắn":$"Ô {slot+1}")}",chosenSkill==o))chosenSkill=o;
             }
-            if(list.Count==0)Label(new Rect(28,215,330,65),string.IsNullOrWhiteSpace(skillQuery)?"Chưa có kỹ năng phù hợp.":"Không tìm thấy kỹ năng.",small);
+            if(list.Count==0)Label(new Rect(28,215,330,65),string.IsNullOrWhiteSpace(skillQuery)?"Chưa học chiêu nào. Nuốt sinh vật có gai, chân... rồi để Giải Mã phân tích.":"Không tìm thấy kỹ năng.",small);
             WithEnabled(skillPage>0,()=>{if(Button(new Rect(88,550,40,30),"←"))skillPage--;});
             Label(new Rect(137,554,130,25),$"{skillPage+1} / {HudCatalog.PageCount(list.Count,8)}  ·  {list.Count} kỹ năng",small);
             WithEnabled(skillPage+1<HudCatalog.PageCount(list.Count,8),()=>{if(Button(new Rect(294,550,40,30),"→"))skillPage++;});
             Paint(new Rect(395,125,1,460),new Color(.5f,.7f,.9f,.16f),Texture2D.whiteTexture);
-            if(chosenSkill==null){Label(new Rect(430,180,720,70),"Nâng cơ quan có kỹ năng để mở thêm vào kho.");return;}
-            var ability=chosenSkill.GrantedAbility;int level=organs.GetLevel(chosenSkill);
+            if(chosenSkill==null){Label(new Rect(430,180,720,70),"Nuốt sinh vật rồi để Giải Mã học chiêu của nó.");return;}
+            var ability=skills.AbilityFor(chosenSkill);int level=skills.LevelFor(chosenSkill);int stars=Mathf.Max(1,skills.StarsOf(chosenSkill));
             Paint(new Rect(427,134,70,70),new Color(.18f,.32f,.43f),disc);
             Label(new Rect(427,147,70,40),AbilityMark(ability),new GUIStyle(heading){alignment=TextAnchor.MiddleCenter});
-            Label(new Rect(515,133,680,25),$"{chosenSkill.DisplayName} · Cấp {level}",small);
+            Label(new Rect(515,133,680,25),$"{chosenSkill.DisplayName} · {new string('★',stars)}",small);
             Label(new Rect(515,162,680,43),ability.DisplayName,heading);
             if(KeyPressed.TabHeld())DrawSkillCalculation(new Rect(427,224,485,350),ability,level);
             else
@@ -426,18 +426,18 @@ namespace Evolve.Survival
             for(int slot=0;slot<SkillBar.SlotCount;slot++)
             {
                 var current=skills.GetSlot(slot);int target=slot;
-                string mark=current!=null?AbilityMark(current.GrantedAbility):"+";
+                string mark=current!=null?AbilityMark(skills.AbilityFor(current)):"+";
                 if(Button(new Rect(947+slot*52,342,46,62),$"{mark}\n{slot+1}",current==chosenSkill))skills.Assign(target,chosenSkill);
             }
             int at=skills.SlotOf(chosenSkill);
             Label(new Rect(947,423,260,50),at<0?"Chưa gắn":$"Đang gắn ở ô {at+1}",small);
             WithEnabled(at>=0,()=>{if(Button(new Rect(947,489,245,35),"Gỡ kỹ năng"))skills.Clear(at);});
         }
-        string AbilityMark(AbilitySO a)=>a is SpikeBurstAbility?"✦":a is ChargeAbility?"➶":a is BurstDashAbility?"↝":"◇";
+        string AbilityMark(AbilitySO a)=>a is SpikeBurstAbility?"✦":a is ChargeAbility?"➶":a is BurstDashAbility?"↝":a is SprintAbility?"»":"◇";
         string ReadyFor(OrganSO o)
         {
             int slot=skills.SlotOf(o);
-            return slot<0?"Chưa gắn":skills.CooldownRemaining(slot)>0?$"{skills.CooldownRemaining(slot):0.0}s":stats.State.Energy<o.GrantedAbility.EnergyCost?"Thiếu năng lượng":"Sẵn sàng";
+            return slot<0?"Chưa gắn":skills.CooldownRemaining(slot)>0?$"{skills.CooldownRemaining(slot):0.0}s":stats.State.Energy<skills.AbilityFor(o).EnergyCost?"Thiếu năng lượng":"Sẵn sàng";
         }
         void DrawSkillCalculation(Rect r,AbilitySO ability,int level)
         {
@@ -457,6 +457,12 @@ namespace Evolve.Survival
                 Label(new Rect(r.x,y,r.width,38),"Lao mạnh",heading);y+=48;
                 Label(new Rect(r.x,y,r.width,70),$"Lực lao: {charge.Force:0.#} × {AbilitySO.Power(level):0.##} = {charge.Force*AbilitySO.Power(level):0.#}\nHướng lao theo điểm đang ngắm.");y+=86;
                 Label(new Rect(r.x,y,r.width,65),"Sát thương va chạm còn phụ thuộc tốc độ và sinh vật bị đâm trúng.",small);y+=80;
+            }
+            else if(ability is SprintAbility sprint)
+            {
+                Label(new Rect(r.x,y,r.width,38),"Chạy nước rút",heading);y+=48;
+                Label(new Rect(r.x,y,r.width,70),$"Tốc độ ×{sprint.Multiplier:0.#} trong {Evolve.Swallow.SkillRules.SprintSeconds(level):0} giây.\nChân mọc ra khi chạy, thu vào khi hồi chiêu.");y+=86;
+                Label(new Rect(r.x,y,r.width,65),"Lên sao để chạy lâu hơn (4 / 5 / 6 giây) và hồi chiêu nhanh hơn ở ★3.",small);y+=80;
             }
             else if(ability is BurstDashAbility dash)
             {

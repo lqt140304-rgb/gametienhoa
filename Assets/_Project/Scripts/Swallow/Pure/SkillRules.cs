@@ -52,3 +52,29 @@ namespace Evolve.Swallow
         public static float CombineBoost(float a, float b) => Mathf.Max(a, b);
     }
 }
+
+namespace Evolve.Swallow
+{
+    /// <summary>Time-limited Sprint boost: overlapping Sprints take the stronger factor and the later end, never multiplying.</summary>
+    public class SprintTimer
+    {
+        float mult = 1f, until;
+
+        public float Multiplier(float now) => now < until ? mult : 1f;
+
+        public void Apply(float now, float multiplier, float seconds)
+        {
+            float end = now + seconds;
+            if (now < until)
+            {
+                mult = SkillRules.CombineBoost(mult, multiplier);
+                until = System.Math.Max(until, end);
+            }
+            else
+            {
+                mult = multiplier;
+                until = end;
+            }
+        }
+    }
+}

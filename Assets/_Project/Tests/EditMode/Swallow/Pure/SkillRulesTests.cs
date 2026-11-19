@@ -29,5 +29,38 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test] public void SprintBoost_MaxNotStacked() => Assert.AreEqual(2f, SkillRules.CombineBoost(1.4f, 2f), 1e-4f);
+
+        [Test]
+        public void SprintTimer_AppliesThenExpires()
+        {
+            var t = new SprintTimer();
+            Assert.AreEqual(1f, t.Multiplier(0f));
+            t.Apply(10f, 2f, 4f);
+            Assert.AreEqual(2f, t.Multiplier(10f));
+            Assert.AreEqual(2f, t.Multiplier(13.9f));
+            Assert.AreEqual(1f, t.Multiplier(14.1f));
+        }
+
+        [Test]
+        public void SprintTimer_Overlap_StrongerWinsAndExtends()
+        {
+            var t = new SprintTimer();
+            t.Apply(0f, 1.4f, 4f);
+            t.Apply(2f, 2f, 4f);                       // until 6, multiplier 2
+            Assert.AreEqual(2f, t.Multiplier(3f));
+            Assert.AreEqual(2f, t.Multiplier(5.9f));
+            t.Apply(3f, 1.4f, 1f);                     // weaker and shorter: changes nothing
+            Assert.AreEqual(2f, t.Multiplier(5f));
+            Assert.AreEqual(1f, t.Multiplier(6.1f));
+        }
+
+        [Test]
+        public void SprintTimer_ExpiredThenNew_StartsFresh()
+        {
+            var t = new SprintTimer();
+            t.Apply(0f, 2f, 4f);
+            t.Apply(10f, 1.4f, 4f);                    // the old one ended long ago: a weaker new one is not held up by it
+            Assert.AreEqual(1.4f, t.Multiplier(11f), 1e-5f);
+        }
     }
 }
