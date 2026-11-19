@@ -465,9 +465,9 @@ def terrain_height(x, y):
 
     # Vách bao gãy khúc vươn lên trần + 3 hốc cửa hầm
     u = _boundary_u(x, y)
+    alcove_f, in_alcove = _alcove_depth_factor(x, y)
     if u > 0.72:
         wall_t = _smoothstep(0.72, 1.02, u)
-        alcove_f, _ = _alcove_depth_factor(x, y)
         wall_t *= alcove_f
         strata_wall = _stepped(wall_t, steps=7.0, sharp=0.88)
         rock_crag = 5.6 * _ridged(Vector((x * 0.074, y * 0.074, 2.3)))
@@ -476,6 +476,9 @@ def terrain_height(x, y):
     if abs(x - 9.0) < 15.0 and y > 54.0:
         wf_w = (1.0 - _smoothstep(5.5, 14.0, abs(x - 9.0))) * _smoothstep(54.0, 68.0, y)
         h += wf_w * 9.0
+
+    if in_alcove and u < 0.91:
+        h = min(h, 1.1 + 0.25 * n1)
 
     return h
 
@@ -682,7 +685,7 @@ def build_chamber_shell(rng):
     for f in col_terrain_faces:
         if f.normal.z < 0.0:
             f.normal_flip()
-    col_obj = kit.finish_object(bm_col, "MazeChamber_Crystal_COL")
+    col_obj = kit.finish_object(bm_col, "MazeChamber_Crystal_COL", recalc_normals=False)
 
     _add_ceiling_obsidian_ribs(bm, rng)
 
@@ -729,8 +732,16 @@ def build_chamber_shell(rng):
     if sharp_edges:
         bmesh.ops.split_edges(bm, edges=sharp_edges)
 
+    bm.normal_update()
+    for f in terrain_faces:
+        if f.is_valid and f.normal.z < 0.0:
+            f.normal_flip()
+    for f in ceiling_faces:
+        if f.is_valid and f.normal.z > 0.0:
+            f.normal_flip()
+
     shell_mat = _make_obsidian_material("MazeChamber_Crystal_ShellMat")
-    shell_obj = kit.finish_object(bm, "MazeChamber_Crystal_Shell", shell_mat)
+    shell_obj = kit.finish_object(bm, "MazeChamber_Crystal_Shell", shell_mat, recalc_normals=False)
     for p in shell_obj.data.polygons:
         p.use_smooth = False
 
@@ -777,7 +788,7 @@ def build_chamber_shell(rng):
 
 # ---------------------------------------------------------------- Nguồn Nước Tối Giản: Chỉ 2 Hố Nhỏ Đoạn Trên Cao
 
-def _build_water_ribbon_sheet(bm, x0, x1, y0, y1, nx, ny, z_fn, mask_fn):
+def _build_water_ribbon_sheet(bm, x0, x1, y0, y1, nx, ny, z_fn, mask_fn, out_faces=None):
     grid = [[None] * nx for _ in range(ny)]
     for iy in range(ny):
         y = y0 + (y1 - y0) * iy / (ny - 1)
@@ -791,7 +802,9 @@ def _build_water_ribbon_sheet(bm, x0, x1, y0, y1, nx, ny, z_fn, mask_fn):
             a, b = grid[iy][ix], grid[iy][ix + 1]
             c, d = grid[iy + 1][ix + 1], grid[iy + 1][ix]
             if a and b and c and d:
-                bm.faces.new([a, b, c, d])
+                f = bm.faces.new([a, b, c, d])
+                if out_faces is not None:
+                    out_faces.append(f)
 
 
 def _add_waterfall_curtain(bm, top_p, bot_p, half_w_top, half_w_bot, curve_fwd, foam_hints):
@@ -802,22 +815,27 @@ def _add_waterfall_curtain(bm, top_p, bot_p, half_w_top, half_w_bot, curve_fwd, 
     side = Vector((-fwd.y, fwd.x, 0.0))
 
     grid = []
+    back_grid = []
     for r in range(rows):
         t = r / (rows - 1)
         arc_fwd = math.sin(t * math.pi * 0.85) * curve_fwd
         w = half_w_top + (half_w_bot - half_w_top) * (t ** 0.75)
         center = top_p.lerp(bot_p, t) + fwd * arc_fwd
         row = []
+        brow = []
         for c in range(cols):
             u = (c / (cols - 1)) * 2.0 - 1.0
             ripple = 0.18 * math.sin(u * 4.5 + t * 5.0) + 0.12 * noise.noise(Vector((u * 3.0, t * 4.0, 2.2)))
             p = center + side * (u * w) + fwd * ripple
             row.append(bm.verts.new(p))
+            brow.append(bm.verts.new(p - fwd * 0.08))
         grid.append(row)
+        back_grid.append(brow)
 
     for r in range(rows - 1):
         for c in range(cols - 1):
             bm.faces.new([grid[r][c], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c]])
+            bm.faces.new([back_grid[r][c], back_grid[r + 1][c], back_grid[r + 1][c + 1], back_grid[r][c + 1]])
 
     foam_hints.append(Vector((bot_p.x, bot_p.y, bot_p.z)))
     res = bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
@@ -834,12 +852,14 @@ def build_water_system(walk_bvh, rng):
     """CHỈ giữ nguồn dịch độc nhỏ ở đoạn trên cao phía Bắc (+8.85m & +5.45m); BỎ hoàn toàn nước ở giữa khoang."""
     bm_water = bmesh.new()
     foam_hints = []
+    sheet_faces = []
 
     # Hố dịch độc nhỏ tầng lửng (+5.45m)
     _build_water_ribbon_sheet(
         bm_water, -22.0, 8.0, 24.0, 48.0, 34, 30,
         lambda x, y: TERRACE2_WATER_Z + 0.02 * math.sin(x * 0.5 + y * 0.4),
         lambda x, y: _terrace2_dist(x, y) < 0.89,
+        sheet_faces,
     )
 
     # Hố dịch độc thượng nguồn (+8.85m)
@@ -847,6 +867,7 @@ def build_water_system(walk_bvh, rng):
         bm_water, -8.0, 24.0, 36.0, 62.0, 34, 30,
         lambda x, y: TERRACE3_WATER_Z + 0.02 * math.sin(x * 0.5 + y * 0.4),
         lambda x, y: _terrace3_dist(x, y) < 0.89,
+        sheet_faces,
     )
 
     # Thác dịch độc mảnh từ khe đá vách Bắc -> Hố +8.85m -> Hố +5.45m -> ngấm tắt dần vào hốc đá
@@ -855,8 +876,11 @@ def build_water_system(walk_bvh, rng):
     _add_waterfall_curtain(bm_water, Vector((1.0, 42.0, TERRACE3_WATER_Z + 0.05)), Vector((-2.5, 38.0, TERRACE2_WATER_Z - 0.1)), 2.0, 2.9, 1.3, foam_hints)
     _add_waterfall_curtain(bm_water, Vector((-8.0, 27.5, TERRACE2_WATER_Z + 0.05)), Vector((-8.5, 22.0, 1.6)), 1.4, 2.0, 1.2, foam_hints)
 
-    bmesh.ops.recalc_face_normals(bm_water, faces=bm_water.faces[:])
-    water_obj = kit.finish_object(bm_water, "MazeChamber_Crystal_Water", _make_toxic_fluid_material("MazeChamber_Crystal_FluidMat"))
+    bm_water.normal_update()
+    for f in sheet_faces:
+        if f.normal.z < 0.0:
+            f.normal_flip()
+    water_obj = kit.finish_object(bm_water, "MazeChamber_Crystal_Water", _make_toxic_fluid_material("MazeChamber_Crystal_FluidMat"), recalc_normals=False)
 
     def paint_toxic_fluid(p, n):
         if n.z < 0.55:

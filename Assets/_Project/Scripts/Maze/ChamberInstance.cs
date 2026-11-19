@@ -21,6 +21,9 @@ namespace Evolve.Maze
         [SerializeField] bool hasHighLedge = true;
         [SerializeField] List<float> tunnelAnglesDeg = new List<float>();
 
+        MeshCollider cachedMeshCollider;
+        bool searchedMeshCollider;
+
         public int ChamberId => chamberId;
         public string ChamberName => chamberName;
         public ChamberDepth Depth => depth;
@@ -53,8 +56,36 @@ namespace Evolve.Maze
             if (kind == ChamberKind.BirthCavern) return null;
             float lx = worldX - transform.position.x;
             float lz = worldZ - transform.position.z;
-            if (lx * lx + lz * lz > (chamberRadius + 16f) * (chamberRadius + 16f)) return null;
+            var floorMc = FindChamberFloorCollider();
+            float maxR = floorMc != null ? Mathf.Max(chamberRadius + 16f, 120f) : chamberRadius + 16f;
+            if (lx * lx + lz * lz > maxR * maxR) return null;
+
+            if (floorMc != null && floorMc.enabled && floorMc.gameObject.activeInHierarchy)
+            {
+                var ray = new Ray(new Vector3(worldX, transform.position.y + 38f, worldZ), Vector3.down);
+                if (floorMc.Raycast(ray, out var hit, 76f))
+                    return hit.point.y;
+            }
+
             return transform.position.y + MazeTerrainMath.GroundHeightAt(lx, lz, terrainSeed, chamberRadius, tunnelAnglesDeg, hasHighLedge);
+        }
+
+        MeshCollider FindChamberFloorCollider()
+        {
+            if (searchedMeshCollider) return cachedMeshCollider;
+            searchedMeshCollider = true;
+            foreach (var mc in GetComponentsInChildren<MeshCollider>(true))
+            {
+                if (mc == null) continue;
+                string n = mc.gameObject.name;
+                string pn = mc.transform.parent != null ? mc.transform.parent.name : "";
+                if (n.EndsWith("_3D") || pn.EndsWith("_3D"))
+                {
+                    cachedMeshCollider = mc;
+                    break;
+                }
+            }
+            return cachedMeshCollider;
         }
 
         public void RegisterPortal(TunnelPortal portal)

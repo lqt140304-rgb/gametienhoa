@@ -612,6 +612,7 @@ def build_chamber_shell(rng):
 
     bm = bmesh.new()
     grid = [[None] * nx for _ in range(ny)]
+    terrain_faces = []
 
     for j in range(ny):
         y = y_min + (j / (ny - 1)) * (y_max - y_min)
@@ -625,7 +626,9 @@ def build_chamber_shell(rng):
         for i in range(nx - 1):
             a, b, c, d = grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]
             if a and b and c and d:
-                bm.faces.new([a, b, c, d])
+                terrain_faces.append(bm.faces.new([a, b, c, d]))
+
+    terrain_set = set(terrain_faces)
 
     _add_stone_arch_bridge(bm)
 
@@ -657,15 +660,23 @@ def build_chamber_shell(rng):
             (rng.uniform(-0.2, 0.2), rng.uniform(-0.2, 0.2), rng.uniform(0.0, 3.14)),
         )
 
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    floor_extra = [f for f in bm.faces if f not in terrain_set]
+    if floor_extra:
+        bmesh.ops.recalc_face_normals(bm, faces=floor_extra)
+    bm.normal_update()
+    for f in terrain_faces:
+        if f.normal.z < 0.0:
+            f.normal_flip()
     walk_bvh = BVHTree.FromBMesh(bm)
 
     bm_col = bm.copy()
-    col_obj = kit.finish_object(bm_col, "MazeChamber_Luma_COL")
+    col_obj = kit.finish_object(bm_col, "MazeChamber_Luma_COL", recalc_normals=False)
 
     # Vòm Trần kín + gân đá vòm trần + 26 cụm nhũ đá phân tầng
+    pre_ceiling_set = set(bm.faces[:])
     cnx, cny = 86, 68
     c_grid = [[None] * cnx for _ in range(cny)]
+    ceiling_faces = []
     for j in range(cny):
         y = y_min + (j / (cny - 1)) * (y_max - y_min)
         for i in range(cnx):
@@ -679,8 +690,9 @@ def build_chamber_shell(rng):
         for i in range(cnx - 1):
             a, b, c, d = c_grid[j][i], c_grid[j][i + 1], c_grid[j + 1][i + 1], c_grid[j + 1][i]
             if a and b and c and d:
-                bm.faces.new([a, d, c, b])
+                ceiling_faces.append(bm.faces.new([a, d, c, b]))
 
+    ceiling_set = set(ceiling_faces)
     _add_ceiling_rock_ribs(bm, rng)
 
     stalactite_bud_spots = []
@@ -693,12 +705,24 @@ def build_chamber_shell(rng):
         tips = _add_stalactite_cluster(bm, Vector((sx, sy, cz)), Vector((s_i * 2.3, 4.1, 7.2)), rng)
         stalactite_bud_spots.extend(tips)
 
+    ceiling_extra = [f for f in bm.faces if f not in pre_ceiling_set and f not in ceiling_set]
+    if ceiling_extra:
+        bmesh.ops.recalc_face_normals(bm, faces=ceiling_extra)
+
     sharp_edges = [e for e in bm.edges if len(e.link_faces) == 2 and e.calc_face_angle(0.0) > math.radians(24.0)]
     if sharp_edges:
         bmesh.ops.split_edges(bm, edges=sharp_edges)
 
+    bm.normal_update()
+    for f in terrain_faces:
+        if f.is_valid and f.normal.z < 0.0:
+            f.normal_flip()
+    for f in ceiling_faces:
+        if f.is_valid and f.normal.z > 0.0:
+            f.normal_flip()
+
     shell_mat = _make_rock_material("MazeChamber_Luma_RockMat")
-    shell_obj = kit.finish_object(bm, "MazeChamber_Luma_Shell", shell_mat)
+    shell_obj = kit.finish_object(bm, "MazeChamber_Luma_Shell", shell_mat, recalc_normals=False)
     for p in shell_obj.data.polygons:
         p.use_smooth = True
 
@@ -767,7 +791,7 @@ def build_chamber_shell(rng):
 
 # ---------------------------------------------------------------- Nguồn Nước (Hồ Thượng, Thác 2 Tầng, Suối Ngọc Lam & Bèo Sáng)
 
-def _build_water_ribbon_sheet(bm, x0, x1, y0, y1, nx, ny, z_fn, mask_fn, foam_hints):
+def _build_water_ribbon_sheet(bm, x0, x1, y0, y1, nx, ny, z_fn, mask_fn, foam_hints, out_faces=None):
     grid = [[None] * nx for _ in range(ny)]
     for j in range(ny):
         y = y0 + (j / (ny - 1)) * (y1 - y0)
@@ -780,7 +804,9 @@ def _build_water_ribbon_sheet(bm, x0, x1, y0, y1, nx, ny, z_fn, mask_fn, foam_hi
         for i in range(nx - 1):
             a, b, c, d = grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]
             if a and b and c and d:
-                bm.faces.new([a, b, c, d])
+                f = bm.faces.new([a, b, c, d])
+                if out_faces is not None:
+                    out_faces.append(f)
 
 
 def _add_waterfall_curtain(bm, top_p, bot_p, half_w_top, half_w_bot, curve_fwd, foam_hints):
@@ -793,6 +819,7 @@ def _add_waterfall_curtain(bm, top_p, bot_p, half_w_top, half_w_bot, curve_fwd, 
     right = Vector((-fwd.y, fwd.x, 0.0))
 
     grid = []
+    back_grid = []
     for i in range(rows):
         t = i / (rows - 1)
         # Parabol rơi trọng lực tự nhiên
@@ -805,16 +832,20 @@ def _add_waterfall_curtain(bm, top_p, bot_p, half_w_top, half_w_bot, curve_fwd, 
         ))
         hw = half_w_top * (1.0 - t) + half_w_bot * t
         row = []
+        brow = []
         for j in range(cols):
             v = (j / (cols - 1)) * 2.0 - 1.0
             rib = 0.24 * math.sin(v * 7.0 + t * 5.0)
             wp = p + right * (v * hw) + fwd * rib
             row.append(bm.verts.new(wp))
+            brow.append(bm.verts.new(wp - fwd * 0.08))
         grid.append(row)
+        back_grid.append(brow)
 
     for i in range(rows - 1):
         for j in range(cols - 1):
             bm.faces.new([grid[i][j], grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1]])
+            bm.faces.new([back_grid[i][j], back_grid[i][j + 1], back_grid[i + 1][j + 1], back_grid[i + 1][j]])
 
     # Vòng bọt thác nổi nhẹ trên mặt hồ chân thác
     for ri in range(18):
@@ -828,6 +859,7 @@ def build_water_system(walk_bvh, rng):
     """Dựng nguồn nước hoàn chỉnh: Dòng Suối + Hồ Hạ (-0.85m), Hồ Thượng (+7.35m), Thác Nước 2 tầng & Bèo Bào Tử."""
     bm_water = bmesh.new()
     foam_hints = []
+    sheet_faces = []
 
     # 1. Mặt nước Hồ Hạ & Dòng Suối Uốn Chữ S (-0.85m): nới rộng mép +1.3m vào trong bờ đất để bờ hồ trơn tru không bị răng cưa!
     _build_water_ribbon_sheet(
@@ -841,6 +873,7 @@ def build_water_system(walk_bvh, rng):
             and (abs(y - _stream_center_y(x)) < 13.5 or _lower_pool_dist(x, y) < 1.28)
         ),
         foam_hints=foam_hints,
+        out_faces=sheet_faces,
     )
 
     # 2. Mặt nước Hồ Thượng trên Thềm Ban Công Cao (+7.35m) - giới hạn gọn trong lòng bồn y > 30 để không tràn vệt rời bên mép dốc
@@ -851,6 +884,7 @@ def build_water_system(walk_bvh, rng):
         z_fn=lambda x, y: UPPER_WATER_Z + 0.02 * math.sin(x * 0.8 + y * 0.7),
         mask_fn=lambda x, y: _upper_pool_dist(x, y) < 1.05 and y > 31.5 and terrain_height(x, y) < UPPER_WATER_Z + 0.65,
         foam_hints=foam_hints,
+        out_faces=sheet_faces,
     )
 
     # 3. Thác Nước Tầng Trên (vách hang Bắc (-15, 68, z=25m) -> Hồ Thượng (-14, 52, z=7.35m))
@@ -859,8 +893,11 @@ def build_water_system(walk_bvh, rng):
     # 4. Thác Nước Tầng Dưới (mép tràn Thềm Cao (-13, 28, z=7.35m) -> Hồ Hạ (-12, 12, z=-0.85m))
     _add_waterfall_curtain(bm_water, Vector((-13.0, 27.5, UPPER_WATER_Z - 0.1)), Vector((-12.0, 13.0, LOWER_WATER_Z - 0.1)), 2.8, 4.4, 2.5, foam_hints)
 
-    bmesh.ops.recalc_face_normals(bm_water, faces=bm_water.faces[:])
-    water_obj = kit.finish_object(bm_water, "MazeChamber_Luma_Water", _make_water_material("MazeChamber_Luma_WaterMat"))
+    bm_water.normal_update()
+    for f in sheet_faces:
+        if f.normal.z < 0.0:
+            f.normal_flip()
+    water_obj = kit.finish_object(bm_water, "MazeChamber_Luma_Water", _make_water_material("MazeChamber_Luma_WaterMat"), recalc_normals=False)
 
     def paint_water(p, n):
         # Dải dòng thác có vân sọc nước lam ngọc xen kẽ vệt bọt trắng tự nhiên thay vì trắng đục nguyên tấm

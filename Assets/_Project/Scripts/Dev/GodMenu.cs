@@ -211,15 +211,11 @@ namespace Evolve.DevTools
                 GUILayout.EndHorizontal();
             }
 #if UNITY_EDITOR
-            else
-            {
-                if (GUILayout.Button("⚡ Dựng Mê Cung ngay (Build Maze World)"))
-                {
-                    var type = System.Type.GetType("Evolve.EditorTools.MazeBuilder, Assembly-CSharp-Editor");
-                    var method = type?.GetMethod("Build", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                    method?.Invoke(null, null);
-                }
-            }
+            string rebuildLabel = mazeMgr != null && mazeMgr.Graph != null
+                ? "🔄 Dựng lại Mê Cung (Rebuild Maze World)"
+                : "⚡ Dựng Mê Cung ngay (Build Maze World)";
+            if (GUILayout.Button(rebuildLabel))
+                Evolve.Maze.MazeWorldManager.InvokeEditorRebuild();
 #endif
             var vision = FindAnyObjectByType<MonochromeVision>();
             if (vision != null && GUILayout.Button(vision.Sight >= 1f ? "Tắt mắt (đen trắng)" : "Bật mắt (có màu)"))

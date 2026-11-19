@@ -45,11 +45,7 @@ namespace Evolve.Maze
                 GUILayout.Label("Hãy bấm nút dưới hoặc Evolve -> Build Maze World (Step 3).");
 #if UNITY_EDITOR
                 if (GUILayout.Button("⚡ Dựng Mê Cung ngay (Build Maze World)", GUILayout.Height(36)))
-                {
-                    var type = System.Type.GetType("Evolve.EditorTools.MazeBuilder, Assembly-CSharp-Editor");
-                    var method = type?.GetMethod("Build", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                    method?.Invoke(null, null);
-                }
+                    MazeWorldManager.InvokeEditorRebuild();
 #endif
                 GUI.DragWindow();
                 return;
@@ -75,6 +71,11 @@ namespace Evolve.Maze
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
+
+#if UNITY_EDITOR
+            if (GUILayout.Button("🔄 Dựng lại Mê Cung (Rebuild Maze World)"))
+                MazeWorldManager.InvokeEditorRebuild();
+#endif
 
             var curChamber = manager.CurrentChamber;
             var curEncounter = curChamber != null ? curChamber.GetComponentInChildren<ChamberEncounterZone>(true) : null;

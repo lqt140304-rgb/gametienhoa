@@ -21,6 +21,30 @@ namespace Evolve.EditorTools
         const int DefaultChambers = 14;
         const float ChamberRadius = MazeTerrainMath.DefaultChamberRadius;
 
+        [InitializeOnLoadMethod]
+        static void AutoRebuildIfOutdated()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+                var mgr = Object.FindAnyObjectByType<MazeWorldManager>();
+                if (mgr == null) return;
+
+                bool hasLuma = false, hasCrystal = false;
+                foreach (var tr in mgr.GetComponentsInChildren<Transform>(true))
+                {
+                    if (tr.name == "Khoang_RừngNấmPhátSáng_3D") hasLuma = true;
+                    else if (tr.name == "Khoang_VựcThẳmTinhThể_3D") hasCrystal = true;
+                }
+
+                if (mgr.BuildVersion < MazeWorldManager.CurrentBuildVersion || !hasLuma || !hasCrystal)
+                {
+                    Debug.Log("[MazeBuilder] Phát hiện Maze World bản cũ hoặc thiếu khoang 3D mới — tự động dựng lại scene...");
+                    Build();
+                }
+            };
+        }
+
         [MenuItem("Evolve/Build Maze World (Step 3)")]
         public static void Build()
         {
@@ -29,10 +53,26 @@ namespace Evolve.EditorTools
 
             // Dọn cả Cavern Maze Wall cũ (nếu có) để không bị 2 bộ miệng hang trùng nhau
             var oldWall = GameObject.Find("Cavern Maze Wall");
-            if (oldWall != null) Object.DestroyImmediate(oldWall);
+            if (oldWall != null)
+            {
+                if (Application.isPlaying) Object.Destroy(oldWall);
+                else Object.DestroyImmediate(oldWall);
+            }
 
             var old = GameObject.Find(WorldRootName);
-            if (old != null) Object.DestroyImmediate(old);
+            if (old != null)
+            {
+                if (Application.isPlaying)
+                {
+                    old.name = "_MazeWorld_Old";
+                    old.SetActive(false);
+                    Object.Destroy(old);
+                }
+                else
+                {
+                    Object.DestroyImmediate(old);
+                }
+            }
 
             var root = new GameObject(WorldRootName);
             var graph = MazeGenerator.Generate(DefaultSeed, DefaultChambers);
@@ -106,9 +146,20 @@ namespace Evolve.EditorTools
                 inst.Configure(node.Id, node.Name, node.Depth, node.Kind, alwaysActive: isBirth, arrival: arrival);
                 inst.ConfigureTerrain(terrainSeed, ChamberRadius, node.HasHighLedge, tunnelAngles);
 
+                MeshCollider floor3d = null;
                 if (!isBirth)
                 {
                     MazeChamberDecorator.Decorate(chamberGo.transform, node, ChamberRadius, tunnelAngles, mossMat);
+                    floor3d = FindHandcraftedFloorCollider(chamberGo);
+                    if (floor3d != null)
+                    {
+                        Physics.SyncTransforms();
+                        var arrRay = new Ray(new Vector3(origin.x + arrival.localPosition.x, origin.y + 30f, origin.z + arrival.localPosition.z), Vector3.down);
+                        if (floor3d.Raycast(arrRay, out var arrHit, 60f))
+                        {
+                            arrival.localPosition = new Vector3(arrival.localPosition.x, arrHit.point.y - origin.y + 0.8f, arrival.localPosition.z);
+                        }
+                    }
                 }
 
                 var profile = ChamberThemeCatalog.Get(node.Theme);
@@ -140,7 +191,8 @@ namespace Evolve.EditorTools
                         tunnelAngles,
                         mouthMat,
                         darkMat,
-                        destGlow);
+                        destGlow,
+                        floor3d);
                 }
 
                 instances.Add(inst);
@@ -149,11 +201,27 @@ namespace Evolve.EditorTools
             // Gắn MazeWorldManager (chỉ bật khoang hiện tại và các khoang kề)
             var manager = root.AddComponent<MazeWorldManager>();
             manager.Configure(DefaultSeed, DefaultChambers, instances);
+            manager.SetBuildVersion(MazeWorldManager.CurrentBuildVersion);
             manager.ApplyActiveChambers();
 
-            EditorSceneManager.MarkSceneDirty(root.scene);
-            Selection.activeGameObject = root;
+            if (!Application.isPlaying)
+            {
+                EditorSceneManager.MarkSceneDirty(root.scene);
+                Selection.activeGameObject = root;
+            }
             Debug.Log($"Maze World: đã dựng {graph.Chambers.Count} khoang (bán kính {ChamberRadius}m = đường kính {ChamberRadius * 2f}m, bỏ nước lũ & chỗ trú), chỉ bật Hang Khởi Sinh và {graph.GetNeighborIds(0).Count} khoang kề.");
+        }
+
+        static MeshCollider FindHandcraftedFloorCollider(GameObject chamberGo)
+        {
+            foreach (var mc in chamberGo.GetComponentsInChildren<MeshCollider>(true))
+            {
+                if (mc == null) continue;
+                string n = mc.gameObject.name;
+                string pn = mc.transform.parent != null ? mc.transform.parent.name : "";
+                if (n.EndsWith("_3D") || pn.EndsWith("_3D")) return mc;
+            }
+            return null;
         }
 
         static void BuildChamberTunnelEndpoint(
@@ -168,7 +236,8 @@ namespace Evolve.EditorTools
             IReadOnlyList<float> tunnelAngles,
             Material rockMat,
             Material darkMat,
-            Color deepGlowColor)
+            Color deepGlowColor,
+            MeshCollider floor3d = null)
         {
             float rad = angleDeg * Mathf.Deg2Rad;
             float gx = Mathf.Cos(rad) * radius;
@@ -177,6 +246,15 @@ namespace Evolve.EditorTools
             float baseY = isBirth
                 ? CavernLayout.GroundHeight(gx, gz) - 0.1f
                 : MazeTerrainMath.GroundHeightAt(gx, gz, terrainSeed, ChamberRadius, tunnelAngles, node.HasHighLedge) - 0.1f;
+
+            if (!isBirth && floor3d != null)
+            {
+                var ray = new Ray(new Vector3(parent.position.x + gx, parent.position.y + 30f, parent.position.z + gz), Vector3.down);
+                if (floor3d.Raycast(ray, out var hit, 60f))
+                {
+                    baseY = hit.point.y - parent.position.y - 0.1f;
+                }
+            }
 
             // Miệng hang Blender rộng rãi (scale 1.4x): thông thoáng, dấu hiệu hang đích sáng rõ dần vào trong
             (float width, float height) = edge.Size switch

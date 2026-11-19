@@ -93,20 +93,21 @@ namespace Evolve.EditorTools
             Material wallMat,
             System.Random rnd)
         {
-            // 1. Dựng model 3D khoang mẫu hoàn chỉnh từ Blender (đã được duyệt)
+            // 1. Dựng model 3D khoang mẫu hoàn chỉnh từ Blender (xoay 180° quanh Y để khớp hệ tọa độ Unity 1:1)
             var lumaGo = (GameObject)PrefabUtility.InstantiatePrefab(lumaFbx, parent);
             lumaGo.name = "Khoang_RừngNấmPhátSáng_3D";
             lumaGo.transform.localPosition = Vector3.zero;
-            lumaGo.transform.localRotation = Quaternion.identity;
+            lumaGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             lumaGo.transform.localScale = Vector3.one;
 
             EnsureLumaMaterials(lumaGo);
+            var chamberCollider = EnsureChamberCollider(lumaGo);
 
             // 2. Thảm thực vật nhỏ có vật lý rẽ ngang sống động và animation rung động nhẹ
-            PlaceInteractiveLumaFlora(parent, rnd);
+            PlaceInteractiveLumaFlora(parent, chamberCollider, rnd);
 
             // 3. Thức ăn (Nutrient) phân bố tự nhiên
-            PlaceHandcraftedLumaForage(parent, profile, glowMat, rnd);
+            PlaceHandcraftedLumaForage(parent, chamberCollider, profile, glowMat, rnd);
 
             // 4. Sinh vật sinh thái
             PlaceCreatures(parent, node, 65f, profile, rnd);
@@ -121,6 +122,45 @@ namespace Evolve.EditorTools
             }
         }
 
+        static MeshCollider EnsureChamberCollider(GameObject root)
+        {
+            if (root == null) return null;
+            var mc = root.GetComponent<MeshCollider>() ?? root.GetComponentInChildren<MeshCollider>(true);
+            if (mc == null)
+            {
+                MeshFilter colMf = null;
+                foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (mf.sharedMesh == null) continue;
+                    if (mf.gameObject.name.EndsWith("_COL")) { colMf = mf; break; }
+                    if (mf.gameObject.name.Contains("Shell")) colMf = mf;
+                }
+                if (colMf != null)
+                {
+                    mc = colMf.gameObject.AddComponent<MeshCollider>();
+                    mc.sharedMesh = colMf.sharedMesh;
+                    mc.convex = false;
+                }
+            }
+            Physics.SyncTransforms();
+            return mc;
+        }
+
+        static Vector3 SnapToChamberSurface(Transform chamberParent, MeshCollider chamberCollider, Vector3 localPos, float offsetY = 0f)
+        {
+            if (chamberCollider != null && chamberCollider.enabled && chamberCollider.gameObject.activeInHierarchy)
+            {
+                float startLocalY = Mathf.Clamp(localPos.y + 18f, 22f, 36f);
+                Vector3 worldTop = chamberParent.TransformPoint(new Vector3(localPos.x, startLocalY, localPos.z));
+                var ray = new Ray(worldTop, Vector3.down);
+                if (chamberCollider.Raycast(ray, out var hit, 58f))
+                {
+                    return new Vector3(localPos.x, hit.point.y - chamberParent.position.y + offsetY, localPos.z);
+                }
+            }
+            return new Vector3(localPos.x, localPos.y + offsetY, localPos.z);
+        }
+
         static void EnsureLumaMaterials(GameObject root)
         {
             var rockMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_VC.mat");
@@ -131,6 +171,11 @@ namespace Evolve.EditorTools
             foreach (var r in root.GetComponentsInChildren<Renderer>(true))
             {
                 string n = r.gameObject.name;
+                if (n.EndsWith("_COL"))
+                {
+                    r.enabled = false;
+                    continue;
+                }
                 if (n.Contains("Water") && waterMat != null)
                 {
                     r.sharedMaterial = waterMat;
@@ -144,9 +189,10 @@ namespace Evolve.EditorTools
                     r.sharedMaterial = rockMat;
                 }
             }
+            EnsureChamberCollider(root);
         }
 
-        static void PlaceInteractiveLumaFlora(Transform parent, System.Random rnd)
+        static void PlaceInteractiveLumaFlora(Transform parent, MeshCollider chamberCollider, System.Random rnd)
         {
             var floraGroup = new GameObject("Thảm Thực Vật Tương Tác (Rẽ Ngang)").transform;
             floraGroup.SetParent(parent, false);
@@ -220,7 +266,7 @@ namespace Evolve.EditorTools
                 {
                     float ox = (float)(rnd.NextDouble() - 0.5) * 2.8f;
                     float oz = (float)(rnd.NextDouble() - 0.5) * 2.8f;
-                    var pos = wp + new Vector3(ox, 0f, oz);
+                    var pos = SnapToChamberSurface(parent, chamberCollider, wp + new Vector3(ox, 0f, oz));
 
                     var fbx = fbxList[rnd.Next(fbxList.Count)];
                     var plantGo = (GameObject)PrefabUtility.InstantiatePrefab(fbx, floraGroup);
@@ -239,7 +285,7 @@ namespace Evolve.EditorTools
             }
         }
 
-        static void PlaceHandcraftedLumaForage(Transform parent, ChamberThemeProfile profile, Material glowMat, System.Random rnd)
+        static void PlaceHandcraftedLumaForage(Transform parent, MeshCollider chamberCollider, ChamberThemeProfile profile, Material glowMat, System.Random rnd)
         {
             if (profile.ForageItems.Count == 0) return;
             var forageGroup = new GameObject("Thức Ăn Khoang Luma").transform;
@@ -262,7 +308,8 @@ namespace Evolve.EditorTools
             for (int i = 0; i < foragePoints.Length; i++)
             {
                 var item = profile.ForageItems[i % profile.ForageItems.Count];
-                CreateNutrientObject(forageGroup, item, foragePoints[i], glowMat, rnd);
+                var snappedPos = SnapToChamberSurface(parent, chamberCollider, foragePoints[i], 0.05f);
+                CreateNutrientObject(forageGroup, item, snappedPos, glowMat, rnd);
             }
         }
 
@@ -292,20 +339,21 @@ namespace Evolve.EditorTools
             Material wallMat,
             System.Random rnd)
         {
-            // 1. Dựng model 3D khoang mẫu hoàn chỉnh từ Blender (V3 đã được duyệt)
+            // 1. Dựng model 3D khoang mẫu hoàn chỉnh từ Blender (xoay 180° quanh Y để khớp hệ tọa độ Unity 1:1)
             var crystalGo = (GameObject)PrefabUtility.InstantiatePrefab(crystalFbx, parent);
             crystalGo.name = "Khoang_VựcThẳmTinhThể_3D";
             crystalGo.transform.localPosition = Vector3.zero;
-            crystalGo.transform.localRotation = Quaternion.identity;
+            crystalGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             crystalGo.transform.localScale = Vector3.one;
 
             EnsureCrystalMaterials(crystalGo);
+            var chamberCollider = EnsureChamberCollider(crystalGo);
 
             // 2. Thảm khoáng biến dị & quặng gai nhọn rải theo các gờ đá (0% cây cỏ, đàn hồi khoáng thạch giòn cứng)
-            PlaceInteractiveCrystalMinerals(parent, rnd);
+            PlaceInteractiveCrystalMinerals(parent, chamberCollider, rnd);
 
             // 3. Thức ăn (Nutrient/Ore) phân bố tự nhiên trên các mỏm đá & hốc quặng
-            PlaceHandcraftedCrystalForage(parent, profile, glowMat, rnd);
+            PlaceHandcraftedCrystalForage(parent, chamberCollider, profile, glowMat, rnd);
 
             // 4. Sinh vật sinh thái
             PlaceCreatures(parent, node, 68f, profile, rnd);
@@ -330,6 +378,11 @@ namespace Evolve.EditorTools
             foreach (var r in root.GetComponentsInChildren<Renderer>(true))
             {
                 string n = r.gameObject.name;
+                if (n.EndsWith("_COL"))
+                {
+                    r.enabled = false;
+                    continue;
+                }
                 if ((n.Contains("Water") || n.Contains("Fluid")) && waterMat != null)
                 {
                     r.sharedMaterial = waterMat;
@@ -343,9 +396,10 @@ namespace Evolve.EditorTools
                     r.sharedMaterial = rockMat;
                 }
             }
+            EnsureChamberCollider(root);
         }
 
-        static void PlaceInteractiveCrystalMinerals(Transform parent, System.Random rnd)
+        static void PlaceInteractiveCrystalMinerals(Transform parent, MeshCollider chamberCollider, System.Random rnd)
         {
             var mineralGroup = new GameObject("Cụm Khoáng Biến Dị Tương Tác").transform;
             mineralGroup.SetParent(parent, false);
@@ -421,7 +475,7 @@ namespace Evolve.EditorTools
                 {
                     float ox = (float)(rnd.NextDouble() - 0.5) * 2.5f;
                     float oz = (float)(rnd.NextDouble() - 0.5) * 2.5f;
-                    var pos = wp + new Vector3(ox, 0f, oz);
+                    var pos = SnapToChamberSurface(parent, chamberCollider, wp + new Vector3(ox, 0f, oz));
 
                     var fbx = fbxList[rnd.Next(fbxList.Count)];
                     var minGo = (GameObject)PrefabUtility.InstantiatePrefab(fbx, mineralGroup);
@@ -432,6 +486,13 @@ namespace Evolve.EditorTools
 
                     // Vật lý tương tác rẽ ngang: khoáng thạch giòn cứng
                     var iflora = minGo.AddComponent<InteractiveFlora>();
+                    var so = new SerializedObject(iflora);
+                    so.FindProperty("maxBendAngle").floatValue = 14f;
+                    so.FindProperty("recoverySmoothTime").floatValue = 0.14f;
+                    so.FindProperty("idleAmplitude").floatValue = 0.5f;
+                    so.FindProperty("stiffness").floatValue = 0.72f;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+
                     var sc = minGo.GetComponent<SphereCollider>();
                     if (sc == null) sc = minGo.AddComponent<SphereCollider>();
                     sc.isTrigger = true;
@@ -441,7 +502,7 @@ namespace Evolve.EditorTools
             }
         }
 
-        static void PlaceHandcraftedCrystalForage(Transform parent, ChamberThemeProfile profile, Material glowMat, System.Random rnd)
+        static void PlaceHandcraftedCrystalForage(Transform parent, MeshCollider chamberCollider, ChamberThemeProfile profile, Material glowMat, System.Random rnd)
         {
             if (profile.ForageItems.Count == 0) return;
             var forageGroup = new GameObject("Thức Ăn Khoang Tinh Thể").transform;
@@ -464,7 +525,8 @@ namespace Evolve.EditorTools
             for (int i = 0; i < foragePoints.Length; i++)
             {
                 var item = profile.ForageItems[i % profile.ForageItems.Count];
-                CreateNutrientObject(forageGroup, item, foragePoints[i], glowMat, rnd);
+                var snappedPos = SnapToChamberSurface(parent, chamberCollider, foragePoints[i], 0.05f);
+                CreateNutrientObject(forageGroup, item, snappedPos, glowMat, rnd);
             }
         }
 
