@@ -44,6 +44,19 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void TheDetailKindsHaveTheirPlacesToo()
+        {
+            Assert.Greater(Best(CavernFloraMath.Kind.Flower, (x, z) => true), 0.2f, "flower drifts");
+            Assert.Greater(Best(CavernFloraMath.Kind.Clover, (x, z) => true), 0.3f, "clover carpet");
+            Assert.Greater(Best(CavernFloraMath.Kind.Leaves, (x, z) => true), 0.3f, "fallen leaves");
+            Assert.Greater(Best(CavernFloraMath.Kind.Twigs, (x, z) => true), 0.2f, "twigs");
+            Assert.Greater(Best(CavernFloraMath.Kind.Pebbles, (x, z) => true), 0.2f, "pebbles");
+            Assert.Greater(Best(CavernFloraMath.Kind.Lichen, (x, z) => true), 0.2f, "lichen");
+            Assert.AreEqual(0f, Best(CavernFloraMath.Kind.Flower, (x, z) => CavernLayout.ShoreOffset(x, z) < 2.5f), 1e-5f, "no flowers at the water");
+            Assert.AreEqual(0f, Best(CavernFloraMath.Kind.Leaves, (x, z) => CavernLayout.ShoreOffset(x, z) < 4f), 1e-5f, "no fallen leaves at the water");
+        }
+
+        [Test]
         public void VinesHangRoundTheHoleNotAcrossIt()
         {
             var hole = CavernLayout.HoleCenter();

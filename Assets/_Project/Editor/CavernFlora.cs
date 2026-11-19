@@ -29,13 +29,19 @@ namespace Evolve.EditorTools
 
         static readonly Plan[] Plans =
         {
-            new Plan(CavernFloraMath.Kind.Reed, "Reed", 2, 130, 1.0f, 0.9f, 1.4f),
-            new Plan(CavernFloraMath.Kind.Moss, "Moss", 3, 170, 0.9f, 0.9f, 1.8f),
-            new Plan(CavernFloraMath.Kind.Fern, "Fern", 2, 150, 1.6f, 0.8f, 1.5f),
-            new Plan(CavernFloraMath.Kind.Bush, "Bush", 2, 70, 2.2f, 0.9f, 1.5f),
-            new Plan(CavernFloraMath.Kind.Mushrooms, "Mushrooms", 2, 80, 1.4f, 0.8f, 1.5f),
+            new Plan(CavernFloraMath.Kind.Reed, "Reed", 3, 140, 1.0f, 0.9f, 1.4f),
+            new Plan(CavernFloraMath.Kind.Moss, "Moss", 3, 190, 0.9f, 0.9f, 1.8f),
+            new Plan(CavernFloraMath.Kind.Fern, "Fern", 3, 160, 1.6f, 0.8f, 1.5f),
+            new Plan(CavernFloraMath.Kind.Bush, "Bush", 3, 80, 2.2f, 0.9f, 1.5f),
+            new Plan(CavernFloraMath.Kind.Mushrooms, "Mushrooms", 3, 90, 1.4f, 0.8f, 1.5f),
             new Plan(CavernFloraMath.Kind.RootArc, "RootArc", 2, 40, 3.0f, 0.9f, 1.5f),
-            new Plan(CavernFloraMath.Kind.Vine, "Vine", 2, 26, 3.0f, 0.9f, 1.3f)
+            new Plan(CavernFloraMath.Kind.Vine, "Vine", 2, 26, 3.0f, 0.9f, 1.3f),
+            new Plan(CavernFloraMath.Kind.Flower, "Flower", 3, 130, 0.9f, 0.9f, 1.5f),
+            new Plan(CavernFloraMath.Kind.Clover, "Clover", 2, 170, 0.7f, 0.9f, 1.6f),
+            new Plan(CavernFloraMath.Kind.Leaves, "Leaves", 3, 150, 0.8f, 0.9f, 1.6f),
+            new Plan(CavernFloraMath.Kind.Twigs, "Twigs", 2, 60, 1.5f, 0.9f, 1.4f),
+            new Plan(CavernFloraMath.Kind.Pebbles, "Pebbles", 3, 120, 0.8f, 0.8f, 1.6f),
+            new Plan(CavernFloraMath.Kind.Lichen, "Lichen", 2, 80, 0.9f, 0.9f, 1.7f)
         };
 
         [MenuItem("Evolve/Dress Cavern: Flora")]
@@ -54,7 +60,8 @@ namespace Evolve.EditorTools
             var old = GameObject.Find(RootName);
             if (old != null) Object.DestroyImmediate(old);
             var root = new GameObject(RootName).transform;
-            var glow = GlowMaterial();
+            var glow = GlowMaterial("Cavern_Glow_Cluster", new Color(0.55f, 0.95f, 0.85f));
+            var bloom = new[] { GlowMaterial("Cavern_Glow_Bloom_0", new Color(0.45f, 0.95f, 0.90f)), GlowMaterial("Cavern_Glow_Bloom_1", new Color(0.75f, 0.50f, 1.00f)), GlowMaterial("Cavern_Glow_Bloom_2", new Color(1.00f, 0.72f, 0.35f)) };
 
             var taken = new List<Vector2>();
             foreach (var n in Object.FindObjectsByType<Nutrient>()) taken.Add(new Vector2(n.transform.position.x, n.transform.position.z));
@@ -80,13 +87,18 @@ namespace Evolve.EditorTools
                     foreach (var o in mine) if (Vector2.Distance(p, o) < plan.Spacing) { near = true; break; }
                     if (!near && !vine) foreach (var t in taken) if (Vector2.Distance(p, t) < 1.3f) { near = true; break; }   // not on top of food
                     if (near) continue;
-                    var prefab = prefabs[$"Flora_{plan.Model}_{rnd.Next(plan.Variants)}"];
+                    int variant = rnd.Next(plan.Variants);
+                    var prefab = prefabs[$"Flora_{plan.Model}_{variant}"];
                     var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, group);
                     float y = vine ? CavernLayout.CeilingY(x, z) + 0.3f : CavernLayout.GroundHeight(x, z) - 0.03f;
                     go.transform.position = new Vector3(x, y, z);
                     go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                     go.transform.localScale = Vector3.one * Mathf.Lerp(plan.ScaleLo, plan.ScaleHi, (float)rnd.NextDouble());
-                    foreach (var r in go.GetComponentsInChildren<Renderer>(true)) if (r.name.Contains("Glow")) r.sharedMaterial = glow;
+                    foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+                    {
+                        if (r.name.Contains("Bloom Glow")) r.sharedMaterial = bloom[variant % bloom.Length];      // each kind of bellflower its own colour
+                        else if (r.name.Contains("Glow")) r.sharedMaterial = glow;
+                    }
                     foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
                     mine.Add(p);
                     got++;
@@ -106,14 +118,14 @@ namespace Evolve.EditorTools
             if (old != null) { Object.DestroyImmediate(old); EditorSceneManager.MarkAllScenesDirty(); Debug.Log("Đã gỡ thảm thực vật hang. Ctrl+S để lưu scene."); }
         }
 
-        static Material GlowMaterial()
+        static Material GlowMaterial(string name, Color tint)
         {
-            const string path = "Assets/_Project/Materials/Cavern_Glow_Cluster.mat";
+            string path = $"Assets/_Project/Materials/{name}.mat";
             var shader = Shader.Find("Evolve/RockVertexColor");
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (mat == null) { mat = new Material(shader) { name = "Cavern_Glow_Cluster" }; AssetDatabase.CreateAsset(mat, path); }
+            if (mat == null) { mat = new Material(shader) { name = name }; AssetDatabase.CreateAsset(mat, path); }
             mat.shader = shader;
-            mat.SetColor("_Tint", new Color(0.55f, 0.95f, 0.85f, 1f));
+            mat.SetColor("_Tint", new Color(tint.r, tint.g, tint.b, 1f));
             mat.SetFloat("_Glow", 1.3f);
             EditorUtility.SetDirty(mat);
             return mat;

@@ -9,7 +9,7 @@ namespace Evolve.World
     /// </summary>
     public static class CavernFloraMath
     {
-        public enum Kind { Fern, Reed, Moss, Bush, Mushrooms, RootArc, Vine }
+        public enum Kind { Fern, Reed, Moss, Bush, Mushrooms, RootArc, Vine, Flower, Clover, Leaves, Twigs, Pebbles, Lichen }
 
         static float Smooth01(float t) { t = Mathf.Clamp01(t); return t * t * (3f - 2f * t); }
         static float Band(float v, float lo, float hi, float soft) => Smooth01((v - lo) / soft) * (1f - Smooth01((v - hi) / soft));
@@ -44,6 +44,24 @@ namespace Evolve.World
                 case Kind.Mushrooms: // little clusters in the shade and on the wet rim
                     if (!dry || h > 4f) return 0f;
                     return Mathf.Max(Band(d, 0.5f, 6f, 1.5f) * 0.6f, shade) * Mathf.Clamp01((ZoneLayout.Noise(x / 5f + 90f, z / 5f + 14f) - 0.56f) * 4f);
+                case Kind.Flower:    // bellflowers in small drifts on the damp, shaded ground
+                    if (!dry || h > 2.6f) return 0f;
+                    return Band(d, 3f, 20f, 2.5f) * (0.3f + 0.4f * shade + 0.3f * wet) * Patch(x, z, 5f, 41f, 0.52f, 0.2f);
+                case Kind.Clover:    // a low carpet of round leaves, wide patches on the moist ground
+                    if (!dry || h > 3f) return 0f;
+                    return Band(d, 1f, 15f, 2f) * Mathf.Clamp01(0.3f + wet) * Patch(x, z, 8f, 19f, 0.4f);
+                case Kind.Leaves:    // drifts of fallen leaves on the drier ground
+                    if (!dry || h > 3f) return 0f;
+                    return Band(d, 5f, 28f, 3f) * Patch(x, z, 6f, 67f, 0.5f);
+                case Kind.Twigs:     // a few fallen sticks, scattered
+                    if (!dry || h > 3f) return 0f;
+                    return Band(d, 4f, 30f, 3f) * Mathf.Clamp01((ZoneLayout.Noise(x / 4f + 17f, z / 4f + 3f) - 0.66f) * 5f);
+                case Kind.Pebbles:   // small stones: thick on the wet rim, a few elsewhere
+                    if (!dry || h > 4f) return 0f;
+                    return Mathf.Max(Band(d, 0.2f, 3f, 0.8f) * 0.7f, 0.25f) * Mathf.Clamp01((ZoneLayout.Noise(x / 5f + 60f, z / 5f + 28f) - 0.55f) * 3f);
+                case Kind.Lichen:    // pale lichen on the rises and in the shade of the wall
+                    if (!dry) return 0f;
+                    return Mathf.Clamp01(Smooth01((h - 0.35f) / 0.5f) * (1f - Smooth01((h - 4f) / 2f)) + 0.4f * shade) * Patch(x, z, 6f, 9f, 0.48f);
                 case Kind.RootArc:   // roots breaking out of the ground at the wall's foot
                     if (!dry || h > 12f) return 0f;
                     return Band(r, CavernLayout.FloorRadius - 4f, CavernLayout.FloorRadius + 7f, 2f) * Patch(x, z, 8f, 23f, 0.5f);

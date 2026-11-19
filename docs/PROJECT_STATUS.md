@@ -539,3 +539,5 @@ Checklist: (1) Console sạch (không lỗi shader); (2) Evolve → Dress Cavern
 - Chưa biên dịch hay thấy trong Unity. Chưa có va chạm cho các cây này.
 
 Checklist: (1) Console sạch, Test Runner xanh (`CavernFloraMathTests`); (2) Reinstall Blender Props, rồi Dress Cavern: Flora, Ctrl+S; (3) quanh hồ thấy các dải sậy, rêu, dương xỉ; bụi lá xa hơn; dây leo quanh lỗ sáng; (4) FPS không tụt quá 10%.
+
+- **Chi tiết hơn (đợt 2 của mục 33):** mô hình dựng kỹ hơn (lá thật dạng bầu dục thon cho dương xỉ, bụi, rễ, dây leo; sậy có lá dài cong và bông; rêu có cuống bào tử; nấm có vòng thân; dây leo có tua cuốn) và 6 loại **chi tiết mặt đất** mới: hoa chuông phát sáng 3 màu (ngọc, tím, hổ phách), thảm lá tam diệp, đống lá rụng, cành khô, cụm cuội, địa y. Mỗi loại 2 đến 3 kiểu; khoảng 1.300 vật; vẫn đặt theo luật môi trường `CavernFloraMath` (có test).
