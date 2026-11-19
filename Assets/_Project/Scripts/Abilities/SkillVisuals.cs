@@ -52,7 +52,14 @@ namespace Evolve.Abilities
         public void Play(OrganSO organ, float hold)
         {
             if (organ == null) return;
-            if (shows.TryGetValue(organ, out var existing)) { existing.Start = Time.time; existing.Hold = hold; return; }
+            if (shows.TryGetValue(organ, out var existing))
+            {
+                // using it again while the part is still out: keep its current size and carry on (no pop down to nothing)
+                float k = SkillRules.VisualScale(Time.time - existing.Start, existing.Hold);
+                existing.Start = Time.time - SkillRules.GrowSeconds * Mathf.Clamp01(k);
+                existing.Hold = hold;
+                return;
+            }
             var show = new Show { Organ = organ, Start = Time.time, Hold = hold };
             if (organ.VisualPrefab != null)
             {
@@ -90,6 +97,14 @@ namespace Evolve.Abilities
                 shows.Remove(o);
             }
             ContactDamage = contact;
+        }
+
+        /// <summary>Death and respawn: every part goes away at once.</summary>
+        public void ClearAll()
+        {
+            foreach (var show in shows.Values) if (show.Visual != null) Destroy(show.Visual);
+            shows.Clear();
+            ContactDamage = 0f;
         }
 
         void OnDestroy()

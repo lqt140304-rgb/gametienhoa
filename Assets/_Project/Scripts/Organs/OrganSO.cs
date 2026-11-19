@@ -37,7 +37,7 @@ namespace Evolve.Organs
         [Header("Active skill")]
         [Tooltip("Active skill this organ grants (empty = passive only). Tier C organs have none; skills start from tier B.")]
         public AbilitySO GrantedAbility;
-        [Tooltip("Organ level at which the skill unlocks (2 = Lv2); Lv3 upgrades it")]
+        [Tooltip("Unused since skills replaced worn organs (a learned move is usable from ★1)")]
         [Min(1)] public int AbilityUnlockLevel = 2;
 
         /// <summary>What this gene is as a skill: a passive that is always on (eyes, heat membrane) or an active move on keys 1-5.</summary>

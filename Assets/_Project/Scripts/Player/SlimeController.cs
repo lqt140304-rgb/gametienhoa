@@ -132,6 +132,8 @@ namespace Evolve.Player
             transform.position = spawnPoint;
             stats.State.Ambient = stats.Config.DefaultAmbient;
             stats.State.Reset();
+            var boost = GetComponent<Evolve.Abilities.SprintBoost>(); if (boost != null) boost.ResetBoost();   // no sprint or spikes carried over a death
+            var parts = GetComponent<Evolve.Abilities.SkillVisuals>(); if (parts != null) parts.ClearAll();
         }
 
         /// <summary>Move instantly (debug teleport).</summary>

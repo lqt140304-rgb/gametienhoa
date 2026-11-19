@@ -30,8 +30,8 @@ namespace Evolve.Swallow
             return GeneUse.None;
         }
 
-        /// <summary>Level the old ability code expects: its Lv2 is the base move, Lv3 the upgrade. ★1 and ★2 are the base, ★3 the upgrade.</summary>
-        public static int AbilityLevel(int stars) => stars >= 3 ? 3 : 2;
+        /// <summary>Level the old ability code expects: its Lv2 is the base move, Lv3 the upgrade. ★1 is the base, ★2 and ★3 the upgrade (min(3, stars + 1)).</summary>
+        public static int AbilityLevel(int stars) => stars >= 2 ? 3 : 2;
 
         /// <summary>Seconds the Sprint lasts: 4 / 5 / 6 for ★1 / ★2 / ★3.</summary>
         public static float SprintSeconds(int stars) => 3f + Mathf.Clamp(stars, 1, 3);
@@ -55,26 +55,27 @@ namespace Evolve.Swallow
 
 namespace Evolve.Swallow
 {
-    /// <summary>Time-limited Sprint boost: overlapping Sprints take the stronger factor and the later end, never multiplying.</summary>
+    /// <summary>
+    /// Time-limited Sprint boost. Overlapping Sprints never multiply: the strongest one still running counts.
+    /// When the strong one ends, a weaker one that lasts longer carries on at its own factor.
+    /// </summary>
     public class SprintTimer
     {
-        float mult = 1f, until;
+        readonly System.Collections.Generic.List<(float mult, float until)> running = new System.Collections.Generic.List<(float, float)>();
 
-        public float Multiplier(float now) => now < until ? mult : 1f;
-
-        public void Apply(float now, float multiplier, float seconds)
+        public float Multiplier(float now)
         {
-            float end = now + seconds;
-            if (now < until)
+            float best = 1f;
+            for (int i = running.Count - 1; i >= 0; i--)
             {
-                mult = SkillRules.CombineBoost(mult, multiplier);
-                until = System.Math.Max(until, end);
+                if (now >= running[i].until) { running.RemoveAt(i); continue; }
+                best = SkillRules.CombineBoost(best, running[i].mult);
             }
-            else
-            {
-                mult = multiplier;
-                until = end;
-            }
+            return best;
         }
+
+        public void Apply(float now, float multiplier, float seconds) => running.Add((multiplier, now + seconds));
+
+        public void Reset() => running.Clear();
     }
 }

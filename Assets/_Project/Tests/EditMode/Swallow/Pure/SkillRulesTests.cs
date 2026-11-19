@@ -13,7 +13,7 @@ namespace Evolve.Tests.EditMode
         [Test] public void UseOf_SpikesWithoutAbility_Passive() => Assert.AreEqual(GeneUse.Passive, SkillRules.UseOf(false, false, 0f, 1f, 15f));
         [Test] public void UseOf_Plain_None() => Assert.AreEqual(GeneUse.None, SkillRules.UseOf(false, false, 0f, 1f, 0f));
 
-        [Test] public void AbilityLevel_FromStars() { Assert.AreEqual(2, SkillRules.AbilityLevel(1)); Assert.AreEqual(2, SkillRules.AbilityLevel(2)); Assert.AreEqual(3, SkillRules.AbilityLevel(3)); }
+        [Test] public void AbilityLevel_FromStars_StarTwoAlreadyUpgrades() { Assert.AreEqual(2, SkillRules.AbilityLevel(1)); Assert.AreEqual(3, SkillRules.AbilityLevel(2)); Assert.AreEqual(3, SkillRules.AbilityLevel(3)); }
         [Test] public void SprintSeconds_GrowWithStars() { Assert.AreEqual(4f, SkillRules.SprintSeconds(1)); Assert.AreEqual(5f, SkillRules.SprintSeconds(2)); Assert.AreEqual(6f, SkillRules.SprintSeconds(3)); }
         [Test] public void MaxPassives_Is3() => Assert.AreEqual(3, SkillRules.MaxPassives);
 
@@ -52,6 +52,26 @@ namespace Evolve.Tests.EditMode
             t.Apply(3f, 1.4f, 1f);                     // weaker and shorter: changes nothing
             Assert.AreEqual(2f, t.Multiplier(5f));
             Assert.AreEqual(1f, t.Multiplier(6.1f));
+        }
+
+        [Test]
+        public void SprintTimer_StrongEnds_WeakerContinuesAtItsOwnFactor()
+        {
+            var t = new SprintTimer();
+            t.Apply(0f, 2f, 4f);                       // strong, until 4
+            t.Apply(1f, 1.4f, 6f);                     // weaker but longer, until 7
+            Assert.AreEqual(2f, t.Multiplier(3f), 1e-5f);
+            Assert.AreEqual(1.4f, t.Multiplier(5f), 1e-5f);
+            Assert.AreEqual(1f, t.Multiplier(7.1f), 1e-5f);
+        }
+
+        [Test]
+        public void SprintTimer_Reset_ClearsBoost()
+        {
+            var t = new SprintTimer();
+            t.Apply(0f, 2f, 4f);
+            t.Reset();
+            Assert.AreEqual(1f, t.Multiplier(1f));
         }
 
         [Test]

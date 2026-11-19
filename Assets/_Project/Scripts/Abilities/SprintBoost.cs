@@ -11,5 +11,8 @@ namespace Evolve.Abilities
         public float Multiplier => timer.Multiplier(Time.time);
 
         public void Apply(float multiplier, float seconds) => timer.Apply(Time.time, multiplier, seconds);
+
+        /// <summary>Death and respawn end any running boost.</summary>
+        public void ResetBoost() => timer.Reset();
     }
 }

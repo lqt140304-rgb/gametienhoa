@@ -68,7 +68,7 @@ namespace Evolve.Tests.EditMode
             Assert.IsInstanceOf<SprintAbility>(bar.AbilityFor(legs));
             Assert.AreEqual(1, bar.LevelFor(legs));
             Assert.AreEqual(4f, SkillRules.SprintSeconds(bar.LevelFor(legs)));
-            Learn(legs, 3);                                 // 3 more samples → ★2
+            Learn(legs, 3);                                 // 4 more samples (≥ 3) → ★2
             Assert.AreEqual(2, bar.LevelFor(legs));
         }
 
