@@ -61,6 +61,7 @@ namespace Evolve.Tests.EditMode
                 for (float z = -30f; z <= 30f; z += 1f)
                 {
                     if (CavernLayout.ShoreOffset(x, z) < 6f) continue;      // the dry floor beyond the shore
+                    if (CavernLayout.RadiusFromCenter(x, z) > CavernLayout.FloorRadius - 6f) continue;   // not the wall: its foot wanders about 4 m inward
                     float h = CavernLayout.GroundHeight(x, z);
                     min = Mathf.Min(min, h); max = Mathf.Max(max, h);
                     float slope = Mathf.Abs(CavernLayout.GroundHeight(x + 1f, z) - h);
