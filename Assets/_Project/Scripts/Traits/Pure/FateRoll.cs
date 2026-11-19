@@ -52,46 +52,6 @@ namespace Evolve.Traits
             return new FateResult(card.Id, card.Rarity, option, flaws);
         }
 
-        /// <summary>
-        /// The face-down cards the player picks from (spec 8.3): <paramref name="count"/> different cores, each drawn by rarity as in Roll
-        /// (no core twice), then shuffled. The player picks a position blindly, so what they get follows the same odds. Fewer cards if the pool is small.
-        /// </summary>
-        public static FateCard[] DealDeck(int seed, IReadOnlyList<FateCard> pool, int count)
-        {
-            if (pool == null || pool.Count == 0 || count <= 0) return new FateCard[0];
-            var rnd = new Random(seed);
-            var remaining = new List<FateCard>(pool);
-            int n = Math.Min(count, remaining.Count);
-            var deck = new List<FateCard>(n);
-            for (int k = 0; k < n; k++)
-            {
-                int i = DrawIndex(rnd, remaining);
-                if (i < 0) break;
-                deck.Add(remaining[i]);
-                remaining.RemoveAt(i);
-            }
-            for (int i = deck.Count - 1; i > 0; i--)   // Fisher-Yates
-            {
-                int j = rnd.Next(i + 1);
-                (deck[i], deck[j]) = (deck[j], deck[i]);
-            }
-            return deck.ToArray();
-        }
-
-        /// <summary>The flaw cards of a core in a random order (the player picks a position blindly).</summary>
-        public static string[][] ShuffleOptions(int seed, string[][] options)
-        {
-            if (options == null) return new string[0][];
-            var copy = (string[][])options.Clone();
-            var rnd = new Random(seed ^ 0x2545F491);
-            for (int i = copy.Length - 1; i > 0; i--)
-            {
-                int j = rnd.Next(i + 1);
-                (copy[i], copy[j]) = (copy[j], copy[i]);
-            }
-            return copy;
-        }
-
         /// <summary>Rarity tier by weight (tiers with no card share their weight among the others), then a card evenly inside the tier. -1 if nothing is left.</summary>
         static int DrawIndex(Random rnd, List<FateCard> remaining)
         {
