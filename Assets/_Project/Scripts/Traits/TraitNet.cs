@@ -4,39 +4,27 @@ using System.Collections.Generic;
 namespace Evolve.Traits
 {
     /// <summary>
-    /// The bridge between the picking screen (assembly Evolve) and the co-op code (assembly Evolve.Net, which Evolve cannot
-    /// reference). TraitsSync fills the hooks when a room is running; with none set the picker plays solo. Also holds the
-    /// text codecs for the three messages, which are plain functions so they can be tested.
+    /// The bridge between the birth scene (assembly Evolve) and the co-op code (assembly Evolve.Net, which Evolve cannot reference).
+    /// TraitsSync fills ClientPick when this machine is a client; the scene calls it with what fate gave. Also holds the text codecs
+    /// for the pick message, plain functions so they can be tested.
     /// </summary>
     public static class TraitNet
     {
-        // Hooks, set by TraitsSync (host or client) and cleared when the room ends.
-        public static Func<string[]> HostHand;                      // host: the host's own hand (joins the local player)
-        public static Func<string, ConfirmResult> HostConfirm;      // host: the host's own pick
-        public static Action<string, string[]> ClientPick;          // client: send the pick to the host
-        public static bool IsClient;                                // true while connected to a host as a client
+        /// <summary>Client: send the core and flaws fate gave this player to the host. Set by TraitsSync, cleared when the session ends.</summary>
+        public static Action<string, string[]> ClientPick;
+        /// <summary>True while connected to a host as a client.</summary>
+        public static bool IsClient;
         /// <summary>The local player's traits (the one that owns a SlimeController), set by PlayerTraits.</summary>
         public static PlayerTraits Local;
-
-        /// <summary>Client side: the host dealt (or re-dealt) this hand.</summary>
-        public static event Action<string[]> HandReceived;
-        /// <summary>Client side: the host's answer to the last pick.</summary>
-        public static event Action<ConfirmResult> ResultReceived;
-        /// <summary>The last hand a client received, kept in case the picker opens after it arrived.</summary>
-        public static string[] LastHand { get; private set; }
 
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void Reset()
         {
-            HostHand = null; HostConfirm = null; ClientPick = null; IsClient = false; LastHand = null; Local = null;
-            HandReceived = null; ResultReceived = null;
+            ClientPick = null; IsClient = false; Local = null;
         }
 
         /// <summary>Forget what came from a finished co-op session.</summary>
-        public static void ClearClient() { LastHand = null; IsClient = false; ClientPick = null; }
-
-        public static void RaiseHand(string[] hand) { LastHand = hand; HandReceived?.Invoke(hand); }
-        public static void RaiseResult(ConfirmResult result) { if (result.NewHand != null) LastHand = result.NewHand; ResultReceived?.Invoke(result); }
+        public static void ClearClient() { IsClient = false; ClientPick = null; }
 
         // ---------------------------------------------------------------- codecs
 
@@ -44,7 +32,7 @@ namespace Evolve.Traits
 
         public static string EncodeHand(string[] hand) => hand == null ? "" : string.Join(Sep.ToString(), hand);
 
-        /// <summary>Never throws: null, empty or garbage text gives an empty hand.</summary>
+        /// <summary>Never throws: null, empty or garbage text gives an empty list.</summary>
         public static string[] DecodeHand(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return new string[0];
@@ -71,26 +59,6 @@ namespace Evolve.Traits
             var all = new List<string> { first ?? "" };
             if (rest != null) all.AddRange(rest);
             return all.ToArray();
-        }
-    }
-
-    /// <summary>Checks a pick against what the core really offers.</summary>
-    public static class TraitChoice
-    {
-        /// <summary>True when <paramref name="flawIds"/> is exactly one of the core's flaw options (order does not matter).</summary>
-        public static bool IsValid(IReadOnlyList<string[]> options, string[] flawIds)
-        {
-            if (options == null || flawIds == null || flawIds.Length == 0) return false;
-            foreach (var option in options)
-            {
-                if (option == null || option.Length != flawIds.Length) continue;
-                var remaining = new List<string>(option);
-                bool all = true;
-                foreach (var id in flawIds)
-                    if (!remaining.Remove(id)) { all = false; break; }
-                if (all) return true;
-            }
-            return false;
         }
     }
 }
