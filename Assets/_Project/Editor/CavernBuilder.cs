@@ -70,7 +70,7 @@ namespace Evolve.EditorTools
 
         static TerrainLayer Layer(string name, Color a, Color b, float tile)
         {
-            string texPath = $"{TerrainFolder}/Cavern_{name}_v2.png", layerPath = $"{TerrainFolder}/Cavern_{name}.terrainlayer";
+            string texPath = $"{TerrainFolder}/Cavern_{name}_v3.png", layerPath = $"{TerrainFolder}/Cavern_{name}.terrainlayer";
             var tex = LakeWater.PaintedTexture(texPath, 256, 256, (u, v) =>
             {
                 // four scales of noise (blotches, patches, grain, specks) so the ground is not a flat colour; a pebble speckle on top
@@ -97,9 +97,9 @@ namespace Evolve.EditorTools
         {
             var layers = new[]
             {
-                Layer("Mud", new Color(0.13f, 0.11f, 0.08f), new Color(0.22f, 0.19f, 0.13f), 5f),
-                Layer("Moss", new Color(0.12f, 0.2f, 0.09f), new Color(0.2f, 0.32f, 0.13f), 4f),
-                Layer("Rock", new Color(0.18f, 0.17f, 0.16f), new Color(0.32f, 0.3f, 0.28f), 8f),
+                Layer("Mud", new Color(0.24f, 0.19f, 0.13f), new Color(0.42f, 0.34f, 0.23f), 5f),
+                Layer("Moss", new Color(0.18f, 0.30f, 0.12f), new Color(0.32f, 0.50f, 0.20f), 4f),
+                Layer("Rock", new Color(0.30f, 0.29f, 0.27f), new Color(0.50f, 0.48f, 0.44f), 8f),
             };
 
             var data = new TerrainData { heightmapResolution = HeightRes };
