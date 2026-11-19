@@ -598,3 +598,19 @@ Spec mục 6.1, plan `docs/superpowers/plans/2026-11-19-skills-not-organs.md`. S
 - Test: `SkillRulesTests` (chạy bằng `tools/cstest/run.sh`, 68 test xanh), `SculptTests` và `SkillBarMenuTests` (cần Unity). **Chưa mở trong Unity.**
 
 Checklist: (a) Console sạch; (b) bấm **K**: có chiêu đã học (sau khi Giải Mã xong gene Gai độc hoặc Chân); (c) gắn phím 1–5, bấm: gai trồi trên lưng, bắn, rồi tan vào thân, hồi chiêu hiện ở ô phím; (d) chân: bấm thì chân mọc ra, chạy nhanh khoảng 4 giây rồi thu vào; (e) **G**: chỉ thấy ô Mắt và Da, đủ 3 bị động thì báo; ngoài tổ nút Nặn khóa; (f) F1 có "Học chiêu" để thử nhanh; (g) chết rồi hồi sinh: chiêu đã học vẫn còn.
+
+## 38. Cảnh Ra Đời: chia bài số mệnh (bước 2): trạng thái và danh sách kiểm tra
+
+Spec `docs/superpowers/specs/2026-11-19-birth-scene-design.md`, plan `docs/superpowers/plans/2026-11-19-birth-scene.md`.
+
+- **Cảnh** (`Traits/BirthScene`, thay `TraitPicker`): khoảng 22 giây. Giọt nhờn rơi; Tiếng Vọng báo, sáu Ân Điển hiện dần (Phân Thân còn ghi "chưa có hiệu ứng"); **chia bài Lõi** (7 thẻ úp xếp hình quạt, xáo, một thẻ lật lên); **chia bài Khuyết Điểm** (3 thẻ tối, một thẻ lật); tổng kết. **Space hoặc Enter** bỏ qua sau 3 giây (nhảy tới tổng kết, kết quả giữ nguyên). Chạy một lần mỗi vòng chơi; chết rồi hồi sinh không chạy lại. Không còn phím "chơi không Lõi".
+- **Số mệnh** (`FateRoll`, thuần, có test): bậc theo độ hiếm Thường 65% / Hiếm 25% / Cực hiếm 10% (bậc rỗng thì chia lại), rồi chọn đều trong bậc; Khuyết Điểm chọn đều trong 3 cái đi kèm Lõi. Kết quả định trước khi cảnh chạy.
+  - Thường: Màng Thẩm Thấu, Ăn Mòn, Quang Hợp, Cộng Sinh, Thích Nghi, Bám Dính. Hiếm: Thần Tốc, Nguỵ Sắc, Phản Chấn, Quen Đất. Cực hiếm: Dòng Máu Tham Lam, Dạ Dày Bất Diệt.
+  - Kho rút gồm cả 12 Lõi; Lõi chưa có hiệu ứng ghi "chưa có hiệu ứng" trên thẻ. Chưa chạy `Evolve → Create Traits` thì cảnh rút từ bảng dữ liệu có sẵn.
+- **Hai Lõi làm lại:** *Dòng Máu Tham Lam* (cũ: Con Bạc; ×1,5 cơ hội Giải Mã cho gene Hiếm trở lên) và *Dạ Dày Bất Diệt* (cũ: Giữ Gốc; hai lần chết đầu còn mạng thì **giữ món trong Túi Không Đáy**). `Id` giữ nguyên.
+- **Co-op:** mỗi người tự rút (có thể trùng Lõi). Client báo kết quả bằng tin `evolve.tr.pick`; máy chủ chỉ kiểm Lõi có tồn tại và Khuyết Điểm đúng một lựa chọn của nó rồi gắn vào avatar. Đã bỏ phòng tranh thẻ (`TraitRoom`), `CardDealer` và tin chia thẻ.
+- **Giọng Tiếng Vọng (tùy chọn):** thả file vào `Assets/_Project/Resources/Voice/Echo/<id>.mp3`; danh sách câu và hướng dẫn giọng ở `docs/art/echo-voice-lines.md`. Không có file thì chỉ hiện chữ.
+- Chưa làm: **Dị Tượng** (cần lũ và hệ sinh thái), hiệu ứng cho 9 Lõi và 8 Khuyết Điểm còn ghi "chưa có hiệu ứng".
+- Test: `FateRollTests`, `BirthTests`, `TraitChoiceTests`, `DeathLossRulesTests`, `AnalysisBookTests` chạy được ngoài Unity (`tools/cstest/run.sh`, 104 test xanh). Cần Unity: `TraitCatalogTests`, `TraitSeedTests` (thêm kiểm tên hai Lõi làm lại). **Chưa mở trong Unity.**
+
+Checklist: (a) chạy `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: thấy cảnh 22 giây, slime đứng yên, HUD ẩn; (d) Space sau 3 giây nhảy tới tổng kết; (e) xong thì điều khiển được slime và Lõi hiện trong dữ liệu (Tab/H hoặc F1); (f) chết (F1 → Tự sát) rồi R: cảnh không chạy lại, Lõi còn; (g) chạy 5 lần: các Lõi khác nhau, thỉnh thoảng thẻ xanh hoặc vàng; (h) co-op (nếu thử được): client rút xong, avatar của nó trên máy chủ có Lõi.
