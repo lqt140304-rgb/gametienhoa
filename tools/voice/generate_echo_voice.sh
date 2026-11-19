@@ -11,7 +11,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 OUT=Assets/_Project/Resources/Voice/Echo
-VOICE="${VOICE:-deC6NEXcbavaVWbzjgzb}"   # Phương: nữ trẻ, giọng Trung, mềm và dịu (thư viện chung ElevenLabs, gọi thẳng bằng id). Giọng Hạnh (nữ Hà Nội): pGapy9MNHCukzJtjavF0
+VOICE="${VOICE:-5yEPTrA0uAhZsBEhHjfi}"   # Chi: nữ, giọng Bắc (có sẵn trong tài khoản). Khác: Phương (nữ trẻ, giọng Trung) deC6NEXcbavaVWbzjgzb; Hạnh (nữ Hà Nội) pGapy9MNHCukzJtjavF0 (gọi thẳng bằng id)
 MODEL=eleven_turbo_v2_5      # ép tiếng Việt bằng language_code (mô hình multilingual tự đoán ngôn ngữ nên dễ lệch)
 MODE="${MODE:-natural}"
 FLAT="${FLAT:-0.0}"
