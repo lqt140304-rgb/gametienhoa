@@ -30,6 +30,8 @@ namespace Evolve.World
         SurvivalStats stats;
         MonochromeVision vision;
         readonly HashSet<Transform> flashed = new HashSet<Transform>();
+        /// <summary>The scan reaches this fraction of the serialized radius (half: the wave is a ring now, not a lit disc).</summary>
+        public const float ScanRadiusFactor = 0.5f;
         float scanStart = -1f;
         float scanRadius;
         float readyAt;
@@ -100,7 +102,7 @@ namespace Evolve.World
         void StartScan()
         {
             if (vision == null) vision = FindAnyObjectByType<MonochromeVision>();
-            scanRadius = radius * SenseMul;
+            scanRadius = radius * ScanRadiusFactor * SenseMul;   // the sound wave reaches half as far as the old light scan
             scanStart = Time.time;
             readyAt = Time.time + cooldown;
             flashed.Clear();
@@ -112,9 +114,7 @@ namespace Evolve.World
             float t = (Time.time - scanStart) / Mathf.Max(0.01f, expandSeconds);
             float r = Mathf.Min(1f, t) * scanRadius;
 
-            foreach (var n in Nutrient.Active) TryFlash(n.transform, Vector3.zero, r, foodColor);
-            foreach (var p in Prey.Active) TryFlash(p.transform, Vector3.zero, r, preyColor);
-            foreach (var p in Predator.Active) TryFlash(p.transform, Vector3.up * 0.5f, r, predatorColor);
+            // no particles puffing out of the things the wave passes: the wave itself shows their shape (Shaders/SonarShell)
 
             if (t >= 1f) scanStart = -1f;
         }

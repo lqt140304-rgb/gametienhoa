@@ -20,12 +20,19 @@ float EvolveWaveVisible(float3 positionWS)
     return exp(-x * x) * _EvolveWaveFade;
 }
 
-float EvolveSightVisible(float3 positionWS)
+// the sight of a blind slime alone: a soft glow round it (no sound wave)
+float EvolveSightBase(float3 positionWS)
 {
     float near = _EvolveSightCenter.w > 0.0 ? saturate(1.0 - distance(positionWS, _EvolveSightCenter.xyz) / _EvolveSightCenter.w) : 0.0;
     near = near * near * (3.0 - 2.0 * near);
     near = near * near;
-    return max(1.0 - saturate(_EvolveBlind) * (1.0 - near), EvolveWaveVisible(positionWS));
+    return 1.0 - saturate(_EvolveBlind) * (1.0 - near);
+}
+
+// base sight or the sound wave passing
+float EvolveSightVisible(float3 positionWS)
+{
+    return max(EvolveSightBase(positionWS), EvolveWaveVisible(positionWS));
 }
 
 #endif

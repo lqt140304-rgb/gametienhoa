@@ -327,8 +327,8 @@ namespace Evolve.EditorTools
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(Root + "/Settings/CavernLook.asset");
             if (profile != null && profile.TryGet(out Bloom bloom))
             {
-                bloom.intensity.Override(1.0f);       // the glows bloom into soft halos
-                bloom.threshold.Override(0.8f);
+                bloom.intensity.Override(0.8f);       // the glows bloom into soft halos
+                bloom.threshold.Override(1.0f);
                 bloom.scatter.Override(0.75f);
                 bloom.tint.Override(new Color(0.85f, 0.95f, 1f));
                 EditorUtility.SetDirty(profile);

@@ -1,12 +1,13 @@
 Shader "Evolve/SonarShell"
 {
-    // The sound wave seen as a thin expanding shell: no light is thrown. It shows only as a bright line wherever the shell cuts through the ground and the things standing
-    // on it (read from the scene depth), plus a faint rim, like a ripple of sound passing through the cave. Additive.
+    // The sound wave seen as an expanding shell: no light is thrown. Every surface within a band's thickness of the shell glows (read from the scene depth), brighter
+    // along the outlines and creases of what it passes (where the depth jumps), so the wave draws the SHAPE of the ground and the things on it as it goes by,
+    // plus a faint rim. Additive.
     Properties
     {
         _Color ("Wave colour", Color) = (0.55, 0.85, 1.0, 1)
-        _Intensity ("Line brightness", Float) = 2.2
-        _Edge ("Line width (m)", Float) = 0.55
+        _Intensity ("Brightness", Float) = 1.6
+        _Edge ("Thickness of the band that shows surfaces (m)", Float) = 1.5
         _Rim ("Faint rim", Float) = 0.06
         _Fade ("Fade (set by the game)", Float) = 1
     }
@@ -52,10 +53,15 @@ Shader "Evolve/SonarShell"
                 float2 uv = i.positionCS.xy / _ScaledScreenParams.xy;
                 float sceneEye = LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
                 float diff = abs(sceneEye - i.positionCS.w);                    // how far the shell is from the surface behind it
-                float line_ = pow(saturate(1.0 - diff / max(0.01, _Edge)), 3.0); // bright exactly where the shell cuts a surface
+                float x = diff / max(0.01, _Edge);
+                float band = exp(-x * x * 2.5);                                  // a soft band: surfaces within about _Edge of the shell glow
+                // outlines and creases: where the depth beside a pixel jumps, that is the edge of an object
+                float gx = ddx(sceneEye), gy = ddy(sceneEye);
+                float edge = saturate(length(float2(gx, gy)) / (0.025 * sceneEye + 0.04));
+                float shape = 0.35 + 1.1 * edge;
                 float3 v = normalize(GetWorldSpaceViewDir(i.positionWS));
                 float rim = pow(1.0 - saturate(abs(dot(normalize(i.normalWS), v))), 3.0);
-                half3 col = _Color.rgb * (line_ * _Intensity + rim * _Rim) * _Fade;
+                half3 col = _Color.rgb * (band * _Intensity * shape + rim * _Rim) * _Fade;
                 return half4(col, 1);
             }
             ENDHLSL

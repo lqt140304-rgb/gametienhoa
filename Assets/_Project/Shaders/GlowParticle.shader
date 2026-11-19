@@ -51,7 +51,7 @@ Shader "Evolve/GlowParticle"
                 float core = pow(saturate(1.0 - d * 2.2), 3.0);
                 float pulse = lerp(1.0, 0.25 + 0.75 * (0.5 + 0.5 * sin(_Time.y * (1.4 + i.color.g * 3.2) + i.color.r * 57.0)), _Blink);
                 float a = (halo * 0.7 + core * 1.3) * i.color.a * pulse;
-                a *= EvolveSightVisible(i.positionWS);   // blind: only the lights near the slime show
+                a *= EvolveSightBase(i.positionWS);   // blind: only the lights near the slime show
                 return half4(i.color.rgb * _Intensity, saturate(a));
             }
             ENDHLSL

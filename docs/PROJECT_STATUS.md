@@ -552,3 +552,5 @@ Checklist: (1) Console sạch, Test Runner xanh (`CavernFloraMathTests`); (2) Re
 - Cần Depth Texture bật trong URP (hang đã bật). Chưa thấy trong Unity.
 
 Checklist: (1) Console sạch, Test Runner xanh (`SonarWaveMathTests`); (2) chưa có mắt: vật thể không còn sáng bất thường; (3) bấm C: một vòng sóng lan ra, các đường sáng quét qua mặt đất và vật thể, không có đèn lớn; (4) có mắt: không đổi.
+
+- **Sóng âm, chỉnh theo ý chủ dự án:** bỏ các hạt nháy tại vật thể khi sóng đi qua; bán kính quét giảm một nửa (`VibrationSense.ScanRadiusFactor` = 0,5); vỏ sóng (`Evolve/SonarShell`) dày hơn và có đường viền: mọi bề mặt trong dải khoảng 1,5 m quanh vỏ đều sáng, sáng hơn dọc các mép và nếp gấp của vật (nơi độ sâu nhảy), nên sóng vẽ ra **hình dạng** của mặt đất và vật thể khi lướt qua. Hạt sáng (`GlowParticle`) không còn hiện theo sóng. Đèn nhỏ quanh slime khi mù tối đa 1,0 (trước 1,8) và Bloom của hang nhẹ lại (cường độ 0,8, ngưỡng 1,0) để slime không bị chói.

@@ -9,7 +9,7 @@ namespace Evolve.World
     public static class SonarWaveMath
     {
         /// <summary>The blind slime's own faint light never goes above this, so lamps no longer blow out the things close to it.</summary>
-        public const float MaxBlindLight = 1.8f;
+        public const float MaxBlindLight = 1.0f;
 
         /// <summary>Radius (m) of the wave front <paramref name="t"/> seconds after the press.</summary>
         public static float Radius(float t, float expand, float maxRadius) => Mathf.Lerp(0f, maxRadius, Mathf.Clamp01(t / Mathf.Max(0.01f, expand)));
