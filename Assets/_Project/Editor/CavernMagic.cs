@@ -35,6 +35,7 @@ namespace Evolve.EditorTools
             Particles(root, glow, glowBlink, bokeh);
             Water();
             Mood();
+            LightsFollowSight();
             AssetDatabase.SaveAssets();
             Debug.Log("Ánh sáng huyền ảo: chùm sáng có bụi và vệt trôi, hồ có vũng sáng, lấp lánh và bờ phát quang, đom đóm và bụi sáng bay quanh bờ. Ctrl+S để lưu scene.");
         }
@@ -233,6 +234,21 @@ namespace Evolve.EditorTools
             mat.SetColor("_BeamColor", new Color(1f, 0.88f, 0.62f));
             mat.SetFloat("_Shimmer", 0.6f);
             EditorUtility.SetDirty(mat);
+        }
+
+        /// <summary>The cavern's own lights (the beam's spot light, the glowing ore) fade with the slime's sight like every light of the living world:
+        /// without eyes they no longer light up the whole cave.</summary>
+        static void LightsFollowSight()
+        {
+            int n = 0;
+            foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+            {
+                if (!(l.name.StartsWith("Beam Light") || l.name.StartsWith("Ore Light")) || l.GetComponent<LightByVision>() != null) continue;
+                var lv = l.gameObject.AddComponent<LightByVision>();
+                lv.AlwaysOnWhenSighted = l.name.StartsWith("Beam Light");   // the beam is seen from across the cave
+                n++;
+            }
+            if (n > 0) Debug.Log($"{n} đèn của hang giờ mờ theo thị lực của slime.");
         }
 
         static void Mood()

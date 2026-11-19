@@ -25,6 +25,7 @@ Shader "Evolve/GrassBlade"
             #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "EvolveSight.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Root;
@@ -76,6 +77,7 @@ Shader "Evolve/GrassBlade"
                 half occlusion = lerp(0.35, 1.0, saturate(i.uv.y * 1.3));                                                    // dark at the root
                 half3 col = albedo * (direct + ambient) * occlusion + albedo * 0.12 * i.uv.y;                               // a little light through the tip
                 col = MixFog(col, i.fogFactor);
+                col *= EvolveSightVisible(i.positionWS);   // blind: only the grass round the slime can be felt
                 return half4(col, 1);
             }
             ENDHLSL

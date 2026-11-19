@@ -525,3 +525,5 @@ Checklist: (1) Console sạch, Test Runner xanh; (2) Install Scanned Assets (c�
 - Chưa biên dịch hay thấy trong Unity.
 
 Checklist: (1) Console sạch (không lỗi shader); (2) Evolve → Dress Cavern: Magic Light, Ctrl+S; (3) Play: chùm sáng mềm có bụi, đom đóm nhấp nháy quanh bờ, hồ lấp lánh và có vũng sáng dưới chùm; (4) FPS không tụt rõ; (5) nếu quá lòe loẹt hoặc quá tối, báo để chỉnh cường độ.
+
+- **Khi slime chưa có mắt (hang):** chùm sáng, hạt sáng (bụi, đom đóm, đốm sáng, lấp lánh nước), cỏ và các hiệu ứng nước mới chỉ hiện **loang mềm quanh slime**, mờ dần mịn ra xa (`Shaders/EvolveSight.hlsl`: `EvolveSightVisible`, đọc `_EvolveBlind` và `_EvolveSightCenter` của `MonochromeVision`). Đèn rọi của chùm và đèn quặng gắn `LightByVision` nên cũng mờ theo thị lực.

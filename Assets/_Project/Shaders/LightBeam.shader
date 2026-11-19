@@ -27,6 +27,7 @@ Shader "Evolve/LightBeam"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "EvolveSight.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
@@ -89,6 +90,7 @@ Shader "Evolve/LightBeam"
                 speck *= saturate(1.0 - length(frac3) * 3.2);
                 float body = _Intensity * streak * along * edge * soft;
                 half3 col = _Color.rgb * (body + speck * _Dust * 1.6 * along * soft);
+                col *= EvolveSightVisible(i.positionWS);   // blind: only the light round the slime is seen, spreading softly
                 return half4(col, 1);
             }
             ENDHLSL

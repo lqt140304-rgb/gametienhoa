@@ -23,6 +23,7 @@ Shader "Evolve/GlowParticle"
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "EvolveSight.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float _Intensity;
@@ -31,12 +32,13 @@ Shader "Evolve/GlowParticle"
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; float3 positionWS : TEXCOORD1; };
 
             Varyings vert(Attributes i)
             {
                 Varyings o;
                 o.positionCS = TransformObjectToHClip(i.positionOS.xyz);
+                o.positionWS = TransformObjectToWorld(i.positionOS.xyz);
                 o.uv = i.uv;
                 o.color = i.color;
                 return o;
@@ -49,6 +51,7 @@ Shader "Evolve/GlowParticle"
                 float core = pow(saturate(1.0 - d * 2.2), 3.0);
                 float pulse = lerp(1.0, 0.25 + 0.75 * (0.5 + 0.5 * sin(_Time.y * (1.4 + i.color.g * 3.2) + i.color.r * 57.0)), _Blink);
                 float a = (halo * 0.7 + core * 1.3) * i.color.a * pulse;
+                a *= EvolveSightVisible(i.positionWS);   // blind: only the lights near the slime show
                 return half4(i.color.rgb * _Intensity, saturate(a));
             }
             ENDHLSL
