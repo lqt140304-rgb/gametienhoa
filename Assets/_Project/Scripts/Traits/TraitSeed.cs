@@ -17,6 +17,7 @@ namespace Evolve.Traits
         public string[][] Options;
         public bool Heavy;
         public bool Implemented;
+        public TraitRarity Rarity;
     }
 
     /// <summary>
@@ -26,6 +27,15 @@ namespace Evolve.Traits
     public static class TraitSeed
     {
         static readonly OrganSlot[] None = new OrganSlot[0];
+
+        // declared before Flaws and Cores: static fields start in textual order and C() reads this table
+        static readonly System.Collections.Generic.Dictionary<string, TraitRarity> RarityOf = new System.Collections.Generic.Dictionary<string, TraitRarity>
+        {
+            { "core.mang_tham_thau", TraitRarity.Common }, { "core.an_mon", TraitRarity.Common }, { "core.quang_hop", TraitRarity.Common },
+            { "core.cong_sinh", TraitRarity.Common }, { "core.thich_nghi", TraitRarity.Common }, { "core.bam_dinh", TraitRarity.Common },
+            { "core.than_toc", TraitRarity.Rare }, { "core.nguy_sac", TraitRarity.Rare }, { "core.phan_chan", TraitRarity.Rare }, { "core.quen_dat", TraitRarity.Rare },
+            { "core.con_bac", TraitRarity.Mythic }, { "core.giu_goc", TraitRarity.Mythic },
+        };
 
         public static IReadOnlyList<FlawDef> Flaws { get; } = new List<FlawDef>
         {
@@ -89,6 +99,15 @@ namespace Evolve.Traits
         static string[][] S(string a, string b, string c) => new[] { new[] { a }, new[] { b }, new[] { c } };
 
         static CoreDef C(string id, string name, string summary, string detail, string[][] options, bool heavy, bool implemented) =>
-            new CoreDef { Id = id, Name = name, Summary = summary, Detail = detail, Options = options, Heavy = heavy, Implemented = implemented };
+            new CoreDef { Id = id, Name = name, Summary = summary, Detail = detail, Options = options, Heavy = heavy, Implemented = implemented,
+                          Rarity = RarityOf.TryGetValue(id, out var r) ? r : TraitRarity.Common };
+
+        /// <summary>The pool fate draws from when no core assets exist: every core with its rarity and flaw options.</summary>
+        public static IReadOnlyList<FateCard> FateCards()
+        {
+            var cards = new List<FateCard>();
+            foreach (var c in Cores) cards.Add(new FateCard(c.Id, c.Rarity, c.Options));
+            return cards;
+        }
     }
 }
