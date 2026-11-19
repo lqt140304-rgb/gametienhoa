@@ -40,3 +40,6 @@ __pycache__/
 # Scanned assets downloaded on each machine (Evolve -> Install Scanned Assets)
 Assets/_Project/ThirdParty/Scanned/
 Assets/_Project/ThirdParty/Scanned.meta
+
+# Plain .NET test runner for pure rules (not a Unity-generated project)
+!tools/cstest/cstest.csproj
