@@ -21,6 +21,8 @@ namespace Evolve.Traits
         public Color OrbColor = Color.cyan;
         [Tooltip("Exactly three options; a heavy core offers pairs of two flaws.")] public FlawOption[] Options = new FlawOption[3];
         public bool Heavy;
+        [Tooltip("How rare the core is in the birth draw: stronger cores are rarer.")]
+        public TraitRarity Rarity;
         [Tooltip("False while the effect is not coded yet: the card is shown but nothing happens.")]
         public bool Implemented;
     }
