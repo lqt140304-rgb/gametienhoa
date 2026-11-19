@@ -35,7 +35,7 @@ namespace Evolve.Creatures
         public void SpawnAt(Vector3 position)
         {
             if (prefab == null) return;
-            var p = Instantiate(prefab, new Vector3(position.x, prefab.transform.position.y, position.z), Quaternion.identity, transform);
+            var p = Instantiate(prefab, OnGround(position.x, position.z), Quaternion.identity, transform);
             p.HomeCenter = p.transform.position;
             p.HomeRadius = radius;
             p.Killed += _ => { alive--; nextSpawn = Time.time + respawnSeconds; };
@@ -45,13 +45,16 @@ namespace Evolve.Creatures
         void SpawnOne()
         {
             Vector2 c = Random.insideUnitCircle * radius * 0.6f;
-            Vector3 pos = transform.position + new Vector3(c.x, prefab.transform.position.y, c.y);
+            Vector3 pos = OnGround(transform.position.x + c.x, transform.position.z + c.y);
             var p = Instantiate(prefab, pos, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
             p.HomeCenter = transform.position;
             p.HomeRadius = radius;
             p.Killed += _ => { alive--; nextSpawn = Time.time + respawnSeconds; };
             alive++;
         }
+
+        /// <summary>The prefab's height above the ground at (x, z); on a flat scene without a Terrain the ground is y = 0, as before.</summary>
+        Vector3 OnGround(float x, float z) => new Vector3(x, Evolve.World.GroundHeight.At(x, z, 0f) + prefab.transform.position.y, z);
 
         void OnDrawGizmosSelected()
         {

@@ -81,6 +81,15 @@ namespace Evolve.World
             return Mathf.Max(h, wall);
         }
 
+        /// <summary>A point on dry ground <paramref name="beyondShore"/> metres past the shore, in compass direction <paramref name="angleDeg"/> (0 = east, 90 = north).</summary>
+        public static Vector3 ShorePoint(float angleDeg, float beyondShore)
+        {
+            float a = angleDeg * Mathf.Deg2Rad;
+            float r = LakeRadius(a) + beyondShore;
+            float x = LakeCenter.x + Mathf.Cos(a) * r, z = LakeCenter.y + Mathf.Sin(a) * r;
+            return new Vector3(x, GroundHeight(x, z), z);
+        }
+
         /// <summary>Where the slimes appear: on the dry shore, a few metres from the water, to the south-west.</summary>
         public static Vector3 SpawnPoint()
         {

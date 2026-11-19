@@ -72,6 +72,18 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void ShorePointIsDryAndTheRightDistanceFromTheWater()
+        {
+            foreach (float deg in new[] { 0f, 35f, 215f, 250f })
+            {
+                var p = CavernLayout.ShorePoint(deg, 8f);
+                Assert.AreEqual(0f, CavernLayout.DepthAt(p.x, p.z), 1e-5f);
+                Assert.AreEqual(8f, CavernLayout.ShoreOffset(p.x, p.z), 0.01f);
+                Assert.AreEqual(CavernLayout.GroundHeight(p.x, p.z), p.y, 1e-4f);
+            }
+        }
+
+        [Test]
         public void SpawnIsOnDryGroundBesideTheWater()
         {
             var p = CavernLayout.SpawnPoint();

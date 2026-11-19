@@ -583,3 +583,5 @@ Spec `docs/superpowers/specs/2026-11-19-reincarnation-survival-design.md`, plan 
 - Lưu ý: `ShelterZone.MaxBodyScale` 1,3 nghĩa là slime khối trên 17,5 không vào hang trú cũ được (sẽ làm lại hang trú ở bước 3).
 
 Checklist: (a) Console sạch; (b) đâm vào con mồi: nó vào bụng, B thấy món đang Phân tích; (c) đứng trong tổ: thanh chạy nhanh hơn rõ; (d) học được: có dòng Tiếng Vọng; (e) G ngoài tổ: nút khóa; trong tổ: Nặn trừ khối, cơ quan hiện lên người; (f) giết thú săn mồi, F vào xác (giữ F nếu to): vào bụng; (g) chết: bụng rỗng, cơ quan còn; (h) bụng đầy: có thông báo. Menu God (F1) có "+10 khối" và "Học hết cơ quan" để thử nhanh.
+
+- **Sinh vật và tổ tạm trong Hang Khởi Sinh** (`Editor/CavernLife`, menu `Evolve → Dress Cavern: Creatures + Shelter`, cũng chạy trong Build Slime Cavern): 2 ổ con mồi (7 con) trên bờ khô, 1 kẻ săn mồi phía đông bắc, một **tổ tạm** (vòng rêu sáng xanh có `ShelterZone`) phía tây nam gần chỗ xuất hiện. Spawner giờ đặt sinh vật **trên mặt đất** (`GroundHeight`), không còn ở độ cao cố định. Test `ShorePointIsDryAndTheRightDistanceFromTheWater`.
