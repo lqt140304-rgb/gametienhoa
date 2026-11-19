@@ -92,10 +92,22 @@ namespace Evolve.Tests.EditMode
         [Test]
         public void RimRisesExceptAtTheNorthEntry()
         {
-            Assert.GreaterOrEqual(TerrainShape.HeightAt(245f, 0f, 1337), 15f);
-            Assert.GreaterOrEqual(TerrainShape.HeightAt(0f, -245f, 1337), 15f);
-            Assert.GreaterOrEqual(TerrainShape.HeightAt(-245f, 0f, 1337), 15f);
+            Assert.GreaterOrEqual(TerrainShape.HeightAt(245f, 0f, 1337), 45f);   // the open-sky pit's wall is tall
+            Assert.GreaterOrEqual(TerrainShape.HeightAt(0f, -245f, 1337), 45f);
+            Assert.GreaterOrEqual(TerrainShape.HeightAt(-245f, 0f, 1337), 45f);
+            Assert.AreEqual(TerrainShape.CliffHeight, TerrainShape.HeightAt(250f, 0f, 1337), 0.5f);
             Assert.LessOrEqual(TerrainShape.HeightAt(ZoneLayout.NorthEntry.x, ZoneLayout.NorthEntry.y, 1337), 9f);   // the ridge (6 m) leads out through the gap
+        }
+
+        [Test]
+        public void RimWallIsSteepAndFitsTheHeightmap()
+        {
+            // somewhere on the wall the ground climbs at more than 1.5 m per metre (about 56 degrees), and the tallest point fits TerrainHeight
+            float steepest = 0f;
+            for (float x = 205f; x < 249f; x += 1f)
+                steepest = Mathf.Max(steepest, (TerrainShape.HeightAt(x + 1f, 0f, 1337) - TerrainShape.HeightAt(x, 0f, 1337)));
+            Assert.Greater(steepest, 1.5f);
+            Assert.Less(TerrainShape.BaseOffset + TerrainShape.CliffHeight + 8f, TerrainShape.TerrainHeight);   // 8 m of headroom for the mounds
         }
 
         [Test]

@@ -26,6 +26,16 @@ namespace Evolve.World
             return w;
         }
 
+        /// <summary>Name of the sky material that Evolve → Dress Lake: Open Sky puts in the scene. With it the pit is open to the sky and daylit.</summary>
+        public const string OpenSkyName = "LakeSky";
+        static readonly Color OpenSkyHaze = new Color(0.62f, 0.72f, 0.82f);
+
+        public static bool IsOpenSky => RenderSettings.skybox != null && RenderSettings.skybox.name == OpenSkyName;
+
+        /// <summary>Open-sky fog: black and 80 m without eyes, a pale haze out to 600 m with full sight.</summary>
+        public static Color OpenSkyFogColor(float sight) => Color.Lerp(Color.black, OpenSkyHaze, Mathf.Clamp01(sight));
+        public static float OpenSkyFogEnd(float sight) => Mathf.Lerp(80f, 600f, Mathf.Clamp01(sight));
+
         public bool ParticlesEnabled { get; set; } = true;
         /// <summary>When true (default) the zone's dusk ambient light is set every frame, scaled by the player's sight.</summary>
         public bool ControlsAmbient { get; set; } = true;
@@ -135,10 +145,11 @@ namespace Evolve.World
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.Linear;
                 RenderSettings.fogStartDistance = 0f;
-                RenderSettings.fogEndDistance = ZoneAtmosphereMath.FogEndFor(Current, sight);
-                RenderSettings.fogColor = ZoneAtmosphereMath.FogColorFor(Current, sight);
+                bool open = IsOpenSky;   // the pit is daylit: a pale haze far away, not a cave's dark fog
+                RenderSettings.fogEndDistance = open ? OpenSkyFogEnd(sight) : ZoneAtmosphereMath.FogEndFor(Current, sight);
+                RenderSettings.fogColor = open ? OpenSkyFogColor(sight) : ZoneAtmosphereMath.FogColorFor(Current, sight);
             }
-            if (ControlsAmbient)
+            if (ControlsAmbient && !IsOpenSky)   // in the open the ambient light comes from the sky itself (MonochromeVision dims it without eyes)
             {
                 // also under water (nothing else writes it there): black without eyes, the zone's dusk ambient with them
                 RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
