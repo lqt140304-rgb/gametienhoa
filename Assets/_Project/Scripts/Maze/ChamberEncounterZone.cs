@@ -237,7 +237,7 @@ namespace Evolve.Maze
 
         static SlimeBody FindLocalPlayerBody()
         {
-            var bodies = FindObjectsByType<SlimeBody>(FindObjectsSortMode.None);
+            var bodies = FindObjectsByType<SlimeBody>();
             for (int i = 0; i < bodies.Length; i++)
             {
                 var stats = bodies[i].GetComponent<SurvivalStats>();
