@@ -25,7 +25,7 @@ namespace Evolve.World
         public const float WallHeight = 30f;
         /// <summary>Height of the roof over the middle; it comes down to WallHeight toward the edge.</summary>
         public const float CeilingHeight = 36f;
-        public const float HoleRadius = 6.5f;
+        public const float HoleRadius = 10f;   // the mouth in the roof: wide, so a lot of light falls in (it was 6.5 m)
 
         /// <summary>The sun: elevation and compass heading (degrees), chosen so its beam through the hole falls on the lake.</summary>
         public const float SunElevation = 66f;

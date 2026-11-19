@@ -564,3 +564,5 @@ Checklist: (1) Console sạch, Test Runner xanh (`SonarWaveMathTests`); (2) chư
 - Test `PlantDragMathTests`. Cần dựng lại hang (Build Slime Cavern) hoặc chạy Dress Cavern: Flora để có vật lý. Chưa thấy trong Unity.
 
 Checklist: (1) Console sạch; (2) đi vào đá: bị chặn, đi vòng được, không kẹt, không rung; (3) đi vào bụi, dương xỉ, sậy: chậm lại rõ ràng, ra khỏi thì chạy bình thường; (4) rễ trồi chặn đường, đi vòng được; (5) FPS không tụt rõ.
+
+- **Miệng lỗ trời rộng hơn:** bán kính lỗ trên mái hang tăng từ 6,5 m lên **10 m** (`CavernLayout.HoleRadius`, diện tích gấp khoảng 2,4 lần), nên chùm sáng và vũng sáng trên hồ lớn hơn; đèn mặt trời tăng từ 1,3 lên 1,7; chùm sáng, tia phụ, bụi trong chùm và vòng dây leo quanh miệng đều theo bán kính mới. Cần dựng lại hang (Build Slime Cavern).

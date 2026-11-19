@@ -366,7 +366,7 @@ namespace Evolve.EditorTools
             {
                 sun.transform.rotation = Quaternion.Euler(CavernLayout.SunElevation, CavernLayout.SunAzimuth, 0f);
                 sun.color = new Color(1f, 0.95f, 0.85f);
-                sun.intensity = 1.3f;
+                sun.intensity = 1.7f;   // more light through the wider mouth
                 sun.shadows = LightShadows.Soft;
                 sun.shadowStrength = 1f;
                 RenderSettings.sun = sun;
@@ -394,7 +394,7 @@ namespace Evolve.EditorTools
             var go = new GameObject("Light Beam");
             go.transform.position = topPoint;
             go.transform.rotation = Quaternion.FromToRotation(Vector3.down, dir);
-            go.AddComponent<MeshFilter>().sharedMesh = RootMeshes.LightShaft(CavernLayout.HoleRadius, CavernLayout.HoleRadius + 1.8f, height, 18, 8, 3);
+            go.AddComponent<MeshFilter>().sharedMesh = RootMeshes.LightShaft(CavernMagicMath.BeamTopRadius, CavernMagicMath.BeamBottomRadius, height, 24, 8, 3);
             var mr = go.AddComponent<MeshRenderer>();
             mr.sharedMaterial = mat;
             mr.shadowCastingMode = ShadowCastingMode.Off;

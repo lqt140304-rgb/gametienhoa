@@ -20,7 +20,7 @@ namespace Evolve.Tests.EditMode
         public void ThePoolOfLightFitsOnTheLake()
         {
             Assert.Greater(CavernMagicMath.PoolRadius, CavernLayout.HoleRadius);
-            Assert.LessOrEqual(CavernMagicMath.PoolRadius, CavernLayout.LakeMeanRadius * 0.7f, "the pool stays on the water");
+            Assert.LessOrEqual(CavernMagicMath.PoolRadius, CavernLayout.LakeMeanRadius * 0.85f, "the pool stays on the water");
         }
 
         [Test]

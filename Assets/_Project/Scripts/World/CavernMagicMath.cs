@@ -8,7 +8,7 @@ namespace Evolve.World
     /// </summary>
     public static class CavernMagicMath
     {
-        public const float BeamBottomExtra = 1.8f;   // the beam widens by this many metres of radius on its way down
+        public const float BeamBottomExtra = 1.2f;   // the beam widens by this many metres of radius on its way down
 
         public static Vector3 BeamTop
         {
