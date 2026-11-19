@@ -120,7 +120,9 @@ namespace Evolve.Player
                 float k = Mathf.Sqrt(Mathf.Clamp(transform.lossyScale.y, 0.3f, 1.5f));   // a smaller slime hops proportionally lower (height grows with speed squared)
                 rb.AddForce(Vector3.up * hopForce * k + dir * hopForward * k, ForceMode.VelocityChange);
                 squashTarget = 1f; // eased in (see AnimateVisual), never an instant jump
+                if (!stats.IsRemote) Evolve.Audio.SlimeSfx.Play("slime_hop", 0.9f);
             }
+            TickStepSound(Time.deltaTime);
             AnimateVisual();
         }
 
@@ -276,6 +278,17 @@ namespace Evolve.Player
         }
 
         bool wasAirborne;
+        float stepTimer;
+
+        /// <summary>The wet crawl sound while the slime moves on the ground: slower when walking, quicker when sprinting.</summary>
+        void TickStepSound(float dt)
+        {
+            if (stats.IsRemote || IsSwimming || stats.Frozen || !stats.IsMoving || !IsGrounded()) { stepTimer = 0.12f; return; }
+            stepTimer -= dt;
+            if (stepTimer > 0f) return;
+            stepTimer = IsSprinting ? 0.27f : 0.48f;
+            Evolve.Audio.SlimeSfx.Step(IsSprinting ? 0.55f : 0.4f);
+        }
 
         void AnimateVisual()
         {
@@ -294,6 +307,7 @@ namespace Evolve.Player
                 var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
                 // Only a real fall splats; the small lift of a dash or a step off a bump does not.
                 if (jelly != null && fallSpeed < -2.5f) jelly.Land(Mathf.Clamp(-fallSpeed / 7f, 0.3f, 1.2f));
+                if (fallSpeed < -2.5f && !stats.IsRemote) Evolve.Audio.SlimeSfx.Play("slime_land", Mathf.Clamp(-fallSpeed / 6f, 0.4f, 1f));
                 fallSpeed = 0f;
             }
             wasAirborne = !grounded;

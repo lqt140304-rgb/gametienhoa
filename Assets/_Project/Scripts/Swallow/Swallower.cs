@@ -60,6 +60,7 @@ namespace Evolve.Swallow
             var item = new StomachItem { Label = label, Mass = mass, Nutrition = nutrition, Food = food, Genes = genes ?? new List<Gene>(), Quality = AnalysisRules.Fresh };
             if (!stomach.TryAdd(item)) return false;
             Evolve.Visuals.SlimeGelAnimator.Play(gameObject, Evolve.Visuals.GelMotion.Gulp);
+            Evolve.Audio.SlimeSfx.Play("slime_swallow");
             return true;
         }
 
@@ -94,16 +95,19 @@ namespace Evolve.Swallow
             s.Label = it.Label;
             s.QualityCap = it.Quality;
             Evolve.Visuals.SlimeGelAnimator.Play(gameObject, Evolve.Visuals.GelMotion.Release);
+            Evolve.Audio.SlimeSfx.Play("slime_spit");
         }
 
         void Update()
         {
-            if (stats.IsRemote || stats.State.IsDead) return;
+            if (stats.IsRemote) return;
+            if (stats.State.IsDead) { Evolve.Audio.SlimeSfx.SetLoop("slime_dissolve", false); return; }
             if (traitsComp == null) traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
             // Dòng Máu Tham Lam: rarer genes come easier.
             book.RareGeneBonus = traitsComp != null && traitsComp.HasCore(Evolve.Traits.LuckRules.CoreId) ? Evolve.Traits.TraitTuning.ThamLamFactor : 1f;
             TickStomach(Time.deltaTime);
             UpdateCarcass(Time.deltaTime);
+            Evolve.Audio.SlimeSfx.SetLoop("slime_dissolve", dissolve > 0.01f);   // a bubbling sound while a big carcass is being dissolved
         }
 
         void TickStomach(float dt)
@@ -159,6 +163,7 @@ namespace Evolve.Swallow
             if (!stomach.TryAdd(item)) { Echo.Say("«Túi Không Đáy đã đầy.»"); return; }
             if (c.Stage == CarcassStage.Rotten) stats.State.TryInfect(DiseaseKind.RottenGel, DiseaseRules.RottenBiteChance);
             Evolve.Visuals.SlimeGelAnimator.Play(gameObject, Evolve.Visuals.GelMotion.Gulp);
+            Evolve.Audio.SlimeSfx.Play("slime_swallow");
             touching = null;
             Destroy(c.gameObject);
         }
