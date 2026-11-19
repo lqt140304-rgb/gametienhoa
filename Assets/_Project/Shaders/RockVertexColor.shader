@@ -1,7 +1,7 @@
 Shader "Evolve/RockVertexColor"
 {
     // Simple URP lit shader whose albedo is the mesh's vertex colour (stone and moss painted in Blender).
-    // Main light with shadows + ambient; additional lights are not sampled (keep it cheap and compile-safe).
+    // Main light with shadows + ambient + every additional light (point and spot, with their distance falloff: the farther from a lamp, the darker).
     Properties { _Tint ("Tint", Color) = (1,1,1,1) _Glow ("Glow (self-lit, fades with blindness)", Float) = 0 _Fill ("Fill light (a soft light independent of the scene, fades with blindness)", Float) = 0 }
     SubShader
     {
@@ -15,6 +15,8 @@ Shader "Evolve/RockVertexColor"
             #pragma fragment frag
             #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _FORWARD_PLUS
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
@@ -70,8 +72,19 @@ Shader "Evolve/RockVertexColor"
                 // large patches (0.6 m) and fine grain: no two spots the same, stone never one flat colour
                 float patch = vnoise(pw * 1.7) - 0.5, grain = fbm2(pw * 2.3) - 0.5;
                 albedo *= saturate(1.0 + patch * 0.55 + grain * 0.5);
+                half3 extra = 0;
+                #if defined(_ADDITIONAL_LIGHTS) || USE_FORWARD_PLUS
+                InputData inputData = (InputData)0;
+                inputData.positionWS = pw;
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.positionCS);
+                uint pixelLightCount = GetAdditionalLightsCount();
+                LIGHT_LOOP_BEGIN(pixelLightCount)
+                    Light al = GetAdditionalLight(lightIndex, pw);
+                    extra += al.color * al.distanceAttenuation * saturate(dot(n, al.direction));   // every lamp lights what is near it, less and less with distance
+                LIGHT_LOOP_END
+                #endif
                 half sight = EvolveSightVisible(pw);
-                half3 col = albedo * (direct + ambient + _Fill * sight);   // _Fill keeps dark-painted plants readable in a dim cave, only while they can be seen
+                half3 col = albedo * (direct + ambient + extra + _Fill * sight);   // _Fill keeps dark-painted plants readable in a dim cave, only while they can be seen
                 col += albedo * _Glow * sight;   // luminous parts (mushroom caps, crystals, bulbs) shine only while you can see
                 col = MixFog(col, i.fogFactor); // far rocks fade into the fog like everything else
                 return half4(col, 1);

@@ -24,6 +24,8 @@ Shader "Evolve/GrassBlade"
             #pragma multi_compile_instancing
             #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _FORWARD_PLUS
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "EvolveSight.hlsl"
 
@@ -72,10 +74,21 @@ Shader "Evolve/GrassBlade"
                 Light l = GetMainLight(i.shadowCoord);
                 half3 direct = l.color * (l.distanceAttenuation * l.shadowAttenuation * (0.35 + 0.65 * saturate(dot(n, l.direction))));
                 half3 ambient = SampleSH(n);
+                half3 extra = 0;
+                #if defined(_ADDITIONAL_LIGHTS) || USE_FORWARD_PLUS
+                InputData inputData = (InputData)0;
+                inputData.positionWS = i.positionWS;
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.positionCS);
+                uint pixelLightCount = GetAdditionalLightsCount();
+                LIGHT_LOOP_BEGIN(pixelLightCount)
+                    Light al = GetAdditionalLight(lightIndex, i.positionWS);
+                    extra += al.color * al.distanceAttenuation * saturate(dot(n, al.direction));   // every lamp lights what is near it, less and less with distance
+                LIGHT_LOOP_END
+                #endif
                 half vary = 0.85 + 0.3 * frac(sin(dot(floor(i.positionWS.xz * 1.7), float2(12.9898, 78.233))) * 43758.5453);   // blade patches differ a little
                 half3 albedo = lerp(_Root.rgb, _Tip.rgb, saturate(i.uv.y)) * vary;
                 half occlusion = lerp(0.35, 1.0, saturate(i.uv.y * 1.3));                                                    // dark at the root
-                half3 col = albedo * (direct + ambient) * occlusion + albedo * 0.12 * i.uv.y;                               // a little light through the tip
+                half3 col = albedo * (direct + ambient + extra) * occlusion + albedo * 0.12 * i.uv.y;                               // a little light through the tip
                 col = MixFog(col, i.fogFactor);
                 col *= EvolveSightVisible(i.positionWS);   // blind: only the grass round the slime can be felt
                 return half4(col, 1);

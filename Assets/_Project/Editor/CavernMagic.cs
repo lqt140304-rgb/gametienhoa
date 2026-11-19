@@ -66,7 +66,7 @@ namespace Evolve.EditorTools
                     l.innerSpotAngle = 0f;
                     l.spotAngle = 85f;
                     l.range = CavernMagicMath.BeamHeight * 1.6f;
-                    l.intensity = 1.5f;
+                    l.intensity = 110f;       // the light is spread over about 40 m, so it must be strong to leave a gentle wash on the near shore
                     l.color = new Color(1f, 0.93f, 0.78f);
                     l.shadows = LightShadows.None;
                 }
@@ -110,12 +110,12 @@ namespace Evolve.EditorTools
             var hit = CavernMagicMath.BeamHit;
             var go = new GameObject("Beam Bounce Light");
             go.transform.SetParent(root, false);
-            go.transform.position = new Vector3(hit.x, CavernLayout.WaterLevel + 2.5f, hit.z);
+            go.transform.position = new Vector3(hit.x, CavernLayout.WaterLevel + 7f, hit.z);   // high enough not to burn the water under it
             var l = go.AddComponent<Light>();
             l.type = LightType.Point;
             l.color = new Color(0.78f, 0.92f, 0.88f);
-            l.range = 42f;
-            l.intensity = 1.1f;
+            l.range = 46f;
+            l.intensity = 48f;                  // inverse-square: about 0.9 on the pool, 0.12 at the shore, 0.05 far away
             l.shadows = LightShadows.None;
             go.AddComponent<LightByVision>().AlwaysOnWhenSighted = true;   // fades with sight like every light, never culled by distance (the cave is small)
         }
@@ -280,7 +280,7 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>The Blender plants are painted dark (made for a sunlit map) and came out black in the dim cave. They get a lifted copy of the vertex-colour
-        /// material: albedo x1.5 and a gentle fill light, both fading with the slime's sight.</summary>
+        /// material: a plain copy (no lift, no fill), both fading with the slime's sight.</summary>
         static void BrightenPlants()
         {
             var shader = Shader.Find("Evolve/RockVertexColor");
@@ -289,8 +289,8 @@ namespace Evolve.EditorTools
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (mat == null) { mat = new Material(shader) { name = "Cavern_PlantVC" }; AssetDatabase.CreateAsset(mat, path); }
             mat.shader = shader;
-            mat.SetColor("_Tint", new Color(1.5f, 1.5f, 1.5f, 1f));
-            mat.SetFloat("_Fill", 0.3f);
+            mat.SetColor("_Tint", Color.white);
+            mat.SetFloat("_Fill", 0f);   // no light out of nowhere: plants are lit only by the lamps, so they darken with distance
             EditorUtility.SetDirty(mat);
             int n = 0;
             foreach (var nut in Object.FindObjectsByType<Nutrient>())
@@ -309,7 +309,7 @@ namespace Evolve.EditorTools
         static void Mood()
         {
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.15f, 0.18f, 0.25f);           // soft and blue: the cave is dim but its shapes and colours stay readable
+            RenderSettings.ambientLight = new Color(0.03f, 0.04f, 0.065f);          // almost nothing: the light comes from the lamps, so the farther from them, the darker
             RenderSettings.fogColor = new Color(0.035f, 0.05f, 0.09f);
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(Root + "/Settings/CavernLook.asset");
             if (profile != null && profile.TryGet(out Bloom bloom))
