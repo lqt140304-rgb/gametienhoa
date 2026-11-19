@@ -274,6 +274,8 @@ namespace Evolve.EditorTools
             slime.AddComponent<OrganInteractor>();
             var stats = slime.AddComponent<SurvivalStats>();
             Set(stats, "config", shared.Config);
+            slime.AddComponent<Evolve.Swallow.SlimeBody>();   // body mass: health and size
+            slime.AddComponent<Evolve.Swallow.Swallower>();   // Nuốt Chửng, Túi Không Đáy, Giải Mã
             slime.AddComponent<ClimateSensor>();
             slime.AddComponent<WaterSensor>();   // thirst only switches on in scenes with a WaterZone
             slime.AddComponent<ShelterSensor>();

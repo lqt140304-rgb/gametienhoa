@@ -234,6 +234,7 @@ namespace Evolve.Player
         /// and lift the body by the radius growth so it does not sink into the ground. No-op when settled.</summary>
         void UpdateBodyScale()
         {
+            if (body == null) body = GetComponent<Evolve.Swallow.SlimeBody>();   // the HUD may add it after Awake (older scenes)
             float target = body != null ? BodySize.ScaleForMass(body.Mass) : 1f;
             if (Mathf.Approximately(BodyScale, target)) return;
             float old = BodyScale;

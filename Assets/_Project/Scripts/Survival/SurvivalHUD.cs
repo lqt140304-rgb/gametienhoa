@@ -46,6 +46,11 @@ namespace Evolve.Survival
             skills = stats.GetComponent<SkillBar>();
             // Upgrade existing scenes in memory; no scene rebuild or saved asset changes.
             if (skills == null && organs != null) skills = stats.gameObject.AddComponent<SkillBar>();
+            if (organs != null && !stats.IsRemote)
+            {
+                if (stats.GetComponent<Evolve.Swallow.SlimeBody>() == null) stats.gameObject.AddComponent<Evolve.Swallow.SlimeBody>();
+                if (stats.GetComponent<Evolve.Swallow.Swallower>() == null) stats.gameObject.AddComponent<Evolve.Swallow.Swallower>();
+            }
             if (skills != null)
                 skills.SkillUnlocked += (o, slot) =>
                     Toast($"Mở kỹ năng: {o.GrantedAbility.DisplayName}\n(phím {slot + 1}, từ {o.DisplayName})");
