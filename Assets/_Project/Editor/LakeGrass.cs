@@ -18,7 +18,7 @@ namespace Evolve.EditorTools
         const string Root = "Assets/_Project";
         const string ShaderName = "Evolve/GrassBlade";
         const string Prefix = "Lake_Grass_";
-        const int Variants = 4;
+        internal const int Variants = 4;
         static readonly float[] Heights = { 0.55f, 0.75f, 0.95f, 1.15f };
         static readonly int[] Blades = { 8, 7, 6, 5 };
         static readonly Color[] Tips = { new Color(0.30f, 0.54f, 0.15f), new Color(0.34f, 0.58f, 0.17f), new Color(0.40f, 0.58f, 0.18f), new Color(0.27f, 0.50f, 0.20f) };
@@ -98,7 +98,7 @@ namespace Evolve.EditorTools
             Debug.Log($"Đã trồng thảm cỏ: khoảng {clumps} bụi quanh vùng nước, rẽ sang hai bên khi đi qua (cần GrassPushers chạy khi Play). Bấm Ctrl+S để lưu scene.");
         }
 
-        static float Hash(int x, int y, int s)
+        internal static float Hash(int x, int y, int s)
         {
             unchecked
             {
@@ -109,7 +109,7 @@ namespace Evolve.EditorTools
             }
         }
 
-        static GameObject MakePrefab(int variant, Shader shader)
+        internal static GameObject MakePrefab(int variant, Shader shader)
         {
             string name = Prefix + variant;
             string meshPath = $"{Root}/Models/Grass/{name}.asset", matPath = $"{Root}/Materials/{name}.mat", prefabPath = $"{Root}/Prefabs/{name}.prefab";

@@ -129,6 +129,20 @@ namespace Evolve.World
             return band * (0.45f + 0.55f * ZoneLayout.Noise(x / 6f + 11f, z / 6f + 5f));
         }
 
+        /// <summary>
+        /// The grass carpet: real blades (terrain details, see Editor/CavernGrass): thick from the wet edge out across the dry floor, patchy with clearings,
+        /// thinning toward the wall; none in the water or on the wall.
+        /// </summary>
+        public static float GrassDensity(float x, float z)
+        {
+            if (DepthAt(x, z) > 0f || GroundHeight(x, z) > 3.2f) return 0f;
+            float d = Distance(x, z) - LakeRadius(Angle(x, z));
+            float band = Smooth01((d - 0.2f) / 1.2f) * (1f - Smooth01((d - 22f) / 14f));
+            float patch = 0.6f + 0.4f * ZoneLayout.Noise(x / 11f + 3f, z / 11f + 8f);
+            float clearing = Smooth01((ZoneLayout.Noise(x / 17f + 40f, z / 17f + 7f) - 0.2f) / 0.2f);
+            return band * patch * clearing;
+        }
+
         /// <summary>Glowing mushrooms: in clumps, mostly in the shade of the wall's foot and at the water's edge.</summary>
         public static float MushroomDensity(float x, float z)
         {

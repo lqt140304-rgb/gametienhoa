@@ -106,6 +106,24 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void GrassCarpetRingsTheLakeAndStopsAtWaterAndWall()
+        {
+            int grassy = 0, total = 0;
+            for (float x = -44f; x <= 44f; x += 1f)
+                for (float z = -44f; z <= 44f; z += 1f)
+                {
+                    float d = CavernLayout.GrassDensity(x, z);
+                    Assert.That(d, Is.InRange(0f, 1f));
+                    if (CavernLayout.DepthAt(x, z) > 0f) Assert.AreEqual(0f, d, 1e-6f);
+                    if (CavernLayout.GroundHeight(x, z) > 3.2f) Assert.AreEqual(0f, d, 1e-6f);
+                    total++;
+                    if (d > 0.3f) grassy++;
+                }
+            Assert.Greater(grassy, 300, "a real carpet");
+            Assert.Less(grassy, total / 2);
+        }
+
+        [Test]
         public void OreIsRareAndOnDryGround()
         {
             var ore = CavernLayout.ScatterSpaced(11, 20000, CavernLayout.OreDensity, 10f, 20);

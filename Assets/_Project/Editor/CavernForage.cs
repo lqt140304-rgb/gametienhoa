@@ -23,7 +23,7 @@ namespace Evolve.EditorTools
         static readonly Dictionary<string, string> BlenderModel = new Dictionary<string, string>
         {
             { "reed", "Forage_Cattail" }, { "lily", "Forage_WaterLily" }, { "moss", "Forage_MossClump" }, { "sweet", "Forage_SweetRoot" },
-            { "fern", "Forage_BitterFern" }, { "berry", "Forage_EmberBerry" }, { "fatcap", "Forage_FatMushroom" }, { "pod", "Forage_SporePod" },
+            { "fern", "Forage_BitterFern" }, { "berry", "Forage_EmberBerry" }, { "fatcap", "Forage_FatCap" }, { "pod", "Forage_SporePod" },
             { "quartz", "Forage_Quartz" }, { "lime", "Forage_LimeCrystal" }, { "iron", "Forage_IronNodule" }, { "salt", "Forage_SaltCrust" },
         };
 
@@ -107,7 +107,7 @@ namespace Evolve.EditorTools
             Debug.Log($"Thức ăn trong hang: {all.Count} cái ({string.Join(", ", summary)}); mô hình Blender {fromBlender}, mô hình dự phòng bằng code {fromCode}. Ctrl+S để lưu scene.");
         }
 
-        static Material GlowMat(string id, Color tint)
+        internal static Material GlowMat(string id, Color tint)
         {
             string path = $"Assets/_Project/Materials/Cavern_Glow_{id}.mat";
             var shader = Shader.Find("Evolve/RockVertexColor");

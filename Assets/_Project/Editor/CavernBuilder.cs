@@ -391,26 +391,47 @@ namespace Evolve.EditorTools
         {
             var root = new GameObject("Plants").transform;
 
-            // the carpet: small tufts of grass round the lake, in 16 m cells so only the near ones are drawn
-            var grass = LakeGround.OpaqueMaterial("Cavern_Grass", new Color(0.17f, 0.40f, 0.13f), 0.05f, true);
-            var cells = new Dictionary<(int, int), List<Vector3>>();
-            foreach (var p in CavernLayout.Scatter(21, 9000, CavernLayout.PlantDensity))
-            {
-                var key = (Mathf.FloorToInt(p.x / 16f), Mathf.FloorToInt(p.z / 16f));
-                if (!cells.TryGetValue(key, out var list)) cells[key] = list = new List<Vector3>();
-                list.Add(p);
-            }
-            var holder = new GameObject("Grass").transform;
-            holder.SetParent(root, false);
-            foreach (var kv in cells)
-                LakeGround.AddMesh(holder, $"Grass {kv.Key.Item1},{kv.Key.Item2}", GroundMeshes.Tufts(kv.Value, 31 + kv.Key.Item1 * 7 + kv.Key.Item2, 0.5f), grass);
+            // the carpet: real 3D grass blades (terrain details, swaying and bending away from the slime)
+            CavernGrass.Dress(Object.FindAnyObjectByType<Terrain>());
 
-            // glowing mushrooms in clumps at the water's edge and at the foot of the wall
+            // decorative mushrooms in clumps at the water's edge and at the foot of the wall: the detailed Blender clusters (CaveShroom_0..3);
+            // the code mushrooms are only the fallback
+            PropInstaller.EnsureLandmarks();
+            var prefabs = new GameObject[4];
+            bool haveModels = true;
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                prefabs[i] = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Models/Underroot/CaveShroom_{i}.fbx");
+                if (prefabs[i] == null) haveModels = false;
+            }
+            var rnd = new System.Random(23);
+            var points = CavernLayout.Scatter(23, 4000, CavernLayout.MushroomDensity);
+            if (haveModels)
+            {
+                var tints = new Dictionary<int, Color> { { 2, new Color(0.3f, 0.95f, 0.9f) }, { 3, new Color(1f, 0.72f, 0.3f) } };   // the glowing caps: teal and amber
+                int placed = 0;
+                foreach (var p in points)
+                {
+                    if (placed >= 60) break;                       // each cluster is already several mushrooms
+                    double pick = rnd.NextDouble();
+                    int v = pick < 0.34 ? 0 : pick < 0.60 ? 1 : pick < 0.85 ? 2 : 3;
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[v], root);
+                    go.transform.position = p;
+                    go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                    go.transform.localScale = Vector3.one * Mathf.Lerp(0.8f, 1.4f, (float)rnd.NextDouble());
+                    if (tints.TryGetValue(v, out var tint))
+                    {
+                        var glow = CavernForage.GlowMat("shroom" + v, tint);
+                        if (glow != null) foreach (var r in go.GetComponentsInChildren<Renderer>(true)) if (r.name.Contains("Glow")) r.sharedMaterial = glow;
+                    }
+                    placed++;
+                }
+                return;
+            }
             var stalkParts = new List<CombineInstance>();
             var capParts = new List<CombineInstance>();
-            var rnd = new System.Random(23);
             int count = 0;
-            foreach (var p in CavernLayout.Scatter(23, 4000, CavernLayout.MushroomDensity))
+            foreach (var p in points)
             {
                 if (count >= 160) break;
                 FloraMeshes.Mushroom(1000 + count, 0.25f + (float)rnd.NextDouble() * 0.45f, out var stalk, out var cap, out _);
