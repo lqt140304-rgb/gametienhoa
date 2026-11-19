@@ -270,7 +270,7 @@ namespace Evolve.EditorTools
         static Light FindSun()
         {
             if (RenderSettings.sun != null) return RenderSettings.sun;
-            foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+            foreach (var l in Object.FindObjectsByType<Light>())
                 if (l.type == LightType.Directional) return l;
             return null;
         }

@@ -243,7 +243,7 @@ namespace Evolve.EditorTools
             RenderSettings.fogEndDistance = 120f;
 
             Light sun = null;
-            foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None)) if (l.type == LightType.Directional) { sun = l; break; }
+            foreach (var l in Object.FindObjectsByType<Light>()) if (l.type == LightType.Directional) { sun = l; break; }
             if (sun != null)
             {
                 sun.transform.rotation = Quaternion.Euler(CavernLayout.SunElevation, CavernLayout.SunAzimuth, 0f);
