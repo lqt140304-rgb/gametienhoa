@@ -191,7 +191,7 @@ namespace Evolve.World
         /// <summary>The sound wave: its front radius and fade go to the shaders (things light up only while the ring passes) and to the shell that draws it.</summary>
         void UpdateWave()
         {
-            bool on = revealStart >= 0f && sight < 0.999f;
+            bool on = revealStart >= 0f;          // with eyes too: the scan still works and still shows the wave
             float t = Time.time - revealStart;
             float r = on ? SonarWaveMath.Radius(t, revealExpand, revealRadius) : 0f;
             float fade = on ? SonarWaveMath.Fade(t, revealExpand, revealHold, revealFade) : 0f;

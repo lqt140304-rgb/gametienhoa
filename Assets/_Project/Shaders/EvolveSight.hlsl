@@ -20,6 +20,16 @@ float EvolveWaveVisible(float3 positionWS)
     return exp(-x * x) * _EvolveWaveFade;
 }
 
+// For food: lit once the wave front has reached it and for as long as the wave lasts (it fades with the wave), a little less the farther behind the front it lies.
+float EvolveEdibleEcho(float3 positionWS)
+{
+    if (_EvolveWave.w <= 0.0 || _EvolveWaveFade <= 0.0) return 0.0;
+    float d = distance(positionWS, _EvolveWave.xyz);
+    float edge = smoothstep(0.0, max(1.0, 0.06 * _EvolveWave.w), _EvolveWave.w - d);         // switches on as the front passes
+    float behind = exp(-max(0.0, _EvolveWave.w - d) / max(2.0, 0.9 * _EvolveWave.w));
+    return edge * behind * _EvolveWaveFade;
+}
+
 // the sight of a blind slime alone: a soft glow round it (no sound wave)
 float EvolveSightBase(float3 positionWS)
 {

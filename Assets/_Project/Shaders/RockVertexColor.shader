@@ -2,7 +2,7 @@ Shader "Evolve/RockVertexColor"
 {
     // Simple URP lit shader whose albedo is the mesh's vertex colour (stone and moss painted in Blender).
     // Main light with shadows + ambient + every additional light (point and spot, with their distance falloff: the farther from a lamp, the darker).
-    Properties { _Tint ("Tint", Color) = (1,1,1,1) _Glow ("Glow (self-lit, fades with blindness)", Float) = 0 _Fill ("Fill light (a soft light independent of the scene, fades with blindness)", Float) = 0 }
+    Properties { _Tint ("Tint", Color) = (1,1,1,1) _Glow ("Glow (self-lit, fades with blindness)", Float) = 0 _Fill ("Fill light (a soft light independent of the scene, fades with blindness)", Float) = 0 _ScanTint ("Food scan tint (set per object by the game; alpha 0 = not food)", Color) = (0,0,0,0) }
     SubShader
     {
         Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" "Queue"="Geometry" }
@@ -23,6 +23,7 @@ Shader "Evolve/RockVertexColor"
                 half4 _Tint;
                 half _Glow;
                 half _Fill;
+                half4 _ScanTint;
             CBUFFER_END
             #include "EvolveSight.hlsl"   // _EvolveBlind, _EvolveSightCenter and EvolveSightVisible
 
@@ -86,6 +87,15 @@ Shader "Evolve/RockVertexColor"
                 half sight = EvolveSightVisible(pw);
                 half3 col = albedo * (direct + ambient + extra + _Fill * sight);   // _Fill keeps dark-painted plants readable in a dim cave, only while they can be seen
                 col += albedo * _Glow * sight;   // luminous parts (mushroom caps, crystals, bulbs) shine only while you can see
+                // food shows what it is when the sound wave has reached it: its own tint, moving bands and a bright rim
+                if (_ScanTint.a > 0.0)
+                {
+                    float echo = EvolveEdibleEcho(pw);
+                    float3 vdir = normalize(GetWorldSpaceViewDir(pw));
+                    float rimv = pow(1.0 - saturate(abs(dot(n, vdir))), 2.0);
+                    float bands = smoothstep(0.55, 0.95, 0.5 + 0.5 * sin(dot(pw, float3(7.0, 11.0, 5.0)) * 1.3 - _Time.y * 5.0));
+                    col += _ScanTint.rgb * echo * (0.35 + 1.1 * bands + 1.4 * rimv);
+                }
                 col = MixFog(col, i.fogFactor); // far rocks fade into the fog like everything else
                 return half4(col, 1);
             }

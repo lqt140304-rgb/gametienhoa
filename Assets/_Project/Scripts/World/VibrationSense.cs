@@ -32,6 +32,10 @@ namespace Evolve.World
         readonly HashSet<Transform> flashed = new HashSet<Transform>();
         /// <summary>The scan reaches this fraction of the serialized radius (half: the wave is a ring now, not a lit disc).</summary>
         public const float ScanRadiusFactor = 0.5f;
+        /// <summary>The wave takes this many times the serialized expand time to cross its radius, and the echo on food lasts at least <see cref="MinEchoSeconds"/>.</summary>
+        public const float ExpandFactor = 2.5f;
+        public const float MinEchoSeconds = 2.2f;
+        float scanExpand;
         float scanStart = -1f;
         float scanRadius;
         float readyAt;
@@ -106,12 +110,13 @@ namespace Evolve.World
             scanStart = Time.time;
             readyAt = Time.time + cooldown;
             flashed.Clear();
-            if (vision != null) vision.Reveal(scanRadius, expandSeconds, holdSeconds, fadeSeconds);
+            scanExpand = expandSeconds * ExpandFactor;
+            if (vision != null) vision.Reveal(scanRadius, scanExpand, Mathf.Max(holdSeconds, MinEchoSeconds * 0.6f), Mathf.Max(fadeSeconds, MinEchoSeconds * 0.5f));
         }
 
         void UpdateWave()
         {
-            float t = (Time.time - scanStart) / Mathf.Max(0.01f, expandSeconds);
+            float t = (Time.time - scanStart) / Mathf.Max(0.01f, scanExpand);
             float r = Mathf.Min(1f, t) * scanRadius;
 
             // no particles puffing out of the things the wave passes: the wave itself shows their shape (Shaders/SonarShell)

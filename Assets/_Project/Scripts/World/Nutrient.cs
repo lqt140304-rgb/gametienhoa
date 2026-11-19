@@ -47,6 +47,7 @@ namespace Evolve.World
             rend = GetComponentInChildren<Renderer>();
             baseScale = transform.localScale;
             remaining = totalNutrition;
+            EdibleScan.Apply(this, foodKind);   // the sound wave tints food in its own colour
             all.Add(this);
         }
 
