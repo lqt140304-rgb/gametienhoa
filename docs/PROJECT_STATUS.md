@@ -530,3 +530,12 @@ Checklist: (1) Console sạch (không lỗi shader); (2) Evolve → Dress Cavern
 
 - **Độ sáng do người chơi chỉnh:** `Visuals/BrightnessSetting` (tự tạo khi chạy game): **F10** mở bảng "Độ sáng" có thanh kéo (0 đến 100%, mặc định 35%), phím **[** và **]** chỉnh nhanh từng nấc 5%, nhớ giữa các lần chơi (PlayerPrefs). Thêm một Volume hậu xử lý ưu tiên cao chỉ chỉnh độ phơi sáng (-0,5 đến +3 stop) và nâng vùng tối (LiftGammaGain), không đụng độ bão hòa của hệ thị lực. Số liệu ở `Visuals/BrightnessMath`, test `BrightnessMathTests`.
 - **Chùm sáng hang:** phần của chùm gần camera mờ đi (3 đến 14 m), nên đứng trong chùm không còn thấy tường sọc dọc phủ kín màn hình.
+
+## 33. Thảm thực vật không ăn được của Hang Khởi Sinh: trạng thái và danh sách kiểm tra
+
+- Cách quét tài sản bên ngoài bị bỏ vì tốn tài nguyên; thay bằng mô hình Blender nhẹ (`tools/blender/build_cavern_flora.py`, test `test_cavern_flora.py`, màu đỉnh sáng vừa để không đen trong hang tối): dương xỉ hang (2), sậy (2), đệm rêu (3), bụi lá (2), cụm nấm với mũ phát sáng riêng (2), rễ trồi (2), dây leo buông từ trần (2). Mỗi cái dưới 2.200 mặt.
+- **Evolve → Dress Cavern: Flora** (Build Slime Cavern cũng chạy nó; hoàn tác: Restore Cavern Flora; cần Reinstall Blender Props trước): đặt khoảng 650 cây theo **luật môi trường** `World/CavernFloraMath` (có test): sậy ở nước nông và mép ướt, rêu ở chỗ ẩm và bóng, dương xỉ ở đất ẩm cách nước 2 đến 22 m, bụi lá ở đất khô hơn cách nước 7 đến 26 m, cụm nấm ở bóng chân vách và mép hồ, rễ trồi ở chân vách, dây leo buông thành vòng quanh lỗ sáng ở trần. Không đặt trong nước sâu, trên chỗ slime sinh ra, hay đè lên thức ăn.
+- Cây nhận ánh sáng như các đồ Blender khác (shader `RockVertexColor`): sáng ở gần nguồn, tối dần khi xa; khi slime mù chỉ hiện quanh slime.
+- Chưa biên dịch hay thấy trong Unity. Chưa có va chạm cho các cây này.
+
+Checklist: (1) Console sạch, Test Runner xanh (`CavernFloraMathTests`); (2) Reinstall Blender Props, rồi Dress Cavern: Flora, Ctrl+S; (3) quanh hồ thấy các dải sậy, rêu, dương xỉ; bụi lá xa hơn; dây leo quanh lỗ sáng; (4) FPS không tụt quá 10%.
