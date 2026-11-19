@@ -9,7 +9,7 @@ namespace Evolve.Maze
     /// </summary>
     public static class MazeActivationRules
     {
-        public const float DefaultChamberSpacing = 250f;
+        public const float DefaultChamberSpacing = 280f;
         public const int GridColumns = 4;
 
         /// <summary>Trả về tập Id khoang cần bật (khoang hiện tại + các khoang kề trực tiếp).</summary>

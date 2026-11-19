@@ -90,6 +90,24 @@ namespace Evolve.Maze
         FossilBoneyard = 32
     }
 
+    /// <summary>Kỳ ngộ hoặc bẫy/cơ chế môi trường riêng của từng khoang (lấy cảm hứng từ kỳ ngộ TFT).</summary>
+    public enum ChamberEncounterKind
+    {
+        None = 0,
+        /// <summary>Suối Nguồn Cổ Đại: hồi đầy máu và tặng thêm khối lượng (nạp lại sau mỗi đỉnh lũ).</summary>
+        AncientFont = 1,
+        /// <summary>Tinh Thể Cộng Hưởng: hiến 25% máu hiện tại để nhận khối lượng lớn và đẩy lùi quái quanh đó.</summary>
+        ResonanceCrystal = 2,
+        /// <summary>Hổ Phách Tiền Sử: cần đủ khối lượng (>= 11) để phá vỡ và nhận thưởng lớn.</summary>
+        AmberShrine = 3,
+        /// <summary>Mạch Phun Nước Ngầm: phun theo nhịp giúp phóng slime lên gờ cao tránh lũ hoặc vượt địa hình.</summary>
+        UndergroundGeyser = 4,
+        /// <summary>Túi Bào Tử Nổ: bẫy sinh học phát nổ khi slime lại gần, gây sát thương và hất văng.</summary>
+        SporeGeyserTrap = 5,
+        /// <summary>Khe Hơi Nóng: bẫy nhiệt tầng sâu phun theo chu kỳ ở vùng trũng.</summary>
+        ThermalVentTrap = 6
+    }
+
     /// <summary>Dữ liệu thuần một khoang trong đồ thị mê cung.</summary>
     public sealed class ChamberNode
     {
@@ -98,6 +116,7 @@ namespace Evolve.Maze
         public ChamberDepth Depth { get; }
         public ChamberKind Kind { get; }
         public ChamberTheme Theme { get; }
+        public ChamberEncounterKind Encounter { get; }
         public bool HasHighLedge { get; }
         public int DangerTier => (int)Depth + 1;
 
@@ -107,7 +126,8 @@ namespace Evolve.Maze
             ChamberDepth depth,
             ChamberKind kind,
             bool hasHighLedge = true,
-            ChamberTheme theme = ChamberTheme.LumaMushroomGrove)
+            ChamberTheme theme = ChamberTheme.LumaMushroomGrove,
+            ChamberEncounterKind encounter = ChamberEncounterKind.None)
         {
             Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -115,6 +135,7 @@ namespace Evolve.Maze
             Kind = kind;
             HasHighLedge = hasHighLedge;
             Theme = theme;
+            Encounter = encounter;
         }
     }
 

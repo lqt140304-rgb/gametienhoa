@@ -91,7 +91,8 @@ namespace Evolve.Maze
                     ChamberKind.DeadEnd => $"Lối Giả #{deadEndNum++}",
                     _ => ChamberThemeCatalog.Get(theme).DisplayName
                 };
-                chambers.Add(new ChamberNode(i, name, depths[i], kinds[i], hasHighLedge: true, theme: theme));
+                var encounter = ChamberEncounterRules.PickForChamber(kinds[i], depths[i], theme, ref rng);
+                chambers.Add(new ChamberNode(i, name, depths[i], kinds[i], hasHighLedge: true, theme: theme, encounter: encounter));
             }
 
             // 4. Tạo đồ thị hầm nối các khoang chính (không phải DeadEnd)
