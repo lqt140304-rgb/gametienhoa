@@ -21,7 +21,7 @@ namespace Evolve.Survival
         public static float MenuScale(float width,float height,float hudScale)
             => Math.Max(.1f,Math.Min(1f,Math.Min((width-32)/1240f,(height-68-272*hudScale)/650f)));
     }
-    public enum HudMenu { None, Skills, Organs, Settings, Help }
+    public enum HudMenu { None, Skills, Organs, Settings, Help, Stomach }
 
     /// <summary>Viewport and menu rules shared by the HUD and its checks.</summary>
     public static class HudLayout

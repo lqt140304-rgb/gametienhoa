@@ -108,6 +108,8 @@ namespace Evolve.Survival
             }
 
             if (!MenuOpen) DrawOrganPrompt();
+            DrawSwallowHint();
+            DrawEchoLine();
 
             DrawAim();
             DrawOverlayMenu();
