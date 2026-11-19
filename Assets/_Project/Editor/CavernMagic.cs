@@ -280,7 +280,7 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>The Blender plants are painted dark (made for a sunlit map) and came out black in the dim cave. They get a lifted copy of the vertex-colour
-        /// material: albedo x2.6 and a soft fill light, both fading with the slime's sight.</summary>
+        /// material: albedo x1.5 and a gentle fill light, both fading with the slime's sight.</summary>
         static void BrightenPlants()
         {
             var shader = Shader.Find("Evolve/RockVertexColor");
@@ -289,8 +289,8 @@ namespace Evolve.EditorTools
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (mat == null) { mat = new Material(shader) { name = "Cavern_PlantVC" }; AssetDatabase.CreateAsset(mat, path); }
             mat.shader = shader;
-            mat.SetColor("_Tint", new Color(2.6f, 2.6f, 2.6f, 1f));
-            mat.SetFloat("_Fill", 0.9f);
+            mat.SetColor("_Tint", new Color(1.5f, 1.5f, 1.5f, 1f));
+            mat.SetFloat("_Fill", 0.3f);
             EditorUtility.SetDirty(mat);
             int n = 0;
             foreach (var nut in Object.FindObjectsByType<Nutrient>())
