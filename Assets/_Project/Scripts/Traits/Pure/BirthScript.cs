@@ -19,12 +19,12 @@ namespace Evolve.Traits
         /// <summary>The six gifts every slime is born with (spec 3), in the order they are granted.</summary>
         public static IReadOnlyList<Gift> Gifts { get; } = new List<Gift>
         {
-            new Gift("gift.tui", "Túi Không Đáy", "Chứa những gì bạn nuốt.", true),
-            new Gift("gift.nuot", "Nuốt Chửng", "Nuốt thứ nhỏ hơn mình.", true),
-            new Gift("gift.giaima", "Giải Mã", "Học từ những gì đã nuốt.", true),
-            new Gift("gift.bienhinh", "Biến Hình", "Nặn kỹ năng từ chính thân mình.", true),
-            new Gift("gift.songdo", "Sóng Dò", "Nghe thế giới bằng sóng âm.", true),
-            new Gift("gift.phanthan", "Phân Thân", "Tách một mảnh nhỏ, nuốt lại được.", false),
+            new Gift("gift.tui", "Túi Không Đáy", "Cho phép chứa mọi thứ bạn nuốt.", true),
+            new Gift("gift.nuot", "Nuốt Chửng", "Nuốt trọn những gì nhỏ hơn bạn.", true),
+            new Gift("gift.giaima", "Giải Mã", "Học hỏi từ những gì bạn đã nuốt.", true),
+            new Gift("gift.bienhinh", "Biến Hình", "Nặn kỹ năng từ chính cơ thể bạn.", true),
+            new Gift("gift.songdo", "Sóng Dò", "Cảm nhận thế giới bằng sóng âm.", true),
+            new Gift("gift.phanthan", "Phân Thân", "Tách một mảnh khỏi cơ thể, và nuốt lại khi cần.", false),
         };
 
         /// <summary>The steps of the scene, in order (a fresh list each time: the scene fills in the reveal steps' voices).</summary>
@@ -33,9 +33,9 @@ namespace Evolve.Traits
             var steps = new List<BirthStep>
             {
                 new BirthStep { Kind = BirthStepKind.Boot, Text = "Hệ thống đang khởi động…", MinSeconds = 4.5f },
-                Line("echo.born", "Xác nhận. Phát hiện một linh hồn vừa chuyển sinh vào thế giới này.", 4.5f),
-                Line("echo.body", "Đang dựng cá thể. Chủng tộc: Slime. Hình thể ban đầu là một khối nhầy nhỏ, chưa có mắt, chưa có chân.", 6f),
-                Line("echo.gift", "Ban tặng Ân Điển Khởi Sinh. Đây là sáu năng lực nền tảng mà mọi cá thể đều mang theo.", 5f),
+                Line("echo.born", "Xác nhận. Một linh hồn vừa chuyển sinh vào thế giới này.", 4.5f),
+                Line("echo.body", "Đang dựng cá thể. Chủng tộc: Slime. Hình thể: một khối nhầy nhỏ. Chưa có mắt. Chưa có chân.", 6f),
+                Line("echo.gift", "Ban tặng Ân Điển Khởi Sinh. Sáu năng lực nền tảng, mà mọi cá thể đều mang theo.", 5f),
             };
             for (int i = 0; i < Gifts.Count; i++)
             {
@@ -46,13 +46,13 @@ namespace Evolve.Traits
                     Text = g.Name + ": " + g.Line, VoiceText = g.Name + ". " + g.Line
                 });
             }
-            steps.Add(Line("echo.fate", "Tiếp theo, số mệnh sẽ ban cho bạn hai thứ: một Lõi độc nhất, và một khiếm khuyết.", 5.5f));
+            steps.Add(Line("echo.fate", "Tiếp theo, số mệnh sẽ định đoạt hai điều. Lõi của bạn. Và cái giá phải trả.", 5.5f));
             steps.Add(new BirthStep { Kind = BirthStepKind.DealCore, VoiceId = "echo.core", MinSeconds = 4f,
-                Text = "Lõi là quy luật riêng của cơ thể bạn, luôn chạy ngầm. Hãy chọn một lá bài." });
+                Text = "Lõi là quy luật riêng của cơ thể bạn, luôn âm thầm vận hành. Hãy chọn một lá bài." });
             steps.Add(new BirthStep { Kind = BirthStepKind.PickCore, Text = "Chọn một lá bài." });
             steps.Add(new BirthStep { Kind = BirthStepKind.RevealCore, MinSeconds = 6f });
             steps.Add(new BirthStep { Kind = BirthStepKind.DealFlaw, VoiceId = "echo.flaw", MinSeconds = 4f,
-                Text = "Mỗi Lõi đều có cái giá của nó. Hãy chọn một lá bài khiếm khuyết." });
+                Text = "Mỗi sức mạnh đều có cái giá. Hãy chọn một lá bài khiếm khuyết." });
             steps.Add(new BirthStep { Kind = BirthStepKind.PickFlaw, Text = "Chọn một lá bài." });
             steps.Add(new BirthStep { Kind = BirthStepKind.RevealFlaw, MinSeconds = 6f });
             steps.Add(new BirthStep { Kind = BirthStepKind.Summary, VoiceId = "echo.done", MinSeconds = 6f, Text = "Số mệnh đã định. Hãy sống sót." });

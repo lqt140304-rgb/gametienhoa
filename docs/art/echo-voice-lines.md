@@ -10,7 +10,7 @@ Cảnh ra đời đọc mọi lời bằng giọng Tiếng Vọng. Mỗi câu l�
 Chữ của từng câu nằm trong `Assets/_Project/Scripts/Traits/Pure/BirthScript.cs` (một nguồn duy nhất). Đổi lời hay thêm Lõi thì chạy lại script bên dưới.
 
 ## Giọng đang dùng
-- **Giọng:** Hạnh (ElevenLabs, nữ trẻ Hà Nội, `pGapy9MNHCukzJtjavF0`, thư viện chung), mô hình `eleven_turbo_v2_5` với `language_code=vi` (mô hình multilingual tự đoán ngôn ngữ nên đọc lệch tiếng Việt).
+- **Giọng:** Phương (ElevenLabs, nữ trẻ, giọng Trung, mềm và dịu, `deC6NEXcbavaVWbzjgzb`, thư viện chung), mô hình `eleven_turbo_v2_5` với `language_code=vi`. Đọc **tự nhiên**: chỉ cân âm lượng, không hiệu ứng. Muốn giọng máy: `MODE=system`. Giọng Hạnh (nữ Hà Nội): `VOICE=pGapy9MNHCukzJtjavF0`.
 - **Đọc:** `stability 1.0`, `style 0`, `speed 0.95`.
 - **Làm phẳng cao độ** (`tools/voice/flatten_pitch.py`, WORLD vocoder): đọc cùng một nốt như máy, một màu, không cảm xúc. `FLAT=0.0` phẳng hoàn toàn (mặc định), `FLAT=0.2` còn chút nhấn, `FLAT=1` giữ nguyên.
 - **Hiệu ứng "hệ thống" (ffmpeg):** lọc dải 170 Hz–6,5 kHz, chorus mỏng, vang ngắn kiểu kim loại, nén, chuẩn hóa -16 LUFS. Máy móc hơn: thêm `acrusher` (méo số) hoặc `asetrate=44100*0.97` (trầm hơn); nhẹ hơn: bỏ `chorus`.
