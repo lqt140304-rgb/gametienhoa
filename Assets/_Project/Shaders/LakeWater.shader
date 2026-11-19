@@ -186,10 +186,10 @@ Shader "Evolve/LakeWater"
                 if (_BeamPool.w > 0.0)
                 {
                     float bd = distance(i.positionWS.xz, _BeamPool.xz) / _BeamPool.w;
-                    pool = smoothstep(1.0, 0.1, bd);
+                    pool = smoothstep(1.0, 0.0, bd); pool *= pool;       // a soft round glow, no edge
                     float ring = 0.5 + 0.5 * sin(bd * 20.0 - _Time.y * 2.4);                     // slow rings spreading out from the middle
                     float fine = Caustics(i.positionWS.xz * 2.2 + n.xz * 2.0, _Time.y * 1.4);
-                    col += _BeamColor.rgb * (pool * 0.5 + pool * pool * ring * 0.22 + pool * fine * 0.9);
+                    col += _BeamColor.rgb * (pool * 0.5 + pool * ring * 0.08 + pool * fine * 0.9);
                 }
                 if (_SparkleStrength > 0.0)
                 {

@@ -53,7 +53,12 @@ namespace Evolve.EditorTools
             EditorUtility.SetDirty(mat);
 
             var main = GameObject.Find("Light Beam");
-            if (main != null) main.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            if (main != null)
+            {
+                main.GetComponent<MeshRenderer>().sharedMaterial = mat;
+                // the spot light's cone must not leave a circle with a hard edge on the floor and walls: all penumbra, no flat middle
+                foreach (var l in main.GetComponentsInChildren<Light>()) { l.innerSpotAngle = 0f; l.spotAngle = Mathf.Min(120f, l.spotAngle * 1.25f); }
+            }
 
             // a few thinner rays through the rough edge of the hole, slightly different in angle, so the light is not one clean tube
             var dir = CavernLayout.SunDirection;
@@ -63,7 +68,7 @@ namespace Evolve.EditorTools
             rays.SetParent(root, false);
             var rnd = new System.Random(19);
             var rayMat = new Material(mat) { name = "Cavern_BeamRay" };
-            rayMat.SetFloat("_Intensity", 0.26f);
+            rayMat.SetFloat("_Intensity", 0.16f);
             rayMat.SetFloat("_Dust", 0.5f);
             for (int i = 0; i < 4; i++)
             {

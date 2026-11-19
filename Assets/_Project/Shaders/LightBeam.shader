@@ -68,7 +68,7 @@ Shader "Evolve/LightBeam"
                 float h = saturate(i.uv.y);                                  // 0 at the hole, 1 at the water
                 float3 viewDir = normalize(GetWorldSpaceViewDir(i.positionWS));
                 float facing = abs(dot(normalize(i.normalWS), viewDir));
-                float edge = pow(saturate(facing), 1.7);                      // the silhouette fades out: a volume of light, not a tube
+                float edge = pow(saturate(facing), 2.6);                      // no outline: the light thins to nothing at the sides, brightest through the middle
                 // streaks of denser and thinner air drifting round and down the beam
                 float per = max(2.0, floor(_Streaks));
                 float s1 = wrapNoise(i.uv.x * per + t * _Speed * 3.0, h * 2.5 - t * _Speed, per);
@@ -76,11 +76,11 @@ Shader "Evolve/LightBeam"
                 float s2 = wrapNoise(i.uv.x * per2 - t * _Speed * 5.0 + 3.0, h * 6.0 + t * _Speed * 2.0, per2);
                 float streak = 0.35 + 0.95 * (s1 * 0.65 + s2 * 0.35);
                 // strongest at the hole, thinning toward the water
-                float along = lerp(1.0, 0.35, h) * smoothstep(0.0, 0.04, h);
+                float along = lerp(1.0, 0.3, h * h) * smoothstep(0.0, 0.22, h) * (1.0 - smoothstep(0.78, 1.0, h));   // it grows out of the hole and dissolves above the water: no start or end line
                 // where the beam meets the water or the ground it fades out instead of ending in a hard line
                 float2 suv = i.positionCS.xy / _ScaledScreenParams.xy;
                 float sceneEye = LinearEyeDepth(SampleSceneDepth(suv), _ZBufferParams);
-                float soft = saturate((sceneEye - i.positionCS.w) / 2.5);
+                float soft = smoothstep(0.0, 1.0, saturate((sceneEye - i.positionCS.w) / 3.5));
                 // dust specks: a few bright motes drifting down through the beam, each twinkling at its own pace
                 float3 cell = floor(i.positionWS * 3.2 + float3(0.0, t * 0.25, 0.0));
                 float r = hash31(cell);
