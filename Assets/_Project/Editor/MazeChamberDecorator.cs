@@ -50,13 +50,13 @@ namespace Evolve.EditorTools
             // 3. Thảm thực vật, cỏ mềm, đá tảng và nhũ đá/rễ bám chặt đúng cao độ đất/trần
             PlacePropsAndFlora(parent, node, seed, chamberRadius, tunnelAnglesDeg, profile, floorColor, wallMat, glowMat, rnd);
 
-            // 4. Thức ăn (Nutrient) & Kỳ Ngộ / Bẫy riêng của khoang
+            // 4. Thức ăn (Nutrient) & Sinh vật & Ánh sáng đa tầng
             PlaceForageNutrients(parent, node, seed, chamberRadius, tunnelAnglesDeg, profile, glowMat, rnd);
-            PlaceEncounterOrTrap(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, glowMat, rnd);
-
-            // 5. Sinh vật & Ánh sáng đa tầng
             PlaceCreatures(parent, node, chamberRadius, profile, rnd);
-            BuildChamberLighting(parent, profile, mainLightColor, accentLightColor);
+            var lights = BuildChamberLighting(parent, profile, mainLightColor, accentLightColor);
+
+            // 5. Kỳ Ngộ Tình Huống Môi Trường Động (trực quan với tán nấm trú / tinh thể chắn / mạch phun / lồng xương)
+            PlaceEncounterOrTrap(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, lights);
         }
 
         static void BuildSpecialLandmarks(
@@ -264,99 +264,98 @@ namespace Evolve.EditorTools
             float chamberRadius,
             IReadOnlyList<float> tunnelAnglesDeg,
             Material wallMat,
-            Material glowMat,
-            System.Random rnd)
+            List<Light> chamberLights)
         {
             if (node.Encounter == ChamberEncounterKind.None) return;
 
-            // Đặt Kỳ Ngộ / Bẫy chính ở phía đối diện đồi trú lũ (vùng dễ gặp khi khám phá khoang)
-            float ledgeAngle = MazeTerrainMath.PickHighLedgeAngleDeg(tunnelAnglesDeg, seed);
-            float encAngleRad = (ledgeAngle + 150f) * Mathf.Deg2Rad;
-            float dist = node.Encounter == ChamberEncounterKind.UndergroundGeyser ? 10.5f : 12.0f;
-            float ex = Mathf.Cos(encAngleRad) * dist;
-            float ez = Mathf.Sin(encAngleRad) * dist;
-            if (node.Kind == ChamberKind.Shelter)
+            var situationGo = new GameObject($"TìnhHuốngMôiTrường_{node.Encounter}");
+            situationGo.transform.SetParent(parent, false);
+            var covers = new List<Transform>();
+            var geysers = new List<Transform>();
+
+            float[] anchorAngles = { 35f, 155f, 275f };
+            for (int i = 0; i < anchorAngles.Length; i++)
             {
-                ex = 0f;
-                ez = 0f;
+                float rad = anchorAngles[i] * Mathf.Deg2Rad;
+                float dist = node.Encounter == ChamberEncounterKind.ThermalGeyserSurge ? 10f : 15f;
+                float px = Mathf.Cos(rad) * dist;
+                float pz = Mathf.Sin(rad) * dist;
+                if (node.Encounter == ChamberEncounterKind.AncientDragonBreath)
+                {
+                    // Ở Khoang Phong Ấn, điểm trú là ngay trong lồng xương rồng ở giữa khoang
+                    if (i > 0) continue;
+                    px = 0f;
+                    pz = -2f;
+                }
+                float py = MazeTerrainMath.GroundHeightAt(px, pz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
+                Vector3 localPos = new Vector3(px, py, pz);
+
+                switch (node.Encounter)
+                {
+                    case ChamberEncounterKind.AcidSporeRain:
+                        covers.Add(CreateFeatureMarker(situationGo.transform, $"Tán Nấm Trú Mưa_{i}", localPos, $"Mushroom_Giant_{i % 3}", 2.2f, new Color(0.35f, 0.95f, 0.65f), wallMat));
+                        break;
+
+                    case ChamberEncounterKind.CrystalPulseStorm:
+                        covers.Add(CreateFeatureMarker(situationGo.transform, $"Tinh Thể Chắn Sóng_{i}", localPos, $"CrystalCluster_{i % 3}", 2.1f, new Color(0.35f, 0.85f, 1.0f), wallMat));
+                        break;
+
+                    case ChamberEncounterKind.ThermalGeyserSurge:
+                        if (i < 2)
+                            geysers.Add(CreateFeatureMarker(situationGo.transform, $"Mạch Phun Ngầm_{i}", localPos, "BulbPlant_0", 1.7f, new Color(0.35f, 0.80f, 1.0f), wallMat));
+                        break;
+
+                    case ChamberEncounterKind.AwakeningRoots:
+                        if (i < 2)
+                            geysers.Add(CreateFeatureMarker(situationGo.transform, $"Gốc Rễ Thức Tỉnh_{i}", localPos, i == 0 ? "RootArch" : "Log_Hollow", 1.5f, new Color(0.55f, 1.0f, 0.45f), wallMat));
+                        break;
+
+                    case ChamberEncounterKind.AncientDragonBreath:
+                        var dragonCover = new GameObject("Vùng Trú Lồng Xương Rồng").transform;
+                        dragonCover.SetParent(situationGo.transform, false);
+                        dragonCover.localPosition = localPos;
+                        covers.Add(dragonCover);
+                        break;
+                }
             }
-            float ey = MazeTerrainMath.GroundHeightAt(ex, ez, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
 
-            SpawnEncounterNode(parent, node.Encounter, new Vector3(ex, ey, ez), wallMat, glowMat, seed);
-
-            // Nếu là bẫy môi trường (Bào Tử / Khe Nhiệt), thêm 1 bẫy phụ + thưởng quặng quý ở gần để kích thích mạo hiểm
-            if (node.Encounter == ChamberEncounterKind.SporeGeyserTrap || node.Encounter == ChamberEncounterKind.ThermalVentTrap)
-            {
-                float subAngle = encAngleRad + 1.4f;
-                float sx = Mathf.Cos(subAngle) * 14f;
-                float sz = Mathf.Sin(subAngle) * 14f;
-                float sy = MazeTerrainMath.GroundHeightAt(sx, sz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
-                SpawnEncounterNode(parent, node.Encounter, new Vector3(sx, sy, sz), wallMat, glowMat, seed + 50);
-
-                var rewardItem = new ThemeForageItem("Forage_Quartz", "Thạch Anh Hiếm", FoodKind.GlowQuartz, isMineral: true);
-                CreateNutrientObject(parent, rewardItem, new Vector3(ex + 2.4f, MazeTerrainMath.GroundHeightAt(ex + 2.4f, ez, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge), ez), glowMat, rnd);
-            }
+            var zone = situationGo.AddComponent<ChamberEncounterZone>();
+            zone.Configure(node.Encounter, offsetSeconds: node.Id * 7f, covers, geysers, chamberLights);
         }
 
-        static void SpawnEncounterNode(
+        static Transform CreateFeatureMarker(
             Transform parent,
-            ChamberEncounterKind kind,
+            string name,
             Vector3 localPos,
-            Material wallMat,
-            Material glowMat,
-            int seed)
+            string fbxName,
+            float scale,
+            Color lightColor,
+            Material wallMat)
         {
-            var go = new GameObject($"KỳNgộ_{kind}");
+            var go = new GameObject(name);
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPos;
 
-            var col = go.AddComponent<SphereCollider>();
-            col.isTrigger = true;
-            col.radius = kind == ChamberEncounterKind.ThermalVentTrap ? 3.2f : 2.5f;
-            col.center = new Vector3(0f, 0.8f, 0f);
-
-            // Bệ đá tự nhiên
-            var ring = new GameObject("Bệ Đá Tự Nhiên");
-            ring.transform.SetParent(go.transform, false);
-            ring.transform.localPosition = new Vector3(0f, -0.15f, 0f);
-            ring.AddComponent<MeshFilter>().sharedMesh = CaveMeshes.Disc(2.2f, 0.28f, 14);
-            ring.AddComponent<MeshRenderer>().sharedMaterial = wallMat;
-
-            (string fbxName, Color auraColor, float intensity) = kind switch
-            {
-                ChamberEncounterKind.AncientFont => ("Forage_WaterLily", new Color(0.25f, 1.0f, 0.78f), 3.2f),
-                ChamberEncounterKind.ResonanceCrystal => ("CrystalCluster_0", new Color(0.75f, 0.38f, 1.0f), 3.5f),
-                ChamberEncounterKind.AmberShrine => ("Forage_Quartz", new Color(1.0f, 0.72f, 0.18f), 3.2f),
-                ChamberEncounterKind.UndergroundGeyser => ("BulbPlant_0", new Color(0.30f, 0.80f, 1.0f), 3.0f),
-                ChamberEncounterKind.SporeGeyserTrap => ("VaultPod_0", new Color(0.85f, 0.25f, 0.85f), 2.8f),
-                _ => ("Cliff_3", new Color(1.0f, 0.35f, 0.12f), 3.6f)
-            };
-
-            var visualHolder = new GameObject("Biểu Tượng Kỳ Ngộ").transform;
-            visualHolder.SetParent(go.transform, false);
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + fbxName + ".fbx");
             if (fbx != null)
             {
-                var vis = (GameObject)PrefabUtility.InstantiatePrefab(fbx, visualHolder);
-                vis.transform.localScale = Vector3.one * 1.45f;
-                ApplyGlowTint(vis, LakeGround.OpaqueMaterial($"Maze_Enc_{kind}", auraColor, 0.3f, false, auraColor * 1.6f));
+                var vis = (GameObject)PrefabUtility.InstantiatePrefab(fbx, go.transform);
+                vis.transform.localScale = Vector3.one * scale;
             }
             else
             {
-                MazeTerrainMesh.PlaceFramingBoulder(visualHolder, Vector3.zero, 1.4f, seed, wallMat);
+                MazeTerrainMesh.PlaceFramingBoulder(go.transform, Vector3.zero, scale, name.GetHashCode(), wallMat);
             }
 
-            var light = new GameObject("Hào Quang Kỳ Ngộ").AddComponent<Light>();
-            light.transform.SetParent(go.transform, false);
-            light.transform.localPosition = new Vector3(0f, 1.6f, 0f);
-            light.type = LightType.Point;
-            light.range = 13f;
-            light.color = auraColor;
-            light.intensity = intensity;
-            light.shadows = LightShadows.None;
-
-            var zone = go.AddComponent<ChamberEncounterZone>();
-            zone.Configure(kind, light, visualHolder);
+            var l = new GameObject("Ánh Sáng Dấu Hiệu").AddComponent<Light>();
+            l.transform.SetParent(go.transform, false);
+            l.transform.localPosition = new Vector3(0f, 1.8f, 0f);
+            l.type = LightType.Point;
+            l.range = 10f;
+            l.color = lightColor;
+            l.intensity = 2.2f;
+            l.shadows = LightShadows.None;
+            return go.transform;
         }
 
         static void PlaceCreatures(
@@ -402,12 +401,13 @@ namespace Evolve.EditorTools
             }
         }
 
-        static void BuildChamberLighting(
+        static List<Light> BuildChamberLighting(
             Transform parent,
             ChamberThemeProfile profile,
             Color mainColor,
             Color accentColor)
         {
+            var list = new List<Light>(4);
             var mainLight = new GameObject("Ánh Sáng Chính").AddComponent<Light>();
             mainLight.transform.SetParent(parent, false);
             mainLight.transform.localPosition = new Vector3(0f, 17.5f, 0f);
@@ -416,6 +416,7 @@ namespace Evolve.EditorTools
             mainLight.color = mainColor;
             mainLight.intensity = profile.MainLightIntensity * 1.4f;
             mainLight.shadows = LightShadows.None;
+            list.Add(mainLight);
 
             Vector3[] accentOffsets = { new Vector3(-18f, 6.5f, 16f), new Vector3(18f, 7.0f, -16f), new Vector3(0f, 7.5f, 20f) };
             for (int i = 0; i < accentOffsets.Length; i++)
@@ -428,7 +429,9 @@ namespace Evolve.EditorTools
                 accent.color = accentColor;
                 accent.intensity = profile.AccentLightIntensity * 1.2f;
                 accent.shadows = LightShadows.None;
+                list.Add(accent);
             }
+            return list;
         }
 
         static T LoadCreatureComponent<T>(string preferredPrefabName, string fallbackPrefabName) where T : Component

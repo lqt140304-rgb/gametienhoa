@@ -90,22 +90,29 @@ namespace Evolve.Maze
         FossilBoneyard = 32
     }
 
-    /// <summary>Kỳ ngộ hoặc bẫy/cơ chế môi trường riêng của từng khoang (lấy cảm hứng từ kỳ ngộ TFT).</summary>
+    /// <summary>Tình huống & cơ chế môi trường động gắn với chủ đề của từng khoang.</summary>
     public enum ChamberEncounterKind
     {
         None = 0,
-        /// <summary>Suối Nguồn Cổ Đại: hồi đầy máu và tặng thêm khối lượng (nạp lại sau mỗi đỉnh lũ).</summary>
-        AncientFont = 1,
-        /// <summary>Tinh Thể Cộng Hưởng: hiến 25% máu hiện tại để nhận khối lượng lớn và đẩy lùi quái quanh đó.</summary>
-        ResonanceCrystal = 2,
-        /// <summary>Hổ Phách Tiền Sử: cần đủ khối lượng (>= 11) để phá vỡ và nhận thưởng lớn.</summary>
-        AmberShrine = 3,
-        /// <summary>Mạch Phun Nước Ngầm: phun theo nhịp giúp phóng slime lên gờ cao tránh lũ hoặc vượt địa hình.</summary>
-        UndergroundGeyser = 4,
-        /// <summary>Túi Bào Tử Nổ: bẫy sinh học phát nổ khi slime lại gần, gây sát thương và hất văng.</summary>
-        SporeGeyserTrap = 5,
-        /// <summary>Khe Hơi Nóng: bẫy nhiệt tầng sâu phun theo chu kỳ ở vùng trũng.</summary>
-        ThermalVentTrap = 6
+        /// <summary>Mưa Axit Bào Tử: mưa ăn mòn 10s ngoài trời; nấp dưới tán nấm lớn để tránh; sau mưa mọc thêm thức ăn.</summary>
+        AcidSporeRain = 1,
+        /// <summary>Bão Xung Kích Tinh Thể: sóng đẩy lùi ngoài vùng trống và làm tê liệt quái săn; nấp sau cụm tinh thể lớn.</summary>
+        CrystalPulseStorm = 2,
+        /// <summary>Triều Nhiệt & Mạch Phun Ngầm: vùng trũng bỏng rát trong khi các mạch phun phóng slime bay lên đồi cao.</summary>
+        ThermalGeyserSurge = 3,
+        /// <summary>Rễ Đại Thụ Thức Tỉnh: rễ rung chuyển hất văng quanh gốc nhưng rụng thêm thức ăn và làm con mồi chạy tán loạn.</summary>
+        AwakeningRoots = 4,
+        /// <summary>Hơi Thở Cổ Long: luồng gió cổ đại kéo/đẩy cả khoang; ẩn trong lồng xương rồng để được che chắn.</summary>
+        AncientDragonBreath = 5
+    }
+
+    /// <summary>Các pha của một tình huống môi trường trong khoang.</summary>
+    public enum EncounterPhase
+    {
+        Calm = 0,
+        Telegraph = 1,
+        Active = 2,
+        Aftermath = 3
     }
 
     /// <summary>Dữ liệu thuần một khoang trong đồ thị mê cung.</summary>

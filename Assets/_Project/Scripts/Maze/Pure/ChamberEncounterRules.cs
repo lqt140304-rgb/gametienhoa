@@ -2,177 +2,197 @@ using System;
 
 namespace Evolve.Maze
 {
-    /// <summary>Kết quả tương tác thuần khi slime kích hoạt một Kỳ Ngộ hoặc dính Bẫy môi trường.</summary>
-    public readonly struct EncounterOutcome
+    /// <summary>Trạng thái hiện tại của tình huống môi trường trong khoang.</summary>
+    public readonly struct EncounterSituationSnapshot
     {
-        public bool Triggered { get; }
-        public bool Consumed { get; }
-        public float HealthDelta { get; }
-        public float MassGain { get; }
-        public float ImpulseY { get; }
-        public float ImpulseRadial { get; }
-        public string Message { get; }
+        public int CycleIndex { get; }
+        public EncounterPhase Phase { get; }
+        public float PhaseProgress { get; }
+        public string Announcement { get; }
 
-        public EncounterOutcome(
-            bool triggered,
-            bool consumed,
-            float healthDelta,
-            float massGain,
-            float impulseY,
-            float impulseRadial,
-            string message)
+        public EncounterSituationSnapshot(int cycleIndex, EncounterPhase phase, float phaseProgress, string announcement)
         {
-            Triggered = triggered;
-            Consumed = consumed;
-            HealthDelta = healthDelta;
-            MassGain = massGain;
-            ImpulseY = impulseY;
-            ImpulseRadial = impulseRadial;
-            Message = message;
+            CycleIndex = cycleIndex;
+            Phase = phase;
+            PhaseProgress = phaseProgress;
+            Announcement = announcement;
+        }
+    }
+
+    /// <summary>Hệ quả vật lý và sinh thái lên slime/quái/thức ăn tại một thời điểm trong tình huống môi trường.</summary>
+    public readonly struct SituationEffect
+    {
+        public float HealthRatePerSecond { get; }
+        public float LaunchImpulseY { get; }
+        public float RadialPushForce { get; }
+        public bool StunPredators { get; }
+        public bool RegrowFoodAndScatterPrey { get; }
+
+        public SituationEffect(
+            float healthRatePerSecond,
+            float launchImpulseY,
+            float radialPushForce,
+            bool stunPredators,
+            bool regrowFoodAndScatterPrey)
+        {
+            HealthRatePerSecond = healthRatePerSecond;
+            LaunchImpulseY = launchImpulseY;
+            RadialPushForce = radialPushForce;
+            StunPredators = stunPredators;
+            RegrowFoodAndScatterPrey = regrowFoodAndScatterPrey;
         }
 
-        public static EncounterOutcome Ignored(string message = null) =>
-            new EncounterOutcome(false, false, 0f, 0f, 0f, 0f, message);
+        public static SituationEffect None => new SituationEffect(0f, 0f, 0f, false, false);
     }
 
     /// <summary>
-    /// Luật thuần cho Kỳ Ngộ & Bẫy môi trường trong mỗi khoang (mỗi khoang một cơ chế đặc trưng).
+    /// Luật thuần cho Kỳ Ngộ Tình Huống Môi Trường Động (không phải bục tăng chỉ số tĩnh,
+    /// mà là biến cố môi trường buộc slime thích nghi: trú dưới tán nấm, nấp sau tinh thể, cưỡi mạch phun...).
     /// </summary>
     public static class ChamberEncounterRules
     {
-        public const float AmberMinMassRequired = 11f;
-        public const float MinSafeHealthAfterSacrifice = 10f;
+        public const float CalmSeconds = 22f;
+        public const float TelegraphSeconds = 5f;
+        public const float ActiveSeconds = 10f;
+        public const float AftermathSeconds = 5f;
+        public const float CyclePeriodSeconds = CalmSeconds + TelegraphSeconds + ActiveSeconds + AftermathSeconds;
 
-        /// <summary>Chọn cơ chế Kỳ Ngộ hoặc Bẫy phù hợp với loại, độ sâu và chủ đề của khoang.</summary>
         public static ChamberEncounterKind PickForChamber(
             ChamberKind kind,
             ChamberDepth depth,
             ChamberTheme theme,
             ref MazeRng rng)
         {
-            if (kind == ChamberKind.BirthCavern) return ChamberEncounterKind.None;
-            if (kind == ChamberKind.Shelter) return ChamberEncounterKind.AncientFont;
-            if (kind == ChamberKind.SealedCavern) return ChamberEncounterKind.ResonanceCrystal;
-            if (kind == ChamberKind.DeadEnd)
-                return rng.NextFloat() < 0.5f ? ChamberEncounterKind.AmberShrine : ChamberEncounterKind.SporeGeyserTrap;
+            if (kind == ChamberKind.BirthCavern || kind == ChamberKind.Shelter)
+                return ChamberEncounterKind.None;
+            if (kind == ChamberKind.SealedCavern)
+                return ChamberEncounterKind.AncientDragonBreath;
 
             return theme switch
             {
-                ChamberTheme.LumaMushroomGrove => ChamberEncounterKind.AncientFont,
-                ChamberTheme.RootCanopy => ChamberEncounterKind.UndergroundGeyser,
-                ChamberTheme.DampReedHollow => ChamberEncounterKind.UndergroundGeyser,
-                ChamberTheme.AmberPebbleGarden => ChamberEncounterKind.AmberShrine,
-                ChamberTheme.LimestoneStalactite => ChamberEncounterKind.UndergroundGeyser,
-                ChamberTheme.CrystalVein => ChamberEncounterKind.ResonanceCrystal,
-                ChamberTheme.SporeCurtain => ChamberEncounterKind.SporeGeyserTrap,
-                ChamberTheme.DeepRootTangle => ChamberEncounterKind.SporeGeyserTrap,
-                ChamberTheme.EmberBasalt => ChamberEncounterKind.ThermalVentTrap,
-                ChamberTheme.SaltAbyss => ChamberEncounterKind.ThermalVentTrap,
-                ChamberTheme.FossilBoneyard => ChamberEncounterKind.ResonanceCrystal,
-                _ => depth == ChamberDepth.Sau ? ChamberEncounterKind.ThermalVentTrap : ChamberEncounterKind.UndergroundGeyser
+                ChamberTheme.LumaMushroomGrove => ChamberEncounterKind.AcidSporeRain,
+                ChamberTheme.SporeCurtain => ChamberEncounterKind.AcidSporeRain,
+                ChamberTheme.CrystalVein => ChamberEncounterKind.CrystalPulseStorm,
+                ChamberTheme.LimestoneStalactite => ChamberEncounterKind.CrystalPulseStorm,
+                ChamberTheme.EmberBasalt => ChamberEncounterKind.ThermalGeyserSurge,
+                ChamberTheme.SaltAbyss => ChamberEncounterKind.ThermalGeyserSurge,
+                ChamberTheme.FossilBoneyard => ChamberEncounterKind.ThermalGeyserSurge,
+                ChamberTheme.RootCanopy => ChamberEncounterKind.AwakeningRoots,
+                ChamberTheme.DeepRootTangle => ChamberEncounterKind.AwakeningRoots,
+                ChamberTheme.DampReedHollow => ChamberEncounterKind.AcidSporeRain,
+                ChamberTheme.AmberPebbleGarden => ChamberEncounterKind.AwakeningRoots,
+                ChamberTheme.MirageDeadEnd => rng.NextFloat() < 0.5f ? ChamberEncounterKind.ThermalGeyserSurge : ChamberEncounterKind.CrystalPulseStorm,
+                _ => depth == ChamberDepth.Sau ? ChamberEncounterKind.ThermalGeyserSurge : ChamberEncounterKind.AcidSporeRain
             };
         }
 
-        /// <summary>Kiểm tra bẫy định kỳ (Mạch Phun Nước / Khe Hơi Nóng) có đang phun tại thời điểm <paramref name="timeSeconds"/> không.</summary>
-        public static bool IsCycleActive(ChamberEncounterKind kind, float timeSeconds)
+        public static EncounterSituationSnapshot EvaluateSituation(ChamberEncounterKind kind, float elapsedSeconds)
         {
-            if (kind != ChamberEncounterKind.UndergroundGeyser && kind != ChamberEncounterKind.ThermalVentTrap)
-                return true;
+            if (kind == ChamberEncounterKind.None)
+                return new EncounterSituationSnapshot(0, EncounterPhase.Calm, 0f, null);
 
-            float period = kind == ChamberEncounterKind.UndergroundGeyser ? 5.5f : 6.0f;
-            float activeWindow = kind == ChamberEncounterKind.UndergroundGeyser ? 1.8f : 2.2f;
-            float phase = timeSeconds - (float)Math.Floor(timeSeconds / period) * period;
-            return phase < activeWindow;
+            if (elapsedSeconds < 0f) elapsedSeconds = 0f;
+            int cycle = (int)(elapsedSeconds / CyclePeriodSeconds);
+            float t = elapsedSeconds - cycle * CyclePeriodSeconds;
+
+            if (t < CalmSeconds)
+                return new EncounterSituationSnapshot(cycle, EncounterPhase.Calm, t / CalmSeconds, null);
+
+            if (t < CalmSeconds + TelegraphSeconds)
+            {
+                float p = (t - CalmSeconds) / TelegraphSeconds;
+                return new EncounterSituationSnapshot(cycle, EncounterPhase.Telegraph, p, TelegraphText(kind));
+            }
+
+            if (t < CalmSeconds + TelegraphSeconds + ActiveSeconds)
+            {
+                float p = (t - CalmSeconds - TelegraphSeconds) / ActiveSeconds;
+                return new EncounterSituationSnapshot(cycle, EncounterPhase.Active, p, ActiveText(kind));
+            }
+
+            float afterP = (t - CalmSeconds - TelegraphSeconds - ActiveSeconds) / AftermathSeconds;
+            return new EncounterSituationSnapshot(cycle, EncounterPhase.Aftermath, afterP, AftermathText(kind));
         }
 
-        /// <summary>Tính toán hệ quả khi slime tiếp xúc với Kỳ Ngộ hoặc Bẫy.</summary>
-        public static EncounterOutcome Evaluate(
+        /// <summary>Tính tác động tình huống môi trường tại vị trí slime theo trạng thái nấp/vùng trũng/mạch phun.</summary>
+        public static SituationEffect EvaluatePlayerInSituation(
             ChamberEncounterKind kind,
-            float currentHealth,
-            float maxHealth,
-            float currentMass,
-            bool alreadyConsumed,
-            float timeSeconds)
+            EncounterSituationSnapshot snapshot,
+            bool isInSafeCover,
+            bool isInLowBasin,
+            bool isOnGeyserPad)
         {
+            if (kind == ChamberEncounterKind.None) return SituationEffect.None;
+
+            if (snapshot.Phase == EncounterPhase.Aftermath)
+            {
+                bool regrow = kind == ChamberEncounterKind.AcidSporeRain || kind == ChamberEncounterKind.AwakeningRoots;
+                return new SituationEffect(0f, 0f, 0f, false, regrow);
+            }
+
+            if (snapshot.Phase != EncounterPhase.Active)
+                return SituationEffect.None;
+
             switch (kind)
             {
-                case ChamberEncounterKind.AncientFont:
-                    if (alreadyConsumed) return EncounterOutcome.Ignored("Suối Nguồn đã cạn, sẽ dâng lại sau đợt lũ kế tiếp.");
-                    float heal = Math.Max(0f, maxHealth - currentHealth);
-                    return new EncounterOutcome(
-                        triggered: true,
-                        consumed: true,
-                        healthDelta: heal,
-                        massGain: 1.5f,
-                        impulseY: 0f,
-                        impulseRadial: 0f,
-                        message: "Kỳ Ngộ — Suối Nguồn Cổ Đại: Hồi phục hoàn toàn sinh lực và tăng +1.5 khối lượng!");
+                case ChamberEncounterKind.AcidSporeRain:
+                    // Phơi mình ngoài trời bị axit ăn mòn; nấp dưới tán nấm khổng lồ thì an toàn tuyệt đối
+                    float acidDps = isInSafeCover ? 0f : -6.5f;
+                    return new SituationEffect(acidDps, 0f, 0f, false, false);
 
-                case ChamberEncounterKind.ResonanceCrystal:
-                    if (alreadyConsumed) return EncounterOutcome.Ignored("Tinh Thể Cộng Hưởng đang ngủ yên chờ chu kỳ lũ mới.");
-                    if (currentHealth <= MinSafeHealthAfterSacrifice + 5f)
-                        return EncounterOutcome.Ignored("Sinh lực quá yếu, chưa thể hiến tế cho Tinh Thể Cộng Hưởng.");
-                    float sacrifice = Math.Min(currentHealth * 0.25f, currentHealth - MinSafeHealthAfterSacrifice);
-                    return new EncounterOutcome(
-                        triggered: true,
-                        consumed: true,
-                        healthDelta: -sacrifice,
-                        massGain: 2.5f,
-                        impulseY: 3.0f,
-                        impulseRadial: 8.0f,
-                        message: $"Kỳ Ngộ — Tinh Thể Cộng Hưởng: Hiến {sacrifice:0.#} máu để nhận +2.5 khối lượng!");
+                case ChamberEncounterKind.CrystalPulseStorm:
+                    // Bão xung kích làm tê liệt toàn bộ quái săn; slime không nấp sau cụm tinh thể sẽ bị đẩy dạt
+                    float push = isInSafeCover ? 0f : 14f;
+                    return new SituationEffect(0f, 0f, push, stunPredators: true, false);
 
-                case ChamberEncounterKind.AmberShrine:
-                    if (alreadyConsumed) return EncounterOutcome.Ignored("Khối Hổ Phách Tiền Sử đã được thu hoạch.");
-                    if (currentMass < AmberMinMassRequired)
-                        return EncounterOutcome.Ignored($"Kỳ Ngộ — Hổ Phách Tiền Sử: Cần ít nhất {AmberMinMassRequired:0} khối lượng để nghiền vỡ.");
-                    return new EncounterOutcome(
-                        triggered: true,
-                        consumed: true,
-                        healthDelta: maxHealth * 0.25f,
-                        massGain: 2.0f,
-                        impulseY: 0f,
-                        impulseRadial: 0f,
-                        message: "Kỳ Ngộ — Hổ Phách Tiền Sử: Phá vỡ lớp hổ phách, nhận +2.0 khối lượng và hồi máu!");
+                case ChamberEncounterKind.ThermalGeyserSurge:
+                    // Vùng trũng bốc nhiệt bỏng rát; nhưng bước vào mạch phun ngầm sẽ bay vọt lên đồi cao
+                    float heatDps = isInLowBasin && !isOnGeyserPad ? -7.5f : 0f;
+                    float launch = isOnGeyserPad ? 15f : 0f;
+                    return new SituationEffect(heatDps, launch, 0f, false, false);
 
-                case ChamberEncounterKind.UndergroundGeyser:
-                    if (!IsCycleActive(kind, timeSeconds))
-                        return EncounterOutcome.Ignored();
-                    return new EncounterOutcome(
-                        triggered: true,
-                        consumed: false,
-                        healthDelta: 0f,
-                        massGain: 0f,
-                        impulseY: 13.5f,
-                        impulseRadial: 3.5f,
-                        message: "Mạch Phun Nước Ngầm đẩy bạn bay lên gờ cao!");
+                case ChamberEncounterKind.AwakeningRoots:
+                    // Rễ quất gần gốc rễ làm bay văng nếu đứng sát mạch phun; làm rụng quả & con mồi hoảng loạn
+                    float rootLaunch = isOnGeyserPad ? 9.5f : 0f;
+                    float rootPush = isOnGeyserPad ? 10f : 0f;
+                    return new SituationEffect(0f, rootLaunch, rootPush, false, regrowFoodAndScatterPrey: true);
 
-                case ChamberEncounterKind.SporeGeyserTrap:
-                    if (alreadyConsumed) return EncounterOutcome.Ignored();
-                    return new EncounterOutcome(
-                        triggered: true,
-                        consumed: true,
-                        healthDelta: -16f,
-                        massGain: 0f,
-                        impulseY: 6.5f,
-                        impulseRadial: 11f,
-                        message: "Bẫy Túi Bào Tử phát nổ! Bị hất văng và mất 16 máu.");
-
-                case ChamberEncounterKind.ThermalVentTrap:
-                    if (!IsCycleActive(kind, timeSeconds))
-                        return EncounterOutcome.Ignored();
-                    return new EncounterOutcome(
-                        triggered: true,
-                        consumed: false,
-                        healthDelta: -14f,
-                        massGain: 0f,
-                        impulseY: 5.0f,
-                        impulseRadial: 6.0f,
-                        message: "Khe Hơi Nóng đang phun trào! Tránh ra khỏi vùng trũng.");
+                case ChamberEncounterKind.AncientDragonBreath:
+                    // Lồng xương rồng cổ che chắn gió bão và hồi nhẹ sinh lực; đứng ngoài bị gió thổi dạt mạnh
+                    float wind = isInSafeCover ? 0f : 18f;
+                    float heal = isInSafeCover ? 2.5f : 0f;
+                    return new SituationEffect(heal, 0f, wind, false, false);
 
                 default:
-                    return EncounterOutcome.Ignored();
+                    return SituationEffect.None;
             }
         }
+
+        static string TelegraphText(ChamberEncounterKind kind) => kind switch
+        {
+            ChamberEncounterKind.AcidSporeRain => "Sương axit trên trần bắt đầu nhỏ giọt — hãy nấp dưới tán Nấm Khổng Lồ!",
+            ChamberEncounterKind.CrystalPulseStorm => "Các mạch tinh thể đang ngân vang dữ dội — chuẩn bị nấp sau cụm tinh thể!",
+            ChamberEncounterKind.ThermalGeyserSurge => "Vùng trũng bốc hơi nóng — các mạch phun sắp bùng phát, sẵn sàng phóng lên cao!",
+            ChamberEncounterKind.AwakeningRoots => "Rễ đại thụ trên trần đang rung chuyển mạnh!",
+            ChamberEncounterKind.AncientDragonBreath => "Xương Cổ Long rít gió — hãy chui vào lồng xương sườn!",
+            _ => null
+        };
+
+        static string ActiveText(ChamberEncounterKind kind) => kind switch
+        {
+            ChamberEncounterKind.AcidSporeRain => "Mưa Axit Bào Tử đang rơi (10s)! Trú dưới tán nấm lớn để tránh bị ăn mòn.",
+            ChamberEncounterKind.CrystalPulseStorm => "Bão Xung Kích Tinh Thể! Quái săn đang bị tê liệt — chớp thời cơ săn mồi hoặc vượt qua!",
+            ChamberEncounterKind.ThermalGeyserSurge => "Triều Nhiệt Bùng Phát! Rời khỏi vùng trũng hoặc cưỡi mạch phun lên đồi cao!",
+            ChamberEncounterKind.AwakeningRoots => "Rễ Đại Thụ Thức Tỉnh! Quả ngọt rụng xuống và bầy con mồi đang chạy tán loạn!",
+            ChamberEncounterKind.AncientDragonBreath => "Hơi Thở Cổ Long càn quét! Ẩn trong lồng xương rồng để được che chắn.",
+            _ => null
+        };
+
+        static string AftermathText(ChamberEncounterKind kind) => kind switch
+        {
+            ChamberEncounterKind.AcidSporeRain => "Mưa axit đã tạnh — nhiều nấm và bào tử mới vừa mọc lên khắp khoang.",
+            ChamberEncounterKind.AwakeningRoots => "Mặt đất lắng xuống, thức ăn mới rơi rụng quanh các gốc rễ.",
+            _ => null
+        };
     }
 }

@@ -89,9 +89,9 @@ namespace Evolve.Maze
                 if (ledgeY > floorY) floorY = ledgeY;
             }
 
-            // 3. Vách đá bao quanh khoang (từ WallInnerRadius đến WallOuterRadius dâng lên 22m)
+            // 3. Vách đá bao quanh khoang (từ WallInnerRadius dâng lên 22m và chắc chắn đạt đỉnh trước WallOuterRadius)
             float wallStart = chamberRadius * (WallInnerRadius / DefaultChamberRadius);
-            float wallEnd = chamberRadius * (WallOuterRadius / DefaultChamberRadius);
+            float wallEnd = chamberRadius * (43.8f / DefaultChamberRadius);
             float angleDeg = (float)(Math.Atan2(localZ, localX) * (180.0 / Math.PI));
             float wobbleR = 3.2f * (float)Math.Sin(angleDeg * 0.087f + p1) + 1.8f * (float)Math.Cos(angleDeg * 0.174f + p2);
             float wallT = Smooth01((r + wobbleR - wallStart) / Math.Max(1f, wallEnd - wallStart));
