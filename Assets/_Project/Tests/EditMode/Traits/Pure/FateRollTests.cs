@@ -104,5 +104,55 @@ namespace Evolve.Tests.EditMode
             CollectionAssert.AreEquivalent(rare, cards.Where(c => c.Rarity == TraitRarity.Rare).Select(c => c.Id));
             foreach (var c in cards) Assert.AreEqual(3, c.Options.Length, c.Id);
         }
+
+        // ---------------------------------------------------------------- the deck the player picks from
+
+        [Test]
+        public void DealDeck_DistinctAndSized()
+        {
+            var deck = FateRoll.DealDeck(7, Pool(6, 4, 2), 8);
+            Assert.AreEqual(8, deck.Length);
+            Assert.AreEqual(8, deck.Select(c => c.Id).Distinct().Count(), "no core twice in one deck");
+            Assert.AreEqual(5, FateRoll.DealDeck(7, Pool(2, 2, 1), 8).Length, "a small pool gives a small deck");
+            Assert.AreEqual(0, FateRoll.DealDeck(7, null, 8).Length);
+            Assert.AreEqual(0, FateRoll.DealDeck(7, new List<FateCard>(), 8).Length);
+            Assert.AreEqual(0, FateRoll.DealDeck(7, Pool(3, 0, 0), 0).Length);
+        }
+
+        [Test]
+        public void DealDeck_SameSeedSameDeck_DifferentSeedsDiffer()
+        {
+            var a = FateRoll.DealDeck(11, Pool(6, 4, 2), 8).Select(c => c.Id).ToArray();
+            var b = FateRoll.DealDeck(11, Pool(6, 4, 2), 8).Select(c => c.Id).ToArray();
+            CollectionAssert.AreEqual(a, b);
+            Assert.IsTrue(Enumerable.Range(0, 30).Select(s => string.Join(",", FateRoll.DealDeck(s, Pool(6, 4, 2), 8).Select(c => c.Id))).Distinct().Count() > 10);
+        }
+
+        [Test]
+        public void DealDeck_PickedCardKeepsTheRarityOdds()
+        {
+            // the player picks a position blindly, so the odds of what they get are the share of each rarity over all positions
+            var pool = Pool(6, 4, 2);
+            int n = 4000, common = 0, rare = 0, mythic = 0;
+            for (int seed = 0; seed < n; seed++)
+                foreach (var c in FateRoll.DealDeck(seed, pool, 8))
+                { if (c.Rarity == TraitRarity.Common) common++; else if (c.Rarity == TraitRarity.Rare) rare++; else mythic++; }
+            float total = n * 8f;
+            Assert.AreEqual(0.65f, common / total, 0.05f);
+            Assert.AreEqual(0.25f, rare / total, 0.05f);
+            Assert.AreEqual(0.10f, mythic / total, 0.05f);
+        }
+
+        [Test]
+        public void ShuffleOptions_SameThreeOptionsInAnOrder()
+        {
+            var options = new[] { new[] { "a" }, new[] { "b", "c" }, new[] { "d" } };
+            var shuffled = FateRoll.ShuffleOptions(5, options);
+            Assert.AreEqual(3, shuffled.Length);
+            CollectionAssert.AreEquivalent(options.Select(o => string.Join("+", o)), shuffled.Select(o => string.Join("+", o)));
+            CollectionAssert.AreEqual(shuffled.Select(o => string.Join("+", o)), FateRoll.ShuffleOptions(5, options).Select(o => string.Join("+", o)));
+            Assert.IsTrue(Enumerable.Range(0, 30).Select(sd => string.Join("|", FateRoll.ShuffleOptions(sd, options).Select(o => string.Join("+", o)))).Distinct().Count() > 2);
+            Assert.AreEqual(0, FateRoll.ShuffleOptions(1, null).Length);
+        }
     }
 }

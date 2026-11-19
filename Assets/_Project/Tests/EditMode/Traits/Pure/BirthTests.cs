@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Linq;
 using Evolve.Traits;
 using NUnit.Framework;
@@ -6,64 +8,33 @@ namespace Evolve.Tests.EditMode
 {
     public class BirthTests
     {
+        static BirthFlow Flow() => new BirthFlow(BirthScript.BuildSteps());
+
         [Test]
-        public void PhaseAt_Boundaries()
+        public void Steps_AreInTheDesignedOrder()
         {
-            Assert.AreEqual(BirthPhase.Drop, BirthTimeline.PhaseAt(0f));
-            Assert.AreEqual(BirthPhase.Drop, BirthTimeline.PhaseAt(1.99f));
-            Assert.AreEqual(BirthPhase.Echo, BirthTimeline.PhaseAt(2f));
-            Assert.AreEqual(BirthPhase.DealCore, BirthTimeline.PhaseAt(7f));
-            Assert.AreEqual(BirthPhase.DealFlaw, BirthTimeline.PhaseAt(14f));
-            Assert.AreEqual(BirthPhase.Summary, BirthTimeline.PhaseAt(19f));
-            Assert.AreEqual(BirthPhase.Done, BirthTimeline.PhaseAt(22f));
-            Assert.AreEqual(BirthPhase.Drop, BirthTimeline.PhaseAt(-1f));
+            var kinds = BirthScript.BuildSteps().Select(s => s.Kind).ToArray();
+            var expect = new[]
+            {
+                BirthStepKind.Boot, BirthStepKind.Line, BirthStepKind.Line, BirthStepKind.Line,
+                BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift,
+                BirthStepKind.Line, BirthStepKind.DealCore, BirthStepKind.PickCore, BirthStepKind.RevealCore,
+                BirthStepKind.DealFlaw, BirthStepKind.PickFlaw, BirthStepKind.RevealFlaw, BirthStepKind.Summary
+            };
+            CollectionAssert.AreEqual(expect, kinds);
         }
 
         [Test]
-        public void Total_IsSumOfPhases() =>
-            Assert.AreEqual(BirthTimeline.DropSeconds + BirthTimeline.EchoSeconds + BirthTimeline.DealCoreSeconds + BirthTimeline.DealFlawSeconds + BirthTimeline.SummarySeconds, BirthTimeline.Total, 1e-5f);
-
-        [Test] public void Total_Is22() => Assert.AreEqual(22f, BirthTimeline.Total, 1e-5f);
-
-        [Test]
-        public void PhaseFraction_RunsZeroToOneInsideAPhase()
+        public void GiftSteps_FollowTheSixGifts()
         {
-            Assert.AreEqual(0f, BirthTimeline.PhaseFraction(7f), 1e-5f);
-            Assert.AreEqual(0.5f, BirthTimeline.PhaseFraction(10.5f), 1e-5f);
-            Assert.AreEqual(1f, BirthTimeline.PhaseFraction(30f), 1e-5f);   // Done
-        }
-
-        [Test] public void Skip_Before3_DoesNothing() => Assert.AreEqual(1.5f, BirthTimeline.Skip(1.5f));
-        [Test] public void Skip_DuringDeal_JumpsToSummary() => Assert.AreEqual(19f, BirthTimeline.Skip(9f), 1e-5f);
-        [Test] public void Skip_InSummary_DoesNothing() => Assert.AreEqual(20f, BirthTimeline.Skip(20f));
-        [Test] public void Skip_At3_Works() => Assert.AreEqual(19f, BirthTimeline.Skip(3f), 1e-5f);
-
-        [Test]
-        public void DealProgress_StaggeredAndClamped()
-        {
-            Assert.AreEqual(0f, BirthTimeline.DealProgress(0f, 0, 5), 1e-5f);
-            Assert.AreEqual(1f, BirthTimeline.DealProgress(0.4f, 4, 5), 1e-5f);     // the last card is dealt by 40% of the phase
-            Assert.AreEqual(1f, BirthTimeline.DealProgress(1f, 0, 5), 1e-5f);
-            Assert.Less(BirthTimeline.DealProgress(0.1f, 4, 5), BirthTimeline.DealProgress(0.1f, 0, 5));   // later cards start later
-            Assert.AreEqual(0f, BirthTimeline.DealProgress(0.5f, 0, 0), 1e-5f);
-        }
-
-        [Test]
-        public void FlipProgress_ZeroThenOne()
-        {
-            Assert.AreEqual(0f, BirthTimeline.FlipProgress(0.6f), 1e-5f);
-            Assert.AreEqual(1f, BirthTimeline.FlipProgress(0.9f), 1e-5f);
-            Assert.AreEqual(0.5f, BirthTimeline.FlipProgress(0.775f), 1e-4f);
-            Assert.AreEqual(1f, BirthTimeline.FlipProgress(1f), 1e-5f);
-        }
-
-        [Test]
-        public void ShouldRun_OnlyWithoutCoreAndNotYetRun()
-        {
-            Assert.IsTrue(BirthTimeline.ShouldRun(false, false));
-            Assert.IsFalse(BirthTimeline.ShouldRun(true, false));
-            Assert.IsFalse(BirthTimeline.ShouldRun(false, true));   // ran this run already (skipped or finished): never again on respawn
-            Assert.IsFalse(BirthTimeline.ShouldRun(true, true));
+            var gifts = BirthScript.BuildSteps().Where(s => s.Kind == BirthStepKind.Gift).ToList();
+            Assert.AreEqual(6, gifts.Count);
+            for (int i = 0; i < 6; i++)
+            {
+                Assert.AreEqual(i, gifts[i].GiftIndex);
+                Assert.AreEqual(BirthScript.Gifts[i].Id, gifts[i].VoiceId);
+                StringAssert.Contains(BirthScript.Gifts[i].Name, gifts[i].Text);
+            }
         }
 
         [Test]
@@ -71,18 +42,129 @@ namespace Evolve.Tests.EditMode
         {
             Assert.AreEqual(6, BirthScript.Gifts.Count);
             Assert.AreEqual(6, BirthScript.Gifts.Select(g => g.Id).Distinct().Count());
-            Assert.IsTrue(BirthScript.Gifts.All(g => !string.IsNullOrEmpty(g.Name) && !string.IsNullOrEmpty(g.Line)));
             CollectionAssert.AreEqual(new[] { "Túi Không Đáy", "Nuốt Chửng", "Giải Mã", "Biến Hình", "Sóng Dò", "Phân Thân" }, BirthScript.Gifts.Select(g => g.Name));
-            Assert.IsFalse(BirthScript.Gifts.First(g => g.Name == "Phân Thân").Implemented, "Phân Thân is not built yet");
+            Assert.IsFalse(BirthScript.Gifts.First(g => g.Name == "Phân Thân").Implemented);
         }
 
         [Test]
-        public void EchoLines_IdsUniqueAndKnown()
+        public void EveryTimedStepHasTimeToRead()
         {
-            var ids = BirthScript.EchoLines.Select(l => l.id).ToList();
+            foreach (var s in BirthScript.BuildSteps())
+                if (!s.Interactive) Assert.GreaterOrEqual(s.MinSeconds, 3f, s.Kind + " " + s.VoiceId);
+        }
+
+        // ---------------------------------------------------------------- the flow
+
+        [Test]
+        public void Timed_Step_Advances_AfterMinSecondsAndSilence()
+        {
+            var f = Flow();
+            f.Tick(1f, false);
+            Assert.AreEqual(0, f.Index);
+            f.Tick(f.Current.MinSeconds, false);
+            Assert.AreEqual(1, f.Index, "after its minimum time and a silent gap the next step starts");
+            Assert.AreEqual(0f, f.StepTime, 1e-5f);
+        }
+
+        [Test]
+        public void VoiceBusy_HoldsTheStep()
+        {
+            var f = Flow();
+            f.Tick(f.Current.MinSeconds + 5f, true);   // the voice is still talking
+            Assert.AreEqual(0, f.Index);
+            f.Tick(BirthFlow.GapAfterVoice + 0.01f, false);
+            Assert.AreEqual(1, f.Index);
+        }
+
+        [Test]
+        public void SilenceGap_RestartsWhenTheVoiceTalksAgain()
+        {
+            var f = Flow();
+            f.Tick(f.Current.MinSeconds, true);
+            f.Tick(BirthFlow.GapAfterVoice * 0.6f, false);
+            f.Tick(0.05f, true);                        // the voice came back
+            f.Tick(BirthFlow.GapAfterVoice * 0.6f, false);
+            Assert.AreEqual(0, f.Index, "the gap must be silent for its full length");
+        }
+
+        static BirthFlow FlowAt(BirthStepKind kind)
+        {
+            var f = Flow();
+            while (!f.Finished && f.Current.Kind != kind) f.Tick(100f, false);
+            return f;
+        }
+
+        [Test]
+        public void PickSteps_WaitForever_AndAdvanceOnPick()
+        {
+            var f = FlowAt(BirthStepKind.PickCore);
+            Assert.IsTrue(f.Current.Interactive);
+            int at = f.Index;
+            f.Tick(10000f, false);
+            Assert.AreEqual(at, f.Index);
+            Assert.IsFalse(f.CanSkip);
+            Assert.IsTrue(f.Pick());
+            Assert.AreEqual(BirthStepKind.RevealCore, f.Current.Kind);
+        }
+
+        [Test]
+        public void Pick_OutsideAPickStep_DoesNothing()
+        {
+            var f = Flow();
+            Assert.IsFalse(f.Pick());
+            Assert.AreEqual(0, f.Index);
+        }
+
+        [Test]
+        public void Skip_Rules()
+        {
+            var f = Flow();
+            f.Tick(1f, true);
+            f.Skip();
+            Assert.AreEqual(0, f.Index, "too early to skip");
+            f.Tick(BirthFlow.SkipAfter, true);
+            Assert.IsTrue(f.CanSkip);
+            f.Skip();
+            Assert.AreEqual(1, f.Index, "skipping cuts the line and its voice");
+        }
+
+        [Test]
+        public void SkipIntro_JumpsToTheFirstDeal_OnlyBeforeIt()
+        {
+            var f = Flow();
+            f.Tick(BirthFlow.SkipAfter, true);
+            f.SkipIntro();
+            Assert.AreEqual(BirthStepKind.DealCore, f.Current.Kind);
+            int at = f.Index;
+            f.SkipIntro();
+            Assert.AreEqual(at, f.Index, "after the intro it does nothing");
+        }
+
+        [Test]
+        public void Flow_FinishesAfterTheSummary()
+        {
+            var f = Flow();
+            int guard = 0;
+            while (!f.Finished && guard++ < 100) { if (f.Current.Interactive) f.Pick(); else f.Tick(100f, false); }
+            Assert.IsTrue(f.Finished);
+            Assert.IsNull(f.Current);
+            f.Tick(1f, false);   // harmless after the end
+            Assert.IsFalse(f.Pick());
+        }
+
+        // ---------------------------------------------------------------- the words
+
+        [Test]
+        public void AllVoiceLines_UniqueIds_CoverSteps_CoresAndFlaws()
+        {
+            var lines = BirthScript.AllVoiceLines(TraitSeed.Cores, TraitSeed.Flaws);
+            var ids = lines.Select(l => l.id).ToList();
             Assert.AreEqual(ids.Count, ids.Distinct().Count());
-            foreach (var need in new[] { "echo.born", "echo.gift", "echo.core", "echo.flaw", "echo.done" }) CollectionAssert.Contains(ids, need);
-            Assert.IsTrue(BirthScript.EchoLines.All(l => !string.IsNullOrEmpty(l.text)));
+            Assert.AreEqual(13 + 12 + 12, lines.Count);
+            foreach (var step in BirthScript.BuildSteps().Where(s => !string.IsNullOrEmpty(s.VoiceId))) CollectionAssert.Contains(ids, step.VoiceId);
+            Assert.AreEqual("Phát hiện Lõi độc nhất: Nhân Quen Đất.", lines.First(l => l.id == "core.quen_dat").text);
+            Assert.AreEqual("Phát hiện khiếm khuyết: Đói Sớm.", lines.First(l => l.id == "flaw.doi_som").text);
+            Assert.IsTrue(lines.All(l => !string.IsNullOrWhiteSpace(l.text)));
         }
 
         [Test]
@@ -92,6 +174,18 @@ namespace Evolve.Tests.EditMode
             StringAssert.Contains("Nhân Quen Đất", line);
             StringAssert.Contains("Đói Sớm + Lạ Vùng", line);
             StringAssert.Contains("Nhân Quen Đất", BirthScript.SummaryLine("Nhân Quen Đất", null));
+        }
+
+        /// <summary>
+        /// Not a check: with EXPORT_VOICE_LINES=&lt;file&gt; it writes the voice line list (id, tab, text) that tools/voice/generate_echo_voice.sh reads,
+        /// so the words live in one place (BirthScript). Without the variable it does nothing.
+        /// </summary>
+        [Test]
+        public void ExportVoiceLines()
+        {
+            var path = Environment.GetEnvironmentVariable("EXPORT_VOICE_LINES");
+            if (string.IsNullOrEmpty(path)) Assert.Pass("EXPORT_VOICE_LINES not set");
+            File.WriteAllLines(path, BirthScript.AllVoiceLines(TraitSeed.Cores, TraitSeed.Flaws).Select(l => l.id + "\t" + l.text));
         }
     }
 }
