@@ -20,7 +20,14 @@ namespace Evolve.EditorTools
             "Mushroom_Small_0", "Mushroom_Small_1", "Mushroom_Small_2", "Mushroom_Small_3", "RootArch",
             "Cliff_0", "Cliff_1", "Cliff_2", "Cliff_3", "HangRoot_0", "HangRoot_1", "HangRoot_2", "HangRoot_3",
             "Rib_Straight_0", "Rib_Straight_1", "Rib_Straight_2", "Rib_Bend_0", "Rib_Bend_1", "Rib_Bend_2", "Rib_Fork_0", "Rib_Fork_1",
-            "Rib_Tip_0", "Rib_Tip_1", "Rib_Foot_0", "Rib_Foot_1"
+            "Rib_Tip_0", "Rib_Tip_1", "Rib_Foot_0", "Rib_Foot_1",
+            "VaultRoot_0", "VaultRoot_1", "VaultRoot_2", "VaultRoot_3", "VaultCurtain_0", "VaultCurtain_1",
+            "VaultPod_0", "VaultPod_1", "VaultPod_2", "VaultStalactite_0", "VaultStalactite_1", "VaultStalactite_2",
+            "DragonSkull_0", "DragonSkull_1", "DragonRibcage_0",
+            "LumaShroom_0", "LumaShroom_1", "LumaShroom_2", "CrystalCluster_0", "CrystalCluster_1", "CrystalCluster_2",
+            "BulbPlant_0", "BulbPlant_1", "RootStub_0", "RootStub_1",
+            "Forage_WaterLily", "Forage_Cattail", "Forage_BitterFern", "Forage_FatMushroom", "Forage_SweetRoot", "Forage_IceBloom",
+            "Forage_LimeCrystal", "Forage_IronNodule", "Forage_SaltCrust", "Forage_Quartz"
         };
 
         [MenuItem("Evolve/Install Blender Rocks")]

@@ -432,3 +432,72 @@ Checklist: (1) Console sạch, Test Runner xanh (`ZoneAtmosphereMathTests`, `Dap
 - Hạn chế: số đoạn rễ lớn (khoảng 900 đoạn, tự đổi sang bản đơn giản khi xa); hình dạng bản đầu; đoạn rẽ nhánh `Rib_Fork` và đoạn cong `Rib_Bend` chưa dùng (nhánh bắt đầu chen vào thân sườn mẹ); khi nối, mối giữa hai đoạn có thể lộ ra nhẹ.
 
 Checklist: (1) Console sạch, Test Runner xanh (`VaultLayoutTests`); (2) **Reinstall Blender Props (overwrite)**; (3) Dress Lake: Root Vault, rồi Dress Lake: Dappled Sun, Ctrl+S; (4) nhìn lên: trần không phẳng, có khoang cao thấp và hốc; sườn rễ chạy từ phía Đại sảnh ra, chia nhánh; (5) mảng sáng qua lỗ và khe; (6) chân chống ở rìa chạm đất giữa các tấm vách; (7) khu 06 gần lối vào còn thoáng; (8) FPS bằng PerfOverlay; (9) Restore Lake Canopy trả mái cũ; (10) chụp ảnh nhìn lên từ vài khu gửi tôi.
+
+
+## 25. Vật treo trên vòm và thay cột trụ cũ (giai đoạn 3 của trần vòm): trạng thái và danh sách kiểm tra
+
+- **Thay đồ cũ:** `Dress Lake: Root Vault` ẩn 28 "Hanging Roots" tròn nhẵn (chỉ tắt renderer, vì `LakeLayout` và dây leo tìm theo tên) và treo rễ Blender cùng chỗ, cùng độ dài; ba cột "Landmark" (Humus, Spore, HuntEdge) thành thân rễ gồm 4 rễ Blender kéo giãn (2 rủ từ mái, 2 mọc từ nền), cột tròn cũ còn làm vật cản vô hình hẹp 4 m. `Restore Lake Canopy` trả lại cả hai.
+- **Vật treo mới (Blender, `tools/blender/build_hanging.py`, test `test_hanging.py`):** `VaultRoot_0..3` (rễ rủ dài 4, 8, 14, 20 m), `VaultCurtain_0..1` (màn rễ mảnh rộng 6 m), `VaultPod_0..2` (túi sáng, mũi phát sáng là đối tượng riêng `Pod Glow_N`), `VaultStalactite_0..2` (nhũ đá 3, 4,5, 6 m). Không va chạm.
+- **Đặt theo khu** (cùng menu Root Vault, nhóm "Vault Hanging Props"): 01 túi xanh ngọc; 02 rễ già dày, dài nhất; 03 màn rễ và rễ ngắn; 04 túi tím bào tử; 05 nhũ đá; 06 thưa. Tránh Đại sảnh (9 m), lỗ sáng (11 m), khe sáng (9 m), sườn rễ (6 m). Tối đa 14 đèn túi (`LightByVision`, tắt khi chưa có mắt). Chưa làm "nấm tầng bám sườn" của khu 03.
+- Cần **Reinstall Blender Props (overwrite)** để có FBX mới; thiếu FBX thì rễ buông cũ được giữ.
+
+Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Root Vault, Ctrl+S; (3) không còn cột đen tròn nhẵn, không còn gai khổng lồ trên sườn rễ; (4) mỗi khu có vật treo đúng tính cách, độ dài rễ tạo tầng; (5) túi sáng chỉ thấy khi có mắt; (6) FPS không tụt rõ.
+
+- **Xương rồng treo (fantasy, thêm vào giai đoạn 3):** `DragonSkull_0..1` (sọ rồng dài 7 đến 9 m, sừng cong, răng, mắt phát sáng ngọc là đối tượng riêng `Eye Glow_N`) và `DragonRibcage_0` (lồng ngực rồng 8 m), treo bằng cáp rễ (`tools/blender/build_bones.py`, test `test_bones.py`). `Dress Lake: Root Vault` đặt tối đa 8 cái cách nhau ≥ 45 m, cao hơn đất ≥ 8 m, tránh Đại sảnh, lỗ và khe sáng, sườn rễ; tối đa 6 đèn mắt xanh ngọc (tắt khi chưa có mắt). Cần Reinstall Blender Props (overwrite) trước.
+- **Sự sống trên vòm:** đèn túi sáng và đèn mắt rồng "thở" chậm (`LightByVision.Pulse`, lệch pha nhau); nhũ đá nhỏ giọt nước (`VaultLifeFx` kiểu Drip, 60% nhũ đá) và túi sáng nhả bào tử bay lên (kiểu Spores), chỉ chạy khi camera cách dưới 45 m (tối đa 12 hạt mỗi chỗ). Chạy lại Dress Lake: Root Vault để có.
+- Mô hình sọ và lồng ngực rồng **chưa đẹp**: chờ chủ dự án gửi ảnh tham khảo con rồng rồi dựng lại.
+- **Trần không phẳng như dưới gốc cây:** `VaultLayout.Relief` cộng vào độ cao vòm các gờ rễ to buông xuống (tới khoảng 5 m) với chỗ trũng và bướu giữa chúng (cao thêm tới 2 m), theo noise 52 m, 34 m và 24 m; sườn rễ, vật treo, khe sáng đều theo mặt trần mới. Chạy lại Dress Lake: Root Vault. Test `Relief_IsLumpyButGentle`; giới hạn bước dốc của `VaultHeight` nới từ 1,6 lên 2 m trên 2 m ngang.
+- ~~Bầu trời qua các lỗ sáng~~ **Đã bỏ theo yêu cầu chủ dự án (2026-11-18):** lỗ sáng lại chỉ thấy mặt trong tối của mái hang. Chạy lại Root Vault sẽ không tạo đĩa trời nữa; đĩa cũ (`Vault Sky Windows`) bị xóa khi dựng lại.
+- **Rễ rìa:** `Dress Lake: Root Vault` ẩn (chỉ tắt renderer) "Rim Roots" thẳng nhẵn của `LakeCanopy` và treo rễ Blender (`HangRoot_*`, dày ở mái, thon dần, có rễ phụ) từ vòm xuống đất theo ba hàng quanh vách (khoảng 12 đến 17 m một cây, bề rộng đổi ngẫu nhiên); cửa vào phía bắc vẫn để trống. `Restore Lake Canopy` bật lại rễ cũ.
+- **Mép lỗ sáng tròn mịn:** vỏ vòm cắt lỗ theo từng ô 4 m nên mép bị bậc thang, góc vuông. `Dress Lake: Root Vault` thêm một vành đất dày hơi gồ ghề (ống uốn thành vòng, bán kính ống khoảng 1,9 m) quanh mỗi trong 9 lỗ, bám theo độ cao trần, che mép bậc thang để miệng lỗ tròn mềm. Khe sáng hẹp chưa có vành.
+
+## 26. Ánh sáng thực tế hơn, bớt cảm giác nhựa: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Realism** (bước 20/20 của Rebuild Lake; hoàn tác: **Restore Lake Realism**): (1) hậu xử lý điện ảnh trên volume `LakeLook`: tonemapping ACES, tương phản +12, phơi sáng +0,2, hạt phim mỏng 0,22 (độ bão hòa vẫn do `MonochromeVision`); (2) **SSAO** (tối ở khe và chỗ tiếp xúc) thêm vào mọi renderer URP; (3) mọi vật liệu URP Lit trong `Materials` (trừ nước, tinh thể, đèn, vật phát sáng) bớt bóng: độ bóng ≤ 0,1, tắt điểm sáng phản chiếu và phản xạ môi trường (sao lưu ở `Settings/LakeRealismBackup.json`).
+- Shader `Evolve/RockVertexColor` (đá, rễ, khối Blender) có thêm: mảng màu và hạt nhiễu 3D theo vị trí thế giới (không hai chỗ giống nhau), pháp tuyến nhám theo nhiễu (ánh sáng bắt các gờ nhỏ), ambient tối hơn ở mặt nghiêng hoặc hướng xuống.
+- Hạn chế: đất địa hình và các vật liệu Lit khác chưa có vân chi tiết (đây là việc của lớp nền); SSAO tốn FPS (kiểm bằng PerfOverlay); `Rebuild Lake` bước 18 dựng lại volume nên chạy lại bước 20 sau đó.
+
+Checklist: (1) Console sạch; (2) Dress Lake: Realism, rồi Ctrl+S; (3) cảnh bớt bóng nhựa, đá và rễ có vân, khe tối hơn; (4) FPS không tụt quá 15%; (5) Restore Lake Realism trả lại như cũ.
+
+## 27. Sự sống và nguồn sáng tầng mặt đất: trạng thái và danh sách kiểm tra
+
+- Chủ dự án nhận xét: dưới mặt đất còn trống và thiếu nguồn sáng. Menu **Evolve → Dress Lake: Ground Life** (bước 20/21 của Rebuild Lake; hoàn tác: Restore Lake Ground Life): rải khoảng 430 cụm theo từng khu: nấm sáng (`LumaShroom_0..2`), cụm tinh thể phát sáng (`CrystalCluster_0..2`), hoa đèn lồng (`BulbPlant_0..1`) và rễ trồi lên đất (`RootStub_0..1`, tối, không sáng), đều làm bằng Blender (`tools/blender/build_groundlife.py`, test `test_groundlife.py`). Màu sáng theo khu: 01 ngọc, 02 hổ phách, 03 vàng lục, 04 tím, 05 xanh băng, 06 đỏ dịu. Khoảng một phần ba cụm sáng có đèn nhỏ (tối đa 90, mờ theo thị lực, tắt khi xa 60 m); thêm đèn dẫn đường mỗi 16 m dọc các đường mòn, luân phiên hai bên.
+- Phần sáng của vật thể là đối tượng riêng có chữ "Glow" trong tên: `PropImportPostprocessor` gán vật liệu tự phát sáng `Rock_Glow` (shader `Evolve/RockVertexColor` có thêm `_Glow`, tắt khi mù theo `_EvolveBlind`). Túi sáng và mắt rồng treo trên vòm cũng nhận vật liệu này sau khi nhập lại FBX.
+- Cần **Reinstall Blender Props (overwrite)** trước. Tránh nước sâu, đường mòn (trừ đèn dẫn đường), nơi trú, hang, cột Landmark, thức ăn.
+- Hạn chế: chưa có va chạm cho các cụm này (đi xuyên qua); thú vẫn đi xuyên.
+
+Checklist: (1) Console sạch; (2) Reinstall Blender Props, rồi Dress Lake: Ground Life, Ctrl+S; (3) mỗi khu có màu sáng riêng, đường mòn có đèn dẫn; (4) không có đèn trong nước sâu hay giữa đường; (5) FPS không tụt quá 10% (đèn nhỏ có giới hạn).
+
+## 28. Thảm cỏ rẽ sang hai bên: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Grass** (bước 21/22 của Rebuild Lake, sau Ground Clutter; chạy lại được): thảm cỏ 3D thật quanh vùng nước. `World/GrassMath.Density`: đầy trong khoảng 30 m quanh nước, thưa dần tới hết ở 80 m, loang lổ có bãi trống, không mọc trong nước, trong hang và giữa đường mòn. Bốn mẫu bụi cỏ (cao 0,55 đến 1,15 m, mỗi bụi 5 đến 8 lá thon, cong) là chi tiết địa hình (Terrain detail) dùng GPU instancing nên Unity tự cắt và mờ xa; khoảng 6 bụi mỗi mét vuông ở chỗ dày nhất. Cỏ thẻ cũ của `LakeClutter` giảm 85% ở chỗ đã có thảm cỏ 3D.
+- Shader `Evolve/GrassBlade`: gốc tối, ngọn sáng, lung lay nhẹ theo gió; khi có ai đi qua thì lá cỏ **nghiêng ra xa và cúi xuống**. `World/GrassPushers` (tự tạo khi chạy game) báo cho shader 8 người hoặc thú gần camera nhất (slime cả thật lẫn từ xa, Prey, Predator) qua `_EvolvePushers`.
+- Hạn chế: cỏ không đổ bóng; đo FPS (số lượng lá lớn); chưa nhìn được trong Unity.
+
+Checklist: (1) Console sạch, Test Runner xanh (`GrassMathTests`); (2) Dress Lake: Grass, Ctrl+S; (3) Play, đi vào cỏ: lá rẽ sang hai bên và đứng dậy sau khi đi qua; (4) cỏ dày quanh hồ, thưa dần ra xa, đường mòn trống; (5) FPS không tụt quá 15%.
+
+## 29. Thực vật và quặng hấp thụ được: trạng thái và danh sách kiểm tra
+
+- Menu **Evolve → Dress Lake: Forage** (bước 21/23 của Rebuild Lake; hoàn tác: Restore Lake Forage). Thêm 10 loại hấp thụ được, mỗi loại có `FoodKind` và công thức dưỡng chất riêng (`Survival/FoodProfile`): **thực vật** (rải theo khu): súng nước (Tinh Chất Sống), bồn bồn (Mỡ Nhờn), dương xỉ đắng (Huyết Thiết và Tinh Chất Sống), nấm mỡ (Mỡ Nhờn), củ rễ ngọt (Sợi Nhầy), hoa băng (Tinh Vôi và Tinh Chất Sống); **quặng**: tinh thạch vôi (Tinh Vôi 1,3), quặng sắt (Huyết Thiết 1,3), muối khoáng (Tinh Vôi), thạch anh phát sáng (Huyết Thiết và Tinh Chất Sống, có phần phát sáng tách riêng). Mô hình Blender: `tools/blender/build_forage.py`, test `test_forage.py`.
+- Là các `Nutrient` thường (hình cầu trigger + mô hình), nên ăn, mọc lại và đồng bộ co-op dùng đúng cơ chế cũ. Thực vật 14 đơn vị, hấp thụ 5/giây, mọc lại sau 150 giây; **quặng** 24 đơn vị, hấp thụ chậm 2,5/giây, hình thành lại sau 600 giây. Mỗi khu 34 cái: 01 súng nước (mặt nước nông) và bồn bồn ở bờ, muối; 02 củ rễ ngọt, quặng sắt; 03 nấm mỡ, dương xỉ; 04 dương xỉ, thạch anh; 05 hoa băng, tinh thạch vôi, quặng sắt; 06 quặng sắt, tinh thạch vôi, củ rễ.
+- **Giới hạn đồng bộ co-op nâng từ 400 lên 1000 cục thức ăn** (`World/FoodSyncLimit`, gói tin 4096 byte); cảnh báo ở Console nếu vượt. Cả hai máy phải cùng scene (đã chạy Forage).
+- Hạn chế: chưa có tên và biểu tượng riêng trong giao diện; quặng chưa có va chạm cứng (đi xuyên qua, hấp thụ khi chạm); thú chưa ăn các loại mới.
+
+Checklist: (1) Console sạch, Test Runner xanh (`FoodProfilesWiringTests`); (2) Reinstall Blender Props, Dress Lake: Forage, Ctrl+S; (3) Play: đứng trên một cái thì thanh dưỡng chất tương ứng tăng đúng loại; (4) quặng ăn chậm và mọc lại rất lâu; (5) hai máy co-op thấy cùng thức ăn (không có cảnh báo lệch).
+
+## 30. Nước thật hơn: trạng thái và danh sách kiểm tra
+
+- Shader `Evolve/LakeWater` viết lại phần tô màu (giữ nguyên tên thuộc tính cũ): **khúc xạ** (thấy đáy hồ qua mặt nước, bị gợn sóng bẻ cong, đọc từ URP "Opaque Texture"); **hấp thụ ánh sáng theo độ sâu** kiểu Beer-Lambert (đỏ mất trước nên nước sâu xanh lục, nước đục nâu lục); **vân sáng tụ quang (caustics)** chuyển động trên đáy nước nông; **phản chiếu Fresnel** (yếu khi nhìn thẳng xuống, mạnh ở góc xiên gần bờ) từ môi trường, ambient và một tông tối của hang; **ánh lấp lánh** từ mặt trời và mọi đèn gần (nấm, tinh thể sáng in vệt lên nước); ba lớp gợn sóng (một lớp sóng chậm rộng, hai lớp mịn); bọt ở bờ lởm chởm, động; mép mờ, ẩn khi mù như cũ.
+- Menu **Evolve → Dress Lake: Water Realism** (bước 24/24 của Rebuild Lake; chạy sau Light and Water Look): bật **Opaque Texture** (và Depth Texture) trên mọi URP asset, đặt tham số mới cho các vật liệu nước (`_Absorb`, `_Refract`, `_ReflectTint`, `_CausticStrength`, `_GlintStrength`): nước sạch trong và xanh ngọc, vũng đọng đục.
+- Hạn chế: nước vẫn phẳng (chỉ pháp tuyến gợn, chưa có sóng nhô thật); không phản chiếu chính xác vật thể (không có phản xạ phẳng theo màn hình); nếu Opaque Texture tắt thì nước ra đen; đèn phụ chỉ tính trong giới hạn của URP; shader mới chưa được biên dịch hay thấy trong Unity.
+
+Checklist: (1) Console sạch (không lỗi shader); (2) Dress Lake: Water Realism, Ctrl+S; (3) thấy đáy hồ và vân sáng chuyển động ở chỗ nông, nước sâu xanh lục sẫm; (4) nhìn xiên gần bờ thấy phản chiếu, đứng gần nấm sáng thấy vệt sáng trên nước; (5) chưa có mắt vẫn không thấy nước; (6) FPS không tụt quá 10%.
+
+## 31. Thảm thực vật quét thật (đợt 0–1: tài sản, vật liệu bán thực, dải mẫu): trạng thái và danh sách kiểm tra
+
+- Spec `docs/superpowers/specs/2026-11-18-scanned-flora-design.md`, plan `docs/superpowers/plans/2026-11-18-scanned-flora-wave1.md`. Danh sách 22 tài sản Poly Haven (CC0, khoảng 350 MB): `tools/assets/flora_manifest.json`, trang duyệt có ảnh `docs/art/flora-selection.md`.
+- **Evolve → Install Scanned Assets**: tải về máy vào `Assets/_Project/ThirdParty/Scanned/` (không vào git), không tải lại file đã có, tài sản lỗi thì báo và làm tiếp; rồi dựng prefab với vật liệu URP **bán thực** (`World/SemiRealGrade`: bớt bão hòa 25%, ngả tông xanh lạnh của hang, giữ độ sáng; độ bóng thấp; lá cắt alpha, hai mặt, không đổ bóng).
+- **Evolve → Dress Lake: Scanned Flora Sample** (hoàn tác: Restore Lake Scanned Flora Sample): dải mẫu 40 m ở khu 01 (dương xỉ, tầm ma ở mép ẩm; rêu, cỏ hoa, dây bò; đá rêu, gỗ chết, gốc cây, cụm rễ, cây non) và hai góc máy cố định `Camera Spot 01a/01b`.
+- Test: `FloraManifestTests`, `FloraDownloadTests`, `SemiRealGradeTests` (chưa chạy trong Unity).
+
+Checklist: (1) Console sạch, Test Runner xanh; (2) Install Scanned Assets (cần mạng, vài phút); (3) Dress Lake: Scanned Flora Sample, Ctrl+S; (4) nhìn từ hai góc máy: chất lượng có tới mức bạn muốn không, lá không đen mặt sau, màu có hợp với phần còn lại không; (5) FPS tại góc máy ≥ 90.

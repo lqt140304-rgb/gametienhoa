@@ -42,6 +42,7 @@ namespace Evolve.World
             foreach (var a in Alcoves) h += Bay(x, z, a, 26f, 6f);           // deep alcoves
             foreach (var d in Drops) h += Bay(x, z, d, 16f, -4f);            // ridges hanging down
             h += 1.6f * (Noise(x / 45f, z / 45f) - 0.5f) * 2f;               // gentle undulation
+            h += Relief(x, z);                                               // buttress roots hanging down and hollows between them, like under a big tree
             // over the Great Hall the vault stays well above the hall's own dome (floor level + dome height + 4 m)
             float hallMin = ZoneLayout.ZoneLevels[1] + ZoneLayout.CaveHeight + 4f;
             float hx = (x - ZoneLayout.RootFoot.Center.x) / ZoneLayout.CaveRadii.x, hz = (z - ZoneLayout.RootFoot.Center.y) / ZoneLayout.CaveRadii.y;
@@ -49,6 +50,16 @@ namespace Evolve.World
             float hw = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((hd - 1f) / 0.9f));   // 1 over the hall, 0 beyond ~1.9 hall radii
             h = Mathf.Lerp(h, Mathf.Max(h, hallMin), hw);
             return Mathf.Clamp(h, MinHeight, Mathf.Max(MinHeight, top));
+        }
+
+        /// <summary>Metres added to the roof at (x, z): long ridges of root mass hanging down (up to about 5 m lower) with hollows and knots between them
+        /// (up to 2 m higher), so the roof reads as the underside of a great tree and not as a sheet.</summary>
+        public static float Relief(float x, float z)
+        {
+            float ridge = 1f - Mathf.Abs(2f * Mathf.PerlinNoise(x / 52f + 700f, z / 52f + 700f) - 1f);      // 1 along the crest of a ridge
+            float ridge2 = 1f - Mathf.Abs(2f * Mathf.PerlinNoise(x / 34f + 910f, z / 34f + 910f) - 1f);
+            float knots = (Mathf.PerlinNoise(x / 24f + 300f, z / 24f + 300f) - 0.5f) * 2f;
+            return -3.8f * ridge * ridge - 1.5f * ridge2 * ridge2 + 2f * knots;
         }
 
         static readonly Vector2[] Alcoves = { new Vector2(-70f, 60f), new Vector2(110f, -90f), new Vector2(30f, 150f) };

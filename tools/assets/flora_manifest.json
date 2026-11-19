@@ -1,0 +1,202 @@
+{
+  "assets": [
+    {
+      "id": "fern_02",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "foliage",
+      "tier": "shrub",
+      "species": "Dương xỉ hang"
+    },
+    {
+      "id": "shrub_03",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "foliage",
+      "tier": "shrub",
+      "species": "Bụi lá dưới lỗ sáng"
+    },
+    {
+      "id": "shrub_02",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "foliage",
+      "tier": "shrub",
+      "species": "Bụi lá dưới lỗ sáng"
+    },
+    {
+      "id": "celandine_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "foliage",
+      "tier": "ground",
+      "species": "Cỏ hoa dưới lỗ sáng"
+    },
+    {
+      "id": "moss_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "foliage",
+      "tier": "ground",
+      "species": "Rêu"
+    },
+    {
+      "id": "nettle_plant",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "foliage",
+      "tier": "shrub",
+      "species": "Bụi tầm ma ẩm"
+    },
+    {
+      "id": "periwinkle_plant",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "foliage",
+      "tier": "ground",
+      "species": "Dây dừa cạn bò đất"
+    },
+    {
+      "id": "root_cluster_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "solid",
+      "tier": "shrub",
+      "species": "Cụm rễ trồi"
+    },
+    {
+      "id": "root_cluster_02",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "solid",
+      "tier": "shrub",
+      "species": "Cụm rễ trồi"
+    },
+    {
+      "id": "single_root",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "shrub",
+      "species": "Rễ đơn bò đất"
+    },
+    {
+      "id": "bark_debris_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "solid",
+      "tier": "ground",
+      "species": "Vỏ cây vụn"
+    },
+    {
+      "id": "dry_branches_medium_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "solid",
+      "tier": "ground",
+      "species": "Cành khô"
+    },
+    {
+      "id": "dead_tree_trunk",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "tall",
+      "species": "Thân cây chết (gỗ mục)"
+    },
+    {
+      "id": "dead_tree_trunk_02",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "tall",
+      "species": "Thân cây chết (gỗ mục)"
+    },
+    {
+      "id": "tree_stump_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "shrub",
+      "species": "Gốc cây"
+    },
+    {
+      "id": "tree_stump_02",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "shrub",
+      "species": "Gốc cây"
+    },
+    {
+      "id": "tree_small_02",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "foliage",
+      "tier": "tall",
+      "species": "Cây non dưới lỗ sáng"
+    },
+    {
+      "id": "rock_moss_set_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "rock",
+      "species": "Đá phủ rêu"
+    },
+    {
+      "id": "rock_moss_set_02",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "rock",
+      "species": "Đá phủ rêu"
+    },
+    {
+      "id": "boulder_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "1k",
+      "role": "solid",
+      "tier": "rock",
+      "species": "Tảng đá"
+    },
+    {
+      "id": "rock_07",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "rock",
+      "species": "Đá"
+    },
+    {
+      "id": "rock_face_01",
+      "source": "polyhaven",
+      "kind": "model",
+      "resolution": "2k",
+      "role": "solid",
+      "tier": "rock",
+      "species": "Mặt vách đá"
+    }
+  ]
+}
