@@ -51,6 +51,17 @@ namespace Evolve.EditorTools
                 }
             }
 
+            // Khoang mẫu Vực Thẳm Tinh Thể (Step 3) sử dụng model 3D Blender hoàn chỉnh (235m x 180m, hẻm vực -15m)
+            if (node.Theme == ChamberTheme.CrystalVein)
+            {
+                var crystalFbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "MazeChamber_Crystal.fbx");
+                if (crystalFbx != null)
+                {
+                    BuildHandcraftedCrystalChamber(parent, node, crystalFbx, profile, mainLightColor, accentLightColor, glowMat, wallMat, rnd);
+                    return;
+                }
+            }
+
             // 1. Địa hình đồi thung lũng 150m + vách bao mở khe hầm + vòm trần kín 360 độ
             MazeTerrainMesh.BuildFloorAndWalls(parent, node, chamberRadius, tunnelAnglesDeg, floorMat);
             MazeTerrainMesh.BuildClosedCeiling(parent, node.Id, chamberRadius, wallMat);
@@ -266,6 +277,221 @@ namespace Evolve.EditorTools
             lights.Add(CreatePointLight(lightGroup, "Đèn_CầuĐáVòm", new Vector3(10f, 10.5f, 2f), Color.Lerp(mainColor, new Color(1.0f, 0.75f, 0.35f), 0.5f), 2.0f, 38f));
             lights.Add(CreatePointLight(lightGroup, "Đèn_ThềmCao_HồThượng", new Vector3(-18f, 13.5f, 42f), accentColor, 2.0f, 36f));
             lights.Add(CreatePointLight(lightGroup, "Đèn_ĐồiĐông", new Vector3(32f, 7.5f, -16f), mainColor, 1.5f, 35f));
+
+            return lights;
+        }
+
+        static void BuildHandcraftedCrystalChamber(
+            Transform parent,
+            ChamberNode node,
+            GameObject crystalFbx,
+            ChamberThemeProfile profile,
+            Color mainLightColor,
+            Color accentLightColor,
+            Material glowMat,
+            Material wallMat,
+            System.Random rnd)
+        {
+            // 1. Dựng model 3D khoang mẫu hoàn chỉnh từ Blender (V3 đã được duyệt)
+            var crystalGo = (GameObject)PrefabUtility.InstantiatePrefab(crystalFbx, parent);
+            crystalGo.name = "Khoang_VựcThẳmTinhThể_3D";
+            crystalGo.transform.localPosition = Vector3.zero;
+            crystalGo.transform.localRotation = Quaternion.identity;
+            crystalGo.transform.localScale = Vector3.one;
+
+            EnsureCrystalMaterials(crystalGo);
+
+            // 2. Thảm khoáng biến dị & quặng gai nhọn rải theo các gờ đá (0% cây cỏ, đàn hồi khoáng thạch giòn cứng)
+            PlaceInteractiveCrystalMinerals(parent, rnd);
+
+            // 3. Thức ăn (Nutrient/Ore) phân bố tự nhiên trên các mỏm đá & hốc quặng
+            PlaceHandcraftedCrystalForage(parent, profile, glowMat, rnd);
+
+            // 4. Sinh vật sinh thái
+            PlaceCreatures(parent, node, 68f, profile, rnd);
+
+            // 5. Hệ thống chiếu sáng đa tầng (hắt ngược từ đáy vực -10.5m, hố dịch độc, con mắt, trần hắc ám)
+            var lights = BuildHandcraftedCrystalLighting(parent, mainLightColor, accentLightColor);
+
+            // 6. Tình huống môi trường động (nếu có)
+            if (node.Encounter != ChamberEncounterKind.None)
+            {
+                PlaceEncounterSituation(parent, node, 2000 + node.Id * 79, 68f, new float[] { 25f, 148f, 268f }, wallMat, lights);
+            }
+        }
+
+        static void EnsureCrystalMaterials(GameObject root)
+        {
+            var rockMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_VC.mat");
+            var glowMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_Glow.mat");
+            var waterMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_WaterLake.mat")
+                         ?? AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_Water.mat");
+
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                string n = r.gameObject.name;
+                if ((n.Contains("Water") || n.Contains("Fluid")) && waterMat != null)
+                {
+                    r.sharedMaterial = waterMat;
+                }
+                else if ((n.Contains("Glow") || n.Contains("Ore") || n.Contains("SmallOres")) && glowMat != null)
+                {
+                    r.sharedMaterial = glowMat;
+                }
+                else if (rockMat != null)
+                {
+                    r.sharedMaterial = rockMat;
+                }
+            }
+        }
+
+        static void PlaceInteractiveCrystalMinerals(Transform parent, System.Random rnd)
+        {
+            var mineralGroup = new GameObject("Cụm Khoáng Biến Dị Tương Tác").transform;
+            mineralGroup.SetParent(parent, false);
+
+            string[] mineralPrefabs = {
+                "MazeMineral_VoidSpine",
+                "MazeMineral_BarbedTendril",
+                "MazeMineral_ShardCrust",
+                "MazeMineral_RawChunk"
+            };
+
+            var fbxList = new List<GameObject>();
+            for (int i = 0; i < mineralPrefabs.Length; i++)
+            {
+                var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + mineralPrefabs[i] + ".fbx");
+                if (fbx != null) fbxList.Add(fbx);
+            }
+            if (fbxList.Count == 0) return;
+
+            // Tọa độ trên các gờ đá lồi lõm, thềm đá đi bộ, và 4 dải đá ngầm tự nhiên vượt qua vực
+            var mineralWaypoints = new List<Vector3>
+            {
+                // Thềm đá phía Nam (khu vực xuất hiện & cửa hầm Nam 268 độ)
+                new Vector3(0f, 1.8f, -24f),
+                new Vector3(-8f, 1.6f, -22f),
+                new Vector3(10f, 1.5f, -25f),
+                new Vector3(-18f, 1.2f, -26f),
+                new Vector3(20f, 1.4f, -20f),
+                new Vector3(-28f, 1.5f, -20f),
+                new Vector3(32f, 1.1f, -18f),
+
+                // 4 Dải đá ngầm / Cổ đất tự nhiên băng qua hẻm vực (-15m)
+                // Cổ đất Tây (-36m)
+                new Vector3(-38f, 0.2f, -10f),
+                new Vector3(-35f, -0.4f, -4f),
+                new Vector3(-36f, 0.3f, 4f),
+                // Cổ đất Trung-Tây (-12m)
+                new Vector3(-14f, 0.1f, -12f),
+                new Vector3(-11f, -0.5f, -3f),
+                new Vector3(-12f, 0.4f, 6f),
+                // Cổ đất Trung-Đông (14m)
+                new Vector3(12f, 0.2f, -10f),
+                new Vector3(15f, -0.3f, -2f),
+                new Vector3(13f, 0.5f, 7f),
+                // Cổ đất Đông (40m)
+                new Vector3(40f, 0.4f, -8f),
+                new Vector3(42f, -0.2f, 0f),
+                new Vector3(38f, 0.6f, 8f),
+
+                // Thềm đá dốc gồ ghề phía Bắc (dẫn lên 2 hố dịch độc)
+                new Vector3(-18f, 1.6f, 14f),
+                new Vector3(16f, 1.8f, 16f),
+                new Vector3(-4f, 2.2f, 18f),
+                new Vector3(6f, 2.5f, 22f),
+                new Vector3(-12f, 4.2f, 28f),
+                new Vector3(8f, 4.6f, 30f),
+                new Vector3(0f, 5.2f, 36f),
+                new Vector3(-6f, 7.8f, 44f),
+                new Vector3(10f, 8.2f, 48f),
+
+                // Cửa hầm Đông-Bắc (25 độ) & Tây-Bắc (148 độ)
+                new Vector3(48f, 1.5f, 22f),
+                new Vector3(56f, 1.2f, 28f),
+                new Vector3(-48f, 1.6f, 24f),
+                new Vector3(-58f, 1.3f, 32f),
+            };
+
+            for (int i = 0; i < mineralWaypoints.Count; i++)
+            {
+                var wp = mineralWaypoints[i];
+                int countAtPoint = rnd.Next(1, 3);
+                for (int c = 0; c < countAtPoint; c++)
+                {
+                    float ox = (float)(rnd.NextDouble() - 0.5) * 2.5f;
+                    float oz = (float)(rnd.NextDouble() - 0.5) * 2.5f;
+                    var pos = wp + new Vector3(ox, 0f, oz);
+
+                    var fbx = fbxList[rnd.Next(fbxList.Count)];
+                    var minGo = (GameObject)PrefabUtility.InstantiatePrefab(fbx, mineralGroup);
+                    minGo.name = $"{fbx.name}_{i:00}_{c}";
+                    minGo.transform.localPosition = pos;
+                    minGo.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                    minGo.transform.localScale = Vector3.one * Mathf.Lerp(0.85f, 1.35f, (float)rnd.NextDouble());
+
+                    // Vật lý tương tác rẽ ngang: khoáng thạch giòn cứng
+                    var iflora = minGo.AddComponent<InteractiveFlora>();
+                    var sc = minGo.GetComponent<SphereCollider>();
+                    if (sc == null) sc = minGo.AddComponent<SphereCollider>();
+                    sc.isTrigger = true;
+                    sc.radius = 1.4f;
+                    sc.center = new Vector3(0f, 0.45f, 0f);
+                }
+            }
+        }
+
+        static void PlaceHandcraftedCrystalForage(Transform parent, ChamberThemeProfile profile, Material glowMat, System.Random rnd)
+        {
+            if (profile.ForageItems.Count == 0) return;
+            var forageGroup = new GameObject("Thức Ăn Khoang Tinh Thể").transform;
+            forageGroup.SetParent(parent, false);
+
+            var foragePoints = new Vector3[]
+            {
+                new Vector3(-4f, 1.8f, -22f),
+                new Vector3(8f, 1.6f, -23f),
+                new Vector3(-20f, 1.3f, -24f),
+                new Vector3(-12f, 0.1f, -6f),
+                new Vector3(14f, 0.2f, -4f),
+                new Vector3(-35f, 0.3f, 2f),
+                new Vector3(12f, 1.8f, 14f),
+                new Vector3(-10f, 4.5f, 28f),
+                new Vector3(2f, 5.6f, 38f),
+                new Vector3(-4f, 8.9f, 46f),
+            };
+
+            for (int i = 0; i < foragePoints.Length; i++)
+            {
+                var item = profile.ForageItems[i % profile.ForageItems.Count];
+                CreateNutrientObject(forageGroup, item, foragePoints[i], glowMat, rnd);
+            }
+        }
+
+        static List<Light> BuildHandcraftedCrystalLighting(Transform parent, Color mainColor, Color accentColor)
+        {
+            var lightGroup = new GameObject("Ánh Sáng Vực Thẳm Tinh Thể").transform;
+            lightGroup.SetParent(parent, false);
+            var lights = new List<Light>();
+
+            // 1. Ánh sáng hắt ngược từ đáy vực thẳm -10.5m (Đỏ Máu & Tím Hắc Ám)
+            Color bloodColor = new Color(0.92f, 0.08f, 0.36f);
+            Color voidViolet = new Color(0.72f, 0.12f, 1.00f);
+            Color crimsonGlow = new Color(0.90f, 0.08f, 0.42f);
+
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_Tây", new Vector3(-20f, -10.5f, -3f), bloodColor, 3.2f, 45f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_TrungTâm", new Vector3(0f, -10.5f, -3f), voidViolet, 3.5f, 48f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_Đông", new Vector3(18f, -10.5f, -3f), crimsonGlow, 3.2f, 45f));
+
+            // 2. Điểm sáng hố dịch khoáng độc phía Bắc
+            lights.Add(CreatePointLight(lightGroup, "Đèn_HốDịchĐộc_Thượng", new Vector3(2f, 16.0f, 44f), new Color(0.66f, 0.22f, 1.00f), 2.5f, 42f));
+
+            // 3. Vùng thềm đá xuất phát phía Nam
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThềmĐá_Nam", new Vector3(0f, 8.5f, -24f), new Color(0.70f, 0.14f, 0.96f), 2.2f, 40f));
+
+            // 4. Ánh sáng vòm trần kinh dị & mắt vực thẳm
+            lights.Add(CreatePointLight(lightGroup, "Đèn_VòmTrần_HắcÁm", new Vector3(0f, 32.0f, 6f), new Color(0.55f, 0.12f, 0.90f), 2.8f, 55f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_MắtVực_VáchTây", new Vector3(-44f, 14.0f, 12f), bloodColor, 2.0f, 35f));
 
             return lights;
         }

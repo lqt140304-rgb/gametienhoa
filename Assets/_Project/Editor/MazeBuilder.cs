@@ -70,6 +70,11 @@ namespace Evolve.EditorTools
                         float[] lumaAngles = { 20f, 156f, 264f };
                         angleDeg = lumaAngles[e % lumaAngles.Length];
                     }
+                    else if (node.Theme == ChamberTheme.CrystalVein && edges.Count <= 3)
+                    {
+                        float[] crystalAngles = { 25f, 148f, 268f };
+                        angleDeg = crystalAngles[e % crystalAngles.Length];
+                    }
                     else
                     {
                         angleDeg = (e * (360f / Mathf.Max(1, edges.Count)) + 30f);
@@ -86,6 +91,10 @@ namespace Evolve.EditorTools
                 else if (node.Theme == ChamberTheme.LumaMushroomGrove)
                 {
                     arrival.localPosition = new Vector3(0f, 0.8f, 0f);
+                }
+                else if (node.Theme == ChamberTheme.CrystalVein)
+                {
+                    arrival.localPosition = new Vector3(0f, 1.8f, -24f);
                 }
                 else
                 {
@@ -109,7 +118,7 @@ namespace Evolve.EditorTools
                     : MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallTint, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
 
                 // Đặt miệng hang ở vùng đất phẳng trước chân vách
-                float baseRadius = isBirth ? 25.5f : (node.Theme == ChamberTheme.LumaMushroomGrove ? 72.0f : 56.0f);
+                float baseRadius = isBirth ? 25.5f : ((node.Theme == ChamberTheme.LumaMushroomGrove || node.Theme == ChamberTheme.CrystalVein) ? 72.0f : 56.0f);
                 for (int e = 0; e < edges.Count; e++)
                 {
                     var edge = edges[e];
