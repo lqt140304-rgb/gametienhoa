@@ -120,3 +120,29 @@ Giữ nguyên `Id` (`core.con_bac`, `core.giu_goc`) để không làm hỏng d�
 - Cách thể hiện 6 Ân Điển: danh sách nhỏ hiện dần, hay sáu biểu tượng khắc vào thân.
 - Nếu chưa chạy menu `Evolve → Create Traits` (danh mục asset rỗng): rút thẳng từ dữ liệu `TraitSeed` trong bộ nhớ, hoặc bỏ cảnh kèm cảnh báo; chọn cái đỡ rủi ro hơn. Hạt giống chung của vòng chơi (ví dụ `Environment.TickCount` như phòng cũ) cũng do người làm quyết.
 - Không có phím tắt "chơi không Lõi" như màn cũ (Esc): bấm bỏ qua chỉ rút ngắn cảnh, kết quả vẫn được giao.
+
+---
+
+## 8. Sửa đổi lần 2 (sau khi chủ dự án xem cảnh thật, 2026-11-19)
+
+Chủ dự án thấy: hình còn "phèn", lời đọc quá nhanh và chưa đủ chi tiết, muốn **tự chọn lá bài** thay vì để cảnh tự lật, muốn cảnh mở đầu ở **một không gian khác** (không thấy slime và hang), có cảm giác **"hệ thống"** như trong anime và game, và đổi sang giọng **Hạnh** (nữ Hà Nội, ElevenLabs `pGapy9MNHCukzJtjavF0`), nghe máy móc hơn.
+
+### 8.1 Cảnh là một "không gian hệ thống"
+- Nền **đục hoàn toàn**: không thấy slime, hang, HUD. Một không gian ảo tối, có lưới, đường quét, hạt số trôi, vầng sáng lạnh.
+- Mọi chữ nằm trong **cửa sổ hệ thống** (khung bo góc viền xanh, thanh tiêu đề `[HỆ THỐNG]`, chữ gõ từng ký tự, con trỏ nhấp nháy), kiểu bảng trạng thái trong anime chuyển sinh.
+- Thẻ bài vẽ lại: khung bo góc có viền sáng theo độ hiếm, viên cầu Lõi phát sáng, nhãn độ hiếm, vệt sáng quét qua khi lật; lưng thẻ là một **vòng phù văn** quay chậm. Lúc lật có vầng sáng nổ ra và hạt bay; thẻ Cực hiếm thêm chớp sáng cả màn hình.
+
+### 8.2 Chậm và đầy đủ
+- Mỗi dòng Tiếng Vọng ở lại **đủ lâu để đọc** và **chờ giọng đọc xong** (cộng 0,35 giây) mới sang dòng sau. Tổng cảnh khoảng 70–90 giây (kể cả lúc người chơi chọn bài).
+- Lời đầy đủ hơn: dựng cá thể, từng Ân Điển có một câu riêng (sáu bước), giải thích Lõi và Khuyết Điểm, đọc **tên Lõi và tên Khuyết Điểm** trúng.
+- **Space/Enter** sang dòng kế (sau 1,5 giây của dòng đó); **Tab** nhảy tới lúc chia bài. Lúc chọn bài thì không bỏ qua được.
+
+### 8.3 Người chơi chọn bài
+- **Lõi:** 8 lá **giống hệt nhau** (lưng giống nhau, không dấu hiệu nào) dàn đều trên màn hình (2 hàng × 4). Mỗi lá giấu một Lõi khác nhau; nội dung xếp theo độ hiếm 65/25/10 (rút từng ô, không trùng Lõi), rồi xáo vị trí. Người chơi **chọn một lá** bằng chuột (rê và nhấp) hoặc phím mũi tên + Enter/Space; lá được chọn lật ra Lõi, các lá còn lại mờ đi rồi lật nhanh cho thấy những gì đã bỏ lỡ.
+- **Khuyết Điểm:** 3 lá giống hệt nhau (ba lựa chọn của Lõi, xáo vị trí), chọn một lá tương tự.
+- Số mệnh vẫn quyết định nội dung các lá từ hạt giống trước khi cảnh chạy; người chơi chỉ chọn vị trí. Độ hiếm trung bình của lá được chọn vẫn gần 65/25/10.
+- Con trỏ chuột được mở trong lúc chọn rồi trả lại như cũ.
+
+### 8.4 Giọng
+- Giọng **Hạnh** (`pGapy9MNHCukzJtjavF0`), mô hình `eleven_turbo_v2_5` + `language_code=vi`, đọc đều; thêm hiệu ứng "máy tính hệ thống" mạnh hơn bản trước (trầm nhẹ, chorus, méo số, vang kim loại).
+- Mọi câu thoại có mã riêng; tên Lõi và tên Khuyết Điểm dùng chính `Id` làm tên file (`core.quen_dat.mp3`, `flaw.doi_som.mp3`). Một nguồn duy nhất (`BirthScript.AllVoiceLines`) sinh ra danh sách cho script tạo giọng.
