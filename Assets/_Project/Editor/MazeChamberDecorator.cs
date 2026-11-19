@@ -38,7 +38,7 @@ namespace Evolve.EditorTools
             string floorTex = node.Depth == ChamberDepth.Nong ? "Cavern_Mud_v3.png" : "Cavern_Rock_v3.png";
             var floorMat = MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Floor_{node.Theme}", floorColor, profile.WallSmoothness * 0.5f, false, floorTex);
             var wallMat = MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallColor, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
-            var glowMat = LakeGround.OpaqueMaterial($"Maze_Glow_{node.Theme}", accentLightColor, 0.25f, false, accentLightColor * 1.15f);
+            var glowMat = LakeGround.OpaqueMaterial($"Maze_Glow_{node.Theme}", accentLightColor, 0.25f, false, accentLightColor * 0.55f);
 
             // Khoang mẫu Rừng Nấm Phát Sáng (Step 2) sử dụng model 3D Blender hoàn chỉnh (230m x 175m)
             if (node.Theme == ChamberTheme.LumaMushroomGrove)
@@ -161,10 +161,41 @@ namespace Evolve.EditorTools
             return new Vector3(localPos.x, localPos.y + offsetY, localPos.z);
         }
 
+        static Material LoadOrCreateVertexMaterial(string name, Color tint, float fill, float glow)
+        {
+            string path = $"{Root}/Materials/{name}.mat";
+            var shader = Shader.Find("Evolve/RockVertexColor");
+            var baseMat = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/Rock_VC.mat");
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = baseMat != null ? new Material(baseMat) { name = name } : new Material(shader) { name = name };
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            if (shader != null) mat.shader = shader;
+            mat.SetColor("_Tint", new Color(tint.r, tint.g, tint.b, 1f));
+            mat.SetFloat("_Fill", fill);
+            mat.SetFloat("_Glow", glow);
+            mat.enableInstancing = true;
+            if (!Application.isPlaying) EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
+        static (Material rock, Material largeGlow, Material smallGlow) GetLumaMaterials() => (
+            LoadOrCreateVertexMaterial("Maze_Luma_RockVC", Color.white, fill: 0.28f, glow: 0f),
+            LoadOrCreateVertexMaterial("Maze_Luma_LargeGlow", new Color(0.92f, 0.96f, 0.94f), fill: 0.14f, glow: 0.42f),
+            LoadOrCreateVertexMaterial("Maze_Luma_SmallGlow", new Color(0.95f, 0.98f, 0.96f), fill: 0.16f, glow: 0.52f)
+        );
+
+        static (Material rock, Material largeGlow, Material smallGlow) GetCrystalMaterials() => (
+            LoadOrCreateVertexMaterial("Maze_Crystal_RockVC", new Color(1.15f, 1.10f, 1.22f), fill: 0.34f, glow: 0f),
+            LoadOrCreateVertexMaterial("Maze_Crystal_LargeGlow", new Color(0.90f, 0.86f, 0.95f), fill: 0.14f, glow: 0.42f),
+            LoadOrCreateVertexMaterial("Maze_Crystal_SmallGlow", new Color(0.94f, 0.90f, 0.98f), fill: 0.16f, glow: 0.50f)
+        );
+
         static void EnsureLumaMaterials(GameObject root)
         {
-            var rockMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_VC.mat");
-            var glowMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_Glow.mat");
+            var (lumaRockMat, lumaLargeGlowMat, lumaSmallGlowMat) = GetLumaMaterials();
             var waterMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_WaterLake.mat")
                          ?? AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_Water.mat");
 
@@ -180,13 +211,17 @@ namespace Evolve.EditorTools
                 {
                     r.sharedMaterial = waterMat;
                 }
-                else if (n.Contains("Glow") && glowMat != null)
+                else if (n.Contains("Undergrowth_Glow"))
                 {
-                    r.sharedMaterial = glowMat;
+                    r.sharedMaterial = lumaSmallGlowMat;
                 }
-                else if (rockMat != null)
+                else if (n.Contains("Glow"))
                 {
-                    r.sharedMaterial = rockMat;
+                    r.sharedMaterial = lumaLargeGlowMat;
+                }
+                else
+                {
+                    r.sharedMaterial = lumaRockMat;
                 }
             }
             EnsureChamberCollider(root);
@@ -258,6 +293,7 @@ namespace Evolve.EditorTools
                 new Vector3(-30f, 0.6f, 2f),
             };
 
+            var (lumaRockMat, _, lumaSmallGlowMat) = GetLumaMaterials();
             for (int i = 0; i < keyWaypoints.Count; i++)
             {
                 var wp = keyWaypoints[i];
@@ -274,6 +310,10 @@ namespace Evolve.EditorTools
                     plantGo.transform.localPosition = pos;
                     plantGo.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                     plantGo.transform.localScale = Vector3.one * Mathf.Lerp(0.95f, 1.45f, (float)rnd.NextDouble());
+
+                    bool isGrass = fbx.name.Contains("Grass");
+                    foreach (var r in plantGo.GetComponentsInChildren<Renderer>(true))
+                        r.sharedMaterial = isGrass ? lumaRockMat : lumaSmallGlowMat;
 
                     var iflora = plantGo.AddComponent<InteractiveFlora>();
                     var sc = plantGo.GetComponent<SphereCollider>();
@@ -319,11 +359,17 @@ namespace Evolve.EditorTools
             lightGroup.SetParent(parent, false);
             var lights = new List<Light>();
 
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ThungLũng_TrungTâm", new Vector3(0f, 5.5f, 0f), mainColor, 1.8f, 42f));
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ThácNước_HồHạ", new Vector3(-14f, 6.0f, 10f), accentColor, 2.2f, 36f));
-            lights.Add(CreatePointLight(lightGroup, "Đèn_CầuĐáVòm", new Vector3(10f, 10.5f, 2f), Color.Lerp(mainColor, new Color(1.0f, 0.75f, 0.35f), 0.5f), 2.0f, 38f));
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ThềmCao_HồThượng", new Vector3(-18f, 13.5f, 42f), accentColor, 2.0f, 36f));
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐồiĐông", new Vector3(32f, 7.5f, -16f), mainColor, 1.5f, 35f));
+            // 1. 2 Đèn Vòm Khuếch Tán Tổng Thể ở độ cao y = 26m (bù suy hao 1/d² trong URP)
+            Color domeCool = Color.Lerp(mainColor, Color.white, 0.35f);
+            lights.Add(CreatePointLight(lightGroup, "Đèn_Vòm_TâyNam", new Vector3(-12f, 26f, -6f), domeCool, 65f, 110f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_Vòm_ĐôngBắc", new Vector3(16f, 26f, 22f), domeCool, 65f, 110f));
+
+            // 2. 5 Đèn Vùng Trung Tầng ở độ cao 11m..16m (tạo khối sáng tối hài hòa, không chói)
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThungLũng_TrungTâm", new Vector3(0f, 12f, -4f), mainColor, 30f, 60f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThácNước_HồHạ", new Vector3(-14f, 11f, 12f), accentColor, 32f, 56f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_CầuĐáVòm", new Vector3(10f, 14f, 4f), Color.Lerp(mainColor, new Color(1.0f, 0.78f, 0.45f), 0.45f), 28f, 58f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThềmCao_HồThượng", new Vector3(-18f, 16f, 42f), accentColor, 30f, 58f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐồiĐông", new Vector3(32f, 11f, -16f), mainColor, 26f, 54f));
 
             return lights;
         }
@@ -358,7 +404,7 @@ namespace Evolve.EditorTools
             // 4. Sinh vật sinh thái
             PlaceCreatures(parent, node, 68f, profile, rnd);
 
-            // 5. Hệ thống chiếu sáng đa tầng (hắt ngược từ đáy vực -10.5m, hố dịch độc, con mắt, trần hắc ám)
+            // 5. Hệ thống chiếu sáng đa tầng (khuếch tán vòm + hắt ngược đáy vực -5.5m + vùng đi bộ)
             var lights = BuildHandcraftedCrystalLighting(parent, mainLightColor, accentLightColor);
 
             // 6. Tình huống môi trường động (nếu có)
@@ -370,8 +416,7 @@ namespace Evolve.EditorTools
 
         static void EnsureCrystalMaterials(GameObject root)
         {
-            var rockMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_VC.mat");
-            var glowMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_Glow.mat");
+            var (crystalRockMat, crystalLargeGlowMat, crystalSmallGlowMat) = GetCrystalMaterials();
             var waterMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_WaterLake.mat")
                          ?? AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_Water.mat");
 
@@ -387,13 +432,17 @@ namespace Evolve.EditorTools
                 {
                     r.sharedMaterial = waterMat;
                 }
-                else if ((n.Contains("Glow") || n.Contains("Ore") || n.Contains("SmallOres")) && glowMat != null)
+                else if (n.Contains("SmallOres") || n.Contains("Ore"))
                 {
-                    r.sharedMaterial = glowMat;
+                    r.sharedMaterial = crystalSmallGlowMat;
                 }
-                else if (rockMat != null)
+                else if (n.Contains("Glow"))
                 {
-                    r.sharedMaterial = rockMat;
+                    r.sharedMaterial = crystalLargeGlowMat;
+                }
+                else
+                {
+                    r.sharedMaterial = crystalRockMat;
                 }
             }
             EnsureChamberCollider(root);
@@ -467,6 +516,7 @@ namespace Evolve.EditorTools
                 new Vector3(-58f, 1.3f, 32f),
             };
 
+            var (crystalRockMat, _, crystalSmallGlowMat) = GetCrystalMaterials();
             for (int i = 0; i < mineralWaypoints.Count; i++)
             {
                 var wp = mineralWaypoints[i];
@@ -483,6 +533,9 @@ namespace Evolve.EditorTools
                     minGo.transform.localPosition = pos;
                     minGo.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                     minGo.transform.localScale = Vector3.one * Mathf.Lerp(0.85f, 1.35f, (float)rnd.NextDouble());
+
+                    foreach (var r in minGo.GetComponentsInChildren<Renderer>(true))
+                        r.sharedMaterial = r.gameObject.name.Contains("Glow") ? crystalSmallGlowMat : crystalRockMat;
 
                     // Vật lý tương tác rẽ ngang: khoáng thạch giòn cứng
                     var iflora = minGo.AddComponent<InteractiveFlora>();
@@ -536,24 +589,21 @@ namespace Evolve.EditorTools
             lightGroup.SetParent(parent, false);
             var lights = new List<Light>();
 
-            // 1. Ánh sáng hắt ngược từ đáy vực thẳm -10.5m (Đỏ Máu & Tím Hắc Ám)
-            Color bloodColor = new Color(0.92f, 0.08f, 0.36f);
-            Color voidViolet = new Color(0.72f, 0.12f, 1.00f);
-            Color crimsonGlow = new Color(0.90f, 0.08f, 0.42f);
+            // 1. 2 Đèn Vòm Khuếch Tán Vực Thẳm ở y = 26m (bù suy hao 1/d² để nhìn rõ toàn bộ địa hình gãy khúc & mỏm đá)
+            Color domeMist = new Color(0.72f, 0.60f, 0.92f);
+            lights.Add(CreatePointLight(lightGroup, "Đèn_Vòm_Nam", new Vector3(-14f, 26f, -8f), domeMist, 68f, 115f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_Vòm_Bắc", new Vector3(14f, 26f, 18f), domeMist, 68f, 115f));
 
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_Tây", new Vector3(-20f, -10.5f, -3f), bloodColor, 3.2f, 45f));
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_TrungTâm", new Vector3(0f, -10.5f, -3f), voidViolet, 3.5f, 48f));
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_Đông", new Vector3(18f, -10.5f, -3f), crimsonGlow, 3.2f, 45f));
+            // 2. 3 Đèn Hắt Ngược Đáy Vực lơ lửng giữa khe vực ở y = -5.5m (không dí sát vào tinh thể gây chói)
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_Tây", new Vector3(-22f, -5.5f, -3f), new Color(0.88f, 0.22f, 0.48f), 24f, 52f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_TrungTâm", new Vector3(0f, -5.5f, -3f), new Color(0.72f, 0.28f, 0.96f), 26f, 55f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐáyVực_Đông", new Vector3(20f, -5.5f, -3f), new Color(0.86f, 0.22f, 0.52f), 24f, 52f));
 
-            // 2. Điểm sáng hố dịch khoáng độc phía Bắc
-            lights.Add(CreatePointLight(lightGroup, "Đèn_HốDịchĐộc_Thượng", new Vector3(2f, 16.0f, 44f), new Color(0.66f, 0.22f, 1.00f), 2.5f, 42f));
-
-            // 3. Vùng thềm đá xuất phát phía Nam
-            lights.Add(CreatePointLight(lightGroup, "Đèn_ThềmĐá_Nam", new Vector3(0f, 8.5f, -24f), new Color(0.70f, 0.14f, 0.96f), 2.2f, 40f));
-
-            // 4. Ánh sáng vòm trần kinh dị & mắt vực thẳm
-            lights.Add(CreatePointLight(lightGroup, "Đèn_VòmTrần_HắcÁm", new Vector3(0f, 32.0f, 6f), new Color(0.55f, 0.12f, 0.90f), 2.8f, 55f));
-            lights.Add(CreatePointLight(lightGroup, "Đèn_MắtVực_VáchTây", new Vector3(-44f, 14.0f, 12f), bloodColor, 2.0f, 35f));
+            // 3. 4 Đèn Vùng Đi Bộ ở độ cao 10m..17m (thềm xuất phát, cổ đất Tây-Đông, hố dịch độc Bắc)
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThềmĐá_Nam", new Vector3(0f, 11f, -24f), new Color(0.76f, 0.52f, 0.96f), 30f, 60f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_CổĐất_Tây", new Vector3(-34f, 10f, -2f), new Color(0.72f, 0.48f, 0.92f), 26f, 55f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_CổĐất_Đông", new Vector3(36f, 10f, 2f), new Color(0.72f, 0.48f, 0.92f), 26f, 55f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_HốDịchĐộc_Bắc", new Vector3(2f, 17f, 42f), new Color(0.70f, 0.38f, 0.96f), 28f, 60f));
 
             return lights;
         }
@@ -994,18 +1044,18 @@ namespace Evolve.EditorTools
             mainLight.transform.SetParent(parent, false);
             mainLight.transform.localPosition = new Vector3(0f, 24f, 0f);
             mainLight.type = LightType.Point;
-            mainLight.range = 105f;
+            mainLight.range = 110f;
             mainLight.color = mainColor;
-            mainLight.intensity = profile.MainLightIntensity * 1.8f;
+            mainLight.intensity = 55f;
             mainLight.shadows = LightShadows.None;
             list.Add(mainLight);
 
             Vector3[] accentOffsets =
             {
-                new Vector3(-28f, 9f, 24f),
-                new Vector3(28f, 9f, -24f),
-                new Vector3(-24f, 9f, -28f),
-                new Vector3(24f, 9f, 28f)
+                new Vector3(-28f, 11f, 24f),
+                new Vector3(28f, 11f, -24f),
+                new Vector3(-24f, 11f, -28f),
+                new Vector3(24f, 11f, 28f)
             };
             for (int i = 0; i < accentOffsets.Length; i++)
             {
@@ -1013,9 +1063,9 @@ namespace Evolve.EditorTools
                 accent.transform.SetParent(parent, false);
                 accent.transform.localPosition = accentOffsets[i];
                 accent.type = LightType.Point;
-                accent.range = 42f;
+                accent.range = 52f;
                 accent.color = accentColor;
-                accent.intensity = profile.AccentLightIntensity * 1.4f;
+                accent.intensity = 22f;
                 accent.shadows = LightShadows.None;
                 list.Add(accent);
             }

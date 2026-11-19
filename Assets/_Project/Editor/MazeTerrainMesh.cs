@@ -195,9 +195,9 @@ namespace Evolve.EditorTools
                 rimLight.transform.SetParent(mouth.transform, false);
                 rimLight.transform.localPosition = new Vector3(0f, height * 0.65f, -1.6f);
                 rimLight.type = LightType.Point;
-                rimLight.range = 12f;
+                rimLight.range = 18f;
                 rimLight.color = new Color(0.72f, 0.86f, 0.80f);
-                rimLight.intensity = 1.3f;
+                rimLight.intensity = 10f;
                 rimLight.shadows = LightShadows.None;
 
                 // Đèn dấu hiệu sinh thái nằm sâu bên trong khúc cua để càng vào sâu càng rõ màu khoang đích
@@ -205,9 +205,9 @@ namespace Evolve.EditorTools
                 deepLight.transform.SetParent(mouth.transform, false);
                 deepLight.transform.localPosition = new Vector3(0f, height * 0.45f, 6.0f);
                 deepLight.type = LightType.Point;
-                deepLight.range = 14f;
+                deepLight.range = 22f;
                 deepLight.color = deepGlowColor ?? new Color(0.45f, 0.92f, 0.82f);
-                deepLight.intensity = 2.1f;
+                deepLight.intensity = 14f;
                 deepLight.shadows = LightShadows.None;
 
                 return mouth.transform;
