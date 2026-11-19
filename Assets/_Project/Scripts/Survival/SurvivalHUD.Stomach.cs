@@ -68,7 +68,10 @@ namespace Evolve.Survival
                 if (Button(new Rect(x, 200, 150, 34), "Tiêu hóa", it.Mode == StomachMode.Digest)) st.SetMode(index, StomachMode.Digest);
                 WithEnabled(it.IsSample, () => { if (Button(new Rect(x + 160, 200, 150, 34), "Phân tích", it.Mode == StomachMode.Analyze)) st.SetMode(index, StomachMode.Analyze); });
                 if (Button(new Rect(x + 320, 200, 150, 34), "Giữ", it.Mode == StomachMode.Keep)) st.SetMode(index, StomachMode.Keep);
-                if (Button(new Rect(x + 480, 200, 120, 34), "Nhả ra")) { sw.Spit(index); chosenItem = -1; return; }
+                bool canSpit = SwallowRules.CanSpit(NetWorld.IsClient);
+                bool spat = false;
+                WithEnabled(canSpit, () => { if (Button(new Rect(x + 480, 200, 120, 34), "Nhả ra")) { sw.Spit(index); chosenItem = -1; spat = true; } });
+                if (spat) return;
                 DrawGenome(it, book, x, 250, w);
             }
             bool shelter = stats.State.InShelter;
@@ -139,7 +142,10 @@ namespace Evolve.Survival
                     Label(new Rect(x, y + 6, w - 240, 26), $"{o.DisplayName} {Stars(book.StarsOf(o))} · {cost:0.#} khối", text);
                     GUI.color = prev;
                     var organ = o;
-                    WithEnabled(shelter, () =>
+                    float refundCur = cur != null ? MassRules.Refund(AnalysisRules.FromTier(cur.Tier)) : 0f;
+                    string block = MassRules.SculptBlockReason(shelter, BodyMass, refundCur, rarity);
+                    if (block != null && shelter) Label(new Rect(x + w - 560, y + 6, 320, 26), block, small);
+                    WithEnabled(block == null, () =>
                     {
                         if (!Button(new Rect(x + w - 230, y, 230, 36), cur == null ? "Nặn" : "Nặn thay")) return;
                         var r = organs.TrySculpt(organ, book, body, shelter);

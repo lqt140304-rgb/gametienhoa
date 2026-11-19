@@ -21,5 +21,8 @@ namespace Evolve.Swallow
         /// its stomach lives on its own machine and catches are resolved on the host (co-op learning comes later).
         /// </summary>
         public static bool ShouldUseStomach(bool catcherIsRemote, bool hasSwallower) => !catcherIsRemote && hasSwallower;
+
+        /// <summary>A co-op client cannot drop a carcass into the host's world (Carcass.Spawn is host-only), so it cannot spit.</summary>
+        public static bool CanSpit(bool isClient) => !isClient;
     }
 }

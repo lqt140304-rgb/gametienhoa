@@ -76,6 +76,7 @@ namespace Evolve.Swallow
         /// <summary>Spit an item out: it lands at the slime's feet as a carcass (already-analysed genes are not in it any more).</summary>
         public void Spit(int index)
         {
+            if (!SwallowRules.CanSpit(NetWorld.IsClient)) { Echo.Say("«Không thể nhả ra khi đang là khách trong co-op.»"); return; }
             var it = stomach.Spit(index);
             if (it == null) return;
             var pos = transform.position + transform.forward * 1.2f;

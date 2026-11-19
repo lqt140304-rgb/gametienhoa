@@ -32,9 +32,10 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\nF1  Menu God (thử nghiệm)\n\n" +
             "Đứng yên: không đói, hồi năng lượng nhanh,\nkẻ săn mồi khó phát hiện. Đi vẫn hồi chậm.\n" +
             "Khi quét: xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi\n\n" +
-            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; chết thì cơ quan\nrơi tại chỗ, mỗi cái 50% bị mất)\n\n" +
-            "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E lắp, F hấp thụ, X bỏ qua.\n\n" +
-            "EXP tiến hóa: ăn được ít, hấp thụ cơ quan được\nnhiều. G  Bảng cơ thể: đổ EXP cho cơ quan\n(mầm → Lv1 → Lv3), chọn ưu tiên, tháo.";
+            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; bụng rỗng,\ncơ quan và những gì đã học vẫn còn)\n\n" +
+            "Nuốt Chửng: chạm con mồi để nuốt sống;\nF vào xác để nuốt (giữ F nếu xác to hơn bạn).\n" +
+            "B  Túi Không Đáy: tiêu hóa, phân tích, giữ, nhả.\nGiải Mã học cơ quan từ mẫu (nhanh ×4 trong tổ).\n" +
+            "G  Cơ thể (Biến Hình): nặn cơ quan đã học\nbằng khối, chỉ trong hang trú; tháo hoàn nửa khối.";
 
         void Start()
         {
@@ -90,7 +91,7 @@ namespace Evolve.Survival
                     if (NetWorld.CoopActive) { } // RescueController draws the rescue / spectator text
                     else {
                     GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Thân xác nằm lại, chỉ đồng đội mới cứu được (chơi một mình: chưa có ai cứu)", dead);
-                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Cơ quan vẫn nằm trên xác. Chơi lại thì chúng rơi ra tại xác, mỗi cái 50% bị mất.", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Cơ quan vẫn nằm trên xác. Chơi lại thì chúng mất theo xác.", dead);
                     GUI.Label(new Rect(0, Screen.height / 2f + 56, Screen.width, 30), "Y  Chơi lại từ đầu (tạm thời)", dead);
                     }
                 }

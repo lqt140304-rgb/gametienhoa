@@ -26,7 +26,7 @@ namespace Evolve.World
         {
             if (stats.IsRemote) return;
             zones.Prune(ZoneSet.IsAliveUnityObject);
-            float scale = ctrl != null ? ctrl.BodyScale : 1f;
+            float scale = Evolve.Swallow.MassRules.ShelterFitScale(ctrl != null ? ctrl.BodyScale : 1f);   // a gel body squeezes in
             bool fits = false;
             for (int i = 0; i < zones.Count && !fits; i++)
             {

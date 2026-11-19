@@ -40,5 +40,20 @@ namespace Evolve.Swallow
             inShelter && known && AfterSpend(mass, SculptCost(r)) >= 0f;
 
         public static float MaxHealth(float mass) => mass * HealthPerMass;
+
+        /// <summary>
+        /// Body scale used to check whether the slime fits a shelter. A gel body squeezes through: until shelters are
+        /// rebuilt for body size (step 3), it never counts as bigger than scale 1, so growing never locks it out of Biến Hình.
+        /// </summary>
+        public static float ShelterFitScale(float bodyScale) => bodyScale < 1f ? bodyScale : 1f;
+
+        /// <summary>Why the sculpt button is locked (null = it can be pressed). <paramref name="refund"/> is what the organ in that slot gives back.</summary>
+        public static string SculptBlockReason(bool inShelter, float mass, float refund, GeneRarity r)
+        {
+            if (!inShelter) return "Chỉ nặn lại cơ thể được trong hang trú.";
+            float cost = SculptCost(r);
+            if (AfterSpend(mass + refund, cost) < 0f) return $"Không đủ khối (cần {cost:0.#}, giữ tối thiểu {MinMass:0}).";
+            return null;
+        }
     }
 }
