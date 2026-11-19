@@ -19,6 +19,14 @@ namespace Evolve.Player
         [System.NonSerialized] public float SpeedScale = 1f;
         /// <summary>Speed factor from a core (Nhân Quen Đất): 1 = none. Written by PlayerTraits.</summary>
         [System.NonSerialized] public float TraitSpeed = 1f;
+        float plantDrag = 1f, plantDragUntil;
+        /// <summary>A soft plant (World/SoftPlant) the slime is pushing through asks for a slower speed; the strongest one counts, for a moment after the last contact.</summary>
+        public void NotePlantDrag(float speedFactor)
+        {
+            plantDrag = Time.time < plantDragUntil ? Mathf.Min(plantDrag, speedFactor) : speedFactor;
+            plantDragUntil = Time.time + 0.15f;
+        }
+        float PlantDragScale => Time.time < plantDragUntil ? plantDrag : 1f;
         float frozenUntil;
         Evolve.Traits.PlayerTraits traitsComp;
         Vector3 steer;
@@ -164,7 +172,7 @@ namespace Evolve.Player
             float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
             UpdateWater();
             float speed = crawlSpeed * organSpeed * SpeedScale * TraitSpeed * (IsSprinting ? sprintMultiplier : 1f)
-                * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f);
+                * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f) * PlantDragScale;
             if (IsSwimming)
             {
                 float vertical = ReadVertical();

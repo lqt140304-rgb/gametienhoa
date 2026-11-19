@@ -100,6 +100,7 @@ namespace Evolve.EditorTools
                         else if (r.name.Contains("Glow")) r.sharedMaterial = glow;
                     }
                     foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                    AddPhysics(go, plan.Kind);
                     mine.Add(p);
                     got++;
                 }
@@ -109,6 +110,37 @@ namespace Evolve.EditorTools
             EditorSceneManager.MarkSceneDirty(root.gameObject.scene);
             AssetDatabase.SaveAssets();
             Debug.Log($"Thảm thực vật hang: {total} ({string.Join(", ", summary)}). Ctrl+S để lưu scene.");
+        }
+
+        /// <summary>Physics of the vegetation: root arcs are solid (the slime goes round or under them, their own mesh is the collider); ferns, reeds and bushes are soft (a trigger
+        /// that slows a slime pushing through, see World/SoftPlant); the rest is too small or too thin to matter.</summary>
+        static void AddPhysics(GameObject go, CavernFloraMath.Kind kind)
+        {
+            switch (kind)
+            {
+                case CavernFloraMath.Kind.RootArc:
+                    foreach (var mf in go.GetComponentsInChildren<MeshFilter>(true))
+                    {
+                        if (mf.sharedMesh == null || mf.name.EndsWith("Leaves")) continue;    // the roots, not the little leaves on them
+                        var mc = mf.gameObject.AddComponent<MeshCollider>();
+                        mc.sharedMesh = mf.sharedMesh;
+                        mc.convex = false;
+                    }
+                    break;
+                case CavernFloraMath.Kind.Fern: AddSoft(go, 0.55f, 0.6f, 0.3f); break;
+                case CavernFloraMath.Kind.Reed: AddSoft(go, 0.4f, 1.4f, 0.45f); break;
+                case CavernFloraMath.Kind.Bush: AddSoft(go, 0.45f, 0.9f, 0.8f); break;
+            }
+        }
+
+        static void AddSoft(GameObject go, float radius, float height, float stiffness)
+        {
+            var cap = go.AddComponent<CapsuleCollider>();
+            cap.isTrigger = true;
+            cap.radius = radius;
+            cap.height = Mathf.Max(height, radius * 2f);
+            cap.center = new Vector3(0f, cap.height * 0.5f, 0f);
+            go.AddComponent<SoftPlant>().Stiffness = stiffness;
         }
 
         [MenuItem("Evolve/Restore Cavern Flora (undo)")]

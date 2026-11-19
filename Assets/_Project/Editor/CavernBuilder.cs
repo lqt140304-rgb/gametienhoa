@@ -518,6 +518,7 @@ namespace Evolve.EditorTools
                 go.transform.position = p + Vector3.down * 0.05f;
                 go.transform.rotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                 go.transform.localScale = Vector3.one * Mathf.Lerp(minScale, maxScale, (float)rnd.NextDouble());
+                LakeProps.EnsureCollision(go, false);   // a rock is solid: the slime goes round it (its simplified _COL mesh, or the rock's own mesh)
             }
         }
 
