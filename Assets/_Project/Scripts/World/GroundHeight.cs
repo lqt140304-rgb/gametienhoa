@@ -13,7 +13,11 @@ namespace Evolve.World
         {
             var terrain = Terrain.activeTerrain;
             if (terrain == null) return fallbackY;
-            return terrain.SampleHeight(new Vector3(x, 0f, z)) + terrain.transform.position.y;
+            Vector3 tPos = terrain.transform.position;
+            Vector3 tSize = terrain.terrainData.size;
+            if (x < tPos.x || x > tPos.x + tSize.x || z < tPos.z || z > tPos.z + tSize.z)
+                return fallbackY;
+            return terrain.SampleHeight(new Vector3(x, 0f, z)) + tPos.y;
         }
 
         /// <summary>How far a point sits above the ground (0 when there is no Terrain).</summary>

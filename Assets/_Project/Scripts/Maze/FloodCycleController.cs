@@ -135,16 +135,20 @@ namespace Evolve.Maze
 
         void ApplyWaterField(float waterLevel)
         {
-            // Giữ nguyên hồ ở đáy Hang Khởi Sinh, đồng thời nâng mực nước mặt khi lũ dâng
+            var manager = FindFirstObjectByType<MazeWorldManager>();
+            bool inBirthCavern = manager == null || manager.CurrentChamberId == 0;
+
             WaterField.Use(
                 (x, z) =>
                 {
+                    if (!inBirthCavern) return Mathf.Max(0f, waterLevel);
                     float lakeDepth = CavernLayout.DepthAt(x, z);
                     float floodDepth = Mathf.Max(0f, waterLevel - CavernLayout.GroundHeight(x, z));
                     return Mathf.Max(lakeDepth, floodDepth);
                 },
                 (x, z) =>
                 {
+                    if (!inBirthCavern) return Mathf.Max(0f, waterLevel);
                     float lakeDepth = CavernLayout.DepthAt(x, z);
                     float floodDepth = Mathf.Max(0f, waterLevel - CavernLayout.GroundHeight(x, z));
                     return Mathf.Max(lakeDepth, floodDepth);
