@@ -601,16 +601,18 @@ Checklist: (a) Console sạch; (b) bấm **K**: có chiêu đã học (sau khi G
 
 ## 38. Cảnh Ra Đời: chia bài số mệnh (bước 2): trạng thái và danh sách kiểm tra
 
-Spec `docs/superpowers/specs/2026-11-19-birth-scene-design.md`, plan `docs/superpowers/plans/2026-11-19-birth-scene.md`.
+Spec `docs/superpowers/specs/2026-11-19-birth-scene-design.md` (mục 8 là bản sửa sau khi xem cảnh thật), plan `docs/superpowers/plans/2026-11-19-birth-scene.md`.
 
-- **Cảnh** (`Traits/BirthScene`, thay `TraitPicker`): khoảng 22 giây. Giọt nhờn rơi; Tiếng Vọng báo, sáu Ân Điển hiện dần (Phân Thân còn ghi "chưa có hiệu ứng"); **chia bài Lõi** (7 thẻ úp xếp hình quạt, xáo, một thẻ lật lên); **chia bài Khuyết Điểm** (3 thẻ tối, một thẻ lật); tổng kết. **Space hoặc Enter** bỏ qua sau 3 giây (nhảy tới tổng kết, kết quả giữ nguyên). Chạy một lần mỗi vòng chơi; chết rồi hồi sinh không chạy lại. Không còn phím "chơi không Lõi".
-- **Số mệnh** (`FateRoll`, thuần, có test): bậc theo độ hiếm Thường 65% / Hiếm 25% / Cực hiếm 10% (bậc rỗng thì chia lại), rồi chọn đều trong bậc; Khuyết Điểm chọn đều trong 3 cái đi kèm Lõi. Kết quả định trước khi cảnh chạy.
+- **Không gian hệ thống** (`Traits/BirthScene`, `BirthUi`): nền **đục hoàn toàn**, không thấy slime, hang hay HUD. Lưới trôi, hạt số bay lên, đường quét chậm, vòng phù văn quay. Mọi chữ trong **cửa sổ hệ thống** (khung bo góc viền sáng, thanh tiêu đề `[HỆ THỐNG]`, chữ gõ từng ký tự, thanh sóng khi đang đọc).
+- **Chậm và đủ ý** (`BirthFlow`, `BirthScript`): khởi động, ba dòng dựng cá thể, **mỗi Ân Điển một bước** (có danh sách trạng thái), lời dẫn tới chia bài, đọc **tên Lõi và tên Khuyết Điểm** trúng. Mỗi dòng ở lại đủ lâu và **chờ giọng đọc xong** (+0,35 giây). Tổng khoảng 80–100 giây. Space/Enter sang dòng kế (sau 1,5 giây), Tab nhảy tới lúc chia bài.
+- **Người chơi chọn bài:** 8 lá **giống hệt nhau** dàn đều (2 hàng × 4); mỗi lá giấu một Lõi khác nhau, nội dung rút theo độ hiếm 65/25/10 (`FateRoll.DealDeck`, không trùng) rồi xáo vị trí. Chọn bằng **chuột (rê và nhấp)** hoặc **mũi tên + Enter**. Lá được chọn bay ra giữa, lật, có vầng sáng và hạt bay; thẻ Cực hiếm chớp vàng cả màn hình. Sau đó 3 lá Khuyết Điểm giống hệt nhau, chọn tương tự.
   - Thường: Màng Thẩm Thấu, Ăn Mòn, Quang Hợp, Cộng Sinh, Thích Nghi, Bám Dính. Hiếm: Thần Tốc, Nguỵ Sắc, Phản Chấn, Quen Đất. Cực hiếm: Dòng Máu Tham Lam, Dạ Dày Bất Diệt.
-  - Kho rút gồm cả 12 Lõi; Lõi chưa có hiệu ứng ghi "chưa có hiệu ứng" trên thẻ. Chưa chạy `Evolve → Create Traits` thì cảnh rút từ bảng dữ liệu có sẵn.
-- **Hai Lõi làm lại:** *Dòng Máu Tham Lam* (cũ: Con Bạc; ×1,5 cơ hội Giải Mã cho gene Hiếm trở lên) và *Dạ Dày Bất Diệt* (cũ: Giữ Gốc; hai lần chết đầu còn mạng thì **giữ món trong Túi Không Đáy**). `Id` giữ nguyên.
-- **Co-op:** mỗi người tự rút (có thể trùng Lõi). Client báo kết quả bằng tin `evolve.tr.pick`; máy chủ chỉ kiểm Lõi có tồn tại và Khuyết Điểm đúng một lựa chọn của nó rồi gắn vào avatar. Đã bỏ phòng tranh thẻ (`TraitRoom`), `CardDealer` và tin chia thẻ.
-- **Giọng Tiếng Vọng (tùy chọn):** thả file vào `Assets/_Project/Resources/Voice/Echo/<id>.mp3`; danh sách câu và hướng dẫn giọng ở `docs/art/echo-voice-lines.md`. Không có file thì chỉ hiện chữ.
-- Chưa làm: **Dị Tượng** (cần lũ và hệ sinh thái), hiệu ứng cho 9 Lõi và 8 Khuyết Điểm còn ghi "chưa có hiệu ứng".
-- Test: `FateRollTests`, `BirthTests`, `TraitChoiceTests`, `DeathLossRulesTests`, `AnalysisBookTests` chạy được ngoài Unity (`tools/cstest/run.sh`, 104 test xanh). Cần Unity: `TraitCatalogTests`, `TraitSeedTests` (thêm kiểm tên hai Lõi làm lại). **Chưa mở trong Unity.**
+  - Lõi chưa có hiệu ứng ghi "chưa có hiệu ứng". Chưa chạy `Evolve → Create Traits` thì rút từ bảng dữ liệu có sẵn.
+- **Chạy một lần mỗi vòng chơi**; chết rồi hồi sinh không chạy lại. Con trỏ chuột được mở trong cảnh và trả lại như cũ.
+- **Hai Lõi làm lại:** *Dòng Máu Tham Lam* (×1,5 cơ hội Giải Mã cho gene Hiếm trở lên) và *Dạ Dày Bất Diệt* (hai lần chết đầu còn mạng thì giữ món trong Túi Không Đáy). `Id` giữ nguyên.
+- **Co-op:** mỗi người tự rút; client báo kết quả bằng tin `evolve.tr.pick`, máy chủ chỉ kiểm Lõi có tồn tại và Khuyết Điểm đúng một lựa chọn của nó. Đã bỏ `TraitRoom`, `CardDealer`, tin chia thẻ.
+- **Giọng Tiếng Vọng:** giọng **Hạnh** (ElevenLabs), đọc phẳng như máy, hiệu ứng hệ thống; 37 file trong `Assets/_Project/Resources/Voice/Echo/`. Cách tạo lại: `docs/art/echo-voice-lines.md`, `tools/voice/`.
+- Chưa làm: **Dị Tượng**, hiệu ứng cho 9 Lõi và 8 Khuyết Điểm còn ghi "chưa có hiệu ứng".
+- Test: `FateRollTests`, `BirthTests`, `TraitChoiceTests`, `DeathLossRulesTests`, `AnalysisBookTests` chạy ngoài Unity (`tools/cstest/run.sh`, 109 test xanh). Cần Unity: `TraitCatalogTests`, `TraitSeedTests`. **Cảnh vẽ bằng IMGUI chưa mở trong Unity: chưa biết có lỗi biên dịch hay hình có đẹp như tính toán không.**
 
-Checklist: (a) chạy `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: thấy cảnh 22 giây, slime đứng yên, HUD ẩn; (d) Space sau 3 giây nhảy tới tổng kết; (e) xong thì điều khiển được slime và Lõi hiện trong dữ liệu (Tab/H hoặc F1); (f) chết (F1 → Tự sát) rồi R: cảnh không chạy lại, Lõi còn; (g) chạy 5 lần: các Lõi khác nhau, thỉnh thoảng thẻ xanh hoặc vàng; (h) co-op (nếu thử được): client rút xong, avatar của nó trên máy chủ có Lõi.
+Checklist: (a) `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: màn tối hoàn toàn, **không thấy slime hay hang**; (d) chữ gõ ra, giọng đọc xong mới sang dòng; (e) 8 lá giống hệt nhau dàn đều, rê chuột thấy lá nhô lên và sáng, nhấp để chọn; (f) lá được chọn lật ra Lõi, có vầng sáng; (g) 3 lá Khuyết Điểm tương tự; (h) tổng kết rồi điều khiển được slime; (i) chết rồi R: cảnh không chạy lại; (j) chạy nhiều lần: các Lõi khác nhau, thỉnh thoảng thẻ xanh hoặc vàng.
