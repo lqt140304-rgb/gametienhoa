@@ -6,7 +6,7 @@ using UnityEngine.Rendering.Universal;
 namespace Evolve.Visuals
 {
     /// <summary>
-    /// A brightness setting for the player: F10 opens a small panel with a slider ("Độ sáng"), [ and ] change it a notch without the panel; it is remembered
+    /// A display setting for the player: F10 opens a small panel with a brightness slider ("Độ sáng") and an LOD switch (LodSetting), [ and ] change it a notch without the panel; it is remembered
     /// (PlayerPrefs). It adds a global post-processing volume that raises exposure and lifts the shadows (BrightnessMath), above every other volume, touching only
     /// those two settings (the vision system keeps the saturation). Created by itself when the game starts.
     /// </summary>
@@ -40,6 +40,7 @@ namespace Evolve.Visuals
             volume.isGlobal = true;
             volume.priority = 100f;       // above every scene volume
             volume.sharedProfile = profile;
+            LodSetting.Apply(LodSetting.Saved);   // LOD is off until the player turns it back on
             Apply();
         }
 
@@ -70,12 +71,15 @@ namespace Evolve.Visuals
         void OnGUI()
         {
             if (!panel) return;
-            const float w = 300f, h = 88f;
+            const float w = 320f, h = 130f;
             var rect = new Rect(Screen.width - w - 16f, 64f, w, h);
-            GUI.Box(rect, "Độ sáng  (F10 đóng · [ ] chỉnh nhanh)");
-            float v = GUI.HorizontalSlider(new Rect(rect.x + 16f, rect.y + 38f, w - 32f, 20f), brightness, 0f, 1f);
+            GUI.Box(rect, "Hiển thị  (F10 đóng · [ ] chỉnh sáng nhanh)");
+            GUI.Label(new Rect(rect.x + 16f, rect.y + 28f, w - 32f, 20f), "Độ sáng");
+            float v = GUI.HorizontalSlider(new Rect(rect.x + 16f, rect.y + 50f, w - 32f, 20f), brightness, 0f, 1f);
             if (!Mathf.Approximately(v, brightness)) Set(v);
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 58f, w - 32f, 22f), $"{Mathf.RoundToInt(brightness * 100f)}%   (mặc định {Mathf.RoundToInt(BrightnessMath.Default * 100f)}%)");
+            GUI.Label(new Rect(rect.x + 16f, rect.y + 66f, w - 32f, 22f), $"{Mathf.RoundToInt(brightness * 100f)}%   (mặc định {Mathf.RoundToInt(BrightnessMath.Default * 100f)}%)");
+            bool lodOff = GUI.Toggle(new Rect(rect.x + 16f, rect.y + 94f, w - 32f, 24f), LodSetting.Off, " Tắt LOD (chi tiết tối đa, nặng máy hơn)");
+            if (lodOff != LodSetting.Off) LodSetting.Apply(lodOff);
         }
     }
 }

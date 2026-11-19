@@ -155,7 +155,7 @@ namespace Evolve.EditorTools
             go.transform.position = new Vector3(-half, -BaseOffset, -half);
             var terrain = go.GetComponent<Terrain>();
             terrain.heightmapPixelError = 1f;   // no coarse terrain LOD: it made big triangular teeth along the curved shore
-            terrain.basemapDistance = 150f;
+            terrain.basemapDistance = 1000f;   // the ground keeps its sharp textures all over the cave (the base map is a blurry far version)
             terrain.drawInstanced = true;
 
             // check what was really saved: the ground's texture depends on the layers and their alpha maps
