@@ -142,6 +142,15 @@ namespace Evolve.EditorTools
             terrain.heightmapPixelError = 1f;   // no coarse terrain LOD: it made big triangular teeth along the curved shore
             terrain.basemapDistance = 150f;
             terrain.drawInstanced = true;
+
+            // check what was really saved: the ground's texture depends on the layers and their alpha maps
+            int layerCount = terrain.terrainData.terrainLayers != null ? terrain.terrainData.terrainLayers.Length : 0;
+            int alphaCount = terrain.terrainData.alphamapTextureCount;
+            bool texOk = true;
+            foreach (var l in terrain.terrainData.terrainLayers) if (l == null || l.diffuseTexture == null) texOk = false;
+            if (layerCount < 3 || alphaCount < 1 || !texOk)
+                Debug.LogError($"Nền hang thiếu texture: {layerCount} lớp đất, {alphaCount} ảnh alpha, ảnh màu đủ: {texOk}. Chạy Build Slime Cavern thêm một lần nữa, hoặc gửi ảnh Console này.");
+            else Debug.Log($"Nền hang: {layerCount} lớp đất, {alphaCount} ảnh alpha, texture đủ.");
         }
 
         // ---------------------------------------------------------------- the lake
