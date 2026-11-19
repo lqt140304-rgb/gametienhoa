@@ -566,3 +566,20 @@ Checklist: (1) Console sạch, Test Runner xanh (`SonarWaveMathTests`); (2) chư
 Checklist: (1) Console sạch; (2) đi vào đá: bị chặn, đi vòng được, không kẹt, không rung; (3) đi vào bụi, dương xỉ, sậy: chậm lại rõ ràng, ra khỏi thì chạy bình thường; (4) rễ trồi chặn đường, đi vòng được; (5) FPS không tụt rõ.
 
 - **Miệng lỗ trời rộng hơn:** bán kính lỗ trên mái hang tăng từ 6,5 m lên **10 m** (`CavernLayout.HoleRadius`, diện tích gấp khoảng 2,4 lần), nên chùm sáng và vũng sáng trên hồ lớn hơn; đèn mặt trời tăng từ 1,3 lên 1,7; chùm sáng, tia phụ, bụi trong chùm và vòng dây leo quanh miệng đều theo bán kính mới. Cần dựng lại hang (Build Slime Cavern).
+
+## 36. Bước 1 "Chuyển Sinh Trong Hang": Nuốt, Bụng, Giải Mã, Biến Hình: trạng thái và danh sách kiểm tra
+
+Spec `docs/superpowers/specs/2026-11-19-reincarnation-survival-design.md`, plan `docs/superpowers/plans/2026-11-19-swallow-learn-core.md`.
+
+- **Nuốt Chửng** (`Swallow/Swallower`): đâm vào con mồi thì nuốt sống vào bụng (con mồi phải ≤ 80% khối của slime, bụng còn chỗ; nếu không thì ăn tại chỗ như cũ). Thú săn mồi chết để lại xác có bảng di truyền (`CarcassSample`): **F** để nuốt; xác to hơn thì **giữ F** để hòa tan. Không còn vật phẩm cơ quan rơi ra.
+- **Túi Không Đáy** (`Stomach`, phím **B**): 6 chỗ; mỗi món Tiêu hóa / Phân tích / Giữ, hoặc Nhả ra. Phân tích 20 giây trong hang trú, chậm gấp 4 ở ngoài; tiêu hóa 8 giây, cho no và thêm 30% khối của món.
+- **Giải Mã** (`AnalysisRules`, `AnalysisBook`): bảng di truyền lấy từ drop table của loài. Mỗi mẫu một lần may (Thường 25%, Hiếm 8%, Quý 2%, Huyền thoại 10% chỉ ở con đầu đàn) và một bước tích lũy (chắc chắn sau 7 / 15 / 25 / 3 mẫu). Chất lượng mẫu ×1 tươi, ×0,5 xác cũ, ×0,2 xác thối. Đã học thì 3 mẫu lên ★2, 9 mẫu lên ★3. Cấp Giải Mã (10 / 30 mẫu) mở tên rồi % cơ hội. Sổ giữ nguyên khi chết.
+- **Biến Hình** (phím **G**): nặn cơ quan đã học bằng **khối** (2 / 4 / 7 / 12 theo độ hiếm), **chỉ trong hang trú**; tháo ra hoàn nửa khối. Cấp cơ quan = số sao. Bỏ hẳn EXP nuôi cơ quan và bản mẫu.
+- **Khối lượng** (`SlimeBody`): máu tối đa = khối × 10; kích thước theo khối (khối 10 = cỡ cũ). Chưa mất khối khi bị đánh (để sau).
+- **Tiếng Vọng** (`Echo`): dòng chữ giữa trên màn hình khi phân tích, học, lên sao.
+- Chết: bụng rỗng, cơ quan và sổ Giải Mã còn nguyên. Hết mạng và mất xác: cơ quan đang gắn mất.
+- Cảnh, prefab cũ: HUD tự thêm `SlimeBody` và `Swallower` cho slime khi chạy; dựng lại scene cũng có.
+- Test: phần luật chạy được ngoài Unity bằng `tools/cstest/run.sh` (.NET 8, 46 test xanh). Test cần Unity: `SculptTests`. **Chưa mở trong Unity: chưa biết có lỗi biên dịch không.**
+- Lưu ý: `ShelterZone.MaxBodyScale` 1,3 nghĩa là slime khối trên 17,5 không vào hang trú cũ được (sẽ làm lại hang trú ở bước 3).
+
+Checklist: (a) Console sạch; (b) đâm vào con mồi: nó vào bụng, B thấy món đang Phân tích; (c) đứng trong tổ: thanh chạy nhanh hơn rõ; (d) học được: có dòng Tiếng Vọng; (e) G ngoài tổ: nút khóa; trong tổ: Nặn trừ khối, cơ quan hiện lên người; (f) giết thú săn mồi, F vào xác (giữ F nếu to): vào bụng; (g) chết: bụng rỗng, cơ quan còn; (h) bụng đầy: có thông báo. Menu God (F1) có "+10 khối" và "Học hết cơ quan" để thử nhanh.
