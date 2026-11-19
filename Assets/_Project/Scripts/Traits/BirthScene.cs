@@ -453,9 +453,10 @@ namespace Evolve.Traits
                     break;
                 case BirthStepKind.Pull:
                     Type(step.Text, t, inst);
-                    foreach (var s in streaks)
+                    for (int si = 0; si < streaks.Count; si++)
                     {
-                        float y = size.y / 2f + 200f - Mathf.Repeat(clock * (900f + 600f * BirthUiKit.Hash(s.GetInstanceID() & 0xff)) + BirthUiKit.Hash(s.GetInstanceID() & 0x3f) * size.y, size.y + 400f);
+                        var s = streaks[si];
+                        float y = size.y / 2f + 200f - Mathf.Repeat(clock * (900f + 600f * BirthUiKit.Hash(si * 7 + 1)) + BirthUiKit.Hash(si * 5 + 3) * size.y, size.y + 400f);
                         s.rectTransform.anchoredPosition = new Vector2(s.rectTransform.anchoredPosition.x, y);
                     }
                     countdown.text = Mathf.Max(1, 3 - (int)(t / 1.4f)).ToString();
