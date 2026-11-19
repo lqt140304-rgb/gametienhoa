@@ -106,6 +106,17 @@ Hai nguyên liệu trong Túi Không Đáy ghép thành một vật phẩm mạn
 
 **Chuyển đổi từ hệ cũ:** `OrganSO`, `OrganHost` (ô, cấp, hiệu ứng) được tái dùng làm dữ liệu cơ quan. `OrganPickup` và EXP nuôi cơ quan bị thay bằng học qua Giải Mã và chi phí khối. Chi tiết nằm trong plan.
 
+### 6.1 Sửa đổi sau chơi thử (2026-11-19): kỹ năng thay cho cơ quan
+
+Cơ thể slime **trơn, không gắn gì cố định**. Mỗi gene học được là một **kỹ năng**:
+
+- **Bị động** (mắt, màng chịu nhiệt…): luôn bật; tối đa **3**; chỉ nặn hoặc tháo ở **hang trú**, tốn khối như trên. Mắt luôn hiện trên người; bị động khác không hiện hình.
+- **Chiêu chủ động** (phóng gai, chạy nước rút, lao tới…): gắn phím **1–5 ở bất cứ đâu**, không tốn gì. Mỗi lần dùng tốn năng lượng và có hồi chiêu. Bộ phận **chỉ hiện hình lúc vận chiêu**: mọc ra, dùng, rồi tan vào thân.
+  - Gai phản đòn chỉ có tác dụng khi gai đang trồi.
+  - Chân (chân giả, chân chạy) cho chiêu **Chạy Nước Rút**: ×tốc độ của loại đó trong vài giây.
+- Học xong là dùng được ngay (★1). ★2 và ★3 mạnh hơn.
+- Bảng G: Bị động. Bảng K: Chiêu.
+
 ## 7. Thức ăn và Mẫu Sống
 
 - **Thức Ăn** (rêu thường, nước, côn trùng nhỏ): để sống; khá nhiều; hồi lại theo chu kỳ lũ; **không cho kỹ năng**.
