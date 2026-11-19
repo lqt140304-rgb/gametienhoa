@@ -271,6 +271,7 @@ namespace Evolve.EditorTools
             int n = 0;
             foreach (var l in Object.FindObjectsByType<Light>())
             {
+                if (l.name.StartsWith("Ore Light")) { l.intensity = 9f; l.range = 13f; }   // a real lamp now: lights the ground and plants round it, fading with distance
                 if (!(l.name.StartsWith("Beam Light") || l.name.StartsWith("Ore Light")) || l.GetComponent<LightByVision>() != null) continue;
                 var lv = l.gameObject.AddComponent<LightByVision>();
                 lv.AlwaysOnWhenSighted = l.name.StartsWith("Beam Light");   // the beam is seen from across the cave
