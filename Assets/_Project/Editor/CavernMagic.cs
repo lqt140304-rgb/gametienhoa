@@ -66,7 +66,7 @@ namespace Evolve.EditorTools
                     l.innerSpotAngle = 0f;
                     l.spotAngle = 85f;
                     l.range = CavernMagicMath.BeamHeight * 1.6f;
-                    l.intensity = 110f;       // the light is spread over about 40 m, so it must be strong to leave a gentle wash on the near shore
+                    l.intensity = 150f;       // the light is spread over about 40 m, so it must be strong to leave a gentle wash on the near shore
                     l.color = new Color(1f, 0.93f, 0.78f);
                     l.shadows = LightShadows.None;
                 }
@@ -110,14 +110,26 @@ namespace Evolve.EditorTools
             var hit = CavernMagicMath.BeamHit;
             var go = new GameObject("Beam Bounce Light");
             go.transform.SetParent(root, false);
-            go.transform.position = new Vector3(hit.x, CavernLayout.WaterLevel + 7f, hit.z);   // high enough not to burn the water under it
+            go.transform.position = new Vector3(hit.x, CavernLayout.WaterLevel + 10f, hit.z);   // high enough not to burn the water under it
             var l = go.AddComponent<Light>();
             l.type = LightType.Point;
             l.color = new Color(0.78f, 0.92f, 0.88f);
-            l.range = 46f;
-            l.intensity = 48f;                  // inverse-square: about 0.9 on the pool, 0.12 at the shore, 0.05 far away
+            l.range = 60f;
+            l.intensity = 75f;                  // inverse-square: about 0.9 on the pool, 0.12 at the shore, 0.05 far away
             l.shadows = LightShadows.None;
             go.AddComponent<LightByVision>().AlwaysOnWhenSighted = true;   // fades with sight like every light, never culled by distance (the cave is small)
+
+            // a very wide, faint, cool light high under the roof, so the far side of the cave is lifted too and the light is even, not a bright middle and a black edge
+            var roofGo = new GameObject("Roof Fill Light");
+            roofGo.transform.SetParent(root, false);
+            roofGo.transform.position = new Vector3(0f, CavernLayout.CeilingY(0f, 0f) - 3f, 0f);
+            var rl = roofGo.AddComponent<Light>();
+            rl.type = LightType.Point;
+            rl.color = new Color(0.55f, 0.72f, 0.95f);
+            rl.range = 80f;
+            rl.intensity = 70f;
+            rl.shadows = LightShadows.None;
+            roofGo.AddComponent<LightByVision>().AlwaysOnWhenSighted = true;
         }
 
         // ------------------------------------------------------------------ particles
@@ -310,7 +322,7 @@ namespace Evolve.EditorTools
         static void Mood()
         {
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.03f, 0.04f, 0.065f);          // almost nothing: the light comes from the lamps, so the farther from them, the darker
+            RenderSettings.ambientLight = new Color(0.065f, 0.08f, 0.115f);         // a little: lifts the whole cave evenly, the lamps still do the lighting: the light comes from the lamps, so the farther from them, the darker
             RenderSettings.fogColor = new Color(0.035f, 0.05f, 0.09f);
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(Root + "/Settings/CavernLook.asset");
             if (profile != null && profile.TryGet(out Bloom bloom))
