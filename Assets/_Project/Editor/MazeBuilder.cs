@@ -91,12 +91,17 @@ namespace Evolve.EditorTools
                     ? rockMat
                     : MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallTint, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
 
-                // Đặt miệng hang ở vùng đất phẳng trước chân vách (27.5m ở Hang Khởi Sinh, 56m ở khoang 75m)
-                float baseRadius = isBirth ? 27.5f : 56.0f;
+                // Đặt miệng hang ở vùng đất phẳng trước chân vách (25.5m ở Hang Khởi Sinh, 56m ở khoang 75m)
+                float baseRadius = isBirth ? 25.5f : 56.0f;
                 for (int e = 0; e < edges.Count; e++)
                 {
                     var edge = edges[e];
                     int otherId = edge.OtherEnd(node.Id);
+                    var destProfile = ChamberThemeCatalog.Get(graph.GetChamber(otherId).Theme);
+                    Color destGlow = new Color(
+                        destProfile.AccentLightColor.R,
+                        destProfile.AccentLightColor.G,
+                        destProfile.AccentLightColor.B);
                     BuildChamberTunnelEndpoint(
                         chamberGo.transform,
                         inst,
@@ -108,7 +113,8 @@ namespace Evolve.EditorTools
                         terrainSeed,
                         tunnelAngles,
                         mouthMat,
-                        darkMat);
+                        darkMat,
+                        destGlow);
                 }
 
                 instances.Add(inst);
@@ -135,21 +141,23 @@ namespace Evolve.EditorTools
             int terrainSeed,
             IReadOnlyList<float> tunnelAngles,
             Material rockMat,
-            Material darkMat)
+            Material darkMat,
+            Color deepGlowColor)
         {
             float rad = angleDeg * Mathf.Deg2Rad;
             float gx = Mathf.Cos(rad) * radius;
             float gz = Mathf.Sin(rad) * radius;
-            float baseY = node.Kind == ChamberKind.BirthCavern
+            bool isBirth = node.Kind == ChamberKind.BirthCavern;
+            float baseY = isBirth
                 ? CavernLayout.GroundHeight(gx, gz) - 0.1f
                 : MazeTerrainMath.GroundHeightAt(gx, gz, terrainSeed, ChamberRadius, tunnelAngles, node.HasHighLedge) - 0.1f;
 
-            // Miệng hang rộng rãi đồ sộ để slime đi vào mượt 100% không bị lấp hay vướng
+            // Miệng hang Blender rộng rãi (scale 1.4x): thông thoáng, dấu hiệu hang đích sáng rõ dần vào trong
             (float width, float height) = edge.Size switch
             {
-                TunnelSize.Small => (4.6f, 4.2f),
-                TunnelSize.Medium => (6.8f, 5.8f),
-                _ => (9.5f, 7.8f)
+                TunnelSize.Small => (4.0f, 3.3f),
+                TunnelSize.Medium => (6.2f, 5.0f),
+                _ => (9.0f, 7.0f)
             };
 
             var mouth = MazeTerrainMesh.BuildNaturalTunnelMouth(
@@ -162,21 +170,23 @@ namespace Evolve.EditorTools
                 height,
                 rockMat,
                 darkMat,
-                seed: edge.Id * 31 + node.Id);
+                seed: edge.Id * 31 + node.Id,
+                sizeHint: edge.Size,
+                deepGlowColor: deepGlowColor);
 
-            // Điểm xuất hiện khi từ khoang đích bước ra (đứng ngay trước cửa hang rộng)
+            // Điểm xuất hiện khi từ khoang đích bước ra (đứng ngoài hẳn phần miệng loe -3.6m)
             var exitPoint = new GameObject("ExitSpawnPoint").transform;
             exitPoint.SetParent(mouth, false);
-            exitPoint.localPosition = new Vector3(0f, 0.8f, -4.0f);
+            exitPoint.localPosition = new Vector3(0f, 0.8f, isBirth ? -5.2f : -5.8f);
             exitPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
 
-            // Cổng hoán đổi đặt ngay trong lòng cửa hang (z = +2.4m), thông thoáng không có collider cản
+            // Cổng hoán đổi đặt sâu trong đoạn khuất giữa hầm (sau miệng hang, trước vách đáy kín)
             var portalGo = new GameObject("TunnelPortal");
             portalGo.transform.SetParent(mouth, false);
-            portalGo.transform.localPosition = new Vector3(0f, height * 0.45f, 2.4f);
+            portalGo.transform.localPosition = new Vector3(0f, height * 0.45f, isBirth ? 2.8f : 4.0f);
             var portalCol = portalGo.AddComponent<BoxCollider>();
             portalCol.isTrigger = true;
-            portalCol.size = new Vector3(width * 0.85f, height * 0.85f, 2.8f);
+            portalCol.size = new Vector3(width * 0.9f, height * 0.85f, 3.0f);
 
             var portal = portalGo.AddComponent<TunnelPortal>();
             portal.Configure(node.Id, targetChamberId, edge.Id, exitPoint);

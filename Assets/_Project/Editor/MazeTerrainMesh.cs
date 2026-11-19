@@ -143,8 +143,9 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>
-        /// Dựng miệng hang đồ sộ, thông thoáng 100% (lòng hang đi thẳng trên mặt đất tự nhiên,
-        /// đá viền tách sang hai bên mép ngoài và cắm sâu xuống đất, không chặn hay lấp cửa).
+        /// Dựng miệng &amp; lòng đường hầm Blender tự nhiên bất đối xứng (MazeTunnel_Small/Medium/Large.fbx),
+        /// căn chuẩn hướng mở vào trong khoang (-Z) và khúc uốn sâu + dấu hiệu sinh thái hướng ra ngoài (+Z).
+        /// Tự động giữ tương thích với các lời gọi chỉ truyền kích thước width/height.
         /// </summary>
         public static Transform BuildNaturalTunnelMouth(
             Transform parent,
@@ -156,7 +157,9 @@ namespace Evolve.EditorTools
             float height,
             Material rockMat,
             Material darkMat,
-            int seed = 1)
+            int seed = 1,
+            TunnelSize? sizeHint = null,
+            Color? deepGlowColor = null)
         {
             float rad = angleDeg * Mathf.Deg2Rad;
             Vector3 dir = new Vector3(Mathf.Cos(rad), 0f, Mathf.Sin(rad));
@@ -168,6 +171,49 @@ namespace Evolve.EditorTools
             mouth.transform.position = pos;
             mouth.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
 
+            TunnelSize resolvedSize = sizeHint ?? (width <= 5.2f ? TunnelSize.Small : width <= 7.8f ? TunnelSize.Medium : TunnelSize.Large);
+            string variant = resolvedSize switch
+            {
+                TunnelSize.Small => "Small",
+                TunnelSize.Medium => "Medium",
+                _ => "Large"
+            };
+
+            var fbx = AssetDatabase.LoadAssetAtPath<GameObject>($"{ModelFolder}MazeTunnel_{variant}.fbx");
+            if (fbx != null)
+            {
+                const float uniformScale = 1.4f;
+                var tunnelGo = (GameObject)PrefabUtility.InstantiatePrefab(fbx, mouth.transform);
+                tunnelGo.name = $"Đường Hầm Blender ({variant})";
+                tunnelGo.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+                tunnelGo.transform.localScale = Vector3.one * uniformScale;
+                OrientTunnelDeepAlongPlusZ(tunnelGo);
+                EnsureTunnelColliderAndGlowTint(tunnelGo, deepGlowColor);
+
+                // Đèn hắt viền đá ngoài cửa giúp nhận biết miệng hang từ xa
+                var rimLight = new GameObject("Ánh Sáng Cửa Hang").AddComponent<Light>();
+                rimLight.transform.SetParent(mouth.transform, false);
+                rimLight.transform.localPosition = new Vector3(0f, height * 0.65f, -1.6f);
+                rimLight.type = LightType.Point;
+                rimLight.range = 12f;
+                rimLight.color = new Color(0.72f, 0.86f, 0.80f);
+                rimLight.intensity = 1.3f;
+                rimLight.shadows = LightShadows.None;
+
+                // Đèn dấu hiệu sinh thái nằm sâu bên trong khúc cua để càng vào sâu càng rõ màu khoang đích
+                var deepLight = new GameObject("Ánh Sáng Dấu Hiệu Sâu").AddComponent<Light>();
+                deepLight.transform.SetParent(mouth.transform, false);
+                deepLight.transform.localPosition = new Vector3(0f, height * 0.45f, 6.0f);
+                deepLight.type = LightType.Point;
+                deepLight.range = 14f;
+                deepLight.color = deepGlowColor ?? new Color(0.45f, 0.92f, 0.82f);
+                deepLight.intensity = 2.1f;
+                deepLight.shadows = LightShadows.None;
+
+                return mouth.transform;
+            }
+
+            Debug.LogWarning($"Không tìm thấy {ModelFolder}MazeTunnel_{variant}.fbx, dùng hình học dự phòng.");
             const float length = 6.2f;
             var path = new List<Vector3>
             {
@@ -176,7 +222,6 @@ namespace Evolve.EditorTools
                 new Vector3(0f, -0.45f, length)
             };
 
-            // 1. Vòm hang cong lớn (ArchTunnel rỗng lòng, chân cắm sâu -0.95m xuống đất)
             var archGo = new GameObject("Vòm Đá Đường Hầm");
             archGo.transform.SetParent(mouth.transform, false);
             var archMesh = CaveMeshes.ArchTunnel(path, width, height, 12);
@@ -185,7 +230,6 @@ namespace Evolve.EditorTools
             archMr.sharedMaterial = rockMat;
             archMr.shadowCastingMode = ShadowCastingMode.TwoSided;
 
-            // 2. Màn tối sâu cuối hầm (chỉ là hình ảnh, không collider cản đường)
             var darkGo = new GameObject("Bóng Tối Sâu Hầm");
             darkGo.transform.SetParent(mouth.transform, false);
             darkGo.transform.localPosition = new Vector3(0f, height * 0.42f, length - 0.8f);
@@ -194,22 +238,88 @@ namespace Evolve.EditorTools
             darkGo.AddComponent<MeshFilter>().sharedMesh = darkDisc;
             darkGo.AddComponent<MeshRenderer>().sharedMaterial = darkMat;
 
-            // 3. Đá viền đặt TÁCH hẳn sang 2 mép ngoài (không lấn vào lòng cửa hang) và cắm chân sâu xuống đất
-            float sideOffset = width * 0.65f + 1.35f;
-            PlaceFramingBoulder(mouth.transform, new Vector3(-sideOffset, -0.7f, 0.6f), 1.45f, seed + 1, rockMat, disableCollider: true);
-            PlaceFramingBoulder(mouth.transform, new Vector3(sideOffset, -0.7f, 0.6f), 1.45f, seed + 2, rockMat, disableCollider: true);
-
-            // 4. Đèn hắt ấm nhẹ ở đỉnh vòm giúp người chơi nhận biết rõ miệng hang từ xa
             var gateLight = new GameObject("Ánh Sáng Cửa Hang").AddComponent<Light>();
             gateLight.transform.SetParent(mouth.transform, false);
             gateLight.transform.localPosition = new Vector3(0f, height * 0.72f, 0.8f);
             gateLight.type = LightType.Point;
             gateLight.range = 14f;
-            gateLight.color = new Color(0.55f, 0.90f, 0.85f);
+            gateLight.color = deepGlowColor ?? new Color(0.55f, 0.90f, 0.85f);
             gateLight.intensity = 1.6f;
             gateLight.shadows = LightShadows.None;
 
             return mouth.transform;
+        }
+
+        static void OrientTunnelDeepAlongPlusZ(GameObject tunnelGo)
+        {
+            MeshFilter shellMf = null;
+            foreach (var mf in tunnelGo.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh == null) continue;
+                string n = mf.gameObject.name;
+                if (n.EndsWith("_COL") || n.EndsWith("_Glow") || n.EndsWith("_Stalks")) continue;
+                shellMf = mf;
+                break;
+            }
+            if (shellMf == null) return;
+
+            var verts = shellMf.sharedMesh.vertices;
+            if (verts == null || verts.Length == 0) return;
+
+            float minX = float.MaxValue, maxX = float.MinValue;
+            float minZ = float.MaxValue, maxZ = float.MinValue;
+            int step = Mathf.Max(1, verts.Length / 400);
+            var rootTr = tunnelGo.transform;
+            var meshTr = shellMf.transform;
+
+            for (int i = 0; i < verts.Length; i += step)
+            {
+                Vector3 p = rootTr.InverseTransformPoint(meshTr.TransformPoint(verts[i]));
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.z < minZ) minZ = p.z;
+                if (p.z > maxZ) maxZ = p.z;
+            }
+
+            // Đầu mở miệng hang ở ngắn hơn (-2.6m), còn đầu kín sâu tới (+8.2..9.8m) nên dấu của (max + min) chỉ rõ chiều sâu.
+            float asymZ = maxZ + minZ;
+            float asymX = maxX + minX;
+            if (Mathf.Abs(asymZ) >= Mathf.Abs(asymX))
+            {
+                tunnelGo.transform.localRotation = asymZ < 0f
+                    ? Quaternion.Euler(0f, 180f, 0f)
+                    : Quaternion.identity;
+            }
+            else
+            {
+                tunnelGo.transform.localRotation = asymX > 0f
+                    ? Quaternion.Euler(0f, -90f, 0f)
+                    : Quaternion.Euler(0f, 90f, 0f);
+            }
+        }
+
+        static void EnsureTunnelColliderAndGlowTint(GameObject tunnelGo, Color? deepGlowColor)
+        {
+            if (tunnelGo.GetComponentInChildren<Collider>(true) == null)
+            {
+                foreach (var mf in tunnelGo.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (!mf.gameObject.name.EndsWith("_COL") || mf.sharedMesh == null) continue;
+                    var mc = mf.gameObject.AddComponent<MeshCollider>();
+                    mc.sharedMesh = mf.sharedMesh;
+                    var mr = mf.GetComponent<MeshRenderer>();
+                    if (mr != null) mr.enabled = false;
+                }
+            }
+
+            if (!deepGlowColor.HasValue) return;
+            var block = new MaterialPropertyBlock();
+            block.SetColor("_Tint", Color.Lerp(Color.white, deepGlowColor.Value, 0.55f));
+            foreach (var r in tunnelGo.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.gameObject.name.Contains("Glow"))
+                    r.SetPropertyBlock(block);
+            }
         }
 
         public static void PlaceFramingBoulder(
