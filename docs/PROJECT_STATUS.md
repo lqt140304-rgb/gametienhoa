@@ -527,3 +527,6 @@ Checklist: (1) Console sạch, Test Runner xanh; (2) Install Scanned Assets (c�
 Checklist: (1) Console sạch (không lỗi shader); (2) Evolve → Dress Cavern: Magic Light, Ctrl+S; (3) Play: chùm sáng mềm có bụi, đom đóm nhấp nháy quanh bờ, hồ lấp lánh và có vũng sáng dưới chùm; (4) FPS không tụt rõ; (5) nếu quá lòe loẹt hoặc quá tối, báo để chỉnh cường độ.
 
 - **Khi slime chưa có mắt (hang):** chùm sáng, hạt sáng (bụi, đom đóm, đốm sáng, lấp lánh nước), cỏ và các hiệu ứng nước mới chỉ hiện **loang mềm quanh slime**, mờ dần mịn ra xa (`Shaders/EvolveSight.hlsl`: `EvolveSightVisible`, đọc `_EvolveBlind` và `_EvolveSightCenter` của `MonochromeVision`). Đèn rọi của chùm và đèn quặng gắn `LightByVision` nên cũng mờ theo thị lực.
+
+- **Độ sáng do người chơi chỉnh:** `Visuals/BrightnessSetting` (tự tạo khi chạy game): **F10** mở bảng "Độ sáng" có thanh kéo (0 đến 100%, mặc định 35%), phím **[** và **]** chỉnh nhanh từng nấc 5%, nhớ giữa các lần chơi (PlayerPrefs). Thêm một Volume hậu xử lý ưu tiên cao chỉ chỉnh độ phơi sáng (-0,5 đến +3 stop) và nâng vùng tối (LiftGammaGain), không đụng độ bão hòa của hệ thị lực. Số liệu ở `Visuals/BrightnessMath`, test `BrightnessMathTests`.
+- **Chùm sáng hang:** phần của chùm gần camera mờ đi (3 đến 14 m), nên đứng trong chùm không còn thấy tường sọc dọc phủ kín màn hình.

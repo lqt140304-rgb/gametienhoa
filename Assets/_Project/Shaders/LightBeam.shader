@@ -90,6 +90,8 @@ Shader "Evolve/LightBeam"
                 speck *= saturate(1.0 - length(frac3) * 3.2);
                 float body = _Intensity * streak * along * edge * soft;
                 half3 col = _Color.rgb * (body + speck * _Dust * 1.6 * along * soft);
+                // standing inside the beam must not wall the screen with streaks: whatever is near the camera fades away
+                col *= smoothstep(3.0, 14.0, distance(i.positionWS, _WorldSpaceCameraPos));
                 col *= EvolveSightVisible(i.positionWS);   // blind: only the light round the slime is seen, spreading softly
                 return half4(col, 1);
             }
