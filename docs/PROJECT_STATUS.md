@@ -599,20 +599,18 @@ Spec mục 6.1, plan `docs/superpowers/plans/2026-11-19-skills-not-organs.md`. S
 
 Checklist: (a) Console sạch; (b) bấm **K**: có chiêu đã học (sau khi Giải Mã xong gene Gai độc hoặc Chân); (c) gắn phím 1–5, bấm: gai trồi trên lưng, bắn, rồi tan vào thân, hồi chiêu hiện ở ô phím; (d) chân: bấm thì chân mọc ra, chạy nhanh khoảng 4 giây rồi thu vào; (e) **G**: chỉ thấy ô Mắt và Da, đủ 3 bị động thì báo; ngoài tổ nút Nặn khóa; (f) F1 có "Học chiêu" để thử nhanh; (g) chết rồi hồi sinh: chiêu đã học vẫn còn.
 
-## 38. Cảnh Ra Đời: chia bài số mệnh (bước 2): trạng thái và danh sách kiểm tra
+## 38. Cảnh Ra Đời bản 3 "đường truyền sụp đổ" (bước 2): trạng thái và danh sách kiểm tra
 
-Spec `docs/superpowers/specs/2026-11-19-birth-scene-design.md` (mục 8 là bản sửa sau khi xem cảnh thật), plan `docs/superpowers/plans/2026-11-19-birth-scene.md`.
+Spec `docs/superpowers/specs/2026-11-20-birth-scene-system-collapse-design.md`, plan `docs/superpowers/plans/2026-11-20-birth-scene-system-collapse.md`.
 
-- **Không gian hệ thống** (`Traits/BirthScene`, `BirthUi`): nền **đục hoàn toàn**, không thấy slime, hang hay HUD. Lưới trôi, hạt số bay lên, đường quét chậm, vòng phù văn quay. Mọi chữ trong **cửa sổ hệ thống** (khung bo góc viền sáng, thanh tiêu đề `[HỆ THỐNG]`, chữ gõ từng ký tự, thanh sóng khi đang đọc).
-- **Chậm và đủ ý** (`BirthFlow`, `BirthScript`): khởi động, ba dòng dựng cá thể, **mỗi Ân Điển một bước** (có danh sách trạng thái), lời dẫn tới chia bài, đọc **tên Lõi và tên Khuyết Điểm** trúng. Mỗi dòng ở lại đủ lâu và **chờ giọng đọc xong** (+0,35 giây). Tổng khoảng 80–100 giây. Space/Enter sang dòng kế (sau 1,5 giây), Tab nhảy tới lúc chia bài.
-- **Người chơi chọn bài:** 8 lá **giống hệt nhau** dàn đều (2 hàng × 4); mỗi lá giấu một Lõi khác nhau, nội dung rút theo độ hiếm 65/25/10 (`FateRoll.DealDeck`, không trùng) rồi xáo vị trí. Chọn bằng **chuột (rê và nhấp)** hoặc **mũi tên + Enter**. Lá được chọn bay ra giữa, lật, có vầng sáng và hạt bay; thẻ Cực hiếm chớp vàng cả màn hình. Sau đó 3 lá Khuyết Điểm giống hệt nhau, chọn tương tự.
-  - Thường: Màng Thẩm Thấu, Ăn Mòn, Quang Hợp, Cộng Sinh, Thích Nghi, Bám Dính. Hiếm: Thần Tốc, Nguỵ Sắc, Phản Chấn, Quen Đất. Cực hiếm: Dòng Máu Tham Lam, Dạ Dày Bất Diệt.
-  - Lõi chưa có hiệu ứng ghi "chưa có hiệu ứng". Chưa chạy `Evolve → Create Traits` thì rút từ bảng dữ liệu có sẵn.
-- **Chạy một lần mỗi vòng chơi**; chết rồi hồi sinh không chạy lại. Con trỏ chuột được mở trong cảnh và trả lại như cũ.
-- **Hai Lõi làm lại:** *Dòng Máu Tham Lam* (×1,5 cơ hội Giải Mã cho gene Hiếm trở lên) và *Dạ Dày Bất Diệt* (hai lần chết đầu còn mạng thì giữ món trong Túi Không Đáy). `Id` giữ nguyên.
-- **Co-op:** mỗi người tự rút; client báo kết quả bằng tin `evolve.tr.pick`, máy chủ chỉ kiểm Lõi có tồn tại và Khuyết Điểm đúng một lựa chọn của nó. Đã bỏ `TraitRoom`, `CardDealer`, tin chia thẻ.
-- **Giọng Tiếng Vọng:** giọng **Chi** (ElevenLabs, nữ giọng Bắc), đọc tự nhiên, 37 file trong `Assets/_Project/Resources/Voice/Echo/`. Cách tạo lại: `docs/art/echo-voice-lines.md`, `tools/voice/`.
-- Chưa làm: **Dị Tượng**, hiệu ứng cho 9 Lõi và 8 Khuyết Điểm còn ghi "chưa có hiệu ứng".
-- Test: `FateRollTests`, `BirthTests`, `TraitChoiceTests`, `DeathLossRulesTests`, `AnalysisBookTests` chạy ngoài Unity (`tools/cstest/run.sh`, 109 test xanh). Cần Unity: `TraitCatalogTests`, `TraitSeedTests`. **Cảnh vẽ bằng IMGUI chưa mở trong Unity: chưa biết có lỗi biên dịch hay hình có đẹp như tính toán không.**
+- **Sân khấu riêng** (`BirthStage`): camera + Canvas UGUI đặt xa (y=20000), Volume hậu kỳ riêng (Bloom, tách màu, méo kính, nhiễu hạt, tối viền), vẽ vào RenderTexture rồi IMGUI phủ toàn màn (che cả HUD). Không thấy slime, hang hay HUD. Tạo sân khấu lỗi thì bỏ qua cảnh và trao kết quả ngay.
+- **"Độ bất ổn" 0..1** (`Instability`) điều khiển nhiễu, rung, khung vỡ và chữ vỡ. Bắt đầu cao (mất kết nối), giảm dần, về 0 khi "Kết nối ổn định".
+- **Khung vỡ** (`BirthWindow`): viền chia đoạn giật, rách, nhấp nháy, góc ngoặc, nghiêng; chữ gõ từng ký tự, vỡ thành ký hiệu khi bất ổn.
+- **Rút tự động:** số mệnh (`FateRoll`, 65/25/10) quyết định trước, cảnh chỉ trình diễn: 7 lá Lõi xáo, lá số mệnh bay lên rồi tự lật (nổ hạt, loé, rung theo độ hiếm), 3 lá Khuyết Điểm lật 1–2 lá.
+- **Sáu Ân Điển, mỗi cái một cảnh** (`BirthGiftScene`): Túi, Nuốt, Giải Mã, Biến Hình, Sóng Dò, Phân Thân (đánh dấu "sắp có").
+- **Đập tên** (`SlamPlan`, `BirthSlam`): Lõi nghiêng trái, Khuyết Điểm nghiêng phải, các Ân Điển xen kẽ; rơi vào với rung màn hình (Cực hiếm rung gấp đôi).
+- **Âm thanh:** 22 hiệu ứng ElevenLabs thật (`Resources/Sfx/Birth/`, bảng ở `BirthSfx`, tạo lại bằng `tools/voice/generate_birth_sfx.sh`): gõ chữ, nhiễu, báo động, nhạc nền ù, lật bài, lộ Lõi (thường/hiếm/cực hiếm), lộ Khuyết Điểm, đập tên, chuông ổn định, mỗi Ân Điển một tiếng. Thiếu file thì im. Giọng Chi tự nhiên, 39 câu (`docs/art/echo-voice-lines.md`).
+- Space/Enter sang bước kế (sau 1,5 giây), Tab nhảy tới lúc rút bài. Chạy một lần mỗi vòng; chết rồi hồi sinh không chạy lại. Co-op: mỗi người tự rút, client báo `evolve.tr.pick`, máy chủ kiểm hợp lệ.
+- Test ngoài Unity: 131 test xanh (`tools/cstest/run.sh`). **Toàn bộ phần Unity của bản 3 (BirthStage, Glitch, Frames, Fx, Cards, Slam, Gifts, Audio, Scene) chưa từng biên dịch hay xem trong Unity.** Chưa làm: ô video Veo, Dị Tượng, hiệu ứng thật cho Phân Thân và các Lõi ghi "chưa có hiệu ứng".
 
-Checklist: (a) `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: màn tối hoàn toàn, **không thấy slime hay hang**; (d) chữ gõ ra, giọng đọc xong mới sang dòng; (e) 8 lá giống hệt nhau dàn đều, rê chuột thấy lá nhô lên và sáng, nhấp để chọn; (f) lá được chọn lật ra Lõi, có vầng sáng; (g) 3 lá Khuyết Điểm tương tự; (h) tổng kết rồi điều khiển được slime; (i) chết rồi R: cảnh không chạy lại; (j) chạy nhiều lần: các Lõi khác nhau, thỉnh thoảng thẻ xanh hoặc vàng.
+Checklist: (a) `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: nền tối, không thấy slime/hang/HUD, nhiễu và rung lúc đầu; (d) chữ gõ có tiếng, nhạc nền ù; (e) mỗi Ân Điển một cảnh và một tiếng; (f) bài tự xáo và lật, Lõi có hiệu ứng theo độ hiếm; (g) tên đập vào nghiêng trái/phải kèm rung; (h) "Kết nối ổn định" rồi điều khiển được slime; (i) Space/Tab bỏ qua được; (j) chết rồi R: không chạy lại.
