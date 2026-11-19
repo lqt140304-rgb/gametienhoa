@@ -29,8 +29,6 @@ namespace Evolve.World
         [SerializeField] float blindLightIntensity = 8f;
 
         [Header("Scan (vibration wave)")]
-        [Tooltip("Brightness of the wide light thrown by the scan")]
-        [SerializeField] float scanLightIntensity = 150f;
         [Tooltip("How high above the character the scan light hangs")]
         [SerializeField] float scanLightHeight = 8f;
 
