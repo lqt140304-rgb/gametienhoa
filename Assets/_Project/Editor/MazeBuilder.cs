@@ -60,7 +60,20 @@ namespace Evolve.EditorTools
                 var tunnelAngles = new List<float>(edges.Count);
                 for (int e = 0; e < edges.Count; e++)
                 {
-                    float angleDeg = isBirth ? (315f + e * 115f) % 360f : (e * (360f / Mathf.Max(1, edges.Count)) + 30f);
+                    float angleDeg;
+                    if (isBirth)
+                    {
+                        angleDeg = (315f + e * 115f) % 360f;
+                    }
+                    else if (node.Theme == ChamberTheme.LumaMushroomGrove && edges.Count <= 3)
+                    {
+                        float[] lumaAngles = { 20f, 156f, 264f };
+                        angleDeg = lumaAngles[e % lumaAngles.Length];
+                    }
+                    else
+                    {
+                        angleDeg = (e * (360f / Mathf.Max(1, edges.Count)) + 30f);
+                    }
                     tunnelAngles.Add(angleDeg);
                 }
 
@@ -69,6 +82,10 @@ namespace Evolve.EditorTools
                 if (isBirth)
                 {
                     arrival.position = CavernLayout.SpawnPoint();
+                }
+                else if (node.Theme == ChamberTheme.LumaMushroomGrove)
+                {
+                    arrival.localPosition = new Vector3(0f, 0.8f, 0f);
                 }
                 else
                 {
@@ -91,8 +108,8 @@ namespace Evolve.EditorTools
                     ? rockMat
                     : MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallTint, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
 
-                // Đặt miệng hang ở vùng đất phẳng trước chân vách (25.5m ở Hang Khởi Sinh, 56m ở khoang 75m)
-                float baseRadius = isBirth ? 25.5f : 56.0f;
+                // Đặt miệng hang ở vùng đất phẳng trước chân vách
+                float baseRadius = isBirth ? 25.5f : (node.Theme == ChamberTheme.LumaMushroomGrove ? 72.0f : 56.0f);
                 for (int e = 0; e < edges.Count; e++)
                 {
                     var edge = edges[e];

@@ -40,6 +40,17 @@ namespace Evolve.EditorTools
             var wallMat = MazeTerrainMesh.TexturedSurfaceMaterial($"Maze_Wall_{node.Theme}", wallColor, profile.WallSmoothness, true, "Cavern_Rock_v3.png");
             var glowMat = LakeGround.OpaqueMaterial($"Maze_Glow_{node.Theme}", accentLightColor, 0.25f, false, accentLightColor * 1.15f);
 
+            // Khoang mẫu Rừng Nấm Phát Sáng (Step 2) sử dụng model 3D Blender hoàn chỉnh (230m x 175m)
+            if (node.Theme == ChamberTheme.LumaMushroomGrove)
+            {
+                var lumaFbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + "MazeChamber_Luma.fbx");
+                if (lumaFbx != null)
+                {
+                    BuildHandcraftedLumaChamber(parent, node, lumaFbx, profile, mainLightColor, accentLightColor, glowMat, wallMat, rnd);
+                    return;
+                }
+            }
+
             // 1. Địa hình đồi thung lũng 150m + vách bao mở khe hầm + vòm trần kín 360 độ
             MazeTerrainMesh.BuildFloorAndWalls(parent, node, chamberRadius, tunnelAnglesDeg, floorMat);
             MazeTerrainMesh.BuildClosedCeiling(parent, node.Id, chamberRadius, wallMat);
@@ -58,6 +69,219 @@ namespace Evolve.EditorTools
 
             // 5. Tình Huống Môi Trường Động gắn với chủ đề
             PlaceEncounterSituation(parent, node, seed, chamberRadius, tunnelAnglesDeg, wallMat, lights);
+        }
+
+        static void BuildHandcraftedLumaChamber(
+            Transform parent,
+            ChamberNode node,
+            GameObject lumaFbx,
+            ChamberThemeProfile profile,
+            Color mainLightColor,
+            Color accentLightColor,
+            Material glowMat,
+            Material wallMat,
+            System.Random rnd)
+        {
+            // 1. Dựng model 3D khoang mẫu hoàn chỉnh từ Blender (đã được duyệt)
+            var lumaGo = (GameObject)PrefabUtility.InstantiatePrefab(lumaFbx, parent);
+            lumaGo.name = "Khoang_RừngNấmPhátSáng_3D";
+            lumaGo.transform.localPosition = Vector3.zero;
+            lumaGo.transform.localRotation = Quaternion.identity;
+            lumaGo.transform.localScale = Vector3.one;
+
+            EnsureLumaMaterials(lumaGo);
+
+            // 2. Thảm thực vật nhỏ có vật lý rẽ ngang sống động và animation rung động nhẹ
+            PlaceInteractiveLumaFlora(parent, rnd);
+
+            // 3. Thức ăn (Nutrient) phân bố tự nhiên
+            PlaceHandcraftedLumaForage(parent, profile, glowMat, rnd);
+
+            // 4. Sinh vật sinh thái
+            PlaceCreatures(parent, node, 65f, profile, rnd);
+
+            // 5. Hệ thống chiếu sáng đa tầng
+            var lights = BuildHandcraftedLumaLighting(parent, mainLightColor, accentLightColor);
+
+            // 6. Tình huống môi trường động (nếu có)
+            if (node.Encounter != ChamberEncounterKind.None)
+            {
+                PlaceEncounterSituation(parent, node, 1000 + node.Id * 73, 65f, new float[] { 20f, 156f, 264f }, wallMat, lights);
+            }
+        }
+
+        static void EnsureLumaMaterials(GameObject root)
+        {
+            var rockMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_VC.mat");
+            var glowMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_Glow.mat");
+            var waterMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_WaterLake.mat")
+                         ?? AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Cavern_Water.mat");
+
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                string n = r.gameObject.name;
+                if (n.Contains("Water") && waterMat != null)
+                {
+                    r.sharedMaterial = waterMat;
+                }
+                else if (n.Contains("Glow") && glowMat != null)
+                {
+                    r.sharedMaterial = glowMat;
+                }
+                else if (rockMat != null)
+                {
+                    r.sharedMaterial = rockMat;
+                }
+            }
+        }
+
+        static void PlaceInteractiveLumaFlora(Transform parent, System.Random rnd)
+        {
+            var floraGroup = new GameObject("Thảm Thực Vật Tương Tác (Rẽ Ngang)").transform;
+            floraGroup.SetParent(parent, false);
+
+            string[] floraPrefabs = {
+                "MazeFlora_MutantReed",
+                "MazeFlora_TwinFern",
+                "MazeFlora_StackedSprout",
+                "MazeFlora_GrassClump"
+            };
+
+            var fbxList = new List<GameObject>();
+            for (int i = 0; i < floraPrefabs.Length; i++)
+            {
+                var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(ModelFolder + floraPrefabs[i] + ".fbx");
+                if (fbx != null) fbxList.Add(fbx);
+            }
+            if (fbxList.Count == 0) return;
+
+            var keyWaypoints = new List<Vector3>
+            {
+                // Lòng thung lũng & lối vào
+                new Vector3(-4f, 0f, -8f),
+                new Vector3(6f, 0f, -12f),
+                new Vector3(-10f, 0f, 2f),
+                new Vector3(12f, 0f, 4f),
+                new Vector3(2f, 0f, 10f),
+                new Vector3(-6f, 0f, 16f),
+                new Vector3(8f, 0f, -2f),
+                new Vector3(-14f, 0f, -16f),
+
+                // Ven hồ hạ lưu & chân thác nước
+                new Vector3(-16f, -0.8f, 4f),
+                new Vector3(-8f, -0.8f, 8f),
+                new Vector3(-18f, -0.5f, 12f),
+                new Vector3(-10f, -0.6f, 18f),
+                new Vector3(-4f, -0.7f, 22f),
+
+                // Lối dẫn lên Cầu Đá Vòm
+                new Vector3(32f, 1.0f, -22f),
+                new Vector3(26f, 2.2f, -16f),
+                new Vector3(20f, 3.8f, -10f),
+                new Vector3(14f, 5.2f, -4f),
+                new Vector3(8f, 6.4f, 2f),
+                new Vector3(2f, 7.1f, 8f),
+                new Vector3(-4f, 7.5f, 14f),
+                new Vector3(-10f, 7.8f, 22f),
+                new Vector3(-16f, 7.9f, 28f),
+
+                // Thềm Ban Công Cao & bờ Hồ Thượng
+                new Vector3(-20f, 8.0f, 34f),
+                new Vector3(-24f, 8.0f, 40f),
+                new Vector3(-18f, 8.0f, 46f),
+                new Vector3(-10f, 8.0f, 50f),
+                new Vector3(-6f, 7.6f, 44f),
+                new Vector3(-28f, 8.2f, 32f),
+                new Vector3(-32f, 8.4f, 26f),
+
+                // Ngách hang & cửa hầm
+                new Vector3(18f, 0.4f, -28f),
+                new Vector3(24f, 0.6f, -32f),
+                new Vector3(-24f, 0.5f, -6f),
+                new Vector3(-30f, 0.6f, 2f),
+            };
+
+            for (int i = 0; i < keyWaypoints.Count; i++)
+            {
+                var wp = keyWaypoints[i];
+                int countAtPoint = rnd.Next(1, 3);
+                for (int c = 0; c < countAtPoint; c++)
+                {
+                    float ox = (float)(rnd.NextDouble() - 0.5) * 2.8f;
+                    float oz = (float)(rnd.NextDouble() - 0.5) * 2.8f;
+                    var pos = wp + new Vector3(ox, 0f, oz);
+
+                    var fbx = fbxList[rnd.Next(fbxList.Count)];
+                    var plantGo = (GameObject)PrefabUtility.InstantiatePrefab(fbx, floraGroup);
+                    plantGo.name = $"{fbx.name}_{i:00}_{c}";
+                    plantGo.transform.localPosition = pos;
+                    plantGo.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                    plantGo.transform.localScale = Vector3.one * Mathf.Lerp(0.95f, 1.45f, (float)rnd.NextDouble());
+
+                    var iflora = plantGo.AddComponent<InteractiveFlora>();
+                    var sc = plantGo.GetComponent<SphereCollider>();
+                    if (sc == null) sc = plantGo.AddComponent<SphereCollider>();
+                    sc.isTrigger = true;
+                    sc.radius = 1.6f;
+                    sc.center = new Vector3(0f, 0.5f, 0f);
+                }
+            }
+        }
+
+        static void PlaceHandcraftedLumaForage(Transform parent, ChamberThemeProfile profile, Material glowMat, System.Random rnd)
+        {
+            if (profile.ForageItems.Count == 0) return;
+            var forageGroup = new GameObject("Thức Ăn Khoang Luma").transform;
+            forageGroup.SetParent(parent, false);
+
+            var foragePoints = new Vector3[]
+            {
+                new Vector3(-2f, 0.1f, -4f),
+                new Vector3(4f, 0.1f, 6f),
+                new Vector3(-8f, 0.1f, 12f),
+                new Vector3(10f, 0.1f, -8f),
+                new Vector3(-14f, -0.6f, 6f),
+                new Vector3(-6f, -0.6f, 20f),
+                new Vector3(12f, 5.4f, -2f),
+                new Vector3(-22f, 8.1f, 38f),
+                new Vector3(-12f, 8.1f, 48f),
+                new Vector3(-28f, 8.3f, 28f),
+            };
+
+            for (int i = 0; i < foragePoints.Length; i++)
+            {
+                var item = profile.ForageItems[i % profile.ForageItems.Count];
+                CreateNutrientObject(forageGroup, item, foragePoints[i], glowMat, rnd);
+            }
+        }
+
+        static List<Light> BuildHandcraftedLumaLighting(Transform parent, Color mainColor, Color accentColor)
+        {
+            var lightGroup = new GameObject("Ánh Sáng Khoang Luma").transform;
+            lightGroup.SetParent(parent, false);
+            var lights = new List<Light>();
+
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThungLũng_TrungTâm", new Vector3(0f, 5.5f, 0f), mainColor, 1.8f, 42f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThácNước_HồHạ", new Vector3(-14f, 6.0f, 10f), accentColor, 2.2f, 36f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_CầuĐáVòm", new Vector3(10f, 10.5f, 2f), Color.Lerp(mainColor, new Color(1.0f, 0.75f, 0.35f), 0.5f), 2.0f, 38f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ThềmCao_HồThượng", new Vector3(-18f, 13.5f, 42f), accentColor, 2.0f, 36f));
+            lights.Add(CreatePointLight(lightGroup, "Đèn_ĐồiĐông", new Vector3(32f, 7.5f, -16f), mainColor, 1.5f, 35f));
+
+            return lights;
+        }
+
+        static Light CreatePointLight(Transform parent, string name, Vector3 localPos, Color color, float intensity, float range)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            var l = go.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = color;
+            l.intensity = intensity;
+            l.range = range;
+            l.shadows = LightShadows.None;
+            return l;
         }
 
         static void BuildGrandPerimeterCliffs(
