@@ -29,7 +29,7 @@ Người chơi là một người **bị bắt vào thế giới này làm slime
 - Unity 6.6, **URP 17**, `com.unity.ugui 2.6` (có; **không có TextMeshPro**: dùng `Text` cũ với `LegacyRuntime.ttf`, font đang dùng cho IMGUI đã hiện được tiếng Việt). Dự án đã dùng hậu kỳ (Volume, bloom, chỉnh màu) nên URP hậu kỳ bật được cho camera.
 - **Không có Unity trong môi trường làm việc của người viết kế hoạch:** luật thuần phải chạy được bằng `tools/cstest/run.sh`; phần Unity chỉ kiểm được khi chủ dự án mở. Vì thế **dùng các hiệu ứng hậu kỳ có sẵn của URP** (không viết shader toàn màn hình riêng) để tránh màn hình tím.
 - Volume toàn cục `BrightnessSetting` (độ sáng, ưu tiên 100) và hệ nhìn đơn sắc của slime nằm ở layer Default: **cảnh dùng layer riêng** cho Volume của nó để không bị chúng làm hỏng màu.
-- Không có file hiệu ứng âm thanh nào trong dự án. **Khóa ElevenLabs hiện không có quyền `sound_generation`**, nên âm thanh được **tổng hợp bằng code**; chừa chỗ để thả file thật vào sau.
+- Không có file hiệu ứng âm thanh nào trong dự án; tiếng được tạo bằng ElevenLabs Sound Effects (khóa đã có quyền `sound_generation`, đã thử thành công).
 - Giọng Chi (37 file) có sẵn ở `Resources/Voice/Echo/<id>.mp3`, tạo bằng `tools/voice/generate_echo_voice.sh` từ `BirthScript` (một nguồn). Lời mới cần giọng mới: chạy lại script.
 - Mọi chữ trong game bằng tiếng Việt.
 
@@ -88,10 +88,11 @@ Mỗi đoạn có thời gian tối thiểu để đọc kịp và **chờ giọ
 - Màu: Lõi theo độ hiếm (trắng, xanh, vàng; **Cực hiếm** có chớp vàng toàn màn hình và rung gấp đôi), Khuyết Điểm đỏ, Ân Điển xanh lam.
 - Các tên **ở lại trên màn hình** xếp chồng nhau lệch góc cho tới hết đoạn, rồi cùng tan khi chuyển sang đoạn ổn định.
 
-### 5.7 Âm thanh (`SfxSynth` thuần, `BirthAudio`)
-- Âm tổng hợp bằng code từ dạng sóng (sin, nhiễu, lọc, bao hình), tạo thành `AudioClip` lúc bắt đầu cảnh. Danh sách: tiếng gõ chữ, nhiễu (xé), chuông báo động, ù nền (lặp, có nhịp chậm), whoosh, bài bay và lật, nổ sáng khi nhận Lõi (theo độ hiếm), thud và báo động khi nhận Khuyết Điểm, tiếng va đóng dấu, chime khi ổn định, và **sáu tiếng riêng** cho sáu Ân Điển (nuốt, giải mã, biến hình, sóng, tách...).
-- Nếu có file cùng tên trong `Resources/Sfx/Birth/<tên>` thì **dùng file thay cho âm tổng hợp** (để sau này thả file thật vào, ví dụ làm bằng ElevenLabs khi có quyền).
-- Trộn: giọng đọc luôn nổi lên; âm nền hạ xuống khi có giọng; âm lượng tổng chỉnh được bằng một hằng số.
+### 5.7 Âm thanh (tiếng thật tạo từ ElevenLabs, `BirthSfx`, `BirthAudio`)
+- Khóa ElevenLabs đã có quyền Sound Effects, nên **tiếng được tạo từ mô tả bằng chữ** (API `sound-generation`) và lưu thành file `Assets/_Project/Resources/Sfx/Birth/<tên>.mp3`. Không dùng âm tổng hợp bằng code (đã bỏ để gọn).
+- Danh sách tiếng (tên, mô tả bằng tiếng Anh, độ dài) nằm trong một bảng thuần `BirthSfx` (một nguồn duy nhất); script `tools/voice/generate_birth_sfx.sh` đọc bảng đó và tạo file. Gồm: gõ chữ, nhiễu xé, chuông báo động, ù nền (lặp), whoosh, bài bay và lật, nổ sáng khi nhận Lõi (ba mức theo độ hiếm), thud và báo động khi nhận Khuyết Điểm, tiếng va đóng dấu (ba cỡ), chime khi ổn định, và **sáu tiếng riêng** cho sáu Ân Điển.
+- File nào thiếu thì **im lặng** (cảnh vẫn chạy); chủ dự án thay file bằng cách thả file cùng tên vào thư mục.
+- Trộn: giọng đọc luôn nổi lên; âm nền hạ xuống khi có giọng; âm lượng tổng chỉnh bằng một hằng số.
 
 ### 5.8 Lời mới
 Thêm vào `BirthScript` (nguồn duy nhất, sinh giọng bằng `tools/voice/generate_echo_voice.sh`): `echo.warn` («Cảnh báo. Đường truyền không ổn định.»), `echo.pull` («Đang kéo linh hồn vào thế giới mới.»), `echo.stable` («Kết nối ổn định. Hãy sống sót.»). Các câu cũ giữ nguyên trừ những câu nói về việc chọn bài (`echo.core`, `echo.flaw`) được viết lại cho cảnh tự động.
@@ -108,7 +109,7 @@ Không đổi: số mệnh rút bằng `FateRoll.Roll(seed, pool)` **trước kh
 - Sau mỗi chặng chủ dự án mở Unity xem và báo lỗi (ảnh chụp), rồi chỉnh.
 
 ## 7. Quyết định do người viết tự đặt (chủ dự án xem lại)
-- Âm thanh tổng hợp bằng code (không file), có chỗ thả file thay.
+- Âm thanh là file tạo từ ElevenLabs (không tổng hợp bằng code); thiếu file thì im lặng.
 - Dùng hậu kỳ có sẵn của URP, không viết shader toàn màn hình riêng.
 - Sân khấu đặt xa bằng khoảng cách thay vì dùng layer để che.
 - Thời lượng khoảng 100–120 giây; cảnh Ân Điển ~7 giây mỗi cái.
@@ -117,7 +118,7 @@ Không đổi: số mệnh rút bằng `FateRoll.Roll(seed, pool)` **trước kh
 - Phân Thân có cảnh nhưng ghi "(sắp có)".
 
 ## 8. Để người làm kế hoạch quyết
-- Cách chia lớp và tên file (đề xuất: thuần `Instability`, `ShakeMath`, `SfxSynth`, `SlamPlan`, `BirthFlow` bản 3; Unity `BirthStage`, `BirthGlitch`, `BirthFrames`, `BirthCards`, `BirthSlam`, `BirthGifts`, `BirthAudio`).
+- Cách chia lớp và tên file (đề xuất: thuần `Instability`, `ShakeMath`, `BirthSfx`, `SlamPlan`, `BirthFlow` bản 3; Unity `BirthStage`, `BirthGlitch`, `BirthFrames`, `BirthCards`, `BirthSlam`, `BirthGifts`, `BirthAudio`).
 - Chi tiết số của hiệu ứng (hệ số lệch màu, méo, hạt; độ dài từng xung) trong khoảng an toàn ở 5.2.
 - Cách vẽ hình của sáu cảnh Ân Điển từ hình cơ bản và hạt.
 - Cách tạo khung vỡ bằng đối tượng UGUI (số đoạn, cách lệch).
