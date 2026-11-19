@@ -17,6 +17,7 @@ namespace Evolve.Traits
         public string[][] Options;
         public bool Heavy;
         public bool Implemented;
+        public TraitRarity Rarity;
     }
 
     /// <summary>
@@ -26,6 +27,15 @@ namespace Evolve.Traits
     public static class TraitSeed
     {
         static readonly OrganSlot[] None = new OrganSlot[0];
+
+        // declared before Flaws and Cores: static fields start in textual order and C() reads this table
+        static readonly System.Collections.Generic.Dictionary<string, TraitRarity> RarityOf = new System.Collections.Generic.Dictionary<string, TraitRarity>
+        {
+            { "core.mang_tham_thau", TraitRarity.Common }, { "core.an_mon", TraitRarity.Common }, { "core.quang_hop", TraitRarity.Common },
+            { "core.cong_sinh", TraitRarity.Common }, { "core.thich_nghi", TraitRarity.Common }, { "core.bam_dinh", TraitRarity.Common },
+            { "core.than_toc", TraitRarity.Rare }, { "core.nguy_sac", TraitRarity.Rare }, { "core.phan_chan", TraitRarity.Rare }, { "core.quen_dat", TraitRarity.Rare },
+            { "core.con_bac", TraitRarity.Mythic }, { "core.giu_goc", TraitRarity.Mythic },
+        };
 
         public static IReadOnlyList<FlawDef> Flaws { get; } = new List<FlawDef>
         {
@@ -63,8 +73,8 @@ namespace Evolve.Traits
             C("core.an_mon", "Nhân Ăn Mòn", "Chạm vật hữu cơ thì hút thêm dinh dưỡng.",
               "Chạm hoặc bao phủ vật hữu cơ (xác, thực vật, nấm) thì tiết dịch phân hủy nhanh hơn, hút thêm dưỡng chất (tạm +30%). Chỉ vật hữu cơ; mỗi vật tính một lần.",
               S("flaw.run_ray", "flaw.la_vung", "flaw.de_bi_chu_y"), false, false),
-            C("core.con_bac", "Nhân Con Bạc", "Quái và rương rơi đồ nhiều hơn.",
-              "Tăng tỉ lệ rơi cơ quan từ quái, rương và cả boss theo bậc cơ quan (tương đối): D +20%, C +16%, B +12%, A +8%, S +4%; với boss một nửa. Có trần, không bao giờ chắc chắn; chỉ áp cho lượt rơi của chính bạn.",
+            C("core.con_bac", "Dòng Máu Tham Lam", "Giải Mã dễ ra kỹ năng hiếm hơn.",
+              "Cơ hội học dòng gene Hiếm, Quý và Huyền thoại trong Giải Mã tăng gấp rưỡi (×1,5). Gene Thường không đổi; thanh tích lũy vẫn chạy như cũ.",
               new[] { new[] { "flaw.doi_som", "flaw.mo_trong_toi" }, new[] { "flaw.run_ray", "flaw.la_vung" }, new[] { "flaw.co_quan_mau_mon", "flaw.ngai_dong" } }, true, true),
             C("core.thich_nghi", "Nhân Thích Nghi", "Chịu mãi một loại sát thương thì kháng dần.",
               "Chịu liên tục một loại sát thương môi trường (độc, nhiệt, lạnh, axit) thì kháng loại đó tăng dần (tạm +4% mỗi 5 giây), tối đa 40%; hết bị tác động 60 giây thì giảm về 0.",
@@ -78,8 +88,8 @@ namespace Evolve.Traits
             C("core.quen_dat", "Nhân Quen Đất", "Đi lại một đường nhiều lần thì nhanh hơn trên đó.",
               "Mỗi lần đi qua một đoạn đường (ô khoảng 4 m) thì tăng điểm quen của đoạn đó; điểm cao thì tốc độ trên đoạn đó tăng tối đa +15%. Điểm giảm khi bỏ đường nhiều phút; không cộng khi đứng yên; không tác dụng khi bơi.",
               S("flaw.run_ray", "flaw.doi_som", "flaw.luong_cuong"), false, true),
-            C("core.giu_goc", "Nhân Giữ Gốc", "Chết lần 1 hoặc 2 không mất cơ quan đang mang.",
-              "Chết ở lần thứ 1 hoặc 2 thì cơ quan đang trang bị không bị mất, vẫn gắn vào thân sau hồi sinh. Không áp dụng lần chết thứ 3; không bảo vệ vật phẩm mang theo hay kho; cơ quan đã hỏng vẫn hỏng.",
+            C("core.giu_goc", "Dạ Dày Bất Diệt", "Chết lần 1 hoặc 2 vẫn giữ món trong Túi Không Đáy.",
+              "Chết ở lần thứ 1 hoặc 2 (còn mạng) thì các món trong Túi Không Đáy không bị mất, vẫn nằm trong bụng sau hồi sinh. Không áp dụng lần chết cuối khi hết mạng; cơ quan bị động và những gì đã học vẫn được giữ như mọi slime.",
               new[] { new[] { "flaw.doi_som", "flaw.la_vung" }, new[] { "flaw.mo_trong_toi", "flaw.ngai_dong" }, new[] { "flaw.da_day_ken", "flaw.luong_cuong" } }, true, true),
         };
 
@@ -89,6 +99,15 @@ namespace Evolve.Traits
         static string[][] S(string a, string b, string c) => new[] { new[] { a }, new[] { b }, new[] { c } };
 
         static CoreDef C(string id, string name, string summary, string detail, string[][] options, bool heavy, bool implemented) =>
-            new CoreDef { Id = id, Name = name, Summary = summary, Detail = detail, Options = options, Heavy = heavy, Implemented = implemented };
+            new CoreDef { Id = id, Name = name, Summary = summary, Detail = detail, Options = options, Heavy = heavy, Implemented = implemented,
+                          Rarity = RarityOf.TryGetValue(id, out var r) ? r : TraitRarity.Common };
+
+        /// <summary>The pool fate draws from when no core assets exist: every core with its rarity and flaw options.</summary>
+        public static IReadOnlyList<FateCard> FateCards()
+        {
+            var cards = new List<FateCard>();
+            foreach (var c in Cores) cards.Add(new FateCard(c.Id, c.Rarity, c.Options));
+            return cards;
+        }
     }
 }

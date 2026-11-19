@@ -75,6 +75,17 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
+        public void RareGeneBonus_RaisesOnlyNonCommon()
+        {
+            var rare = Organ("R", OrganTier.B); var common = Organ("C", OrganTier.C);
+            var book = new AnalysisBook { RareGeneBonus = 1.5f };
+            Assert.AreEqual(GeneOutcome.Learned, book.Submit(One(rare), 1f, () => 0.11f)[0].Outcome);       // 0.08 x 1.5 = 0.12 > 0.11
+            Assert.AreEqual(GeneOutcome.Progress, book.Submit(One(common), 1f, () => 0.26f)[0].Outcome);    // Common stays 0.25
+            var plain = new AnalysisBook();
+            Assert.AreEqual(GeneOutcome.Progress, plain.Submit(One(rare), 1f, () => 0.11f)[0].Outcome);     // no bonus: 0.08 < 0.11
+        }
+
+        [Test]
         public void Clear_ForgetsEverything()
         {
             var o = Organ("A", OrganTier.C); var book = new AnalysisBook();

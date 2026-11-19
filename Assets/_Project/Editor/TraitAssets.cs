@@ -40,6 +40,7 @@ namespace Evolve.EditorTools
                 so.Detail = def.Detail;
                 so.OrbColor = Color.HSVToRGB(i / (float)TraitSeed.Cores.Count, 0.55f, 0.95f);   // placeholder orb: one hue per core
                 so.Heavy = def.Heavy;
+                so.Rarity = def.Rarity;
                 so.Implemented = def.Implemented;
                 so.Options = new FlawOption[def.Options.Length];
                 for (int k = 0; k < def.Options.Length; k++) so.Options[k] = new FlawOption { FlawIds = def.Options[k] };

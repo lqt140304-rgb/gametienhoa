@@ -22,7 +22,10 @@ namespace Evolve.Traits
         public const float QuenDatGain = 0.2f;                    // familiarity added each time a cell is entered
         public const float QuenDatDecayPerSecond = 1f / 180f;     // a fully familiar cell is forgotten after three minutes away
 
-        // Nhân Con Bạc
+        // Dòng Máu Tham Lam (was Nhân Con Bạc): Giải Mã chance of Hiếm, Quý and Huyền thoại genes
+        public const float ThamLamFactor = 1.5f;
+
+        // Nhân Con Bạc (old drop-rate luck, no longer used by the game; kept with its tests)
         public const float BossLuckFactor = 0.5f;
         /// <summary>Luck never makes a drop certain.</summary>
         public const float DropChanceCap = 0.95f;

@@ -598,3 +598,21 @@ Spec mục 6.1, plan `docs/superpowers/plans/2026-11-19-skills-not-organs.md`. S
 - Test: `SkillRulesTests` (chạy bằng `tools/cstest/run.sh`, 68 test xanh), `SculptTests` và `SkillBarMenuTests` (cần Unity). **Chưa mở trong Unity.**
 
 Checklist: (a) Console sạch; (b) bấm **K**: có chiêu đã học (sau khi Giải Mã xong gene Gai độc hoặc Chân); (c) gắn phím 1–5, bấm: gai trồi trên lưng, bắn, rồi tan vào thân, hồi chiêu hiện ở ô phím; (d) chân: bấm thì chân mọc ra, chạy nhanh khoảng 4 giây rồi thu vào; (e) **G**: chỉ thấy ô Mắt và Da, đủ 3 bị động thì báo; ngoài tổ nút Nặn khóa; (f) F1 có "Học chiêu" để thử nhanh; (g) chết rồi hồi sinh: chiêu đã học vẫn còn.
+
+## 38. Cảnh Ra Đời: chia bài số mệnh (bước 2): trạng thái và danh sách kiểm tra
+
+Spec `docs/superpowers/specs/2026-11-19-birth-scene-design.md` (mục 8 là bản sửa sau khi xem cảnh thật), plan `docs/superpowers/plans/2026-11-19-birth-scene.md`.
+
+- **Không gian hệ thống** (`Traits/BirthScene`, `BirthUi`): nền **đục hoàn toàn**, không thấy slime, hang hay HUD. Lưới trôi, hạt số bay lên, đường quét chậm, vòng phù văn quay. Mọi chữ trong **cửa sổ hệ thống** (khung bo góc viền sáng, thanh tiêu đề `[HỆ THỐNG]`, chữ gõ từng ký tự, thanh sóng khi đang đọc).
+- **Chậm và đủ ý** (`BirthFlow`, `BirthScript`): khởi động, ba dòng dựng cá thể, **mỗi Ân Điển một bước** (có danh sách trạng thái), lời dẫn tới chia bài, đọc **tên Lõi và tên Khuyết Điểm** trúng. Mỗi dòng ở lại đủ lâu và **chờ giọng đọc xong** (+0,35 giây). Tổng khoảng 80–100 giây. Space/Enter sang dòng kế (sau 1,5 giây), Tab nhảy tới lúc chia bài.
+- **Người chơi chọn bài:** 8 lá **giống hệt nhau** dàn đều (2 hàng × 4); mỗi lá giấu một Lõi khác nhau, nội dung rút theo độ hiếm 65/25/10 (`FateRoll.DealDeck`, không trùng) rồi xáo vị trí. Chọn bằng **chuột (rê và nhấp)** hoặc **mũi tên + Enter**. Lá được chọn bay ra giữa, lật, có vầng sáng và hạt bay; thẻ Cực hiếm chớp vàng cả màn hình. Sau đó 3 lá Khuyết Điểm giống hệt nhau, chọn tương tự.
+  - Thường: Màng Thẩm Thấu, Ăn Mòn, Quang Hợp, Cộng Sinh, Thích Nghi, Bám Dính. Hiếm: Thần Tốc, Nguỵ Sắc, Phản Chấn, Quen Đất. Cực hiếm: Dòng Máu Tham Lam, Dạ Dày Bất Diệt.
+  - Lõi chưa có hiệu ứng ghi "chưa có hiệu ứng". Chưa chạy `Evolve → Create Traits` thì rút từ bảng dữ liệu có sẵn.
+- **Chạy một lần mỗi vòng chơi**; chết rồi hồi sinh không chạy lại. Con trỏ chuột được mở trong cảnh và trả lại như cũ.
+- **Hai Lõi làm lại:** *Dòng Máu Tham Lam* (×1,5 cơ hội Giải Mã cho gene Hiếm trở lên) và *Dạ Dày Bất Diệt* (hai lần chết đầu còn mạng thì giữ món trong Túi Không Đáy). `Id` giữ nguyên.
+- **Co-op:** mỗi người tự rút; client báo kết quả bằng tin `evolve.tr.pick`, máy chủ chỉ kiểm Lõi có tồn tại và Khuyết Điểm đúng một lựa chọn của nó. Đã bỏ `TraitRoom`, `CardDealer`, tin chia thẻ.
+- **Giọng Tiếng Vọng:** giọng **Hạnh** (ElevenLabs), đọc phẳng như máy, hiệu ứng hệ thống; 37 file trong `Assets/_Project/Resources/Voice/Echo/`. Cách tạo lại: `docs/art/echo-voice-lines.md`, `tools/voice/`.
+- Chưa làm: **Dị Tượng**, hiệu ứng cho 9 Lõi và 8 Khuyết Điểm còn ghi "chưa có hiệu ứng".
+- Test: `FateRollTests`, `BirthTests`, `TraitChoiceTests`, `DeathLossRulesTests`, `AnalysisBookTests` chạy ngoài Unity (`tools/cstest/run.sh`, 109 test xanh). Cần Unity: `TraitCatalogTests`, `TraitSeedTests`. **Cảnh vẽ bằng IMGUI chưa mở trong Unity: chưa biết có lỗi biên dịch hay hình có đẹp như tính toán không.**
+
+Checklist: (a) `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: màn tối hoàn toàn, **không thấy slime hay hang**; (d) chữ gõ ra, giọng đọc xong mới sang dòng; (e) 8 lá giống hệt nhau dàn đều, rê chuột thấy lá nhô lên và sáng, nhấp để chọn; (f) lá được chọn lật ra Lõi, có vầng sáng; (g) 3 lá Khuyết Điểm tương tự; (h) tổng kết rồi điều khiển được slime; (i) chết rồi R: cảnh không chạy lại; (j) chạy nhiều lần: các Lõi khác nhau, thỉnh thoảng thẻ xanh hoặc vàng.

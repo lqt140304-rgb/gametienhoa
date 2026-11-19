@@ -23,6 +23,7 @@ namespace Evolve.Swallow
         SurvivalStats stats;
         SlimeBody body;
         Carcass touching;
+        Evolve.Traits.PlayerTraits traitsComp;
         float dissolve;
 
         public Stomach Stomach => stomach;
@@ -44,7 +45,10 @@ namespace Evolve.Swallow
 
         void OnDied()
         {
-            stomach.Clear();
+            // Dạ Dày Bất Diệt: with lives left, the first two deaths keep what is in the stomach.
+            var traits = GetComponent<Evolve.Traits.PlayerTraits>();
+            bool keeps = Evolve.Traits.DeathLossRules.KeepsStomach(traits != null && traits.HasCore(Evolve.Traits.DeathLossRules.CoreId), stats.State.Lives);
+            if (!keeps) stomach.Clear();
             touching = null;
             dissolve = 0f;
         }
@@ -95,6 +99,9 @@ namespace Evolve.Swallow
         void Update()
         {
             if (stats.IsRemote || stats.State.IsDead) return;
+            if (traitsComp == null) traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
+            // Dòng Máu Tham Lam: rarer genes come easier.
+            book.RareGeneBonus = traitsComp != null && traitsComp.HasCore(Evolve.Traits.LuckRules.CoreId) ? Evolve.Traits.TraitTuning.ThamLamFactor : 1f;
             TickStomach(Time.deltaTime);
             UpdateCarcass(Time.deltaTime);
         }

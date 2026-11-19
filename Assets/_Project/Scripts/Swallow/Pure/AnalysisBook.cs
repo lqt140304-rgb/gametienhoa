@@ -26,6 +26,9 @@ namespace Evolve.Swallow
         readonly Dictionary<OrganSO, Entry> entries = new Dictionary<OrganSO, Entry>();
         readonly List<OrganSO> known = new List<OrganSO>();
 
+        /// <summary>Dòng Máu Tham Lam: multiplies the chance of every gene that is not Common (1 = no bonus).</summary>
+        public float RareGeneBonus { get; set; } = 1f;
+
         public int AnalysesDone { get; private set; }
         public int DecoderLevel => AnalysisRules.DecoderLevel(AnalysesDone);
         public IEnumerable<OrganSO> Known => known;
@@ -50,7 +53,7 @@ namespace Evolve.Swallow
                 var r = new GeneResult { Organ = g.Organ };
                 if (!e.Learned)
                 {
-                    if (AnalysisRules.Roll(g.Rarity, ref e.Pity, quality, mult, roll01()))
+                    if (AnalysisRules.Roll(g.Rarity, ref e.Pity, quality, g.Rarity == GeneRarity.Common ? mult : mult * RareGeneBonus, roll01()))
                     {
                         e.Learned = true;
                         known.Add(g.Organ);
