@@ -30,7 +30,7 @@ namespace Evolve.EditorTools
             "Forage_LimeCrystal", "Forage_IronNodule", "Forage_SaltCrust", "Forage_Quartz"
         };
 
-        [MenuItem("Evolve/Install Blender Rocks")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Install Blender Rocks")]
         public static void InstallMenu()
         {
             int n = EnsureRocks() + EnsureLandmarks();
@@ -56,7 +56,7 @@ namespace Evolve.EditorTools
             return true;
         }
 
-        [MenuItem("Evolve/Reinstall Blender Props (overwrite)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Reinstall Blender Props (overwrite)")]
         public static void ReinstallMenu()
         {
             var all = new System.Collections.Generic.List<string>(LandmarkNames);

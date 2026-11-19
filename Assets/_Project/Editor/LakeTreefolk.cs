@@ -18,7 +18,7 @@ namespace Evolve.EditorTools
     {
         const string DressedName = "Treefolk (Root Foot)";
 
-        [MenuItem("Evolve/Dress Lake: Treefolk")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Treefolk")]
         public static void Dress()
         {
             Physics.SyncTransforms();

@@ -13,7 +13,7 @@ namespace Evolve.EditorTools
     /// </summary>
     public static class LakeRebuildAll
     {
-        [MenuItem("Evolve/Rebuild Lake (all steps)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Rebuild Lake (all steps)")]
         public static void Run()
         {
             var steps = new (string name, Action run)[]

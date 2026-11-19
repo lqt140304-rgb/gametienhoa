@@ -16,7 +16,7 @@ namespace Evolve.EditorTools
         const string RootName = "Lake Landmark Props (Dressed)";
         const string LogName = "03 Rotting Log", MushroomsName = "04 Giant Mushrooms", ArchName = "06 Root Arch";
 
-        [MenuItem("Evolve/Dress Lake: Landmark Props")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Landmark Props")]
         public static void Dress()
         {
             if (Terrain.activeTerrain == null) { Debug.LogWarning("Không có Terrain trong scene: bỏ qua điểm nhấn Blender."); return; }

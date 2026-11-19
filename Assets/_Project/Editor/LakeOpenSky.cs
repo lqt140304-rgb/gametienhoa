@@ -52,7 +52,7 @@ namespace Evolve.EditorTools
 
         // ---------------------------------------------------------------- Dress
 
-        [MenuItem("Evolve/Dress Lake: Open Sky")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Open Sky")]
         public static void Dress()
         {
             if (EditorSceneManager.GetActiveScene().path != ScenePath)
@@ -123,7 +123,7 @@ namespace Evolve.EditorTools
 
         // ---------------------------------------------------------------- Restore
 
-        [MenuItem("Evolve/Restore Lake Roof (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Roof (undo)")]
         public static void Restore()
         {
             if (EditorSceneManager.GetActiveScene().path != ScenePath)

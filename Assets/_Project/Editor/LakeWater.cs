@@ -21,7 +21,7 @@ namespace Evolve.EditorTools
         const string DressedName = "Water Surface (Dressed)";
         const string NormalPath = Root + "/Models/WaterRipples_v2.png";
 
-        [MenuItem("Evolve/Dress Lake: Water")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Water")]
         public static void Dress()
         {
             EnsureFolders();

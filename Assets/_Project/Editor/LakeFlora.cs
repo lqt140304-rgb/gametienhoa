@@ -18,7 +18,7 @@ namespace Evolve.EditorTools
     {
         const string DressedName = "Lake Flora (Dressed)";
 
-        [MenuItem("Evolve/Dress Lake: Mushrooms and Vines")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Mushrooms and Vines")]
         public static void Dress()
         {
             PrototypeSceneBuilder.EnsureFolder("Assets/_Project/Materials");

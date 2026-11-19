@@ -17,7 +17,7 @@ namespace Evolve.EditorTools
         const string ManifestPath = "tools/assets/flora_manifest.json";
         const string Api = "https://api.polyhaven.com/files/";
 
-        [MenuItem("Evolve/Install Scanned Assets")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Install Scanned Assets")]
         public static void Install()
         {
             string root = Path.GetDirectoryName(Application.dataPath);
