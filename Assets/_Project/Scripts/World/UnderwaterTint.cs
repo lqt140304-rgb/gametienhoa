@@ -26,8 +26,8 @@ namespace Evolve.World
         {
             Vector3 eye = transform.position;
             // only over real water: the sinkhole and the gorge floor lie below the lake's level but are dry
-            bool overWater = ZoneLayout.CleanDepthAt(eye.x, eye.z) > 0f;
-            bool now = overWater && SwimLogic.IsUnderwater(eye.y, ZoneLayout.WaterLevel, under);
+            bool overWater = WaterField.CleanDepthAt(eye.x, eye.z) > 0f;
+            bool now = overWater && SwimLogic.IsUnderwater(eye.y, WaterField.Level, under);
             if (now == under) return;
             under = now;
             if (under)

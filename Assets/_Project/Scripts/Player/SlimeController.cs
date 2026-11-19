@@ -170,7 +170,7 @@ namespace Evolve.Player
                 float vertical = ReadVertical();
                 Vector3 swim = SwimLogic.Velocity(dir, vertical, speed);
                 // float low, only the back above the surface, bobbing gently; Space never lifts it higher than that
-                float floatY = SwimLogic.TargetY(Evolve.World.ZoneLayout.WaterLevel) + 0.03f * Mathf.Sin(Time.time * 0.6f * Mathf.PI * 2f);
+                float floatY = SwimLogic.TargetY(Evolve.World.WaterField.Level) + 0.03f * Mathf.Sin(Time.time * 0.6f * Mathf.PI * 2f);
                 if (vertical >= 0f && rb.position.y >= floatY - 0.02f) swim.y = Mathf.Clamp((floatY - rb.position.y) * 3f, -0.4f, 0.4f);
                 else if (vertical == 0f) swim.y = Mathf.Min(swim.y, (floatY - rb.position.y) * 3f);
                 rb.linearVelocity = Vector3.MoveTowards(v, swim, acceleration * Time.fixedDeltaTime);
@@ -205,9 +205,9 @@ namespace Evolve.Player
             if (layoutWater)
             {
                 Vector3 p = rb.position;
-                float depth = Evolve.World.ZoneLayout.DepthAt(p.x, p.z);
+                float depth = Evolve.World.WaterField.DepthAt(p.x, p.z);
                 // swim only while below the surface (a hop out of the water lands normally)
-                IsSwimming = SwimLogic.IsSwimming(depth) && p.y < Evolve.World.ZoneLayout.WaterLevel + 0.2f;
+                IsSwimming = SwimLogic.IsSwimming(depth) && p.y < Evolve.World.WaterField.Level + 0.2f;
                 IsWading = !IsSwimming && depth > 0.05f;
             }
             else

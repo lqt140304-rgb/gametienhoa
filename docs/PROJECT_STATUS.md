@@ -236,6 +236,11 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Dùng: mở scene `Underroot_Lake`, chạy **Evolve → Rebuild Lake (all steps)** (bước 25 là Open Sky), hoặc lần lượt **Dress Lake: Terrain** rồi **Dress Lake: Open Sky**. Hoàn tác trần: **Evolve → Restore Lake Roof (undo)**.
 - Chưa có: mảnh Blender trên mặt vách, mê cung hang (dự án 2), vòng ngày đêm, Nhân Quang Hợp theo nắng. Thị giác không mắt vẫn làm tối cảnh.
 
+## 6.12. Hang Khởi Sinh của Slime: bản đồ mới sạch (CHƯA chạy thử trong Unity)
+- Thiết kế: `docs/superpowers/specs/2026-11-19-slime-cavern-design.md`. Bản đồ mới, độc lập với bản đồ Underroot Lake cũ: một hang nhỏ, một hồ sâu 8 m nơi Slime sinh ra, lỗ trời trên hồ, thảm cây nhỏ và quặng phát sáng quanh hồ.
+- Dùng: chạy **Evolve → Build Slime Cavern (new map)**; scene được tạo ở `Assets/_Project/Scenes/Slime_Cavern.unity`. Không dùng `Rebuild Lake (all steps)` cho map này.
+- Chưa có: sinh vật, thức ăn, người cây, hệ sinh thái. Bản đồ cũ và hố lộ thiên (6.11) vẫn còn trong dự án nhưng không phải hướng hiện tại.
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.

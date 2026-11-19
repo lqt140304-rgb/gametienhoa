@@ -54,7 +54,7 @@ namespace Evolve.World
             if (!show) return;
             float cycle = Mathf.Repeat(Time.time * 0.6f, 1f);
             float size = (0.55f + 0.5f * cycle) * Mathf.Max(0.5f, controller.BaseDiameter * controller.BodyScale);
-            ring.position = new Vector3(transform.position.x, ZoneLayout.WaterLevel + 0.01f, transform.position.z);
+            ring.position = new Vector3(transform.position.x, WaterField.Level + 0.01f, transform.position.z);
             ring.localScale = new Vector3(size, 1f, size);
             var c = new Color(0.9f, 1f, 1f, 0.45f * (1f - cycle));
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", c); else material.color = c;
