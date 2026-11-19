@@ -6,6 +6,7 @@ namespace UnityEngine
     public class Object { public string name; public static void DestroyImmediate(Object o) { } }
     public class ScriptableObject : Object { public static T CreateInstance<T>() where T : ScriptableObject, new() => new T(); }
     public struct Color { public float r, g, b, a; public Color(float r, float g, float b, float a = 1f) { this.r = r; this.g = g; this.b = b; this.a = a; } }
+    public struct Vector2 { public float x, y; public Vector2(float x, float y) { this.x = x; this.y = y; } }
     public static class ColorUtility { public static string ToHtmlStringRGB(Color c) => "FFFFFF"; }
     public static class Mathf
     {
