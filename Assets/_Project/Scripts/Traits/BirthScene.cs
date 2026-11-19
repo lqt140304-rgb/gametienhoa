@@ -413,7 +413,6 @@ namespace Evolve.Traits
                 default: return "> TRẠNG THÁI ....... ỔN ĐỊNH";
             }
         }
-            BirthWindow.Create(view, pos, size, title, accent, shownIndex, bodySize);
 
         Color RarityColor() => result.Rarity == TraitRarity.Mythic ? BirthUiKit.Gold : result.Rarity == TraitRarity.Rare ? new Color(0.45f, 0.72f, 1f) : new Color(0.85f, 0.93f, 1f);
 
