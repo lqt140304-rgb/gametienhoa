@@ -16,10 +16,10 @@ namespace Evolve.Tests.EditMode
             var kinds = BirthScript.BuildSteps().Select(s => s.Kind).ToArray();
             var expect = new[]
             {
-                BirthStepKind.Disconnect, BirthStepKind.Pull, BirthStepKind.Form, BirthStepKind.Form, BirthStepKind.GiftIntro,
+                BirthStepKind.Disconnect, BirthStepKind.Pull, BirthStepKind.Form, BirthStepKind.Form, BirthStepKind.Form, BirthStepKind.GiftIntro,
                 BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift, BirthStepKind.Gift,
                 BirthStepKind.Fate, BirthStepKind.DealCore, BirthStepKind.RevealCore, BirthStepKind.DealFlaw, BirthStepKind.RevealFlaw,
-                BirthStepKind.Slam, BirthStepKind.Stabilize
+                BirthStepKind.Slam, BirthStepKind.Stabilize, BirthStepKind.Showcase
             };
             CollectionAssert.AreEqual(expect, kinds);
         }
@@ -141,9 +141,9 @@ namespace Evolve.Tests.EditMode
             var lines = BirthScript.AllVoiceLines(TraitSeed.Cores, TraitSeed.Flaws);
             var ids = lines.Select(l => l.id).ToList();
             Assert.AreEqual(ids.Count, ids.Distinct().Count());
-            Assert.AreEqual(15 + 12 + 12, lines.Count);
+            Assert.AreEqual(16 + 12 + 12, lines.Count);
             foreach (var step in BirthScript.BuildSteps().Where(s => !string.IsNullOrEmpty(s.VoiceId))) CollectionAssert.Contains(ids, step.VoiceId);
-            foreach (var need in new[] { "echo.warn", "echo.pull", "echo.stable" }) CollectionAssert.Contains(ids, need);
+            foreach (var need in new[] { "echo.warn", "echo.pull", "echo.linked", "echo.stable" }) CollectionAssert.Contains(ids, need);
             CollectionAssert.DoesNotContain(ids, "echo.done");
             Assert.AreEqual("Phát hiện Lõi độc nhất: Nhân Quen Đất.", lines.First(l => l.id == "core.quen_dat").text);
             Assert.AreEqual("Phát hiện khiếm khuyết: Đói Sớm.", lines.First(l => l.id == "flaw.doi_som").text);

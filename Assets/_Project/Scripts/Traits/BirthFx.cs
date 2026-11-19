@@ -52,6 +52,7 @@ namespace Evolve.Traits
             var rend = go.GetComponent<ParticleSystemRenderer>();
             var mat = new Material(shader) { mainTexture = BirthUiKit.Disc.texture };
             rend.material = mat;
+            rend.sortingOrder = 150;   // sparks above the UI
             ps.Play();
         }
 

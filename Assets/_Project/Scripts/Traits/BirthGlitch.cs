@@ -10,7 +10,7 @@ namespace Evolve.Traits
     {
         readonly BirthStage stage;
         /// <summary>Camera shake in canvas units for a hit of strength 1 (a mythic core is 2).</summary>
-        const float HitUnits = 0.2f;
+        const float HitUnits = 0.32f;
 
         public BirthGlitch(BirthStage stage) { this.stage = stage; }
 
@@ -21,13 +21,13 @@ namespace Evolve.Traits
             if (stage == null || stage.Cam == null) return;
             float k = Mathf.Clamp01(instability);
             float wobble = 0.6f + 0.4f * Mathf.Sin(time * 7f);
-            stage.Chroma.intensity.value = Mathf.Lerp(0.05f, 0.85f, k);
-            stage.Lens.intensity.value = -0.3f * k * wobble;
-            stage.Grain.intensity.value = Mathf.Lerp(0.12f, 0.8f, k);
-            stage.Vig.intensity.value = Mathf.Lerp(0.25f, 0.5f, k);
-            stage.Bloom.intensity.value = Mathf.Lerp(0.6f, 1.4f, k);
+            stage.Chroma.intensity.value = Mathf.Lerp(0.0f, 0.3f, k);
+            stage.Lens.intensity.value = -0.08f * k * wobble;
+            stage.Grain.intensity.value = Mathf.Lerp(0.04f, 0.3f, k);
+            stage.Vig.intensity.value = Mathf.Lerp(0.3f, 0.4f, k);
+            stage.Bloom.intensity.value = Mathf.Lerp(0.7f, 1.0f, k);
 
-            float tremor = 0.03f * k * k;                       // a constant shiver while the connection is bad
+            float tremor = 0.14f * k;   // the opening is felt as shaking, not as noise                       // a constant shiver while the connection is bad
             var o = ShakeMath.Offset(time, tremor + HitUnits * hitShake);
             stage.Cam.transform.localPosition = new Vector3(o.x, o.y, 0f);
         }

@@ -19,6 +19,7 @@ namespace Evolve.Traits
         readonly List<Seg> segs = new List<Seg>();
         Image scan;
         Vector2 size, bodyBase;
+        bool framed = true;
         float seed;
 
         public static BirthWindow Create(RectTransform parent, Vector2 pos, Vector2 size, string title, Color accent, int seed, int bodySize = 34)
@@ -55,6 +56,19 @@ namespace Evolve.Traits
             return w;
         }
 
+        /// <summary>A text column with no frame: just a small title and the body, running down one side of the screen.</summary>
+        public static BirthWindow CreateSide(RectTransform parent, Vector2 pos, Vector2 size, string title, Color accent, bool right, int bodySize)
+        {
+            var w = new BirthWindow { Accent = accent, size = size, framed = false };
+            w.Root = BirthUiKit.Group(parent, "Column", pos);
+            var anchor = right ? TextAnchor.UpperRight : TextAnchor.UpperLeft;
+            w.Title = BirthUiKit.Label(w.Root, "Title", new Vector2(0f, size.y / 2f - 20f), new Vector2(size.x, 36f), title, 22, right ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft, BirthUiKit.WithAlpha(Color.Lerp(accent, Color.white, 0.3f), 0.9f), true);
+            BirthUiKit.Box(w.Root, "Rule", new Vector2(0f, size.y / 2f - 46f), new Vector2(size.x, 2f), BirthUiKit.WithAlpha(accent, 0.55f));
+            w.bodyBase = new Vector2(0f, -30f);
+            w.Body = BirthUiKit.Label(w.Root, "Body", w.bodyBase, new Vector2(size.x, size.y - 70f), "", bodySize, anchor, right ? BirthUiKit.WithAlpha(accent, 0.85f) : new Color(0.95f, 0.96f, 1f));
+            return w;
+        }
+
         void AddSeg(float x, float y, float w, float h, int index, float alpha = 0.75f)
         {
             var img = BirthUiKit.Box(Root, "Seg" + index, new Vector2(x, y), new Vector2(w, h), BirthUiKit.WithAlpha(Accent, alpha));
@@ -67,6 +81,11 @@ namespace Evolve.Traits
         public void Tick(float time, float instability)
         {
             float k = Mathf.Clamp01(instability);
+            if (!framed)
+            {
+                Body.rectTransform.anchoredPosition = bodyBase + new Vector2(Mathf.Sin(time * 37f) * k * 4f, 0f);
+                return;
+            }
             for (int i = 0; i < segs.Count; i++)
             {
                 var s = segs[i];

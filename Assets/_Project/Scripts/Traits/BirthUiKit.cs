@@ -6,10 +6,10 @@ namespace Evolve.Traits
     /// <summary>Small helpers that build the birth scene's UGUI objects from code (solid rectangles, soft discs, rings, text) so no prefab or asset is needed.</summary>
     internal static class BirthUiKit
     {
-        public static readonly Color Cyan = new Color(0.35f, 0.85f, 1f);
+        public static readonly Color Cyan = new Color(0.72f, 0.58f, 1f);
         public static readonly Color Red = new Color(0.95f, 0.28f, 0.34f);
         public static readonly Color Gold = new Color(1f, 0.8f, 0.25f);
-        public static readonly Color Deep = new Color(0.004f, 0.01f, 0.022f);
+        public static readonly Color Deep = new Color(0.035f, 0.012f, 0.075f);
 
         static Sprite disc, ring;
         static Font font;

@@ -45,7 +45,10 @@ namespace Evolve.Traits
 
         // what is on screen
         RectTransform view, cardsRoot;
-        BirthWindow window;
+        BirthWindow window, window2;
+        BirthSlime slime;
+        Image fadeOut;
+        float fadeInStart = -10f;
         BirthGiftScene gift;
         BirthSlam slam;
         BirthCard[] coreCards = new BirthCard[0], flawCards = new BirthCard[0];
@@ -181,6 +184,7 @@ namespace Evolve.Traits
 
         void Finish()
         {
+            fadeInStart = Time.unscaledTime;
             GiveResult();
             Cleanup();
             ranThisRun = true;
@@ -200,7 +204,7 @@ namespace Evolve.Traits
             if (voice != null) voice.Stop();
             if (audio != null) audio.StopAll();
             if (stage != null) { stage.Destroy(); stage = null; }
-            view = null; cardsRoot = null; window = null; gift = null; slam = null;
+            view = null; cardsRoot = null; window = null; window2 = null; gift = null; slam = null; if (slime != null) { slime.Destroy(); slime = null; } coreCards = new BirthCard[0]; flawCards = new BirthCard[0];
             Unfreeze();
         }
 
@@ -251,10 +255,16 @@ namespace Evolve.Traits
             glitch.Apply(inst, hit, clock);
             fx.Tick(clock, dt, inst);
             if (window != null) window.Tick(clock, inst);
+            if (window2 != null) window2.Tick(clock, inst);
             TickStep(step, t, inst);
         }
 
-        void Pulse(float strength) => pulses.Add((clock, strength));
+        void Pulse(float strength)
+        {
+            // noise belongs to the opening only; later events are felt as shaking, with just a hint of glitch
+            var k = flow != null && flow.Current != null ? flow.Current.Kind : BirthStepKind.Slam;
+            pulses.Add((clock, k == BirthStepKind.Disconnect || k == BirthStepKind.Pull ? strength : strength * 0.2f));
+        }
 
         void Hit(float strength) { lastHitAt = clock; lastHitStrength = strength; }
 
@@ -262,6 +272,7 @@ namespace Evolve.Traits
         {
             if (window == null) return;
             window.SetBody(text, t - 0.2f, 34f, inst, clock);
+            if (window2 != null && flow.Current != null) window2.SetBody(Stream(flow.Current.Kind), t - 0.2f, 60f, inst, clock);
             int n = GlitchText.TypedCount(text, t - 0.2f, 34f);
             if (n > lastTyped && clock - lastTick > 0.09f) { audio.Play("type_tick", 0.5f); lastTick = clock; }
             lastTyped = n;
@@ -274,7 +285,7 @@ namespace Evolve.Traits
             shownIndex = flow.Index;
             var step = flow.Current;
             if (view != null) Destroy(view.gameObject);
-            window = null; gift = null; slam = null; sigil = null; countdown = null; banner = null; blob = null;
+            window = null; window2 = null; gift = null; slam = null; sigil = null; if (slime != null) { slime.Destroy(); slime = null; } fadeOut = null; countdown = null; banner = null; blob = null;
             shards.Clear(); streaks.Clear(); orbs = new Image[0];
             impactDone = false; lastTyped = 0; flipped.Clear();
             view = BirthUiKit.Group(stage.Canvas, "View", Vector2.zero);
@@ -314,13 +325,13 @@ namespace Evolve.Traits
                     break;
                 case BirthStepKind.Form:
                     window = Win(new Vector2(0f, -360f), new Vector2(1180f, 230f), "[HỆ THỐNG]", BirthUiKit.Cyan);
-                    blob = BirthUiKit.Glow(view, "Blob", new Vector2(0f, 60f), 10f, new Color(0.3f, 0.7f, 1f, 0.95f));
+                    blob = BirthUiKit.Glow(view, "Blob", new Vector2(0f, 60f), 10f, new Color(0.7f, 0.55f, 1f, 0.95f));
                     BirthUiKit.Circle(view, "Ring", new Vector2(0f, 60f), 340f, BirthUiKit.WithAlpha(BirthUiKit.Cyan, 0.5f));
                     audio.Play("whoosh"); Pulse(0.15f);
                     break;
                 case BirthStepKind.GiftIntro:
                     window = Win(new Vector2(0f, -360f), new Vector2(1180f, 230f), "[HỆ THỐNG]  ÂN ĐIỂN KHỞI SINH", BirthUiKit.Cyan);
-                    blob = BirthUiKit.Glow(view, "Blob", new Vector2(0f, 60f), 200f, new Color(0.3f, 0.7f, 1f, 0.95f));
+                    blob = BirthUiKit.Glow(view, "Blob", new Vector2(0f, 60f), 200f, new Color(0.7f, 0.55f, 1f, 0.95f));
                     orbs = new Image[6];
                     for (int i = 0; i < 6; i++)
                     {
@@ -358,8 +369,13 @@ namespace Evolve.Traits
                     break;
                 case BirthStepKind.Slam:
                     if (cardsRoot != null) { Destroy(cardsRoot.gameObject); cardsRoot = null; }
+                    coreCards = new BirthCard[0]; flawCards = new BirthCard[0];
                     slam = new BirthSlam(view, slamPlan, size, result.Rarity);
                     slam.OnImpact = OnSlamImpact;
+                    audio.Play("whoosh");
+                    break;
+                case BirthStepKind.Showcase:
+                    BuildShowcase(size);
                     audio.Play("whoosh");
                     break;
                 case BirthStepKind.Stabilize:
@@ -370,7 +386,33 @@ namespace Evolve.Traits
             }
         }
 
-        BirthWindow Win(Vector2 pos, Vector2 size, string title, Color accent, int bodySize = 34) =>
+        /// <summary>Two frameless text columns, the narration on the left and a parallel readout on the right (the frame arguments are no longer used).</summary>
+        BirthWindow Win(Vector2 pos, Vector2 size, string title, Color accent, int bodySize = 34)
+        {
+            var cs = stage.CanvasSize;
+            const float w = 430f, h = 720f;
+            float x = cs.x / 2f - 50f - w / 2f;
+            window2 = BirthWindow.CreateSide(view, new Vector2(x, 0f), new Vector2(w, h), "[ĐƯỜNG TRUYỀN]", accent, true, 24);
+            return BirthWindow.CreateSide(view, new Vector2(-x, 0f), new Vector2(w, h), title, accent, false, Mathf.Min(bodySize, 36));
+        }
+
+        static string Stream(BirthStepKind kind)
+        {
+            switch (kind)
+            {
+                case BirthStepKind.Disconnect: return "> TÍN HIỆU ........ MẤT\n> GÓI TIN ......... 12%\n> ĐỒNG BỘ ......... LỖI\n> THỬ LẠI ......... 1/∞\n> LINH HỒN ........ KHÔNG XÁC ĐỊNH";
+                case BirthStepKind.Pull: return "> ĐỊNH VỊ THẾ GIỚI .. OK\n> TÁI TẠO LINH HỒN .. 41%\n> KÉO VÀO ......... ĐANG CHẠY\n> ĐỘ TRỄ .......... CAO";
+                case BirthStepKind.Form: return "> KẾT NỐI ......... THÀNH CÔNG\n> ĐỘ TRỄ .......... 8 ms\n> ĐỒNG BỘ ......... 100%\n> CHỦNG TỘC ....... SLIME";
+                case BirthStepKind.GiftIntro:
+                case BirthStepKind.Gift: return "> NẠP ÂN ĐIỂN ..... OK\n> BỘ NHỚ .......... ỔN ĐỊNH\n> NĂNG LỰC NỀN ..... 6";
+                case BirthStepKind.Fate: return "> SỐ MỆNH ......... KHỞI ĐỘNG\n> LÕI ............. CHỜ\n> CÁI GIÁ ......... CHỜ";
+                case BirthStepKind.DealCore:
+                case BirthStepKind.RevealCore: return "> SỐ MỆNH ......... ĐANG QUAY\n> LÕI ............. ĐANG CHỌN\n> ĐỘ HIẾM .......... ?";
+                case BirthStepKind.DealFlaw:
+                case BirthStepKind.RevealFlaw: return "> SỐ MỆNH ......... ĐANG QUAY\n> CÁI GIÁ ......... ĐANG CHỌN";
+                default: return "> TRẠNG THÁI ....... ỔN ĐỊNH";
+            }
+        }
             BirthWindow.Create(view, pos, size, title, accent, shownIndex, bodySize);
 
         Color RarityColor() => result.Rarity == TraitRarity.Mythic ? BirthUiKit.Gold : result.Rarity == TraitRarity.Rare ? new Color(0.45f, 0.72f, 1f) : new Color(0.85f, 0.93f, 1f);
@@ -464,7 +506,7 @@ namespace Evolve.Traits
                     break;
                 case BirthStepKind.Form:
                     Type(step.Text, t, inst);
-                    blob.rectTransform.sizeDelta = Vector2.one * (320f * BirthUiKit.Smooth(t / 3f) * (1f + 0.04f * Mathf.Sin(clock * 6f)));
+                    blob.rectTransform.sizeDelta = Vector2.one * (320f * (flow.Index == flow.IndexOf(BirthStepKind.Form) ? BirthUiKit.Smooth(t / 3f) : 1f) * (1f + 0.04f * Mathf.Sin(clock * 6f)));
                     break;
                 case BirthStepKind.GiftIntro:
                     Type(step.Text, t, inst);
@@ -484,6 +526,7 @@ namespace Evolve.Traits
                 case BirthStepKind.RevealCore: RevealCore(t, inst); break;
                 case BirthStepKind.RevealFlaw: RevealFlaw(t, inst); break;
                 case BirthStepKind.Slam: slam.Tick(t); break;
+                case BirthStepKind.Showcase: TickShowcase(t, step.MinSeconds); break;
                 case BirthStepKind.Stabilize:
                     Type("Kết nối ổn định.\n" + step.Text, t, inst);
                     sigil.localRotation = Quaternion.Euler(0f, 0f, clock * 6f);
@@ -491,6 +534,59 @@ namespace Evolve.Traits
             }
             foreach (var c in coreCards) if (c != null) c.Tick(clock, inst);
             foreach (var c in flawCards) if (c != null) c.Tick(clock, inst);
+        }
+
+        // ---- the magazine cover: the primal slime alone, the camera (the slime's turn) circling it
+
+        RectTransform[] coverItems = new RectTransform[0];
+        Vector2[] coverTo = new Vector2[0];
+        bool coverSlam;
+
+        void BuildShowcase(Vector2 size)
+        {
+            var gold = BirthUiKit.Gold; var lilac = BirthUiKit.Cyan;
+            var items = new List<RectTransform>(); var to = new List<Vector2>();
+            RectTransform Add(RectTransform r, Vector2 target) { items.Add(r); to.Add(target); return r; }
+            float lx = -size.x * 0.27f;
+            Add(BirthUiKit.Label(view, "Issue", new Vector2(lx, size.y * 0.40f), new Vector2(900f, 50f), "SỐ 001  ·  NHẬT KÝ SINH TỒN  ·  NĂM THỨ 0", 26, TextAnchor.MiddleLeft, BirthUiKit.WithAlpha(lilac, 0.9f), true).rectTransform, new Vector2(lx, size.y * 0.40f));
+            Add(BirthUiKit.Box(view, "Rule", new Vector2(lx, size.y * 0.355f), new Vector2(900f, 4f), BirthUiKit.WithAlpha(lilac, 0.8f)).rectTransform, new Vector2(lx, size.y * 0.355f));
+            var title = BirthUiKit.Label(view, "TitleA", new Vector2(lx, size.y * 0.20f), new Vector2(1000f, 260f), "SLIME", 230, TextAnchor.MiddleLeft, Color.white, true);
+            title.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 3f);
+            Add(title.rectTransform, new Vector2(lx, size.y * 0.20f));
+            var sub = BirthUiKit.Label(view, "TitleB", new Vector2(lx, size.y * 0.02f), new Vector2(1000f, 190f), "NGUYÊN THỦY", 120, TextAnchor.MiddleLeft, gold, true);
+            sub.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 3f);
+            Add(sub.rectTransform, new Vector2(lx, size.y * 0.02f));
+            string flaws = string.Join("  +  ", flawNames);
+            Add(BirthUiKit.Label(view, "Core", new Vector2(lx, -size.y * 0.16f), new Vector2(1000f, 60f), "LÕI  ·  " + coreName.ToUpperInvariant(), 40, TextAnchor.MiddleLeft, gold, true).rectTransform, new Vector2(lx, -size.y * 0.16f));
+            Add(BirthUiKit.Label(view, "Flaw", new Vector2(lx, -size.y * 0.23f), new Vector2(1000f, 60f), "CÁI GIÁ  ·  " + flaws.ToUpperInvariant(), 34, TextAnchor.MiddleLeft, BirthUiKit.Red, true).rectTransform, new Vector2(lx, -size.y * 0.23f));
+            Add(BirthUiKit.Label(view, "Gifts", new Vector2(lx, -size.y * 0.30f), new Vector2(1000f, 60f), "6 ÂN ĐIỂN KHỞI SINH", 30, TextAnchor.MiddleLeft, BirthUiKit.WithAlpha(Color.white, 0.8f)).rectTransform, new Vector2(lx, -size.y * 0.30f));
+            Add(BirthUiKit.Label(view, "Tag", new Vector2(size.x * 0.28f, -size.y * 0.42f), new Vector2(700f, 44f), "CHƯA CÓ TÊN  ·  CHƯA CÓ MẮT  ·  CHƯA CÓ CHÂN", 22, TextAnchor.MiddleRight, BirthUiKit.WithAlpha(lilac, 0.7f)).rectTransform, new Vector2(size.x * 0.28f, -size.y * 0.42f));
+            coverItems = items.ToArray(); coverTo = to.ToArray(); coverSlam = false;
+            fadeOut = BirthUiKit.Box(view, "FadeOut", Vector2.zero, size * 1.2f, new Color(0f, 0f, 0f, 0f));
+            fadeOut.transform.SetAsLastSibling();
+            Color body = new Color(0.68f, 0.88f, 0.68f);
+            try { body = Evolve.Visuals.SlimeColor.Current; } catch (Exception) { }
+            float s = stage.Canvas.localScale.x;
+            slime = BirthSlime.Create(stage.Root.transform, new Vector3(size.x * 0.22f * s, -size.y * 0.02f * s, stage.Canvas.localPosition.z - 0.5f), 270f * s, body);
+        }
+
+        void TickShowcase(float t, float total)
+        {
+            var size = stage.CanvasSize;
+            for (int i = 0; i < coverItems.Length; i++)
+            {
+                float u = BirthUiKit.Smooth((t - 0.5f - i * 0.18f) / 0.7f);
+                var r = coverItems[i];
+                r.anchoredPosition = coverTo[i] + new Vector2(-(1f - u) * 500f, 0f);
+                var g = r.GetComponent<Graphic>(); if (g != null) { var c = g.color; g.color = new Color(c.r, c.g, c.b, Mathf.Max(c.a * 0f, 1f) * u * (i == 1 ? 0.8f : 1f)); }
+            }
+            if (!coverSlam && t >= 1.3f) { coverSlam = true; fx.Flash(Color.white, 0.35f); Hit(0.5f); audio.Play("slam_big", 0.8f); }
+            // the eyes open (a slow half-open, a blink, then wide), the view circles the slime
+            float open = BirthUiKit.Smooth((t - 3.2f) / 1.0f) * 0.5f;
+            if (t > 4.6f) open = Mathf.Lerp(open, 1f, BirthUiKit.Smooth((t - 4.6f) / 0.5f));
+            float blink = (t > 6.6f && t < 6.8f) ? Mathf.Abs((t - 6.7f) / 0.1f) : 1f;
+            slime.Tick(clock, 20f + t * 32f, open * blink, (t - 0.8f) / 0.8f);
+            fadeOut.color = new Color(0f, 0f, 0f, BirthUiKit.Smooth((t - (total - 1.4f)) / 1.2f));
         }
 
         void FallShards(float t)
@@ -634,8 +730,16 @@ namespace Evolve.Traits
 
         void OnGUI()
         {
-            if (state != State.Running || stage == null) return;
             var e = Event.current;
+            if (e.type == EventType.Repaint && Time.unscaledTime - fadeInStart < 1.6f)
+            {
+                // after the cover the game fades in from black, so the change into the world is smooth
+                float a = 1f - BirthUiKit.Smooth((Time.unscaledTime - fadeInStart) / 1.6f);
+                var prev = GUI.color; GUI.depth = -10001; GUI.color = new Color(0f, 0f, 0f, a);
+                GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
+                GUI.color = prev;
+            }
+            if (state != State.Running || stage == null) return;
             if (e.type == EventType.KeyDown && flow != null)
             {
                 if (e.keyCode == KeyCode.Space || e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) { flow.Skip(); e.Use(); }
