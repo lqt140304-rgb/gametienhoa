@@ -46,6 +46,12 @@ namespace Evolve.World
         static float Angle(float x, float z) => Mathf.Atan2(z - LakeCenter.y, x - LakeCenter.x);
         static float Distance(float x, float z) => Vector2.Distance(new Vector2(x, z), LakeCenter);
 
+        /// <summary>Metres from the lake's middle.</summary>
+        public static float RadiusFromCenter(float x, float z) => Distance(x, z);
+
+        /// <summary>How far (m) a point is beyond the shore: negative in the water, 0 at the edge, positive on land.</summary>
+        public static float ShoreOffset(float x, float z) => Distance(x, z) - LakeRadius(Angle(x, z));
+
         /// <summary>Water depth in metres (0 = dry): shallow and gentle at the shore, deepest (8 m) in the middle.</summary>
         public static float DepthAt(float x, float z)
         {

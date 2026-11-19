@@ -239,7 +239,7 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 ## 6.12. Hang Khởi Sinh của Slime: bản đồ mới sạch (CHƯA chạy thử trong Unity)
 - Thiết kế: `docs/superpowers/specs/2026-11-19-slime-cavern-design.md`. Bản đồ mới, độc lập với bản đồ Underroot Lake cũ: một hang nhỏ, một hồ sâu 8 m nơi Slime sinh ra, lỗ trời trên hồ, thảm cây nhỏ và quặng phát sáng quanh hồ.
 - Dùng: chạy **Evolve → Build Slime Cavern (new map)**; scene được tạo ở `Assets/_Project/Scenes/Slime_Cavern.unity`. Không dùng `Rebuild Lake (all steps)` cho map này.
-- Chưa có: sinh vật, thức ăn, người cây, hệ sinh thái. Bản đồ cũ và hố lộ thiên (6.11) vẫn còn trong dự án nhưng không phải hướng hiện tại.
+- Có thức ăn: 12 loại ăn được (8 cây và nấm, 4 quặng), mỗi loại một công thức dinh dưỡng và một nơi mọc; thảm cỏ và đá thường không ăn được. Chưa có: sinh vật, người cây, hệ sinh thái. Bản đồ cũ và hố lộ thiên (6.11) vẫn còn trong dự án nhưng không phải hướng hiện tại.
 - **Menu Evolve gọn lại:** các công cụ của bản đồ cũ (Dress Lake..., Restore..., Build Underroot Lake, Rebuild Lake (all steps), cài vật thể Blender/quét) được chuyển vào menu con **Evolve → Bản đồ cũ (Underroot)**. Menu chính chỉ còn Build Slime Cavern (new map), Create Traits, Build Prototype Scene, Rebuild Slime Visuals. Chỉ đổi đường dẫn menu, không xóa code; trong tài liệu cũ các tên menu vẫn ghi đường dẫn cũ.
 
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)

@@ -47,6 +47,7 @@ namespace Evolve.EditorTools
             BuildBeam();
             BuildPlants();
             BuildOreAndRocks();
+            CavernForage.Dress();   // what can be eaten: plants, mushrooms and four minerals
 
             var spawn = CavernLayout.SpawnPoint();
             var slime = P.CreatePlayer(shared, spawn);
@@ -339,7 +340,6 @@ namespace Evolve.EditorTools
             var root = new GameObject("Ore and Rocks").transform;
             var rockMat = LakeGround.OpaqueMaterial("Cavern_Rock", new Color(0.30f, 0.29f, 0.28f), 0.08f, false);
             var mossMat = LakeGround.OpaqueMaterial("Cavern_RockMoss", new Color(0.20f, 0.34f, 0.13f), 0.05f, false);
-            var oreMat = LakeGround.OpaqueMaterial("Cavern_Ore", new Color(0.25f, 0.75f, 0.95f), 0.55f, true, new Color(0.25f, 1.1f, 1.4f));
 
             // a few kinds of rock, used again and again
             var rocks = new Mesh[6];
@@ -351,16 +351,16 @@ namespace Evolve.EditorTools
             var mossParts = new List<CombineInstance>();
             AddRocks(CavernLayout.Scatter(25, 1500, CavernLayout.RockDensity), rnd, rocks, mosses, rockParts, mossParts, 0.4f, 1.4f);
 
-            // the ore: a handful of glowing crystal clusters standing on a rock, a few of them lighting the cave
-            var oreParts = new List<CombineInstance>();
-            var sites = CavernLayout.ScatterSpaced(27, 20000, CavernLayout.OreDensity, 10f, 20);
+            // the ore sites: a big rock under each (the crystals themselves are food, see CavernForage), a few glowing ones lighting the cave
+            var sites = CavernForageData.PlaceOre();
+            int lights = 0;
             for (int i = 0; i < sites.Count; i++)
             {
-                var p = sites[i];
+                var p = sites[i].pos;
                 AddRocks(new List<Vector3> { p }, rnd, rocks, mosses, rockParts, mossParts, 1.2f, 1.9f);
-                oreParts.Add(new CombineInstance { mesh = OreCluster(rnd), transform = Matrix4x4.TRS(p + Vector3.up * 0.25f, Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f), Vector3.one) });
-                if (i < 8)
+                if (sites[i].spec.Id == "quartz" && lights < 8)
                 {
+                    lights++;
                     var lg = new GameObject("Ore Light " + i);
                     lg.transform.SetParent(root, false);
                     lg.transform.position = p + Vector3.up * 1.4f;
@@ -374,7 +374,6 @@ namespace Evolve.EditorTools
             }
             LakeGround.AddCombined(root, "Rocks", rockParts, rockMat);
             LakeGround.AddCombined(root, "Rock Moss", mossParts, mossMat);
-            LakeGround.AddCombined(root, "Ore", oreParts, oreMat);
         }
 
         static void AddRocks(IList<Vector3> positions, System.Random rnd, Mesh[] rocks, Mesh[] mosses, List<CombineInstance> rockParts, List<CombineInstance> mossParts, float minScale, float maxScale)
@@ -390,11 +389,11 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>A cluster of 6–9 flat-shaded hexagonal crystals leaning out of one spot, each ending in a point.</summary>
-        static Mesh OreCluster(System.Random rnd)
+        internal static Mesh OreCluster(System.Random rnd, float lengthScale = 1f, float radiusScale = 1f, int minCrystals = 6)
         {
             var verts = new List<Vector3>();
             var tris = new List<int>();
-            int crystals = 6 + rnd.Next(4);
+            int crystals = minCrystals + rnd.Next(4);
             for (int c = 0; c < crystals; c++)
             {
                 float lean = Mathf.Lerp(0f, 38f, (float)rnd.NextDouble()) * Mathf.Deg2Rad, around = (float)rnd.NextDouble() * Mathf.PI * 2f;
@@ -403,7 +402,7 @@ namespace Evolve.EditorTools
                 var fwd = Vector3.Cross(right, dir).normalized;
                 float off = c == 0 ? 0f : 0.25f + (float)rnd.NextDouble() * 0.6f, offAng = (float)rnd.NextDouble() * Mathf.PI * 2f;
                 var basePos = new Vector3(Mathf.Cos(offAng) * off, 0f, Mathf.Sin(offAng) * off);
-                float radius = 0.10f + (float)rnd.NextDouble() * 0.16f, length = (c == 0 ? 1.8f : 0.7f) + (float)rnd.NextDouble() * 1.4f;
+                float radius = (0.10f + (float)rnd.NextDouble() * 0.16f) * radiusScale, length = ((c == 0 ? 1.8f : 0.7f) + (float)rnd.NextDouble() * 1.4f) * lengthScale;
                 const int sides = 6;
                 var ring0 = new Vector3[sides];
                 var ring1 = new Vector3[sides];

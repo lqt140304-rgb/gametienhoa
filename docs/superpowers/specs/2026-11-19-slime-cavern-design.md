@@ -30,3 +30,28 @@ Bắt đầu một ván trong một hang nhỏ, ngay bên bờ hồ. Hang tối,
 - Thị giác Slime không mắt (`MonochromeVision`) vẫn làm tối cảnh khi chưa có mắt.
 - Chỉ có Slime: chưa có thức ăn, quái, hệ sinh thái. Màn chọn Lõi vẫn chạy khi vào cảnh.
 - Ánh sáng và mặt nước là bản đầu: có thể cần chỉnh độ sáng cột nắng, màu nước, mật độ cây.
+
+## Thức ăn trong hang (đã cài; chưa chạy thử)
+Yêu cầu của chủ dự án: **không phải loại cỏ nào cũng ăn được, và loại ăn được thì tốt theo nhiều cách khác nhau**.
+- **Không ăn được (chỉ để nhìn):** thảm cỏ nhỏ phủ quanh hồ, đá thường, nấm xanh lam phát sáng nhỏ.
+- **Ăn được: 12 loại, mỗi loại một công thức dinh dưỡng riêng** (dùng `FoodKind` và `FoodProfile` có sẵn) và một nơi mọc riêng (`CavernForageData`, `CavernForage`):
+
+| Loại | Mọc ở | Cho (chính) |
+|---|---|---|
+| Lau Ven Hồ | mép nước | chất béo, đạm |
+| Súng Nước | nước nông | vitamin |
+| Rêu Sáng | mép hồ ẩm | vitamin |
+| Cỏ Ngọt | dải ven hồ | đạm, chất béo |
+| Dương Xỉ Đắng | nửa đất ngoài | sắt, vitamin |
+| Quả Than Hồng | nửa đất ngoài | sắt |
+| Nấm Béo | chân vách | chất béo |
+| Túi Bào Tử | chân vách | canxi, vitamin |
+| Thạch Anh Sáng (quặng) | các cụm quặng | sắt, vitamin |
+| Đá Vôi (quặng) | các cụm quặng | canxi |
+| Quặng Sắt | các cụm quặng | sắt |
+| Muối Đá (quặng) | các cụm quặng | canxi, ít sắt |
+
+- Cả năm chất dinh dưỡng đều là chất chính của ít nhất một loại. Khoáng chất cho nhiều hơn mỗi lần ăn (24), hấp thụ chậm hơn, và 10 phút mới mọc lại; cây cho ít hơn (8 đến 18), hấp thụ nhanh, mọc lại sau 2 phút rưỡi.
+- Khoảng 130 cái ăn được, cách nhau ít nhất 2,2 m, dưới giới hạn đồng bộ co-op (1000). Menu **Evolve → Dress Cavern: Forage** chạy lại được riêng.
+- Chưa làm: gợi ý nhìn thấy loại nào ăn được (người chơi phải thử), loại độc hại.
+
