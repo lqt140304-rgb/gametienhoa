@@ -126,7 +126,7 @@ namespace Evolve.Player
         /// <summary>Return to the spawn point with full stats. Organs are kept (placeholder rule).</summary>
         public void Respawn()
         {
-            rb.linearVelocity = Vector3.zero;
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;   // a kinematic body (frozen, ghost) has no velocity to clear
             rb.position = spawnPoint;
             transform.position = spawnPoint;
             stats.State.Ambient = stats.Config.DefaultAmbient;
@@ -136,7 +136,7 @@ namespace Evolve.Player
         /// <summary>Move instantly (debug teleport).</summary>
         public void Teleport(Vector3 position)
         {
-            rb.linearVelocity = Vector3.zero;
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;   // a kinematic body (frozen, ghost) has no velocity to clear
             rb.position = position;
             transform.position = position;
         }
