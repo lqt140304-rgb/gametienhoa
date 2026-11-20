@@ -702,3 +702,14 @@ Nhánh `claude/ecology-b1` (từ `claude/prey-defense`). Làm theo các giá tr�
 - **Hành vi trong cảnh** (kẻ săn đuổi con mồi, loài ăn xác tụ quanh xác, hai kẻ săn gặp nhau, slime leo chuỗi thức ăn): mục B2 trong bản giao việc.
 - Rêu Mẹ chết thì rêu héo, Slime nuốt quặng thì Rùa thiếu ăn (hậu quả dây chuyền từ hành động của slime): cần nối với sự kiện trong cảnh.
 - Mọi con số đều tạm: cân theo cảm giác khi chơi.
+
+## 46. Hệ sinh thái B2 (hành vi sinh vật trong cảnh): trạng thái và danh sách kiểm tra
+
+Nhánh `claude/ecology-b2` (từ `claude/ecology-b1`, có luôn phòng vệ con mồi). Bản giao việc cho bên làm hang: `docs/superpowers/handoff/2026-11-20-creature-brain-for-cave-team.md`.
+
+- **Luật thuần có test** (`Creatures/Pure/CreatureBehavior.cs`, 217 test thuần xanh): kích cỡ slime (kẻ săn săn slime tới 1,2 lần khối nó, bỏ qua tới 1,8 lần, tránh từ 1,8 lần; con mồi chỉ sợ slime nuốt trọn được nó, khối ≤ 80%); kẻ săn chọn việc theo thứ tự: tránh slime khổng lồ → (Chó Xương) canh xác và đuổi mọi kẻ lại gần → hai kẻ săn gặp nhau (tránh kẻ nặng hơn 1,3 lần, đánh kẻ ngang cỡ khi đói) → đuổi slime hoặc con mồi gần hơn (con mồi chỉ khi đói) → đi ăn xác → lang thang. Tên loài và khẩu phần ở `CaveEcologySeed` (`IdByName`, `DietSpeciesNames`, `EatsCarcass`).
+- **Trong cảnh (chưa biên dịch):** `Creatures/CreatureBrain.cs` (nghĩ hai lần mỗi giây, chạy trên máy chủ) điều khiển qua `Predator.Intent` (đuổi và cắn sinh vật khác, đi tới điểm, giữ yên, chạy) và `Prey.Goal` (kẻ ăn xác đi tới xác). Móc nhỏ: `Predator` (độ đói `Hunger01`, bộ lọc mục tiêu slime), `Prey` (sợ slime theo kích cỡ; con mồi chết do sinh vật khác để lại xác), `Carcass` (danh sách `Active`, `EatBy`), `GodMenu` (công tắc bật tắt).
+- **Nối sổ sách B1:** sinh vật bị săn chết thì `EmbodiedCreature.NotifyKilled` trừ một con khỏi quần thể như khi người chơi giết.
+- **Chưa làm / hạn chế:** `Region.cs` vẫn dùng mô hình cũ (chưa nối mô hình giàu và `EcologyWorld`), nên lượng con mồi đông hay thưa trong cảnh chưa theo sổ sách mới; kẻ săn chưa biết đường vòng qua vật cản (đi thẳng tới mồi); co-op chưa thông báo cái chết do sinh vật cho các máy khác; hai kẻ săn đánh nhau không để lại xác ăn được ngoài thân thường; số liệu tầm 6/8/12/20 m và 60 + 120 giây đói đều tạm.
+
+Checklist (khi vào được Unity): (a) Console sạch; (b) gắn `CreatureBrain` vào vài prefab thử (kẻ săn đặt tên `Thằn Lằn Bờ Hồ`, con mồi `Bọ Cánh Cứng Nhỏ`, cùng hang); (c) để một lúc: kẻ săn đói đuổi và ăn con mồi, con mồi chạy; (d) con mồi chết để lại xác, Giòi/Kền Kền/Bọ Ăn Xác đi tới ăn; (e) đặt `Chó Xương` gần một xác lớn: nó canh, đuổi người chơi lại gần; (f) slime nhỏ thì kẻ săn đuổi, slime lớn thì kẻ săn né; (g) hai kẻ săn khác loài gặp nhau; (h) tắt công tắc B2 ở menu thần thì về cách cũ.

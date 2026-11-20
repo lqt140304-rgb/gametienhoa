@@ -101,7 +101,17 @@ namespace Evolve.Creatures
         Rigidbody rb;
         SurvivalStats target;
         Vector3 wanderDir;
-        float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite, blindUntil;
+        float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite, blindUntil, lastAteAt;
+
+        // ---- scene behaviour (CreatureBrain sets these; with no brain the old behaviour runs) ----
+        /// <summary>What the brain wants now; None = patrol and hunt the players as before.</summary>
+        public PredatorIntent Intent;
+        /// <summary>Which players it may hunt (a slime much bigger than it is not hunted); null = all.</summary>
+        public Func<SurvivalStats, bool> TargetFilter;
+        const float FullSeconds = 60f, HungerRiseSeconds = 120f;
+        /// <summary>0 = just ate, 1 = starving: after a minute fed it gets hungry over two more.</summary>
+        public float Hunger01 => Mathf.Clamp01((Time.time - lastAteAt - FullSeconds) / HungerRiseSeconds);
+        public void NoteAte() => lastAteAt = Time.time;
         bool dead;
 
         float groundOffset;
@@ -113,6 +123,7 @@ namespace Evolve.Creatures
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             Health = maxHealth;
+            lastAteAt = Time.time - UnityEngine.Random.Range(0f, FullSeconds + HungerRiseSeconds * 0.5f);   // they start at different hunger
             HomeCenter = transform.position;
             NetId = NetWorld.NextId();
         }
@@ -125,6 +136,7 @@ namespace Evolve.Creatures
             if (dead || Frozen || IsReplica || Evolve.Abilities.CreatureStatus.Holds(gameObject)) return;   // stunned or knocked by a skill
             Vector3 pos = rb.position;
             UpdateTarget(pos);
+            if (target == null && Intent.Mode != IntentMode.None) { MoveByIntent(pos); BiteRemotePlayers(); return; }   // the brain is in charge
 
             Vector3 dir = Vector3.zero;
             float speed = 0f;
@@ -169,6 +181,47 @@ namespace Evolve.Creatures
             BiteRemotePlayers();
         }
 
+        /// <summary>Carries out the brain's intent: chase and bite a creature, walk to a point, hold, or run.</summary>
+        void MoveByIntent(Vector3 pos)
+        {
+            Vector3 dir = Vector3.zero;
+            float speed = 0f;
+            var it = Intent;
+            switch (it.Mode)
+            {
+                case IntentMode.Chase:
+                    if (it.Target == null) break;
+                    Vector3 to = it.Target.position - pos; to.y = 0f;
+                    float d = to.magnitude;
+                    if (d > BiteReach) { dir = to.normalized; speed = chaseSpeed; }
+                    if (d <= BiteReach * 1.3f && Time.time >= nextBite) { nextBite = Time.time + biteCooldown; Strike(it.Target, it.Meal); }
+                    if (dir.sqrMagnitude < 0.001f && to.sqrMagnitude > 1e-4f) dir = to.normalized * 0.001f;   // keep facing it
+                    break;
+                case IntentMode.GoTo:
+                    Vector3 g = it.Point - pos; g.y = 0f;
+                    if (g.magnitude > it.Radius) { dir = g.normalized; speed = patrolSpeed; }
+                    break;
+                case IntentMode.Avoid:
+                    if (it.Target == null) break;
+                    dir = Flat(pos - it.Target.position); speed = chaseSpeed;
+                    break;
+            }
+            if (dir.sqrMagnitude > 1e-7f)
+            {
+                if (speed > 0f) rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir.normalized * speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject) * Time.fixedDeltaTime, groundOffset));
+                rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir.normalized), 0.15f));
+            }
+        }
+
+        /// <summary>A bite at another creature (prey, or a rival hunter). Eating a kill makes it full.</summary>
+        void Strike(Transform victim, bool meal)
+        {
+            if (victim == null || !victim.TryGetComponent(out IDamageable damageable)) return;
+            damageable.TakeDamage(biteDamage, null);
+            bool dead = damageable is Prey p ? p.Health <= 0f : damageable is Predator h && h.Health <= 0f;
+            if (dead && meal) NoteAte();   // a rival's body is no meal: the scavengers get it
+        }
+
         // Remote players have no collider here (they are ghosts), so they are bitten by being close enough.
         // The damage is sent to the player's own machine.
         void BiteRemotePlayers()
@@ -205,6 +258,7 @@ namespace Evolve.Creatures
         void UpdateTarget(Vector3 pos)
         {
             if (Passive || Time.time < blindUntil) { target = null; return; }
+            if (target != null && TargetFilter != null && !TargetFilter(target)) target = null;
             if (target != null)
             {
                 if (target.State.IsDead || Vector3.Distance(pos, target.transform.position) > loseRadius
@@ -214,7 +268,7 @@ namespace Evolve.Creatures
             }
             foreach (var p in SurvivalStats.All)
             {
-                if (p.State.IsDead) continue;
+                if (p.State.IsDead || (TargetFilter != null && !TargetFilter(p))) continue;
                 float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p) * Evolve.Abilities.BodyState.DetectMultiplier(p);   // Nhân Ngụy Sắc, Phát Sáng
                 if (Vector3.Distance(pos, p.transform.position) <= radius || Evolve.Traits.TraitSense.SmellsTrail(p, pos)) { target = p; break; }   // Vệt Mùi
             }

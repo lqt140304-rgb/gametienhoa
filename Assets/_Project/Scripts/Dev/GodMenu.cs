@@ -172,6 +172,7 @@ namespace Evolve.DevTools
             if (GUILayout.Button("Thử luật mất xác: mất hết cơ quan đang gắn") && interactor != null) interactor.DropAllOnDeath();
 
             Header("Sinh vật");
+            CreatureBrain.Enabled = GUILayout.Toggle(CreatureBrain.Enabled, " Sinh vật săn nhau, ăn xác, theo kích cỡ slime (B2)");
             Vector3 front = player.transform.position + player.transform.forward * 3f + Vector3.right * 2f;
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Tạo con mồi gần")) FindAnyObjectByType<PreySpawner>()?.SpawnAt(front);

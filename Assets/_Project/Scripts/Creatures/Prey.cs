@@ -41,6 +41,8 @@ namespace Evolve.Creatures
         public float Health { get; private set; }
         public float MaxHealth => maxHealth;
         public float BodyMass => bodyMass;
+        /// <summary>A scavenger walks to this point (a carcass) instead of wandering; null = wander (CreatureBrain).</summary>
+        public Vector3? Goal { get; set; }
 
         // ---- defence hooks (PreyDefense sets them) ----
         /// <summary>Speed multiplier while it runs (a skill).</summary>
@@ -142,6 +144,11 @@ namespace Evolve.Creatures
                     nextTurn = Time.time + UnityEngine.Random.Range(2f, 4f);
                 }
                 dir = wanderDir; speed = wanderSpeed;
+                if (Goal.HasValue)
+                {
+                    Vector3 g = Goal.Value - pos; g.y = 0f;
+                    if (g.magnitude > 1.2f) { dir = g.normalized; speed = wanderSpeed * 1.5f; } else { dir = Vector3.zero; speed = 0f; }
+                }
             }
 
             if (Zigzag && threat != null && Time.time < ForceFleeUntil && dir.sqrMagnitude > 0.001f)
@@ -174,12 +181,12 @@ namespace Evolve.Creatures
             }
         }
 
-        static Transform NearestPlayer(Vector3 pos, out float dist)
+        Transform NearestPlayer(Vector3 pos, out float dist)
         {
             Transform best = null; dist = float.MaxValue;
             foreach (var p in SurvivalStats.All)
             {
-                if (p.State.IsDead) continue;
+                if (p.State.IsDead || (CreatureBrain.Enabled && !FearsSlime(p))) continue;
                 float d = Vector3.Distance(pos, p.transform.position);
                 if (d < dist) { dist = d; best = p.transform; }
             }
@@ -231,9 +238,31 @@ namespace Evolve.Creatures
             {
                 caught = true;
                 Caught?.Invoke(this);
-                if (TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec)) ec.NotifyKilled();
+                bool hasEc = TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec);
+                if (hasEc) ec.NotifyKilled();
+                LeaveCarcass(hasEc ? ec.Region : null);
                 Destroy(gameObject);
             }
+        }
+
+        /// <summary>It runs from a slime that could swallow it whole; one too big to swallow does not scare it (a slime climbs the food chain as it grows).</summary>
+        bool FearsSlime(SurvivalStats p)
+        {
+            float mass = p.TryGetComponent(out Evolve.Swallow.SlimeBody body) ? body.Mass : 10f;
+            return CreatureBehaviorRules.PreyFearsSlime(mass, bodyMass);
+        }
+
+        /// <summary>Killed by something other than a player (a hunter, a rival): the body stays for the scavengers.</summary>
+        void LeaveCarcass(Evolve.Ecology.Region region)
+        {
+            Vector3 p = transform.position;
+            var carcass = Evolve.Ecology.Carcass.Spawn(new Vector3(p.x, Evolve.World.GroundHeight.At(p.x, p.z, p.y) + 0.1f, p.z), Mathf.Max(0.4f, bodyMass * 0.15f), region);
+            if (carcass == null) return;
+            carcass.ResetFood(Mathf.Max(6f, bodyMass * 4f));
+            var sample = carcass.gameObject.AddComponent<Evolve.Swallow.CarcassSample>();
+            sample.Genes = Evolve.Swallow.Genome.From(drops, false);
+            sample.Mass = bodyMass;
+            sample.Label = Label;
         }
 
         void ShowHit(float amount)

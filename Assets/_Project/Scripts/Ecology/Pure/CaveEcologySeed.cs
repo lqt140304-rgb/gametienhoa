@@ -55,6 +55,71 @@ namespace Evolve.Ecology
             "khoi_sinh", "vuon_quang", "reu_tho", "to_bo_hoang", "vuc_nut_tim", "nam_huynh_quang", "suoi_nuoc_nong", "khe_gio_hu", "nghia_dia", "hoa_thach", "tieng_tho",
         };
 
+        /// <summary>The cave lord that guards big carcasses and drives off every other creature (and the slime) that comes near.</summary>
+        public const string GuardianId = "cho_xuong";
+
+        static readonly System.Collections.Generic.Dictionary<string, string> hunterAndLordNames = new System.Collections.Generic.Dictionary<string, string>
+        {
+            { "trung_la", "Trứng Lạ" },
+            { "tham_lan_bo_ho", "Thằn Lằn Bờ Hồ" }, { "bo_giap_quang", "Bọ Giáp Quặng" }, { "ret_reu", "Rết Rêu" }, { "ran_trom_trung", "Rắn Trộm Trứng" },
+            { "nhen_tinh_the", "Nhện Tinh Thể" }, { "ech_doc_dom", "Ếch Độc Đốm" }, { "ky_nhong_lua", "Kỳ Nhông Lửa" }, { "chon_khe", "Chồn Khe" },
+            { "bo_an_xac", "Bọ Ăn Xác" }, { "slime_da", "Slime Đá" }, { "ke_rinh_bong_toi", "Kẻ Rình Bóng Tối" },
+            { "coc_ho_gia", "Cóc Hồ Già" }, { "rua_pha_le", "Rùa Pha Lê" }, { "reu_me", "Rêu Mẹ" }, { "chim_hang_me", "Chim Hang Mẹ" },
+            { "bo_cap_thach_anh", "Bọ Cạp Thạch Anh" }, { "nam_khong_lo", "Nấm Khổng Lồ" }, { "ran_dung_nham", "Rắn Dung Nham" }, { "cao_gio", "Cáo Gió" },
+            { "cho_xuong", "Chó Xương" }, { "golem_thach_anh", "Golem Thạch Anh" }, { "bong_hut", "Bóng Hút" },
+        };
+
+        static System.Collections.Generic.Dictionary<string, string> idByName;
+        static EcologyWorld reference;
+
+        static string Normalize(string name) => name == null ? "" : name.Replace("(Clone)", "").Trim().ToLowerInvariant();
+
+        static System.Collections.Generic.Dictionary<string, string> Names()
+        {
+            if (idByName != null) return idByName;
+            idByName = new System.Collections.Generic.Dictionary<string, string>();
+            foreach (var d in PreyDefenseSeed.All) idByName[Normalize(d.Species)] = d.Id;
+            foreach (var kv in hunterAndLordNames) idByName[Normalize(kv.Value)] = kv.Key;
+            return idByName;
+        }
+
+        /// <summary>The species id of a prefab named with the species' display name ("Thằn Lằn Bờ Hồ"), or null.</summary>
+        public static string IdByName(string name) => Names().TryGetValue(Normalize(name), out var id) ? id : null;
+
+        /// <summary>The display name of a species id, or null.</summary>
+        public static string NameOfId(string id)
+        {
+            if (id == null) return null;
+            var p = PreyDefenseSeed.Get(id);
+            if (p != null) return p.Species;
+            return hunterAndLordNames.TryGetValue(id, out var n) ? n : null;
+        }
+
+        static SpeciesPopulation Find(string id)
+        {
+            reference = reference ?? Build();
+            foreach (var r in reference.Regions.Values) { var s = r.Get(id); if (s != null) return s; }
+            return null;
+        }
+
+        /// <summary>Display names of the species (in its own cave) that this species eats: where a hunter looks for prey in the scene.</summary>
+        public static System.Collections.Generic.List<string> DietSpeciesNames(string id)
+        {
+            var list = new System.Collections.Generic.List<string>();
+            var s = Find(id);
+            if (s == null) return list;
+            foreach (var d in s.Diet) if (!d.IsPool && d.RegionId == null) { var n = NameOfId(d.Id); if (n != null) list.Add(n); }
+            return list;
+        }
+
+        /// <summary>True when the species eats carcasses (its diet has the "xac" pool): Giòi Trắng, Kền Kền Hang, Bọ Ăn Xác, Chó Xương.</summary>
+        public static bool EatsCarcass(string id)
+        {
+            var s = Find(id);
+            if (s != null) foreach (var d in s.Diet) if (d.IsPool && d.Id == "xac") return true;
+            return false;
+        }
+
         public static EcologyWorld Build()
         {
             var w = new EcologyWorld();

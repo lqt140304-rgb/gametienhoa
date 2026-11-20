@@ -11,6 +11,28 @@ namespace Evolve.Ecology
     /// </summary>
     public class Carcass : MonoBehaviour
     {
+        static readonly System.Collections.Generic.List<Carcass> active = new System.Collections.Generic.List<Carcass>();
+        /// <summary>Every carcass in the scene (scavengers and guards look here).</summary>
+        public static System.Collections.Generic.IReadOnlyList<Carcass> Active => active;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => active.Clear();
+
+        void OnEnable() => active.Add(this);
+        void OnDisable() => active.Remove(this);
+
+        /// <summary>Horizontal size of the body (a big carcass is worth guarding).</summary>
+        public float Size => transform.localScale.x;
+        public bool Edible => Decay.Stage == CarcassStage.Fresh || Decay.Stage == CarcassStage.Rotten;
+
+        /// <summary>A creature eats up to this much food (scavengers, guards). Returns what it got; the carcass goes when it is eaten up.</summary>
+        public float EatBy(float amount)
+        {
+            float eaten = Decay.Eat(amount);
+            if (Decay.FoodLeft <= 0.01f) Destroy(gameObject);
+            return eaten;
+        }
+
         const float BiteAmount = 15f;
         const float BiteCooldown = 1f;
 
