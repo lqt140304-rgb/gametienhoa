@@ -41,12 +41,11 @@ namespace Evolve.Combat
                 new MoveDef { Name = "Nhảy Bục", Shape = MoveShape.Perch, Windup = 0.5f, Active = 0.8f, Recover = 0f, Cooldown = 15f, MinRange = 0f, MaxRange = 6f, Distance = 7f, MinHeight = 1.5f, MaxHeight = 3f, PerchSeconds = 8f, Anim = "Perch" },
                 new MoveDef { Name = "Hú Báo Động", Shape = MoveShape.Call, Windup = 0.8f, Active = 0.1f, Recover = 1.0f, Cooldown = 20f, MinRange = 0f, MaxRange = 30f, Radius = 30f, TargetSpecies = SpeciesNames.Key("Khỉ Hang"), UnlockBelow = 0.66f, Anim = "Roar" },
             };
-            // Cáo Gió (cave lord): bite, falling ice, wind, then calls the weasels
+            // Cáo Gió (cave lord): a bite, then three wind spears circling above its tails and thrown one after another, then it calls the weasels
             sets["caogio"] = new[]
             {
                 new MoveDef { Name = "Vồ Cắn", Shape = MoveShape.Lunge, Windup = 0.5f, Active = 0.25f, Recover = 1.5f, Cooldown = 2f, MinRange = 0f, MaxRange = 4f, Distance = 4f, Damage = 22f, Anim = "Attack" },
-                new MoveDef { Name = "Băng Rơi", Shape = MoveShape.IceDrop, Windup = 1.0f, Active = 1.2f, Recover = 1.5f, Cooldown = 6f, MinRange = 4f, MaxRange = 12f, Radius = 1.5f, Damage = 12f, Freeze = 1.5f, Anim = "Cast" },
-                new MoveDef { Name = "Gió Hú", Shape = MoveShape.Gust, Windup = 0.9f, Active = 1.2f, Recover = 1.5f, Cooldown = 8f, MinRange = 0f, MaxRange = 10f, Force = 6f, UnlockBelow = 0.66f, Anim = "Howl" },
+                new MoveDef { Name = "Giáo Gió", Shape = MoveShape.Spears, Windup = 1.3f, Active = 0.9f, Recover = 1.6f, Cooldown = 6f, MinRange = 4f, MaxRange = 16f, Damage = 26f, Force = 9f, SpearCount = 3, SpearSpeed = 26f, LaunchInterval = 0.3f, Anim = "Cast" },
                 new MoveDef { Name = "Gọi Bầy", Shape = MoveShape.Call, Windup = 1.0f, Active = 0.1f, Recover = 1.5f, Cooldown = 20f, MinRange = 0f, MaxRange = 30f, Radius = 30f, TargetSpecies = SpeciesNames.Key("Chồn Khe"), UnlockBelow = 0.33f, Anim = "Roar" },
             };
         }
@@ -89,6 +88,7 @@ namespace Evolve.Combat
                 case MoveShape.Drain: return PoseKind.Hover;
                 case MoveShape.Spin: return PoseKind.Spin;
                 case MoveShape.IceDrop: return PoseKind.Cast;
+                case MoveShape.Spears: return PoseKind.Cast;
                 case MoveShape.Throw: return PoseKind.Throw;
                 case MoveShape.Perch: return PoseKind.Crouch;
                 case MoveShape.Gust: return PoseKind.Roar;

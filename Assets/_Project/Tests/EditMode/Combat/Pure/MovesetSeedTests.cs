@@ -74,7 +74,7 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual("Vồ Xa", MovesetSeed.For("Chồn Khe").Single().Name);
             Assert.AreEqual("Vồ Xa", MovesetSeed.For("ChonKhe(Clone)").Single().Name);
             foreach (var n in new[] { "Cáo Gió", "CaoGio" })
-                CollectionAssert.AreEqual(new[] { "Vồ Cắn", "Băng Rơi", "Gió Hú", "Gọi Bầy" }, MovesetSeed.For(n).Select(m => m.Name).ToArray());
+                CollectionAssert.AreEqual(new[] { "Vồ Cắn", "Giáo Gió", "Gọi Bầy" }, MovesetSeed.For(n).Select(m => m.Name).ToArray());
         }
 
         [Test] public void Slice2_Numbers_MatchTheSpec()
@@ -82,13 +82,30 @@ namespace Evolve.Tests.EditMode
             var leap = One("ChonKhe", "Vồ Xa");
             Assert.AreEqual(0.35f, leap.Windup); Assert.AreEqual(0.5f, leap.Active); Assert.AreEqual(1.5f, leap.Recover); Assert.AreEqual(8f, leap.Distance);
             Assert.AreEqual(16f, leap.Damage); Assert.AreEqual(3f, leap.MinRange); Assert.AreEqual(9f, leap.MaxRange); Assert.AreEqual(6f, leap.RetreatDistance); Assert.AreEqual(4f, leap.Cooldown);
-            var bite = One("CaoGio", "Vồ Cắn"); var ice = One("CaoGio", "Băng Rơi"); var gust = One("CaoGio", "Gió Hú"); var call = One("CaoGio", "Gọi Bầy");
+            var bite = One("CaoGio", "Vồ Cắn"); var call = One("CaoGio", "Gọi Bầy");
             Assert.AreEqual(0.5f, bite.Windup); Assert.AreEqual(4f, bite.Distance); Assert.AreEqual(22f, bite.Damage);
-            Assert.AreEqual(1.0f, ice.Windup); Assert.AreEqual(1.2f, ice.Active); Assert.AreEqual(1.5f, ice.Radius); Assert.AreEqual(12f, ice.Damage); Assert.AreEqual(1.5f, ice.Freeze);
-            Assert.AreEqual(4f, ice.MinRange); Assert.AreEqual(12f, ice.MaxRange); Assert.AreEqual(6f, ice.Cooldown); Assert.AreEqual(MoveShape.IceDrop, ice.Shape);
-            Assert.AreEqual(0.9f, gust.Windup); Assert.AreEqual(1.2f, gust.Active); Assert.AreEqual(6f, gust.Force); Assert.AreEqual(0.66f, gust.UnlockBelow); Assert.AreEqual(MoveShape.Gust, gust.Shape);
             Assert.AreEqual(1.0f, call.Windup); Assert.AreEqual(30f, call.Radius); Assert.AreEqual(0.33f, call.UnlockBelow); Assert.AreEqual(SpeciesNames.Key("Chồn Khe"), call.TargetSpecies);
-            foreach (var m in MovesetSeed.For("CaoGio")) Assert.AreEqual(1.5f, m.Recover, m.Name);
+            foreach (var m in MovesetSeed.For("CaoGio")) Assert.AreEqual(1.5f, m.Recover, m.Name == "Giáo Gió" ? 0.11f : 0f);   // Giáo Gió recovers a little longer (1.6)
+        }
+
+        [Test] public void Spears_Numbers_MatchTheSpec()
+        {
+            var sp = One("CaoGio", "Giáo Gió");
+            Assert.AreEqual(MoveShape.Spears, sp.Shape);
+            Assert.AreEqual(3, sp.SpearCount); Assert.AreEqual(26f, sp.SpearSpeed); Assert.AreEqual(0.3f, sp.LaunchInterval, 1e-5f); Assert.AreEqual(9f, sp.Force); Assert.AreEqual(26f, sp.Damage);
+            Assert.AreEqual(1.3f, sp.Windup); Assert.AreEqual(0.9f, sp.Active); Assert.AreEqual(1.6f, sp.Recover); Assert.AreEqual(6f, sp.Cooldown);
+            Assert.AreEqual(4f, sp.MinRange); Assert.AreEqual(16f, sp.MaxRange); Assert.AreEqual(1f, sp.UnlockBelow);
+        }
+
+        [Test] public void Spears_AllLaunchesFitInTheActiveTime()
+        {
+            var sp = One("CaoGio", "Giáo Gió");
+            Assert.LessOrEqual((sp.SpearCount - 1) * sp.LaunchInterval, sp.Active);
+        }
+
+        [Test] public void Fox_HasNoIceDropOrGust()
+        {
+            foreach (var m in MovesetSeed.For("CaoGio")) { Assert.AreNotEqual(MoveShape.IceDrop, m.Shape); Assert.AreNotEqual(MoveShape.Gust, m.Shape); }
         }
 
         [Test] public void Ambusher_OnlyTheWeasel()
@@ -99,11 +116,7 @@ namespace Evolve.Tests.EditMode
             Assert.IsNull(MovesetSeed.AmbushMove("Cáo Gió"));
         }
 
-        [Test] public void PoseOf_IceDropAndGust()
-        {
-            Assert.AreEqual(PoseKind.Cast, MovesetSeed.PoseOf(One("CaoGio", "Băng Rơi")));
-            Assert.AreEqual(PoseKind.Roar, MovesetSeed.PoseOf(One("CaoGio", "Gió Hú")));
-        }
+        [Test] public void PoseOf_Spears_IsCast() => Assert.AreEqual(PoseKind.Cast, MovesetSeed.PoseOf(One("CaoGio", "Giáo Gió")));
 
         [Test] public void Monkey_Seed_ByAnyName()
         {
