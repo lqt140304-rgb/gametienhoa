@@ -22,3 +22,7 @@
    - Tia dò bỏ qua mọi collider có Rigidbody, nên sinh vật không coi nhau hay slime là sàn hoặc vách.
    - Collider con không có Rigidbody riêng vẫn tính là gắn với Rigidbody cha, nên không sao.
 5. **Bảng loài:** nếu có loài mới bay, nhảy hoặc leo, báo tên để thêm vào `MovementRules`. Loài không có trong bảng mặc định là đi bộ (bậc 0,35 m, xuống tối đa 1 m).
+6. **`CreatureLocomotion.SamplePhysicalGroundY`** (của các bạn, đã gộp chung với `CreatureMotor` trên `claude/unity-test-maze`, hai cái không đụng nhau):
+   - Tia đang bắt đầu cao hơn thân 1,8 m. Con đứng dưới cầu thấp hơn 1,8 m sẽ trúng mặt cầu, nên **mô hình** bị nâng hoặc nghiêng theo cầu (thân vật lý thì không).
+   - Tia cũng có thể trúng sinh vật khác hoặc slime.
+   - Đề xuất: bắt đầu tia ở khoảng `worldPos.y + 0.5f` và bỏ qua hit có `attachedRigidbody != null`, giống `CreatureMotor.Floor`.
