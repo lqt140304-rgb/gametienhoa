@@ -46,7 +46,7 @@ namespace Evolve.Abilities
 
             var tint = Evolve.Swallow.SkillFxMath.FamilyColor(Family);
             var body = user.transform;
-            if (Root && taken < 1f) { SkillFx.GelShell(user, t); SkillFx.Burst(SkillFx.Center(body), tint, 10, 1.4f, 0.12f, 0.6f, 0.2f, SkillFx.Radius(body)); }   // Thu Mình: a shell closes
+            if (Root && taken < 1f) { Evolve.Visuals.SlimeGelAnimator.Tuck(user, t); SkillFx.Burst(SkillFx.Center(body), tint, 10, 1.4f, 0.12f, 0.6f, 0.2f, SkillFx.Radius(body)); }   // Thu Mình: a shell closes
             if (BlockHits > 0) { SkillFx.Orbit(body, tint, 6 + 2 * (star3 ? Star3ExtraHits : 0), t); SkillFx.Shell(body, tint, t, 0.05f, 1.2f, 1.2f); }
             if (Light > 0f)
             {

@@ -46,21 +46,15 @@ namespace Evolve.Swallow
         }
 
         /// <summary>
-        /// Thickness of a gel limb at fraction f (0 at the body, 1 at the tip): tapers from baseR to tipR, flares out where it leaves the body
-        /// (flare), swells into a knob near the tip (bulb), and closes to a round point over the last cap of its length.
+        /// How strongly a point of the slime's body is pulled into a limb (0..1). cos is how well the point faces the limb (1 = straight at it),
+        /// cosWidth the edge of the patch that moves; sharp above 1 makes a pointed spike (only the points facing it go far), near 1 a blunt nub.
         /// </summary>
-        public static float PseudopodRadius(float f, float baseR, float tipR, float flare, float bulb, float cap)
+        public static float LimbWeight(float cos, float cosWidth, float sharp)
         {
-            f = Mathf.Clamp01(f);
-            float root = Mathf.Clamp01(1f - f / 0.18f);
-            float knob = Mathf.Clamp01((f - 0.78f) / 0.1f);
-            float r = (baseR + (tipR - baseR) * f) * (1f + flare * root * root) * (1f + bulb * knob);
-            if (cap > 0f && f > 1f - cap)
-            {
-                float u = (f - (1f - cap)) / cap;
-                r *= (float)System.Math.Sqrt(System.Math.Max(0.0, 1.0 - u * u));
-            }
-            return r;
+            if (cos <= cosWidth || cosWidth >= 1f) return 0f;
+            float k = Mathf.Clamp01((cos - cosWidth) / (1f - cosWidth));
+            k = k * k * (3f - 2f * k);   // eased at the edge, so the neck curves smoothly into the body (no crease)
+            return (float)System.Math.Pow(k, sharp);
         }
 
         /// <summary>How far a limb has reached (0..1): shoots out over outSeconds, stays, draws back over the last backSeconds. Fast out, soft landing.</summary>

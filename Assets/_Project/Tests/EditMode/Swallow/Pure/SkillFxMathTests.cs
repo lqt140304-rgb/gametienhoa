@@ -44,17 +44,13 @@ namespace Evolve.Tests.EditMode
             Assert.Greater(SkillFxMath.EaseOutCubic(0.3f), 0.3f);
         }
 
-        [Test] public void PseudopodRadius_FlaresAtRoot_ClosesAtTip()
+        [Test] public void LimbWeight_FullOnAxis_NoneOutside_Tapering()
         {
-            Assert.Greater(SkillFxMath.PseudopodRadius(0f, 0.3f, 0.1f, 0.6f, 0f, 0.1f), 0.3f);
-            Assert.AreEqual(0f, SkillFxMath.PseudopodRadius(1f, 0.3f, 0.1f, 0.6f, 0f, 0.1f), 1e-4f);
-            float mid = SkillFxMath.PseudopodRadius(0.5f, 0.3f, 0.1f, 0.6f, 0f, 0.1f);
-            Assert.Less(mid, 0.3f); Assert.Greater(mid, 0.1f);
-        }
-
-        [Test] public void PseudopodRadius_BulbSwellsNearTip()
-        {
-            Assert.Greater(SkillFxMath.PseudopodRadius(0.86f, 0.3f, 0.1f, 0f, 0.8f, 0.1f), SkillFxMath.PseudopodRadius(0.86f, 0.3f, 0.1f, 0f, 0f, 0.1f));
+            Assert.AreEqual(1f, SkillFxMath.LimbWeight(1f, 0.85f, 4f), 1e-4f);
+            Assert.AreEqual(0f, SkillFxMath.LimbWeight(0.8f, 0.85f, 4f));
+            float near = SkillFxMath.LimbWeight(0.98f, 0.85f, 4f), far = SkillFxMath.LimbWeight(0.9f, 0.85f, 4f);
+            Assert.Greater(near, far); Assert.Greater(far, 0f);
+            Assert.Greater(SkillFxMath.LimbWeight(0.9f, 0.85f, 1.5f), far);   // blunter = wider
         }
 
         [Test] public void Reach_OutHoldBack()

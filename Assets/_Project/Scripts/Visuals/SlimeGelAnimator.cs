@@ -69,6 +69,43 @@ namespace Evolve.Visuals
         float dead;                // 0..1 how collapsed the body is (stats are looked up lazily)
         Survival.SurvivalStats stats;
 
+        /// <summary>
+        /// A limb the body pulls out of its own gel (tongue, stinger, foot): the part of the body that faces <see cref="Target"/> stretches toward it,
+        /// so the limb is one smooth piece with the body, no seam. Reach 0..1 is how far it has gone; Width (degrees) how big a patch of the body moves;
+        /// Sharp above 1 makes a pointed spike, near 1 a blunt nub; Squeeze thins the limb's neck.
+        /// </summary>
+        public sealed class Limb
+        {
+            public Vector3 Target;
+            public float Reach, Width = 30f, Sharp = 5f, Squeeze = 0.6f;
+            internal SlimeGelAnimator Owner;
+            internal Vector3 Dir;
+            internal float Length, CosWidth;
+            public void Remove() { if (Owner != null) Owner.limbs.Remove(this); Owner = null; }
+        }
+        readonly List<Limb> limbs = new List<Limb>();
+        /// <summary>Where limbs grow from, in the body's own space (about the middle of the dome).</summary>
+        static readonly Vector3 LimbCentre = new Vector3(0f, -0.1f, 0f);
+        const float SurfaceRadius = 0.5f;
+        float tuckUntil, fTuck;
+
+        /// <summary>Start a limb on this slime (null if it has no animated body). Call Remove when done.</summary>
+        public static Limb AddLimb(GameObject slime)
+        {
+            var a = slime != null ? slime.GetComponentInChildren<SlimeGelAnimator>() : null;
+            if (a == null) return null;
+            var l = new Limb { Owner = a };
+            a.limbs.Add(l);
+            return l;
+        }
+
+        /// <summary>Thu Mình: the body draws itself in, smaller and tighter, for a while.</summary>
+        public static void Tuck(GameObject slime, float seconds)
+        {
+            var a = slime != null ? slime.GetComponentInChildren<SlimeGelAnimator>() : null;
+            if (a != null) a.tuckUntil = Time.time + seconds;
+        }
+
         /// <summary>Play a motion on the slime that owns this object (a player or a remote avatar).</summary>
         public static void Play(GameObject slime, GelMotion motion)
         {
@@ -307,6 +344,16 @@ namespace Evolve.Visuals
                         break;
                 }
             }
+            fTuck = Mathf.Lerp(fTuck, Time.time < tuckUntil ? 1f : 0f, soft);
+            foreach (var l in limbs)
+            {
+                Vector3 v = transform.InverseTransformPoint(l.Target) - LimbCentre;
+                float dist = v.magnitude;
+                l.Dir = dist > 1e-4f ? v / dist : Vector3.forward;
+                l.Length = Mathf.Max(0f, dist - SurfaceRadius) * Mathf.Clamp01(l.Reach);
+                l.CosWidth = Mathf.Cos(l.Width * Mathf.Deg2Rad);
+            }
+
             fAbsorbPulse = Mathf.Lerp(fAbsorbPulse, tPulse, soft);
             fKick = Mathf.Lerp(fKick, tKick, quick);
             fStretch = Mathf.Lerp(fStretch, tStretch, quick);
@@ -321,7 +368,7 @@ namespace Evolve.Visuals
 
             // Standing still (only breathing): every second frame is plenty.
             bool still = fMove * locoK < 0.02f && activeTime < 0f && Mathf.Abs(fLand) < 0.002f
-                && Mathf.Abs(jig) < 0.002f && leanPos.sqrMagnitude < 4e-6f && dead < 0.01f;
+                && Mathf.Abs(jig) < 0.002f && leanPos.sqrMagnitude < 4e-6f && dead < 0.01f && limbs.Count == 0 && fTuck < 0.001f;
             if (still && (frameCount & 1) == 0) return;
 
             for (int i = 0; i < baseVertices.Length; i++) work[i] = baseVertices[i] + Offset(baseVertices[i]);
@@ -429,6 +476,26 @@ namespace Evolve.Visuals
                 o.x += leanPos.x * lag;
                 o.z += leanPos.z * lag;
                 o.y -= new Vector2(leanPos.x, leanPos.z).magnitude * 0.25f * lag;
+            }
+
+            // Thu Mình: drawn in, a little smaller and flatter.
+            if (fTuck > 0.001f)
+            {
+                o -= (b - LimbCentre) * 0.16f * fTuck;
+                o.y -= 0.03f * fTuck;
+            }
+
+            // Limbs pulled out of the body: points facing the target stretch toward it, the neck narrows.
+            foreach (var l in limbs)
+            {
+                if (l.Length <= 1e-4f) continue;
+                Vector3 rel = b - LimbCentre;
+                float rl = rel.magnitude;
+                if (rl < 1e-4f) continue;
+                float k = Evolve.Swallow.SkillFxMath.LimbWeight(Vector3.Dot(rel / rl, l.Dir), l.CosWidth, l.Sharp);
+                if (k <= 0f) continue;
+                Vector3 perp = rel - l.Dir * Vector3.Dot(rel, l.Dir);
+                o += l.Dir * (l.Length * k) - perp * (l.Squeeze * k * Mathf.Min(1f, l.Length * 2f));
             }
 
             // Dead: the body slumps into a flat puddle.
