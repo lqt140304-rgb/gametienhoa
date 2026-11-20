@@ -14,7 +14,7 @@ namespace Evolve.DevTools
     /// Testing cheats, toggled with F1. Added automatically when entering Play mode
     /// (Editor and development builds only), so no scene change is needed.
     /// </summary>
-    public class GodMenu : MonoBehaviour
+    public partial class GodMenu : MonoBehaviour
     {
         static readonly Vector3 DesertCenter = new Vector3(37.5f, 1f, 0f);
         const int WindowId = 0x60D; // any fixed id unique among IMGUI windows
@@ -183,6 +183,8 @@ namespace Evolve.DevTools
             Predator.Passive = GUILayout.Toggle(Predator.Passive, " Hòa bình: kẻ săn mồi không tấn công");
             bool frozen = GUILayout.Toggle(Predator.Frozen && Prey.Frozen, " Đóng băng mọi sinh vật");
             Predator.Frozen = frozen; Prey.Frozen = frozen;
+
+            DrawTestSection(s, slimeBody, swallower);   // GodMenu.Tests.cs
 
             Header("Thế giới");
             GUILayout.BeginHorizontal();

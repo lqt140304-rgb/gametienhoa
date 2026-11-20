@@ -726,3 +726,7 @@ Nhánh `claude/encounter-rewards` (từ `claude/quirky-carson-xnvto6`). Bên là
 - Lưu ý khi gộp nhánh: mục này ghi cuối `PROJECT_STATUS.md`, các nhánh khác cũng ghi cuối file nên có thể báo xung đột đoạn văn bản: giữ cả hai đoạn.
 
 Checklist (khi vào được Unity): (a) Console sạch; (b) `Evolve → Create Encounter Genes`; (c) dùng menu thần hoặc một script thử gọi từng hàm với `EncounterRewards.LocalPlayer`; (d) `GrantGene(Rare)`: học được một gene Hiếm trở lên và hiện trong bảng kỹ năng; (e) `RerollFlaw`: Khuyết Điểm đổi, không ra lại đúng cái cũ; (f) `AddHeatResistance(8)`: HUD kháng nhiệt tăng 8, vào hầm nóng chịu được hơn; (g) `BoostCore`: Lõi mạnh hơn (thử với Ngụy Sắc: tầm phát hiện nhỏ hơn); (h) `UnlockColor(Rainbow)` rồi F3: có ô Cầu Vồng, bật thì thân đổi sắc, tắt/khởi động lại vẫn giữ khóa; (i) `RefillStats`, `CureDiseases`, `GiveStomachItems` làm đúng việc.
+
+## 47. Nhánh gộp để thử trong Unity
+
+`claude/unity-test` gộp mọi nhánh (kỹ năng hang và hình ảnh, phần thưởng kỳ ngộ, phòng vệ con mồi, hệ sinh thái B1 và B2). Hướng dẫn kéo nhánh, các menu cần chạy và danh sách kiểm thử: `docs/TEST_CHECKLIST_UNITY.md`. Menu thần (F1) có thêm mục "Kiểm thử": đặt khối slime, học kỹ năng ★1/★3, tạo sinh vật thử đúng tên loài, tạo xác, gọi từng phần thưởng kỳ ngộ, chạy mô phỏng sinh thái.

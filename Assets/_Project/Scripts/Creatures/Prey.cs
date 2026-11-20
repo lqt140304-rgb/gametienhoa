@@ -41,6 +41,8 @@ namespace Evolve.Creatures
         public float Health { get; private set; }
         public float MaxHealth => maxHealth;
         public float BodyMass => bodyMass;
+        /// <summary>Set mass and health from code (the god menu's test creatures have no prefab to tune).</summary>
+        public void SetStats(float mass, float health) { bodyMass = mass; maxHealth = health; Health = health; }
         /// <summary>A scavenger walks to this point (a carcass) instead of wandering; null = wander (CreatureBrain).</summary>
         public Vector3? Goal { get; set; }
 
