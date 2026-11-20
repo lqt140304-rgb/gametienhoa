@@ -684,3 +684,21 @@ Nhánh `claude/prey-defense` (từ `claude/quirky-carson-xnvto6`). Thiết kế:
 - 182 test thuần xanh (thêm 2 mục: luật phòng vệ, bảng dữ liệu, ghép với quần thể; 8 test quần thể cũ nay cũng chạy ngoài Unity).
 
 Checklist (khi vào được Unity): (a) Console sạch; (b) gắn `PreyDefense` vào một prefab con mồi thử (ví dụ tên `Thỏ Lá`); (c) lại gần: con mồi chạy ngoằn ngoèo, bấm kỹ năng đuổi theo; (d) Ốc Hồ: chạm vào thì rụt vỏ, chưa nuốt được trong 3 giây; (e) Bọ Gai Tím: rải gai, bị cắn thì mất máu nhiều; (f) Dế Gió: cả đàn cùng chạy; (g) Chim Non bị đánh: Chim Hang Mẹ lao tới; (h) Tắc Kè Đá bị tóm: thoát và để lại hình giả; (i) slime nhỏ thì con mồi dám đánh trả, slime lớn thì chạy sớm.
+
+## 44. Hệ sinh thái B1 (mô hình số liệu cân bằng): trạng thái và danh sách kiểm tra
+
+Nhánh `claude/ecology-b1` (từ `claude/prey-defense`). Làm theo các giá trị mình đề xuất vì chủ dự án chưa đổi: tổ sinh lại 6 phút, Chúa Hang 9 phút, kẻ săn chết đói còn 1 con, di cư khi đầy 90% hoặc đói 3 phút (chuyển khoảng 20%).
+
+- **Mô hình giàu hơn** (`Ecology/Pure/RegionPopulation.Rich.cs`, mở rộng `RegionPopulation`, mô hình cũ giữ nguyên khi vùng không có kho nguồn sống và loài không có khẩu phần): nhiều món ăn có trọng số cho mỗi loài (loài mồi hoặc kho nguồn sống); nhiều kho (rêu, nấm, quặng, xác…) mỗi kho tự mọc lại; chia phần công bằng khi nhiều loài tranh một thứ; săn **bão hòa** (mồi hiếm bị bắt ít, nên không bao giờ bị diệt hẳn); **đói thật** cho mọi loài (không đủ ăn thì chết dần, kẻ săn dừng ở sàn 1 con); sinh sản theo độ no; **tổ không bao giờ chết hẳn** (loài mất hết mà tổ còn thì sinh lại 1 con sau 6 phút, Chúa Hang 9 phút); xác chết trả lại nguồn sống; xác suất thoát của con mồi (mục 43) giảm số bị bắt.
+- **Loài đi xa** (Dơi, Chim Hang Mẹ, Cáo Gió): khẩu phần có `RegionId`; chỉ với tới được một phần (hiệu suất) mồi ở hang kề, phần với tới được thì no bình thường.
+- **Di cư** (`Ecology/Pure/EcologyWorld.cs`): loài quá đông hoặc đói gửi khoảng 20% sang hang kề thành "khách" (không có tổ, nên chỉ vơi dần, thành van xả khi hang quá tải). Chúa Hang không di cư.
+- **Dữ liệu 11 hang** (`Ecology/Pure/CaveEcologySeed.cs`): theo chuỗi thức ăn mục 5.2 và số lượng mục 5.4 (mồi 8/10, kẻ săn 2/3, Chúa Hang 1), nối hang tạm bằng bảng tay (13 đường hầm) cho đến khi có đồ thị mê cung thật.
+- **Bộ kiểm cân bằng 2 giờ chơi** (`Tests/EditMode/Ecology/`): không loài nào ra ngoài [0, sức chứa], không loài nào ở mức 0 quá 12 phút (Chúa Hang 10), mọi loài trung bình có mặt; giết hết kẻ săn → trở lại sau 30 phút; giết hết con mồi → con mồi và kẻ săn trở lại, mất mặt không quá 8 và 14 phút; giết Chúa Hang → trở lại sau 8–10 phút; kịch bản con mồi hung dữ nhất (Bọ Gai Tím thoát 50%) vẫn sống sau 2 giờ. Bảng thống kê quần thể từng loài in bằng test thủ công `Report` (Explicit).
+- 204 test thuần xanh ngoài Unity. Số liệu mô phỏng: mồi trung bình 7–9, kẻ săn 1–2, Chúa Hang 1.
+
+**Chưa làm:**
+- **Nối vào Unity:** `Region.cs` vẫn dùng mô hình cũ; chưa có Diet, kho nguồn sống trong `SpeciesSO`, chưa gắn `EcologyWorld` toàn mê cung. Phần này không kiểm được khi chưa mở Unity, nên để sau.
+- **Đồ thị hang thật** (đang tạm 13 đường hầm), hỏi bên làm hang qua `maze-questions.md`.
+- **Hành vi trong cảnh** (kẻ săn đuổi con mồi, loài ăn xác tụ quanh xác, hai kẻ săn gặp nhau, slime leo chuỗi thức ăn): mục B2 trong bản giao việc.
+- Rêu Mẹ chết thì rêu héo, Slime nuốt quặng thì Rùa thiếu ăn (hậu quả dây chuyền từ hành động của slime): cần nối với sự kiện trong cảnh.
+- Mọi con số đều tạm: cân theo cảm giác khi chơi.

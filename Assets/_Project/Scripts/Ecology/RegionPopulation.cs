@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Evolve.Ecology
 {
     /// <summary>Pure-C# population model of a region. Tick order: food, starvation, predation, births.</summary>
-    public class RegionPopulation
+    public partial class RegionPopulation
     {
         const float Eps = 1e-4f;
 
@@ -20,6 +20,9 @@ namespace Evolve.Ecology
             return s;
         }
 
+        /// <summary>Drop migrant colonies that have died out, so empty guests do not pile up.</summary>
+        public void RemoveEmptyGuests() => species.RemoveAll(s => s.Guest && s.Count <= 0);
+
         public SpeciesPopulation Get(string id)
         {
             for (int i = 0; i < species.Count; i++)
@@ -30,6 +33,7 @@ namespace Evolve.Ecology
         public void Tick(float minutes)
         {
             if (minutes <= 0f) return;
+            if (UsesRichModel) { TickRich(minutes); return; }
 
             // 1. Food regeneration.
             Food += FoodRegenPerMinute * minutes;
