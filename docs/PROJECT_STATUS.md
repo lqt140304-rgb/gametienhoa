@@ -625,3 +625,10 @@ Kế hoạch `docs/superpowers/plans/2026-11-20-traits-wave2.md`. 12 hang, kỳ 
 - Chờ nền: Thích Nghi, Phản Chấn, Cộng Sinh, Bám Dính, Thần Tốc, Mờ Trong Tối, Lạ Vùng, Cơ Quan Mau Mòn (xem kế hoạch, mục B).
 
 Checklist: (a) chạy `Evolve → Create Traits` lại (để lá bài bỏ chữ "chưa có hiệu ứng"); (b) Console sạch; (c) dùng menu thần (GodMenu) hoặc chơi nhiều lần để thử từng thứ: Ngụy Sắc đứng yên 2 giây thì kẻ săn mồi đi sát mới thấy; Vệt Mùi bị lần theo dù đã chạy xa; Dễ Bị Chú Ý kẻ săn mồi lảng vảng lại gần; Màng Thẩm Thấu đứng yên ở nước nông thấy no tăng tới 60%; Quang Hợp nổi trong tia nắng thấy năng lượng tăng nhanh; Ăn Mòn giữ F hòa tan nhanh hơn; Mau Khô ở cạn lâu thì chậm, chạm nước hết; Bám Bùn lên bờ còn chậm 2 giây.
+
+## 40. Hang, loài, kỹ năng, hệ sinh thái chương 1: đã duyệt, đã giao việc
+
+- Thiết kế (nguồn duy nhất): `docs/superpowers/specs/2026-11-20-caves-creatures-ecosystem-design.md`: 12 hang 3 tầng, mỗi hang một kỳ ngộ; 44 loài (mỗi hang 2 con mồi, 1 kẻ săn, 1 Chúa Hang), mỗi loài một kỹ năng đơn giản có họ (cho dung hợp sau); chuỗi thức ăn từng hang và liên kết giữa các hang. Tạm chưa làm nội dung dưới nước.
+- Giao việc bên làm hang (Antigravity): `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.
+- Giao việc phần lõi game cho bất kỳ phiên nào làm tiếp: `docs/superpowers/handoff/2026-11-20-core-systems-brief.md` (A kỹ năng, B hệ sinh thái, C phần thưởng kỳ ngộ, D Lõi/Khuyết Điểm còn lại, E chờ kiểm trong Unity).
+- Chưa có code cho phần này.
