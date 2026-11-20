@@ -85,6 +85,33 @@ namespace Evolve.Tests.EditMode
                     Assert.LessOrEqual(s.Count, s.Capacity + 1, r.Key + "/" + s.Id);
         }
 
+        [Test] public void HunterScale_OnlyHuntersMove()
+        {
+            var w = CaveEcologySeed.Build(null, id => id == "vuon_quang" ? 0.5f : 1f);
+            var c = w.Find("vuon_quang");
+            Assert.AreEqual(1, c.Species[2].Count);    // the hunter: 2 × 0.5
+            Assert.AreEqual(8, c.Species[0].Count);    // prey untouched
+            Assert.AreEqual(1, c.Species[3].Count);    // lord untouched
+            Assert.AreEqual(2, w.Find("khoi_sinh").Species[2].Count);   // other caves untouched
+        }
+
+        [Test] public void DepthScaled_TwoHours_NoExtinctionAndInBounds()
+        {
+            var w = CaveEcologySeed.Build(id => id == "khoi_sinh" ? 1f : 1.875f, id => Evolve.Creatures.CaveTier.DangerOf(Evolve.Creatures.CaveTier.Of(id)).HunterCount);
+            Assert.AreEqual(1, w.Find("khoi_sinh").Species[2].Count);     // safe cavern: half the hunters
+            Assert.AreEqual(6, w.Find("nghia_dia").Species[2].Count);     // deep: 2 × 1.875 × 1.5, rounded up
+            var t = new Trace();
+            Run(w, t, Steps);
+            foreach (var kv in t.Longest0)
+            {
+                bool lord = w.Regions.Values.Any(r => kv.Key.EndsWith("/" + r.Species[3].Id));
+                Assert.LessOrEqual(kv.Value * Step, lord ? 10f : 12f, kv.Key + " was at zero for " + kv.Value * Step + " min");
+            }
+            foreach (var r in w.Regions)
+                foreach (var s in r.Value.Species.Where(s => !s.Guest))
+                    Assert.LessOrEqual(s.Count, s.Capacity + 1, r.Key + "/" + s.Id);
+        }
+
         [Test] public void TwoHours_PreyAndHunters_StayAlive_OnAverage()
         {
             var w = CaveEcologySeed.Build();

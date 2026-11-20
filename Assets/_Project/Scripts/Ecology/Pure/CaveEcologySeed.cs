@@ -133,19 +133,22 @@ namespace Evolve.Ecology
         /// A fresh world. <paramref name="scaleOf"/> gives a cave's size factor (1 = the small start cavern the numbers were tuned for;
         /// the wide maze chambers pass &gt; 1): prey and hunters, their births and the cave's pools grow by it, cave lords stay one.
         /// </summary>
-        public static EcologyWorld Build(System.Func<string, float> scaleOf = null)
+        public static EcologyWorld Build(System.Func<string, float> scaleOf = null, System.Func<string, float> hunterScaleOf = null)
         {
             var w = Build0();
-            if (scaleOf != null)
+            if (scaleOf != null || hunterScaleOf != null)
                 foreach (var kv in w.Regions)
                 {
-                    float k = scaleOf(kv.Key);
-                    if (k <= 1.001f) continue;
-                    foreach (var p in kv.Value.Pools.Values) { p.Amount *= k; p.RegenPerMinute *= k; p.Capacity *= k; }
+                    float k = scaleOf != null ? scaleOf(kv.Key) : 1f, hk = hunterScaleOf != null ? hunterScaleOf(kv.Key) : 1f;
+                    if (k > 1.001f) foreach (var p in kv.Value.Pools.Values) { p.Amount *= k; p.RegenPerMinute *= k; p.Capacity *= k; }
                     foreach (var s in kv.Value.Species)
                     {
                         if (s.Capacity <= 1) continue;   // a lord
-                        s.Count = (int)System.Math.Ceiling(s.Count * k - 1e-3); s.Capacity = (int)System.Math.Ceiling(s.Capacity * k - 1e-3); s.BirthsPerMinute *= k;
+                        float f = s.Floor >= 1 ? k * hk : k;   // hunters (floor of one) also follow the cave's danger
+                        if (System.Math.Abs(f - 1f) < 1e-3f) continue;
+                        s.Count = System.Math.Max(s.Floor, (int)System.Math.Ceiling(s.Count * f - 1e-3));
+                        s.Capacity = System.Math.Max(s.Count, (int)System.Math.Ceiling(s.Capacity * f - 1e-3));
+                        s.BirthsPerMinute *= f;
                     }
                 }
             return w;

@@ -16,6 +16,12 @@ namespace Evolve.EditorTools
     {
         public static void PopulateBirthCavern(Transform chamberRoot, Vector3 origin)
         {
+            // hunters leave a new slime alone around where it appears (spec: the start cavern is safe)
+            var safe = new GameObject("Vùng An Toàn");
+            safe.transform.SetParent(chamberRoot, false);
+            safe.transform.position = CavernLayout.SpawnPoint();
+            safe.AddComponent<SafeZone>().Radius = 25f;
+
             PopulateEcosystem(
                 chamberRoot,
                 origin,
@@ -235,6 +241,11 @@ namespace Evolve.EditorTools
                 bool lord = spec.IsPredator && spec.IsLeader;   // a cave lord is one animal in one nest
                 int nests = lord ? 1 : ChamberDensity.NestsPerSpecies(chamberRadius);
                 int total = lord ? counts[i] : ChamberDensity.Scaled(counts[i], chamberRadius);
+                if (spec.IsPredator && !lord)   // a hunter's number also follows the cave's depth (same factor as the ecology model)
+                {
+                    string cave = CaveEcologySeed.CaveOfSpecies(CaveEcologySeed.IdByName(spName));
+                    total = Mathf.Max(1, Mathf.CeilToInt(total * CaveTier.DangerOf(CaveTier.Of(cave)).HunterCount - 1e-3f));
+                }
                 var spots = new List<Vector2> { denOffsets[i % denOffsets.Length] };
                 if (nests > 1)
                     foreach (var e in ChamberDensity.NestPositions(nests - 1, chamberRadius * 0.74f, spName.GetHashCode(), null, taken))

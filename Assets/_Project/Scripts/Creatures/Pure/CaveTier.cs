@@ -79,6 +79,13 @@ namespace Evolve.Creatures
             return s == null || s.Floor < 1 ? CreatureRole.Prey : s.Capacity <= 1 ? CreatureRole.Lord : CreatureRole.Hunter;
         }
 
+        /// <summary>Is the point inside a flat circle (height ignored, edge inclusive)? Used by <see cref="SafeZone"/>.</summary>
+        public static bool InZone(float px, float pz, float cx, float cz, float radius)
+        {
+            float dx = px - cx, dz = pz - cz;
+            return dx * dx + dz * dz <= radius * radius;
+        }
+
         /// <summary>A gentle lord stays calm until a player hurts it, then fights for <see cref="ProvokeSeconds"/> after the last hit.</summary>
         public static bool IsCalm(bool gentle, float provokedUntil, float now) => gentle && now >= provokedUntil;
     }

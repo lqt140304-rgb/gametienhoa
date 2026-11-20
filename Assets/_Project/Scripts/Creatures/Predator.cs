@@ -247,7 +247,7 @@ namespace Evolve.Creatures
             Vector3 pos = rb.position;
             foreach (var p in SurvivalStats.All)
             {
-                if (!p.IsRemote || p.State.IsDead) continue;
+                if (!p.IsRemote || p.State.IsDead || SafeZone.Contains(p.transform.position)) continue;
                 Vector3 d = p.transform.position - pos; d.y = 0f;
                 if (d.sqrMagnitude > BiteReach * BiteReach) continue;
 
@@ -275,7 +275,7 @@ namespace Evolve.Creatures
         void UpdateTarget(Vector3 pos)
         {
             if (Passive || Calm || Time.time < blindUntil) { target = null; return; }
-            if (target != null && TargetFilter != null && !TargetFilter(target)) target = null;
+            if (target != null && (SafeZone.Contains(target.transform.position) || (TargetFilter != null && !TargetFilter(target)))) target = null;
             if (target != null)
             {
                 if (target.State.IsDead || Vector3.Distance(pos, target.transform.position) > loseRadius
@@ -285,7 +285,7 @@ namespace Evolve.Creatures
             }
             foreach (var p in SurvivalStats.All)
             {
-                if (p.State.IsDead || (TargetFilter != null && !TargetFilter(p))) continue;
+                if (p.State.IsDead || SafeZone.Contains(p.transform.position) || (TargetFilter != null && !TargetFilter(p))) continue;
                 float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p) * Evolve.Abilities.BodyState.DetectMultiplier(p);   // Nhân Ngụy Sắc, Phát Sáng
                 if (Vector3.Distance(pos, p.transform.position) <= radius || Evolve.Traits.TraitSense.SmellsTrail(p, pos)) { target = p; break; }   // Vệt Mùi
             }

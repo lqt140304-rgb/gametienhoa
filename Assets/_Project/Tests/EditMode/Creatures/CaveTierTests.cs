@@ -71,5 +71,12 @@ namespace Evolve.Tests.EditMode
             Assert.IsFalse(CaveTier.IsCalm(false, 0f, 10f));
             Assert.AreEqual(30f, CaveTier.ProvokeSeconds);
         }
+
+        [Test] public void InZone_IgnoresHeight_EdgeInclusive()
+        {
+            Assert.IsTrue(CaveTier.InZone(3f, 4f, 0f, 0f, 5f));    // exactly on the edge
+            Assert.IsFalse(CaveTier.InZone(3f, 4.1f, 0f, 0f, 5f));
+            Assert.IsTrue(CaveTier.InZone(10f, 10f, 10f, 10f, 0f));
+        }
     }
 }
