@@ -43,3 +43,16 @@ Chủ dự án thấy các khoang rộng 75 m còn trống so với Hang Khởi 
 1. Kiểm tra mọi vách, bục, cầu có collider và không đặt `isTrigger`.
 2. `CreatureLocomotion.SamplePhysicalGroundY`: tia bắt đầu cao hơn thân 1,8 m nên hình con dưới cầu thấp có thể bị nâng lên theo mặt cầu. Đề xuất bắt đầu ở khoảng `worldPos.y + 0.5f` và bỏ qua `attachedRigidbody != null`.
 3. Tầng Sâu (Nghĩa Địa, Hóa Thạch, Tiếng Thở, Khoang Phong Ấn): khi có khoang và prefab thì chạy lại `Evolve → Attach Creature Brains` để gắn não, phòng vệ và bảng rơi.
+
+## Cập nhật: kích cỡ, độ khó theo tầng, vùng trong khoang (nhánh `claude/unity-test-maze`)
+Thiết kế: `docs/superpowers/specs/2026-11-20-wide-caves-size-danger-design.md`.
+- **Chúng mình sửa file của các bạn:**
+  - `Predator.cs` (chung): thêm `Gentle`, `ScaleDanger`, `SafeZone` và trạng thái "hiền".
+  - `CreatureMotor.Resize` và `CreatureLocomotion.ScaleBy` (thêm vài dòng).
+  - `CaveWave1ScenePopulator`: vùng an toàn ở hang đầu, số kẻ săn theo tầng, nhận thêm `tunnelAnglesDeg` và `plan` ở năm hàm `Populate*Chamber` của khoang thủ tục.
+  - `MazeChamberDecorator`: cụm cảnh có đèn đối diện cửa hầm chính (`PlaceBeacon`), đường mòn đèn mờ và góc ẩn có khoáng (`PlaceTrailAndNook`).
+- **Mình cần các bạn:**
+  - Hai khoang dựng sẵn bằng Blender (Vườn Quặng, Vực Nứt Tím) chưa có cụm cảnh, đường mòn, góc ẩn. Nếu muốn có thì hàm `BuildHandcrafted*Chamber` cần truyền các hướng hầm.
+  - Cho mình biết bán kính thật của hai khoang đó: mình đang giả định 75 m để đặt tổ.
+- **Sinh vật to hơn:** Chúa Hang rộng đến 3 đến 4,5 m. Nếu hầm hay lối nào nhỏ hơn thế thì báo mình.
+
