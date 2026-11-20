@@ -581,11 +581,18 @@ def build_16_reu_me(out_dir, prev_dir):
             (ca * 0.04, sa * 0.04, 0.70),
         ], [0.016, 0.018, 0.014, 0.008], sides=8, subdiv=1, mat_index=3, color_fn=regen_glow)
 
-    for _ in range(8):
+    for _ in range(10):
         ang = rng.uniform(0, 2 * math.pi)
-        r = rng.uniform(0.18, 0.36)
-        w1._add_moss_tuft(bm, col, (math.cos(ang) * r, math.sin(ang) * r, rng.uniform(0.32, 0.58)),
-                          scale=rng.uniform(0.055, 0.085), rng=rng)
+        r = rng.uniform(0.18, 0.38)
+        w1._add_moss_tuft(bm, col, (math.cos(ang) * r, math.sin(ang) * r, rng.uniform(0.32, 0.60)),
+                          scale=rng.uniform(0.060, 0.095), rng=rng)
+    # Thảm rêu con & nụ bào tử nhỏ mọc quanh chân rễ (thể hiện vai trò nuôi cả thảm rêu)
+    for k in range(6):
+        ang = k * (math.pi / 3.0) + 0.25
+        rc = 0.50 + (k % 2) * 0.12
+        px, py = math.cos(ang) * rc, math.sin(ang) * rc
+        w1._add_moss_tuft(bm, col, (px, py, 0.03), scale=0.075, rng=rng)
+        w1._add_luma_bud(bm, col, (px * 0.92, py * 0.92, 0.06), Vector((math.cos(ang) * 0.3, math.sin(ang) * 0.3, 1.0)), size=0.032, hue=0.36)
 
     bones = [
         ("Root", (0, 0, 0.24), (0, 0, 0.50), None, 0.55, 1.0),
@@ -925,92 +932,105 @@ def build_19_ran_trom_trung(out_dir, prev_dir):
 
 
 def build_20_chim_hang_me(out_dir, prev_dir):
-    """[C] Chim Hang Mẹ — Khả năng: Nhảy Cao (bổ nhào từ trên cao).
-    Thân khí động học nở ức cơ bắp, mào lông nhọn, mỏ khoằm sắc,
-    sải cánh lớn chia tầng lông sơ cấp/thứ cấp 3D, cặp đùi bật nhảy cơ bắp + 4 vuốt cong."""
+    """[C] Chim Hang Mẹ — Vai trò: Canh tổ, che chở đàn Chim Non, bổ nhào từ trên cao (Nhảy Cao).
+    Dáng chim săn mồi hang động to lớn bệ vệ: ức nở rộng, áo lông cổ bảo vệ dày,
+    sải cánh đại bàng rộng khum nhẹ che chở bên dưới, 10 lông bay 2 tầng + đùi cơ bắp bật nhảy."""
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
 
     def plumage(p, n):
-        base = w1._lerp3((0.18, 0.16, 0.20), (0.44, 0.34, 0.28), 0.35 + 0.35 * math.sin(p.y * 10.0))
-        if p.z < 0.45 and p.y < 0.0:
-            base = w1._lerp3(base, (0.76, 0.68, 0.54), 0.50)
+        base = w1._lerp3((0.16, 0.14, 0.18), (0.46, 0.35, 0.28), 0.35 + 0.35 * math.sin(p.y * 8.0))
+        if p.z < 0.62 and p.y < 0.02:
+            base = w1._lerp3(base, (0.82, 0.72, 0.56), 0.55)
         return base
 
-    # Thân khí động học nở ức cơ bắp + cổ vững
-    _add_sculpted_blob(bm, col, (0.0, 0.02, 0.48), (0.205, 0.285, 0.190), rot=(-0.22, 0.0, 0.0),
-                       segs=26, rings=18,
-                       disp_fn=lambda u: Vector((0.0, -0.025 * max(0.0, -u.y), 0.015 * max(0.0, u.z))),
+    # Thân bệ vệ to lớn, ức nở rộng, cổ vai dày bảo vệ
+    _add_sculpted_blob(bm, col, (0.0, 0.02, 0.64), (0.295, 0.390, 0.270), rot=(-0.26, 0.0, 0.0),
+                       segs=28, rings=18,
+                       disp_fn=lambda u: Vector((0.0, -0.04 * max(0.0, -u.y), 0.02 * max(0.0, u.z))),
                        mat_index=0, color_fn=plumage)
-    # Đầu + mào lông nhọn 3 chùm
-    _add_sculpted_blob(bm, col, (0.0, -0.25, 0.67), (0.125, 0.145, 0.115),
-                       segs=22, rings=14, mat_index=0, color_fn=plumage)
-    for sx, len_m in [(-0.04, 0.16), (0.0, 0.21), (0.04, 0.16)]:
-        _add_layered_feather(bm, col, (sx, -0.20, 0.74), (sx * 1.5, 0.85, 0.55), (0, 0, 1),
-                             length=len_m, width=0.036, thickness=0.014, mat_index=0, color_fn=plumage)
+    # Áo lông cổ & vai dày (protective mantle) che phủ lưng trên
+    _add_sculpted_blob(bm, col, (0.0, -0.14, 0.80), (0.235, 0.240, 0.155), rot=(-0.18, 0.0, 0.0),
+                       segs=24, rings=14,
+                       disp_fn=lambda u: Vector((0.0, 0.0, -0.02 * max(0.0, -u.z))),
+                       mat_index=0, color_fn=plumage)
 
-    # Mỏ khoằm sắc bén + mắt sáng rực nhìn xuyên tối
-    w1._add_tube(bm, col, [(0.0, -0.37, 0.665), (0.0, -0.47, 0.648), (0.0, -0.52, 0.595)],
-                 [(0.048, 0.042), (0.028, 0.024), (0.004, 0.004)], sides=10, subdiv=1,
+    # Đầu oai vệ + mào lông 5 chùm
+    _add_sculpted_blob(bm, col, (0.0, -0.32, 0.92), (0.160, 0.180, 0.145),
+                       segs=24, rings=14, mat_index=0, color_fn=plumage)
+    for sx, len_m in [(-0.07, 0.18), (-0.035, 0.23), (0.0, 0.27), (0.035, 0.23), (0.07, 0.18)]:
+        _add_layered_feather(bm, col, (sx, -0.25, 1.01), (sx * 1.6, 0.85, 0.52), (0, 0, 1),
+                             length=len_m, width=0.042, thickness=0.016, mat_index=0, color_fn=plumage)
+
+    # Mỏ khoằm lớn sắc bén + mắt sáng rực bảo vệ tổ
+    w1._add_tube(bm, col, [(0.0, -0.47, 0.915), (0.0, -0.60, 0.892), (0.0, -0.66, 0.815)],
+                 [(0.062, 0.055), (0.036, 0.030), (0.005, 0.005)], sides=12, subdiv=1,
                  mat_index=2, color_fn=lambda _p, _n: (0.22, 0.18, 0.16))
     for sx in (-1.0, 1.0):
-        w1._add_eye_bulb(bm, col, (sx * 0.095, -0.31, 0.69), 0.030, yaw=sx * 0.35,
-                         eye_col=(0.98, 0.68, 0.18), mat_eye=3)
+        w1._add_eye_bulb(bm, col, (sx * 0.122, -0.40, 0.945), 0.038, yaw=sx * 0.35,
+                         eye_col=(0.98, 0.70, 0.18), mat_eye=3)
 
-    # Sải cánh rộng chia tầng xương cánh + lông sơ cấp & thứ cấp 3D
+    # Sải cánh che chở cực rộng (1.35m mỗi bên) khum nhẹ hình mái vòm bảo vệ đàn chim non bên dưới
     for sx in (-1.0, 1.0):
         w1._add_tube(bm, col, [
-            (sx * 0.16, -0.05, 0.55),
-            (sx * 0.42, -0.08, 0.66),
-            (sx * 0.76, -0.02, 0.72),
-            (sx * 0.96, 0.08, 0.68),
-        ], [0.055, 0.044, 0.032, 0.018], sides=12, subdiv=1, mat_index=0, color_fn=plumage)
+            (sx * 0.22, -0.06, 0.74),
+            (sx * 0.60, -0.10, 0.88),
+            (sx * 1.04, -0.02, 0.84),
+            (sx * 1.36, 0.12, 0.68),
+        ], [0.078, 0.062, 0.044, 0.022], sides=14, subdiv=1, mat_index=0, color_fn=plumage)
 
-        # 8 lông cánh lớn (4 sơ cấp ngoài + 4 thứ cấp trong) tách rõ từng lông
-        for f_i in range(8):
-            ft = f_i / 7.0
-            bx = sx * (0.20 + ft * 0.72)
-            by = -0.05 + ft * 0.10
-            bz = 0.56 + math.sin(ft * math.pi * 0.7) * 0.15
-            dir_v = (sx * (0.18 + ft * 0.68), 0.94 - ft * 0.18, -0.08 + (f_i % 2) * 0.04)
-            _add_layered_feather(bm, col, (bx, by, bz), dir_v, (0, 0, 1),
-                                 length=0.40 + ft * 0.18, width=0.044, thickness=0.013,
+        # Tầng lông phủ cánh dày phía trên (wing coverts)
+        for c_i in range(6):
+            ct = c_i / 5.0
+            bx = sx * (0.26 + ct * 0.76)
+            by = -0.05 + ct * 0.08
+            bz = 0.75 + math.sin(ct * math.pi * 0.8) * 0.12
+            _add_layered_feather(bm, col, (bx, by, bz), (sx * (0.22 + ct * 0.45), 0.88, -0.22), (0, 0, 1),
+                                 length=0.34 + ct * 0.12, width=0.064, thickness=0.018,
                                  mat_index=0, color_fn=plumage)
 
-    # Đuôi xòe quạt 5 lông dài khí động học
-    for sx in (-0.5, -0.25, 0.0, 0.25, 0.5):
-        _add_layered_feather(bm, col, (sx * 0.10, 0.25, 0.42), (sx * 0.45, 1.0, 0.08), (0, 0, 1),
-                             length=0.40, width=0.058, thickness=0.014, mat_index=0, color_fn=plumage)
+        # 10 lông bay lớn sơ cấp & thứ cấp xòe thành mái che rộng
+        for f_i in range(10):
+            ft = f_i / 9.0
+            bx = sx * (0.24 + ft * 1.06)
+            by = -0.06 + ft * 0.16
+            bz = 0.73 + math.sin(ft * math.pi * 0.7) * 0.16 - ft * 0.08
+            dir_v = (sx * (0.16 + ft * 0.72), 0.92 - ft * 0.20, -0.16 + (f_i % 2) * 0.03)
+            _add_layered_feather(bm, col, (bx, by, bz), dir_v, (0, 0, 1),
+                                 length=0.52 + ft * 0.24, width=0.058, thickness=0.015,
+                                 mat_index=0, color_fn=plumage)
 
-    # ĐẶC TRƯNG KHẢ NĂNG (Nhảy Cao): Cặp đùi to cơ bắp phủ lông + cẳng chân dài khớp bật + 4 vuốt cong sắc
+    # Đuôi xòe quạt 7 lông dài rộng
+    for sx in (-0.65, -0.43, -0.21, 0.0, 0.21, 0.43, 0.65):
+        _add_layered_feather(bm, col, (sx * 0.13, 0.34, 0.52), (sx * 0.48, 1.0, 0.06), (0, 0, 1),
+                             length=0.52, width=0.068, thickness=0.016, mat_index=0, color_fn=plumage)
+
+    # ĐẶC TRƯNG KHẢ NĂNG (Nhảy Cao): Cặp đùi cơ bắp to khỏe + cẳng chân dài khớp bật + 4 vuốt cong sắc
     for sx in (-1.0, 1.0):
-        # Đùi to khỏe
-        _add_sculpted_blob(bm, col, (sx * 0.13, 0.02, 0.30), (0.078, 0.085, 0.115), rot=(0.25, sx * 0.15, 0.0),
-                           segs=16, rings=10, mat_index=0, color_fn=plumage)
-        # Cẳng chân khớp bật
-        ankle = (sx * 0.15, 0.07, 0.16)
-        foot = (sx * 0.15, -0.01, 0.025)
-        _add_jointed_limb(bm, col, [(sx * 0.14, 0.02, 0.24), ankle, foot], [0.036, 0.024, 0.020],
-                          mat_index=2, color_fn=lambda _p, _n: (0.78, 0.62, 0.28))
-        # 3 vuốt trước + 1 vuốt sau cong sắc
-        for dx in (-0.045, 0.0, 0.045):
-            w1._add_tube(bm, col, [foot, (foot[0] + dx, -0.10, 0.022), (foot[0] + dx * 1.1, -0.14, 0.005)],
-                         [0.012, 0.008, 0.002], sides=8, subdiv=0, mat_index=2,
+        _add_sculpted_blob(bm, col, (sx * 0.18, 0.03, 0.40), (0.105, 0.115, 0.155), rot=(0.22, sx * 0.15, 0.0),
+                           segs=18, rings=12, mat_index=0, color_fn=plumage)
+        ankle = (sx * 0.20, 0.09, 0.21)
+        foot = (sx * 0.20, -0.01, 0.032)
+        _add_jointed_limb(bm, col, [(sx * 0.19, 0.03, 0.32), ankle, foot], [0.048, 0.032, 0.026],
+                          mat_index=2, color_fn=lambda _p, _n: (0.80, 0.64, 0.28))
+        for dx in (-0.060, 0.0, 0.060):
+            w1._add_tube(bm, col, [foot, (foot[0] + dx, -0.14, 0.028), (foot[0] + dx * 1.12, -0.20, 0.006)],
+                         [0.016, 0.010, 0.003], sides=8, subdiv=0, mat_index=2,
                          color_fn=lambda _p, _n: (0.12, 0.10, 0.10))
-        w1._add_tube(bm, col, [foot, (foot[0], 0.08, 0.020), (foot[0], 0.11, 0.005)],
-                     [0.012, 0.007, 0.002], sides=8, subdiv=0, mat_index=2,
+        w1._add_tube(bm, col, [foot, (foot[0], 0.11, 0.024), (foot[0], 0.15, 0.006)],
+                     [0.016, 0.009, 0.003], sides=8, subdiv=0, mat_index=2,
                      color_fn=lambda _p, _n: (0.12, 0.10, 0.10))
 
     bones = [
-        ("Root", (0, 0.02, 0.48), (0, -0.12, 0.56), None, 0.42, 1.0),
-        ("Head", (0, -0.15, 0.58), (0, -0.32, 0.68), "Root", 0.24, 2.2),
-        ("Wing_L1", (-0.16, -0.05, 0.55), (-0.54, -0.05, 0.69), "Root", 0.28, 2.2),
-        ("Wing_L2", (-0.54, -0.05, 0.69), (-0.96, 0.08, 0.68), "Wing_L1", 0.26, 2.4),
-        ("Wing_R1", (0.16, -0.05, 0.55), (0.54, -0.05, 0.69), "Root", 0.28, 2.2),
-        ("Wing_R2", (0.54, -0.05, 0.69), (0.96, 0.08, 0.68), "Wing_R1", 0.26, 2.4),
-        ("Tail", (0, 0.25, 0.42), (0, 0.60, 0.45), "Root", 0.26, 2.0),
-        ("Talons", (0, 0.0, 0.24), (0, -0.02, 0.02), "Root", 0.24, 2.2),
+        ("Root", (0, 0.02, 0.64), (0, -0.16, 0.76), None, 0.56, 1.0),
+        ("Head", (0, -0.18, 0.78), (0, -0.40, 0.94), "Root", 0.32, 2.2),
+        ("Wing_L1", (-0.22, -0.06, 0.74), (-0.76, -0.06, 0.86), "Root", 0.38, 2.2),
+        ("Wing_L2", (-0.76, -0.06, 0.86), (-1.36, 0.12, 0.68), "Wing_L1", 0.36, 2.4),
+        ("Wing_R1", (0.22, -0.06, 0.74), (0.76, -0.06, 0.86), "Root", 0.38, 2.2),
+        ("Wing_R2", (0.76, -0.06, 0.86), (1.36, 0.12, 0.68), "Wing_R1", 0.36, 2.4),
+        ("Tail", (0, 0.34, 0.52), (0, 0.80, 0.56), "Root", 0.34, 2.0),
+        ("Talons", (0, 0.0, 0.32), (0, -0.02, 0.03), "Root", 0.32, 2.2),
     ]
     clips = {
         "Idle": (1, 56, [

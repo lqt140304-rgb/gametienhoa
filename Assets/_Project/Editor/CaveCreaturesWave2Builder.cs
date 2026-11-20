@@ -15,12 +15,12 @@ namespace Evolve.EditorTools
             new CaveCreaturesWave1Builder.CreatureSpec("SenReu", "Sên Rêu", "BreathingMoss", false, false, "Action", 0.30f, 0.70f, 0.28f, 0.65f, 14f, 3f, 16f, 0f, 8, 22),
             new CaveCreaturesWave1Builder.CreatureSpec("MuoiReu", "Muỗi Rêu", "BreathingMoss", false, false, "Action", 0.26f, 0.70f, 0.95f, 2.4f, 10f, 2f, 14f, 0f, 8, 24),
             new CaveCreaturesWave1Builder.CreatureSpec("RetReu", "Rết Rêu", "BreathingMoss", true, false, "Attack", 0.36f, 1.45f, 1.15f, 2.6f, 38f, 12f, 30f, 12f, 3, 8, "SenReu"),
-            new CaveCreaturesWave1Builder.CreatureSpec("ReuMe", "Rêu Mẹ", "BreathingMoss", true, true, "Action", 0.90f, 1.85f, 0.40f, 0.95f, 120f, 44f, 68f, 16f, 1, 2, "RetReu"),
+            new CaveCreaturesWave1Builder.CreatureSpec("ReuMe", "Rêu Mẹ", "BreathingMoss", true, true, "Action", 1.15f, 2.25f, 0.40f, 0.95f, 120f, 44f, 68f, 16f, 1, 2, "RetReu"),
 
             // Hang 4: Tổ Bỏ Hoang
-            new CaveCreaturesWave1Builder.CreatureSpec("ChimNon", "Chim Non", "AbandonedNest", false, false, "Hit", 0.26f, 0.55f, 0.75f, 1.8f, 12f, 2.5f, 15f, 0f, 8, 22),
-            new CaveCreaturesWave1Builder.CreatureSpec("RanTromTrung", "Rắn Trộm Trứng", "AbandonedNest", true, false, "Attack", 0.34f, 1.40f, 1.05f, 2.5f, 40f, 11f, 32f, 14f, 3, 8, "ChimNon"),
-            new CaveCreaturesWave1Builder.CreatureSpec("ChimHangMe", "Chim Hang Mẹ", "AbandonedNest", true, true, "Attack", 0.72f, 1.65f, 1.25f, 3.0f, 110f, 36f, 60f, 22f, 1, 2, "RanTromTrung"),
+            new CaveCreaturesWave1Builder.CreatureSpec("ChimNon", "Chim Non", "AbandonedNest", false, false, "Hit", 0.24f, 0.50f, 0.75f, 1.8f, 12f, 2.5f, 15f, 0f, 8, 22),
+            new CaveCreaturesWave1Builder.CreatureSpec("RanTromTrung", "Rắn Trộm Trứng", "AbandonedNest", true, false, "Attack", 0.36f, 1.55f, 1.05f, 2.5f, 40f, 11f, 32f, 14f, 3, 8, "ChimNon"),
+            new CaveCreaturesWave1Builder.CreatureSpec("ChimHangMe", "Chim Hang Mẹ", "AbandonedNest", true, true, "Attack", 1.05f, 2.40f, 1.25f, 3.0f, 110f, 36f, 60f, 22f, 1, 2, "RanTromTrung"),
         };
 
         [MenuItem("Evolve/Build Wave 2 Nong Creatures & Prefabs")]
