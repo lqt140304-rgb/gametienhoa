@@ -57,7 +57,7 @@ namespace Evolve.EditorTools
             new[] { 0f, 0f, 1f, 0f, 3f, 0f, 3f, 4f, 0f, 0f }    // 06 hunting edge
         };
 
-        [MenuItem("Evolve/Dress Lake: Forage")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Forage")]
         public static void Dress()
         {
             var terrain = Terrain.activeTerrain;
@@ -164,7 +164,7 @@ namespace Evolve.EditorTools
             Debug.Log($"Thực vật và quặng hấp thụ được: {total} cái ({string.Join(", ", summary)}); tổng {all} cục thức ăn trong scene. Ctrl+S để lưu scene.");
         }
 
-        [MenuItem("Evolve/Restore Lake Forage (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Forage (undo)")]
         public static void Restore()
         {
             var old = GameObject.Find(RootName);

@@ -23,7 +23,7 @@ namespace Evolve.EditorTools
         static readonly int[] Blades = { 8, 7, 6, 5 };
         static readonly Color[] Tips = { new Color(0.30f, 0.54f, 0.15f), new Color(0.34f, 0.58f, 0.17f), new Color(0.40f, 0.58f, 0.18f), new Color(0.27f, 0.50f, 0.20f) };
 
-        [MenuItem("Evolve/Dress Lake: Grass")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Grass")]
         public static void Dress()
         {
             var terrain = Object.FindAnyObjectByType<Terrain>();

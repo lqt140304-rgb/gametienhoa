@@ -26,7 +26,7 @@ namespace Evolve.EditorTools
         /// <summary>Gap of the cave's slit, as in the concept art: 0.9 m wide, 0.7 m high (a slime 0.6 m across fits, a grown one up to scale 1.4 too).</summary>
         const float SlitWidth = 0.9f, SlitHeight = 0.7f;
 
-        [MenuItem("Evolve/Dress Lake: Landmarks")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Landmarks")]
         public static void Dress()
         {
             PrototypeSceneBuilder.EnsureFolder(Root + "/Materials");

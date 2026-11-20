@@ -45,7 +45,7 @@ namespace Evolve.EditorTools
         };
         static readonly int[] Counts = { 80, 60, 80, 90, 70, 50 };
 
-        [MenuItem("Evolve/Dress Lake: Ground Life")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Ground Life")]
         public static void Dress()
         {
             var terrain = Terrain.activeTerrain;
@@ -171,7 +171,7 @@ namespace Evolve.EditorTools
             Debug.Log($"Sự sống tầng đất: {made} cụm, {beacons} đèn dẫn đường dọc đường mòn, {lights} đèn nhỏ. Ctrl+S để lưu scene.");
         }
 
-        [MenuItem("Evolve/Restore Lake Ground Life (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Ground Life (undo)")]
         public static void Restore()
         {
             var old = GameObject.Find(RootName);

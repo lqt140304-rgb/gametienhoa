@@ -231,6 +231,17 @@ Quyết định đã chốt nằm ở `GAME_DESIGN.md` mục 4.5. Hệ quả cho
 - Để dùng: chạy menu **Evolve → Create Traits** một lần (tạo 24 asset trong `Resources/Traits`), rồi vào Play: màn hình chọn hiện ra (1–3 chọn, Tab chi tiết, Enter tiếp, Esc bỏ qua). Test: `Assets/_Project/Tests/EditMode/Trait*Tests.cs`, `CardDealerTests`, `FlawCompensationTests`, `LuckRulesTests`, `DeathLossRulesTests`, `FamiliarityGridTests`, `FlawRulesTests`.
 - Giới hạn đã biết: chưa chạy test hay game; Nhân Con Bạc chưa áp cho boss hay rương (chưa có); Luống Cuống làm chậm đổi hướng di chuyển (slime không có xoay); báo đói sớm của Đói Sớm chưa làm; màn chọn là một "căn phòng riêng" phủ kín màn hình (không phải một scene riêng): trong lúc chọn người chơi bị đóng băng, bất tử, không bị quái nhắm tới (`SurvivalStats.Frozen`), không trừ chỉ số, HUD bị che và chặn; sinh tồn chỉ bắt đầu sau khi chọn xong hoặc bỏ qua.
 
+## 6.11. Hố lộ thiên (dự án 1 của đổi môi trường khởi sinh; CHƯA chạy thử trong Unity)
+- Thiết kế: `docs/superpowers/specs/2026-11-19-open-sky-pit-design.md`. Hồ Khởi Sinh thành một hố lộ thiên: bầu trời, nắng, thế giới trên miệng hố; vách rìa cao 55 m và dốc.
+- Dùng: mở scene `Underroot_Lake`, chạy **Evolve → Rebuild Lake (all steps)** (bước 25 là Open Sky), hoặc lần lượt **Dress Lake: Terrain** rồi **Dress Lake: Open Sky**. Hoàn tác trần: **Evolve → Restore Lake Roof (undo)**.
+- Chưa có: mảnh Blender trên mặt vách, mê cung hang (dự án 2), vòng ngày đêm, Nhân Quang Hợp theo nắng. Thị giác không mắt vẫn làm tối cảnh.
+
+## 6.12. Hang Khởi Sinh của Slime: bản đồ mới sạch (CHƯA chạy thử trong Unity)
+- Thiết kế: `docs/superpowers/specs/2026-11-19-slime-cavern-design.md`. Bản đồ mới, độc lập với bản đồ Underroot Lake cũ: một hang nhỏ, một hồ sâu 8 m nơi Slime sinh ra, lỗ trời trên hồ, thảm cây nhỏ và quặng phát sáng quanh hồ.
+- Dùng: chạy **Evolve → Build Slime Cavern (new map)**; scene được tạo ở `Assets/_Project/Scenes/Slime_Cavern.unity`. Không dùng `Rebuild Lake (all steps)` cho map này.
+- Có thức ăn: 12 loại ăn được (8 cây và nấm, 4 quặng), mỗi loại một công thức dinh dưỡng và một nơi mọc; thảm cỏ và đá thường không ăn được. Chưa có: sinh vật, người cây, hệ sinh thái. Bản đồ cũ và hố lộ thiên (6.11) vẫn còn trong dự án nhưng không phải hướng hiện tại.
+- **Menu Evolve gọn lại:** các công cụ của bản đồ cũ (Dress Lake..., Restore..., Build Underroot Lake, Rebuild Lake (all steps), cài vật thể Blender/quét) được chuyển vào menu con **Evolve → Bản đồ cũ (Underroot)**. Menu chính chỉ còn Build Slime Cavern (new map), Create Traits, Build Prototype Scene, Rebuild Slime Visuals. Chỉ đổi đường dẫn menu, không xóa code; trong tài liệu cũ các tên menu vẫn ghi đường dẫn cũ.
+
 ## 7. Việc tiếp theo (chủ dự án chưa chọn)
 
 1. **0.4b đợt 1 (thế giới chung) đã viết, chưa chạy thử**: Host điều khiển quái, thức ăn, cơ quan rơi; người vào phòng thấy bản sao, bị cắn, bắn trúng, ăn, nhặt (xem `docs/COOP_SETUP.md`). 0.4a (thấy nhau) **đã chạy được** trên máy chủ dự án (Netcode 2.14.0). Đợt 2 còn: cứu đồng đội, chuyền máu, quan sát. Ý ban đầu của hạng mục này: đưa quái, thức ăn, cơ quan rơi về Host điều khiển bằng `NetworkObject`/prefab, đồng bộ sát thương, rồi cứu đồng đội và quan sát. Trước đó: **bản 0.4a** (Netcode for GameObjects, host + IP, người chơi thấy nhau qua tin nhắn có tên, không dùng `NetworkObject`) cần chủ dự án cài gói, thử, và gửi lỗi biên dịch nếu có. Mục tiêu gốc của hạng mục này (`GAME_DESIGN.md` mục 8): Netcode for GameObjects, thử 2 người, rồi làm cứu đồng đội, chuyền máu, chế độ quan sát theo mục 6.1. Dữ liệu đã tách sẵn (`SurvivalState`, `SurvivalStats.All`, `OrganHost`) để đồng bộ ID cơ quan và trạng thái. Nên xin ý kiến chủ dự án về mô hình mạng (host/client hay dedicated) trước khi làm.
@@ -501,3 +512,123 @@ Checklist: (1) Console sạch (không lỗi shader); (2) Dress Lake: Water Reali
 - Test: `FloraManifestTests`, `FloraDownloadTests`, `SemiRealGradeTests` (chưa chạy trong Unity).
 
 Checklist: (1) Console sạch, Test Runner xanh; (2) Install Scanned Assets (cần mạng, vài phút); (3) Dress Lake: Scanned Flora Sample, Ctrl+S; (4) nhìn từ hai góc máy: chất lượng có tới mức bạn muốn không, lá không đen mặt sau, màu có hợp với phần còn lại không; (5) FPS tại góc máy ≥ 90.
+
+## 32. Ánh sáng huyền ảo và nước lung linh cho Hang Khởi Sinh: trạng thái và danh sách kiểm tra
+
+- Chủ dự án chuyển sang **bản đồ mới Hang Khởi Sinh** (cách tài sản quét tốn tài nguyên nên bỏ, sẽ làm cách đơn giản hơn sau); việc đầu: ánh sáng và nước huyền ảo hơn vì hiện chỉ có một chùm sáng mảnh chiếu vào mặt nước.
+- **Menu Evolve → Dress Cavern: Magic Light** (Build Slime Cavern cũng chạy nó; chạy lại được):
+  - **Chùm sáng** `Evolve/LightBeam`: thể tích ánh sáng trong không khí bụi, viền mềm (không còn ống tròn cứng), vệt đậm nhạt trôi chậm, hạt bụi lấp lánh, mờ dần ở gần nước; thêm 4 tia mảnh lọt qua mép lỗ.
+  - **Nước** `Evolve/LakeWater` (thuộc tính mới, mặc định tắt nên các hồ khác không đổi): vũng sáng dưới chùm có vòng sóng lan chậm và vân sáng tụ quang, lấp lánh nhấp nháy trên mặt, bờ phát quang xanh ngọc, sắc nước trôi từ xanh ngọc sang tím nhẹ.
+  - **Hạt sáng** `Evolve/GlowParticle` (cộng sáng, quầng mềm, nhấp nháy riêng từng hạt): bụi trong chùm sáng (300), đom đóm bay lang thang quanh bờ (110), đốm sáng mờ to bay lên màu ngọc, tím, hổ phách (90), ánh lấp lánh trên mặt hồ (170). Tổng khoảng 670 hạt, rẻ.
+  - **Không khí:** ambient và sương lạnh và xanh hơn một chút, Bloom mạnh hơn để các điểm sáng nở quầng.
+- Số liệu thuần (hướng chùm, vũng sáng, vòng đom đóm) ở `World/CavernMagicMath`, test `CavernMagicMathTests`.
+- Chưa biên dịch hay thấy trong Unity.
+
+Checklist: (1) Console sạch (không lỗi shader); (2) Evolve → Dress Cavern: Magic Light, Ctrl+S; (3) Play: chùm sáng mềm có bụi, đom đóm nhấp nháy quanh bờ, hồ lấp lánh và có vũng sáng dưới chùm; (4) FPS không tụt rõ; (5) nếu quá lòe loẹt hoặc quá tối, báo để chỉnh cường độ.
+
+- **Khi slime chưa có mắt (hang):** chùm sáng, hạt sáng (bụi, đom đóm, đốm sáng, lấp lánh nước), cỏ và các hiệu ứng nước mới chỉ hiện **loang mềm quanh slime**, mờ dần mịn ra xa (`Shaders/EvolveSight.hlsl`: `EvolveSightVisible`, đọc `_EvolveBlind` và `_EvolveSightCenter` của `MonochromeVision`). Đèn rọi của chùm và đèn quặng gắn `LightByVision` nên cũng mờ theo thị lực.
+
+- **Độ sáng do người chơi chỉnh:** `Visuals/BrightnessSetting` (tự tạo khi chạy game): **F10** mở bảng "Độ sáng" có thanh kéo (0 đến 100%, mặc định 35%), phím **[** và **]** chỉnh nhanh từng nấc 5%, nhớ giữa các lần chơi (PlayerPrefs). Thêm một Volume hậu xử lý ưu tiên cao chỉ chỉnh độ phơi sáng (-0,5 đến +3 stop) và nâng vùng tối (LiftGammaGain), không đụng độ bão hòa của hệ thị lực. Số liệu ở `Visuals/BrightnessMath`, test `BrightnessMathTests`.
+- **Chùm sáng hang:** phần của chùm gần camera mờ đi (3 đến 14 m), nên đứng trong chùm không còn thấy tường sọc dọc phủ kín màn hình.
+
+## 33. Thảm thực vật không ăn được của Hang Khởi Sinh: trạng thái và danh sách kiểm tra
+
+- Cách quét tài sản bên ngoài bị bỏ vì tốn tài nguyên; thay bằng mô hình Blender nhẹ (`tools/blender/build_cavern_flora.py`, test `test_cavern_flora.py`, màu đỉnh sáng vừa để không đen trong hang tối): dương xỉ hang (2), sậy (2), đệm rêu (3), bụi lá (2), cụm nấm với mũ phát sáng riêng (2), rễ trồi (2), dây leo buông từ trần (2). Mỗi cái dưới 2.200 mặt.
+- **Evolve → Dress Cavern: Flora** (Build Slime Cavern cũng chạy nó; hoàn tác: Restore Cavern Flora; cần Reinstall Blender Props trước): đặt khoảng 650 cây theo **luật môi trường** `World/CavernFloraMath` (có test): sậy ở nước nông và mép ướt, rêu ở chỗ ẩm và bóng, dương xỉ ở đất ẩm cách nước 2 đến 22 m, bụi lá ở đất khô hơn cách nước 7 đến 26 m, cụm nấm ở bóng chân vách và mép hồ, rễ trồi ở chân vách, dây leo buông thành vòng quanh lỗ sáng ở trần. Không đặt trong nước sâu, trên chỗ slime sinh ra, hay đè lên thức ăn.
+- Cây nhận ánh sáng như các đồ Blender khác (shader `RockVertexColor`): sáng ở gần nguồn, tối dần khi xa; khi slime mù chỉ hiện quanh slime.
+- Chưa biên dịch hay thấy trong Unity. Chưa có va chạm cho các cây này.
+
+Checklist: (1) Console sạch, Test Runner xanh (`CavernFloraMathTests`); (2) Reinstall Blender Props, rồi Dress Cavern: Flora, Ctrl+S; (3) quanh hồ thấy các dải sậy, rêu, dương xỉ; bụi lá xa hơn; dây leo quanh lỗ sáng; (4) FPS không tụt quá 10%.
+
+- **Chi tiết hơn (đợt 2 của mục 33):** mô hình dựng kỹ hơn (lá thật dạng bầu dục thon cho dương xỉ, bụi, rễ, dây leo; sậy có lá dài cong và bông; rêu có cuống bào tử; nấm có vòng thân; dây leo có tua cuốn) và 6 loại **chi tiết mặt đất** mới: hoa chuông phát sáng 3 màu (ngọc, tím, hổ phách), thảm lá tam diệp, đống lá rụng, cành khô, cụm cuội, địa y. Mỗi loại 2 đến 3 kiểu; khoảng 1.300 vật; vẫn đặt theo luật môi trường `CavernFloraMath` (có test).
+
+- **LOD tắt (tạm):** `Visuals/LodSetting`: khi tắt LOD (mặc định lúc này), mọi mô hình giữ chi tiết đầy đủ ở mọi khoảng cách (`lodBias` 20, `maximumLODLevel` 0), texture ở độ phân giải đầy đủ, lọc dị hướng bật; texture nền hang giữ nét khắp hang (`basemapDistance` 1000 m). Bật lại LOD (nhẹ máy hơn) trong bảng **F10** (ô "Tắt LOD"); được nhớ giữa các lần chơi. Test `LodSettingTests`.
+
+## 34. Quét rung động là sóng âm, không phải quét ánh sáng: trạng thái và danh sách kiểm tra
+
+- Trước đây phím **C** ném một đèn lớn (cường độ 150) và mở rộng vòng nhìn thấy, nên mọi thứ trong bán kính sáng bừng, và đèn nhỏ quanh slime (cường độ 8) làm các vật thể Blender chói bất thường khi chưa có mắt.
+- Nay: **đèn quét tắt hẳn**; đèn quanh slime khi mù không bao giờ vượt 1,8 (`SonarWaveMath.MaxBlindLight`); lượng ánh sáng từ mỗi đèn phụ trong shader đá và cỏ bị chặn ở mức 3 để vật ở gần đèn không cháy sáng.
+- **Sóng âm** (`World/SonarWaveMath`, shader `Evolve/SonarShell`, `MonochromeVision.UpdateWave`): một **vỏ cầu mỏng** lan ra từ chỗ slime đứng lúc bấm C, không phát sáng gì, chỉ hiện thành **đường sáng xanh nhạt nơi vỏ cắt qua mặt đất và vật thể** (đọc độ sâu cảnh) cùng viền mờ. Chỉ những gì vòng sóng đang đi qua mới hiện (chùm sáng, hạt sáng, cỏ, đá Blender, nước; `EvolveWaveVisible` trong `EvolveSight.hlsl`), rồi tối lại. Sóng mờ dần sau khi tới bán kính tối đa. Hiệu ứng chạm vật (`VibrationSense` nháy màu theo loại) giữ nguyên.
+- Cần Depth Texture bật trong URP (hang đã bật). Chưa thấy trong Unity.
+
+Checklist: (1) Console sạch, Test Runner xanh (`SonarWaveMathTests`); (2) chưa có mắt: vật thể không còn sáng bất thường; (3) bấm C: một vòng sóng lan ra, các đường sáng quét qua mặt đất và vật thể, không có đèn lớn; (4) có mắt: không đổi.
+
+- **Sóng âm, chỉnh theo ý chủ dự án:** bỏ các hạt nháy tại vật thể khi sóng đi qua; bán kính quét giảm một nửa (`VibrationSense.ScanRadiusFactor` = 0,5); vỏ sóng (`Evolve/SonarShell`) dày hơn và có đường viền: mọi bề mặt trong dải khoảng 1,5 m quanh vỏ đều sáng, sáng hơn dọc các mép và nếp gấp của vật (nơi độ sâu nhảy), nên sóng vẽ ra **hình dạng** của mặt đất và vật thể khi lướt qua. Hạt sáng (`GlowParticle`) không còn hiện theo sóng. Đèn nhỏ quanh slime khi mù tối đa 1,0 (trước 1,8) và Bloom của hang nhẹ lại (cường độ 0,8, ngưỡng 1,0) để slime không bị chói.
+
+- **Quét khi có mắt, chậm hơn, thức ăn có hiệu ứng riêng:** quét (phím C) và sóng âm vẫn chạy khi đã có mắt. Sóng đi **chậm hơn 2,5 lần** (`VibrationSense.ExpandFactor`) và dư âm dài hơn (ít nhất 2,2 giây). **Thức ăn** (`Nutrient`) có hiệu ứng bề mặt riêng khi sóng chạm tới: phủ màu theo loại (`World/EdibleScan`: thực vật xanh bạc hà, nấm và quả hổ phách, quặng vàng, thịt đỏ), có dải sọc chuyển động và viền sáng, giữ lại sau khi sóng đã qua cho tới khi sóng tan (shader `RockVertexColor`: `_ScanTint`, `EvolveEdibleEcho`), nên sau một lần quét thấy rõ những gì ăn được trong tầm. Test `EdibleScanTests`.
+
+## 35. Vật lý cho đá và cây cối: trạng thái và danh sách kiểm tra
+
+- **Đá** (Hang Khởi Sinh): mọi tảng đá Blender, kể cả đá dưới cụm quặng, được đảm bảo có va chạm (`LakeProps.EnsureCollision`: mesh `_COL` đơn giản hoặc chính mesh đá): slime đi vòng, không xuyên.
+- **Cây cối** (`Editor/CavernFlora.AddPhysics`): **rễ trồi** rắn (chính mesh rễ làm va chạm, không tính lá nhỏ); **dương xỉ, sậy, bụi** mềm: một vùng chạm (trigger) `World/SoftPlant` làm **chậm slime khi đi xuyên qua** (hệ số `PlantDragMath`: nhẹ nhất 1, bụi dày nhất 0,55; slime vẫn đi được), không chặn đường; các loại còn lại (rêu, hoa, lá, cuội, cành, địa y) quá nhỏ nên không có va chạm. `SlimeController.NotePlantDrag` nhận yêu cầu chậm và lấy hệ số nhỏ nhất trong 0,15 giây sau lần chạm cuối.
+- Test `PlantDragMathTests`. Cần dựng lại hang (Build Slime Cavern) hoặc chạy Dress Cavern: Flora để có vật lý. Chưa thấy trong Unity.
+
+Checklist: (1) Console sạch; (2) đi vào đá: bị chặn, đi vòng được, không kẹt, không rung; (3) đi vào bụi, dương xỉ, sậy: chậm lại rõ ràng, ra khỏi thì chạy bình thường; (4) rễ trồi chặn đường, đi vòng được; (5) FPS không tụt rõ.
+
+- **Miệng lỗ trời rộng hơn:** bán kính lỗ trên mái hang tăng từ 6,5 m lên **10 m** (`CavernLayout.HoleRadius`, diện tích gấp khoảng 2,4 lần), nên chùm sáng và vũng sáng trên hồ lớn hơn; đèn mặt trời tăng từ 1,3 lên 1,7; chùm sáng, tia phụ, bụi trong chùm và vòng dây leo quanh miệng đều theo bán kính mới. Cần dựng lại hang (Build Slime Cavern).
+
+## 36. Bước 1 "Chuyển Sinh Trong Hang": Nuốt, Bụng, Giải Mã, Biến Hình: trạng thái và danh sách kiểm tra
+
+Spec `docs/superpowers/specs/2026-11-19-reincarnation-survival-design.md`, plan `docs/superpowers/plans/2026-11-19-swallow-learn-core.md`.
+
+- **Nuốt Chửng** (`Swallow/Swallower`): đâm vào con mồi thì nuốt sống vào bụng (con mồi phải ≤ 80% khối của slime, bụng còn chỗ; nếu không thì ăn tại chỗ như cũ). Thú săn mồi chết để lại xác có bảng di truyền (`CarcassSample`): **F** để nuốt; xác to hơn thì **giữ F** để hòa tan. Không còn vật phẩm cơ quan rơi ra.
+- **Túi Không Đáy** (`Stomach`, phím **B**): 6 chỗ; mỗi món Tiêu hóa / Phân tích / Giữ, hoặc Nhả ra. Phân tích 20 giây trong hang trú, chậm gấp 4 ở ngoài; tiêu hóa 8 giây, cho no và thêm 30% khối của món.
+- **Giải Mã** (`AnalysisRules`, `AnalysisBook`): bảng di truyền lấy từ drop table của loài. Mỗi mẫu một lần may (Thường 25%, Hiếm 8%, Quý 2%, Huyền thoại 10% chỉ ở con đầu đàn) và một bước tích lũy (chắc chắn sau 7 / 15 / 25 / 3 mẫu). Chất lượng mẫu ×1 tươi, ×0,5 xác cũ, ×0,2 xác thối. Đã học thì 3 mẫu lên ★2, 9 mẫu lên ★3. Cấp Giải Mã (10 / 30 mẫu) mở tên rồi % cơ hội. Sổ giữ nguyên khi chết.
+- **Biến Hình** (phím **G**): nặn cơ quan đã học bằng **khối** (2 / 4 / 7 / 12 theo độ hiếm), **chỉ trong hang trú**; tháo ra hoàn nửa khối. Cấp cơ quan = số sao. Bỏ hẳn EXP nuôi cơ quan và bản mẫu.
+- **Khối lượng** (`SlimeBody`): máu tối đa = khối × 10; kích thước theo khối (khối 10 = cỡ cũ). Chưa mất khối khi bị đánh (để sau).
+- **Tiếng Vọng** (`Echo`): dòng chữ giữa trên màn hình khi phân tích, học, lên sao.
+- Chết: bụng rỗng, cơ quan và sổ Giải Mã còn nguyên. Hết mạng và mất xác: cơ quan đang gắn mất.
+- Cảnh, prefab cũ: HUD tự thêm `SlimeBody` và `Swallower` cho slime khi chạy; dựng lại scene cũng có.
+- Test: phần luật chạy được ngoài Unity bằng `tools/cstest/run.sh` (.NET 8, 46 test xanh). Test cần Unity: `SculptTests`. **Chưa mở trong Unity: chưa biết có lỗi biên dịch không.**
+- Lưu ý: `ShelterZone.MaxBodyScale` 1,3 nghĩa là slime khối trên 17,5 không vào hang trú cũ được (sẽ làm lại hang trú ở bước 3).
+
+Checklist: (a) Console sạch; (b) đâm vào con mồi: nó vào bụng, B thấy món đang Phân tích; (c) đứng trong tổ: thanh chạy nhanh hơn rõ; (d) học được: có dòng Tiếng Vọng; (e) G ngoài tổ: nút khóa; trong tổ: Nặn trừ khối, cơ quan hiện lên người; (f) giết thú săn mồi, F vào xác (giữ F nếu to): vào bụng; (g) chết: bụng rỗng, cơ quan còn; (h) bụng đầy: có thông báo. Menu God (F1) có "+10 khối" và "Học hết cơ quan" để thử nhanh.
+
+- **Sinh vật và tổ tạm trong Hang Khởi Sinh** (`Editor/CavernLife`, menu `Evolve → Dress Cavern: Creatures + Shelter`, cũng chạy trong Build Slime Cavern): 2 ổ con mồi (7 con) trên bờ khô, 1 kẻ săn mồi phía đông bắc, một **tổ tạm** (vòng rêu sáng xanh có `ShelterZone`) phía tây nam gần chỗ xuất hiện. Spawner giờ đặt sinh vật **trên mặt đất** (`GroundHeight`), không còn ở độ cao cố định. Test `ShorePointIsDryAndTheRightDistanceFromTheWater`.
+
+## 37. Kỹ năng thay cho cơ quan: trạng thái và danh sách kiểm tra
+
+Spec mục 6.1, plan `docs/superpowers/plans/2026-11-19-skills-not-organs.md`. Sửa theo ý kiến sau khi chơi thử bước 1: slime **trơn**, không gắn cơ quan; gene học được là kỹ năng.
+
+- **Bị động** (`SkillRules.UseOf` = Passive: mắt, màng chịu nhiệt): luôn bật, **tối đa 3**, chỉ nặn hoặc tháo ở hang trú (tốn khối như cũ). **Không** bị động nào hiện trên người, kể cả mắt (`OrganHost.ShowsOnBody = false`).
+- **Chiêu chủ động** (gene có chiêu riêng, hoặc gene chân có tốc độ > 1): gắn phím **1–5 ở đâu cũng được**, không tốn khối. Học xong là dùng được ở ★1; ★3 là bản nâng cấp. Bảng **K** liệt kê chiêu đã học.
+  - **Phóng Gai** (gene Gai độc), **Lao Tới** (Chân giả cơ bắp, chiêu riêng thắng chiêu chạy), **Chạy Nước Rút** (Chân giả, Chân chạy): tốc độ ×(hệ số của chân) trong **4 / 5 / 6 giây** theo ★1 / ★2 / ★3, hồi chiêu 10 giây (×0,75 ở ★3), tốn 15 năng lượng. Hai lần chạy chồng nhau: lấy hệ số lớn hơn, kéo dài đến lúc muộn hơn, không nhân dồn (`SprintTimer`).
+  - **Bộ phận chỉ hiện lúc dùng** (`SkillVisuals`): mọc ra trong 0,15 giây, giữ suốt hiệu lực (gai 1 giây, chạy nước rút 4–6 giây), rồi thu vào trong 0,35 giây. Phản đòn của gai chỉ tính lúc gai đang hiện.
+- Hệ cơ quan: `OrganHost` chỉ giữ bị động; tốc độ, nhìn, chịu nhiệt tính từ bị động; cơ quan "chiêu" gắn tay (menu God) không có tác dụng thường trực.
+- Test: `SkillRulesTests` (chạy bằng `tools/cstest/run.sh`, 68 test xanh), `SculptTests` và `SkillBarMenuTests` (cần Unity). **Chưa mở trong Unity.**
+
+Checklist: (a) Console sạch; (b) bấm **K**: có chiêu đã học (sau khi Giải Mã xong gene Gai độc hoặc Chân); (c) gắn phím 1–5, bấm: gai trồi trên lưng, bắn, rồi tan vào thân, hồi chiêu hiện ở ô phím; (d) chân: bấm thì chân mọc ra, chạy nhanh khoảng 4 giây rồi thu vào; (e) **G**: chỉ thấy ô Mắt và Da, đủ 3 bị động thì báo; ngoài tổ nút Nặn khóa; (f) F1 có "Học chiêu" để thử nhanh; (g) chết rồi hồi sinh: chiêu đã học vẫn còn.
+
+## 38. Cảnh Ra Đời bản 3 "đường truyền sụp đổ" (bước 2): trạng thái và danh sách kiểm tra
+
+Spec `docs/superpowers/specs/2026-11-20-birth-scene-system-collapse-design.md`, plan `docs/superpowers/plans/2026-11-20-birth-scene-system-collapse.md`.
+
+- **Sân khấu riêng** (`BirthStage`): camera + Canvas UGUI đặt xa (y=20000), Volume hậu kỳ riêng (Bloom, tách màu, méo kính, nhiễu hạt, tối viền), vẽ vào RenderTexture rồi IMGUI phủ toàn màn (che cả HUD). Không thấy slime, hang hay HUD. Tạo sân khấu lỗi thì bỏ qua cảnh và trao kết quả ngay.
+- **"Độ bất ổn" 0..1** (`Instability`) điều khiển nhiễu, rung, khung vỡ và chữ vỡ. Bắt đầu cao (mất kết nối), giảm dần, về 0 khi "Kết nối ổn định".
+- **Khung vỡ** (`BirthWindow`): viền chia đoạn giật, rách, nhấp nháy, góc ngoặc, nghiêng; chữ gõ từng ký tự, vỡ thành ký hiệu khi bất ổn.
+- **Rút tự động:** số mệnh (`FateRoll`, 65/25/10) quyết định trước, cảnh chỉ trình diễn: 7 lá Lõi xáo, lá số mệnh bay lên rồi tự lật (nổ hạt, loé, rung theo độ hiếm), 3 lá Khuyết Điểm lật 1–2 lá.
+- **Sáu Ân Điển, mỗi cái một cảnh** (`BirthGiftScene`): Túi, Nuốt, Giải Mã, Biến Hình, Sóng Dò, Phân Thân (đánh dấu "sắp có").
+- **Đập tên** (`SlamPlan`, `BirthSlam`): Lõi nghiêng trái, Khuyết Điểm nghiêng phải, các Ân Điển xen kẽ; rơi vào với rung màn hình (Cực hiếm rung gấp đôi).
+- **Âm thanh:** 22 hiệu ứng ElevenLabs thật (`Resources/Sfx/Birth/`, bảng ở `BirthSfx`, tạo lại bằng `tools/voice/generate_birth_sfx.sh`): gõ chữ, nhiễu, báo động, nhạc nền ù, lật bài, lộ Lõi (thường/hiếm/cực hiếm), lộ Khuyết Điểm, đập tên, chuông ổn định, mỗi Ân Điển một tiếng. Thiếu file thì im. Giọng Chi tự nhiên, 39 câu (`docs/art/echo-voice-lines.md`).
+- Space/Enter sang bước kế (sau 1,5 giây), Tab nhảy tới lúc rút bài. Chạy một lần mỗi vòng; chết rồi hồi sinh không chạy lại. Co-op: mỗi người tự rút, client báo `evolve.tr.pick`, máy chủ kiểm hợp lệ.
+- Test ngoài Unity: 131 test xanh (`tools/cstest/run.sh`). **Toàn bộ phần Unity của bản 3 (BirthStage, Glitch, Frames, Fx, Cards, Slam, Gifts, Audio, Scene) chưa từng biên dịch hay xem trong Unity.** Chưa làm: ô video Veo, Dị Tượng, hiệu ứng thật cho Phân Thân và các Lõi ghi "chưa có hiệu ứng".
+
+Checklist: (a) `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: nền tối, không thấy slime/hang/HUD, nhiễu và rung lúc đầu; (d) chữ gõ có tiếng, nhạc nền ù; (e) mỗi Ân Điển một cảnh và một tiếng; (f) bài tự xáo và lật, Lõi có hiệu ứng theo độ hiếm; (g) tên đập vào nghiêng trái/phải kèm rung; (h) "Kết nối ổn định" rồi điều khiển được slime; (i) Space/Tab bỏ qua được; (j) chết rồi R: không chạy lại.
+
+## 39. Lõi và Khuyết Điểm đợt 2: trạng thái và danh sách kiểm tra
+
+Kế hoạch `docs/superpowers/plans/2026-11-20-traits-wave2.md`. 12 hang, kỳ ngộ, quái và kỹ năng (đã duyệt, giao cho bên làm hang): `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.
+
+- **Đã có hiệu ứng (mới):** Lõi Ngụy Sắc, Màng Thẩm Thấu, Quang Hợp, Ăn Mòn; Khuyết Điểm Dễ Bị Chú Ý, Vệt Mùi, Ngại Đông, Mau Khô, Bám Bùn. Tổng cộng 7/12 Lõi, 9/12 Khuyết Điểm.
+- Luật thuần `Traits/Pure/EnvTraitRules.cs` (+ `ScentTrail`), 137 test xanh ngoài Unity. Phần Unity (`PlayerTraits`, `TraitSense`, `LightShafts`, `Predator`, `Swallower`, `SurvivalState`) **chưa biên dịch trong Unity**.
+- "Rêu ẩm" tạm hiểu là **hang trú**; "bùn" chưa có nên Bám Bùn chỉ tính nước nông. Tia sáng: tia nắng qua lỗ trần Hang Khởi Sinh (rơi xuống hồ: nổi trên mặt nước trong tia sáng là được); hang khác khai báo bằng `LightShafts.Register`.
+- Chờ nền: Thích Nghi, Phản Chấn, Cộng Sinh, Bám Dính, Thần Tốc, Mờ Trong Tối, Lạ Vùng, Cơ Quan Mau Mòn (xem kế hoạch, mục B).
+
+Checklist: (a) chạy `Evolve → Create Traits` lại (để lá bài bỏ chữ "chưa có hiệu ứng"); (b) Console sạch; (c) dùng menu thần (GodMenu) hoặc chơi nhiều lần để thử từng thứ: Ngụy Sắc đứng yên 2 giây thì kẻ săn mồi đi sát mới thấy; Vệt Mùi bị lần theo dù đã chạy xa; Dễ Bị Chú Ý kẻ săn mồi lảng vảng lại gần; Màng Thẩm Thấu đứng yên ở nước nông thấy no tăng tới 60%; Quang Hợp nổi trong tia nắng thấy năng lượng tăng nhanh; Ăn Mòn giữ F hòa tan nhanh hơn; Mau Khô ở cạn lâu thì chậm, chạm nước hết; Bám Bùn lên bờ còn chậm 2 giây.
+
+## 40. Hang, loài, kỹ năng, hệ sinh thái chương 1: đã duyệt, đã giao việc
+
+- Thiết kế (nguồn duy nhất): `docs/superpowers/specs/2026-11-20-caves-creatures-ecosystem-design.md`: 12 hang 3 tầng, mỗi hang một kỳ ngộ; 44 loài (mỗi hang 2 con mồi, 1 kẻ săn, 1 Chúa Hang), mỗi loài một kỹ năng đơn giản có họ (cho dung hợp sau); chuỗi thức ăn từng hang và liên kết giữa các hang. Tạm chưa làm nội dung dưới nước.
+- Giao việc bên làm hang (Antigravity): `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.
+- Giao việc phần lõi game cho bất kỳ phiên nào làm tiếp: `docs/superpowers/handoff/2026-11-20-core-systems-brief.md` (A kỹ năng, B hệ sinh thái, C phần thưởng kỳ ngộ, D Lõi/Khuyết Điểm còn lại, E chờ kiểm trong Unity).
+- Chưa có code cho phần này.

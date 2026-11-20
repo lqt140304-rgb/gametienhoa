@@ -27,10 +27,12 @@ namespace Evolve.EditorTools
             "LumaShroom_0", "LumaShroom_1", "LumaShroom_2", "CrystalCluster_0", "CrystalCluster_1", "CrystalCluster_2",
             "BulbPlant_0", "BulbPlant_1", "RootStub_0", "RootStub_1",
             "Forage_WaterLily", "Forage_Cattail", "Forage_BitterFern", "Forage_FatMushroom", "Forage_SweetRoot", "Forage_IceBloom",
-            "Forage_LimeCrystal", "Forage_IronNodule", "Forage_SaltCrust", "Forage_Quartz"
+            "Forage_LimeCrystal", "Forage_IronNodule", "Forage_SaltCrust", "Forage_Quartz",
+            "Forage_MossClump", "Forage_EmberBerry", "Forage_SporePod",
+            "Flora_Fern_0", "Flora_Fern_1", "Flora_Fern_2", "Flora_Reed_0", "Flora_Reed_1", "Flora_Reed_2", "Flora_Moss_0", "Flora_Moss_1", "Flora_Moss_2", "Flora_Bush_0", "Flora_Bush_1", "Flora_Bush_2", "Flora_Mushrooms_0", "Flora_Mushrooms_1", "Flora_Mushrooms_2", "Flora_RootArc_0", "Flora_RootArc_1", "Flora_Vine_0", "Flora_Vine_1", "Flora_Flower_0", "Flora_Flower_1", "Flora_Flower_2", "Flora_Clover_0", "Flora_Clover_1", "Flora_Leaves_0", "Flora_Leaves_1", "Flora_Leaves_2", "Flora_Twigs_0", "Flora_Twigs_1", "Flora_Pebbles_0", "Flora_Pebbles_1", "Flora_Pebbles_2", "Flora_Lichen_0", "Flora_Lichen_1"
         };
 
-        [MenuItem("Evolve/Install Blender Rocks")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Install Blender Rocks")]
         public static void InstallMenu()
         {
             int n = EnsureRocks() + EnsureLandmarks();
@@ -56,7 +58,7 @@ namespace Evolve.EditorTools
             return true;
         }
 
-        [MenuItem("Evolve/Reinstall Blender Props (overwrite)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Reinstall Blender Props (overwrite)")]
         public static void ReinstallMenu()
         {
             var all = new System.Collections.Generic.List<string>(LandmarkNames);

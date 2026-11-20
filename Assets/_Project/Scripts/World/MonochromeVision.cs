@@ -29,8 +29,6 @@ namespace Evolve.World
         [SerializeField] float blindLightIntensity = 8f;
 
         [Header("Scan (vibration wave)")]
-        [Tooltip("Brightness of the wide light thrown by the scan")]
-        [SerializeField] float scanLightIntensity = 150f;
         [Tooltip("How high above the character the scan light hangs")]
         [SerializeField] float scanLightHeight = 8f;
 
@@ -41,11 +39,16 @@ namespace Evolve.World
         // Read by the Evolve/LakeWater shader: without eyes the water is only visible near the character (and in a scan).
         static readonly int BlindId = Shader.PropertyToID("_EvolveBlind");
         static readonly int SightCenterId = Shader.PropertyToID("_EvolveSightCenter");
+        static readonly int WaveId = Shader.PropertyToID("_EvolveWave");
+        static readonly int WaveFadeId = Shader.PropertyToID("_EvolveWaveFade");
 
         static readonly Color LightColor = new Color(0.85f, 0.95f, 1f);
 
         ColorAdjustments color;
         Light sun, sightLight, scanLight;
+        Transform sonarShell;          // the sound wave: a thin expanding shell that lights nothing, it only shows where it cuts the ground and the things on it
+        Material sonarMat;
+        Vector3 waveOrigin;
         Camera cam;
         float sunBase, origReflection;
         Color origBackground, origAmbient;
@@ -74,6 +77,7 @@ namespace Evolve.World
             sightLight = MakeLight("Sight Light", carrier, new Vector3(0f, 1.6f, 0f));
             scanLight = MakeLight("Scan Light", carrier, new Vector3(0f, scanLightHeight, 0f));
             scanLight.enabled = false;
+            CreateSonar();
 
             Apply();
             if (host != null) host.Changed += OnOrgansChanged;
@@ -91,8 +95,27 @@ namespace Evolve.World
             return l;
         }
 
+        void CreateSonar()
+        {
+            var shader = Shader.Find("Evolve/SonarShell");
+            if (shader == null) return;
+            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.name = "Sonar Wave";
+            Destroy(go.GetComponent<Collider>());
+            sonarMat = new Material(shader) { name = "SonarShell (runtime)" };
+            var r = go.GetComponent<Renderer>();
+            r.sharedMaterial = sonarMat;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            go.SetActive(false);
+            sonarShell = go.transform;
+        }
+
         void OnDestroy()
         {
+            if (sonarShell != null) Destroy(sonarShell.gameObject);
+            Shader.SetGlobalVector(WaveId, Vector4.zero);
+            Shader.SetGlobalFloat(WaveFadeId, 0f);
             if (host != null) host.Changed -= OnOrgansChanged;
             // Put the scene lighting back the way it was.
             if (sun != null) sun.intensity = sunBase;
@@ -115,7 +138,9 @@ namespace Evolve.World
             UpdateScan();
             Transform carrier = host != null ? host.transform : transform;
             Vector3 p = carrier.position;
-            Shader.SetGlobalVector(SightCenterId, new Vector4(p.x, p.y, p.z, Mathf.Max(blindSightRadius, RevealDistance())));
+            // the blind slime feels only its small surroundings; the wave is a separate thing (a ring spreading out, not a lit disc)
+            Shader.SetGlobalVector(SightCenterId, new Vector4(p.x, p.y, p.z, blindSightRadius));
+            UpdateWave();
         }
 
         /// <summary>0 = blind, 1 = full colour vision; above 1 (levelled eyes) only extends view range.</summary>
@@ -133,6 +158,7 @@ namespace Evolve.World
         /// </summary>
         public void Reveal(float radius, float expand, float hold, float fade)
         {
+            waveOrigin = (host != null ? host.transform : transform).position;
             revealStart = Time.time;
             revealRadius = radius;
             revealExpand = Mathf.Max(0.01f, expand);
@@ -156,19 +182,27 @@ namespace Evolve.World
 
         void UpdateScan()
         {
-            if (scanLight == null) return;
-            float c = Mathf.Clamp01(sight);
-            float r = RevealDistance();
-            if (r <= 0.01f || c >= 0.999f)
-            {
-                if (scanLight.enabled) scanLight.enabled = false;
-                return;
-            }
-            float k = revealRadius > 0f ? r / revealRadius : 0f;
-            float lit = r * 1.15f; // the light fades out toward its range, so reach a bit further
-            scanLight.enabled = true;
-            scanLight.range = Mathf.Sqrt(lit * lit + scanLightHeight * scanLightHeight);
-            scanLight.intensity = scanLightIntensity * Mathf.Min(1f, k * 3f) * (1f - c);
+            // no light is thrown any more: the scan is a sound wave (UpdateWave), the old wide scan light stays off
+            if (scanLight != null && scanLight.enabled) scanLight.enabled = false;
+        }
+
+        /// <summary>The sound wave: its front radius and fade go to the shaders (things light up only while the ring passes) and to the shell that draws it.</summary>
+        void UpdateWave()
+        {
+            bool on = revealStart >= 0f;          // with eyes too: the scan still works and still shows the wave
+            float t = Time.time - revealStart;
+            float r = on ? SonarWaveMath.Radius(t, revealExpand, revealRadius) : 0f;
+            float fade = on ? SonarWaveMath.Fade(t, revealExpand, revealHold, revealFade) : 0f;
+            if (on && fade <= 0f) { revealStart = -1f; on = false; r = 0f; }
+            Shader.SetGlobalVector(WaveId, new Vector4(waveOrigin.x, waveOrigin.y, waveOrigin.z, r));
+            Shader.SetGlobalFloat(WaveFadeId, fade);
+            if (sonarShell == null) return;
+            bool show = on && r > 0.05f;
+            if (sonarShell.gameObject.activeSelf != show) sonarShell.gameObject.SetActive(show);
+            if (!show) return;
+            sonarShell.position = waveOrigin;
+            sonarShell.localScale = Vector3.one * (r * 2f);
+            if (sonarMat != null) sonarMat.SetFloat("_Fade", fade);
         }
 
         void Apply()
@@ -210,7 +244,7 @@ namespace Evolve.World
             if (sightLight != null)
             {
                 sightLight.range = blindSightRadius;
-                sightLight.intensity = blindLightIntensity * (1f - c);
+                sightLight.intensity = Mathf.Min(blindLightIntensity, SonarWaveMath.MaxBlindLight) * (1f - c);   // never blown out: the scene's own serialized value may be much higher
                 sightLight.enabled = sightLight.intensity > 0.01f;
             }
         }

@@ -2,15 +2,16 @@ using System;
 using System.Collections.Generic;
 using Evolve.Organs;
 using Evolve.Survival;
+using Evolve.Swallow;
 using UnityEngine;
 
 namespace Evolve.Abilities
 {
     /// <summary>
-    /// The 5 skill slots (keys 1-5) for skills granted by organs. A skill unlocks when its organ reaches
-    /// AbilityUnlockLevel (Lv2) and is upgraded at Lv3. It goes into the first free slot; the player can move
-    /// it in the body menu (G). Losing the organ loses the skill. The starting Dị Năng (key Q) is separate
-    /// (AbilityCaster) and does not use these slots. Cooldown belongs to the organ, so swapping slots does not reset it.
+    /// The 5 skill slots (keys 1-5) for the active moves Giải Mã has taught (a gene whose SkillRules.UseOf is Active).
+    /// A move is usable from ★1 and is upgraded at ★3. A newly learned move goes into the first free slot; the player can
+    /// move it in the skill menu (K) anywhere, at no cost. The starting Dị Năng (key Q) is separate (AbilityCaster).
+    /// Cooldown belongs to the gene, so swapping slots does not reset it. The body part of a move appears only while it is used (SkillVisuals).
     /// </summary>
     [RequireComponent(typeof(SurvivalStats), typeof(OrganHost))]
     public class SkillBar : MonoBehaviour
@@ -20,8 +21,11 @@ namespace Evolve.Abilities
         readonly OrganSO[] slots = new OrganSO[SlotCount];
         readonly Dictionary<OrganSO, float> readyAt = new Dictionary<OrganSO, float>();
         readonly HashSet<OrganSO> unequipped = new HashSet<OrganSO>();
+        readonly Dictionary<OrganSO, SprintAbility> sprints = new Dictionary<OrganSO, SprintAbility>();
+        readonly List<OrganSO> unlockedList = new List<OrganSO>();
         SurvivalStats stats;
         OrganHost host;
+        SkillVisuals visuals;
 
         /// <summary>Why the last skill key press did nothing (empty after a success). The HUD shows it for a moment.</summary>
         public string FailureReason { get; private set; } = "";
@@ -42,11 +46,49 @@ namespace Evolve.Abilities
             host = GetComponent<OrganHost>();
         }
 
+        void OnDestroy() { foreach (var s in sprints.Values) if (s != null) Destroy(s); sprints.Clear(); }
+
         public OrganSO GetSlot(int slot) => slot >= 0 && slot < SlotCount ? slots[slot] : null;
 
-        /// <summary>True when the organ is worn and high enough level to use its skill.</summary>
+        AnalysisBook Book => host != null ? host.Book : null;
+
+        /// <summary>True when Giải Mã has learned the gene and it is an active move.</summary>
         public bool IsUnlocked(OrganSO organ) =>
-            organ != null && organ.GrantedAbility != null && host.Has(organ) && host.GetLevel(organ) >= organ.AbilityUnlockLevel;
+            organ != null && organ.Use == GeneUse.Active && Book != null && Book.Knows(organ);
+
+        /// <summary>The move behind a gene: its own ability, or Chạy Nước Rút for a leg gene with extra speed.</summary>
+        public AbilitySO AbilityFor(OrganSO organ)
+        {
+            if (organ == null) return null;
+            if (organ.GrantedAbility != null) return organ.GrantedAbility;
+            if (organ.Use != GeneUse.Active) return null;
+            if (!sprints.TryGetValue(organ, out var sprint) || sprint == null)
+            {
+                sprint = ScriptableObject.CreateInstance<SprintAbility>();
+                sprint.Setup(organ);
+                sprints[organ] = sprint;
+            }
+            return sprint;
+        }
+
+        /// <summary>Stars of the gene (1..3), or 0 when it is not learned.</summary>
+        public int StarsOf(OrganSO organ) => Book != null ? Book.StarsOf(organ) : 0;
+
+        /// <summary>The level the move runs at: its stars for Sprint, the old Lv2 / Lv3 scale for the others.</summary>
+        public int LevelFor(OrganSO organ)
+        {
+            int stars = Mathf.Max(1, StarsOf(organ));
+            return AbilityFor(organ) is SprintAbility ? stars : SkillRules.AbilityLevel(stars);
+        }
+
+        /// <summary>Every learned active move (what the skill menu lists).</summary>
+        public List<OrganSO> Unlocked()
+        {
+            unlockedList.Clear();
+            var book = Book;
+            if (book != null) foreach (var o in book.Known) if (o.Use == GeneUse.Active) unlockedList.Add(o);
+            return unlockedList;
+        }
 
         /// <summary>Slot the organ's skill is in, or -1.</summary>
         public int SlotOf(OrganSO organ)
@@ -87,7 +129,7 @@ namespace Evolve.Abilities
         {
             var organ = GetSlot(slot);
             if (organ == null) return 1f;
-            float cd = organ.GrantedAbility.CooldownFor(host.GetLevel(organ));
+            float cd = AbilityFor(organ).CooldownFor(LevelFor(organ));
             return cd <= 0f ? 1f : 1f - Mathf.Clamp01(CooldownRemaining(slot) / cd);
         }
 
@@ -107,14 +149,14 @@ namespace Evolve.Abilities
             Use(pressed);
         }
 
-        /// <summary>Drop skills whose organ is gone and put newly unlocked ones in the first free slot.</summary>
+        /// <summary>Drop moves that are no longer learned (a new reincarnation) and put newly learned ones in the first free slot.</summary>
         void Sync()
         {
             unequipped.RemoveWhere(o => !IsUnlocked(o));
             for (int i = 0; i < SlotCount; i++)
                 if (slots[i] != null && !IsUnlocked(slots[i])) slots[i] = null;
 
-            foreach (var organ in host.OrganList)
+            foreach (var organ in Unlocked())
             {
                 if (!IsUnlocked(organ) || SlotOf(organ) >= 0 || unequipped.Contains(organ)) continue;
                 int free = Array.IndexOf(slots, null);
@@ -127,9 +169,9 @@ namespace Evolve.Abilities
         void Use(int slot)
         {
             var organ = slots[slot];
-            if (organ == null) { Fail($"ô {slot + 1} trống (cần cơ quan bậc B lên Lv2)"); return; }
-            var ability = organ.GrantedAbility;
-            int level = host.GetLevel(organ);
+            if (organ == null) { Fail($"ô {slot + 1} trống (nuốt sinh vật có kỹ năng, để Giải Mã học)"); return; }
+            var ability = AbilityFor(organ);
+            int level = LevelFor(organ);
 
             if (readyAt.TryGetValue(organ, out float t) && Time.time < t)
             {
@@ -144,7 +186,7 @@ namespace Evolve.Abilities
             if (pending) { Fail("đang tụ lực"); return; }
 
             // The body winds up first; the skill leaves at the moment the animation releases.
-            var motion = ability is BurstDashAbility || ability is ChargeAbility
+            var motion = ability is BurstDashAbility || ability is ChargeAbility || ability is SprintAbility
                 ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release;
             Evolve.Visuals.SlimeGelAnimator.Play(gameObject, motion);
             StartCoroutine(FireAfter(Evolve.Visuals.SlimeGelAnimator.WindUp(motion), organ, ability, level));
@@ -163,6 +205,10 @@ namespace Evolve.Abilities
             stats.State.TrySpendEnergy(ability.EnergyCost);
             readyAt[organ] = Time.time + ability.CooldownFor(level);
             FailureReason = "";
+            // The body part (spikes, legs) grows out for the move and melts back in while it cools down.
+            if (visuals == null) visuals = GetComponent<SkillVisuals>();
+            if (visuals == null) visuals = gameObject.AddComponent<SkillVisuals>();
+            visuals.Play(organ, SkillVisuals.HoldFor(ability, Mathf.Max(1, StarsOf(organ))));
         }
     }
 }

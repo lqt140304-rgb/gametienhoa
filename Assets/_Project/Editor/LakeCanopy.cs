@@ -21,7 +21,7 @@ namespace Evolve.EditorTools
         const float Chunk = 64f;
         const float RoofHeight = 25f;
 
-        [MenuItem("Evolve/Dress Lake: Root Canopy")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Root Canopy")]
         public static void Dress()
         {
             PrototypeSceneBuilder.EnsureFolder(Root + "/Materials");

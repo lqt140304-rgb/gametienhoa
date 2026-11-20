@@ -35,7 +35,7 @@ namespace Evolve.EditorTools
         /// <summary>Shelter entrance/interior width: real slime base diameter × max scale + 5 cm (0.6 × 1.3 + 0.05 = 0.83 m).</summary>
         static readonly float ShelterGap = P.SlimeRadius * P.SlimeScale * 2f * ShelterMaxScale + 0.05f;
 
-        [MenuItem("Evolve/Build Underroot Lake")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Build Underroot Lake")]
         public static void Build()
         {
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null &&

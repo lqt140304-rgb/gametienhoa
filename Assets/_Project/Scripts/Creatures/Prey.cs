@@ -8,7 +8,7 @@ namespace Evolve.Creatures
 {
     /// <summary>
     /// Small creature that wanders, flees from nearby players and tires after a
-    /// sprint. Touch it to catch it: gives food and drops an organ the catcher lacks.
+    /// sprint. Touch it to catch it: a slime swallows it alive (Nuốt Chửng) to digest or analyse it.
     /// Needs a kinematic Rigidbody and a non-trigger collider.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
@@ -29,10 +29,10 @@ namespace Evolve.Creatures
         [SerializeField] float nutrition = 15f;
         [Tooltip("Spikes and other attacks can kill it: dying this way gives the same reward as catching it")]
         [SerializeField] float maxHealth = 12f;
-        [Tooltip("What this creature drops when caught")]
+        [Tooltip("Its genome: the organs Giải Mã can learn from it (read from this drop table)")]
         [SerializeField] DropTableSO drops;
-        [Tooltip("Legacy list (used only if Drops is empty): uniform random, always drops")]
-        [SerializeField] OrganSO[] dropTable;
+        [Tooltip("Body mass: a slime swallows it whole if this is at most 80% of its own mass")]
+        [SerializeField] float bodyMass = 3f;
 
         /// <summary>Area it stays inside (set by the spawner).</summary>
         public Vector3 HomeCenter { get; set; }
@@ -212,26 +212,26 @@ namespace Evolve.Creatures
         {
             caught = true;
 
-            NetWorld.Feed(stats, nutrition, FoodProfiles.For(FoodKind.PreyMeat));
-            Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Gulp);
-            var host = stats.GetComponent<OrganHost>();
-            var drop = PickDrop(host);
-            if (drop != null) OrganPickup.Spawn(drop, new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.25f, transform.position.z));
+            // Nuốt Chửng: a local slime swallows it alive into Túi Không Đáy (fed when it is digested);
+            // otherwise (remote player, stomach full, too big) it is eaten on the spot as before.
+            var swallower = stats.GetComponent<Evolve.Swallow.Swallower>();
+            bool swallowed = false;
+            if (Evolve.Swallow.SwallowRules.ShouldUseStomach(stats.IsRemote, swallower != null))
+            {
+                swallowed = swallower.TrySwallowAlive(Label, bodyMass, nutrition, FoodKind.PreyMeat, Evolve.Swallow.Genome.From(drops, false));
+                if (!swallowed) Evolve.Swallow.Echo.Say(swallower.Stomach.IsFull ? "«Túi Không Đáy đã đầy.»" : "«Con mồi quá lớn để nuốt nguyên.»");
+            }
+            if (!swallowed)
+            {
+                NetWorld.Feed(stats, nutrition, FoodProfiles.For(FoodKind.PreyMeat));
+                Evolve.Visuals.SlimeGelAnimator.Play(stats.gameObject, Evolve.Visuals.GelMotion.Gulp);
+            }
 
             Caught?.Invoke(this);
             if (TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec)) ec.NotifyKilled();
             Destroy(gameObject);
         }
 
-        /// <summary>Roll the drop table, skipping organs the catcher already owns.</summary>
-        OrganSO PickDrop(OrganHost host)
-        {
-            if (drops != null) return drops.Roll(o => host != null && host.Has(o), host != null ? Evolve.Traits.LuckRules.ForCatcher(drops, host.gameObject) : 1f);
-            if (dropTable == null) return null;
-            var options = new List<OrganSO>();
-            foreach (var o in dropTable)
-                if (o != null && (host == null || !host.Has(o))) options.Add(o);
-            return options.Count == 0 ? null : options[UnityEngine.Random.Range(0, options.Count)];
-        }
+        string Label => name.Replace("(Clone)", "").Trim();
     }
 }

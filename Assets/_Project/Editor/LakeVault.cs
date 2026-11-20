@@ -38,7 +38,7 @@ namespace Evolve.EditorTools
         const float HoleRadius = 8f;
         const float SlitHalfLength = 7f;
 
-        [MenuItem("Evolve/Dress Lake: Root Vault")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Root Vault")]
         public static void Dress()
         {
             var canopy = GameObject.Find(CanopyName);
@@ -82,7 +82,7 @@ namespace Evolve.EditorTools
             Debug.Log($"Vòm rễ: {chunks} ô vòm, {ribs.Length} sườn rễ ({pieces} đoạn), {slots.Length} khe sáng, {hanging} rễ buông thay cho các cột trụ tròn cũ, {props} vật treo theo khu (rễ dài, màn rễ, túi sáng, nhũ đá), {rim} rễ rìa Blender thay rễ thẳng cũ. Chạy lại Dress Lake: Dappled Sun để mái mới đổ bóng, rồi Ctrl+S.");
         }
 
-        [MenuItem("Evolve/Restore Lake Canopy (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Canopy (undo)")]
         public static void Restore()
         {
             var canopy = GameObject.Find(CanopyName);

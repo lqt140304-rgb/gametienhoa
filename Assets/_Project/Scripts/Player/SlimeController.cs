@@ -19,6 +19,14 @@ namespace Evolve.Player
         [System.NonSerialized] public float SpeedScale = 1f;
         /// <summary>Speed factor from a core (Nhân Quen Đất): 1 = none. Written by PlayerTraits.</summary>
         [System.NonSerialized] public float TraitSpeed = 1f;
+        float plantDrag = 1f, plantDragUntil;
+        /// <summary>A soft plant (World/SoftPlant) the slime is pushing through asks for a slower speed; the strongest one counts, for a moment after the last contact.</summary>
+        public void NotePlantDrag(float speedFactor)
+        {
+            plantDrag = Time.time < plantDragUntil ? Mathf.Min(plantDrag, speedFactor) : speedFactor;
+            plantDragUntil = Time.time + 0.15f;
+        }
+        float PlantDragScale => Time.time < plantDragUntil ? plantDrag : 1f;
         float frozenUntil;
         Evolve.Traits.PlayerTraits traitsComp;
         Vector3 steer;
@@ -49,6 +57,8 @@ namespace Evolve.Player
         public bool IsSprinting { get; private set; }
         SurvivalStats stats;
         OrganHost organs;
+        Evolve.Swallow.SlimeBody body;
+        Evolve.Abilities.SprintBoost sprintBoost;
         Vector3 baseScale = Vector3.one;
         float squash, squashTarget, wobbleAmp, airK, airTime, scaleK = 1f, fallSpeed;
         Evolve.Visuals.SlimeGelAnimator jellyAnimator;
@@ -60,7 +70,7 @@ namespace Evolve.Player
         bool layoutWater;                       // the scene is built from World/ZoneLayout (it has its water depths)
         Evolve.World.WaterSensor waterSensor;
 
-        /// <summary>Current body scale (smoothed toward BodySize.ScaleFor(organ count)). Applied to collider and visual.</summary>
+        /// <summary>Current body scale (smoothed toward BodySize.ScaleForMass(body mass)). Applied to collider and visual.</summary>
         public float BodyScale { get; private set; } = 1f;
         /// <summary>Collider diameter in world units at BodyScale 1 (cached in Awake).</summary>
         public float BaseDiameter { get; private set; } = 1f;
@@ -72,6 +82,7 @@ namespace Evolve.Player
             rb.freezeRotation = true;
             stats = GetComponent<SurvivalStats>();
             organs = GetComponent<OrganHost>();
+            body = GetComponent<Evolve.Swallow.SlimeBody>();
             traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
             if (traitsComp == null) traitsComp = gameObject.AddComponent<Evolve.Traits.PlayerTraits>();
             col = GetComponent<Collider>();
@@ -109,24 +120,28 @@ namespace Evolve.Player
                 float k = Mathf.Sqrt(Mathf.Clamp(transform.lossyScale.y, 0.3f, 1.5f));   // a smaller slime hops proportionally lower (height grows with speed squared)
                 rb.AddForce(Vector3.up * hopForce * k + dir * hopForward * k, ForceMode.VelocityChange);
                 squashTarget = 1f; // eased in (see AnimateVisual), never an instant jump
+                if (!stats.IsRemote) Evolve.Audio.SlimeSfx.Play("slime_hop", 0.9f);
             }
+            TickStepSound(Time.deltaTime);
             AnimateVisual();
         }
 
         /// <summary>Return to the spawn point with full stats. Organs are kept (placeholder rule).</summary>
         public void Respawn()
         {
-            rb.linearVelocity = Vector3.zero;
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;   // a kinematic body (frozen, ghost) has no velocity to clear
             rb.position = spawnPoint;
             transform.position = spawnPoint;
             stats.State.Ambient = stats.Config.DefaultAmbient;
             stats.State.Reset();
+            var boost = GetComponent<Evolve.Abilities.SprintBoost>(); if (boost != null) boost.ResetBoost();   // no sprint or spikes carried over a death
+            var parts = GetComponent<Evolve.Abilities.SkillVisuals>(); if (parts != null) parts.ClearAll();
         }
 
         /// <summary>Move instantly (debug teleport).</summary>
         public void Teleport(Vector3 position)
         {
-            rb.linearVelocity = Vector3.zero;
+            if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;   // a kinematic body (frozen, ghost) has no velocity to clear
             rb.position = position;
             transform.position = position;
         }
@@ -163,14 +178,16 @@ namespace Evolve.Player
             Vector3 v = rb.linearVelocity;
             float organSpeed = organs != null ? organs.SpeedMultiplier : 1f;
             UpdateWater();
-            float speed = crawlSpeed * organSpeed * SpeedScale * TraitSpeed * (IsSprinting ? sprintMultiplier : 1f)
-                * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f);
+            if (sprintBoost == null) sprintBoost = GetComponent<Evolve.Abilities.SprintBoost>();   // added the first time Chạy Nước Rút is used
+            float skillSpeed = sprintBoost != null ? sprintBoost.Multiplier : 1f;
+            float speed = crawlSpeed * organSpeed * skillSpeed * SpeedScale * TraitSpeed * (IsSprinting ? sprintMultiplier : 1f)
+                * (IsSwimming || IsWading ? SwimLogic.SpeedScale : 1f) * PlantDragScale;
             if (IsSwimming)
             {
                 float vertical = ReadVertical();
                 Vector3 swim = SwimLogic.Velocity(dir, vertical, speed);
                 // float low, only the back above the surface, bobbing gently; Space never lifts it higher than that
-                float floatY = SwimLogic.TargetY(Evolve.World.ZoneLayout.WaterLevel) + 0.03f * Mathf.Sin(Time.time * 0.6f * Mathf.PI * 2f);
+                float floatY = SwimLogic.TargetY(Evolve.World.WaterField.Level) + 0.03f * Mathf.Sin(Time.time * 0.6f * Mathf.PI * 2f);
                 if (vertical >= 0f && rb.position.y >= floatY - 0.02f) swim.y = Mathf.Clamp((floatY - rb.position.y) * 3f, -0.4f, 0.4f);
                 else if (vertical == 0f) swim.y = Mathf.Min(swim.y, (floatY - rb.position.y) * 3f);
                 rb.linearVelocity = Vector3.MoveTowards(v, swim, acceleration * Time.fixedDeltaTime);
@@ -205,9 +222,9 @@ namespace Evolve.Player
             if (layoutWater)
             {
                 Vector3 p = rb.position;
-                float depth = Evolve.World.ZoneLayout.DepthAt(p.x, p.z);
+                float depth = Evolve.World.WaterField.DepthAt(p.x, p.z);
                 // swim only while below the surface (a hop out of the water lands normally)
-                IsSwimming = SwimLogic.IsSwimming(depth) && p.y < Evolve.World.ZoneLayout.WaterLevel + 0.2f;
+                IsSwimming = SwimLogic.IsSwimming(depth) && p.y < Evolve.World.WaterField.Level + 0.2f;
                 IsWading = !IsSwimming && depth > 0.05f;
             }
             else
@@ -220,11 +237,12 @@ namespace Evolve.Player
 
         static float MaxAbs(Vector3 v) => Mathf.Max(Mathf.Abs(v.x), Mathf.Max(Mathf.Abs(v.y), Mathf.Abs(v.z)));
 
-        /// <summary>Smooth BodyScale toward the organ-count target, resize the collider from cached base values
+        /// <summary>Smooth BodyScale toward the body-mass target, resize the collider from cached base values
         /// and lift the body by the radius growth so it does not sink into the ground. No-op when settled.</summary>
         void UpdateBodyScale()
         {
-            float target = organs != null ? BodySize.ScaleFor(organs.Count) : 1f;
+            if (body == null) body = GetComponent<Evolve.Swallow.SlimeBody>();   // the HUD may add it after Awake (older scenes)
+            float target = body != null ? BodySize.ScaleForMass(body.Mass) : 1f;
             if (Mathf.Approximately(BodyScale, target)) return;
             float old = BodyScale;
             BodyScale = Mathf.MoveTowards(old, target, BodyScaleRate * Time.fixedDeltaTime);
@@ -260,6 +278,17 @@ namespace Evolve.Player
         }
 
         bool wasAirborne;
+        float stepTimer;
+
+        /// <summary>The wet crawl sound while the slime moves on the ground: slower when walking, quicker when sprinting.</summary>
+        void TickStepSound(float dt)
+        {
+            if (stats.IsRemote || IsSwimming || stats.Frozen || !stats.IsMoving || !IsGrounded()) { stepTimer = 0.12f; return; }
+            stepTimer -= dt;
+            if (stepTimer > 0f) return;
+            stepTimer = IsSprinting ? 0.27f : 0.48f;
+            Evolve.Audio.SlimeSfx.Step(IsSprinting ? 0.55f : 0.4f);
+        }
 
         void AnimateVisual()
         {
@@ -278,6 +307,7 @@ namespace Evolve.Player
                 var jelly = visual.GetComponent<Evolve.Visuals.SlimeGelAnimator>();
                 // Only a real fall splats; the small lift of a dash or a step off a bump does not.
                 if (jelly != null && fallSpeed < -2.5f) jelly.Land(Mathf.Clamp(-fallSpeed / 7f, 0.3f, 1.2f));
+                if (fallSpeed < -2.5f && !stats.IsRemote) Evolve.Audio.SlimeSfx.Play("slime_land", Mathf.Clamp(-fallSpeed / 6f, 0.4f, 1f));
                 fallSpeed = 0f;
             }
             wasAirborne = !grounded;

@@ -35,7 +35,7 @@ namespace Evolve.EditorTools
 
         struct Proto { public Kind Kind; public int Variant; }
 
-        [MenuItem("Evolve/Dress Lake: Ground Clutter")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Ground Clutter")]
         public static void Dress()
         {
             var terrain = Object.FindAnyObjectByType<Terrain>();

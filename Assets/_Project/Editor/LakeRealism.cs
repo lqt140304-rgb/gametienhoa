@@ -25,7 +25,7 @@ namespace Evolve.EditorTools
         [System.Serializable] class MatState { public string path; public float smoothness, specular, reflections; }
         [System.Serializable] class Backup { public List<MatState> materials = new List<MatState>(); }
 
-        [MenuItem("Evolve/Dress Lake: Realism")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Realism")]
         public static void Dress()
         {
             int post = Post();
@@ -35,7 +35,7 @@ namespace Evolve.EditorTools
             Debug.Log($"Thực tế hơn: {post} hiệu ứng hậu xử lý, SSAO trên {ssao} renderer, {mats} vật liệu bớt bóng. Hoàn tác bằng Evolve → Restore Lake Realism.");
         }
 
-        [MenuItem("Evolve/Restore Lake Realism (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Realism (undo)")]
         public static void Restore()
         {
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(ProfilePath);
@@ -107,7 +107,7 @@ namespace Evolve.EditorTools
 
         // ------------------------------------------------------------------ ambient occlusion
 
-        static int Ssao(bool add)
+        internal static int Ssao(bool add)
         {
             int n = 0;
             var seen = new HashSet<ScriptableRendererData>();

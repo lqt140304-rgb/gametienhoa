@@ -20,8 +20,8 @@ namespace Evolve.Survival
         GUIStyle panelSkin;
         Vector2 canvas;
         string skillQuery = "";
-        int skillPage, organPage;
-        OrganSO chosenSkill, chosenOrgan, pendingDrop;
+        int skillPage;
+        OrganSO chosenSkill;
         readonly Color ink = new Color32(234,245,250,255);
         readonly Color muted = new Color32(143,174,194,255);
         readonly Color surface = new Color32(17,31,50,247);
@@ -60,12 +60,13 @@ namespace Evolve.Survival
             else if (searchFocused) return;
             else if (KeyPressed.K()) SetMenu(HudLayout.Toggle(menu, HudMenu.Skills));
             else if (KeyPressed.G()) SetMenu(HudLayout.Toggle(menu, HudMenu.Organs));
+            else if (KeyPressed.B()) SetMenu(HudLayout.Toggle(menu, HudMenu.Stomach));
             else if (KeyPressed.H()) SetMenu(HudLayout.Toggle(menu, HudMenu.Help));
         }
         void SetMenu(HudMenu next)
         {
             if (stats != null && stats.State.IsDead) next = HudMenu.None;
-            if (menu != next) { pendingDrop = null; searchFocused = false; clearFocus = true; }
+            if (menu != next) { sculptNotice = ""; searchFocused = false; clearFocus = true; }
             menu = next;
             if (interactor == null) return;
             if (next == HudMenu.Organs) interactor.OpenBodyMenu(); else interactor.CloseBodyMenu();
@@ -256,7 +257,7 @@ namespace Evolve.Survival
             DrawSkillChip(new Rect(sx,sy,chipWidth,chipHeight),"Q",active!=null?active.DisplayName:null,caster!=null?caster.CooldownRemaining:0,active!=null?active.EnergyCost:0,active);
             for(int slot=0;slot<SkillBar.SlotCount;slot++)
             {
-                var o=skills!=null?skills.GetSlot(slot):null; var a=o!=null?o.GrantedAbility:null;
+                var o=skills!=null?skills.GetSlot(slot):null; var a=o!=null?skills.AbilityFor(o):null;
                 DrawSkillChip(new Rect(sx+(slot+1)*chipStep,sy,chipWidth,chipHeight),(slot+1).ToString(),a!=null?a.DisplayName:null,skills!=null?skills.CooldownRemaining(slot):0,a!=null?a.EnergyCost:0,a);
             }
             var sense=stats.GetComponent<VibrationSense>();
@@ -340,19 +341,20 @@ namespace Evolve.Survival
         {
             if(clearFocus) { GUI.FocusControl(null); clearFocus=false; }
             if(!MenuOpen)return; EnsureStyles(); var old=GUI.matrix;
-            if(menu==HudMenu.Skills||menu==HudMenu.Organs)
+            if(menu==HudMenu.Skills||menu==HudMenu.Organs||menu==HudMenu.Stomach)
             {
                 float scale=HudCatalog.MenuScale(Screen.width,Screen.height,UiScale);
                 GUI.matrix=Matrix4x4.TRS(new Vector3((Screen.width-1240*scale)/2,52,0),Quaternion.identity,Vector3.one*scale);
                 Frame(new Rect(0,0,1240,650),surface,new Color32(138,200,220,85),28);
-                Label(new Rect(25,16,950,42),menu==HudMenu.Skills?"KỸ NĂNG":"CƠ THỂ",title);
+                Label(new Rect(25,16,950,42),menu==HudMenu.Skills?"KỸ NĂNG":menu==HudMenu.Organs?"CƠ THỂ":"TÚI KHÔNG ĐÁY",title);
                 if(Button(new Rect(1185,17,32,32),"×")) SetMenu(HudMenu.None);
                 if(Button(new Rect(23,67,140,34),"G · Cơ quan",menu==HudMenu.Organs)) SetMenu(HudMenu.Organs);
-                if(Button(new Rect(172,67,140,34),"K · Kỹ năng",menu==HudMenu.Skills)) SetMenu(HudMenu.Skills);
+                if(Button(new Rect(172,67,140,34),"B · Bụng",menu==HudMenu.Stomach)) SetMenu(HudMenu.Stomach);
+                if(Button(new Rect(321,67,140,34),"K · Kỹ năng",menu==HudMenu.Skills)) SetMenu(HudMenu.Skills);
                 Line(22,110,1196);
-                if(menu==HudMenu.Skills)DrawSkillInventory(); else if(menu==HudMenu.Organs)DrawOrgansPanel();
+                if(menu==HudMenu.Skills)DrawSkillInventory(); else if(menu==HudMenu.Organs)DrawOrgansPanel(); else DrawStomachPanel();
                 Line(22,607,1196);
-                Label(new Rect(25,618,470,25),menu==HudMenu.Organs?$"EXP còn: {stats.State.EvolutionExp:0}":"Q · Dị năng riêng   /   C · Cảm nhận rung",small);
+                Label(new Rect(25,618,700,25),menu==HudMenu.Organs?$"Khối {BodyMass:0.#} · máu tối đa {stats.State.MaxHealth:0}":menu==HudMenu.Stomach?"Đâm con mồi: nuốt sống · F: nuốt xác (giữ F nếu xác to)":"Q · Dị năng riêng   /   C · Cảm nhận rung",small);
                 Label(new Rect(795,618,340,25),menu==HudMenu.Skills?"Giữ Tab · Xem chi tiết":"Giữ Tab · Xem thêm",small);
                 if(Button(new Rect(1125,614,91,28),"Esc · Đóng"))SetMenu(HudMenu.None);
             }
@@ -375,15 +377,15 @@ namespace Evolve.Survival
         {
             var result=new List<OrganSO>();
             if(organs==null||skills==null)return result;
-            foreach(var o in organs.OrganList)
-                if(skills.IsUnlocked(o)&&(!equippedOnly||skills.SlotOf(o)>=0)&&HudCatalog.Matches(o.GrantedAbility.DisplayName,o.DisplayName,skillQuery))result.Add(o);
+            foreach(var o in skills.Unlocked())
+                if((!equippedOnly||skills.SlotOf(o)>=0)&&HudCatalog.Matches(skills.AbilityFor(o).DisplayName,o.DisplayName,skillQuery))result.Add(o);
             return result;
         }
         void DrawSkillInventory()
         {
-            if(organs==null||skills==null){Label(new Rect(30,140,800,50),"Chưa có kỹ năng cơ quan.");return;}
-            var owned=organs.OrganList;
-            if(chosenSkill==null||!skills.IsUnlocked(chosenSkill))chosenSkill=owned.Find(o=>skills.IsUnlocked(o));
+            if(organs==null||skills==null){Label(new Rect(30,140,800,50),"Chưa có kỹ năng.");return;}
+            var owned=skills.Unlocked();
+            if(chosenSkill==null||!skills.IsUnlocked(chosenSkill))chosenSkill=owned.Count>0?owned[0]:null;
             Label(new Rect(26,126,340,25),"KHO KỸ NĂNG",small);
             GUI.SetNextControlName("CellularSkillSearch");
             var query=GUI.TextField(new Rect(26,158,230,34),skillQuery,input);
@@ -396,18 +398,18 @@ namespace Evolve.Survival
                 int index=skillPage*8+i;if(index>=list.Count)break;var o=list[index];
                 var r=new Rect(26+(i%2)*179,208+(i/2)*78,171,70);
                 int slot=skills.SlotOf(o);
-                if(Button(r,$"{o.GrantedAbility.DisplayName}\n{(slot<0?"Chưa gắn":$"Ô {slot+1}")}",chosenSkill==o))chosenSkill=o;
+                if(Button(r,$"{skills.AbilityFor(o).DisplayName}\n{(slot<0?"Chưa gắn":$"Ô {slot+1}")}",chosenSkill==o))chosenSkill=o;
             }
-            if(list.Count==0)Label(new Rect(28,215,330,65),string.IsNullOrWhiteSpace(skillQuery)?"Chưa có kỹ năng phù hợp.":"Không tìm thấy kỹ năng.",small);
+            if(list.Count==0)Label(new Rect(28,215,330,65),string.IsNullOrWhiteSpace(skillQuery)?"Chưa học chiêu nào. Nuốt sinh vật có gai, chân... rồi để Giải Mã phân tích.":"Không tìm thấy kỹ năng.",small);
             WithEnabled(skillPage>0,()=>{if(Button(new Rect(88,550,40,30),"←"))skillPage--;});
             Label(new Rect(137,554,130,25),$"{skillPage+1} / {HudCatalog.PageCount(list.Count,8)}  ·  {list.Count} kỹ năng",small);
             WithEnabled(skillPage+1<HudCatalog.PageCount(list.Count,8),()=>{if(Button(new Rect(294,550,40,30),"→"))skillPage++;});
             Paint(new Rect(395,125,1,460),new Color(.5f,.7f,.9f,.16f),Texture2D.whiteTexture);
-            if(chosenSkill==null){Label(new Rect(430,180,720,70),"Nâng cơ quan có kỹ năng để mở thêm vào kho.");return;}
-            var ability=chosenSkill.GrantedAbility;int level=organs.GetLevel(chosenSkill);
+            if(chosenSkill==null){Label(new Rect(430,180,720,70),"Nuốt sinh vật rồi để Giải Mã học chiêu của nó.");return;}
+            var ability=skills.AbilityFor(chosenSkill);int level=skills.LevelFor(chosenSkill);int stars=Mathf.Max(1,skills.StarsOf(chosenSkill));
             Paint(new Rect(427,134,70,70),new Color(.18f,.32f,.43f),disc);
             Label(new Rect(427,147,70,40),AbilityMark(ability),new GUIStyle(heading){alignment=TextAnchor.MiddleCenter});
-            Label(new Rect(515,133,680,25),$"{chosenSkill.DisplayName} · Cấp {level}",small);
+            Label(new Rect(515,133,680,25),$"{chosenSkill.DisplayName} · {new string('★',stars)}",small);
             Label(new Rect(515,162,680,43),ability.DisplayName,heading);
             if(KeyPressed.TabHeld())DrawSkillCalculation(new Rect(427,224,485,350),ability,level);
             else
@@ -424,18 +426,18 @@ namespace Evolve.Survival
             for(int slot=0;slot<SkillBar.SlotCount;slot++)
             {
                 var current=skills.GetSlot(slot);int target=slot;
-                string mark=current!=null?AbilityMark(current.GrantedAbility):"+";
+                string mark=current!=null?AbilityMark(skills.AbilityFor(current)):"+";
                 if(Button(new Rect(947+slot*52,342,46,62),$"{mark}\n{slot+1}",current==chosenSkill))skills.Assign(target,chosenSkill);
             }
             int at=skills.SlotOf(chosenSkill);
             Label(new Rect(947,423,260,50),at<0?"Chưa gắn":$"Đang gắn ở ô {at+1}",small);
             WithEnabled(at>=0,()=>{if(Button(new Rect(947,489,245,35),"Gỡ kỹ năng"))skills.Clear(at);});
         }
-        string AbilityMark(AbilitySO a)=>a is SpikeBurstAbility?"✦":a is ChargeAbility?"➶":a is BurstDashAbility?"↝":"◇";
+        string AbilityMark(AbilitySO a)=>a is SpikeBurstAbility?"✦":a is ChargeAbility?"➶":a is BurstDashAbility?"↝":a is SprintAbility?"»":"◇";
         string ReadyFor(OrganSO o)
         {
             int slot=skills.SlotOf(o);
-            return slot<0?"Chưa gắn":skills.CooldownRemaining(slot)>0?$"{skills.CooldownRemaining(slot):0.0}s":stats.State.Energy<o.GrantedAbility.EnergyCost?"Thiếu năng lượng":"Sẵn sàng";
+            return slot<0?"Chưa gắn":skills.CooldownRemaining(slot)>0?$"{skills.CooldownRemaining(slot):0.0}s":stats.State.Energy<skills.AbilityFor(o).EnergyCost?"Thiếu năng lượng":"Sẵn sàng";
         }
         void DrawSkillCalculation(Rect r,AbilitySO ability,int level)
         {
@@ -456,6 +458,12 @@ namespace Evolve.Survival
                 Label(new Rect(r.x,y,r.width,70),$"Lực lao: {charge.Force:0.#} × {AbilitySO.Power(level):0.##} = {charge.Force*AbilitySO.Power(level):0.#}\nHướng lao theo điểm đang ngắm.");y+=86;
                 Label(new Rect(r.x,y,r.width,65),"Sát thương va chạm còn phụ thuộc tốc độ và sinh vật bị đâm trúng.",small);y+=80;
             }
+            else if(ability is SprintAbility sprint)
+            {
+                Label(new Rect(r.x,y,r.width,38),"Chạy nước rút",heading);y+=48;
+                Label(new Rect(r.x,y,r.width,70),$"Tốc độ ×{sprint.Multiplier:0.#} trong {Evolve.Swallow.SkillRules.SprintSeconds(level):0} giây.\nChân mọc ra khi chạy, thu vào khi hồi chiêu.");y+=86;
+                Label(new Rect(r.x,y,r.width,65),"Lên sao để chạy lâu hơn (4 / 5 / 6 giây) và hồi chiêu nhanh hơn ở ★3.",small);y+=80;
+            }
             else if(ability is BurstDashAbility dash)
             {
                 Label(new Rect(r.x,y,r.width,38),"Lướt nhanh",heading);y+=48;
@@ -463,80 +471,6 @@ namespace Evolve.Survival
             }
             else {Label(new Rect(r.x,y,r.width,90),ability.Description);y+=104;}
             Label(new Rect(r.x,y,r.width,72),$"Tốn {ability.EnergyCost:0.#} năng lượng · Hồi {ability.CooldownFor(level):0.##} giây\nHồi chiêu gốc {ability.Cooldown:0.##} giây{(level>=3?" × 0,75 ở cấp 3":"")}",small);
-        }
-        void DrawOrgansPanel()
-        {
-            if(organs==null||interactor==null){Label(new Rect(30,140,900,50),"Không có dữ liệu cơ quan.");return;}
-            var list=organs.OrganList;
-            if(chosenOrgan==null||!organs.Has(chosenOrgan)) {chosenOrgan=list.Count>0?list[0]:null;pendingDrop=null;}
-            bool full=KeyPressed.TabHeld();organPage=HudCatalog.ClampPage(organPage,list.Count,4);
-            Label(new Rect(25,128,190,25),$"CƠ QUAN · {list.Count}",small);
-            for(int i=0;i<4;i++)
-            {
-                int index=organPage*4+i;if(index>=list.Count)break;var o=list[index];int level=organs.GetLevel(o);
-                if(Button(new Rect(25,169+i*83,175,74),$"{o.DisplayName}\n{(level==0?"Mầm":$"Cấp {level}")}{(organs.Priority==o?" · Ưu tiên":"")}",chosenOrgan==o)){chosenOrgan=o;pendingDrop=null;}
-            }
-            WithEnabled(organPage>0,()=>{if(Button(new Rect(25,530,40,30),"←"))organPage--;});
-            Label(new Rect(74,534,90,25),$"{organPage+1}/{HudCatalog.PageCount(list.Count,4)}",small);
-            WithEnabled(organPage+1<HudCatalog.PageCount(list.Count,4),()=>{if(Button(new Rect(160,530,40,30),"→"))organPage++;});
-            if(chosenOrgan==null){Label(new Rect(260,220,750,70),"Chưa có cơ quan. Tìm hoặc săn sinh vật để tiến hóa.");DrawBlueprints(260,300,600);return;}
-            float diagramWidth=full?230:450;
-            Paint(new Rect(225,146,diagramWidth,418),new Color(.07f,.14f,.23f,.5f));
-            Paint(new Rect(240,275,diagramWidth-30,137),new Color(.50f,.57f,.79f,.6f),disc);
-            Label(new Rect(240,280,diagramWidth-30,110),"◎",new GUIStyle(heading){alignment=TextAnchor.MiddleCenter,fontSize=54});
-            foreach(var node in list)
-            {
-                float nx=(node.Slot==OrganSlot.Eyes||node.Slot==OrganSlot.Back) ? .70f : .10f;
-                float ny=node.Slot==OrganSlot.Eyes||node.Slot==OrganSlot.Skin?215:400;
-                if(Button(new Rect(225+nx*(diagramWidth-20),ny,50,42),node.Slot==OrganSlot.Eyes?"◎":node.Slot==OrganSlot.Legs?"↗":node.Slot==OrganSlot.Back?"✦":"◇",chosenOrgan==node))
-                {chosenOrgan=node;pendingDrop=null;}
-            }
-            Label(new Rect(240,452,diagramWidth-30,50),OrganInteractor.SlotName(chosenOrgan.Slot),center);
-            float x=full?478:704,w=full?323:490;var organ=chosenOrgan;
-            Label(new Rect(x,137,w,25),$"{organ.Tier} · {OrganInteractor.SlotName(organ.Slot)}",small);
-            Label(new Rect(x,171,w,65),organ.DisplayName,heading);
-            int lv=organs.GetLevel(organ);organs.GetProgress(organ,out float progress,out float cost);
-            Label(new Rect(x,245,w,25),organs.IsMaxed(organ)?$"Cấp {lv} · Tối đa":$"{(lv==0?"Mầm":$"Cấp {lv}")} · {progress:0}/{cost:0} EXP",text);
-            Paint(new Rect(x,281,w,5),new Color(.15f,.24f,.32f),Texture2D.whiteTexture);
-            Paint(new Rect(x,281,w*(organs.IsMaxed(organ)?1:Frac(progress,cost)),5),cyan,Texture2D.whiteTexture);
-            var need=organ.EffectiveNutrient; float decay=organs.GetDecay(organ);
-            Label(new Rect(x,288,w,20),$"Cần: {NutrientKinds.SlimeName(need)} ({NutrientKinds.RealName(need)})"+(decay>0.01f?$" · đang yếu {decay*100f:0}%":""),small);
-            if(full)
-            {
-                Label(new Rect(x,306,w,87),organ.Description,small);
-                string effects=$"Chỉ số gốc (chưa tính cấp):\nTốc độ: ×{organ.SpeedMultiplier:0.##}\nKháng nóng: +{organ.HeatResistance:0.#}°C · Phản đòn: {organ.ContactDamage:0.#}";
-                Label(new Rect(x,397,w,80),effects,small);
-                DrawBodyDossier(new Rect(831,135,382,447));
-            }
-            else if(organ.GrantedAbility!=null)Label(new Rect(x,307,w,90),$"{organ.GrantedAbility.DisplayName}\nMở ở cấp {organ.AbilityUnlockLevel}",small);
-            float actionY=full?495:441;
-            WithEnabled(!organs.IsMaxed(organ)&&stats.State.EvolutionExp>0,()=>{if(Button(new Rect(x,actionY,w*.58f,36),lv==0?"Nuôi cơ quan":"Nâng cấp"))organs.Invest(organ);});
-            WithEnabled(!organs.IsMaxed(organ),()=>{if(Button(new Rect(x+w*.60f,actionY,w*.40f,36),organs.Priority==organ?"Bỏ ưu tiên":"Ưu tiên",organs.Priority==organ))organs.Priority=organs.Priority==organ?null:organ;});
-            if(pendingDrop==organ)
-            {
-                if(Button(new Rect(x,actionY+47,w*.64f,33),"Tháo · Mất tiến độ nuôi")){pendingDrop=null;interactor.Drop(organ);chosenOrgan=null;}
-                if(Button(new Rect(x+w*.67f,actionY+47,w*.33f,33),"Hủy"))pendingDrop=null;
-            }
-            else if(Button(new Rect(x,actionY+47,w,33),"Tháo cơ quan"))pendingDrop=organ;
-            DrawBlueprints(x,actionY+86,w);
-        }
-        readonly List<OrganSO> spareBlueprints=new List<OrganSO>();
-        string blueprintNotice="";
-        /// <summary>Learned blueprints without an organ: simulate again for EXP, only where the body may be reshaped.</summary>
-        void DrawBlueprints(float x,float y,float w)
-        {
-            organs.GetSpareBlueprints(spareBlueprints);
-            if(spareBlueprints.Count==0){if(blueprintNotice.Length>0)Label(new Rect(x,y,w,28),blueprintNotice,small);return;}
-            Label(new Rect(x,y,w,22),blueprintNotice.Length>0?blueprintNotice:$"Bản mẫu đã học ({spareBlueprints.Count}) · mô phỏng lại tốn EXP, ở đâu cũng được",small);
-            for(int i=0;i<spareBlueprints.Count&&i<2;i++)
-            {
-                var bp=spareBlueprints[i];float bw=w/2f-4;
-                if(Button(new Rect(x+i*(bw+8),y+24,bw,34),$"{bp.DisplayName} · {OrganRules.ResimulateCost(bp.Tier):0} EXP"))
-                {
-                    var result=organs.TryResimulate(bp);
-                    blueprintNotice=result==ResimulateResult.Ok?"":result==ResimulateResult.NoExp?"Chưa đủ EXP tiến hóa.":"Không mô phỏng được (thiếu chất hoặc cơ thể đã chết).";
-                }
-            }
         }
         void DrawBodyDossier(Rect r)
         {

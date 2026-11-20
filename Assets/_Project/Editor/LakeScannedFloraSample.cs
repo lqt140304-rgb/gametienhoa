@@ -18,7 +18,7 @@ namespace Evolve.EditorTools
         const string RootName = "Lake Scanned Flora Sample (Dressed)";
         const string ManifestPath = "tools/assets/flora_manifest.json";
 
-        [MenuItem("Evolve/Dress Lake: Scanned Flora Sample")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Scanned Flora Sample")]
         public static void Dress()
         {
             if (Terrain.activeTerrain == null) { Debug.LogWarning("Không có Terrain trong scene: bỏ qua dải mẫu."); return; }
@@ -101,7 +101,7 @@ namespace Evolve.EditorTools
                       + (missing.Count > 0 ? $" Thiếu {missing.Count}: {string.Join(", ", missing)}." : ""));
         }
 
-        [MenuItem("Evolve/Restore Lake Scanned Flora Sample (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Scanned Flora Sample (undo)")]
         public static void Restore()
         {
             var old = GameObject.Find(RootName);

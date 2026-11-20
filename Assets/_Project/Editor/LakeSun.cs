@@ -42,7 +42,7 @@ namespace Evolve.EditorTools
             public List<int> roofModes = new List<int>();
         }
 
-        [MenuItem("Evolve/Dress Lake: Dappled Sun")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Dappled Sun")]
         public static void Dress()
         {
             if (EditorSceneManager.GetActiveScene().path != ScenePath)
@@ -88,7 +88,7 @@ namespace Evolve.EditorTools
             Debug.Log($"Mặt trời lọt kẽ rễ: {roofRenderers.Count} mảnh mái đổ bóng, tầm bóng {DappledSunMath.ShadowDistance:0} m. F9 bật tắt bóng của mái; Evolve → Restore Lake Sun (undo) để trả lại. Bấm Ctrl+S để lưu scene.");
         }
 
-        [MenuItem("Evolve/Restore Lake Sun (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Sun (undo)")]
         public static void Restore()
         {
             if (EditorSceneManager.GetActiveScene().path != ScenePath)

@@ -24,7 +24,7 @@ namespace Evolve.Survival
             "Shift  Chạy nhanh (tốn thức ăn)\n" +
             "Space  Nảy (tốn năng lượng)\n" +
             "Q  Dùng Dị Năng\n" +
-            "1–5  Kỹ năng gắn cơ quan (cơ quan bậc B, Lv2)\n" +
+            "1–5  Chiêu đã học (K: gắn vào ô, đổi ở đâu cũng được)\n" +
             "Chuột: kỹ năng bắn/lao theo hướng con trỏ\nAlt  Chế độ ngắm: hồng tâm giữa màn hình,\n    camera lệch qua vai, kỹ năng theo hồng tâm\nF5  Góc nhìn thứ nhất (có hồng tâm)\n" +
             "Giữ chuột phải  Xoay camera\n" +
             "Lăn chuột  Phóng to/thu nhỏ\n" +
@@ -32,9 +32,10 @@ namespace Evolve.Survival
             "H  Ẩn/hiện hướng dẫn\nF1  Menu God (thử nghiệm)\n\n" +
             "Đứng yên: không đói, hồi năng lượng nhanh,\nkẻ săn mồi khó phát hiện. Đi vẫn hồi chậm.\n" +
             "Khi quét: xanh = thức ăn, đỏ = con mồi,\ntím = kẻ săn mồi\n\n" +
-            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; chết thì cơ quan\nrơi tại chỗ, mỗi cái 50% bị mất)\n\n" +
-            "Bắt con mồi (chạm vào) để nhận cơ quan.\nChạm cơ quan rơi ra: E lắp, F hấp thụ, X bỏ qua.\n\n" +
-            "EXP tiến hóa: ăn được ít, hấp thụ cơ quan được\nnhiều. G  Bảng cơ thể: đổ EXP cho cơ quan\n(mầm → Lv1 → Lv3), chọn ưu tiên, tháo.";
+            "Hoang mạc (phía đông) rất nóng.\nGai độc / lao vào (Q) để hạ kẻ săn mồi.\nR  Hồi sinh khi chết (3 mạng; bụng rỗng,\ncơ quan và những gì đã học vẫn còn)\n\n" +
+            "Nuốt Chửng: chạm con mồi để nuốt sống;\nF vào xác để nuốt (giữ F nếu xác to hơn bạn).\n" +
+            "B  Túi Không Đáy: tiêu hóa, phân tích, giữ, nhả.\nGiải Mã học cơ quan từ mẫu (nhanh ×4 trong tổ).\n" +
+            "G  Cơ thể: kỹ năng bị động (tối đa 3: mắt, màng...)\nnặn bằng khối, chỉ trong hang trú. Chiêu chủ động\n(gai, chân) chỉ hiện hình lúc dùng, rồi thu vào.";
 
         void Start()
         {
@@ -46,18 +47,23 @@ namespace Evolve.Survival
             skills = stats.GetComponent<SkillBar>();
             // Upgrade existing scenes in memory; no scene rebuild or saved asset changes.
             if (skills == null && organs != null) skills = stats.gameObject.AddComponent<SkillBar>();
+            if (organs != null && !stats.IsRemote)
+            {
+                if (stats.GetComponent<Evolve.Swallow.SlimeBody>() == null) stats.gameObject.AddComponent<Evolve.Swallow.SlimeBody>();
+                if (stats.GetComponent<Evolve.Swallow.Swallower>() == null) stats.gameObject.AddComponent<Evolve.Swallow.Swallower>();
+            }
             if (skills != null)
                 skills.SkillUnlocked += (o, slot) =>
-                    Toast($"Mở kỹ năng: {o.GrantedAbility.DisplayName}\n(phím {slot + 1}, từ {o.DisplayName})");
+                    Toast($"Học được kỹ năng: {skills.AbilityFor(o).DisplayName}\n(phím {slot + 1}, từ {o.DisplayName}; K để đổi ô)");
             if (organs != null)
             {
-                organs.Attached += o => Toast($"Mầm {o.DisplayName}: cần {o.GrowthExpRequired:0} EXP tiến hóa\n(G để đổ EXP hoặc đặt ưu tiên)");
-                organs.LeveledUp += (o, lv) => Toast($"{OrganTiers.Tag(o.Tier)} {o.DisplayName} lên cấp {lv}!");
-                organs.Completed += o => Toast($"Tiến hóa: {OrganTiers.Tag(o.Tier)} {o.DisplayName}!\n{o.Description}");
-                organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(rơi ra đất, nhặt lại phải nuôi từ đầu)");
+                organs.Attached += o => Toast($"Biến Hình: {OrganTiers.Tag(o.Tier)} {o.DisplayName}");
+                organs.LeveledUp += (o, lv) => Toast($"{OrganTiers.Tag(o.Tier)} {o.DisplayName} lên ★{lv}!");
+                organs.Completed += o => Toast($"{OrganTiers.Tag(o.Tier)} {o.DisplayName} đã thành hình\n{o.Description}");
+                organs.Removed += o => Toast($"Đã tháo {o.DisplayName}\n(vẫn còn trong sổ Giải Mã, nặn lại ở hang trú)");
                 if (interactor != null) interactor.DroppedOnDeath += (kept, lost) =>
                 {
-                    if (kept + lost > 0) Toast($"Cơ quan rơi tại chỗ chết: còn {kept}, mất {lost}");
+                    if (lost > 0) Toast($"Xác đã mất: {lost} cơ quan tan theo");
                 };
             }
         }
@@ -85,7 +91,7 @@ namespace Evolve.Survival
                     if (NetWorld.CoopActive) { } // RescueController draws the rescue / spectator text
                     else {
                     GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), "Thân xác nằm lại, chỉ đồng đội mới cứu được (chơi một mình: chưa có ai cứu)", dead);
-                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Cơ quan vẫn nằm trên xác. Chơi lại thì chúng rơi ra tại xác, mỗi cái 50% bị mất.", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30), "Cơ quan vẫn nằm trên xác. Chơi lại thì chúng mất theo xác.", dead);
                     GUI.Label(new Rect(0, Screen.height / 2f + 56, Screen.width, 30), "Y  Chơi lại từ đầu (tạm thời)", dead);
                     }
                 }
@@ -95,9 +101,8 @@ namespace Evolve.Survival
                     GUI.Label(new Rect(0, Screen.height / 2f - 40, Screen.width, 40), "Đã chết", dead);
                     dead.fontSize = 18; dead.fontStyle = FontStyle.Normal;
                     GUI.Label(new Rect(0, Screen.height / 2f, Screen.width, 30), $"Bấm R để hồi sinh (còn {s.Lives} mạng)", dead);
-                    if (interactor != null && interactor.LastDeathKept + interactor.LastDeathLost > 0)
-                        GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30),
-                            $"Cơ quan rơi tại chỗ chết: còn {interactor.LastDeathKept} trên đất, mất {interactor.LastDeathLost}. Quay lại để nhặt.", dead);
+                    GUI.Label(new Rect(0, Screen.height / 2f + 28, Screen.width, 30),
+                        "Túi Không Đáy đã rỗng. Cơ quan và những gì Giải Mã đã học vẫn còn.", dead);
                 }
             }
 
@@ -109,6 +114,8 @@ namespace Evolve.Survival
             }
 
             if (!MenuOpen) DrawOrganPrompt();
+            DrawSwallowHint();
+            DrawEchoLine();
 
             DrawAim();
             DrawOverlayMenu();
@@ -143,8 +150,7 @@ namespace Evolve.Survival
             var r = new Rect(Screen.width / 2f - 230, Screen.height - 320, 460, 190);
             var style = new GUIStyle(box) { alignment = TextAnchor.UpperCenter, fontSize = 15, wordWrap = true, richText = true };
             GUI.Box(r, $"<b><size=18>{title}</size></b>\n\n{body}", style);
-            string absorb = $"[F] Hấp thụ (+{interactor.CurrentAbsorbExp:0} EXP)";
-            string keys = accept != null ? $"[E] {accept}    {absorb}    [X] Bỏ qua" : $"{absorb}    [X] Bỏ qua";
+            string keys = accept != null ? $"[E] {accept}    [X] Bỏ qua" : "[X] Bỏ qua";
             var keyStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 16, fontStyle = FontStyle.Bold };
             GUI.Label(new Rect(r.x, r.yMax - 34, r.width, 26), keys, keyStyle);
         }

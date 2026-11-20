@@ -21,7 +21,7 @@ namespace Evolve.EditorTools
         const string DressedName = "Water Surface (Dressed)";
         const string NormalPath = Root + "/Models/WaterRipples_v2.png";
 
-        [MenuItem("Evolve/Dress Lake: Water")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Water")]
         public static void Dress()
         {
             EnsureFolders();
@@ -146,7 +146,7 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>A tileable ripple normal map, painted in code from a few crossing sine waves (saved as a PNG).</summary>
-        static Texture2D RippleNormalMap()
+        internal static Texture2D RippleNormalMap()
         {
             var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(NormalPath);
             if (existing != null) return existing;
@@ -189,7 +189,7 @@ namespace Evolve.EditorTools
         /// Foam: white and translucent, strongest in the middle of the band, fading out on both sides, broken up
         /// into blotches by smooth random noise (not regular stripes).
         /// </summary>
-        static Material FoamMaterial()
+        internal static Material FoamMaterial()
         {
             var tex = PaintedTexture(Root + "/Models/WaterFoam_v2.png", 128, 32, (u, v) =>
             {
@@ -204,7 +204,7 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>Wet bank: dark brown mud darkening the ground next to the water, fading out away from it.</summary>
-        static Material BankMaterial()
+        internal static Material BankMaterial()
         {
             var tex = PaintedTexture(Root + "/Models/WaterBank.png", 128, 32, (u, v) =>
             {

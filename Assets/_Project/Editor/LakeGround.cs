@@ -20,7 +20,7 @@ namespace Evolve.EditorTools
         const string Root = "Assets/_Project";
         const string DressedName = "Lake Ground (Dressed)";
 
-        [MenuItem("Evolve/Dress Lake: Ground")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Ground")]
         public static void Dress()
         {
             PrototypeSceneBuilder.EnsureFolder(Root + "/Materials");

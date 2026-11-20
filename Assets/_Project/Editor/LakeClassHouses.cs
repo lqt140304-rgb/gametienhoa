@@ -58,7 +58,7 @@ namespace Evolve.EditorTools
             }
         }
 
-        [MenuItem("Evolve/Dress Lake: Class Houses")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Class Houses")]
         public static void Dress()
         {
             Physics.SyncTransforms();

@@ -27,7 +27,7 @@ namespace Evolve.EditorTools
             public Vector2 Sizes;
         }
 
-        [MenuItem("Evolve/Dress Lake: Props")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Props")]
         public static void Dress()
         {
             var terrain = Terrain.activeTerrain;

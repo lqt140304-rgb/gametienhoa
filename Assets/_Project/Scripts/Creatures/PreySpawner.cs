@@ -36,7 +36,7 @@ namespace Evolve.Creatures
         public void SpawnAt(Vector3 position)
         {
             if (prefab == null) return;
-            var prey = Instantiate(prefab, new Vector3(position.x, prefab.transform.position.y, position.z), Quaternion.identity, transform);
+            var prey = Instantiate(prefab, OnGround(position.x, position.z), Quaternion.identity, transform);
             prey.HomeCenter = transform.position;
             prey.HomeRadius = radius;
             prey.Caught += OnCaught;
@@ -48,13 +48,16 @@ namespace Evolve.Creatures
             if (prefab == null) return;
             float a = Random.Range(0f, Mathf.PI * 2f);
             float d = Random.Range(minDistanceFromCenter, radius);
-            Vector3 pos = transform.position + new Vector3(Mathf.Cos(a) * d, prefab.transform.position.y, Mathf.Sin(a) * d);
+            Vector3 pos = OnGround(transform.position.x + Mathf.Cos(a) * d, transform.position.z + Mathf.Sin(a) * d);
             var prey = Instantiate(prefab, pos, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
             prey.HomeCenter = transform.position;
             prey.HomeRadius = radius;
             prey.Caught += OnCaught;
             alive++;
         }
+
+        /// <summary>The prefab's height above the ground at (x, z); on a flat scene without a Terrain the ground is y = 0, as before.</summary>
+        Vector3 OnGround(float x, float z) => new Vector3(x, Evolve.World.GroundHeight.At(x, z, 0f) + prefab.transform.position.y, z);
 
         void OnCaught(Prey p)
         {

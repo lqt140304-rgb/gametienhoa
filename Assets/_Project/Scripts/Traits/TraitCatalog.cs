@@ -33,6 +33,21 @@ namespace Evolve.Traits
 
         public static IReadOnlyList<CoreSO> Cores { get { Load(); return cores; } }
 
+        /// <summary>The pool the birth draw uses: the core assets, or (no assets made yet) the built-in table, so the draw always works.</summary>
+        public static IReadOnlyList<FateCard> FateCards()
+        {
+            Load();
+            if (cores.Count == 0) return TraitSeed.FateCards();
+            var cards = new List<FateCard>();
+            foreach (var c in cores)
+            {
+                var options = new string[c.Options != null ? c.Options.Length : 0][];
+                for (int i = 0; i < options.Length; i++) options[i] = c.Options[i].FlawIds ?? new string[0];
+                cards.Add(new FateCard(c.Id, c.Rarity, options));
+            }
+            return cards;
+        }
+
         public static CoreSO Core(string id)
         {
             Load();

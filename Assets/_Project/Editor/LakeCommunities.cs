@@ -26,7 +26,7 @@ namespace Evolve.EditorTools
 
         internal struct Item { public Mesh Mesh; public Material Material; public Matrix4x4 Matrix; public int MaxLod; public Vector3? Center; }
 
-        [MenuItem("Evolve/Dress Lake: Plant Communities")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Plant Communities")]
         public static void Dress()
         {
             PrototypeSceneBuilder.EnsureFolder(Root + "/Materials");

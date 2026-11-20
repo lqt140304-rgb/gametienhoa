@@ -14,4 +14,5 @@ python3 -m venv .venv-blender && .venv-blender/bin/pip install bpy   # bpy 5.3, 
 - Lưu ý: phải `import bpy` trước `bmesh` và `mathutils`.
 - Ảnh xem trước (3D Cycles CPU, 800×600) ở `docs/art/previews/`; hình trong Unity do chủ dự án chụp.
 
+- `build_cavern_forage.py` / `test_cavern_forage.py`: ba cây hấp thụ được của Hang Khởi Sinh (rêu `Forage_MossClump`, bụi quả than hồng `Forage_EmberBerry`, túi bào tử `Forage_SporePod`); phần phát sáng là object riêng có chữ `Glow` trong tên. Chín loại còn lại (cỏ ngọt, lau, dương xỉ, nấm béo, súng, đá vôi, quặng sắt, muối đá, thạch anh) ở `build_forage.py`. Chạy: `.venv-blender/bin/python -I tools/blender/build_cavern_forage.py --out Assets/_Project/Models/Underroot --previews docs/art/previews`; bản `.fbx.b64` ở `tools/blender/out`, `PropInstaller` ghi ra FBX.
 - `build_landmarks.py` / `test_landmarks.py`: khúc gỗ rỗng, nấm khổng lồ và nhỏ, cung rễ (`python -I tools/blender/build_landmarks.py --out Assets/_Project/Models/Underroot --previews docs/art/previews`). Cần Python 3.11–3.13 cho `bpy` 5.3.

@@ -41,7 +41,7 @@ namespace Evolve.EditorTools
             public bool[] urpDepthTexture = new bool[0];
         }
 
-        [MenuItem("Evolve/Dress Lake: Light and Water Look")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Dress Lake: Light and Water Look")]
         public static void Dress()
         {
             if (EditorSceneManager.GetActiveScene().path != LakeScenePath)
@@ -61,7 +61,7 @@ namespace Evolve.EditorTools
             Debug.Log("Đã đặt ánh sáng và nước (hậu xử lý nhẹ, đèn nấm, shader nước; sương, ambient và màu theo mắt do MonochromeVision lo). Nếu có gì lạ: Evolve → Restore Lake Look (undo).");
         }
 
-        [MenuItem("Evolve/Restore Lake Look (undo)")]
+        [MenuItem("Evolve/Bản đồ cũ (Underroot)/Restore Lake Look (undo)")]
         public static void Restore()
         {
             var b = LoadBackup();

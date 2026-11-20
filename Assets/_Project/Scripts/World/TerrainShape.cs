@@ -5,17 +5,18 @@ namespace Evolve.World
     /// <summary>
     /// Shape of the zone terrain (spec 2026-11-17-lake-map-500m-design): gentle bumps inside the areas (about ±1.3 m),
     /// rolling root-mounds up to ~6 m between them, banks that lie down gently toward the water, the lake / stream / pools
-    /// carved to their depths (ZoneLayout.DepthAt), and a cliff all round the rim with a gap at the north entry.
+    /// carved to their depths (ZoneLayout.DepthAt), and a tall steep wall (55 m) all round the rim with a gap at the north entry:
+    /// the pit opens to the sky (spec 2026-11-19-open-sky-pit-design).
     /// Pure functions of position and seed, so they can be tested and rebuilt identically.
     /// </summary>
     public static class TerrainShape
     {
         /// <summary>TerrainData.size.y in metres.</summary>
-        public const float TerrainHeight = 40f;
+        public const float TerrainHeight = 80f;   // room for a 55 m rim (BaseOffset 9 + 55 = 64 of 80)
         /// <summary>The lake level (y = 0) sits this far above the terrain's lowest point; place the Terrain at y = -BaseOffset.</summary>
         public const float BaseOffset = 9f;
-        public const float CliffStart = 200f;
-        public const float CliffHeight = 20f;
+        public const float CliffStart = 214f;     // the rim wall rises over the last 36 m: about 57 degrees on average, steeper in the middle
+        public const float CliffHeight = 55f;     // open-sky pit: the rim is the edge of the surface world above
 
         const float AreaBumps = 0.65f;   // gentle, long swells: about 0 .. 1.3 m over ~40 m
         const float MoundHeight = 6f;

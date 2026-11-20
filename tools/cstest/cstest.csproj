@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Runs the engine-independent rules and their EditMode tests with plain .NET (no Unity needed).
+       Files listed here must only use what UnityStubs.cs / OrganStubs.cs provide. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);CSTEST</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="UnityStubs.cs;OrganStubs.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Organs/OrganTier.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Survival/FoodProfile.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Survival/NutrientKind.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Swallow/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/Swallow/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Player/BodySize.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Ecology/CarcassStage.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Survival/HudLayout.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Traits/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Traits/TraitSeed.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Traits/DeathLossRules.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/DeathLossRulesTests.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/Traits/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/BodySizeTests.cs" />
+  </ItemGroup>
+</Project>

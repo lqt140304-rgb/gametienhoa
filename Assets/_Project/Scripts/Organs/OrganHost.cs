@@ -8,28 +8,28 @@ namespace Evolve.Organs
     /// <summary>Result of asking whether an organ can be attached.</summary>
     public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom, LackNutrient }
 
-    /// <summary>Result of simulating a known blueprint again.</summary>
-    public enum ResimulateResult { Ok, Unknown, NoExp, Blocked }
+    /// <summary>Result of asking Biến Hình to sculpt an organ.</summary>
+    public enum SculptResult { Ok, NotInShelter, Unknown, NoMass, Blocked, NotPassive }
 
     /// <summary>
-    /// Holds the organs a creature has evolved and grows them with evolution EXP.
-    /// A new organ is a bud (Lv0). Spending GrowthExpRequired EXP grows it to Lv1 (full organ);
-    /// Lv2 costs the same again and Lv3 twice as much; each level adds LevelBonus to its effects.
-    /// EXP comes from eating (a little) and absorbing organs (a lot), into SurvivalState.EvolutionExp.
-    /// The player spends it by hand (body menu) or marks one organ as priority to receive it automatically.
+    /// Holds the organs on the body (Biến Hình). Organs are learned by Giải Mã (AnalysisBook on the Swallower) and
+    /// sculpted from body mass, only in a shelter; removing one gives half the mass back. An organ's level is its
+    /// stars in the book (1..3) and rises as more samples are analysed. A new organ grows in visibly (Shown 0 → 1).
+    /// The nutrient an organ needs running out weakens it and finally dissolves it (it stays learned).
     /// Sockets are found among children automatically.
     /// </summary>
     public class OrganHost : MonoBehaviour
     {
         public const int MaxLevel = 3;
 
+        /// <summary>Passives (eyes included) are hidden: the body stays smooth. Flip to true to show their models again.</summary>
+        public const bool ShowsOnBody = false;
+
         [Tooltip("Max number of organs the body can hold (0 = unlimited, one per slot)")]
         [SerializeField] int maxOrgans = 0;
-        [Tooltip("Evolution EXP gained per unit of food eaten")]
-        [SerializeField] float foodExpRate = 0.2f;
         [Tooltip("Extra effect per level above 1 (0.25 = Lv2 +25%, Lv3 +50%)")]
         [SerializeField] float levelBonus = 0.25f;
-        [Tooltip("How fast the visual catches up with real growth (per second)")]
+        [Tooltip("How fast a freshly sculpted organ grows in (per second)")]
         [SerializeField] float visualCatchUp = 0.5f;
 
         class Entry
@@ -37,12 +37,9 @@ namespace Evolve.Organs
             public OrganSO Organ;
             public GameObject Visual;
             public Vector3 VisualScale;
-            public int Level;        // 0 = bud, 1..MaxLevel
-            public float Progress;   // EXP invested toward the next level
+            public int Level;        // stars, 1..MaxLevel
             public float Shown;      // smoothed 0..1 growth for visuals and effects
             public float Decay;      // 0 healthy .. 1 dissolved (starved of the nutrient it needs)
-            public float Growth => Level >= 1 ? 1f : (Organ.GrowthExpRequired <= 0f ? 1f : Mathf.Clamp01(Progress / Organ.GrowthExpRequired));
-            public float NextCost => Level == 0 ? Organ.GrowthExpRequired : Level < MaxLevel ? Organ.GrowthExpRequired * Level : 0f;
             public bool Maxed => Level >= MaxLevel;
         }
 
@@ -50,30 +47,26 @@ namespace Evolve.Organs
         readonly Dictionary<OrganSlot, Entry> organs = new Dictionary<OrganSlot, Entry>();
         readonly Dictionary<OrganSlot, Transform> sockets = new Dictionary<OrganSlot, Transform>();
         SurvivalStats stats;
-        OrganSO priority;
+        Evolve.Swallow.Swallower swallower;
+        Evolve.Swallow.AnalysisBook watchedBook;
 
         public float SpeedMultiplier { get; private set; } = 1f;
         /// <summary>0 = blind, 1 = fully developed eyes, above 1 = levelled eyes (longer view).</summary>
         public float Sight { get; private set; }
         public bool HasSight => Sight >= 1f;
-        /// <summary>Damage dealt back to attackers (spikes).</summary>
-        public float ContactDamage { get; private set; }
+        /// <summary>Damage dealt back to attackers: passive thorns plus the spikes of an active move while they are out.</summary>
+        public float ContactDamage => passiveContact + (Visuals != null ? Visuals.ContactDamage : 0f);
+        float passiveContact;
+        /// <summary>Set by SkillVisuals when it is added to the body.</summary>
+        public Evolve.Abilities.SkillVisuals Visuals { get; set; }
         public float HeatResistance { get; private set; }
         public IEnumerable<OrganSO> Organs { get { foreach (var e in order) yield return e.Organ; } }
-        public float Exp => stats != null ? stats.State.EvolutionExp : 0f;
 
-        /// <summary>Organ that automatically receives EXP (null = spend by hand only).</summary>
-        public OrganSO Priority
-        {
-            get => priority;
-            set => priority = value != null && Has(value) && !organs[value.Slot].Maxed ? value : null;
-        }
-
-        /// <summary>Raised when an organ is attached as a bud.</summary>
+        /// <summary>Raised when an organ is attached.</summary>
         public event Action<OrganSO> Attached;
-        /// <summary>Raised when a bud becomes a full organ (Lv1).</summary>
+        /// <summary>Raised when a freshly attached organ has fully grown in.</summary>
         public event Action<OrganSO> Completed;
-        /// <summary>Raised when an organ reaches Lv2 or Lv3.</summary>
+        /// <summary>Raised when an organ reaches ★2 or ★3.</summary>
         public event Action<OrganSO, int> LeveledUp;
         /// <summary>Raised when an organ is detached (removed or replaced).</summary>
         public event Action<OrganSO> Removed;
@@ -89,39 +82,31 @@ namespace Evolve.Organs
                 sockets[s.Slot] = s.transform;
         }
 
-        void OnEnable() { if (stats != null) stats.State.FoodFilter = TakeFood; }
-        void OnDisable() { if (stats != null && stats.State.FoodFilter == TakeFood) stats.State.FoodFilter = null; }
+        void OnEnable() => WatchBook();
+        void OnDisable() { if (watchedBook != null) watchedBook.StarsChanged -= OnStarsChanged; watchedBook = null; }
 
-        readonly BlueprintBook blueprints = new BlueprintBook();
-        /// <summary>Blueprints learned so far; they survive losing the organ and dying.</summary>
-        public BlueprintBook Blueprints => blueprints;
-        public bool Knows(OrganSO organ) => organ != null && blueprints.Knows(organ.name);
-        readonly List<OrganSO> known = new List<OrganSO>();
-        /// <summary>Learned blueprints that are not currently attached (what the body menu offers to simulate again).</summary>
-        public void GetSpareBlueprints(List<OrganSO> into)
+        /// <summary>What Giải Mã has learned (null when the body has no Swallower, e.g. a remote avatar).</summary>
+        public Evolve.Swallow.AnalysisBook Book
         {
-            into.Clear();
-            foreach (var o in known) if (!Has(o)) into.Add(o);
-        }
-        public void Learn(OrganSO organ)
-        {
-            if (organ != null && blueprints.Learn(organ.name)) known.Add(organ);
+            get
+            {
+                if (swallower == null) swallower = GetComponent<Evolve.Swallow.Swallower>();
+                return swallower != null ? swallower.Book : null;
+            }
         }
 
-        /// <summary>Grow a known blueprint into a bud again, paying EXP. Works anywhere; an occupied slot is replaced.</summary>
-        public ResimulateResult TryResimulate(OrganSO organ)
+        void WatchBook()
         {
-            if (!Knows(organ)) return ResimulateResult.Unknown;
-            var st = stats != null ? stats : GetComponent<SurvivalStats>();
-            if (st != null && st.State.IsDead) return ResimulateResult.Blocked;
-            var check = Check(organ);
-            if (check != AttachCheck.Ok && check != AttachCheck.SlotOccupied) return ResimulateResult.Blocked; // an occupied slot is replaced
-            float cost = OrganRules.ResimulateCost(organ.Tier);
-            if (st == null || st.State.EvolutionExp < cost) return ResimulateResult.NoExp;
-            if (!TryAttach(organ)) return ResimulateResult.Blocked;
-            st.State.EvolutionExp -= cost;
-            return ResimulateResult.Ok;
+            var b = Book;
+            if (b == null || b == watchedBook) return;
+            if (watchedBook != null) watchedBook.StarsChanged -= OnStarsChanged;
+            watchedBook = b;
+            watchedBook.StarsChanged += OnStarsChanged;
         }
+
+        void OnStarsChanged(OrganSO organ, int stars) => SetLevel(organ, stars);
+
+        public bool Knows(OrganSO organ) { var b = Book; return b != null && b.Knows(organ); }
 
         public bool Has(OrganSO organ) => organ != null && organs.TryGetValue(organ.Slot, out var e) && e.Organ == organ;
 
@@ -152,29 +137,71 @@ namespace Evolve.Organs
             bool lacks = st != null && !st.IsRemote && st.State.IsLacking(organ.EffectiveNutrient);
             if (organs.ContainsKey(organ.Slot)) return lacks ? AttachCheck.LackNutrient : AttachCheck.SlotOccupied;
             if (maxOrgans > 0 && organs.Count >= maxOrgans) return AttachCheck.NoRoom;
+            if (organs.Count >= Evolve.Swallow.SkillRules.MaxPassives) return AttachCheck.NoRoom;   // at most 3 passives
             return lacks ? AttachCheck.LackNutrient : AttachCheck.Ok;
         }
 
-        /// <summary>Growth 0..1 from bud to full organ, or -1 if not owned.</summary>
-        public float GetGrowth(OrganSO organ) => Has(organ) ? organs[organ.Slot].Growth : -1f;
-
-        /// <summary>Level of the organ: 0 = bud, 1..MaxLevel; -1 if not owned.</summary>
-        public int GetLevel(OrganSO organ) => Has(organ) ? organs[organ.Slot].Level : -1;
-
-        /// <summary>EXP invested toward the next level and that level's cost (0 cost = max level).</summary>
-        public void GetProgress(OrganSO organ, out float progress, out float cost)
+        /// <summary>
+        /// Biến Hình: sculpt a learned organ from body mass, only in a shelter. An organ already in that slot is
+        /// removed first and gives half its cost back. The organ comes in at its stars in the book.
+        /// </summary>
+        public SculptResult TrySculpt(OrganSO organ, Evolve.Swallow.AnalysisBook book, Evolve.Swallow.SlimeBody body, bool inShelter)
         {
-            progress = cost = 0f;
+            if (organ == null) return SculptResult.Blocked;
+            if (organ.Use != Evolve.Swallow.GeneUse.Passive) return SculptResult.NotPassive;   // active moves go on keys 1-5 (SkillBar), not on the body
+            if (!inShelter) return SculptResult.NotInShelter;
+            if (book == null || !book.Knows(organ)) return SculptResult.Unknown;
+            var check = Check(organ);
+            if (check != AttachCheck.Ok && check != AttachCheck.SlotOccupied) return SculptResult.Blocked;
+            var rarity = Evolve.Swallow.AnalysisRules.FromTier(organ.Tier);
+            var old = GetInSlot(organ.Slot);
+            float refund = old != null ? Evolve.Swallow.MassRules.Refund(Evolve.Swallow.AnalysisRules.FromTier(old.Tier)) : 0f;
+            if (body == null || !Evolve.Swallow.MassRules.CanSculpt(true, true, body.Mass + refund, rarity)) return SculptResult.NoMass;
+            if (old != null) { Detach(organ.Slot); body.AddMass(refund); }
+            body.TrySpend(Evolve.Swallow.MassRules.SculptCost(rarity));
+            TryAttach(organ, Mathf.Max(1, book.StarsOf(organ)));
+            return SculptResult.Ok;
+        }
+
+        /// <summary>Biến Hình: take an organ off (shelter only) and get half its mass back. The organ stays learned.</summary>
+        public bool Remove(OrganSlot slot, Evolve.Swallow.SlimeBody body, bool inShelter)
+        {
+            if (!inShelter) return false;
+            var old = Detach(slot);
+            if (old == null) return false;
+            if (body != null) body.AddMass(Evolve.Swallow.MassRules.Refund(Evolve.Swallow.AnalysisRules.FromTier(old.Tier)));
+            return true;
+        }
+
+        /// <summary>Raise every worn organ to its stars in the book (also done automatically when the book changes).</summary>
+        public void SyncStars(Evolve.Swallow.AnalysisBook book)
+        {
+            if (book == null) return;
+            foreach (var e in order.ToArray()) SetLevel(e.Organ, book.StarsOf(e.Organ));
+        }
+
+        void SetLevel(OrganSO organ, int stars)
+        {
             if (!Has(organ)) return;
             var e = organs[organ.Slot];
-            progress = e.Progress;
-            cost = e.NextCost;
+            stars = Mathf.Clamp(stars, 1, MaxLevel);
+            if (stars <= e.Level) return;
+            e.Level = stars;
+            Debug.Log($"{name}: {organ.DisplayName} lên ★{stars}");
+            LeveledUp?.Invoke(organ, stars);
+            Recalculate();
         }
+
+        /// <summary>Growth 0..1 while a new organ grows in, or -1 if not owned.</summary>
+        public float GetGrowth(OrganSO organ) => Has(organ) ? organs[organ.Slot].Shown : -1f;
+
+        /// <summary>Stars of the organ (1..MaxLevel); -1 if not owned.</summary>
+        public int GetLevel(OrganSO organ) => Has(organ) ? organs[organ.Slot].Level : -1;
 
         public bool IsMaxed(OrganSO organ) => Has(organ) && organs[organ.Slot].Maxed;
 
-        /// <summary>Attach (or replace) the organ in its slot as a bud. Returns false if already owned.</summary>
-        public bool TryAttach(OrganSO organ)
+        /// <summary>Attach (or replace) the organ in its slot at a level (stars). No mass, shelter or book check: use TrySculpt for play.</summary>
+        public bool TryAttach(OrganSO organ, int level = 1)
         {
             if (organ == null) return false;
             var check = Check(organ);
@@ -182,8 +209,8 @@ namespace Evolve.Organs
 
             if (organs.ContainsKey(organ.Slot)) Detach(organ.Slot);
 
-            var entry = new Entry { Organ = organ };
-            if (organ.VisualPrefab != null)
+            var entry = new Entry { Organ = organ, Level = Mathf.Clamp(level, 1, MaxLevel) };
+            if (organ.VisualPrefab != null && ShowsOnBody)   // no passive shows on the body (spec 6.1): the slime stays smooth; eyes are felt as sight, not seen
             {
                 Transform parent = sockets.TryGetValue(organ.Slot, out var s) ? s : transform;
                 entry.Visual = Instantiate(organ.VisualPrefab, parent, false);
@@ -191,96 +218,44 @@ namespace Evolve.Organs
             }
             organs[organ.Slot] = entry;
             order.Add(entry);
-            Learn(organ);
-
-            if (organ.GrowthExpRequired <= 0f) LevelUp(entry);
             ApplyVisual(entry);
             Recalculate();
             Attached?.Invoke(organ);
             return true;
         }
 
-        /// <summary>Remove the organ in a slot (its growth and levels are lost). Returns it, or null if empty.</summary>
+        /// <summary>Remove the organ in a slot. Returns it, or null if empty.</summary>
         public OrganSO Detach(OrganSlot slot)
         {
             if (!organs.TryGetValue(slot, out var e)) return null;
             if (e.Visual != null) Destroy(e.Visual);
             organs.Remove(slot);
             order.Remove(e);
-            if (priority == e.Organ) priority = null;
             Recalculate();
             Removed?.Invoke(e.Organ);
             return e.Organ;
         }
 
-        /// <summary>
-        /// Spend pooled EXP on an organ, up to its next level (or <paramref name="untilMax"/> all the way).
-        /// Returns the EXP spent.
-        /// </summary>
-        public float Invest(OrganSO organ, bool untilMax = false)
-        {
-            if (!Has(organ) || stats == null) return 0f;
-            var e = organs[organ.Slot];
-            var st = stats.State;
-            float spent = 0f;
-            while (!e.Maxed && st.EvolutionExp > 0f)
-            {
-                float give = Mathf.Min(e.NextCost - e.Progress, st.EvolutionExp);
-                e.Progress += give;
-                st.EvolutionExp -= give;
-                spent += give;
-                if (e.Progress < e.NextCost - 0.0001f) break;
-                LevelUp(e);
-                if (!untilMax) break;
-            }
-            if (e.Maxed && priority == organ) priority = null;
-            if (spent > 0f) Recalculate();
-            return spent;
-        }
-
-        void LevelUp(Entry e)
-        {
-            e.Progress = 0f;
-            e.Level++;
-            if (e.Level == 1)
-            {
-                Debug.Log($"{name} tiến hóa xong: {e.Organ.DisplayName}");
-                Completed?.Invoke(e.Organ);
-            }
-            else
-            {
-                Debug.Log($"{name}: {e.Organ.DisplayName} lên cấp {e.Level}");
-                LeveledUp?.Invoke(e.Organ, e.Level);
-            }
-        }
-
-        /// <summary>Debug: make every bud a full organ (Lv1) immediately.</summary>
+        /// <summary>Debug: make every new organ fully grown immediately.</summary>
         public void DebugGrowAll()
         {
-            foreach (var e in order)
-            {
-                if (e.Level == 0) LevelUp(e);
-                e.Shown = 1f;
-                ApplyVisual(e);
-            }
+            foreach (var e in order) { e.Shown = 1f; ApplyVisual(e); }
             Recalculate();
         }
 
         /// <summary>
-        /// Remote avatars: show this organ at exactly this level, without any EXP involved
-        /// (the real owner spends the EXP on their own machine).
+        /// Remote avatars: show this organ at exactly this level (the real owner learns and sculpts on their own machine).
         /// </summary>
         public void MirrorOrgan(OrganSO organ, int level)
         {
             if (organ == null) return;
-            level = Mathf.Clamp(level, 0, MaxLevel);
-            if (Has(organ) && organs[organ.Slot].Level > level) Detach(organ.Slot); // went back to a bud: start over
-            if (!Has(organ)) TryAttach(organ);
+            level = Mathf.Clamp(level, 1, MaxLevel);
+            if (Has(organ) && organs[organ.Slot].Level > level) Detach(organ.Slot);
+            if (!Has(organ)) TryAttach(organ, level);
             if (!Has(organ)) return;
-
             var e = organs[organ.Slot];
-            while (e.Level < level) LevelUp(e);
-            e.Shown = level >= 1 ? 1f : e.Growth;
+            e.Level = level;
+            e.Shown = 1f;
             Recalculate();
         }
 
@@ -288,40 +263,27 @@ namespace Evolve.Organs
         public void DebugSetLevel(int level)
         {
             level = Mathf.Clamp(level, 1, MaxLevel);
-            foreach (var e in order)
-            {
-                while (e.Level < level) LevelUp(e);
-                e.Shown = 1f;
-            }
+            foreach (var e in order) { if (e.Level < level) e.Level = level; e.Shown = 1f; }
             Recalculate();
-        }
-
-        /// <summary>FoodFilter: all food fills hunger; a little of it also becomes evolution EXP.</summary>
-        float TakeFood(float amount)
-        {
-            if (amount > 0f && stats != null) stats.State.AddExp(amount * foodExpRate);
-            return amount;
         }
 
         void Update()
         {
-            // Priority organ soaks up EXP automatically.
-            if (priority != null && Exp > 0f) Invest(priority, true);
-
+            WatchBook();
             bool changed = false;
             foreach (var e in order)
             {
-                float target = e.Growth;
-                if (Mathf.Approximately(e.Shown, target)) continue;
-                e.Shown = Mathf.MoveTowards(e.Shown, target, visualCatchUp * Time.deltaTime);
+                if (e.Shown >= 1f) continue;
+                e.Shown = Mathf.MoveTowards(e.Shown, 1f, visualCatchUp * Time.deltaTime);
                 ApplyVisual(e);
                 changed = true;
+                if (e.Shown >= 1f) Completed?.Invoke(e.Organ);
             }
             if (changed) Recalculate();
             UpdateStarvation();
         }
 
-        /// <summary>The nutrient an organ needs running out weakens it, and in the end dissolves it (it drops as a pickup for now).</summary>
+        /// <summary>The nutrient an organ needs running out weakens it, and in the end dissolves it (it stays learned).</summary>
         void UpdateStarvation()
         {
             if (stats == null || stats.IsRemote || stats.State.IsDead || stats.Config == null || order.Count == 0) return;
@@ -346,7 +308,6 @@ namespace Evolve.Organs
             var organ = dissolve.Organ;
             Debug.Log($"{name}: {organ.DisplayName} tan vì thiếu {NutrientKinds.SlimeName(organ.EffectiveNutrient)}");
             Detach(organ.Slot);
-            OrganPickup.Spawn(organ, new Vector3(transform.position.x, Evolve.World.GroundHeight.At(transform.position.x, transform.position.z, 0f) + 0.25f, transform.position.z));
             Dissolved?.Invoke(organ);
         }
 
@@ -356,7 +317,7 @@ namespace Evolve.Organs
         void ApplyVisual(Entry e)
         {
             if (e.Visual == null) return;
-            // Buds grow to full size; each extra level makes the organ a bit bigger.
+            // New organs grow in; each extra star makes the organ a bit bigger.
             float levelScale = 1f + 0.1f * Mathf.Max(0, e.Level - 1);
             e.Visual.transform.localScale = e.VisualScale * Mathf.Lerp(0.15f, 1f, e.Shown) * levelScale * (1f - 0.3f * e.Decay); // a starving organ visibly shrinks
         }
@@ -370,6 +331,7 @@ namespace Evolve.Organs
             foreach (var e in order)
             {
                 ApplyVisual(e);
+                if (e.Organ.Use == Evolve.Swallow.GeneUse.Active) continue;   // an active move changes nothing while it rests
                 float k = Strength(e);
                 speed *= 1f + (e.Organ.SpeedMultiplier - 1f) * k;
                 if (e.Organ.GrantsSight) sight = Mathf.Max(sight, k);
@@ -383,7 +345,7 @@ namespace Evolve.Organs
             }
             SpeedMultiplier = speed;
             Sight = sight;
-            ContactDamage = contact;
+            passiveContact = contact;
             HeatResistance = heat;
             if (stats != null) stats.State.HeatResistance = heat;
             Changed?.Invoke();
