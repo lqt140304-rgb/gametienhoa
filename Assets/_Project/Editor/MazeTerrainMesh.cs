@@ -316,7 +316,8 @@ namespace Evolve.EditorTools
             {
                 if (!mf.gameObject.name.EndsWith("_COL") || mf.sharedMesh == null) continue;
                 hasColChild = true;
-                var mc = mf.gameObject.GetComponent<MeshCollider>() ?? mf.gameObject.AddComponent<MeshCollider>();
+                if (!mf.gameObject.TryGetComponent<MeshCollider>(out var mc) || mc == null)
+                    mc = mf.gameObject.AddComponent<MeshCollider>();
                 mc.sharedMesh = mf.sharedMesh;
                 mc.convex = false;
                 var mr = mf.GetComponent<MeshRenderer>();

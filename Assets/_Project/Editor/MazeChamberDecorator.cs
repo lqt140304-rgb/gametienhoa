@@ -144,7 +144,8 @@ namespace Evolve.EditorTools
                 if (mf.gameObject.name.EndsWith("_COL"))
                 {
                     hasColChild = true;
-                    colMc = mf.gameObject.GetComponent<MeshCollider>() ?? mf.gameObject.AddComponent<MeshCollider>();
+                    if (!mf.gameObject.TryGetComponent<MeshCollider>(out colMc) || colMc == null)
+                        colMc = mf.gameObject.AddComponent<MeshCollider>();
                     colMc.sharedMesh = mf.sharedMesh;
                     colMc.convex = false;
                     var mr = mf.GetComponent<MeshRenderer>();

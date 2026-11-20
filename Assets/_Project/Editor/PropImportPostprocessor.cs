@@ -69,7 +69,8 @@ namespace Evolve.EditorTools
                 var mesh = c.GetComponent<MeshFilter>()?.sharedMesh;
                 if (mesh != null)
                 {
-                    var mc = c.gameObject.GetComponent<MeshCollider>() ?? c.gameObject.AddComponent<MeshCollider>();
+                    if (!c.gameObject.TryGetComponent<MeshCollider>(out var mc) || mc == null)
+                        mc = c.gameObject.AddComponent<MeshCollider>();
                     mc.sharedMesh = mesh;
                     mc.convex = false;
                 }
