@@ -17,7 +17,7 @@
 
 ## Quy tắc thêm (chủ dự án, sau khi xem bản phác)
 **Bộ phận cơ thể (lưỡi, ngòi, chân, vỏ) là chính thạch của slime**: cùng màu và chất liệu với thân (vật liệu thân slime, màu người chơi chọn), thò ra từ thân rồi thu lại vào thân; không phải vật thể màu riêng "mọc thêm". Hiệu ứng ngoài thân (vòng sóng, khiên tinh thể, hạt, sao choáng) vẫn theo màu họ kỹ năng.
-Áp dụng: Lưỡi Dài (lưỡi thạch có núm dính), Châm Choáng (gai thạch nhọn), Bám Vách (chân thạch ấn vào vách), Thu Mình (vỏ thạch dày lên). Khiên Quặng vẫn là mảnh tinh thể (quặng slime đã nuốt), chờ chủ dự án xác nhận.
+Áp dụng: Lưỡi Dài (lưỡi thạch có núm dính), Châm Choáng (gai thạch nhọn), Bám Vách (chân thạch ấn vào vách), Thu Mình (vỏ thạch dày lên). Khiên Quặng vẫn là mảnh tinh thể (quặng slime đã nuốt): chủ dự án đã đồng ý.
 
 ## Cách làm (do mình quyết)
 - `Shaders/SkillGel.shader`: viền sáng (Fresnel) + tan dần có đường biên sáng; dùng lại `GlowParticle` cho hạt lấp lánh.
