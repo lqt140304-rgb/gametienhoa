@@ -298,9 +298,9 @@ namespace Evolve.Maze
                     int maxDepth = Math.Max((int)a.Depth, (int)b.Depth);
                     obs = maxDepth switch
                     {
-                        0 => rng.NextFloat() < 0.5f ? ObstacleKind.Flooded : ObstacleKind.HighWall,
-                        1 => (ObstacleKind)rng.Range(1, 4), // Flooded, HighWall, CrumblingRock
-                        _ => (ObstacleKind)rng.Range(1, 6)  // Toàn bộ 5 loại chướng ngại
+                        0 => ObstacleKind.HighWall,
+                        1 => rng.NextFloat() < 0.5f ? ObstacleKind.HighWall : ObstacleKind.CrumblingRock,
+                        _ => (ObstacleKind)rng.Range(2, 6) // HighWall, CrumblingRock, HotDry, PitchDark (không sinh Flooded)
                     };
                 }
             }

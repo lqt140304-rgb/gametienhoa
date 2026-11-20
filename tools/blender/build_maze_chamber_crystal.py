@@ -347,8 +347,32 @@ def _land_neck_factor(x):
     w = 0.0
     for nx_p in LAND_NECK_X:
         d = abs(x - nx_p)
-        w = max(w, 1.0 - _smoothstep(2.8, 6.2, d))
+        w = max(w, 1.0 - _smoothstep(4.8, 9.6, d))
     return w
+
+
+def _walkway_corridor_factor(x, y):
+    """Hành lang đi bộ êm cho người chơi & quái: 4 cổ đất, vành đai Bắc/Nam khe vực, 3 cửa hầm & dốc Đông."""
+    u = _boundary_u(x, y)
+    in_cavity = 1.0 - _smoothstep(0.70, 0.86, u)
+
+    neck_w = _land_neck_factor(x) * in_cavity
+
+    cy_main = _chasm_center_y(x)
+    north_rim = (1.0 - _smoothstep(3.0, 9.5, abs(y - (cy_main + 15.5)))) * (1.0 - _smoothstep(36.0, 56.0, abs(x)))
+    south_rim = (1.0 - _smoothstep(3.0, 9.5, abs(y - (cy_main - 15.5)))) * (1.0 - _smoothstep(34.0, 54.0, abs(x)))
+
+    ang = math.atan2(y, x)
+    alcove_lane = 0.0
+    for ta in TUNNEL_ANGLES:
+        da = abs(_delta_ang(ang, ta))
+        a_w = 1.0 - _smoothstep(math.radians(7.0), math.radians(16.0), da)
+        r_w = _smoothstep(0.32, 0.48, u) * (1.0 - _smoothstep(0.88, 0.96, u))
+        alcove_lane = max(alcove_lane, a_w * r_w)
+
+    ramp_w, _ = _east_ramp_info(x, y)
+    south_plaza = 1.0 - _smoothstep(8.0, 18.0, math.sqrt((x + 2.0) ** 2 + (y + 42.0) ** 2))
+    return max(neck_w, north_rim, south_rim, alcove_lane, ramp_w, south_plaza)
 
 
 def _terrace2_dist(x, y):
@@ -413,8 +437,10 @@ def terrain_height(x, y):
     n2 = _ridged(p_noise * 1.45)
     n3 = _ridged(p_noise * 4.2)
 
-    # 1. Nền đất đá hắc diện LỒI LÕM GÃY BẬC MẠNH (±4m .. ±7.5m): sống đá đứt gãy + hõm sụt lún + góc cạnh sắc
-    fault_ridges = 3.6 * (n2 - 0.42) + 2.6 * n1 + 1.15 * (n3 - 0.5)
+    walkway_w = _walkway_corridor_factor(x, y)
+
+    # 1. Nền đất đá hắc diện LỒI LÕM vừa phải, êm hơn dọc theo hành lang & cổ đất để quái và người chơi đi lại dễ dàng
+    fault_ridges = (2.05 * (n2 - 0.42) + 1.45 * n1 + 0.48 * (n3 - 0.5)) * (1.0 - 0.68 * walkway_w)
     h = 1.65 + fault_ridges
     east_rise = _smoothstep(18.0, 58.0, x) * 4.8 + _smoothstep(16.0, 58.0, y) * 3.8
     west_knoll = _smoothstep(-18.0, -58.0, x) * _smoothstep(15.0, -40.0, y) * 4.6
@@ -457,10 +483,10 @@ def terrain_height(x, y):
         t3_h = _terrace_profile_height(d3, TERRACE3_WATER_Z, 9.60, math.radians(-130.0), x - 8.0, y - 49.0)
         h = _mix_val(h, max(h, t3_h) if d3 >= 0.87 else t3_h, w3)
 
-    # Bậc thềm đá vát cạnh sắc nét rõ rệt khắp toàn bộ mặt đất nền
+    # Bậc thềm đá vát cạnh dịu hơn trên mặt nền, phẳng êm ở hành lang đi bộ
     if h > -1.0:
-        strata = _stepped((h + 3.5) / 14.0, steps=9.0, sharp=0.88) * 14.0 - 3.5
-        strata_w = _smoothstep(-1.0, 1.8, h) * 0.58 * (1.0 - ramp_w * 0.35)
+        strata = _stepped((h + 3.5) / 14.0, steps=9.0, sharp=0.56) * 14.0 - 3.5
+        strata_w = _smoothstep(-1.0, 1.8, h) * 0.26 * (1.0 - 0.82 * walkway_w) * (1.0 - ramp_w * 0.35)
         h = _mix_val(h, strata, strata_w)
 
     # Vách bao gãy khúc vươn lên trần + 3 hốc cửa hầm
@@ -653,16 +679,18 @@ def build_chamber_shell(rng):
         _add_rock_pillar(bm, px, py, bz, tz, rb, rm, sv)
         _add_rock_pillar(bm_col, px, py, bz, tz, rb, rm, sv)
 
-    # Đắp 42 Mỏm Đá Hắc Diện Góc Cạnh & Phiến Đá Nghiêng trực tiếp trên nền & mép vực (làm nền lồi lõm rõ rệt)
+    # Đắp 20 Mỏm Đá Hắc Diện Góc Cạnh tránh hoàn toàn các hành lang đi bộ & cổ đất
     cam_clears = [(24.0, -56.0), (6.0, -25.0), (-22.0, 44.0), (-25.0, -15.0)]
     crags_placed = 0
-    for ci in range(120):
-        if crags_placed >= 42:
+    for ci in range(160):
+        if crags_placed >= 20:
             break
         ang = rng.uniform(0.0, 2.0 * math.pi)
         rad = rng.uniform(0.10, 0.70) ** 0.75
         cx = math.cos(ang) * 90.0 * rad
         cy = math.sin(ang) * 70.0 * rad
+        if _walkway_corridor_factor(cx, cy) > 0.22:
+            continue
         if any((cx - kx) ** 2 + (cy - ky) ** 2 < 64.0 for kx, ky in cam_clears):
             continue
         cz = terrain_height(cx, cy)
@@ -670,11 +698,11 @@ def build_chamber_shell(rng):
             continue
         if (_terrace2_dist(cx, cy) < 0.90 and cz < TERRACE2_WATER_Z + 0.3) or (_terrace3_dist(cx, cy) < 0.90 and cz < TERRACE3_WATER_Z + 0.3):
             continue
-        sc = rng.uniform(2.2, 4.8)
-        rot = (rng.uniform(-0.45, 0.45), rng.uniform(-0.45, 0.45), rng.uniform(0.0, 6.28))
-        scale_v = Vector((sc * rng.uniform(0.9, 1.5), sc * rng.uniform(0.6, 1.2), sc * rng.uniform(0.7, 1.45)))
-        _add_faceted_obsidian_rock(bm, Vector((cx, cy, cz - sc * 0.38)), scale_v, ci * 4.3, rot)
-        _add_faceted_obsidian_rock(bm_col, Vector((cx, cy, cz - sc * 0.38)), scale_v, ci * 4.3, rot)
+        sc = rng.uniform(2.0, 4.0)
+        rot = (rng.uniform(-0.35, 0.35), rng.uniform(-0.35, 0.35), rng.uniform(0.0, 6.28))
+        scale_v = Vector((sc * rng.uniform(0.9, 1.4), sc * rng.uniform(0.7, 1.2), sc * rng.uniform(0.55, 1.05)))
+        _add_faceted_obsidian_rock(bm, Vector((cx, cy, cz - sc * 0.52)), scale_v, ci * 4.3, rot)
+        _add_faceted_obsidian_rock(bm_col, Vector((cx, cy, cz - sc * 0.52)), scale_v, ci * 4.3, rot)
         crags_placed += 1
 
     # Tính pháp tuyến RIÊNG cho khối phụ, TUYỆT ĐỐI không lật ngược mặt lưới địa hình hở!
@@ -1137,16 +1165,18 @@ def build_crystal_architecture_and_ceiling_life(walk_bvh, stalactite_buds, rng):
             continue
         _add_raw_ore_vein_outcrop(bm_stone_root, bm_crystal, loc, rng.uniform(1.1, 1.65), rng, glow_hints, 1 if bi % 2 == 0 else 0)
 
-    # 3. 32 Vỉa Quặng Thô Lộ Thiên & Khối U Quặng Nứt Toác kích thước lớn trên gò đá nền (tránh che camera)
+    # 3. 32 Vỉa Quặng Thô Lộ Thiên & Khối U Quặng Nứt Toác kích thước lớn trên gò đá nền (tránh hành lang & camera)
     cam_clears = [(24.0, -56.0), (6.0, -25.0), (-22.0, 44.0), (-25.0, -15.0)]
     placed_seams = 0
-    for ti in range(120):
+    for ti in range(180):
         if placed_seams >= 32:
             break
         ang = rng.uniform(0.0, 2.0 * math.pi)
         rad = rng.uniform(0.10, 0.72) ** 0.80
         tx = math.cos(ang) * 92.0 * rad
         ty = math.sin(ang) * 72.0 * rad
+        if _walkway_corridor_factor(tx, ty) > 0.42:
+            continue
         if any((tx - kx) ** 2 + (ty - ky) ** 2 < 49.0 for kx, ky in cam_clears):
             continue
         loc, norm = ray_ground(walk_bvh, tx, ty, start_z=24.0)
@@ -1411,15 +1441,17 @@ def build_raw_ore_deposits(walk_bvh, rng):
         _build_stacked_shard_crust_cluster(),
     ]
 
-    # 1. Rải ~360 Phiến Đá Hắc Diện Gãy Sắc
+    # 1. Rải ~300 Phiến Đá Hắc Diện Gãy Sắc ngoài hành lang đi bộ chính
     slabs_placed = 0
-    for _ in range(1100):
-        if slabs_placed >= 360:
+    for _ in range(1200):
+        if slabs_placed >= 300:
             break
         ang = rng.uniform(0.0, 2.0 * math.pi)
         rad = rng.uniform(0.04, 0.74) ** 0.74
         gx = math.cos(ang) * 94.0 * rad
         gy = math.sin(ang) * 74.0 * rad
+        if _walkway_corridor_factor(gx, gy) > 0.45:
+            continue
         loc, norm = ray_ground(walk_bvh, gx, gy, start_z=24.0)
         if loc is None or norm.z < 0.45 or loc.z < -3.0 or loc.z > 13.5 or _is_under_upper_fluid(loc.x, loc.y, loc.z):
             continue
@@ -1431,15 +1463,17 @@ def build_raw_ore_deposits(walk_bvh, rng):
         _copy_bmesh_into(bm_slab_tmpl, bm_slabs, xform)
         slabs_placed += 1
 
-    # 2. Rải ~240 Cụm Quặng Thô & Khoáng Biến Dị (4 kiểu sắc cạnh)
+    # 2. Rải ~240 Cụm Quặng Thô & Khoáng Biến Dị (4 kiểu sắc cạnh, tránh chắn giữa hành lang)
     ores_placed = 0
-    for _ in range(1000):
+    for _ in range(1200):
         if ores_placed >= 240:
             break
         ang = rng.uniform(0.0, 2.0 * math.pi)
         rad = rng.uniform(0.04, 0.72) ** 0.78
         ux = math.cos(ang) * 92.0 * rad
         uy = math.sin(ang) * 72.0 * rad
+        if _walkway_corridor_factor(ux, uy) > 0.45:
+            continue
         loc, norm = ray_ground(walk_bvh, ux, uy, start_z=24.0)
         if loc is None or norm.z < 0.45 or loc.z < -3.0 or loc.z > 13.0 or _is_under_upper_fluid(loc.x, loc.y, loc.z):
             continue

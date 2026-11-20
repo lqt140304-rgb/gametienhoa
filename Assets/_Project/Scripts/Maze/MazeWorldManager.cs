@@ -11,7 +11,7 @@ namespace Evolve.Maze
     /// </summary>
     public class MazeWorldManager : MonoBehaviour
     {
-        public const int CurrentBuildVersion = 5;
+        public const int CurrentBuildVersion = 6;
 
         [SerializeField] int seed = 2026;
         [SerializeField] int chamberCount = MazeGenerator.DefaultChambers;
@@ -25,6 +25,10 @@ namespace Evolve.Maze
         public int CurrentChamberId => currentChamberId;
         public int BuildVersion => buildVersion;
         public MazeGraph Graph { get; private set; }
+        public IMazeAdjacency Adjacency => Graph;
+
+        public IReadOnlyList<int> GetAdjacentChambers(int chamberId) =>
+            Graph != null ? Graph.GetAdjacentChamberIds(chamberId) : Array.Empty<int>();
 
         public ChamberInstance CurrentChamber =>
             chamberMap.TryGetValue(currentChamberId, out var inst) ? inst : null;

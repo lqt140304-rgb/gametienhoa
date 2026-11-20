@@ -58,6 +58,9 @@ namespace Evolve.World
         // Temporary wide reveal from the vibration scan.
         float revealStart = -1f, revealRadius, revealExpand, revealHold, revealFade;
 
+        /// <summary>Phát ra mỗi khi Sóng Dò (phím C) được kích hoạt: (vị trí nguồn, bán kính tối đa).</summary>
+        public static event System.Action<Vector3, float> SonarPulsed;
+
         void Awake()
         {
             var volume = GetComponent<Volume>();
@@ -164,6 +167,7 @@ namespace Evolve.World
             revealExpand = Mathf.Max(0.01f, expand);
             revealHold = hold;
             revealFade = Mathf.Max(0.01f, fade);
+            SonarPulsed?.Invoke(waveOrigin, revealRadius);
         }
 
         /// <summary>Current radius of the scan light (0 when none).</summary>

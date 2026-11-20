@@ -3,11 +3,18 @@ using System.Collections.Generic;
 
 namespace Evolve.Maze
 {
+    /// <summary>Giao diện truy vấn khoang kề nhau dùng cho hệ sinh thái di cư.</summary>
+    public interface IMazeAdjacency
+    {
+        IReadOnlyList<int> GetAdjacentChamberIds(int chamberId);
+        bool AreAdjacent(int aChamberId, int bChamberId);
+    }
+
     /// <summary>
     /// Đồ thị mê cung khoang: 12–16 khoang chia 3 tầng sâu (Nông, Giữa, Sâu).
     /// Bất biến theo seed trong suốt một vòng chơi.
     /// </summary>
-    public sealed class MazeGraph
+    public sealed class MazeGraph : IMazeAdjacency
     {
         readonly Dictionary<int, ChamberNode> chambersById = new Dictionary<int, ChamberNode>();
         readonly Dictionary<int, List<TunnelEdge>> tunnelsByChamber = new Dictionary<int, List<TunnelEdge>>();
@@ -59,6 +66,18 @@ namespace Evolve.Maze
         }
 
         public int CountTunnels(int chamberId) => GetTunnels(chamberId).Count;
+
+        public IReadOnlyList<int> GetAdjacentChamberIds(int chamberId) => GetNeighborIds(chamberId);
+
+        public bool AreAdjacent(int aChamberId, int bChamberId)
+        {
+            if (!tunnelsByChamber.TryGetValue(aChamberId, out var list)) return false;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].OtherEnd(aChamberId) == bChamberId) return true;
+            }
+            return false;
+        }
 
         public IReadOnlyList<int> GetNeighborIds(int chamberId)
         {

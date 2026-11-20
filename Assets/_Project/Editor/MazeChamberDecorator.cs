@@ -109,8 +109,8 @@ namespace Evolve.EditorTools
             // 3. Thức ăn (Nutrient) phân bố tự nhiên
             PlaceHandcraftedLumaForage(parent, chamberCollider, profile, glowMat, rnd);
 
-            // 4. Sinh vật sinh thái
-            PlaceCreatures(parent, node, 65f, profile, rnd);
+            // 4. Sinh vật sinh thái Đợt 1 + Tổ (Den) + LightShafts + Kỳ ngộ Cầu Vồng Trong Thân
+            CaveWave1ScenePopulator.PopulateLumaChamber(parent, parent.position, chamberCollider);
 
             // 5. Hệ thống chiếu sáng đa tầng
             var lights = BuildHandcraftedLumaLighting(parent, mainLightColor, accentLightColor);
@@ -401,8 +401,8 @@ namespace Evolve.EditorTools
             // 3. Thức ăn (Nutrient/Ore) phân bố tự nhiên trên các mỏm đá & hốc quặng
             PlaceHandcraftedCrystalForage(parent, chamberCollider, profile, glowMat, rnd);
 
-            // 4. Sinh vật sinh thái
-            PlaceCreatures(parent, node, 68f, profile, rnd);
+            // 4. Sinh vật sinh thái Đợt 1 + Tổ (Den) + LightShafts + Kỳ ngộ Hợp Âm Tinh Thể
+            CaveWave1ScenePopulator.PopulateCrystalChamber(parent, parent.position, chamberCollider);
 
             // 5. Hệ thống chiếu sáng đa tầng (khuếch tán vòm + hắt ngược đáy vực -5.5m + vùng đi bộ)
             var lights = BuildHandcraftedCrystalLighting(parent, mainLightColor, accentLightColor);

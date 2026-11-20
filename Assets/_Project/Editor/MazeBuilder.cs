@@ -50,6 +50,7 @@ namespace Evolve.EditorTools
         {
             PropInstaller.EnsureRocks();
             PropInstaller.EnsureLandmarks();
+            CaveCreaturesWave1Builder.EnsureAll();
 
             // Dọn cả Cavern Maze Wall cũ (nếu có) để không bị 2 bộ miệng hang trùng nhau
             var oldWall = GameObject.Find("Cavern Maze Wall");
@@ -147,7 +148,11 @@ namespace Evolve.EditorTools
                 inst.ConfigureTerrain(terrainSeed, ChamberRadius, node.HasHighLedge, tunnelAngles);
 
                 MeshCollider floor3d = null;
-                if (!isBirth)
+                if (isBirth)
+                {
+                    CaveWave1ScenePopulator.PopulateBirthCavern(chamberGo.transform, origin);
+                }
+                else
                 {
                     MazeChamberDecorator.Decorate(chamberGo.transform, node, ChamberRadius, tunnelAngles, mossMat);
                     floor3d = FindHandcraftedFloorCollider(chamberGo);
