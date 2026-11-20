@@ -23,6 +23,11 @@ namespace Evolve.Creatures
 
         /// <summary>A gentle cave lord (start cavern) ignores players until one hurts it (<see cref="CaveTier.IsCalm"/>).</summary>
         public bool Gentle { get; set; }
+
+        /// <summary>A slime is latched on (Combat/LatchSession).</summary>
+        public bool Latched { get; set; }
+        /// <summary>Until this time it has learned to watch for that slime from farther away.</summary>
+        public float RememberSlimeUntil { get; set; }
         float provokedUntil;
         bool Calm => CaveTier.IsCalm(Gentle, provokedUntil, Time.time);
 
@@ -290,7 +295,7 @@ namespace Evolve.Creatures
             foreach (var p in SurvivalStats.All)
             {
                 if (p.State.IsDead || SafeZone.Contains(p.transform.position) || (TargetFilter != null && !TargetFilter(p))) continue;
-                float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p) * Evolve.Abilities.BodyState.DetectMultiplier(p);   // Nhân Ngụy Sắc, Phát Sáng
+                float radius = detectRadius * (Time.time < RememberSlimeUntil ? 1.3f : 1f) * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p) * Evolve.Abilities.BodyState.DetectMultiplier(p);   // Nhân Ngụy Sắc, Phát Sáng
                 if (Vector3.Distance(pos, p.transform.position) <= radius || Evolve.Traits.TraitSense.SmellsTrail(p, pos)) { target = p; break; }   // Vệt Mùi
             }
         }

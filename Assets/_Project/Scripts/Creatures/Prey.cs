@@ -51,6 +51,14 @@ namespace Evolve.Creatures
         public float Boost { get; set; } = 1f;
         /// <summary>Until this time it flees from a threat at any distance.</summary>
         public float ForceFleeUntil { get; set; }
+
+        /// <summary>A slime is latched on (Combat/LatchSession): killing it leaves a carcass instead of an instant swallow, so it keeps its genes.</summary>
+        public bool Latched { get; set; }
+        /// <summary>Until this time it has learned to fear that slime and flees from farther away.</summary>
+        public float RememberSlimeUntil { get; set; }
+
+        /// <summary>A pounce (Vồ) by a slime that can swallow it whole: the normal catch.</summary>
+        public void PounceCatch(SurvivalStats by) => TryCatch(by);
         public bool Zigzag { get; set; }
         /// <summary>No vibration pulse while it flees (Bướm Đêm).</summary>
         public bool Silent { get; set; }
@@ -130,7 +138,7 @@ namespace Evolve.Creatures
             {
                 dir = Vector3.zero; speed = 0f;
             }
-            else if (threat != null && (dist < fleeRadius || Time.time < ForceFleeUntil))
+            else if (threat != null && (dist < fleeRadius * (Time.time < RememberSlimeUntil ? 1.5f : 1f) || Time.time < ForceFleeUntil))
             {
                 dir = pos - threat.position; dir.y = 0f; dir.Normalize();
                 speed = fleeSpeed;
@@ -237,7 +245,7 @@ namespace Evolve.Creatures
             Damaged?.Invoke(amount, by);
             if (Health > 0f) return;
 
-            if (by != null) Catch(by);
+            if (by != null && !Latched) Catch(by);
             else
             {
                 caught = true;

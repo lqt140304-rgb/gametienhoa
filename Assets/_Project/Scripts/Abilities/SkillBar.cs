@@ -45,6 +45,8 @@ namespace Evolve.Abilities
             stats = GetComponent<SurvivalStats>();
             host = GetComponent<OrganHost>();
             BodyState.On(gameObject);   // always there: it applies Vỏ Cứng and the timed states of body skills
+            if (!TryGetComponent<Evolve.Combat.Pounce>(out _)) gameObject.AddComponent<Evolve.Combat.Pounce>();   // Vồ: the basic action every slime has
+            if (!TryGetComponent<Evolve.Combat.LatchHud>(out _)) gameObject.AddComponent<Evolve.Combat.LatchHud>();
         }
 
         void OnDestroy() { foreach (var s in sprints.Values) if (s != null) Destroy(s); sprints.Clear(); }
