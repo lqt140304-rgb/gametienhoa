@@ -115,8 +115,11 @@ namespace Evolve.Maze
 
         public static readonly ChamberTheme[] GiuaThemes =
         {
-            ChamberTheme.LimestoneStalactite,
             ChamberTheme.CrystalVein,
+            ChamberTheme.GlowMushroomCavern,
+            ChamberTheme.HotSpringCavern,
+            ChamberTheme.HowlingWindGorge,
+            ChamberTheme.LimestoneStalactite,
             ChamberTheme.SporeCurtain,
             ChamberTheme.DeepRootTangle
         };
@@ -335,6 +338,63 @@ namespace Evolve.Maze
                 new[] { "Predator" }, 1),
 
             // ---------------- TẦNG GIỮA ----------------
+            [ChamberTheme.GlowMushroomCavern] = new ChamberThemeProfile(
+                ChamberTheme.GlowMushroomCavern,
+                "Hang Nấm Huỳnh Quang",
+                new MazeColor(0.14f, 0.20f, 0.28f),
+                new MazeColor(0.18f, 0.22f, 0.30f),
+                0.20f, 0.17f,
+                new MazeColor(0.38f, 0.90f, 0.92f), 2.5f,
+                new MazeColor(0.58f, 0.42f, 0.95f), 1.9f,
+                new[] { "LumaShroom_0", "LumaShroom_1", "Mushroom_Giant_0", "CaveShroom_3", "Flora_Mushrooms_0" },
+                new[] { "VaultPod_0", "VaultCurtain_0" },
+                new[]
+                {
+                    new ThemeForageItem("Forage_FatMushroom", "Nấm Béo", FoodKind.FatMushroom),
+                    new ThemeForageItem("Forage_SporePod", "Túi Bào Tử", FoodKind.SporePod)
+                },
+                9,
+                new[] { "NamDiBo", "BuomBaoTu" }, 6,
+                new[] { "EchDocDom", "NamKhongLo" }, 2),
+
+            [ChamberTheme.HotSpringCavern] = new ChamberThemeProfile(
+                ChamberTheme.HotSpringCavern,
+                "Suối Nước Nóng",
+                new MazeColor(0.24f, 0.16f, 0.12f),
+                new MazeColor(0.22f, 0.15f, 0.13f),
+                0.22f, 0.18f,
+                new MazeColor(1.00f, 0.56f, 0.26f), 2.2f,
+                new MazeColor(0.95f, 0.78f, 0.32f), 1.6f,
+                new[] { "Cliff_3", "Flora_Pebbles_2", "BulbPlant_1" },
+                new[] { "VaultStalactite_2", "VaultCurtain_1" },
+                new[]
+                {
+                    new ThemeForageItem("Forage_EmberBerry", "Quả Than Hồng", FoodKind.EmberBerry),
+                    new ThemeForageItem("Forage_Quartz", "Thạch Anh Sáng", FoodKind.GlowQuartz, isMineral: true)
+                },
+                7,
+                new[] { "OcLuuHuynh", "CuaDaNong" }, 6,
+                new[] { "KyNhongLua", "RanDungNham" }, 2),
+
+            [ChamberTheme.HowlingWindGorge] = new ChamberThemeProfile(
+                ChamberTheme.HowlingWindGorge,
+                "Khe Gió Hú",
+                new MazeColor(0.18f, 0.21f, 0.26f),
+                new MazeColor(0.22f, 0.25f, 0.30f),
+                0.26f, 0.19f,
+                new MazeColor(0.66f, 0.86f, 1.00f), 1.8f,
+                new MazeColor(0.48f, 0.78f, 0.96f), 1.4f,
+                new[] { "Cliff_1", "Cliff_2", "Flora_Pebbles_0", "Flora_Fern_2" },
+                new[] { "VaultStalactite_0", "VaultStalactite_1" },
+                new[]
+                {
+                    new ThemeForageItem("Forage_BitterFern", "Dương Xỉ Đắng", FoodKind.BitterFern),
+                    new ThemeForageItem("Forage_LimeCrystal", "Đá Vôi", FoodKind.LimeCrystal, isMineral: true)
+                },
+                6,
+                new[] { "DeGio", "ChuotGio" }, 6,
+                new[] { "ChonKhe", "CaoGio" }, 2),
+
             [ChamberTheme.LimestoneStalactite] = new ChamberThemeProfile(
                 ChamberTheme.LimestoneStalactite,
                 "Động Thạch Nhũ Vôi",

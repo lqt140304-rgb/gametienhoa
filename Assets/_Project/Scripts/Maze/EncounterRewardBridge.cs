@@ -81,6 +81,29 @@ namespace Evolve.Maze
                 stats.State.Health = stats.State.MaxHealth;
         }
 
+        public static bool RerollFlaw(GameObject player, int seed)
+        {
+            if (player == null) return false;
+            if (TryInvokeStatic("RerollFlaw", player, seed)) return true;
+            Say("Một Khuyết Điểm trong cơ thể bỗng rung chuyển và đổi sang dạng khác...");
+            return true;
+        }
+
+        public static bool AddHeatResistance(GameObject player, float value)
+        {
+            if (player == null) return false;
+            if (TryInvokeStatic("AddHeatResistance", player, value)) return true;
+            Say("Lớp màng ngoài đã tôi luyện qua hơi nóng — chịu nhiệt tốt hơn suốt vòng.");
+            return true;
+        }
+
+        public static bool GiveStomachItems(GameObject player, string[] items)
+        {
+            if (player == null) return false;
+            if (TryInvokeStatic("GiveStomachItems", player, items)) return true;
+            return true;
+        }
+
         static bool TryInvokeStatic(string methodName, params object[] args)
         {
             var t = RewardsType;

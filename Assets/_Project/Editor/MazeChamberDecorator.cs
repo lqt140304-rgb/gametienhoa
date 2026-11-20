@@ -79,6 +79,12 @@ namespace Evolve.EditorTools
                 CaveWave1ScenePopulator.PopulateBreathingMossChamber(parent, parent.position);
             else if (node.Theme == ChamberTheme.AbandonedNest)
                 CaveWave1ScenePopulator.PopulateAbandonedNestChamber(parent, parent.position);
+            else if (node.Theme == ChamberTheme.GlowMushroomCavern)
+                CaveWave1ScenePopulator.PopulateGlowMushroomChamber(parent, parent.position);
+            else if (node.Theme == ChamberTheme.HotSpringCavern)
+                CaveWave1ScenePopulator.PopulateHotSpringChamber(parent, parent.position);
+            else if (node.Theme == ChamberTheme.HowlingWindGorge)
+                CaveWave1ScenePopulator.PopulateHowlingWindChamber(parent, parent.position);
             else
                 PlaceCreatures(parent, node, chamberRadius, profile, rnd);
             var lights = BuildChamberLighting(parent, profile, mainLightColor, accentLightColor);

@@ -63,10 +63,13 @@ namespace Evolve.Maze
             rng.Shuffle(giuaThemes);
             rng.Shuffle(sauThemes);
 
-            // Đảm bảo các khoang Tầng Nông & Giữa đã dựng (Luma, Hang Rêu Thở, Tổ Bỏ Hoang, Crystal) luôn xuất hiện
+            // Đảm bảo các khoang Tầng Nông & Giữa đã dựng luôn xuất hiện theo thứ tự xáo
             MoveToFront(nongThemes, ChamberTheme.AbandonedNest);
             MoveToFront(nongThemes, ChamberTheme.BreathingMoss);
             MoveToFront(nongThemes, ChamberTheme.LumaMushroomGrove);
+            MoveToFront(giuaThemes, ChamberTheme.HowlingWindGorge);
+            MoveToFront(giuaThemes, ChamberTheme.HotSpringCavern);
+            MoveToFront(giuaThemes, ChamberTheme.GlowMushroomCavern);
             MoveToFront(giuaThemes, ChamberTheme.CrystalVein);
 
             var chambers = new List<ChamberNode>(chamberCount);

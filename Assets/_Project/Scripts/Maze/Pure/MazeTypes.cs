@@ -85,6 +85,9 @@ namespace Evolve.Maze
         CrystalVein = 21,
         SporeCurtain = 22,
         DeepRootTangle = 23,
+        GlowMushroomCavern = 24,
+        HotSpringCavern = 25,
+        HowlingWindGorge = 26,
 
         // Tầng Sâu
         EmberBasalt = 30,

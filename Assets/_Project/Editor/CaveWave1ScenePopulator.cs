@@ -358,11 +358,131 @@ namespace Evolve.EditorTools
             eggObj.AddComponent<LivingEggPickup>().Configure(encounter);
         }
 
+        public static void PopulateGlowMushroomChamber(Transform chamberRoot, Vector3 origin)
+        {
+            PopulateEcosystem(
+                chamberRoot,
+                origin,
+                null,
+                isBirth: false,
+                speciesNames: new[] { "NamDiBo", "BuomBaoTu", "EchDocDom", "NamKhongLo" },
+                denOffsets: new[]
+                {
+                    new Vector2(-18f, 12f),
+                    new Vector2(16f, 14f),
+                    new Vector2(-14f, -16f),
+                    new Vector2(18f, -14f)
+                },
+                counts: new[] { 6, 6, 2, 1 });
+
+            var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
+            shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
+            {
+                new ChamberLightShaftRegistrar.ShaftSpec { localCenter = new Vector3(0f, 0f, 0f), radius = 7.5f, topLocalY = 26f },
+            });
+
+            // Kỳ ngộ: Vòng Nấm (bào tử sáng theo nhịp -> đổi Khuyết Điểm)
+            var ringGo = new GameObject("Kỳ Ngộ - Vòng Nấm");
+            ringGo.transform.SetParent(chamberRoot, false);
+            ringGo.transform.position = SnapToFloor(origin, 0f, 0f, null, false);
+            var ringRends = new Renderer[6];
+            for (int i = 0; i < 6; i++)
+            {
+                float a = i * (Mathf.PI * 2f / 6f);
+                var shroom = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                shroom.name = $"Nấm Vòng {i + 1}";
+                shroom.transform.SetParent(ringGo.transform, false);
+                shroom.transform.localPosition = new Vector3(Mathf.Cos(a) * 3.0f, 0.35f, Mathf.Sin(a) * 3.0f);
+                shroom.transform.localScale = new Vector3(0.75f, 0.35f, 0.75f);
+                var r = shroom.GetComponent<Renderer>();
+                if (r != null) r.sharedMaterial = LakeGround.OpaqueMaterial("SporeRingGlow", new Color(0.32f, 0.96f, 0.88f), 0.2f, false, new Color(0.28f, 0.90f, 0.85f));
+                ringRends[i] = r;
+            }
+            var enc = ringGo.AddComponent<SporeRingEncounter>();
+            enc.RingGlowRenderers = ringRends;
+        }
+
+        public static void PopulateHotSpringChamber(Transform chamberRoot, Vector3 origin)
+        {
+            PopulateEcosystem(
+                chamberRoot,
+                origin,
+                null,
+                isBirth: false,
+                speciesNames: new[] { "OcLuuHuynh", "CuaDaNong", "KyNhongLua", "RanDungNham" },
+                denOffsets: new[]
+                {
+                    new Vector2(-18f, 10f),
+                    new Vector2(18f, 12f),
+                    new Vector2(-14f, -16f),
+                    new Vector2(16f, -16f)
+                },
+                counts: new[] { 6, 5, 2, 1 });
+
+            var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
+            shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
+            {
+                new ChamberLightShaftRegistrar.ShaftSpec { localCenter = new Vector3(0f, 0f, 0f), radius = 6.5f, topLocalY = 24f },
+            });
+
+            // Kỳ ngộ: Tôi Luyện (vũng suối nước nóng sôi theo đợt -> tăng chịu nhiệt suốt vòng)
+            var poolGo = new GameObject("Kỳ Ngộ - Tôi Luyện");
+            poolGo.transform.SetParent(chamberRoot, false);
+            poolGo.transform.position = SnapToFloor(origin, 0f, 0f, null, false);
+            var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            water.name = "Vũng Suối Nóng";
+            water.transform.SetParent(poolGo.transform, false);
+            water.transform.localScale = new Vector3(8.5f, 0.2f, 8.5f);
+            var wr = water.GetComponent<Renderer>();
+            if (wr != null) wr.sharedMaterial = LakeGround.OpaqueMaterial("HotSpringPool", new Color(0.95f, 0.52f, 0.22f), 0.1f, false, new Color(0.92f, 0.44f, 0.14f));
+            var enc = poolGo.AddComponent<HotSpringTemperEncounter>();
+            enc.SteamGlowRenderer = wr;
+        }
+
+        public static void PopulateHowlingWindChamber(Transform chamberRoot, Vector3 origin)
+        {
+            PopulateEcosystem(
+                chamberRoot,
+                origin,
+                null,
+                isBirth: false,
+                speciesNames: new[] { "DeGio", "ChuotGio", "ChonKhe", "CaoGio" },
+                denOffsets: new[]
+                {
+                    new Vector2(-18f, 14f),
+                    new Vector2(18f, 12f),
+                    new Vector2(-16f, -14f),
+                    new Vector2(16f, -16f)
+                },
+                counts: new[] { 6, 6, 2, 1 });
+
+            var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
+            shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
+            {
+                new ChamberLightShaftRegistrar.ShaftSpec { localCenter = new Vector3(0f, 0f, 0f), radius = 6.5f, topLocalY = 28f },
+            });
+
+            // Kỳ ngộ: Túi Của Kẻ Đi Trước (khe đá hẹp chỉ slime nhỏ lọt)
+            var stashGo = new GameObject("Kỳ Ngộ - Túi Của Kẻ Đi Trước");
+            stashGo.transform.SetParent(chamberRoot, false);
+            stashGo.transform.position = SnapToFloor(origin, 6f, -6f, null, false);
+            var bag = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            bag.name = "Túi Kẻ Đi Trước";
+            bag.transform.SetParent(stashGo.transform, false);
+            bag.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+            bag.transform.localScale = new Vector3(0.7f, 0.45f, 0.7f);
+            var br = bag.GetComponent<Renderer>();
+            if (br != null) br.sharedMaterial = LakeGround.OpaqueMaterial("PredecessorStash", new Color(0.48f, 0.72f, 0.88f), 0.3f, false, new Color(0.28f, 0.56f, 0.76f));
+            stashGo.AddComponent<WindGorgeStashEncounter>();
+        }
+
         static CaveCreaturesWave1Builder.CreatureSpec FindSpec(string pascalName)
         {
             foreach (var s in CaveCreaturesWave1Builder.Specs)
                 if (s.PascalName == pascalName) return s;
             foreach (var s in CaveCreaturesWave2Builder.Specs)
+                if (s.PascalName == pascalName) return s;
+            foreach (var s in CaveCreaturesWave3Builder.Specs)
                 if (s.PascalName == pascalName) return s;
             return default;
         }
