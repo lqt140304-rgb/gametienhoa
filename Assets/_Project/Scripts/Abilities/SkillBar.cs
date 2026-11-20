@@ -39,6 +39,8 @@ namespace Evolve.Abilities
 
         /// <summary>Raised when a skill unlocks and is put in a slot (organ, slot index).</summary>
         public event Action<OrganSO, int> SkillUnlocked;
+        /// <summary>Raised on any slime after an active skill went off (monsters such as the mosquito react to it).</summary>
+        public static event Action<SurvivalStats> SkillUsed;
 
         void Awake()
         {
@@ -208,6 +210,7 @@ namespace Evolve.Abilities
             if (!ability.Activate(gameObject, level)) { Fail($"{ability.DisplayName} không dùng được lúc này"); yield break; }
             stats.State.TrySpendEnergy(ability.EnergyFor(level));
             readyAt[organ] = Time.time + ability.CooldownFor(level);
+            SkillUsed?.Invoke(stats);
             FailureReason = "";
             Evolve.Audio.SlimeSfx.Play("skill_" + organ.name.Replace("Gene_", ""));   // cave skills: tools/voice/generate_skill_sfx.sh; others are silent
             // The body part (spikes, legs) grows out for the move and melts back in while it cools down.

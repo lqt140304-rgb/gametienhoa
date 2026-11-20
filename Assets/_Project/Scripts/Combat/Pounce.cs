@@ -55,7 +55,8 @@ namespace Evolve.Combat
             float slimeMass = body != null ? body.Mass : 10f;
             float monsterMass = target is Prey pr ? pr.BodyMass : ((Predator)target).BodyMass;
             Vector3 to = target.transform.position - pos; to.y = 0f;
-            var outcome = PounceRules.Decide(slimeMass, monsterMass);
+            var armor = target.GetComponent<CreatureCombat>();
+            var outcome = armor != null && armor.IsArmored ? PounceOutcome.Bounce : PounceRules.Decide(slimeMass, monsterMass);   // an armoured monster cannot be pounced
 
             if (outcome == PounceOutcome.Bounce)
             {

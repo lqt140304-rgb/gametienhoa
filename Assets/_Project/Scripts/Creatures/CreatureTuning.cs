@@ -21,6 +21,11 @@ namespace Evolve.Creatures
             creature.transform.localScale *= k;
             if (creature.TryGetComponent(out CreatureMotor motor)) motor.Resize(k);
             if (creature.TryGetComponent(out CreatureLocomotion loco)) loco.ScaleBy(k);
+            if (creature.TryGetComponent(out Evolve.Combat.CreatureCombat combat))
+            {
+                combat.TellScale = tier == 0 ? 1.3f : 1f;   // the start cavern gives the player longer to read the tell
+                if (creature.TryGetComponent(out Predator _)) combat.DamageScale = CaveTier.DangerOf(tier).Damage;
+            }
             if (creature.TryGetComponent(out Predator hunter))
             {
                 var danger = CaveTier.DangerOf(tier);

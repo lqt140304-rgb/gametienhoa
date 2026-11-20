@@ -54,6 +54,7 @@ namespace Evolve.Creatures
 
         /// <summary>A slime is latched on (Combat/LatchSession): killing it leaves a carcass instead of an instant swallow, so it keeps its genes.</summary>
         public bool Latched { get; set; }
+        Evolve.Combat.CreatureCombat combat;
         /// <summary>Until this time it has learned to fear that slime and flees from farther away.</summary>
         public float RememberSlimeUntil { get; set; }
 
@@ -114,6 +115,7 @@ namespace Evolve.Creatures
         void Awake()
         {
             if (!TryGetComponent(out motor)) motor = gameObject.AddComponent<CreatureMotor>();
+            if (Evolve.Combat.MovesetSeed.Has(name) && !TryGetComponent(out combat)) combat = gameObject.AddComponent<Evolve.Combat.CreatureCombat>();   // the mosquito
             rb = GetComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -129,6 +131,7 @@ namespace Evolve.Creatures
         void FixedUpdate()
         {
             if (Frozen || IsReplica || Evolve.Abilities.CreatureStatus.Holds(gameObject)) return;   // stunned or knocked by a skill
+            if (combat != null && combat.Busy) return;   // hunting, draining or scared off: the combat component drives
             Vector3 pos = rb.position;
             Vector3 dir;
             float speed;
@@ -239,7 +242,7 @@ namespace Evolve.Creatures
             }
             if (caught || amount <= 0f) return;
 
-            amount *= DamageTakenMultiplier;
+            amount *= DamageTakenMultiplier * (combat != null ? combat.DamageTakenFactor : 1f);
             Health -= amount;
             ShowHit(amount);
             Damaged?.Invoke(amount, by);

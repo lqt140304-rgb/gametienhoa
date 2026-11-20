@@ -23,6 +23,13 @@ namespace Evolve.Creatures
 
         /// <summary>A gentle cave lord (start cavern) ignores players until one hurts it (<see cref="CaveTier.IsCalm"/>).</summary>
         public bool Gentle { get; set; }
+        Evolve.Combat.CreatureCombat combat;
+        public bool IsCalm => Calm;
+        public float ChaseSpeed => chaseSpeed;
+
+        /// <summary>May this player be attacked right now: not in peaceful mode, not while a gentle lord is calm, not inside a safe zone, and the brain agrees.</summary>
+        public bool WantsToAttack(SurvivalStats p) =>
+            !Passive && !Calm && !SafeZone.Contains(p.transform.position) && (TargetFilter == null || TargetFilter(p));
 
         /// <summary>A slime is latched on (Combat/LatchSession).</summary>
         public bool Latched { get; set; }
@@ -147,6 +154,7 @@ namespace Evolve.Creatures
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             if (!TryGetComponent(out locomotion)) locomotion = gameObject.AddComponent<CreatureLocomotion>();
+            if (Evolve.Combat.MovesetSeed.Has(name) && !TryGetComponent(out combat)) combat = gameObject.AddComponent<Evolve.Combat.CreatureCombat>();   // telegraphed attacks
             Health = maxHealth;
             lastAteAt = Time.time - UnityEngine.Random.Range(0f, FullSeconds + HungerRiseSeconds * 0.5f);   // they start at different hunger
             HomeCenter = transform.position;
@@ -159,6 +167,7 @@ namespace Evolve.Creatures
         void FixedUpdate()
         {
             if (dead || Frozen || IsReplica || Evolve.Abilities.CreatureStatus.Holds(gameObject)) return;   // stunned or knocked by a skill
+            if (combat != null && combat.Busy) return;   // winding up, striking or recovering: the move set drives
             Vector3 pos = rb.position;
             UpdateTarget(pos);
             if (target == null && Intent.Mode != IntentMode.None) { MoveByIntent(pos); BiteRemotePlayers(); return; }   // the brain is in charge
@@ -252,7 +261,7 @@ namespace Evolve.Creatures
         // The damage is sent to the player's own machine.
         void BiteRemotePlayers()
         {
-            if (Passive || Calm || Time.time < nextBite) return;
+            if (Passive || Calm || Time.time < nextBite) return;   // remote (co-op) players are still bitten here: moves only target the local slime
             Vector3 pos = rb.position;
             foreach (var p in SurvivalStats.All)
             {
@@ -335,6 +344,7 @@ namespace Evolve.Creatures
                 TakeDamage(ramDamage, stats);
             if (dead) return;
 
+            if (combat != null) return;   // a monster with a move set strikes with its moves, not by touching
             if (Time.time < nextBite || Evolve.Abilities.CreatureStatus.Holds(gameObject)) return;
             nextBite = Time.time + biteCooldown;
             target = stats;
@@ -366,6 +376,7 @@ namespace Evolve.Creatures
             }
             if (dead || amount <= 0f) return;
             if (by != null && Gentle) { provokedUntil = Time.time + CaveTier.ProvokeSeconds; target = by; }   // a gentle lord fights back at whoever hurt it
+            if (combat != null) amount *= combat.DamageTakenFactor;   // open to a counter while recovering
             Health -= amount;
             retreatUntil = Time.time + retreatTime;
             ShowHit(amount);
