@@ -59,6 +59,16 @@ namespace Evolve.Abilities
                 if (Damage > 0f && creature is IDamageable target) target.TakeDamage(Damage * power, by);
             }
 
+            var tint = Evolve.Swallow.SkillFxMath.FamilyColor(Family);
+            if (max > 0)
+                foreach (var (creature, _) in inReach) SkillFx.Sting(SkillFx.Center(user.transform), SkillFx.Center(creature.transform), tint);   // a jab
+            else
+            {
+                SkillFx.Ring(c, Radius, tint);
+                SkillFx.Ring(c, Radius * 0.65f, tint, 0.4f, 0.1f);
+                SkillFx.Dust(c, Radius, tint);
+            }
+
             if (Push > 0f)
                 foreach (var col in Physics.OverlapSphere(c, Radius, ~0, QueryTriggerInteraction.Ignore))
                 {

@@ -652,3 +652,15 @@ Giao việc: mục A của `docs/superpowers/handoff/2026-11-20-core-systems-bri
   - Hình kỹ năng (visual): mới có bụi gai tạm của Cắm Gai và đèn của Phát Sáng.
 
 Checklist: (a) `Evolve → Create Cave Skills` một lần; (b) Console sạch; (c) Play, mở menu thần, bấm "Học chiêu"/"Nhận bị động" từng kỹ năng; (d) Da Dày: máu tối đa +10; Vỏ Cứng: bị cắn mất ít hơn; (e) Thu Mình: đứng im 3 giây, bị cắn mất nửa; (f) Khiên Quặng: cú cắn đầu tiên trong 5 giây không mất máu; (g) Phát Sáng: có đèn quanh slime 10 giây; (h) Lách Né: lách ngang ~2 m; (i) Lưỡi Dài: ngắm con mồi trong 6 m, nó bị kéo về trước mặt và đứng yên chốc lát; (j) Ợ Chấn: sinh vật quanh 4 m bị đẩy văng; (k) Cắm Gai: bụi gai tím ở chân, sinh vật dẫm vào mất máu, 20 giây thì mất; (l) Bám Vách: lao vào vách rồi dùng, slime bò lên; (m) Châm Choáng: con gần nhất trong 2,5 m đứng im 1 giây, không cắn.
+
+## 42. Hình ảnh kỹ năng hang đợt 1 (tạm): trạng thái và danh sách kiểm tra
+
+Thiết kế: `docs/superpowers/specs/2026-11-20-skill-visuals-design.md`. Tất cả dựng bằng code, không cần file hình.
+
+- **Shader mới** `Shaders/SkillGel.shader`: viền sáng trong như thạch + tan dần bằng nhiễu có đường biên sáng (cộng sáng, tôn trọng tầm nhìn tối như `GlowParticle`).
+- **Bộ dụng cụ** `Abilities/SkillFx.cs`, `SkillFxMeshes.cs`: vòng sóng, vỏ bong bóng, mảnh tinh thể xoay, lưỡi, ngòi, sao choáng, vệt mờ, hạt (một hệ hạt dùng chung). Số học (bảng màu theo họ, nhịp mở/giữ/tan, hàm nảy) ở `Swallow/Pure/SkillFxMath.cs`, 156 test thuần xanh.
+- **Hình từng kỹ năng:** Ợ Chấn (2 vòng sóng + bụi), Châm Choáng (ngòi tinh thể đâm + lóe), Lách Né (vệt mờ + gió), Lưỡi Dài (lưỡi hồng dính con mồi khi bị kéo), Thu Mình (vỏ + mảnh vụn), Khiên Quặng (6–8 mảnh xoay, vỡ khi hết đòn), Phát Sáng (đom đóm + quầng ấm), Cắm Gai (7 tinh thể mọc lần lượt, tan dần cuối giờ), Bám Vách (quầng nhẹ + đá vụn rơi). Chung: sao xoay trên đầu sinh vật bị choáng (chiều cao đọc từ collider); Vỏ Cứng nháy nhẹ khi giảm đòn; ★3 Thu Mình có tia hồng, Phát Sáng có vòng lóa. Không có hình: Da Dày, Sóng Dò Mạnh.
+- Màu theo họ kỹ năng (`SkillFxMath.FamilyColor`); lưỡi hồng, Phát Sáng vàng ấm.
+- **Chưa làm / còn chờ:** hình thân mọc ra (`SkillVisuals`, cần prefab); mesh Blender thay khối dựng bằng code; chỉnh số theo ảnh Play; chỉ máy người dùng chiêu thấy hiệu ứng (co-op chưa); chạy lại `Evolve → Create Cave Skills` để gắn họ cho chiêu và tạo hai material trong `Resources/CaveSkills` (để shader vào bản build). **Phần Unity chưa biên dịch lần nào.**
+
+Checklist: (a) `Evolve → Create Cave Skills` lại; (b) Console sạch, không "Sprites/Default" lạ (nếu thấy hiệu ứng trắng đục là shader chưa nạp); (c) từng kỹ năng bấm thử qua menu thần, xem có hình, không chói, không giật máy (F4 xem hiệu năng); (d) bị đánh trong lúc Khiên Quặng: mảnh vỡ ở đòn cuối; (e) choáng một con: có sao quay trên đầu và biến mất đúng lúc hết choáng; (f) Cắm Gai: tinh thể mọc dần, 20 giây sau tan; (g) đứng trong hang tối bấm Phát Sáng: quầng ấm hiện.

@@ -23,10 +23,12 @@ namespace Evolve.Abilities
         static CreatureStatus On(Component creature) =>
             creature.TryGetComponent(out CreatureStatus s) ? s : creature.gameObject.AddComponent<CreatureStatus>();
 
-        public static void Stun(Component creature, float seconds)
+        /// <summary>Hold the creature still. <paramref name="stars"/> shows stars over its head (not wanted for a pulled prey, which is only held to be swallowed).</summary>
+        public static void Stun(Component creature, float seconds, bool stars = true)
         {
             var s = On(creature);
             s.stunUntil = Mathf.Max(s.stunUntil, Time.time + seconds);
+            if (stars) SkillFx.Stars(creature, seconds);
         }
 
         /// <summary>Slide the creature at <paramref name="velocity"/> (flat) for <paramref name="seconds"/>, following the ground.</summary>

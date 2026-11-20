@@ -46,7 +46,8 @@ namespace Evolve.Abilities
                 Vector3 to = c - prey.transform.position; to.y = 0f;
                 float travel = Mathf.Max(0f, to.magnitude - StopShort - i * 0.6f);   // a second one stops a little further out
                 CreatureStatus.Knock(prey, to.normalized * travel / PullSeconds, PullSeconds);
-                CreatureStatus.Stun(prey, PullSeconds + 0.5f);   // a moment to swallow it
+                CreatureStatus.Stun(prey, PullSeconds + 0.5f, false);   // a moment to swallow it
+                SkillFx.Tongue(user.transform, prey.transform, Evolve.Swallow.SkillFxMath.TongueColor);
             }
             return true;
         }

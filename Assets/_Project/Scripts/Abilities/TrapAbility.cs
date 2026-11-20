@@ -19,7 +19,7 @@ namespace Evolve.Abilities
             user.TryGetComponent(out SurvivalStats owner);
             Vector3 p = user.transform.position;
             p.y = Evolve.World.GroundHeight.At(p.x, p.z, p.y - 0.4f);
-            SpikeTrap.Spawn(p, Radius, Damage * StarPower(stars), Seconds, stars >= 3 ? Star3Stun : 0f, owner);
+            SpikeTrap.Spawn(p, Radius, Damage * StarPower(stars), Seconds, stars >= 3 ? Star3Stun : 0f, owner, Evolve.Swallow.SkillFxMath.FamilyColor(Family));
             return true;
         }
     }

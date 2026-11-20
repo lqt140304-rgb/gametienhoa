@@ -8,6 +8,8 @@ namespace Evolve.Abilities
     /// </summary>
     public abstract class CaveAbility : AbilitySO
     {
+        [UnityEngine.Tooltip("Skill family: sets the colour of its effects, and later what it fuses with")]
+        public SkillFamily Family;
         public string Star3Text;
         [UnityEngine.Tooltip("Energy at ★3 as a share of the normal cost (1 = same)")]
         public float Star3EnergyFactor = 1f;

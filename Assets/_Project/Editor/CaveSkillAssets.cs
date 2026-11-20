@@ -42,8 +42,22 @@ namespace Evolve.EditorTools
                 table.Organs.Add(organ);
                 EditorUtility.SetDirty(table);
             }
+            // the effects' materials live in Resources so their shaders ship with a build (Shader.Find only works in the editor)
+            MakeMaterial("SkillGel", "Evolve/SkillGel");
+            MakeMaterial("SkillGlow", "Evolve/GlowParticle");
             AssetDatabase.SaveAssets();
             Debug.Log($"Đã tạo hoặc cập nhật {CaveSkillSeed.All.Count} kỹ năng hang trong {Folder}.");
+        }
+
+        static void MakeMaterial(string name, string shaderName)
+        {
+            var shader = Shader.Find(shaderName);
+            if (shader == null) { Debug.LogWarning($"Không thấy shader {shaderName}: bỏ qua vật liệu {name}."); return; }
+            string path = $"{Folder}/{name}.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null) { mat = new Material(shader); AssetDatabase.CreateAsset(mat, path); }
+            else mat.shader = shader;
+            EditorUtility.SetDirty(mat);
         }
 
         /// <summary>Passives take a body slot each (one per slot): stone → back, vitality → skin, shadow → eyes, the rest → legs.</summary>
@@ -87,6 +101,7 @@ namespace Evolve.EditorTools
             a.DisplayName = d.Skill;
             a.Description = $"{d.Description}\n★3: {d.Star3}";
             a.Star3Text = d.Star3;
+            a.Family = d.Family;
             a.Star3EnergyFactor = d.Star3EnergyFactor;
             a.Cooldown = d.Cooldown;
             a.EnergyCost = d.Energy;

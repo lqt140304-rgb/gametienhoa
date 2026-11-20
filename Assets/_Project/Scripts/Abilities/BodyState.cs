@@ -14,7 +14,7 @@ namespace Evolve.Abilities
     {
         const float ClimbSpeed = 3f, WallReach = 0.9f;
 
-        float damageUntil, rootUntil, shieldUntil, lightUntil, climbUntil;
+        float damageUntil, rootUntil, shieldUntil, lightUntil, climbUntil, nextFlash, nextChip;
         float damageMultiplier = 1f;
         int shieldCharges;
         Light glow;
@@ -57,10 +57,22 @@ namespace Evolve.Abilities
 
         float Filter(float amount)
         {
-            int charges = Time.time < shieldUntil ? shieldCharges : 0;
+            int before = Time.time < shieldUntil ? shieldCharges : 0, charges = before;
             float state = Time.time < damageUntil ? damageMultiplier : 1f;
-            float left = Evolve.Swallow.CaveSkillMath.Incoming(amount, host != null ? host.DamageReduction : 0f, state, ref charges);
+            float reduction = host != null ? host.DamageReduction : 0f;
+            float left = Evolve.Swallow.CaveSkillMath.Incoming(amount, reduction, state, ref charges);
             if (Time.time < shieldUntil) shieldCharges = charges;
+
+            var stone = Evolve.Swallow.SkillFxMath.FamilyColor(Evolve.Swallow.SkillFamily.Stone);
+            if (charges < before)   // the shield ate a hit: it bursts on the last one, flashes on the others
+            {
+                if (charges == 0) SkillFx.ShieldBreak(transform, stone); else SkillFx.Shell(transform, stone, 0.3f, 0.3f, 2f, 1.15f);
+            }
+            else if (reduction > 0f && left > 0f && left < amount && Time.time >= nextFlash)   // Vỏ Cứng shrugged a hit off
+            {
+                nextFlash = Time.time + 0.4f;
+                SkillFx.Shell(transform, stone, 0.3f, 0.25f, 2f, 1.1f);
+            }
             return left;
         }
 
@@ -89,6 +101,12 @@ namespace Evolve.Abilities
         void Update()
         {
             if (glow != null && glow.enabled && Time.time >= lightUntil) glow.enabled = false;
+            // Bám Vách: rock chips fall off the wall while the body walks up it
+            if (Climbing && rb != null && rb.linearVelocity.y > 0.5f && Time.time >= nextChip)
+            {
+                nextChip = Time.time + 0.09f;
+                SkillFx.Burst(rb.position + lastMoveDir * 0.5f, Evolve.Swallow.SkillFxMath.FamilyColor(Evolve.Swallow.SkillFamily.Agility), 2, 0.5f, 0.1f, 0.6f, 0f, 0.1f);
+            }
         }
 
         void FixedUpdate()

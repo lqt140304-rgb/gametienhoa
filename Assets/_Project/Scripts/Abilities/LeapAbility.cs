@@ -33,6 +33,7 @@ namespace Evolve.Abilities
             }
             rb.AddForce(dir * (Distance * StarPower(stars) / DashSeconds) + Vector3.up * 0.5f, ForceMode.VelocityChange);
             if (InvulnSeconds > 0f) BodyState.On(user).TakeLessDamage(0f, InvulnSeconds);
+            SkillFx.Afterimage(user, Evolve.Swallow.SkillFxMath.FamilyColor(Family), dir);
             return true;
         }
     }
