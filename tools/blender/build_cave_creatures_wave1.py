@@ -14,7 +14,7 @@ import time
 
 import bpy  # must come before bmesh/mathutils
 import bmesh
-from mathutils import Euler, Matrix, Vector, noise
+from mathutils import Euler, Matrix, Vector, kdtree, noise
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import kit_common as kc  # noqa: E402
@@ -151,6 +151,60 @@ def _new_bm():
     bm = bmesh.new()
     col = bm.loops.layers.color.new("Col")
     return bm, col, set()
+
+
+def _sculpt_remesh_into(dst_bm, dst_col, src_bm, voxel_size=0.016, smooth_iter=6,
+                        decimate_ratio=0.45, mat_index=0, color_fn=None):
+    """Hòa trộn toàn bộ khối chồng lấn trong src_bm bằng Voxel Remesh + Smooth để tạo bề mặt điêu khắc hữu cơ liền mạch,
+    sau đó tô Vertex Color theo vị trí/pháp tuyến và gộp vào dst_bm."""
+    tmp_mesh = bpy.data.meshes.new("_tmp_sculpt")
+    src_bm.to_mesh(tmp_mesh)
+    src_bm.free()
+
+    tmp_obj = bpy.data.objects.new("_tmp_sculpt_obj", tmp_mesh)
+    bpy.context.collection.objects.link(tmp_obj)
+    bpy.context.view_layer.objects.active = tmp_obj
+
+    rem = tmp_obj.modifiers.new("Remesh", 'REMESH')
+    rem.mode = 'VOXEL'
+    rem.voxel_size = voxel_size
+    rem.use_smooth_shade = True
+
+    sm = tmp_obj.modifiers.new("Smooth", 'SMOOTH')
+    sm.factor = 0.55
+    sm.iterations = smooth_iter
+
+    if 0.1 < decimate_ratio < 0.99:
+        dec = tmp_obj.modifiers.new("Decimate", 'DECIMATE')
+        dec.ratio = decimate_ratio
+
+    deps = bpy.context.evaluated_depsgraph_get()
+    eval_obj = tmp_obj.evaluated_get(deps)
+    eval_mesh = bpy.data.meshes.new_from_object(eval_obj)
+
+    res_bm = bmesh.new()
+    res_bm.from_mesh(eval_mesh)
+    res_bm.normal_update()
+
+    vert_map = {}
+    for v in res_bm.verts:
+        vert_map[v.index] = dst_bm.verts.new(v.co)
+    for f in res_bm.faces:
+        try:
+            nf = dst_bm.faces.new([vert_map[v.index] for v in f.verts])
+            nf.material_index = mat_index
+            nf.smooth = True
+            nrm = f.normal
+            for loop in nf.loops:
+                rgb = color_fn(loop.vert.co, nrm) if color_fn else (0.5, 0.5, 0.5)
+                loop[dst_col] = (_clamp01(rgb[0]), _clamp01(rgb[1]), _clamp01(rgb[2]), 1.0)
+        except ValueError:
+            pass
+
+    res_bm.free()
+    bpy.data.meshes.remove(eval_mesh)
+    bpy.data.objects.remove(tmp_obj, do_unlink=True)
+    bpy.data.meshes.remove(tmp_mesh)
 
 
 def _paint_faces(faces, col_layer, color_fn, flat_faces=None, is_flat=False):
@@ -591,7 +645,77 @@ def _build_rig_and_nla(mesh_obj, rig_name, bone_specs, clips_spec, z_shift=0.0):
     return arm_obj
 
 
-def _finalize_and_export(bm, flat_faces, mats, mesh_name, fbx_path, preview_path, bone_specs=None, clips_spec=None):
+def _apply_organic_voxel_remesh(bm, flat_faces):
+    """Tách riêng phần thân hữu cơ (mat_index == 0) của Wave 1, hòa trộn khớp bằng Voxel Remesh + Smooth,
+    bảo toàn Vertex Color gốc qua KDTree rồi gộp lại với giáp/mắt/tinh thể."""
+    col_layer = bm.loops.layers.color.get("Col")
+    if col_layer is None:
+        return
+    org_faces = [f for f in bm.faces if f.material_index == 0 and f not in flat_faces]
+    if len(org_faces) < 12:
+        return
+
+    vert_cols = {}
+    for f in org_faces:
+        for loop in f.loops:
+            vi = loop.vert.index
+            c = loop[col_layer]
+            if vi not in vert_cols:
+                vert_cols[vi] = [c[0], c[1], c[2], 1]
+            else:
+                vert_cols[vi][0] += c[0]
+                vert_cols[vi][1] += c[1]
+                vert_cols[vi][2] += c[2]
+                vert_cols[vi][3] += 1
+
+    org_verts = list({v for f in org_faces for v in f.verts})
+    kd = kdtree.KDTree(len(org_verts))
+    idx_to_col = {}
+    min_co = Vector((1e9, 1e9, 1e9))
+    max_co = Vector((-1e9, -1e9, -1e9))
+    for k_i, v in enumerate(org_verts):
+        kd.insert(v.co, k_i)
+        s = vert_cols[v.index]
+        idx_to_col[k_i] = (s[0] / s[3], s[1] / s[3], s[2] / s[3])
+        for ax in range(3):
+            min_co[ax] = min(min_co[ax], v.co[ax])
+            max_co[ax] = max(max_co[ax], v.co[ax])
+    kd.balance()
+
+    max_dim = max(max_co.x - min_co.x, max_co.y - min_co.y, max_co.z - min_co.z)
+    voxel_size = max(0.011, min(0.022, max_dim * 0.016))
+
+    org_bm = bmesh.new()
+    vmap = {}
+    for v in org_verts:
+        vmap[v.index] = org_bm.verts.new(v.co)
+    for f in org_faces:
+        try:
+            nf = org_bm.faces.new([vmap[v.index] for v in f.verts])
+            nf.smooth = True
+        except ValueError:
+            pass
+
+    bmesh.ops.delete(bm, geom=org_faces, context='FACES')
+    orphan_verts = [v for v in bm.verts if not v.link_faces]
+    if orphan_verts:
+        bmesh.ops.delete(bm, geom=orphan_verts, context='VERTS')
+
+    def lookup_col(co, _n):
+        _, idx, _ = kd.find(co)
+        return idx_to_col.get(idx, (0.5, 0.5, 0.5))
+
+    _sculpt_remesh_into(bm, col_layer, org_bm, voxel_size=voxel_size, smooth_iter=6,
+                        decimate_ratio=0.45, mat_index=0, color_fn=lookup_col)
+
+
+_WAVE1_AUTO_REMESH = False
+
+
+def _finalize_and_export(bm, flat_faces, mats, mesh_name, fbx_path, preview_path,
+                         bone_specs=None, clips_spec=None, remesh_organic=False):
+    if remesh_organic or _WAVE1_AUTO_REMESH:
+        _apply_organic_voxel_remesh(bm, flat_faces)
     bm.normal_update()
     bm.faces.index_update()
     flat_indices = {f.index for f in flat_faces if f.is_valid}
@@ -1983,6 +2107,8 @@ def main():
     out_dir = os.path.abspath(args.out) if args.out else None
     prev_dir = None if args.no_previews else (os.path.abspath(args.previews) if args.previews else None)
 
+    global _WAVE1_AUTO_REMESH
+    _WAVE1_AUTO_REMESH = True
     for key, fn in BUILDERS:
         if args.only and args.only != key:
             continue

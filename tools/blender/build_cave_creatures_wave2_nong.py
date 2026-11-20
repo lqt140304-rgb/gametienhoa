@@ -131,6 +131,7 @@ def build_13_sen_reu(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
     rng = random.Random(313)
 
     def slug_skin(p, n):
@@ -144,7 +145,7 @@ def build_13_sen_reu(out_dir, prev_dir):
         pulse = 0.5 + 0.5 * math.sin(p.y * 22.0 + p.z * 18.0)
         return w1._lerp3((0.18, 0.78, 0.58), (0.55, 1.0, 0.42), pulse)
 
-    # Thân sên đầy đặn 3D nhiều vòng + diềm chân gợn sóng bám đất
+    # Thân sên + diềm chân + áo choàng + gốc râu điêu khắc liền mạch bằng Voxel Remesh
     pts = [
         (0.05, -0.44, 0.12), (0.04, -0.28, 0.15), (0.02, -0.10, 0.16),
         (0.0, 0.08, 0.15), (-0.03, 0.26, 0.11), (-0.05, 0.44, 0.06),
@@ -153,22 +154,31 @@ def build_13_sen_reu(out_dir, prev_dir):
         (0.085, 0.075), (0.125, 0.115), (0.155, 0.140),
         (0.145, 0.130), (0.110, 0.092), (0.045, 0.032),
     ]
-    w1._add_tube(bm, col, pts, rads, sides=22, subdiv=2, mat_index=0, color_fn=slug_skin)
+    w1._add_tube(body_bm, body_col, pts, rads, sides=22, subdiv=2, mat_index=0, color_fn=slug_skin)
 
-    # Diềm bàn chân gợn sóng (pedal wave) & áo choàng (mantle) ở lưng trước
     foot_pts = [(0.05, -0.45, 0.028), (0.03, -0.22, 0.030), (0.01, 0.0, 0.030),
                 (-0.02, 0.22, 0.026), (-0.05, 0.44, 0.018)]
     foot_rads = [(0.115, 0.028), (0.165, 0.032), (0.185, 0.032), (0.145, 0.026), (0.065, 0.018)]
-    w1._add_tube(bm, col, foot_pts, foot_rads, sides=18, subdiv=2, mat_index=0,
-                 color_fn=lambda p, _n: w1._lerp3((0.55, 0.68, 0.42), (0.72, 0.84, 0.52), 0.5 + 0.5 * math.sin(p.y * 28.0)))
+    w1._add_tube(body_bm, body_col, foot_pts, foot_rads, sides=18, subdiv=2, mat_index=0, color_fn=slug_skin)
 
-    # Áo choàng phồng ôm lưng giữa
     _add_sculpted_blob(
-        bm, col, (0.01, -0.06, 0.19), (0.15, 0.21, 0.11), rot=(0.08, 0.0, -0.06),
+        body_bm, body_col, (0.01, -0.06, 0.19), (0.15, 0.21, 0.11), rot=(0.08, 0.0, -0.06),
         segs=24, rings=14,
         disp_fn=lambda u: u * (0.014 * math.sin(u.y * 12.0) * math.cos(u.x * 8.0)),
         mat_index=0, color_fn=slug_skin,
     )
+    for sx in (-1.0, 1.0):
+        tip = (0.05 + sx * 0.095, -0.54, 0.29)
+        w1._add_tube(body_bm, body_col, [(0.05 + sx * 0.045, -0.40, 0.17), (0.05 + sx * 0.078, -0.48, 0.23), tip],
+                     [0.024, 0.017, 0.015], sides=10, subdiv=1, mat_index=0, color_fn=slug_skin)
+        w1._add_tube(body_bm, body_col, [(0.05 + sx * 0.04, -0.44, 0.09), (0.05 + sx * 0.085, -0.53, 0.055)],
+                     [0.017, 0.008], sides=8, subdiv=0, mat_index=0, color_fn=slug_skin)
+
+    w1._sculpt_remesh_into(bm, col, body_bm, voxel_size=0.014, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=slug_skin)
+
+    for sx in (-1.0, 1.0):
+        tip = (0.05 + sx * 0.095, -0.54, 0.29)
+        w1._add_eye_bulb(bm, col, tip, 0.022, yaw=sx * 0.22, eye_col=(0.12, 0.09, 0.06), mat_eye=1)
 
     # ĐẶC TRƯNG KHẢ NĂNG (Tiết Nhớt): 4 túi tuyến nhớt phát sáng xanh ngọc mọng trên lưng + vệt nhớt ướt ở đuôi
     sac_specs = [
@@ -188,15 +198,6 @@ def build_13_sen_reu(out_dir, prev_dir):
     w1._add_tube(bm, col, [(-0.04, 0.36, 0.014), (-0.06, 0.56, 0.010), (-0.04, 0.74, 0.006)],
                  [(0.08, 0.012), (0.095, 0.009), (0.05, 0.005)],
                  sides=14, subdiv=1, mat_index=3, color_fn=slime_sac_col)
-
-    # 2 cặp râu mắt dài có nhãn cầu bóng + 2 râu khứu giác phía dưới
-    for sx in (-1.0, 1.0):
-        tip = (0.05 + sx * 0.095, -0.54, 0.29)
-        w1._add_tube(bm, col, [(0.05 + sx * 0.045, -0.40, 0.17), (0.05 + sx * 0.078, -0.48, 0.23), tip],
-                     [0.022, 0.015, 0.014], sides=10, subdiv=1, mat_index=0, color_fn=slug_skin)
-        w1._add_eye_bulb(bm, col, tip, 0.022, yaw=sx * 0.22, eye_col=(0.12, 0.09, 0.06), mat_eye=1)
-        w1._add_tube(bm, col, [(0.05 + sx * 0.04, -0.44, 0.09), (0.05 + sx * 0.085, -0.53, 0.055)],
-                     [0.015, 0.006], sides=8, subdiv=0, mat_index=0, color_fn=slug_skin)
 
     # Rêu 3D & nụ bào tử thở sáng xen kẽ túi nhớt
     w1._add_moss_tuft(bm, col, (-0.08, -0.06, 0.25), scale=0.065, rng=rng)
@@ -503,6 +504,7 @@ def build_16_reu_me(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
     rng = random.Random(316)
 
     def bark_moss(p, n):
@@ -515,14 +517,13 @@ def build_16_reu_me(out_dir, prev_dir):
     def regen_glow(p, n):
         return w1._lerp3((0.28, 0.92, 0.45), (0.78, 1.0, 0.52), 0.5 + 0.5 * math.sin(p.z * 16.0))
 
-    # Lõi thân rêu cổ thụ phồng cao 3D có nếp vỏ cây & các tầng rêu xếp lớp
+    # Lõi thân + 4 tầng tán rêu + 4 rễ-chân + ngón rễ điêu khắc liền mạch bằng Voxel Remesh
     _add_sculpted_blob(
-        bm, col, (0.0, 0.0, 0.34), (0.36, 0.38, 0.28),
+        body_bm, body_col, (0.0, 0.0, 0.34), (0.36, 0.38, 0.28),
         segs=28, rings=18,
         disp_fn=lambda u: u * (0.042 * math.sin(u.x * 6.0 + u.y * 5.0) + 0.025 * math.cos(u.z * 9.0)),
         mat_index=0, color_fn=bark_moss,
     )
-    # Tầng tán rêu bồng bềnh xếp lớp quanh vai & đỉnh
     canopy_blobs = [
         ((0.0, -0.05, 0.58), (0.26, 0.28, 0.16), (0.1, 0.0, 0.0)),
         ((-0.24, 0.06, 0.44), (0.20, 0.22, 0.14), (0.0, -0.3, 0.2)),
@@ -531,28 +532,26 @@ def build_16_reu_me(out_dir, prev_dir):
     ]
     for pos, rad, rot in canopy_blobs:
         _add_sculpted_blob(
-            bm, col, pos, rad, rot=rot, segs=20, rings=12,
+            body_bm, body_col, pos, rad, rot=rot, segs=20, rings=12,
             disp_fn=lambda u: u * (0.030 * math.sin(u.x * 8.0) * math.cos(u.y * 7.0)),
             mat_index=0, color_fn=bark_moss,
         )
-
-    # 3 mắt cảm quang ấm ẩn trong khe rêu phía trước
-    for mx, mz, r in [(-0.09, 0.33, 0.036), (0.09, 0.33, 0.036), (0.0, 0.39, 0.026)]:
-        w1._add_eye_bulb(bm, col, (mx, -0.34, mz), r, yaw=mx * 2.0,
-                         eye_col=(0.45, 0.96, 0.42), mat_eye=3)
-
-    # 4 rễ-chân to mập bám đất chia khớp rõ rệt + ngón rễ
     for sx, sy in [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)]:
         hip = (sx * 0.24, sy * 0.20, 0.24)
         knee = (sx * 0.42, sy * 0.34, 0.18)
         ankle = (sx * 0.52, sy * 0.44, 0.07)
-        foot = (sx * 0.56, sy * 0.48, 0.015)
-        w1._add_tube(bm, col, [hip, knee, ankle, foot], [0.11, 0.082, 0.064, 0.048],
+        foot = (sx * 0.56, sy * 0.48, 0.018)
+        w1._add_tube(body_bm, body_col, [hip, knee, ankle, foot], [0.115, 0.085, 0.066, 0.050],
                      sides=12, subdiv=1, mat_index=0, color_fn=bark_moss)
-        # 2 ngón rễ xòe bám đất
         for dy in (-0.06, 0.06):
-            w1._add_tube(bm, col, [foot, (foot[0] + sx * 0.11, foot[1] + sy * 0.06 + dy, 0.008)],
-                         [0.032, 0.010], sides=8, subdiv=0, mat_index=0, color_fn=bark_moss)
+            w1._add_tube(body_bm, body_col, [foot, (foot[0] + sx * 0.11, foot[1] + sy * 0.06 + dy, 0.012)],
+                         [0.034, 0.014], sides=8, subdiv=0, mat_index=0, color_fn=bark_moss)
+
+    w1._sculpt_remesh_into(bm, col, body_bm, voxel_size=0.022, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=bark_moss)
+
+    for mx, mz, r in [(-0.09, 0.33, 0.036), (0.09, 0.33, 0.036), (0.0, 0.39, 0.026)]:
+        w1._add_eye_bulb(bm, col, (mx, -0.34, mz), r, yaw=mx * 2.0,
+                         eye_col=(0.45, 0.96, 0.42), mat_eye=3)
 
     # ĐẶC TRƯNG KHẢ NĂNG (Tái Sinh): 3 búp hoa/bào tử Tái Sinh lớn phát sáng + mạch rễ sáng dẫn năng lượng
     bud_positions = [
@@ -642,6 +641,7 @@ def build_17_chim_non(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def down_feather(p, n):
         blend = max(0.0, min(1.0, (p.z - 0.12) * 3.0))
@@ -650,22 +650,24 @@ def build_17_chim_non(out_dir, prev_dir):
             base = w1._lerp3(base, (0.95, 0.88, 0.68), 0.65)
         return base
 
-    # Thân tròn mũm mĩm (ngực nở, mông tròn) + đầu to
-    _add_sculpted_blob(bm, col, (0.0, 0.02, 0.20), (0.145, 0.165, 0.142), rot=(-0.20, 0.0, 0.0),
+    # Thân tròn + đầu + lông tơ đỉnh/má + gốc cánh điêu khắc liền mạch bằng Voxel Remesh
+    _add_sculpted_blob(body_bm, body_col, (0.0, 0.02, 0.20), (0.145, 0.165, 0.142), rot=(-0.20, 0.0, 0.0),
                        segs=24, rings=16,
                        disp_fn=lambda u: Vector((0.0, -0.015 * max(0.0, -u.y), 0.0)),
                        mat_index=0, color_fn=down_feather)
-    _add_sculpted_blob(bm, col, (0.0, -0.09, 0.34), (0.125, 0.125, 0.118),
+    _add_sculpted_blob(body_bm, body_col, (0.0, -0.09, 0.34), (0.125, 0.125, 0.118),
                        segs=24, rings=16, mat_index=0, color_fn=down_feather)
-
-    # Chùm lông tơ xù trên đỉnh đầu, hai má và ức
     for ang, tilt in [(0.0, 0.2), (-0.4, 0.5), (0.4, 0.5)]:
-        _add_layered_feather(bm, col, (math.sin(ang) * 0.03, -0.08, 0.45),
+        _add_layered_feather(body_bm, body_col, (math.sin(ang) * 0.03, -0.08, 0.45),
                              (math.sin(ang) * 0.4, 0.35, 0.85), (0, -1, 0.3),
-                             length=0.075, width=0.028, thickness=0.010, mat_index=0, color_fn=down_feather)
+                             length=0.075, width=0.030, thickness=0.014, mat_index=0, color_fn=down_feather)
     for sx in (-1.0, 1.0):
-        _add_layered_feather(bm, col, (sx * 0.09, -0.11, 0.32), (sx * 0.6, 0.5, 0.2), (0, 0, 1),
-                             length=0.065, width=0.032, thickness=0.012, mat_index=0, color_fn=down_feather)
+        _add_layered_feather(body_bm, body_col, (sx * 0.09, -0.11, 0.32), (sx * 0.6, 0.5, 0.2), (0, 0, 1),
+                             length=0.065, width=0.032, thickness=0.014, mat_index=0, color_fn=down_feather)
+        w1._add_tube(body_bm, body_col, [(sx * 0.12, -0.02, 0.24), (sx * 0.24, 0.02, 0.26), (sx * 0.32, 0.06, 0.24)],
+                     [0.038, 0.028, 0.018], sides=10, subdiv=1, mat_index=0, color_fn=down_feather)
+
+    w1._sculpt_remesh_into(bm, col, body_bm, voxel_size=0.013, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=down_feather)
 
     # Mỏ ngắn mở nhẹ (hàm trên & hàm dưới) như đang kêu chíp
     w1._add_tube(bm, col, [(0.0, -0.20, 0.345), (0.0, -0.27, 0.340), (0.0, -0.31, 0.330)],
@@ -840,6 +842,7 @@ def build_19_ran_trom_trung(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def snake_scale(p, n):
         band = 0.5 + 0.5 * math.sin(p.y * 22.0 + p.x * 16.0)
@@ -848,40 +851,38 @@ def build_19_ran_trom_trung(out_dir, prev_dir):
             base = w1._lerp3(base, (0.86, 0.80, 0.62), 0.72)
         return base
 
-    # Thân rắn uốn chữ S 3D nâng cổ lên phía trước, phần cổ có ĐOẠN PHÌNH TRÒN ĐANG NUỐT TRỨNG
+    # Thân rắn uốn chữ S 3D + đoạn cổ phình nuốt trứng + đầu + hàm dưới điêu khắc liền mạch
     pts = [
-        (0.0, -0.44, 0.34),    # đầu nâng cao
-        (0.02, -0.32, 0.28),   # cổ trên
-        (0.05, -0.20, 0.18),   # ĐOẠN PHÌNH ĐANG NUỐT TRỨNG!
-        (0.11, -0.04, 0.095),  # vai
-        (0.02, 0.16, 0.085),   # thân giữa
-        (-0.13, 0.34, 0.075),  # thân sau
-        (-0.04, 0.52, 0.055),  # đuôi cong
-        (0.09, 0.64, 0.032),   # chóp đuôi
+        (0.0, -0.44, 0.34),
+        (0.02, -0.32, 0.28),
+        (0.05, -0.20, 0.18),
+        (0.11, -0.04, 0.095),
+        (0.02, 0.16, 0.085),
+        (-0.13, 0.34, 0.075),
+        (-0.04, 0.52, 0.055),
+        (0.09, 0.64, 0.032),
     ]
     rads = [
         (0.062, 0.050), (0.058, 0.052), (0.112, 0.105),
         (0.082, 0.074), (0.078, 0.070), (0.064, 0.058),
-        (0.042, 0.038), (0.012, 0.012),
+        (0.042, 0.038), (0.014, 0.014),
     ]
-    w1._add_tube(bm, col, pts, rads, sides=20, subdiv=2, mat_index=0, color_fn=snake_scale)
+    w1._add_tube(body_bm, body_col, pts, rads, sides=20, subdiv=2, mat_index=0, color_fn=snake_scale)
+    _add_sculpted_blob(body_bm, body_col, (0.0, -0.48, 0.35), (0.078, 0.092, 0.046), rot=(0.08, 0.0, 0.0),
+                       segs=20, rings=12,
+                       disp_fn=lambda u: Vector((0.0, -0.02 * max(0.0, -u.y), 0.01 * max(0.0, u.z))),
+                       mat_index=0, color_fn=snake_scale)
+    w1._add_tube(body_bm, body_col, [(0.0, -0.43, 0.315), (0.0, -0.52, 0.285), (0.0, -0.57, 0.280)],
+                 [(0.055, 0.022), (0.042, 0.016), (0.022, 0.010)], sides=12, subdiv=1,
+                 mat_index=0, color_fn=snake_scale)
 
-    # Hàng gờ vảy sống lưng dọc thân
+    w1._sculpt_remesh_into(bm, col, body_bm, voxel_size=0.014, smooth_iter=5, decimate_ratio=0.45, mat_index=0, color_fn=snake_scale)
+
     for i in range(1, len(pts) - 1):
         px, py, pz = pts[i]
         rx, rz = rads[i]
         _add_sculpted_blob(bm, col, (px, py, pz + rz * 0.72), (0.018, 0.045, 0.024),
                            segs=10, rings=8, mat_index=2, color_fn=lambda _p, _n: (0.28, 0.22, 0.16))
-
-    # Đầu rắn tam giác sắc nét + HÀM DƯỚI TÁCH KHỚP MỞ RỘNG (Nuốt Nhanh)
-    _add_sculpted_blob(bm, col, (0.0, -0.48, 0.35), (0.078, 0.092, 0.046), rot=(0.08, 0.0, 0.0),
-                       segs=20, rings=12,
-                       disp_fn=lambda u: Vector((0.0, -0.02 * max(0.0, -u.y), 0.01 * max(0.0, u.z))),
-                       mat_index=0, color_fn=snake_scale)
-    # Hàm dưới mở nhẹ linh hoạt
-    w1._add_tube(bm, col, [(0.0, -0.43, 0.315), (0.0, -0.52, 0.285), (0.0, -0.57, 0.280)],
-                 [(0.055, 0.022), (0.042, 0.016), (0.022, 0.010)], sides=12, subdiv=1,
-                 mat_index=0, color_fn=snake_scale)
 
     # Mắt rắn vàng đồng tử dọc + lưỡi chẻ đôi thè ra
     for sx in (-1.0, 1.0):
@@ -938,6 +939,7 @@ def build_20_chim_hang_me(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def plumage(p, n):
         base = w1._lerp3((0.16, 0.14, 0.18), (0.46, 0.35, 0.28), 0.35 + 0.35 * math.sin(p.y * 8.0))
@@ -945,25 +947,33 @@ def build_20_chim_hang_me(out_dir, prev_dir):
             base = w1._lerp3(base, (0.82, 0.72, 0.56), 0.55)
         return base
 
-    # Thân bệ vệ to lớn, ức nở rộng, cổ vai dày bảo vệ
-    _add_sculpted_blob(bm, col, (0.0, 0.02, 0.64), (0.295, 0.390, 0.270), rot=(-0.26, 0.0, 0.0),
+    # Thân bệ vệ + áo lông cổ + đầu + gốc mào + gốc cánh + cặp đùi cơ bắp điêu khắc liền mạch
+    _add_sculpted_blob(body_bm, body_col, (0.0, 0.02, 0.64), (0.295, 0.390, 0.270), rot=(-0.26, 0.0, 0.0),
                        segs=28, rings=18,
                        disp_fn=lambda u: Vector((0.0, -0.04 * max(0.0, -u.y), 0.02 * max(0.0, u.z))),
                        mat_index=0, color_fn=plumage)
-    # Áo lông cổ & vai dày (protective mantle) che phủ lưng trên
-    _add_sculpted_blob(bm, col, (0.0, -0.14, 0.80), (0.235, 0.240, 0.155), rot=(-0.18, 0.0, 0.0),
+    _add_sculpted_blob(body_bm, body_col, (0.0, -0.14, 0.80), (0.235, 0.240, 0.155), rot=(-0.18, 0.0, 0.0),
                        segs=24, rings=14,
                        disp_fn=lambda u: Vector((0.0, 0.0, -0.02 * max(0.0, -u.z))),
                        mat_index=0, color_fn=plumage)
-
-    # Đầu oai vệ + mào lông 5 chùm
-    _add_sculpted_blob(bm, col, (0.0, -0.32, 0.92), (0.160, 0.180, 0.145),
+    _add_sculpted_blob(body_bm, body_col, (0.0, -0.32, 0.92), (0.160, 0.180, 0.145),
                        segs=24, rings=14, mat_index=0, color_fn=plumage)
+    for sx in (-1.0, 1.0):
+        w1._add_tube(body_bm, body_col, [
+            (sx * 0.22, -0.06, 0.74),
+            (sx * 0.60, -0.10, 0.88),
+            (sx * 1.04, -0.02, 0.84),
+            (sx * 1.36, 0.12, 0.68),
+        ], [0.080, 0.064, 0.046, 0.024], sides=14, subdiv=1, mat_index=0, color_fn=plumage)
+        _add_sculpted_blob(body_bm, body_col, (sx * 0.18, 0.03, 0.40), (0.105, 0.115, 0.155), rot=(0.22, sx * 0.15, 0.0),
+                           segs=18, rings=12, mat_index=0, color_fn=plumage)
+
+    w1._sculpt_remesh_into(bm, col, body_bm, voxel_size=0.024, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=plumage)
+
     for sx, len_m in [(-0.07, 0.18), (-0.035, 0.23), (0.0, 0.27), (0.035, 0.23), (0.07, 0.18)]:
         _add_layered_feather(bm, col, (sx, -0.25, 1.01), (sx * 1.6, 0.85, 0.52), (0, 0, 1),
                              length=len_m, width=0.042, thickness=0.016, mat_index=0, color_fn=plumage)
 
-    # Mỏ khoằm lớn sắc bén + mắt sáng rực bảo vệ tổ
     w1._add_tube(bm, col, [(0.0, -0.47, 0.915), (0.0, -0.60, 0.892), (0.0, -0.66, 0.815)],
                  [(0.062, 0.055), (0.036, 0.030), (0.005, 0.005)], sides=12, subdiv=1,
                  mat_index=2, color_fn=lambda _p, _n: (0.22, 0.18, 0.16))
@@ -971,14 +981,7 @@ def build_20_chim_hang_me(out_dir, prev_dir):
         w1._add_eye_bulb(bm, col, (sx * 0.122, -0.40, 0.945), 0.038, yaw=sx * 0.35,
                          eye_col=(0.98, 0.70, 0.18), mat_eye=3)
 
-    # Sải cánh che chở cực rộng (1.35m mỗi bên) khum nhẹ hình mái vòm bảo vệ đàn chim non bên dưới
     for sx in (-1.0, 1.0):
-        w1._add_tube(bm, col, [
-            (sx * 0.22, -0.06, 0.74),
-            (sx * 0.60, -0.10, 0.88),
-            (sx * 1.04, -0.02, 0.84),
-            (sx * 1.36, 0.12, 0.68),
-        ], [0.078, 0.062, 0.044, 0.022], sides=14, subdiv=1, mat_index=0, color_fn=plumage)
 
         # Tầng lông phủ cánh dày phía trên (wing coverts)
         for c_i in range(6):

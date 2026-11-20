@@ -11,7 +11,6 @@ import random
 import sys
 import time
 
-import bmesh  # noqa: E402
 import bpy  # noqa: E402
 from mathutils import Euler, Vector  # noqa: E402
 
@@ -20,60 +19,7 @@ import kit_common as kc  # noqa: E402
 import build_cave_creatures_wave1 as w1  # noqa: E402
 import build_cave_creatures_wave2_nong as w2  # noqa: E402
 
-
-def _sculpt_remesh_into(dst_bm, dst_col, src_bm, voxel_size=0.016, smooth_iter=6,
-                        decimate_ratio=0.45, mat_index=0, color_fn=None):
-    """Hòa trộn toàn bộ khối chồng lấn trong src_bm bằng Voxel Remesh + Smooth để tạo bề mặt điêu khắc hữu cơ liền mạch,
-    sau đó tô Vertex Color theo vị trí/pháp tuyến và gộp vào dst_bm."""
-    tmp_mesh = bpy.data.meshes.new("_tmp_sculpt")
-    src_bm.to_mesh(tmp_mesh)
-    src_bm.free()
-
-    tmp_obj = bpy.data.objects.new("_tmp_sculpt_obj", tmp_mesh)
-    bpy.context.collection.objects.link(tmp_obj)
-    bpy.context.view_layer.objects.active = tmp_obj
-
-    rem = tmp_obj.modifiers.new("Remesh", 'REMESH')
-    rem.mode = 'VOXEL'
-    rem.voxel_size = voxel_size
-    rem.use_smooth_shade = True
-
-    sm = tmp_obj.modifiers.new("Smooth", 'SMOOTH')
-    sm.factor = 0.55
-    sm.iterations = smooth_iter
-
-    if 0.1 < decimate_ratio < 0.99:
-        dec = tmp_obj.modifiers.new("Decimate", 'DECIMATE')
-        dec.ratio = decimate_ratio
-
-    deps = bpy.context.evaluated_depsgraph_get()
-    eval_obj = tmp_obj.evaluated_get(deps)
-    eval_mesh = bpy.data.meshes.new_from_object(eval_obj)
-
-    res_bm = bmesh.new()
-    res_bm.from_mesh(eval_mesh)
-    res_bm.normal_update()
-
-    vert_map = {}
-    for v in res_bm.verts:
-        nv = dst_bm.verts.new(v.co)
-        vert_map[v.index] = nv
-    for f in res_bm.faces:
-        try:
-            nf = dst_bm.faces.new([vert_map[v.index] for v in f.verts])
-            nf.material_index = mat_index
-            nf.smooth = True
-            nrm = f.normal
-            for loop in nf.loops:
-                rgb = color_fn(loop.vert.co, nrm) if color_fn else (0.5, 0.5, 0.5)
-                loop[dst_col] = (*rgb, 1.0)
-        except ValueError:
-            pass
-
-    res_bm.free()
-    bpy.data.meshes.remove(eval_mesh)
-    bpy.data.objects.remove(tmp_obj, do_unlink=True)
-    bpy.data.meshes.remove(tmp_mesh)
+_sculpt_remesh_into = w1._sculpt_remesh_into
 
 
 # ================================================================== HANG 6: HANG NẤM HUỲNH QUANG (4 LOÀI)
@@ -84,6 +30,7 @@ def build_21_nam_di_bo(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
     rng = random.Random(321)
 
     def cap_col(p, n):
@@ -93,27 +40,31 @@ def build_21_nam_di_bo(out_dir, prev_dir):
     def stalk_col(p, n):
         return w1._lerp3((0.76, 0.72, 0.62), (0.58, 0.64, 0.54), max(0.0, min(1.0, (0.35 - p.z) * 2.5)))
 
-    # Cuống nấm mập hữu cơ hơi cong tự nhiên
-    w1._add_tube(bm, col, [(0.0, 0.02, 0.14), (0.0, 0.0, 0.28), (0.0, -0.02, 0.42)],
+    # Cuống nấm + vòng cổ + 4 rễ-chân nấm điêu khắc liền mạch bằng Voxel Remesh
+    w1._add_tube(body_bm, body_col, [(0.0, 0.02, 0.14), (0.0, 0.0, 0.28), (0.0, -0.02, 0.42)],
                  [(0.115, 0.115), (0.085, 0.085), (0.072, 0.072)], sides=20, subdiv=2,
                  mat_index=0, color_fn=stalk_col)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.01, 0.34), (0.115, 0.115, 0.028), segs=18, rings=8, mat_index=0, color_fn=stalk_col)
+    for sx, sy in [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)]:
+        hip = (sx * 0.06, sy * 0.05, 0.15)
+        knee = (sx * 0.11, sy * 0.10, 0.09)
+        foot = (sx * 0.13, sy * 0.12, 0.015)
+        w1._add_tube(body_bm, body_col, [hip, knee, foot], [0.036, 0.028, 0.024], sides=10, subdiv=1, mat_index=0, color_fn=stalk_col)
 
-    # Mũ nấm nhám hữu cơ (hết bóng nhựa) + tầng mang nấm xếp tỏa tròn dưới mũ + vòng cổ nấm + đốm bào tử phát sáng
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.014, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=stalk_col)
+
+    # Mũ nấm nhám hữu cơ + tầng mang nấm xếp tỏa tròn + đốm bào tử phát sáng + mắt
     w2._add_sculpted_blob(
         bm, col, (0.0, -0.02, 0.47), (0.24, 0.24, 0.11),
         segs=28, rings=16,
         disp_fn=lambda u: Vector((0.0, 0.0, 0.018 * math.sin(math.atan2(u.y, u.x) * 7.0) * (1.0 - abs(u.z)) - 0.04 * max(0.0, -u.z))),
         mat_index=0, color_fn=cap_col,
     )
-    # Tầng mang nấm (gills) xếp tỏa tròn dưới mũ
     for k in range(12):
         ang = k * (math.pi * 2.0 / 12.0)
         w2._add_layered_feather(bm, col, (math.cos(ang) * 0.06, -0.02 + math.sin(ang) * 0.06, 0.39),
                                 (math.cos(ang), math.sin(ang), 0.12), (0, 0, 1),
                                 length=0.16, width=0.024, thickness=0.014, mat_index=0, color_fn=stalk_col)
-    # Vòng váy cổ nấm trên cuống
-    w2._add_sculpted_blob(bm, col, (0.0, -0.01, 0.34), (0.115, 0.115, 0.028), segs=18, rings=8, mat_index=0, color_fn=stalk_col)
-    # 5 đốm bào tử phát sáng trên đỉnh mũ
     for k in range(5):
         ang = k * (2.0 * math.pi / 5.0) + 0.3
         r = 0.12
@@ -121,18 +72,9 @@ def build_21_nam_di_bo(out_dir, prev_dir):
                               (0.032, 0.032, 0.022), segs=12, rings=8, mat_index=3,
                               color_fn=lambda _p, _n: (0.65, 1.0, 0.92))
 
-    # 2 mắt nhỏ thân thiện trên cuống nấm
     for sx in (-1.0, 1.0):
         w1._add_eye_bulb(bm, col, (sx * 0.048, -0.088, 0.30), 0.016, yaw=sx * 0.25,
                          eye_col=(0.10, 0.12, 0.18), mat_eye=1)
-
-    # 4 rễ-chân nấm mập tròn bám đất
-    for sx, sy in [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)]:
-        hip = (sx * 0.06, sy * 0.05, 0.15)
-        knee = (sx * 0.11, sy * 0.10, 0.09)
-        foot = (sx * 0.13, sy * 0.12, 0.012)
-        w2._add_jointed_limb(bm, col, [hip, knee, foot], [0.034, 0.026, 0.022],
-                             mat_index=0, color_fn=stalk_col)
 
     bones = [
         ("Root", (0, 0, 0.14), (0, 0, 0.30), None, 0.24, 1.0),
@@ -332,6 +274,7 @@ def build_24_nam_khong_lo(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def giant_cap(p, n):
         ring = 0.5 + 0.5 * math.sin(math.hypot(p.x, p.y) * 14.0)
@@ -340,12 +283,22 @@ def build_24_nam_khong_lo(out_dir, prev_dir):
     def bark_stalk(p, n):
         return w1._lerp3((0.44, 0.40, 0.36), (0.68, 0.64, 0.56), max(0.0, min(1.0, p.z * 0.9)))
 
-    # Thân trụ nấm khổng lồ có rãnh gân & vòng cổ nấm
-    w1._add_tube(bm, col, [(0.0, 0.0, 0.24), (0.0, 0.0, 0.56), (0.0, 0.0, 0.88)],
+    # Thân trụ + vòng cổ + 6 rễ-chân trụ to khỏe điêu khắc liền mạch bằng Voxel Remesh
+    w1._add_tube(body_bm, body_col, [(0.0, 0.0, 0.24), (0.0, 0.0, 0.56), (0.0, 0.0, 0.88)],
                  [(0.28, 0.28), (0.21, 0.21), (0.18, 0.18)], sides=24, subdiv=2, mat_index=0, color_fn=bark_stalk)
-    w2._add_sculpted_blob(bm, col, (0.0, 0.0, 0.68), (0.28, 0.28, 0.06), segs=24, rings=10, mat_index=0, color_fn=bark_stalk)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.0, 0.68), (0.28, 0.28, 0.06), segs=24, rings=10, mat_index=0, color_fn=bark_stalk)
+    for k in range(6):
+        ang = k * (math.pi / 3.0) + 0.3
+        ca, sa = math.cos(ang), math.sin(ang)
+        w1._add_tube(body_bm, body_col, [
+            (ca * 0.22, sa * 0.22, 0.26),
+            (ca * 0.42, sa * 0.42, 0.18),
+            (ca * 0.52, sa * 0.52, 0.02),
+        ], [0.095, 0.072, 0.052], sides=12, subdiv=1, mat_index=0, color_fn=bark_stalk)
 
-    # Mũ nấm khổng lồ nhám hữu cơ 2 tầng + tầng mang nấm xếp tỏa + các bọc bào tử chín phát sáng sắp nổ
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.022, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=bark_stalk)
+
+    # Mũ nấm khổng lồ nhám hữu cơ 2 tầng + tầng mang nấm xếp tỏa + bọc bào tử chín + nấm con + mắt
     w2._add_sculpted_blob(
         bm, col, (0.0, 0.0, 0.96), (0.64, 0.64, 0.24),
         segs=32, rings=18,
@@ -359,27 +312,16 @@ def build_24_nam_khong_lo(out_dir, prev_dir):
                                 (math.cos(ang), math.sin(ang), 0.10), (0, 0, 1),
                                 length=0.42, width=0.055, thickness=0.024, mat_index=0, color_fn=bark_stalk)
 
-    # 6 bọc bào tử phồng căng quanh vành mũ + 3 mắt phát sáng trên thân
     for k in range(6):
         ang = k * (math.pi / 3.0)
         ca, sa = math.cos(ang), math.sin(ang)
         w2._add_sculpted_blob(bm, col, (ca * 0.46, sa * 0.46, 0.98), (0.095, 0.095, 0.075),
                               segs=14, rings=10, mat_index=3, color_fn=lambda _p, _n: (0.68, 1.0, 0.88))
-    for mx, mz in [(-0.10, 0.50), (0.10, 0.50), (0.0, 0.58)]:
-        w1._add_eye_bulb(bm, col, (mx, -0.20, mz), 0.032, yaw=mx * 2.0, eye_col=(0.45, 0.98, 0.92), mat_eye=3)
-
-    # 6 rễ-chân trụ to khỏe + nấm con mọc cạnh chân
-    for k in range(6):
-        ang = k * (math.pi / 3.0) + 0.3
-        ca, sa = math.cos(ang), math.sin(ang)
-        w2._add_jointed_limb(bm, col, [
-            (ca * 0.22, sa * 0.22, 0.26),
-            (ca * 0.42, sa * 0.42, 0.18),
-            (ca * 0.52, sa * 0.52, 0.02),
-        ], [0.09, 0.068, 0.050], mat_index=0, color_fn=bark_stalk)
         if k % 2 == 0:
             w2._add_sculpted_blob(bm, col, (ca * 0.44, sa * 0.44, 0.10), (0.075, 0.075, 0.045),
                                   segs=14, rings=8, mat_index=3, color_fn=giant_cap)
+    for mx, mz in [(-0.10, 0.50), (0.10, 0.50), (0.0, 0.58)]:
+        w1._add_eye_bulb(bm, col, (mx, -0.20, mz), 0.032, yaw=mx * 2.0, eye_col=(0.45, 0.98, 0.92), mat_eye=3)
 
     bones = [
         ("Root", (0, 0, 0.24), (0, 0, 0.58), None, 0.52, 1.0),
@@ -427,23 +369,30 @@ def build_25_oc_luu_huynh(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
+
+    def slug_col(p, n):
+        return w1._lerp3((0.76, 0.56, 0.36), (0.88, 0.68, 0.42), 0.4 + 0.4 * max(0.0, n.z))
 
     def shell_col(p, n):
         return w1._lerp3((0.32, 0.24, 0.16), (0.94, 0.78, 0.18), 0.35 + 0.5 * math.sin(p.x * 18.0 + p.z * 14.0))
 
-    # Thân ốc mềm bò dưới vỏ + 2 râu cảm nhiệt
-    w1._add_tube(bm, col, [(0.0, -0.26, 0.05), (0.0, -0.04, 0.06), (0.0, 0.20, 0.04)],
+    # Thân ốc mềm + 2 râu cảm nhiệt điêu khắc liền mạch bằng Voxel Remesh
+    w1._add_tube(body_bm, body_col, [(0.0, -0.26, 0.05), (0.0, -0.04, 0.06), (0.0, 0.20, 0.04)],
                  [(0.075, 0.045), (0.115, 0.055), (0.065, 0.035)], sides=16, subdiv=1,
-                 mat_index=0, color_fn=lambda _p, _n: (0.76, 0.56, 0.36))
+                 mat_index=0, color_fn=slug_col)
     for sx in (-1.0, 1.0):
-        w1._add_tube(bm, col, [(sx * 0.04, -0.24, 0.07), (sx * 0.08, -0.34, 0.14)], [0.014, 0.008],
-                     sides=8, subdiv=0, mat_index=0, color_fn=lambda _p, _n: (0.85, 0.62, 0.35))
+        w1._add_tube(body_bm, body_col, [(sx * 0.04, -0.24, 0.07), (sx * 0.08, -0.34, 0.14)], [0.015, 0.008],
+                     sides=8, subdiv=0, mat_index=0, color_fn=slug_col)
+
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.012, smooth_iter=5, decimate_ratio=0.45, mat_index=0, color_fn=slug_col)
+
+    for sx in (-1.0, 1.0):
         w1._add_eye_bulb(bm, col, (sx * 0.045, -0.25, 0.085), 0.015, yaw=sx * 0.2, eye_col=(0.15, 0.10, 0.06), mat_eye=1)
 
     # Vỏ ốc xoắn dày chịu nhiệt + ống xi-phông phụt hơi nước (Hơi Nước)
     for k, (cx, cy, cz, rad) in enumerate([(0.0, 0.02, 0.19, 0.155), (0.09, 0.06, 0.22, 0.115), (0.15, 0.08, 0.24, 0.078)]):
         w2._add_sculpted_blob(bm, col, (cx, cy, cz), (rad, rad * 1.1, rad), segs=20, rings=14, mat_index=2, color_fn=shell_col)
-    # Ống phụt hơi nước trên đỉnh vỏ
     w1._add_tube(bm, col, [(-0.04, 0.02, 0.31), (-0.06, 0.06, 0.42)], [(0.042, 0.042), (0.054, 0.054)],
                  sides=14, subdiv=1, mat_index=3, color_fn=lambda _p, _n: (0.98, 0.88, 0.56))
 
@@ -724,26 +673,28 @@ def build_29_de_gio(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def wind_chitin(p, n):
         return w1._lerp3((0.28, 0.34, 0.38), (0.62, 0.74, 0.78), 0.35 + 0.4 * max(0.0, n.z))
 
-    w2._add_sculpted_blob(bm, col, (0.0, -0.18, 0.16), (0.068, 0.068, 0.065), segs=16, rings=10, mat_index=2, color_fn=wind_chitin)
-    w2._add_sculpted_blob(bm, col, (0.0, 0.02, 0.17), (0.088, 0.185, 0.082), segs=20, rings=12, mat_index=2, color_fn=wind_chitin)
+    # Đầu + ngực + bụng + gốc đùi sau điêu khắc liền mạch bằng Voxel Remesh
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.18, 0.16), (0.068, 0.068, 0.065), segs=16, rings=10, mat_index=2, color_fn=wind_chitin)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.02, 0.17), (0.088, 0.185, 0.082), segs=20, rings=12, mat_index=2, color_fn=wind_chitin)
+    for sx in (-1.0, 1.0):
+        w1._add_tube(body_bm, body_col, [(sx * 0.07, 0.06, 0.16), (sx * 0.14, 0.22, 0.34), (sx * 0.16, 0.30, 0.015)],
+                     [0.036, 0.022, 0.012], sides=10, subdiv=0, mat_index=2, color_fn=wind_chitin)
+        w1._add_tube(body_bm, body_col, [(sx * 0.06, -0.10, 0.14), (sx * 0.12, -0.14, 0.09), (sx * 0.13, -0.16, 0.015)],
+                     [0.020, 0.014, 0.010], sides=8, subdiv=0, mat_index=2, color_fn=wind_chitin)
+
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.012, smooth_iter=5, decimate_ratio=0.45, mat_index=2, color_fn=wind_chitin)
+
     for sx in (-1.0, 1.0):
         w1._add_eye_bulb(bm, col, (sx * 0.048, -0.22, 0.18), 0.022, yaw=sx * 0.3, eye_col=(0.45, 0.90, 0.98), mat_eye=3)
-        # Râu siêu dài nhạy âm (Nghe Xa)
         w1._add_tube(bm, col, [(sx * 0.03, -0.23, 0.19), (sx * 0.14, -0.44, 0.34), (sx * 0.24, -0.62, 0.44)],
                      [0.010, 0.006, 0.002], sides=6, subdiv=1, mat_index=3, color_fn=lambda _p, _n: (0.6, 0.95, 0.98))
-        # Cánh rung âm
         w2._add_layered_feather(bm, col, (sx * 0.04, -0.06, 0.24), (sx * 0.18, 0.96, 0.12), (0, 0, 1),
                                length=0.28, width=0.055, thickness=0.008, mat_index=4, color_fn=lambda _p, _n: (0.72, 0.88, 0.94))
-        # Đùi sau nhảy xa (nối thẳng không tạo khớp cầu tách rời)
-        w1._add_tube(bm, col, [(sx * 0.07, 0.06, 0.16), (sx * 0.14, 0.22, 0.34), (sx * 0.16, 0.30, 0.015)],
-                     [0.036, 0.022, 0.010], sides=10, subdiv=0, mat_index=2, color_fn=wind_chitin)
-        # Chân trước
-        w2._add_jointed_limb(bm, col, [(sx * 0.06, -0.10, 0.14), (sx * 0.12, -0.14, 0.09), (sx * 0.13, -0.16, 0.012)],
-                             [0.018, 0.012, 0.008], mat_index=2, color_fn=wind_chitin)
 
     bones = [
         ("Root", (0, 0.02, 0.17), (0, -0.12, 0.17), None, 0.25, 1.0),
