@@ -135,6 +135,15 @@ namespace Evolve.DevTools
             if (GUILayout.Button("Kẻ săn (khối 18)")) SpawnTest("Thằn Lằn Bờ Hồ", 18f, 60f, true);
             if (GUILayout.Button("Chúa Hang (khối 35)")) SpawnTest("Cóc Hồ Già", 35f, 120f, true);
             GUILayout.EndHorizontal();
+            GUILayout.Label("Combat quái (chiêu báo trước; né bằng Lách Né, phản công lúc quái kiệt sức):");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Thằn Lằn")) SpawnTest("Thằn Lằn Bờ Hồ", 10f, 34f, true);
+            if (GUILayout.Button("Bọ Giáp")) SpawnTest("Bọ Giáp Quặng", 18f, 52f, true);
+            if (GUILayout.Button("Rùa Pha Lê")) SpawnTest("Rùa Pha Lê", 42f, 115f, true);
+            if (GUILayout.Button("Bầy Muỗi (4)")) for (int i = 0; i < 4; i++) SpawnTest("Muỗi Rêu", 1f, 8f, false);
+            GUILayout.EndHorizontal();
+            foreach (var cc in Evolve.Combat.CreatureCombat.All)
+                if (cc != null && (cc.transform.position - player.transform.position).sqrMagnitude < 625f) GUILayout.Label($"  {cc.name.Replace("(Clone)", "")}: {cc.Status}");
             var latch = Evolve.Combat.LatchSession.Active;
             GUILayout.Label(latch == null ? "Không đang bám." : $"Đang bám: lỗi {latch.Game.Faults}/{latch.Game.MaxFaults}, vùng xanh {latch.Game.ZoneWidth * 100f:0}%, năng lượng {stats.State.Energy:0}");
             if (GUILayout.Button("Hồi đầy")) testNotice = EncounterRewards.RefillStats(go) ? "đã hồi đầy" : "không được";

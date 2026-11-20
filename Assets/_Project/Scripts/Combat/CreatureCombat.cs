@@ -25,6 +25,8 @@ namespace Evolve.Combat
         float tellScale = 1f;
         public float TellScale { get => tellScale; set { tellScale = value; if (scheduler != null) scheduler.TellScale = value; } }
         public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle));
+        /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
+        public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
         public float DamageTakenFactor => scheduler != null ? scheduler.DamageTakenFactor : 1f;
 
