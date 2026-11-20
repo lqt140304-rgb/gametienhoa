@@ -227,6 +227,7 @@ namespace Evolve.Ecology
                 if (ec == null) ec = go.AddComponent<EmbodiedCreature>();
                 ec.Init(this, pop);
                 embodied.Add(ec);
+                Evolve.Creatures.CreatureTuning.Apply(go, CaveId);
                 return true;
             }
             return false;
@@ -242,6 +243,7 @@ namespace Evolve.Ecology
             ec.Init(this, pop);
             if (homeRadius > 0f) ec.SetHome(home, homeRadius); else ec.SetHome(home);
             embodied.Add(ec);
+            Evolve.Creatures.CreatureTuning.Apply(go, CaveId);
             return ec;
         }
 

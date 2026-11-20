@@ -89,6 +89,13 @@ namespace Evolve.DevTools
             // ---- creatures ----
             LoadNames();
             Evolve.Creatures.CreatureMotor.Enabled = GUILayout.Toggle(Evolve.Creatures.CreatureMotor.Enabled, " Di chuyển mới cho quái (va vách, bước bậc, không vọt lên cầu); tắt = kiểu cũ");
+            GUILayout.Label($"Cỡ quái ×{Evolve.Creatures.CaveTier.SizeScale:0.00} (chỉ áp cho quái tạo sau khi đổi)");
+            Evolve.Creatures.CaveTier.SizeScale = GUILayout.HorizontalSlider(Evolve.Creatures.CaveTier.SizeScale, 0.5f, 2f);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Độ khó: {(Evolve.Creatures.CaveTier.TierOverride < 0 ? "theo hang" : "tầng " + Evolve.Creatures.CaveTier.TierOverride)}", GUILayout.Width(140));
+            if (GUILayout.Button("Theo hang")) Evolve.Creatures.CaveTier.TierOverride = -1;
+            for (int t = 0; t <= 3; t++) if (GUILayout.Button(t.ToString())) Evolve.Creatures.CaveTier.TierOverride = t;
+            GUILayout.EndHorizontal();
             GUILayout.Label($"Sinh vật thử (đặt trước mặt slime, {testCreatures.Count(c => c != null)} con)");
             showPrey = GUILayout.Toggle(showPrey, $" Con mồi ({preyNames.Count})");
             if (showPrey) foreach (var n in preyNames) if (GUILayout.Button(n)) SpawnTest(n, 3f, 12f, false);
