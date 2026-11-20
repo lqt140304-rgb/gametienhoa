@@ -51,7 +51,8 @@ namespace Evolve.EditorTools
             CavernForage.Dress();   // what can be eaten: plants, mushrooms and four minerals
             CavernFlora.Dress();    // the vegetation that cannot be eaten: reeds, ferns, moss, bushes, mushroom clusters, roots, hanging vines
             CavernMagic.Dress();    // enchanted light (after the plants and ore: it relights them and hooks the cave's lights to sight): dusty beam, pool of light and sparkles on the water, fireflies, spores
-            CavernLife.Dress();     // prey, a predator and a temporary shelter for Nuốt / Giải Mã / Biến Hình (step 1)
+            CavernLife.Dress();     // prey, a predator and the first real shelter on a high ledge
+            CavernMazeWall.Dress(); // vách hang: miệng hầm nhiều cỡ, gờ đá trú lũ, khe nứt
 
             var spawn = CavernLayout.SpawnPoint();
             var slime = P.CreatePlayer(shared, spawn);

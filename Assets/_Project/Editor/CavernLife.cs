@@ -34,10 +34,10 @@ namespace Evolve.EditorTools
             PreySpawner(root, "Prey Spawner (south-west)", CavernLayout.ShorePoint(215f, 8f), 4, 6f, preyPrefab);
             PreySpawner(root, "Prey Spawner (north)", CavernLayout.ShorePoint(100f, 8f), 3, 6f, preyPrefab);
             PredatorSpawner(root, "Predator Spawner (north-east)", CavernLayout.ShorePoint(35f, 9f), 1, 6f, predatorPrefab);
-            Shelter(root, CavernLayout.ShorePoint(250f, 6f));
+            MossShelterSpot(root, CavernLayout.ShorePoint(248f, 6f));
 
             EditorSceneManager.MarkSceneDirty(root.gameObject.scene);
-            Debug.Log("Hang Khởi Sinh: đã thả 7 con mồi (2 ổ), 1 kẻ săn mồi và một tổ tạm (vòng rêu sáng, phía tây nam gần chỗ xuất hiện). Ctrl+S để lưu scene.");
+            Debug.Log("Hang Khởi Sinh: đã thả 7 con mồi (2 ổ), 1 kẻ săn mồi và vùng rêu trú sát mặt đất (phía tây nam). Ctrl+S để lưu scene.");
         }
 
         static void PreySpawner(Transform root, string name, Vector3 pos, int count, float radius, Prey prefab)
@@ -65,10 +65,10 @@ namespace Evolve.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        /// <summary>A temporary shelter: a soft green moss ring on the ground, a faint light, and a ShelterZone trigger over it.</summary>
-        static void Shelter(Transform root, Vector3 pos)
+        /// <summary>Vùng rêu ẩm bám sát mặt đất bờ hồ kèm ShelterZone (không dựng khối cầu lơ lửng).</summary>
+        static void MossShelterSpot(Transform root, Vector3 pos)
         {
-            var go = new GameObject("Tổ tạm (Shelter)");
+            var go = new GameObject("Vùng Rêu Trú (Shelter)");
             go.transform.SetParent(root, false);
             go.transform.position = pos;
             var col = go.AddComponent<SphereCollider>();
@@ -80,17 +80,17 @@ namespace Evolve.EditorTools
             moss.name = "Moss Ring";
             Object.DestroyImmediate(moss.GetComponent<Collider>());
             moss.transform.SetParent(go.transform, false);
-            moss.transform.localPosition = new Vector3(0f, 0.03f, 0f);
-            moss.transform.localScale = new Vector3(5f, 0.02f, 5f);
+            moss.transform.localPosition = new Vector3(0f, 0.01f, 0f);
+            moss.transform.localScale = new Vector3(4.8f, 0.02f, 4.8f);
             moss.GetComponent<Renderer>().sharedMaterial = MossMaterial();
 
             var light = new GameObject("Shelter Glow").AddComponent<Light>();
             light.transform.SetParent(go.transform, false);
-            light.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+            light.transform.localPosition = new Vector3(0f, 1.1f, 0f);
             light.type = LightType.Point;
             light.color = new Color(0.55f, 1f, 0.6f);
             light.range = 6f;
-            light.intensity = 2.5f;
+            light.intensity = 2.2f;
             light.shadows = LightShadows.None;
         }
 

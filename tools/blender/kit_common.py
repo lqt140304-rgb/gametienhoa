@@ -176,9 +176,12 @@ def cap_ring(bm, ring, flip=False):
     bm.faces.new(ring[::-1] if flip else ring)
 
 
-def finish_object(bm, name, material=None):
-    """bmesh -> mesh object linked to the scene, with smooth shading and recalculated normals."""
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+def finish_object(bm, name, material=None, recalc_normals=True):
+    """bmesh -> mesh object linked to the scene, with smooth shading and optional recalculated normals."""
+    if recalc_normals and bm.faces:
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    else:
+        bm.normal_update()
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()

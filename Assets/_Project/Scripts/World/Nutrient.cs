@@ -74,6 +74,15 @@ namespace Evolve.World
             transform.localScale = baseScale * (on ? Mathf.Lerp(0.3f, 1f, remaining / totalNutrition) : 1f);
         }
 
+        /// <summary>Tái tạo ngay điểm thức ăn này (dùng khi tình huống môi trường như Mưa Axit hoặc Rễ Thức Tỉnh kích hoạt).</summary>
+        public void ForceRespawn()
+        {
+            respawnAt = -1f;
+            remaining = totalNutrition;
+            transform.localScale = baseScale;
+            SetActive(true);
+        }
+
         // Remote players have no collider here (they are ghosts), so they eat by standing close.
         void FixedUpdate()
         {

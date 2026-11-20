@@ -26,16 +26,22 @@ namespace Evolve.EditorTools
 
         const string RockMaterial = "Assets/_Project/Materials/Rock_VC.mat";
         const string GlowMaterial = "Assets/_Project/Materials/Rock_Glow.mat";
+        const string WaterMaterial = "Assets/_Project/Materials/Cavern_WaterLake.mat";
 
         // Props come with painted vertex colours (stone and moss); URP Lit ignores them, so use the vertex-colour shader.
         Material OnAssignMaterialModel(Material material, Renderer renderer)
         {
             if (!assetPath.StartsWith(Folder)) return null;
-            // luminous parts (named "...Glow...": mushroom caps, crystals, bulbs, pods, eyes) get the self-lit variant
-            if (renderer != null && renderer.name.Contains("Glow"))
+            // luminous parts (named "...Glow..." or "...Ore...": mushroom caps, crystals, bulbs, pods, eyes, raw ore veins) get the self-lit variant
+            if (renderer != null && (renderer.name.Contains("Glow") || renderer.name.Contains("Ore")))
             {
                 var glow = AssetDatabase.LoadAssetAtPath<Material>(GlowMaterial);
                 if (glow != null) return glow;
+            }
+            if (renderer != null && (renderer.name.Contains("Water") || renderer.name.Contains("Fluid")))
+            {
+                var water = AssetDatabase.LoadAssetAtPath<Material>(WaterMaterial);
+                if (water != null) return water;
             }
             return AssetDatabase.LoadAssetAtPath<Material>(RockMaterial);
         }
