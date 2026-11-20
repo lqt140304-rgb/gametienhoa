@@ -175,6 +175,18 @@ Menu thần (F1), mục Kiểm thử, dòng "Combat quái": tạo Thằn Lằn, 
 - [ ] Không có lỗi đỏ khi quái chết giữa lúc gồng; quái không đứng đơ mãi (Busy kẹt) sau khi bị choáng, bị hất hay mất mục tiêu.
 - [ ] Vồ vào quái đang kiệt sức: bám được và vào mini game như thường.
 
+### H7. Chiến đấu của quái, lát 2: Chồn Khe và Cáo Gió
+Menu thần (F1), mục Kiểm thử, dòng "Combat quái": nút "Chồn Khe (rình, 2 con)" và "Cáo Gió (Chúa Hang)". Cho slime học Lách Né để thử né. Với slime nặng từ khoảng 19 trở lên, Chồn Khe không còn coi slime là mồi (đúng luật kích cỡ).
+- [ ] **Chồn Khe rình:** vừa tạo ra thì không thấy hình, chỉ thấy **đôi mắt sáng nhỏ màu vàng** và một vầng sáng mờ. Đi tới trong khoảng 5 m thì nó hiện ra và phóng tới rất nhanh (tín hiệu ngắn, khoảng 0,2 giây).
+- [ ] **Chồn Khe vồ xa rồi chạy:** sau cú vồ 8 m nó **bỏ chạy 6 m** trong 1,5 giây (khoảng kiệt sức) rồi quay lại. Hai con thì cú vồ của hai con lệch nhịp. Sau khi không có người chơi quanh đó khoảng 20 giây, nó nằm im ẩn mình lại.
+- [ ] **Không vồ được chồn đang ẩn:** bấm chuột trái khi chỉ có chồn ẩn gần: không có mục tiêu, không tốn năng lượng.
+- [ ] **Cáo Gió, Vồ Cắn:** cúi thân rồi lao 4 m; né sang bên.
+- [ ] **Băng Rơi** (cách 4 đến 12 m): cáo đưa tay lên (thân ngả ra sau, hơi cao lên), một **vòng xanh băng hiện dưới chân bạn**, khoảng 1,2 giây sau cục băng rơi. Đứng yên thì mất 12 máu và bị đóng băng 1,5 giây; bước ra khỏi vòng thì không sao.
+- [ ] **Gió Hú** (khi máu cáo dưới 66%): cáo ngẩng đầu hú, một luồng gió đẩy slime ra xa trong 1,2 giây. Slime nặng bị đẩy ít hơn (từ khối 40 còn nửa). **Thu Mình** (đứng im) và **Bám Vách** thì không bị đẩy; đang ghì quái cũng không bị đẩy. Gió không đẩy slime xuyên vách.
+- [ ] **Gọi Bầy** (máu dưới 33%): Chồn Khe trong 30 m kéo tới.
+- [ ] Chồn ẩn bị choáng hoặc bị hạ gục khi đang ẩn: hình hiện lại, mắt biến mất, không đứng đơ.
+- [ ] Không có lỗi đỏ khi chồn ẩn rồi hiện nhiều lần, hoặc khi cục băng rơi lúc slime đã chết hoặc đã chạy xa.
+
 ### I. Chưa làm được, đừng thử
 Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 

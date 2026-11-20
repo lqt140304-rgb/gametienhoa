@@ -829,3 +829,13 @@ Thiết kế: `docs/superpowers/specs/2026-11-20-monster-combat-movesets-design.
 - **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Tư thế tạm nhân lên `localScale` của nút `Model` và có thể chồng với `CreatureLocomotion`. Muỗi chỉ nhắm slime cục bộ; người chơi co-op từ xa vẫn bị cắn theo luật cũ. Số liệu là bản tạm.
 - Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H6.
 
+## 56. Chiến đấu của quái, lát 2: Chồn Khe, Cáo Gió, rình (đã làm khung, chưa kiểm trong Unity)
+
+Thiết kế: mục "Lát 2" trong `docs/superpowers/specs/2026-11-20-monster-combat-movesets-design.md`. Kế hoạch: `docs/superpowers/plans/2026-11-20-monster-combat-slice2.md`.
+- **Luật thuần có test:** hai hình chiêu mới (`IceDrop` băng rơi, `Gust` gió hú), `MoveScheduler.Force` (bật ra với gồng ngắn), `WindRules` (lực đẩy gió giảm theo khối slime, miễn khi giữ chặt), `AmbushRules` (rình, lộ, đi tuần, rình lại sau 20 giây), bộ chiêu `Chồn Khe` và `Cáo Gió`, tư thế `Cast`.
+- **Mã Unity:** `CreatureCombat` thêm Rình (tắt hình, chỉ đôi mắt sáng và vầng sáng mờ), Rút Lui sau đòn (đánh rồi chạy), Băng Rơi (vòng báo dưới chân, rơi sau 1,2 giây, đóng băng), Gió Hú (`WindPush` đẩy slime, dừng ở vách; `Thu Mình`, `Bám Vách` và đang ghì thì miễn); vồ không chọn được quái đang ẩn.
+- **Giao bên làm hang:** bản bổ sung clip cho Chồn Khe (rình nằm, bật ra, chạy trốn) và Cáo Gió (đưa tay phép, hú, gầm) ở cuối `docs/superpowers/handoff/2026-11-20-monster-tell-poses-for-cave-team.md`.
+- **Chưa làm:** Khỉ (lát 3); rình sau vật cụ thể (đá, rễ), cần điểm nấp từ bên làm hang; yếu theo họ kỹ năng; dấu hiệu báo trên máy khách co-op.
+- **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Vầng sáng mắt và vòng băng chưa được xem trong bóng tối của hang. Chồn Khe chỉ rình slime nhỏ hơn khoảng 1,2 lần khối của nó (luật kích cỡ có sẵn).
+- Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H7.
+

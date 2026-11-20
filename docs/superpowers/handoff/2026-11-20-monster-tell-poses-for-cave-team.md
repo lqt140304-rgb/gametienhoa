@@ -35,3 +35,16 @@ Menu thần (F1), mục Kiểm thử, dòng "Combat quái": nút tạo Thằn L�
 
 ## Việc chưa làm, bàn sau
 - Lát 2: Cáo Gió (cục băng, gió đẩy), Chồn Khe (đánh rồi bỏ chạy), rình ở góc khuất. Lát 3: Khỉ (cần loài mới). Sẽ có bản giao tương tự cho từng lát.
+
+## Bổ sung lát 2: Chồn Khe và Cáo Gió (Khe Gió Hú)
+Mã đã chạy được bằng tư thế tạm. Trigger đặt theo `<Anim>` của chiêu: `Tell_Attack`/`Strike_Attack`/`Recover_Attack` (Vồ Xa, Vồ Cắn), `Tell_Cast`/`Strike_Cast`/`Recover_Cast` (Băng Rơi), `Tell_Howl`/`Strike_Howl`/`Recover_Howl` (Gió Hú), `Tell_Roar`/`Strike_Roar`/`Recover_Roar` (Gọi Bầy). Khi giao đủ clip, thêm `chonkhe` và `caogio` vào `MovesetSeed.AuthoredClips`.
+
+| Loài, chiêu | Gồng | Ra đòn | Kiệt sức |
+|---|---|---|---|
+| **Chồn Khe**, rình | nằm sát đất cuộn mình trong bóng tối, chỉ thấy đôi mắt (mã đang ẩn mô hình; nếu có clip nằm thì bỏ việc ẩn và dùng clip, báo lại để đổi) | bật dậy rất nhanh (0,2 giây, đoạn gồng của lúc bật ra) | |
+| Chồn Khe, Vồ Xa (`Attack`) | 0,35 giây: hạ thấp người, vai nhô cao, đuôi dựng | 0,5 giây: thân duỗi dài vọt tới 8 m, hàm há | 1,5 giây: quay ngoắt rồi **chạy ngược lại** (cần clip chạy nhanh, thân thấp) |
+| **Cáo Gió**, Vồ Cắn (`Attack`) | 0,5 giây: hạ thân, tai cụp, nhe răng | 0,25 giây: nhảy lao cắn | 1,5 giây: đứng thở, đuôi cụp |
+| Cáo Gió, Băng Rơi (`Cast`) | 1,0 giây: ngồi chồm, một chân trước đưa lên cao, ánh sáng xanh băng tụ quanh bàn chân | 1,2 giây: bàn chân hạ xuống chỉ vào người chơi (băng rơi từ trên) | 1,5 giây: ánh sáng tắt, thở |
+| Cáo Gió, Gió Hú (`Howl`) | 0,9 giây: ngửa đầu hít sâu, lông dựng, ngực nở | 1,2 giây: hú, lông và đuôi tung bay như bị gió thổi | 1,5 giây: gục đầu thở |
+| Cáo Gió, Gọi Bầy (`Roar`) | 1,0 giây: chồm lên, ngửa mặt | 0,1 giây: gầm | 1,5 giây: thở |
+
