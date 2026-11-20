@@ -58,3 +58,6 @@ Loài mới, xem `2026-11-20-monkey-species-for-cave-team.md` cho phần loài. 
 | Nhảy Bục (`Perch`) | 0,5 giây: cúi xuống, hai chân đạp mạnh | 0,8 giây: bay theo cung lên chỗ cao, tay chân duỗi | không (đứng trên cao ném đá) |
 | Hú Báo Động (`Roar`) | 0,8 giây: ngửa đầu há miệng, hai tay vỗ ngực | 0,1 giây: hú | 1,0 giây: thở |
 
+## Đổi chiêu Cáo Gió (cập nhật mới nhất)
+Cáo Gió không còn Băng Rơi và Gió Hú; chiêu mới là **Giáo Gió**: 3 mũi giáo gió **xoay vòng liên tục trên các đuôi** rồi phóng đi. Clip `Tell_Cast` (gồng 1,3 giây): cáo ngồi chồm hoặc đứng thẳng, **ba chiếc đuôi dựng lên và xoay chậm**, mỗi đuôi có một mũi giáo xoay quanh; `Strike_Cast` (0,9 giây): ba đuôi vung lần lượt cách nhau 0,3 giây theo từng mũi giáo bay đi; `Recover_Cast` (1,6 giây): đuôi rũ xuống, thở. **Mô hình Cáo Gió cần ba chiếc đuôi** (kiểu cáo ba đuôi) để chiêu này đẹp. Hiện mã vẽ ba mũi giáo xoay ở phía trên lưng cáo như chỗ tạm; khi có mô hình ba đuôi, báo lại vị trí gốc từng đuôi (tên xương) để mã gắn giáo xoay đúng đuôi.
+

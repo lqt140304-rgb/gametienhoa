@@ -182,8 +182,8 @@ Menu thần (F1), mục Kiểm thử, dòng "Combat quái": nút "Chồn Khe (r�
 - [ ] **Chồn Khe vồ xa rồi chạy:** sau cú vồ 8 m nó **bỏ chạy 6 m** trong 1,5 giây (khoảng kiệt sức) rồi quay lại. Hai con thì cú vồ của hai con lệch nhịp. Sau khi không có người chơi quanh đó khoảng 20 giây, nó nằm im ẩn mình lại.
 - [ ] **Không vồ được chồn đang ẩn:** bấm chuột trái khi chỉ có chồn ẩn gần: không có mục tiêu, không tốn năng lượng.
 - [ ] **Cáo Gió, Vồ Cắn:** cúi thân rồi lao 4 m; né sang bên.
-- [ ] **Băng Rơi** (cách 4 đến 12 m): cáo đưa tay lên (thân ngả ra sau, hơi cao lên), một **vòng xanh băng hiện dưới chân bạn**, khoảng 1,2 giây sau cục băng rơi. Đứng yên thì mất 12 máu và bị đóng băng 1,5 giây; bước ra khỏi vòng thì không sao.
-- [ ] **Gió Hú** (khi máu cáo dưới 66%): cáo ngẩng đầu hú, một luồng gió đẩy slime ra xa trong 1,2 giây. Slime nặng bị đẩy ít hơn (từ khối 40 còn nửa). **Thu Mình** (đứng im) và **Bám Vách** thì không bị đẩy; đang ghì quái cũng không bị đẩy. Gió không đẩy slime xuyên vách.
+- [ ] **Giáo Gió** (cách 4 đến 16 m): cáo đưa tay lên, **3 mũi giáo gió xanh trắng xoay vòng liên tục phía trên lưng (chỗ đuôi)** khoảng 1,3 giây kèm tiếng vù nhỏ. Rồi cáo phóng lần lượt 3 mũi, cách nhau 0,3 giây, mỗi mũi bay thẳng về **chỗ bạn đứng lúc nó được phóng**, có vệt sáng và tiếng **xé gió**. Trúng thì mất 26 máu mỗi mũi và bị **hất lùi** khoảng 3 m. Chạy sang bên là tránh được; giáo dừng khi chạm vách. Sau khi phóng cáo kiệt sức khoảng 1,6 giây.
+- [ ] Cáo bị choáng hoặc bị hạ gục lúc giáo đang xoay: giáo biến mất, không lơ lửng.
 - [ ] **Gọi Bầy** (máu dưới 33%): Chồn Khe trong 30 m kéo tới.
 - [ ] Chồn ẩn bị choáng hoặc bị hạ gục khi đang ẩn: hình hiện lại, mắt biến mất, không đứng đơ.
 - [ ] Không có lỗi đỏ khi chồn ẩn rồi hiện nhiều lần, hoặc khi cục băng rơi lúc slime đã chết hoặc đã chạy xa.

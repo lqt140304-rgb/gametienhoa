@@ -96,3 +96,6 @@ Khỉ là loài **mới** (chưa có trong dữ liệu sinh thái, mô hình hay
 - **Không làm ở lát 3:** khỉ giật đồ trong bụng slime (đề xuất để sau, sau khi chủ dự án thử ném đá).
 - Số liệu khác là bản tạm.
 
+## Đổi chiêu Cáo Gió (chủ dự án, 2026-11-20)
+Băng Rơi và Gió Hú bị thay bằng **Giáo Gió**: cáo tạo 3 mũi giáo gió xoay vòng liên tục trên các đuôi (đó là dấu hiệu báo), rồi phóng chúng đi lần lượt; giáo có tiếng xé gió, sát thương cao và hất lùi. Số tạm: gồng 1,3 giây, phóng cách 0,3 giây, tốc độ 26 m/s, 26 sát thương mỗi mũi, hất lùi 9 m/s trong 0,35 giây, tầm 4 đến 16 m, hồi chiêu 6 giây, kiệt sức 1,6 giây. Cáo Gió còn Vồ Cắn và Gọi Bầy.
+

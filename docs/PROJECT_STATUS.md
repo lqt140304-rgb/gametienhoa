@@ -853,3 +853,10 @@ Thiết kế: mục "Lát 3" trong `docs/superpowers/specs/2026-11-20-monster-co
 
 `Editor/TestArenaBuilder.cs`, menu `Evolve → Build Test Arena`: dựng `Scenes/TestArena.unity` (sàn phẳng 60 m có lưới, tường bao, ánh sáng sáng đều, các vật thử đá, tường, dốc, bục, cầu, cột; dùng lại slime, camera, HUD của cảnh thử cũ, bỏ bộ lọc tầm nhìn tối). Không đụng cài đặt build. Danh sách vật thử và vị trí: `docs/TEST_CHECKLIST_UNITY.md` mục "Khu thử sạch sẽ". Chưa chạy trong Unity.
 
+## 59. Cáo Gió Giáo Gió, kẻ săn chủ động hơn, bỏ cảnh báo kinematic
+
+- **Giáo Gió thay Băng Rơi và Gió Hú:** ba mũi giáo gió xoay vòng liên tục trên lưng cáo (chỗ đuôi) lúc gồng 1,3 giây, rồi phóng lần lượt (cách 0,3 giây, tốc độ 26 m/s, nhắm vị trí người chơi lúc phóng), mỗi mũi 26 sát thương và hất lùi khoảng 3 m. Tiếng xé gió tổng hợp bằng mã (`Combat/Pure/WhooshSynth`, `Combat/ProceduralSfx`), không cần tệp âm thanh. Luật có test: `SpearRules` (quỹ đạo, nhịp phóng), `WhooshSynth`, bộ chiêu. Mã Unity: `MonsterSpear`, bộ giáo xoay trong `CreatureCombat`. Cáo Gió còn Vồ Cắn và Gọi Bầy. Mã hình chiêu `IceDrop` và `Gust` còn trong thư viện nhưng không loài nào dùng.
+- **Kẻ săn chủ động săn mồi:** trước đây kẻ săn chỉ săn mồi khi đói từ 0,4, mà lúc mới tạo mức đói ngẫu nhiên chỉ khoảng 0 đến 0,5 và tăng chậm, nên phần lớn đứng ngoài cuộc vài phút. Nay ngưỡng săn là 0,2, kẻ săn mới sinh đói ngẫu nhiên từ 0,1 đến 0,7, và quái thử tạo từ menu thần đói sẵn 0,8. Có test.
+- **Cảnh báo "Setting linear velocity of a kinematic body":** các chỗ đặt vận tốc hoặc đẩy lực lên thân kinematic (chế độ ma, đóng băng) giờ bỏ qua thân kinematic (`SlimeController`, `BodyState`, `LatchSession`, `Pounce`, đòn của quái, `Combat/Impulse`). Chưa biết chắc chỗ nào đã gây ra cảnh báo của bạn vì ảnh không có dòng gọi.
+- Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H7.
+
