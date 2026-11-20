@@ -269,7 +269,8 @@ namespace Evolve.EditorTools
                 r.sharedMaterials = mats;
             }
 
-            var anim = visual.GetComponent<Animator>() ?? visual.AddComponent<Animator>();
+            var anim = visual.GetComponentInChildren<Animator>(true);
+            if (anim == null) anim = visual.AddComponent<Animator>();
             anim.runtimeAnimatorController = controller;
 
             var rb = root.AddComponent<Rigidbody>();
