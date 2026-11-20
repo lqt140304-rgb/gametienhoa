@@ -33,7 +33,7 @@ namespace Evolve.Abilities
             s.slowUntil = Mathf.Max(s.slowUntil, Time.time + seconds);
         }
 
-        static CreatureStatus On(Component creature) =
+        static CreatureStatus On(Component creature) =>
             creature.TryGetComponent(out CreatureStatus s) ? s : creature.gameObject.AddComponent<CreatureStatus>();
 
         /// <summary>Hold the creature still. <paramref name="stars"/> shows stars over its head (not wanted for a pulled prey, which is only held to be swallowed).</summary>
