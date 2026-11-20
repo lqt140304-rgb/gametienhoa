@@ -15,7 +15,9 @@ namespace Evolve.Traits
         public static float DetectMultiplier(SurvivalStats p)
         {
             var t = Of(p);
-            return t == null ? 1f : EnvTraitRules.NguySacDetect(t.HasCore(EnvTraitRules.NguySac), t.StillSeconds);
+            if (t == null) return 1f;
+            float f = EnvTraitRules.NguySacDetect(t.HasCore(EnvTraitRules.NguySac), t.StillSeconds);
+            return f < 1f ? EncounterRewardRules.BoostReduction(f, t.CoreBoost) : f;
         }
 
         /// <summary>Vệt Mùi: is a fresh part of this player's trail within reach of a predator standing at <paramref name="at"/>?</summary>

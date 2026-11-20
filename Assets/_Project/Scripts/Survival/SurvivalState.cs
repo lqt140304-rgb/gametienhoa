@@ -53,6 +53,31 @@ namespace Evolve.Survival
         [NonSerialized] public float Ambient = 22f;
         /// <summary>Extra degrees of heat tolerated (from organs).</summary>
         [NonSerialized] public float HeatResistance;
+        /// <summary>Extra heat resistance from cave encounters (Tôi Luyện): lasts the whole round, unlike HeatResistance which the worn organs rewrite.</summary>
+        [NonSerialized] public float BonusHeatResistance;
+        public float TotalHeatResistance => HeatResistance + BonusHeatResistance;
+
+        public void AddBonusHeat(float degrees)
+        {
+            BonusHeatResistance = Evolve.Traits.EncounterRewardRules.AddHeat(BonusHeatResistance, degrees);
+            Changed?.Invoke();
+        }
+
+        /// <summary>Encounter reward: health, hunger, energy and thirst full, calm again.</summary>
+        public void RefillAll()
+        {
+            if (IsDead) return;
+            Health = MaxHealth; Hunger = MaxHunger; Energy = MaxEnergy; Thirst = MaxThirst; Stress = 0f;
+            Changed?.Invoke();
+        }
+
+        /// <summary>Encounter reward: every disease gone.</summary>
+        public void CureAll()
+        {
+            EnsureDiseases();
+            for (int k = 0; k < DiseaseTime.Length; k++) DiseaseTime[k] = 0f;
+            Changed?.Invoke();
+        }
 
         [UnityEngine.Tooltip("Lives per player. Each death costs one; at 0 the player can no longer respawn on their own.")]
         public int MaxLives = 3;
@@ -130,6 +155,7 @@ namespace Evolve.Survival
         public void ResetLives()
         {
             Lives = MaxLives;
+            BonusHeatResistance = 0f;   // a new round: what the caves gave is gone
             Lost = false;
             Changed?.Invoke();
         }
@@ -214,7 +240,7 @@ namespace Evolve.Survival
             // Body temperature drifts toward the air; outside the comfort range it hurts.
             Temperature = MoveTowards(Temperature, Ambient,
                 cfg.TemperatureChangePerSec * NutrientEffects.TemperatureDriftMultiplier(Nutrients[(int)NutrientKind.Fat]) * dt);
-            float over = Temperature - (cfg.ComfortMax + HeatResistance);
+            float over = Temperature - (cfg.ComfortMax + TotalHeatResistance);
             float under = cfg.ComfortMin - Temperature;
             if (over > 0f) ApplyDamage(over * cfg.DamagePerDegreePerSec * dt);
             else if (under > 0f) ApplyDamage(under * cfg.DamagePerDegreePerSec * dt);
@@ -235,7 +261,7 @@ namespace Evolve.Survival
         }
 
         /// <summary>Highest body temperature tolerated with current organs.</summary>
-        public float HeatLimit(SurvivalConfig cfg) => cfg.ComfortMax + HeatResistance;
+        public float HeatLimit(SurvivalConfig cfg) => cfg.ComfortMax + TotalHeatResistance;
 
         public void AddExp(float amount)
         {

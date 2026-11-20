@@ -62,7 +62,7 @@ namespace Evolve.Visuals
         void LateUpdate()
         {
             if (Time.time < nextScan) return;
-            nextScan = Time.time + 0.4f; // also catches organs that were just attached
+            nextScan = Time.time + (SlimeColor.RainbowOn ? 0.1f : 0.4f); // also catches organs that were just attached; the rainbow needs smaller steps
             Apply();
         }
 

@@ -51,6 +51,11 @@ namespace Evolve.Visuals
         {
             bool linked = GUILayout.Toggle(SlimeColor.Linked, " Mắt, chân, lưng cùng màu với thân");
             if (linked != SlimeColor.Linked) { SlimeColor.SetLinked(linked); LoadHsv(); }
+            if (SlimeColor.IsUnlocked(ColorUnlocks.Rainbow))   // won in the Vườn Quặng Cầu Vồng
+            {
+                bool rainbow = GUILayout.Toggle(SlimeColor.RainbowOn, " Cầu Vồng (đã mở khóa): thân đổi sắc liên tục");
+                if (rainbow != SlimeColor.RainbowOn) SlimeColor.SetRainbow(rainbow);
+            }
 
             int picked = GUILayout.SelectionGrid(part, PartNames, 3);
             if (picked != part) { part = picked; LoadHsv(); }

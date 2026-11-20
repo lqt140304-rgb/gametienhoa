@@ -37,5 +37,6 @@
     <Compile Include="../../Assets/_Project/Scripts/Ecology/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Ecology/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/RegionPopulationTests.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Visuals/Pure/*.cs" />
   </ItemGroup>
 </Project>

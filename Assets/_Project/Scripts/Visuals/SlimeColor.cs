@@ -24,14 +24,45 @@ namespace Evolve.Visuals
             new Color(0.68f, 0.88f, 0.68f), new Color(0.68f, 0.88f, 0.68f), new Color(0.68f, 0.88f, 0.68f),
             new Color(0.68f, 0.88f, 0.68f), new Color(0.90f, 0.75f, 0.40f), new Color(1.00f, 0.62f, 0.15f)
         };
+        const string UnlockKey = "evolve.slimeUnlocked", RainbowKey = "evolve.slimeRainbow";
         const string ColorsKey = "evolve.slimeColors";
         const string LinkedKey = "evolve.slimeLinked";
 
         static Color[] colors;
         static bool linked = true;
         static bool loaded;
+        static ColorUnlocks unlocks = new ColorUnlocks();
+        static bool rainbowOn;
+        /// <summary>Hue turns a full circle in this many seconds (the unlocked Cầu Vồng finish).</summary>
+        public const float RainbowSeconds = 8f;
 
         public static event Action Changed;
+
+        /// <summary>A special colour won in a cave (kept between sessions and rounds). Returns true when it was new.</summary>
+        public static bool Unlock(string id)
+        {
+            Load();
+            if (!unlocks.Add(id)) return false;
+            SaveUnlocks();
+            Changed?.Invoke();
+            return true;
+        }
+
+        public static bool IsUnlocked(string id) { Load(); return unlocks.Has(id); }
+
+        /// <summary>The Cầu Vồng finish is switched on (and unlocked): the body colour cycles through every hue.</summary>
+        public static bool RainbowOn { get { Load(); return rainbowOn && unlocks.Has(ColorUnlocks.Rainbow); } }
+
+        public static void SetRainbow(bool on)
+        {
+            Load();
+            if (rainbowOn == on) return;
+            rainbowOn = on;
+            SaveUnlocks();
+            Changed?.Invoke();
+        }
+
+        static Color RainbowColor() => Color.HSVToRGB(Mathf.Repeat(Time.time / RainbowSeconds, 1f), 0.5f, 0.95f);
 
         public static bool Linked
         {
@@ -48,6 +79,7 @@ namespace Evolve.Visuals
         public static Color Get(SlimePart part)
         {
             Load();
+            if (RainbowOn && (part == SlimePart.Body || (linked && Follows(part)))) return RainbowColor();
             return linked && Follows(part) ? colors[(int)SlimePart.Body] : colors[(int)part];
         }
 
@@ -85,7 +117,19 @@ namespace Evolve.Visuals
             Load();
             for (int i = 0; i < PartCount; i++) colors[i] = Defaults[i];
             linked = true;
+            rainbowOn = false;   // the unlock stays, the finish goes
+            SaveUnlocks();
             Save();
+        }
+
+        static void SaveUnlocks()
+        {
+            try
+            {
+                PlayerPrefs.SetString(UnlockKey, unlocks.Encode());
+                PlayerPrefs.SetInt(RainbowKey, rainbowOn ? 1 : 0);
+            }
+            catch (Exception) { /* not saved, still applied */ }
         }
 
         static void Save()
@@ -114,6 +158,8 @@ namespace Evolve.Visuals
                     for (int i = 0; i < PartCount; i++)
                         if (ColorUtility.TryParseHtmlString("#" + parts[i], out Color c)) colors[i] = c;
                 linked = PlayerPrefs.GetInt(LinkedKey, 1) != 0;
+                unlocks = ColorUnlocks.Decode(PlayerPrefs.GetString(UnlockKey, ""));
+                rainbowOn = PlayerPrefs.GetInt(RainbowKey, 0) != 0;
             }
             catch (Exception) { /* keep the defaults */ }
         }

@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "gxlPNau5+vyyLaFqeF6z742SM2ZvEKw5IoV8enZC0h/Yt0UtQwkvkp4uqHsaLXG+AoAwaKkjovsQ5BrhBL4/yw==",
+  "success": true,
+  "projectFilePath": "/home/user/gametienhoa/tools/syntaxcheck/syntaxcheck.csproj",
+  "expectedPackageFiles": [
+    "/root/.nuget/packages/microsoft.codeanalysis.analyzers/3.3.4/microsoft.codeanalysis.analyzers.3.3.4.nupkg.sha512",
+    "/root/.nuget/packages/microsoft.codeanalysis.common/4.8.0/microsoft.codeanalysis.common.4.8.0.nupkg.sha512",
+    "/root/.nuget/packages/microsoft.codeanalysis.csharp/4.8.0/microsoft.codeanalysis.csharp.4.8.0.nupkg.sha512",
+    "/root/.nuget/packages/system.collections.immutable/7.0.0/system.collections.immutable.7.0.0.nupkg.sha512",
+    "/root/.nuget/packages/system.reflection.metadata/7.0.0/system.reflection.metadata.7.0.0.nupkg.sha512",
+    "/root/.nuget/packages/system.runtime.compilerservices.unsafe/6.0.0/system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

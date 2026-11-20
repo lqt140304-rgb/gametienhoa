@@ -476,7 +476,7 @@ namespace Evolve.Survival
         {
             var s=stats.State;Label(new Rect(r.x,r.y,r.width,30),"CƠ THỂ & MÔI TRƯỜNG",small);
             string[] names={"Máu","Năng lượng","Độ no","Nước","Căng thẳng","Thân nhiệt","Không khí","Kháng nóng","Số mạng","Trú ẩn","Tốc độ","Phản sát thương"};
-            string[] values={$"{s.Health:0}/{s.MaxHealth*NutrientEffects.MaxHealthMultiplier(s.Nutrients[(int)NutrientKind.Iron]):0}",$"{s.Energy:0}/{s.MaxEnergy:0}",$"{s.Hunger:0}/{s.MaxHunger:0}",$"{s.Thirst:0}/{s.MaxThirst:0}",$"{s.Stress:0}",$"{s.Temperature:0}°C",$"{s.Ambient:0}°C",$"+{s.HeatResistance:0.#}°C",$"{s.Lives}/{s.MaxLives}",s.InShelter?"Trong tổ":"Ngoài tổ",$"×{organs.SpeedMultiplier:0.##}",$"{organs.ContactDamage:0.#}"};
+            string[] values={$"{s.Health:0}/{s.MaxHealth*NutrientEffects.MaxHealthMultiplier(s.Nutrients[(int)NutrientKind.Iron]):0}",$"{s.Energy:0}/{s.MaxEnergy:0}",$"{s.Hunger:0}/{s.MaxHunger:0}",$"{s.Thirst:0}/{s.MaxThirst:0}",$"{s.Stress:0}",$"{s.Temperature:0}°C",$"{s.Ambient:0}°C",$"+{s.TotalHeatResistance:0.#}°C",$"{s.Lives}/{s.MaxLives}",s.InShelter?"Trong tổ":"Ngoài tổ",$"×{organs.SpeedMultiplier:0.##}",$"{organs.ContactDamage:0.#}"};
             for(int i=0;i<names.Length;i++)Metric(new Rect(r.x+(i%3)*128,r.y+47+(i/3)*77,120,67),names[i],values[i]);
             Label(new Rect(r.x,r.y+374,r.width,60),$"Vùng nhiệt an toàn: {stats.Config.ComfortMin:0}–{s.HeatLimit(stats.Config):0}°C\n{(s.ThirstEnabled?"Đang tiêu hao nước":"Vùng này không tiêu hao nước")}",small);
         }
