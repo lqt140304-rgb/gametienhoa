@@ -26,6 +26,30 @@ namespace Evolve.Combat
             } },
         };
 
+        static MoveDef weaselLeap;
+
+        static MovesetSeed()
+        {
+            // Chồn Khe: hides, bursts out, bites from afar and runs (hit and run)
+            weaselLeap = new MoveDef { Name = "Vồ Xa", Shape = MoveShape.Lunge, Windup = 0.35f, Active = 0.5f, Recover = 1.5f, Cooldown = 4f, MinRange = 3f, MaxRange = 9f, Distance = 8f, Damage = 16f, RetreatDistance = 6f, Anim = "Attack" };
+            sets["chonkhe"] = new[] { weaselLeap };
+            // Cáo Gió (cave lord): bite, falling ice, wind, then calls the weasels
+            sets["caogio"] = new[]
+            {
+                new MoveDef { Name = "Vồ Cắn", Shape = MoveShape.Lunge, Windup = 0.5f, Active = 0.25f, Recover = 1.5f, Cooldown = 2f, MinRange = 0f, MaxRange = 4f, Distance = 4f, Damage = 22f, Anim = "Attack" },
+                new MoveDef { Name = "Băng Rơi", Shape = MoveShape.IceDrop, Windup = 1.0f, Active = 1.2f, Recover = 1.5f, Cooldown = 6f, MinRange = 4f, MaxRange = 12f, Radius = 1.5f, Damage = 12f, Freeze = 1.5f, Anim = "Cast" },
+                new MoveDef { Name = "Gió Hú", Shape = MoveShape.Gust, Windup = 0.9f, Active = 1.2f, Recover = 1.5f, Cooldown = 8f, MinRange = 0f, MaxRange = 10f, Force = 6f, UnlockBelow = 0.66f, Anim = "Howl" },
+                new MoveDef { Name = "Gọi Bầy", Shape = MoveShape.Call, Windup = 1.0f, Active = 0.1f, Recover = 1.5f, Cooldown = 20f, MinRange = 0f, MaxRange = 30f, Radius = 30f, TargetSpecies = SpeciesNames.Key("Chồn Khe"), UnlockBelow = 0.33f, Anim = "Roar" },
+            };
+        }
+
+        /// <summary>Species that lie hidden until a player comes close (the weasel).</summary>
+        public static bool IsAmbusher(string speciesIdOrName) =>
+            !string.IsNullOrEmpty(speciesIdOrName) && SpeciesNames.Key(speciesIdOrName) == "chonkhe";
+
+        /// <summary>The move an ambusher bursts out with (null for a species that does not ambush).</summary>
+        public static MoveDef AmbushMove(string speciesIdOrName) => IsAmbusher(speciesIdOrName) ? weaselLeap : null;
+
         public static IReadOnlyList<MoveDef> For(string speciesIdOrName) =>
             !string.IsNullOrEmpty(speciesIdOrName) && sets.TryGetValue(SpeciesNames.Key(speciesIdOrName), out var s) ? s : None;
 
@@ -47,6 +71,8 @@ namespace Evolve.Combat
                 case MoveShape.Charge: return PoseKind.HornDown;
                 case MoveShape.Drain: return PoseKind.Hover;
                 case MoveShape.Spin: return PoseKind.Spin;
+                case MoveShape.IceDrop: return PoseKind.Cast;
+                case MoveShape.Gust: return PoseKind.Roar;
                 default: return PoseKind.Roar;
             }
         }

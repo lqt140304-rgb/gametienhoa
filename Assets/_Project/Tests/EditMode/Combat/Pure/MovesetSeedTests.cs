@@ -68,5 +68,41 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(PoseKind.Spin, MovesetSeed.PoseOf(One("RuaPhaLe", "Xoay Mai")));
             Assert.AreEqual(PoseKind.Roar, MovesetSeed.PoseOf(One("RuaPhaLe", "Gọi Bầy")));
         }
+
+        [Test] public void Slice2_Seed_ByAnyName()
+        {
+            Assert.AreEqual("Vồ Xa", MovesetSeed.For("Chồn Khe").Single().Name);
+            Assert.AreEqual("Vồ Xa", MovesetSeed.For("ChonKhe(Clone)").Single().Name);
+            foreach (var n in new[] { "Cáo Gió", "CaoGio" })
+                CollectionAssert.AreEqual(new[] { "Vồ Cắn", "Băng Rơi", "Gió Hú", "Gọi Bầy" }, MovesetSeed.For(n).Select(m => m.Name).ToArray());
+        }
+
+        [Test] public void Slice2_Numbers_MatchTheSpec()
+        {
+            var leap = One("ChonKhe", "Vồ Xa");
+            Assert.AreEqual(0.35f, leap.Windup); Assert.AreEqual(0.5f, leap.Active); Assert.AreEqual(1.5f, leap.Recover); Assert.AreEqual(8f, leap.Distance);
+            Assert.AreEqual(16f, leap.Damage); Assert.AreEqual(3f, leap.MinRange); Assert.AreEqual(9f, leap.MaxRange); Assert.AreEqual(6f, leap.RetreatDistance); Assert.AreEqual(4f, leap.Cooldown);
+            var bite = One("CaoGio", "Vồ Cắn"); var ice = One("CaoGio", "Băng Rơi"); var gust = One("CaoGio", "Gió Hú"); var call = One("CaoGio", "Gọi Bầy");
+            Assert.AreEqual(0.5f, bite.Windup); Assert.AreEqual(4f, bite.Distance); Assert.AreEqual(22f, bite.Damage);
+            Assert.AreEqual(1.0f, ice.Windup); Assert.AreEqual(1.2f, ice.Active); Assert.AreEqual(1.5f, ice.Radius); Assert.AreEqual(12f, ice.Damage); Assert.AreEqual(1.5f, ice.Freeze);
+            Assert.AreEqual(4f, ice.MinRange); Assert.AreEqual(12f, ice.MaxRange); Assert.AreEqual(6f, ice.Cooldown); Assert.AreEqual(MoveShape.IceDrop, ice.Shape);
+            Assert.AreEqual(0.9f, gust.Windup); Assert.AreEqual(1.2f, gust.Active); Assert.AreEqual(6f, gust.Force); Assert.AreEqual(0.66f, gust.UnlockBelow); Assert.AreEqual(MoveShape.Gust, gust.Shape);
+            Assert.AreEqual(1.0f, call.Windup); Assert.AreEqual(30f, call.Radius); Assert.AreEqual(0.33f, call.UnlockBelow); Assert.AreEqual(SpeciesNames.Key("Chồn Khe"), call.TargetSpecies);
+            foreach (var m in MovesetSeed.For("CaoGio")) Assert.AreEqual(1.5f, m.Recover, m.Name);
+        }
+
+        [Test] public void Ambusher_OnlyTheWeasel()
+        {
+            Assert.IsTrue(MovesetSeed.IsAmbusher("Chồn Khe")); Assert.IsTrue(MovesetSeed.IsAmbusher("ChonKhe(Clone)"));
+            Assert.IsFalse(MovesetSeed.IsAmbusher("Thằn Lằn Bờ Hồ")); Assert.IsFalse(MovesetSeed.IsAmbusher("Cáo Gió")); Assert.IsFalse(MovesetSeed.IsAmbusher(null));
+            Assert.AreEqual("Vồ Xa", MovesetSeed.AmbushMove("Chồn Khe").Name);
+            Assert.IsNull(MovesetSeed.AmbushMove("Cáo Gió"));
+        }
+
+        [Test] public void PoseOf_IceDropAndGust()
+        {
+            Assert.AreEqual(PoseKind.Cast, MovesetSeed.PoseOf(One("CaoGio", "Băng Rơi")));
+            Assert.AreEqual(PoseKind.Roar, MovesetSeed.PoseOf(One("CaoGio", "Gió Hú")));
+        }
     }
 }
