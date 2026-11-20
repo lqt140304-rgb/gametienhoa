@@ -646,7 +646,7 @@ Giao việc: mục A của `docs/superpowers/handoff/2026-11-20-core-systems-bri
 - **Chỉnh theo chủ dự án (đợt 2):** Châm Choáng chỉ choáng, không sát thương; Phát Sáng làm kẻ săn thấy từ xa hơn ×1,5; sao chỉ mạnh hơn chút (★2 +10%, ★3 +20%, hồi chiêu −5%/−10%) và mỗi kỹ năng có một cơ chế nhỏ ở ★3 (`CaveAbility`, trường `Star3*`); bị động **không chiếm ô cơ thể** nữa mà chiếm **5 ô bị động** (`SkillRules.MaxPassives = 5`, `OrganHost` giữ theo gene, bảng Biến Hình hiện 5 ô); năng lượng theo độ mạnh: nhẹ 25, vừa 30, mạnh 35 (đầy thanh 100 đủ 3 kỹ năng, không đủ 4); gene Chúa Hang là A.
 - **Chưa làm / còn chờ:**
   - Sóng Dò Mạnh: số đã có (`OrganHost.SonarRangeMultiplier`) nhưng `World/VibrationSense` (thư mục bên làm hang) cần nhân bán kính quét với số này. Một dòng, cần bên giữ `World/` đồng ý.
-  - Tiếng kỹ năng: script `tools/voice/generate_skill_sfx.sh` (9 tiếng, nhẹ, sạch) đã viết; môi trường đám mây này chưa có khóa ElevenLabs nên chưa tạo file. Thiếu file thì im.
+  - (Đã xong) Tiếng kỹ năng: 9 file `Resources/Sfx/Slime/skill_*.mp3` từ `tools/voice/generate_skill_sfx.sh`; bị động không có tiếng.
   - Gắn `DropTable_*` vào ô `drops` của từng loài trong hang (loài do bên làm hang dựng).
   - Co-op: kỹ năng của client chưa tác động lên sinh vật ở máy chủ (choáng/đẩy chỉ chạy ở máy mô phỏng sinh vật).
   - Hình kỹ năng (visual): mới có bụi gai tạm của Cắm Gai và đèn của Phát Sáng.
