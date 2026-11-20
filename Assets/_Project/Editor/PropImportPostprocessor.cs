@@ -69,11 +69,12 @@ namespace Evolve.EditorTools
                 var mesh = c.GetComponent<MeshFilter>()?.sharedMesh;
                 if (mesh != null)
                 {
-                    var mc = root.AddComponent<MeshCollider>();
+                    var mc = c.gameObject.GetComponent<MeshCollider>() ?? c.gameObject.AddComponent<MeshCollider>();
                     mc.sharedMesh = mesh;
                     mc.convex = false;
                 }
-                Object.DestroyImmediate(c.GetComponent<Renderer>());
+                var mr = c.GetComponent<Renderer>();
+                if (mr != null) Object.DestroyImmediate(mr);
             }
             if (main != null && lods.Count > 0)
             {

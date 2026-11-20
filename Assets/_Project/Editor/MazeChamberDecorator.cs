@@ -136,6 +136,30 @@ namespace Evolve.EditorTools
         static MeshCollider EnsureChamberCollider(GameObject root)
         {
             if (root == null) return null;
+            MeshCollider colMc = null;
+            bool hasColChild = false;
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh == null) continue;
+                if (mf.gameObject.name.EndsWith("_COL"))
+                {
+                    hasColChild = true;
+                    colMc = mf.gameObject.GetComponent<MeshCollider>() ?? mf.gameObject.AddComponent<MeshCollider>();
+                    colMc.sharedMesh = mf.sharedMesh;
+                    colMc.convex = false;
+                    var mr = mf.GetComponent<MeshRenderer>();
+                    if (mr != null) mr.enabled = false;
+                }
+            }
+
+            if (hasColChild)
+            {
+                var rootMc = root.GetComponent<MeshCollider>();
+                if (rootMc != null) Object.DestroyImmediate(rootMc);
+                Physics.SyncTransforms();
+                return colMc;
+            }
+
             var mc = root.GetComponent<MeshCollider>() ?? root.GetComponentInChildren<MeshCollider>(true);
             if (mc == null)
             {
@@ -143,8 +167,7 @@ namespace Evolve.EditorTools
                 foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
                 {
                     if (mf.sharedMesh == null) continue;
-                    if (mf.gameObject.name.EndsWith("_COL")) { colMf = mf; break; }
-                    if (mf.gameObject.name.Contains("Shell")) colMf = mf;
+                    if (mf.gameObject.name.Contains("Shell")) { colMf = mf; break; }
                 }
                 if (colMf != null)
                 {

@@ -208,12 +208,16 @@ namespace Evolve.Player
             if (dir.sqrMagnitude > 0.01f && v.y < 1f)
             {
                 float extent = col ? col.bounds.extents.y : 0.5f;
-                if (Physics.Raycast(rb.position, Vector3.down, out var hit, extent + 0.3f, groundMask, QueryTriggerInteraction.Ignore)
-                    && hit.normal.y > 0.6f && hit.collider.attachedRigidbody != rb)
+                float probeRadius = col ? Mathf.Clamp(col.bounds.extents.x * 0.45f, 0.12f, 0.45f) : 0.2f;
+                Vector3 castStart = rb.position + Vector3.up * 0.1f;
+                float castDist = extent + 0.45f;
+                if (Physics.SphereCast(castStart, probeRadius, Vector3.down, out var hit, castDist, groundMask, QueryTriggerInteraction.Ignore)
+                    && hit.normal.y > 0.45f && hit.collider.attachedRigidbody != rb)
                 {
                     Vector3 along = Vector3.ProjectOnPlane(horizontal, hit.normal);
                     if (along.sqrMagnitude > 1e-6f) along = along.normalized * horizontal.magnitude;
-                    float y = hit.distance > extent + 0.06f ? Mathf.Min(v.y, along.y - 1f) : along.y;   // a small gap: settle down onto it
+                    float gap = (hit.distance - 0.1f) - extent;
+                    float y = gap > 0.08f ? Mathf.Min(v.y, along.y - 1.5f) : along.y;
                     rb.linearVelocity = new Vector3(along.x, y, along.z);
                     return;
                 }
@@ -287,7 +291,7 @@ namespace Evolve.Player
             float maxStep = SlimeStep.MaxStep(b.size.x);
             Vector3 low = new Vector3(b.center.x, b.min.y + 0.05f, b.center.z);
             if (!Physics.Raycast(low, flat, out var face, b.extents.x + 0.15f, groundMask, QueryTriggerInteraction.Ignore)
-                || face.collider.attachedRigidbody != null || face.normal.y > 0.6f) return false;   // nothing, a creature, or a walkable slope
+                || face.collider.attachedRigidbody != null || face.normal.y > 0.45f) return false;   // nothing, a creature, or a walkable slope
             Vector3 above = face.point + flat * 0.05f;
             above.y = b.min.y + maxStep + 0.05f;
             // starting inside a wall taller than maxStep this ray misses the wall and finds the floor: height ~0, no climb

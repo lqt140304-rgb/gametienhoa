@@ -23,7 +23,7 @@ namespace Evolve.EditorTools
             IReadOnlyList<float> tunnelAnglesDeg,
             Material floorMat)
         {
-            const int grid = 96;
+            const int grid = 180;
             float outer = chamberRadius + 8f;
             float cell = (outer * 2f) / grid;
 
@@ -55,8 +55,16 @@ namespace Evolve.EditorTools
                     int b = a + 1;
                     int c = a + (grid + 1);
                     int d = c + 1;
-                    tris.Add(a); tris.Add(c); tris.Add(b);
-                    tris.Add(b); tris.Add(c); tris.Add(d);
+                    if (((xi + zi) & 1) == 0)
+                    {
+                        tris.Add(a); tris.Add(c); tris.Add(b);
+                        tris.Add(b); tris.Add(c); tris.Add(d);
+                    }
+                    else
+                    {
+                        tris.Add(a); tris.Add(c); tris.Add(d);
+                        tris.Add(a); tris.Add(d); tris.Add(b);
+                    }
                 }
             }
 
@@ -229,6 +237,7 @@ namespace Evolve.EditorTools
             var archMr = archGo.AddComponent<MeshRenderer>();
             archMr.sharedMaterial = rockMat;
             archMr.shadowCastingMode = ShadowCastingMode.TwoSided;
+            archGo.AddComponent<MeshCollider>().sharedMesh = archMesh;
 
             var darkGo = new GameObject("Bóng Tối Sâu Hầm");
             darkGo.transform.SetParent(mouth.transform, false);
@@ -300,15 +309,36 @@ namespace Evolve.EditorTools
 
         static void EnsureTunnelColliderAndGlowTint(GameObject tunnelGo, Color? deepGlowColor)
         {
-            if (tunnelGo.GetComponentInChildren<Collider>(true) == null)
+            // Kiểm tra xem FBX có node *_COL con không; nếu có thì luôn gắn MeshCollider trên chính node *_COL đó
+            // (tránh lỗi collider gắn trên root làm lệch transform nếu node con có xoay/dịch từ Blender).
+            bool hasColChild = false;
+            foreach (var mf in tunnelGo.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (!mf.gameObject.name.EndsWith("_COL") || mf.sharedMesh == null) continue;
+                hasColChild = true;
+                var mc = mf.gameObject.GetComponent<MeshCollider>() ?? mf.gameObject.AddComponent<MeshCollider>();
+                mc.sharedMesh = mf.sharedMesh;
+                mc.convex = false;
+                var mr = mf.GetComponent<MeshRenderer>();
+                if (mr != null) mr.enabled = false;
+            }
+
+            if (hasColChild)
+            {
+                // Xóa MeshCollider gắn nhầm trên root của tunnelGo nếu có
+                var rootMc = tunnelGo.GetComponent<MeshCollider>();
+                if (rootMc != null) Object.DestroyImmediate(rootMc);
+            }
+            else if (tunnelGo.GetComponentInChildren<Collider>(true) == null)
             {
                 foreach (var mf in tunnelGo.GetComponentsInChildren<MeshFilter>(true))
                 {
-                    if (!mf.gameObject.name.EndsWith("_COL") || mf.sharedMesh == null) continue;
+                    if (mf.sharedMesh == null) continue;
+                    string n = mf.gameObject.name;
+                    if (n.Contains("Glow") || n.Contains("Stalks") || n.Contains("Roots")) continue;
                     var mc = mf.gameObject.AddComponent<MeshCollider>();
                     mc.sharedMesh = mf.sharedMesh;
-                    var mr = mf.GetComponent<MeshRenderer>();
-                    if (mr != null) mr.enabled = false;
+                    mc.convex = false;
                 }
             }
 
@@ -353,6 +383,7 @@ namespace Evolve.EditorTools
             rockGo.transform.localScale = Vector3.one * scale;
             rockGo.AddComponent<MeshFilter>().sharedMesh = mesh;
             rockGo.AddComponent<MeshRenderer>().sharedMaterial = fallbackRockMat;
+            if (!disableCollider) rockGo.AddComponent<MeshCollider>().sharedMesh = mesh;
         }
 
         public static Material TexturedSurfaceMaterial(string name, Color tint, float smoothness, bool twoSided, string texFile = "Cavern_Rock_v3.png", Color emission = default)
