@@ -42,11 +42,17 @@ namespace Evolve.Combat
 
             // crown on the head, with a gem in the middle of the brow
             Vector3 head = new Vector3(c.x, min.y + size.y * HeadHeight, min.z + size.z * HeadForward);
+            // the rig's own Head bone is the exact spot (same name CreatureLocomotion looks for); the sliders are only the fallback
+            bool onBone = false;
+            foreach (var t in GetComponentsInChildren<Transform>())
+                if (t.name.Equals("Head", System.StringComparison.OrdinalIgnoreCase))
+                { head = model.InverseTransformPoint(t.position) + new Vector3(0f, 0.08f * u, 0f); onBone = true; break; }
             Part("Vương Miện", RegaliaMeshes.Crown(0.17f * u, 0.2f * u, 5), goldMat, model, head, Quaternion.identity, false);
             Sphere("Ngọc Trán", skyMat, model, head + new Vector3(0f, 0.1f * u, 0.17f * u), 0.07f * u);
 
             // scarf round the neck
             Vector3 neck = new Vector3(c.x, min.y + size.y * 0.62f, min.z + size.z * NeckForward);
+            if (onBone) neck = new Vector3(head.x, head.y - 0.12f * u, Mathf.Lerp(neck.z, head.z, 0.5f));
             Part("Khăn Gió", RegaliaMeshes.Torus(0.2f * u, 0.04f * u, 20, 8), skyMat, model, neck, Quaternion.Euler(65f, 0f, 0f), false);
 
             // cloak from the shoulders down the back, fluttering
