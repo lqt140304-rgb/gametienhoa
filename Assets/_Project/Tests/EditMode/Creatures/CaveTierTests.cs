@@ -78,5 +78,17 @@ namespace Evolve.Tests.EditMode
             Assert.IsFalse(CaveTier.InZone(3f, 4.1f, 0f, 0f, 5f));
             Assert.IsTrue(CaveTier.InZone(10f, 10f, 10f, 10f, 0f));
         }
+
+        [Test] public void Overrides_AffectOutputsAndReset()
+        {
+            CaveTier.TierOverride = 3;
+            Assert.AreEqual(3, CaveTier.Of("khoi_sinh"));
+            CaveTier.TierOverride = -1;
+            Assert.AreEqual(0, CaveTier.Of("khoi_sinh"));
+            CaveTier.SizeScale = 2f;
+            Assert.AreEqual(1.7f, CaveTier.SizeFactor(CreatureRole.Prey, 0), 1e-4f);
+            CaveTier.SizeScale = 1f;
+            Assert.AreEqual(0.85f, CaveTier.SizeFactor(CreatureRole.Prey, 0), 1e-4f);
+        }
     }
 }
