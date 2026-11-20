@@ -57,7 +57,9 @@ namespace Evolve.Creatures
 
         bool SlimeFilter(SurvivalStats p) => !Enabled || CreatureBehaviorRules.HunterToSlime(MassOf(p), pred.BodyMass) == SlimeAttitude.Hunt;
 
-        bool IsDiet(Component c) { var cid = CaveEcologySeed.IdByName(c.name); return cid != null && dietIds.Contains(cid); }
+        bool Kin(Component c) => CaveEcologySeed.IdByName(c.name) == id;
+
+        bool IsDiet(Component c) { var cid = CaveEcologySeed.IdByName(c.name); return cid != null && cid != id && dietIds.Contains(cid); }   // never eats its own kind
 
         void Update()
         {
@@ -117,7 +119,7 @@ namespace Evolve.Creatures
             }
             foreach (var h in Predator.Active)
             {
-                if (h == null || h == pred) continue;
+                if (h == null || h == pred || Kin(h)) continue;   // its own pack is never a rival
                 float d = Flat(pos, h.transform.position);
                 if (IsDiet(h)) { if (d < inp.PreyDist && d <= CreatureBehaviorRules.PreySense) { inp.PreyDist = d; preyT = h.transform; inp.HasPrey = true; } }   // a lord eats hunters
                 else if (d < inp.RivalDist) { inp.RivalDist = d; rivalT = h.transform; inp.RivalRatio = h.BodyMass / myMass; inp.HasRival = true; }
@@ -140,7 +142,7 @@ namespace Evolve.Creatures
                     foreach (var c in Prey.Active)
                         if (c != null && Flat(cp, c.transform.position) <= best) { best = Flat(cp, c.transform.position); intruder = c.transform; intruderIsPlayer = false; }
                     foreach (var h in Predator.Active)
-                        if (h != null && h != pred && Flat(cp, h.transform.position) <= best) { best = Flat(cp, h.transform.position); intruder = h.transform; intruderIsPlayer = false; }
+                        if (h != null && h != pred && !Kin(h) && Flat(cp, h.transform.position) <= best) { best = Flat(cp, h.transform.position); intruder = h.transform; intruderIsPlayer = false; }
                     inp.IntruderNear = intruder != null;
                 }
             }

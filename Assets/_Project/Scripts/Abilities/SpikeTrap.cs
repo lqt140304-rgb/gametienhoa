@@ -17,6 +17,7 @@ namespace Evolve.Abilities
         float radius, damage, stun, born, until;
         bool hostile;
         SurvivalStats owner;
+        string spareKind;   // species key a creature-laid trap never hurts (its own herd)
         Color tint;
         Material mat;
         Transform[] crystals;
@@ -24,12 +25,12 @@ namespace Evolve.Abilities
         readonly HashSet<Component> hurt = new HashSet<Component>();
 
         /// <param name="hostile">A creature laid it: it hurts players too (a slime's own trap never does).</param>
-        public static SpikeTrap Spawn(Vector3 at, float radius, float damage, float seconds, float stun, SurvivalStats owner, Color tint, bool hostile = false)
+        public static SpikeTrap Spawn(Vector3 at, float radius, float damage, float seconds, float stun, SurvivalStats owner, Color tint, bool hostile = false, string spareSpecies = null)
         {
             var go = new GameObject("SpikeTrap");
             go.transform.position = at;
             var trap = go.AddComponent<SpikeTrap>();
-            trap.radius = radius; trap.damage = damage; trap.stun = stun; trap.owner = owner; trap.tint = tint; trap.hostile = hostile;
+            trap.radius = radius; trap.damage = damage; trap.stun = stun; trap.owner = owner; trap.tint = tint; trap.hostile = hostile; trap.spareKind = string.IsNullOrEmpty(spareSpecies) ? null : Evolve.Creatures.SpeciesNames.Key(spareSpecies);
             trap.born = Time.time; trap.until = Time.time + seconds;
             trap.mat = SkillFx.Gel(tint, 0.3f, 1.4f, 1.8f);
 
@@ -98,6 +99,7 @@ namespace Evolve.Abilities
         void Check(Component creature, Vector3 c)
         {
             if (creature == null || hurt.Contains(creature)) return;
+            if (spareKind != null && Evolve.Creatures.SpeciesNames.Key(creature.name) == spareKind) return;
             Vector3 d = creature.transform.position - c; d.y = 0f;
             if (d.sqrMagnitude > radius * radius) return;
             hurt.Add(creature);
