@@ -150,6 +150,7 @@ namespace Evolve.DevTools
         {
             LoadNames();
             Header("Hành vi sinh vật");
+            useRealModels = Check(useRealModels, "Dùng mô hình thật của loài khi có (tắt = quả cầu đặt tên)");
             CreatureBrain.Enabled = Check(CreatureBrain.Enabled, "Sinh vật săn nhau, ăn xác, theo kích cỡ slime (B2)");
             Predator.Passive = Check(Predator.Passive, "Hòa bình: kẻ săn mồi không tấn công");
             bool frozen = Check(Predator.Frozen && Prey.Frozen, "Đóng băng mọi sinh vật");
@@ -245,8 +246,45 @@ namespace Evolve.DevTools
             }
         }
 
+        static bool useRealModels = true;
+        static readonly Dictionary<string, GameObject> prefabCache = new Dictionary<string, GameObject>();
+
+        /// <summary>The real creature prefab of a species (Assets/_Project/Prefabs/Wildlife, matched by SpeciesNames.Key), or null: editor only.</summary>
+        static GameObject FindPrefab(string displayName)
+        {
+#if UNITY_EDITOR
+            string key = SpeciesNames.Key(displayName);
+            if (prefabCache.TryGetValue(key, out var cached) && cached != null) return cached;
+            foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/_Project/Prefabs/Wildlife" }))
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                if (SpeciesNames.Key(System.IO.Path.GetFileNameWithoutExtension(path)) != key) continue;
+                var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab != null && (prefab.GetComponent<Predator>() != null || prefab.GetComponent<Prey>() != null)) return prefabCache[key] = prefab;
+            }
+#endif
+            return null;
+        }
+
+        /// <summary>Spawns the species' real prefab (with its model, stats and components) in front of the slime; false when there is none.</summary>
+        bool SpawnPrefab(string displayName)
+        {
+            var prefab = useRealModels ? FindPrefab(displayName) : null;
+            if (prefab == null) return false;
+            Vector3 pos = player.transform.position + player.transform.forward * 5f + Vector3.right * Random.Range(-2f, 2f);
+            pos.y = Evolve.World.GroundHeight.At(pos.x, pos.z, pos.y) + prefab.transform.position.y;
+            var go = Instantiate(prefab, pos, Quaternion.identity);
+            if (go.TryGetComponent(out Prey prey)) prey.HomeCenter = pos;
+            if (go.GetComponent<CreatureBrain>() == null) go.AddComponent<CreatureBrain>();
+            if (go.GetComponent<Prey>() != null && go.GetComponent<PreyDefense>() == null && PreyDefenseSeed.FindBySpecies(displayName) != null) go.AddComponent<PreyDefense>();
+            testCreatures.Add(go);
+            testNotice = $"Đã tạo {displayName} (mô hình thật)";
+            return true;
+        }
+
         void SpawnTest(string displayName, float mass, float health, bool predator)
         {
+            if (SpawnPrefab(displayName)) return;   // the real model when the species has a prefab; otherwise the plain sphere below
             Vector3 pos = player.transform.position + player.transform.forward * 5f + Vector3.right * Random.Range(-2f, 2f);
             var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.name = displayName;   // the species name: PreyDefense and CreatureBrain find their data by it
