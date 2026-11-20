@@ -792,3 +792,7 @@ Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
   - Phải chạy lại `Evolve → Build Maze World (Step 3)` để thấy.
 - **Chưa làm:** sinh vật hang rộng chưa đi tuần quanh nhiều tổ, tổ phụ chưa bám sàn thật khi khoang không có collider sàn, chưa có công trình mới hoàn toàn (hiện lặp lại cụm cảnh sẵn có). Việc cần mô hình 3D mới thuộc bên làm hang.
 
+
+## 53. Combat của slime: Vồ – Bám – Tiêu Hóa (đã duyệt, chưa làm)
+
+Thiết kế và kế hoạch: `docs/superpowers/specs/2026-11-20-slime-combat-latch-design.md`. Vồ là hành động cơ bản; con to hơn thì bám lên và vào mini game Ghì Chặt (giữ chấm trong vùng xanh để tiêu hóa, sai 3–5 lần tùy loài thì quái thoát, quái khỏe thì khó hơn), có điểm yếu, cú giãy mạnh, giai đoạn tuyệt vọng, cảnh nuốt chửng khi kết liễu. Phần khớp với phiên làm combat của quái: mục 6 của file. Kỹ năng có điều kiện (Đạn Nước, Tan Chảy): chưa chốt cách mở, hỏi chủ dự án trước.
