@@ -1,6 +1,6 @@
 # Thiết kế: chiến đấu của quái bằng bộ chiêu dùng chung (2026-11-20)
 
-Chủ dự án đã chọn hướng (cách 2, lát 1) trong hội thoại ngày 2026-11-20. Các loài và con số trong bản này là **đề xuất để chủ dự án chốt trước khi làm**.
+Chủ dự án đã chọn hướng (cách 2, lát 1) trong hội thoại ngày 2026-11-20. Chủ dự án đã chốt 4 loài lát 1 và giữ số tạm (2026-11-20); các thay đổi chốt thêm nằm ở mục "Quyết định chốt thêm".
 
 ## Ý chủ dự án và lý do
 - Chiến đấu hiện nay chủ yếu là lao vào nhau: kẻ săn đuổi rồi cắn, slime húc hoặc dùng kỹ năng. Thiếu đa dạng, không cần suy nghĩ.
@@ -55,3 +55,9 @@ Thư viện kiểu chiêu: **Phóng** (Lunge), **Húc** (Charge), **Xoay** (Spin
 - Lát 2: đánh xa và rình (Cáo Gió: cục băng trên đầu và gió đẩy, Chồn Khe: đánh rồi bỏ chạy, rình ở góc khuất, gọi bầy rộng hơn).
 - Lát 3: Khỉ (ném vật, leo trèo; cần thêm loài mới).
 - Yếu theo họ kỹ năng; ánh xạ chiêu quái thành kỹ năng người chơi; co-op thấy dấu hiệu báo; tiếng cho từng chiêu.
+
+
+## Quyết định chốt thêm (chủ dự án, 2026-11-20)
+- **Muỗi Rêu chủ động, đi theo bầy:** muỗi đi tìm người chơi (một con phát hiện thì báo cả bầy trong 15 m), bám vào slime hút máu (1,5 máu mỗi giây). Người chơi đuổi muỗi bằng cách **nhảy, chạy nhanh (khoảng 3 m/s trở lên trong nửa giây), dùng kỹ năng tức thời, hoặc đánh trúng nó**. Bị đuổi thì muỗi sợ và bay đi **30 giây**; hết 30 giây mà người chơi vẫn ở gần (trong 15 m) thì quay lại hút tiếp. Muỗi vẫn là con mồi trong dữ liệu sinh thái.
+- **Dấu hiệu báo rõ ở hình dáng cơ thể:** dấu hiệu chính là **tư thế thân** (cúi người cuộn lại, cào đất cúi sừng, rụt mai co lại, xòe cánh giương vòi), làm đủ nổi bật để nhìn ra ngay cả khi nhìn từ xa. Phần làm được bằng code (co giãn, nghiêng, rung thân theo tiến độ gồng) làm ngay; phần hoạt hình và biến dạng mô hình thật (clip `Tell`, `Strike`, `Recover` cho từng loài) giao bên làm hang theo kế hoạch `docs/superpowers/handoff/2026-11-20-monster-tell-poses-for-cave-team.md`. Mã dùng clip của họ khi có, rơi về tư thế bằng code khi chưa có.
+- Đòn cảnh báo của chiêu vùng (Xoay Mai) thêm vòng tròn báo trên đất.
