@@ -65,7 +65,7 @@ namespace Evolve.Audio
             if (loopId == id && loop.isPlaying) return;
             var clip = Get(id);
             if (clip == null) return;
-            loopId = id; loop.clip = clip; loop.volume = 0.6f * Master; loop.Play();
+            loopId = id; loop.clip = clip; loop.volume = 0.35f * Master; loop.Play();
         }
     }
 }

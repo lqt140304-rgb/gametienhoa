@@ -69,12 +69,12 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
-        public void OnlySliceImplemented()
+        public void ImplementedSet_MatchesWave2()
         {
             var cores = TraitSeed.Cores.Where(c => c.Implemented).Select(c => c.Id);
-            CollectionAssert.AreEquivalent(new[] { "core.con_bac", "core.giu_goc", "core.quen_dat" }, cores);
+            CollectionAssert.AreEquivalent(new[] { "core.con_bac", "core.giu_goc", "core.quen_dat", "core.nguy_sac", "core.mang_tham_thau", "core.quang_hop", "core.an_mon" }, cores);
             var flaws = TraitSeed.Flaws.Where(f => f.Implemented).Select(f => f.Id);
-            CollectionAssert.AreEquivalent(new[] { "flaw.doi_som", "flaw.run_ray", "flaw.luong_cuong", "flaw.da_day_ken" }, flaws);
+            CollectionAssert.AreEquivalent(new[] { "flaw.doi_som", "flaw.run_ray", "flaw.luong_cuong", "flaw.da_day_ken", "flaw.de_bi_chu_y", "flaw.vet_mui", "flaw.ngai_dong", "flaw.mau_kho", "flaw.bam_bun" }, flaws);
         }
 
         [Test]

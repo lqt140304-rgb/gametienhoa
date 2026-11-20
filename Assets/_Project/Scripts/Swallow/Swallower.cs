@@ -57,7 +57,7 @@ namespace Evolve.Swallow
         public bool TrySwallowAlive(string label, float mass, float nutrition, FoodKind food, List<Gene> genes)
         {
             if (stats.State.IsDead || !MassRules.CanSwallowWhole(Mass, mass)) return false;
-            var item = new StomachItem { Label = label, Mass = mass, Nutrition = nutrition, Food = food, Genes = genes ?? new List<Gene>(), Quality = AnalysisRules.Fresh };
+            var item = new StomachItem { Label = label, Mass = mass, Nutrition = nutrition * AnMonNutrition(), Food = food, Genes = genes ?? new List<Gene>(), Quality = AnalysisRules.Fresh };
             if (!stomach.TryAdd(item)) return false;
             Evolve.Visuals.SlimeGelAnimator.Play(gameObject, Evolve.Visuals.GelMotion.Gulp);
             Evolve.Audio.SlimeSfx.Play("slime_swallow");
@@ -110,6 +110,15 @@ namespace Evolve.Swallow
             Evolve.Audio.SlimeSfx.SetLoop("slime_dissolve", dissolve > 0.01f);   // a bubbling sound while a big carcass is being dissolved
         }
 
+        // Nhân Ăn Mòn: carcasses dissolve faster and everything swallowed gives more.
+        bool HasAnMon()
+        {
+            if (traitsComp == null) traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
+            return traitsComp != null && traitsComp.HasCore(Evolve.Traits.EnvTraitRules.AnMon);
+        }
+        float AnMonNutrition() => Evolve.Traits.EnvTraitRules.AnMonNutritionMultiplier(HasAnMon());
+        float AnMonDissolve() => Evolve.Traits.EnvTraitRules.AnMonDissolveMultiplier(HasAnMon());
+
         void TickStomach(float dt)
         {
             analyzed.Clear();
@@ -141,7 +150,7 @@ namespace Evolve.Swallow
                 return;
             }
             if (!KeyPressed.FHeld()) { dissolve = 0f; return; }
-            dissolve += dt / Mathf.Max(0.1f, MassRules.DissolveSeconds(Mass, mass));
+            dissolve += dt * AnMonDissolve() / Mathf.Max(0.1f, MassRules.DissolveSeconds(Mass, mass));
             if (dissolve >= 1f) SwallowCarcass(touching, sample);
         }
 
@@ -155,7 +164,7 @@ namespace Evolve.Swallow
             {
                 Label = sample != null ? sample.Label : "Xác",
                 Mass = sample != null ? sample.Mass : 5f,
-                Nutrition = c.Decay.FoodLeft,
+                Nutrition = c.Decay.FoodLeft * AnMonNutrition(),
                 Food = FoodKind.PredatorMeat,
                 Genes = sample != null ? new List<Gene>(sample.Genes) : new List<Gene>(),
                 Quality = quality
