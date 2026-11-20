@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Evolve.Visuals
 {
     /// <summary>
-    /// The living core inside the gel: a soft amber glow (a bright centre inside two faint halos) with a few bubbles.
+    /// The living core inside the gel: a soft amber glow (a bright centre inside a faint halo). No bubbles: nothing else floats inside the see-through body.
     /// Built when the game starts (so no temporary materials are ever saved into scenes). It pulses; faster and
     /// dimmer when the owner's health is low. Put it on the slime's "Visual" object.
     /// </summary>
@@ -32,21 +32,12 @@ namespace Evolve.Visuals
             var amber = MakeMaterial(Amber, 1.0f, 1f);
             var haloA = MakeMaterial(Amber, 0.5f, 0.12f);
             var haloB = MakeMaterial(new Color(1f, 0.8f, 0.4f), 0.5f, 0.07f);
-            var bubbleMat = MakeMaterial(new Color(0.9f, 1f, 0.85f), 0.2f, 0.45f);
 
             var centre = new Vector3(0.03f, -0.1f, -0.02f);
             core = MakePart("Core", centre, 0.085f, amber).transform;
             coreRenderer = core.GetComponent<Renderer>();
             halo1 = MakePart("CoreHalo", centre, 0.12f, haloA).transform; // tiny soft glow, stays inside the body
             halo2 = halo1; // (no second halo)
-
-            var rnd = new System.Random(11);
-            for (int i = 0; i < 6; i++)
-            {
-                float a = (float)rnd.NextDouble() * Mathf.PI * 2f, r = 0.15f + (float)rnd.NextDouble() * 0.2f;
-                MakePart("Bubble", new Vector3(Mathf.Cos(a) * r, -0.2f + (float)rnd.NextDouble() * 0.34f, Mathf.Sin(a) * r),
-                    0.018f + (float)rnd.NextDouble() * 0.02f, bubbleMat);
-            }
         }
 
         void Update()
