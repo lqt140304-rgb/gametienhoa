@@ -11,7 +11,7 @@ namespace Evolve.Maze
     {
         public const int MinChambers = 12;
         public const int MaxChambers = 16;
-        public const int DefaultChambers = 18;
+        public const int DefaultChambers = 14;
 
         public static MazeGraph Generate(int seed, int chamberCount = DefaultChambers)
         {
@@ -20,10 +20,22 @@ namespace Evolve.Maze
 
             var rng = new MazeRng(seed);
 
-            // 1. Phân bổ số lượng khoang theo 3 tầng sâu
-            int nongCount = chamberCount / 3;
-            int giuaCount = chamberCount / 3;
-            int sauCount = chamberCount - nongCount - giuaCount;
+            // 1. Phân bổ số lượng khoang theo 3 tầng sâu.
+            // Khi chamberCount >= 14, tầng Nông cần ít nhất 5 khoang (1 Khởi Sinh, 1 Trú, 3 Handcrafted)
+            // và tầng Giữa cần ít nhất 5 khoang (1 Trú, 4 Handcrafted).
+            int nongCount, giuaCount, sauCount;
+            if (chamberCount >= 14)
+            {
+                nongCount = 5;
+                giuaCount = 5;
+                sauCount = chamberCount - nongCount - giuaCount;
+            }
+            else
+            {
+                nongCount = chamberCount / 3;
+                giuaCount = chamberCount / 3;
+                sauCount = chamberCount - nongCount - giuaCount;
+            }
 
             var depths = new ChamberDepth[chamberCount];
             int idx = 0;
@@ -44,33 +56,68 @@ namespace Evolve.Maze
             PickSpecialInRange(ref rng, kinds, nongCount, nongCount + giuaCount, ChamberKind.Shelter);
             PickSpecialInRange(ref rng, kinds, nongCount + giuaCount, sealedId, ChamberKind.Shelter);
 
-            // Chọn 1–2 lối giả ở tầng Nông/Giữa/Sâu (từ các khoang Normal còn lại)
-            int deadEndTarget = chamberCount >= 14 ? 2 : 1;
+            // Chọn 1–2 lối giả (ngõ cụt dẫn lên cao)
+            // Ưu tiên chọn ở tầng Sâu để giữ nguyên các khoang mẫu handcrafted ở Nông & Giữa
+            int deadEndTarget = chamberCount >= 16 ? 2 : 1;
             var normalPool = new List<int>();
-            for (int i = 1; i < sealedId; i++)
+            for (int i = nongCount + giuaCount; i < sealedId; i++)
             {
                 if (kinds[i] == ChamberKind.Normal) normalPool.Add(i);
+            }
+            if (normalPool.Count < deadEndTarget)
+            {
+                for (int i = 1; i < nongCount + giuaCount; i++)
+                {
+                    if (kinds[i] == ChamberKind.Normal) normalPool.Add(i);
+                }
             }
             rng.Shuffle(normalPool);
             for (int i = 0; i < deadEndTarget && i < normalPool.Count; i++)
                 kinds[normalPool[i]] = ChamberKind.DeadEnd;
 
             // 3. Tạo danh sách ChamberNode với chủ đề đa dạng theo tầng sâu
-            var nongThemes = new List<ChamberTheme>(ChamberThemeCatalog.NongThemes);
-            var giuaThemes = new List<ChamberTheme>(ChamberThemeCatalog.GiuaThemes);
-            var sauThemes = new List<ChamberTheme>(ChamberThemeCatalog.SauThemes);
-            rng.Shuffle(nongThemes);
-            rng.Shuffle(giuaThemes);
-            rng.Shuffle(sauThemes);
+            // Đảm bảo các khoang handcrafted luôn xuất hiện trước
+            var craftedNong = new List<ChamberTheme>
+            {
+                ChamberTheme.LumaMushroomGrove,
+                ChamberTheme.BreathingMoss,
+                ChamberTheme.AbandonedNest
+            };
+            rng.Shuffle(craftedNong);
 
-            // Đảm bảo các khoang Tầng Nông & Giữa đã dựng luôn xuất hiện theo thứ tự xáo
-            MoveToFront(nongThemes, ChamberTheme.AbandonedNest);
-            MoveToFront(nongThemes, ChamberTheme.BreathingMoss);
-            MoveToFront(nongThemes, ChamberTheme.LumaMushroomGrove);
-            MoveToFront(giuaThemes, ChamberTheme.HowlingWindGorge);
-            MoveToFront(giuaThemes, ChamberTheme.HotSpringCavern);
-            MoveToFront(giuaThemes, ChamberTheme.GlowMushroomCavern);
-            MoveToFront(giuaThemes, ChamberTheme.CrystalVein);
+            var extraNong = new List<ChamberTheme>
+            {
+                ChamberTheme.RootCanopy,
+                ChamberTheme.DampReedHollow,
+                ChamberTheme.AmberPebbleGarden
+            };
+            rng.Shuffle(extraNong);
+
+            var nongThemes = new List<ChamberTheme>(craftedNong);
+            nongThemes.AddRange(extraNong);
+
+            var craftedGiua = new List<ChamberTheme>
+            {
+                ChamberTheme.CrystalVein,
+                ChamberTheme.GlowMushroomCavern,
+                ChamberTheme.HotSpringCavern,
+                ChamberTheme.HowlingWindGorge
+            };
+            rng.Shuffle(craftedGiua);
+
+            var extraGiua = new List<ChamberTheme>
+            {
+                ChamberTheme.LimestoneStalactite,
+                ChamberTheme.SporeCurtain,
+                ChamberTheme.DeepRootTangle
+            };
+            rng.Shuffle(extraGiua);
+
+            var giuaThemes = new List<ChamberTheme>(craftedGiua);
+            giuaThemes.AddRange(extraGiua);
+
+            var sauThemes = new List<ChamberTheme>(ChamberThemeCatalog.SauThemes);
+            rng.Shuffle(sauThemes);
 
             var chambers = new List<ChamberNode>(chamberCount);
             int nongThemeIdx = 0, giuaThemeIdx = 0, sauThemeIdx = 0;
