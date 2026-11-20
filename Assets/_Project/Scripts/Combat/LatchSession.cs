@@ -144,6 +144,7 @@ namespace Evolve.Combat
                     if (d < bestD) { bestD = d; best = c; }
                 }
                 swallower.SwallowCarcassNow(best);   // the freshest body there is: Giải Mã reads its best genes
+                if (best != null) SwallowCinematic.Play(slime);
             }
             Active = null;
             Ended?.Invoke(state);
