@@ -775,3 +775,9 @@ Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
   - Cảnh cũ (hồ ngầm, không thuộc hang nào) vẫn chạy mô hình cũ.
   - Menu thần có thêm nút "In quần thể đang sống của mọi hang".
 
+## 51. Đối chiếu lần hai với bên làm hang (commit `f928881`)
+
+- Bên làm hang vừa sửa: sàn khoang lưới 180×180 với đường chéo xen kẽ, collider `*_COL` gắn đúng node, `GroundHeight.At` ưu tiên tia dò collider thật (chọn mặt gần chiều cao ước tính nhất), SphereCast mượt hơn cho slime, ngưỡng dốc đi được 0,45. Đã gộp vào `claude/unity-test-maze`, 276/276 test thuần đạt, các sửa này khớp với `CreatureMotor` và `StepUp`.
+- Thông tin gửi lại họ: `docs/superpowers/handoff/2026-11-20-core-update-for-cave-team.md`.
+- **Việc còn treo cần chủ dự án chọn:** mỗi loài đang được tạo hai lần, từ bộ tạo bầy (`PreySpawner`/`PredatorSpawner`) và từ `Region` qua tổ. Cách A (đề xuất): tính con của bộ tạo bầy vào quần thể, `Region` chỉ tạo bù phần thiếu. Cách B: tắt bộ tạo bầy ở hang đã có mô hình B1.
+
