@@ -5,6 +5,8 @@ using Evolve.Creatures;
 using Evolve.Organs;
 using Evolve.Player;
 using Evolve.Survival;
+using Evolve.Swallow;
+using Evolve.Traits;
 using Evolve.World;
 using UnityEngine;
 
@@ -36,7 +38,7 @@ namespace Evolve.DevTools
         }
 
         bool open;
-        Rect window = new Rect(20, 60, 380, 640);
+        Rect window = new Rect(20, 20, 700, 760);
         Vector2 scroll;
 
         bool invulnerable, infiniteFood, infiniteEnergy, noCooldown, growInstantly = true;
@@ -86,127 +88,153 @@ namespace Evolve.DevTools
             }
         }
 
+        static readonly string[] TabNames = { "Bản thân", "Kỹ năng", "Sinh vật", "Combat", "Thế giới", "Khác" };
+        int tab;
+        float userScale = 1f;
+        bool scaleLoaded, showOrganList, showRewards, showDropTests;
+        static GUIStyle wrapLabel, wrapToggle, headerStyle;
+
+        /// <summary>The menu is drawn bigger on big screens (and with A- / A+ to taste), so it is readable.</summary>
+        float UiScale
+        {
+            get
+            {
+                if (!scaleLoaded) { userScale = PlayerPrefs.GetFloat("GodMenuScale", 1f); scaleLoaded = true; }
+                return Mathf.Clamp(Screen.height / 820f, 1f, 2.4f) * userScale;
+            }
+        }
+
+        void SetScale(float v) { userScale = Mathf.Clamp(v, 0.7f, 1.8f); PlayerPrefs.SetFloat("GodMenuScale", userScale); }
+
         void OnGUI()
         {
-            if (!open)
+            var oldMatrix = GUI.matrix;
+            float scale = UiScale;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            float sw = Screen.width / scale, sh = Screen.height / scale;
+            if (!open) GUI.Label(new Rect(sw / 2f - 60, 4, 200, 22), "F1: Menu God");
+            else
             {
-                GUI.Label(new Rect(Screen.width / 2f - 60, 4, 200, 22), "F1: Menu God");
-                return;
+                float w = Mathf.Min(700f, sw - 20f), h = sh - 40f;
+                window.width = w; window.height = h;
+                window.x = Mathf.Clamp(window.x, 0f, Mathf.Max(0f, sw - w));
+                window.y = Mathf.Clamp(window.y, 0f, Mathf.Max(0f, sh - 60f));
+                window = GUILayout.Window(WindowId, window, DrawWindow, "Menu God (F1 để đóng)", GUILayout.Width(w), GUILayout.Height(h));
             }
-            window = GUILayout.Window(WindowId, window, DrawWindow, "Menu God (F1 để đóng)");
+            GUI.matrix = oldMatrix;
+        }
+
+        static void EnsureStyles()
+        {
+            if (wrapLabel != null) return;
+            wrapLabel = new GUIStyle(GUI.skin.label) { wordWrap = true };
+            wrapToggle = new GUIStyle(GUI.skin.toggle) { wordWrap = true };
+            headerStyle = new GUIStyle(GUI.skin.label) { richText = true, fontSize = 15, fontStyle = FontStyle.Bold };
         }
 
         void DrawWindow(int id)
         {
-            scroll = GUILayout.BeginScrollView(scroll);
-            if (player == null)
-            {
-                GUILayout.Label("Không tìm thấy slime trong scene.");
-                GUILayout.EndScrollView();
-                GUI.DragWindow();
-                return;
-            }
-            var s = player.State;
-
-            Header("Bản thân");
-            invulnerable = GUILayout.Toggle(invulnerable, " Bất tử (không mất máu)");
-            infiniteFood = GUILayout.Toggle(infiniteFood, " Vô hạn thức ăn");
-            infiniteEnergy = GUILayout.Toggle(infiniteEnergy, " Vô hạn năng lượng");
-            noCooldown = GUILayout.Toggle(noCooldown, " Dị Năng không hồi chiêu");
+            EnsureStyles();
+            if (player == null) { Say("Không tìm thấy slime trong scene."); GUI.DragWindow(); return; }
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Hồi đầy chỉ số")) { s.Health = s.MaxHealth; s.Hunger = s.MaxHunger; s.Energy = s.MaxEnergy; s.Temperature = s.Ambient; }
-            if (GUILayout.Button("Tự sát")) { bool inv = s.Invulnerable; s.Invulnerable = false; s.Damage(99999f); s.Invulnerable = invulnerable && inv; }
+            tab = GUILayout.Toolbar(tab, TabNames, GUILayout.Height(34));
+            if (GUILayout.Button("A−", GUILayout.Width(40), GUILayout.Height(34))) SetScale(userScale - 0.1f);
+            if (GUILayout.Button("A+", GUILayout.Width(40), GUILayout.Height(34))) SetScale(userScale + 0.1f);
+            GUILayout.EndHorizontal();
+            if (testNotice.Length > 0) Say("» " + testNotice);
+
+            scroll = GUILayout.BeginScrollView(scroll);
+            var slimeBody = player.GetComponent<Evolve.Swallow.SlimeBody>();
+            var swallower = player.GetComponent<Evolve.Swallow.Swallower>();
+            switch (tab)
+            {
+                case 0: DrawSelf(player.State, slimeBody); break;
+                case 1: DrawSkills(player, slimeBody, swallower); break;
+                case 2: DrawCreatures(); break;
+                case 3: DrawCombat(player); break;
+                case 4: DrawWorld(); break;
+                default: DrawMisc(player, swallower); break;
+            }
+            GUILayout.EndScrollView();
+            GUI.DragWindow();
+        }
+
+        // ---------- small layout helpers ----------
+
+        static void Say(string text) => GUILayout.Label(text, wrapLabel);
+        static bool Check(bool value, string text) => GUILayout.Toggle(value, " " + text, wrapToggle);
+        static bool Fold(bool open, string text) => GUILayout.Toggle(open, (open ? "▼ " : "▶ ") + text, GUI.skin.button, GUILayout.Height(30));
+
+        static void Header(string text)
+        {
+            GUILayout.Space(10);
+            GUILayout.Label(text, headerStyle);
+        }
+
+        // ---------- tab: bản thân ----------
+
+        void DrawSelf(SurvivalState s, Evolve.Swallow.SlimeBody slimeBody)
+        {
+            Header("Bản thân");
+            invulnerable = Check(invulnerable, "Bất tử (không mất máu)");
+            infiniteFood = Check(infiniteFood, "Vô hạn thức ăn");
+            infiniteEnergy = Check(infiniteEnergy, "Vô hạn năng lượng");
+            noCooldown = Check(noCooldown, "Dị Năng không hồi chiêu");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Hồi đầy chỉ số", GUILayout.Height(30))) { s.Health = s.MaxHealth; s.Hunger = s.MaxHunger; s.Energy = s.MaxEnergy; s.Temperature = s.Ambient; }
+            if (GUILayout.Button("Tự sát", GUILayout.Height(30))) { bool inv = s.Invulnerable; s.Invulnerable = false; s.Damage(99999f); s.Invulnerable = invulnerable && inv; }
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Mạng: {s.Lives}/{s.MaxLives}", GUILayout.Width(90));
+            GUILayout.Label($"Mạng: {s.Lives}/{s.MaxLives}", GUILayout.Width(110));
             if (GUILayout.Button("+1 mạng")) s.Lives = Mathf.Min(s.Lives + 1, s.MaxLives);
             if (GUILayout.Button("Hồi đủ mạng")) s.ResetLives();
             GUILayout.EndHorizontal();
             if (s.IsDead && GUILayout.Button("Hồi sinh ngay (giữ mạng)")) { s.Lives = Mathf.Max(1, s.Lives); controller.Respawn(); }
 
-            Header("Cơ quan");
-            growInstantly = GUILayout.Toggle(growInstantly, " Cho lớn đầy ngay khi nhận (Lv1)");
-            var slimeBody = player.GetComponent<Evolve.Swallow.SlimeBody>();
-            var swallower = player.GetComponent<Evolve.Swallow.Swallower>();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Khối: {(slimeBody != null ? slimeBody.Mass : 0f):0.#}", GUILayout.Width(140));
-            if (GUILayout.Button("+10 khối") && slimeBody != null) slimeBody.AddMass(10f);
-            if (GUILayout.Button("Học hết cơ quan") && swallower != null)
-                foreach (var o in AllOrgans())
-                    while (!swallower.Book.Knows(o))
-                        swallower.Book.Submit(new List<Evolve.Swallow.Gene> { new Evolve.Swallow.Gene(o, Evolve.Swallow.AnalysisRules.FromTier(o.Tier)) }, 1f, () => 0f);
-            GUILayout.EndHorizontal();
-            foreach (var o in AllOrgans())
-            {
-                bool has = host != null && host.Has(o);
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"[{o.Tier}] {o.DisplayName} ({OrganInteractor.SlotName(o.Slot)})", GUILayout.Width(230));
-                bool active = o.Use == Evolve.Swallow.GeneUse.Active;
-                bool learned = swallower != null && swallower.Book.Knows(o);
-                GUI.enabled = host != null && (active ? !learned : !has);
-                if (GUILayout.Button(active ? (learned ? "Đã học" : "Học chiêu") : (has ? "Đang có" : "Nhận bị động")))
-                {
-                    if (active)
-                    {
-                        // an active move is learned, not worn: it appears in the skill menu (K) and on keys 1-5
-                        if (swallower != null)
-                            while (!swallower.Book.Knows(o))
-                                swallower.Book.Submit(new List<Evolve.Swallow.Gene> { new Evolve.Swallow.Gene(o, Evolve.Swallow.AnalysisRules.FromTier(o.Tier)) }, 1f, () => 0f);
-                    }
-                    else
-                    {
-                        host.TryAttach(o);
-                        if (growInstantly) host.DebugGrowAll();
-                    }
-                }
-                GUI.enabled = true;
-                GUILayout.EndHorizontal();
-            }
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Lớn đầy tất cả (Lv1)") && host != null) host.DebugGrowAll();
-            if (GUILayout.Button("Mọi cơ quan Lv2") && host != null) host.DebugSetLevel(2);
-            if (GUILayout.Button("Mọi cơ quan Lv3") && host != null) host.DebugSetLevel(3);
-            if (GUILayout.Button("Tháo hết (biến mất)") && host != null)
-                foreach (var o in host.OrganList) host.Detach(o);
-            GUILayout.EndHorizontal();
-            if (GUILayout.Button("Thử luật mất xác: mất hết cơ quan đang gắn") && interactor != null) interactor.DropAllOnDeath();
+            var traits = player.GetComponent<Evolve.Traits.PlayerTraits>();
+            Say($"Máu {s.Health:0}/{s.MaxHealth:0} · năng lượng {s.Energy:0} · kháng nhiệt +{s.TotalHeatResistance:0.#}°C · Lõi {(traits != null ? traits.CoreId : "-")} ×{(traits != null ? traits.CoreBoost : 1f):0.##} · Khuyết Điểm {(traits != null ? string.Join(", ", traits.FlawIds) : "-")}");
 
-            Header("Sinh vật");
-            CreatureBrain.Enabled = GUILayout.Toggle(CreatureBrain.Enabled, " Sinh vật săn nhau, ăn xác, theo kích cỡ slime (B2)");
-            Vector3 front = player.transform.position + player.transform.forward * 3f + Vector3.right * 2f;
+            Header($"Kích cỡ slime (khối {(slimeBody != null ? slimeBody.Mass : 0f):0.#})");
+            Say("Đổi để thử ai săn ai, ai chạy ai.");
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Tạo con mồi gần")) FindAnyObjectByType<PreySpawner>()?.SpawnAt(front);
-            if (GUILayout.Button("Tạo kẻ săn mồi gần")) FindAnyObjectByType<PredatorSpawner>()?.SpawnAt(player.transform.position + Vector3.forward * 8f);
+            foreach (float m in new[] { 3f, 10f, 20f, 40f, 80f })
+                if (GUILayout.Button($"{m:0}", GUILayout.Height(28)) && slimeBody != null) slimeBody.SetMass(m);
+            if (GUILayout.Button("+10 khối", GUILayout.Height(28)) && slimeBody != null) slimeBody.AddMass(10f);
             GUILayout.EndHorizontal();
-            if (GUILayout.Button($"Hạ hết kẻ săn mồi ({Predator.Active.Count}) (vẫn rơi đồ)"))
-                foreach (var p in Predator.Active.ToList()) p.TakeDamage(99999f, player);
-            Predator.Passive = GUILayout.Toggle(Predator.Passive, " Hòa bình: kẻ săn mồi không tấn công");
-            bool frozen = GUILayout.Toggle(Predator.Frozen && Prey.Frozen, " Đóng băng mọi sinh vật");
-            Predator.Frozen = frozen; Prey.Frozen = frozen;
 
-            DrawTestSection(player, slimeBody, swallower);   // GodMenu.Tests.cs
-
-            Header("Thế giới");
+            Header("Tốc độ game");
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Tới hoang mạc")) controller.Teleport(DesertCenter);
-            if (GUILayout.Button("Về điểm xuất phát")) controller.Teleport(controller.SpawnPoint);
+            GUILayout.Label($"{Time.timeScale:0.#}×", GUILayout.Width(60));
+            foreach (float t in new[] { 0.25f, 0.5f, 1f, 2f, 4f })
+                if (GUILayout.Button($"{t}×", GUILayout.Height(28))) Time.timeScale = t;
+            GUILayout.EndHorizontal();
+            if (GUILayout.Button("Về điểm xuất phát", GUILayout.Height(30))) controller.Teleport(controller.SpawnPoint);
+        }
+
+        // ---------- tab: thế giới ----------
+
+        void DrawWorld()
+        {
+            Header("Dịch chuyển");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Tới hoang mạc", GUILayout.Height(30))) controller.Teleport(DesertCenter);
+            if (GUILayout.Button("Về điểm xuất phát", GUILayout.Height(30))) controller.Teleport(controller.SpawnPoint);
             GUILayout.EndHorizontal();
 
             var mazeMgr = FindAnyObjectByType<Evolve.Maze.MazeWorldManager>();
             if (mazeMgr != null && mazeMgr.Graph != null)
             {
-                GUILayout.Space(2);
                 GUILayout.BeginHorizontal();
                 foreach (var c in mazeMgr.Graph.Chambers)
                 {
                     if (c.Theme == Evolve.Maze.ChamberTheme.LumaMushroomGrove)
                     {
-                        if (GUILayout.Button("Tới Rừng Nấm (Luma)"))
+                        if (GUILayout.Button("Tới Rừng Nấm (Luma)", GUILayout.Height(30)))
                             mazeMgr.TeleportPlayerToChamber(controller.transform, c.Id);
                     }
                     else if (c.Theme == Evolve.Maze.ChamberTheme.CrystalVein)
                     {
-                        if (GUILayout.Button("Tới Vực Thẳm Tinh Thể"))
+                        if (GUILayout.Button("Tới Vực Thẳm Tinh Thể", GUILayout.Height(30)))
                             mazeMgr.TeleportPlayerToChamber(controller.transform, c.Id);
                     }
                 }
@@ -214,32 +242,35 @@ namespace Evolve.DevTools
             }
 #if UNITY_EDITOR
             string rebuildLabel = mazeMgr != null && mazeMgr.Graph != null
-                ? "🔄 Dựng lại Mê Cung (Rebuild Maze World)"
-                : "⚡ Dựng Mê Cung ngay (Build Maze World)";
-            if (GUILayout.Button(rebuildLabel))
+                ? "Dựng lại Mê Cung (Rebuild Maze World)"
+                : "Dựng Mê Cung ngay (Build Maze World)";
+            if (GUILayout.Button(rebuildLabel, GUILayout.Height(30)))
                 Evolve.Maze.MazeWorldManager.InvokeEditorRebuild();
 #endif
             var vision = FindAnyObjectByType<MonochromeVision>();
-            if (vision != null && GUILayout.Button(vision.Sight >= 1f ? "Tắt mắt (đen trắng)" : "Bật mắt (có màu)"))
+            if (vision != null && GUILayout.Button(vision.Sight >= 1f ? "Tắt mắt (đen trắng)" : "Bật mắt (có màu)", GUILayout.Height(30)))
                 vision.SetSight(vision.Sight >= 1f ? 0f : 1f);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Tốc độ game: {Time.timeScale:0.#}×", GUILayout.Width(120));
-            foreach (float t in new[] { 0.5f, 1f, 2f, 4f })
-                if (GUILayout.Button($"{t}×")) Time.timeScale = t;
-            GUILayout.EndHorizontal();
 
-            Header("Thử tỉ lệ rơi (kết quả ở Console)");
-            foreach (var table in Resources.FindObjectsOfTypeAll<DropTableSO>())
-                if (GUILayout.Button($"Bốc thử 1000 lần: {table.name}")) RollTest(table);
-
-            GUILayout.EndScrollView();
-            GUI.DragWindow();
+            DrawEcology();
         }
 
-        static void Header(string text)
+        // ---------- tab: khác ----------
+
+        void DrawMisc(SurvivalStats stats, Evolve.Swallow.Swallower swallower)
         {
-            GUILayout.Space(8);
-            GUILayout.Label($"<b>{text}</b>", new GUIStyle(GUI.skin.label) { richText = true, fontSize = 14 });
+            Header("Bệnh và Túi");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Nhiễm bệnh thử", GUILayout.Height(28))) { stats.State.Infect(DiseaseKind.RottenGel); stats.State.Infect(DiseaseKind.SporeBlur); }
+            if (GUILayout.Button("Hết bệnh", GUILayout.Height(28))) testNotice = EncounterRewards.CureDiseases(stats.gameObject) ? "đã chữa" : "không được";
+            GUILayout.EndHorizontal();
+            if (GUILayout.Button("Bỏ 2 món vào Túi", GUILayout.Height(28)))
+                testNotice = $"Vào Túi: {EncounterRewards.GiveItems(stats.gameObject, new[] { new EncounterItem { Label = "Mẩu xương cũ", Mass = 1f, Nutrition = 10f, Food = FoodKind.PreyMeat }, new EncounterItem { Label = "Hạt lạ", Mass = 0.5f, Nutrition = 5f, Food = FoodKind.PreyMeat } })} món";
+            if (interactor != null && GUILayout.Button("Thử luật mất xác: mất hết cơ quan đang gắn", GUILayout.Height(28))) interactor.DropAllOnDeath();
+
+            showDropTests = Fold(showDropTests, "Thử tỉ lệ rơi (kết quả ở Console)");
+            if (showDropTests)
+                foreach (var table in Resources.FindObjectsOfTypeAll<DropTableSO>())
+                    if (GUILayout.Button($"Bốc thử 1000 lần: {table.name}")) RollTest(table);
         }
 
         static IEnumerable<OrganSO> AllOrgans() =>

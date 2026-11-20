@@ -22,6 +22,7 @@ Các nhánh nhỏ (chỉ cần nếu muốn tách): `claude/quirky-carson-xnvto6
 `Window → General → Test Runner → EditMode → Run All`. Báo lại số test đỏ (nếu có) kèm tên. Ngoài Unity, 226 test thuần đã xanh.
 
 ## 4. Menu thần (F1; bảng mê cung của bên làm hang là F10) có gì mới
+Menu thần giờ chia **6 tab**: Bản thân (bất tử, hồi, mạng, khối slime, tốc độ game), Kỹ năng (học kỹ năng, danh sách cơ quan, phần thưởng kỳ ngộ), Sinh vật (hành vi, cỡ và độ khó, tạo quái thử), Combat (Vồ, chiêu của quái, pha hiện tại), Thế giới (dịch chuyển, mê cung, sinh thái), Khác (bệnh, Túi, thử tỉ lệ rơi). Menu tự phóng to theo độ cao màn hình; nút **A−** và **A+** chỉnh cỡ thêm, nhớ lại lần sau. Danh sách dài (cơ quan, con mồi, kẻ săn, Chúa Hang, phần thưởng, thử tỉ lệ rơi) nằm trong mục thu gọn, bấm tiêu đề để mở.
 Mục **"Kiểm thử"** (cuộn xuống dưới "Sinh vật"):
 - **Kích cỡ slime:** nút 3, 10, 20, 40, 80 để đặt khối.
 - **Kỹ năng hang:** học 9 kỹ năng chủ động ★1, lên ★3 hết, gắn tối đa bị động hang.

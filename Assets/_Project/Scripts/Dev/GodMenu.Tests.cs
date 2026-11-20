@@ -48,32 +48,20 @@ namespace Evolve.DevTools
             for (int i = 0; i < 80 && sw.Book.StarsOf(o) < stars; i++) sw.Book.Submit(g, 1f, () => 0f);
         }
 
-        void DrawTestSection(SurvivalStats stats, SlimeBody body, Swallower swallower)
+        // ---------- tab: kỹ năng ----------
+
+        void DrawSkills(SurvivalStats stats, SlimeBody body, Swallower swallower)
         {
-            Header("Kiểm thử kỹ năng, sinh vật, phần thưởng (tài liệu: docs/TEST_CHECKLIST_UNITY.md)");
-            if (testNotice.Length > 0) GUILayout.Label(testNotice);
-            var traits = player.GetComponent<PlayerTraits>();
-            var go = player.gameObject;
-
-            GUILayout.Label($"Máu {stats.State.Health:0}/{stats.State.MaxHealth:0} · kháng nhiệt +{stats.State.TotalHeatResistance:0.#}°C · Lõi {(traits != null ? traits.CoreId : "-")} ×{(traits != null ? traits.CoreBoost : 1f):0.##} · Khuyết Điểm {(traits != null ? string.Join(", ", traits.FlawIds) : "-")}");
-
-            // ---- slime size ----
-            GUILayout.Label($"Kích cỡ slime (khối {(body != null ? body.Mass : 0f):0.#}): đổi để thử ai săn ai, ai chạy ai");
-            GUILayout.BeginHorizontal();
-            foreach (float m in new[] { 3f, 10f, 20f, 40f, 80f })
-                if (GUILayout.Button($"{m:0}") && body != null) body.SetMass(m);
-            GUILayout.EndHorizontal();
-
-            // ---- skills ----
+            Header("Kỹ năng hang");
             var caveGenes = Resources.LoadAll<OrganSO>("CaveSkills");
-            GUILayout.Label($"Kỹ năng hang: {caveGenes.Length} gene (chạy Evolve → Create Cave Skills nếu bằng 0)");
+            Say($"{caveGenes.Length} gene (chạy Evolve → Create Cave Skills nếu bằng 0). Cho Lách Né để thử né.");
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Học kỹ năng chủ động ★1") && swallower != null)
+            if (GUILayout.Button("Học kỹ năng chủ động ★1", GUILayout.Height(30)) && swallower != null)
                 foreach (var o in caveGenes) if (o.Use == GeneUse.Active) LearnGene(swallower, o);
-            if (GUILayout.Button("Lên ★3 hết") && swallower != null)
+            if (GUILayout.Button("Lên ★3 hết", GUILayout.Height(30)) && swallower != null)
                 foreach (var o in caveGenes) if (o.Use == GeneUse.Active) { LearnGene(swallower, o); RaiseStars(swallower, o, 3); }
             GUILayout.EndHorizontal();
-            if (GUILayout.Button("Gắn tối đa bị động hang (Da Dày, Vỏ Cứng, Sóng Dò Mạnh)") && swallower != null && host != null)
+            if (GUILayout.Button("Gắn tối đa bị động hang (Da Dày, Vỏ Cứng, Sóng Dò Mạnh)", GUILayout.Height(30)) && swallower != null && host != null)
             {
                 int n = 0;
                 foreach (var o in caveGenes)
@@ -86,31 +74,58 @@ namespace Evolve.DevTools
                 testNotice = $"Đã gắn {n} bị động hang.";
             }
 
-            // ---- creatures ----
-            LoadNames();
-            Evolve.Creatures.CreatureMotor.Enabled = GUILayout.Toggle(Evolve.Creatures.CreatureMotor.Enabled, " Di chuyển mới cho quái (va vách, bước bậc, không vọt lên cầu); tắt = kiểu cũ");
-            GUILayout.Label($"Cỡ quái ×{Evolve.Creatures.CaveTier.SizeScale:0.00} (chỉ áp cho quái tạo sau khi đổi)");
-            Evolve.Creatures.CaveTier.SizeScale = GUILayout.HorizontalSlider(Evolve.Creatures.CaveTier.SizeScale, 0.5f, 2f);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Độ khó: {(Evolve.Creatures.CaveTier.TierOverride < 0 ? "theo hang" : "tầng " + Evolve.Creatures.CaveTier.TierOverride)}", GUILayout.Width(140));
-            if (GUILayout.Button("Theo hang")) Evolve.Creatures.CaveTier.TierOverride = -1;
-            for (int t = 0; t <= 3; t++) if (GUILayout.Button(t.ToString())) Evolve.Creatures.CaveTier.TierOverride = t;
-            GUILayout.EndHorizontal();
-            GUILayout.Label($"Sinh vật thử (đặt trước mặt slime, {testCreatures.Count(c => c != null)} con)");
-            showPrey = GUILayout.Toggle(showPrey, $" Con mồi ({preyNames.Count})");
-            if (showPrey) foreach (var n in preyNames) if (GUILayout.Button(n)) SpawnTest(n, 3f, 12f, false);
-            showHunters = GUILayout.Toggle(showHunters, $" Kẻ săn ({hunterNames.Count})");
-            if (showHunters) foreach (var n in hunterNames) if (GUILayout.Button(n)) SpawnTest(n, 15f, 40f, true);
-            showLords = GUILayout.Toggle(showLords, $" Chúa Hang ({lordNames.Count})");
-            if (showLords) foreach (var n in lordNames) if (GUILayout.Button(n)) SpawnTest(n, 40f, 120f, true);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Xác lớn gần (Chó Xương canh)")) SpawnCarcass(2.2f, 90f);
-            if (GUILayout.Button("Xác nhỏ gần")) SpawnCarcass(0.7f, 20f);
-            if (GUILayout.Button("Xóa sinh vật thử")) { foreach (var c in testCreatures) if (c != null) Destroy(c); testCreatures.Clear(); foreach (var c in Carcass.Active.ToList()) if (c != null) Destroy(c.gameObject); }
-            GUILayout.EndHorizontal();
+            showOrganList = Fold(showOrganList, "Danh sách cơ quan và gene (nhận, học, gắn)");
+            if (showOrganList) DrawOrganList(swallower);
+            showRewards = Fold(showRewards, "Phần thưởng kỳ ngộ (EncounterRewards)");
+            if (showRewards) DrawRewards(stats);
+        }
 
-            // ---- rewards ----
-            GUILayout.Label("Phần thưởng kỳ ngộ (EncounterRewards)");
+        void DrawOrganList(Swallower swallower)
+        {
+            growInstantly = Check(growInstantly, "Cho lớn đầy ngay khi nhận (Lv1)");
+            if (GUILayout.Button("Học hết cơ quan") && swallower != null)
+                foreach (var o in AllOrgans())
+                    while (!swallower.Book.Knows(o))
+                        swallower.Book.Submit(new List<Gene> { new Gene(o, AnalysisRules.FromTier(o.Tier)) }, 1f, () => 0f);
+            foreach (var o in AllOrgans())
+            {
+                bool has = host != null && host.Has(o);
+                bool active = o.Use == GeneUse.Active;
+                bool learned = swallower != null && swallower.Book.Knows(o);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"[{o.Tier}] {o.DisplayName} ({OrganInteractor.SlotName(o.Slot)})", wrapLabel, GUILayout.ExpandWidth(true));
+                GUI.enabled = host != null && (active ? !learned : !has);
+                if (GUILayout.Button(active ? (learned ? "Đã học" : "Học chiêu") : (has ? "Đang có" : "Nhận bị động"), GUILayout.Width(120)))
+                {
+                    if (active)
+                    {
+                        // an active move is learned, not worn: it appears in the skill menu (K) and on keys 1-5
+                        if (swallower != null)
+                            while (!swallower.Book.Knows(o))
+                                swallower.Book.Submit(new List<Gene> { new Gene(o, AnalysisRules.FromTier(o.Tier)) }, 1f, () => 0f);
+                    }
+                    else
+                    {
+                        host.TryAttach(o);
+                        if (growInstantly) host.DebugGrowAll();
+                    }
+                }
+                GUI.enabled = true;
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Lớn đầy (Lv1)") && host != null) host.DebugGrowAll();
+            if (GUILayout.Button("Lv2") && host != null) host.DebugSetLevel(2);
+            if (GUILayout.Button("Lv3") && host != null) host.DebugSetLevel(3);
+            if (GUILayout.Button("Tháo hết") && host != null)
+                foreach (var o in host.OrganList) host.Detach(o);
+            GUILayout.EndHorizontal();
+        }
+
+        void DrawRewards(SurvivalStats stats)
+        {
+            var traits = player.GetComponent<PlayerTraits>();
+            var go = player.gameObject;
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Gene Hiếm+")) testNotice = "Gene: " + (EncounterRewards.GrantGene(go, (int)GeneRarity.Rare) ?? "không còn gene nào");
             if (GUILayout.Button("Gene Lạ")) testNotice = "Gene riêng: " + (EncounterRewards.GrantUniqueGene(go, "gene_la") ?? "không có (chạy Evolve → Create Encounter Genes) hoặc đã biết");
@@ -126,39 +141,98 @@ namespace Evolve.DevTools
             if (GUILayout.Button("Mở màu Cầu Vồng")) testNotice = EncounterRewards.UnlockFinish(go, ColorUnlocks.Rainbow) ? "Đã mở khóa Cầu Vồng (F3 để bật)" : "đã mở từ trước";
             if (GUILayout.Button("Câu Tiếng Vọng")) EncounterRewards.Say("«Thử: Tiếng Vọng nói một câu.»");
             GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Nhiễm bệnh thử")) { stats.State.Infect(DiseaseKind.RottenGel); stats.State.Infect(DiseaseKind.SporeBlur); }
-            if (GUILayout.Button("Hết bệnh")) testNotice = EncounterRewards.CureDiseases(go) ? "đã chữa" : "không được";
-            GUILayout.Label("Combat: Vồ (chuột trái) và Ghì Chặt. Tạo quái thử ngay trước mặt slime:");
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Con mồi to (khối 14)")) SpawnTest("Ốc Hồ", 14f, 40f, false);
-            if (GUILayout.Button("Kẻ săn (khối 18)")) SpawnTest("Thằn Lằn Bờ Hồ", 18f, 60f, true);
-            if (GUILayout.Button("Chúa Hang (khối 35)")) SpawnTest("Cóc Hồ Già", 35f, 120f, true);
-            GUILayout.EndHorizontal();
-            GUILayout.Label("Combat quái (chiêu báo trước; né bằng Lách Né, phản công lúc quái kiệt sức):");
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Thằn Lằn")) SpawnTest("Thằn Lằn Bờ Hồ", 10f, 34f, true);
-            if (GUILayout.Button("Bọ Giáp")) SpawnTest("Bọ Giáp Quặng", 18f, 52f, true);
-            if (GUILayout.Button("Rùa Pha Lê")) SpawnTest("Rùa Pha Lê", 42f, 115f, true);
-            if (GUILayout.Button("Bầy Muỗi (4)")) for (int i = 0; i < 4; i++) SpawnTest("Muỗi Rêu", 1f, 8f, false);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Chồn Khe (rình, 2 con)")) for (int i = 0; i < 2; i++) SpawnTest("Chồn Khe", 16f, 54f, true);
-            if (GUILayout.Button("Cáo Gió (Chúa Hang)")) SpawnTest("Cáo Gió", 48f, 155f, true);
-            if (GUILayout.Button("Khỉ Hang (3)")) for (int i = 0; i < 3; i++) SpawnTest("Khỉ Hang", 12f, 40f, true);
-            GUILayout.EndHorizontal();
-            foreach (var cc in Evolve.Combat.CreatureCombat.All)
-                if (cc != null && (cc.transform.position - player.transform.position).sqrMagnitude < 625f) GUILayout.Label($"  {cc.name.Replace("(Clone)", "")}: {cc.Status}");
-            var latch = Evolve.Combat.LatchSession.Active;
-            GUILayout.Label(latch == null ? "Không đang bám." : $"Đang bám: lỗi {latch.Game.Faults}/{latch.Game.MaxFaults}, vùng xanh {latch.Game.ZoneWidth * 100f:0}%, năng lượng {stats.State.Energy:0}");
-            if (GUILayout.Button("Hồi đầy")) testNotice = EncounterRewards.RefillStats(go) ? "đã hồi đầy" : "không được";
-            GUILayout.EndHorizontal();
-            if (GUILayout.Button("Bỏ 2 món vào Túi"))
-                testNotice = $"Vào Túi: {EncounterRewards.GiveItems(go, new[] { new EncounterItem { Label = "Mẩu xương cũ", Mass = 1f, Nutrition = 10f, Food = FoodKind.PreyMeat }, new EncounterItem { Label = "Hạt lạ", Mass = 0.5f, Nutrition = 5f, Food = FoodKind.PreyMeat } })} món";
+            if (GUILayout.Button("Hồi đầy chỉ số (phần thưởng)")) testNotice = EncounterRewards.RefillStats(go) ? "đã hồi đầy" : "không được";
+        }
 
-            // ---- ecosystem ----
-            if (GUILayout.Button("Mô phỏng sinh thái 2 giờ chơi (kết quả ở Console)")) RunEcologySim();
-            if (GUILayout.Button("In quần thể đang sống của mọi hang (Console)"))
+        // ---------- tab: sinh vật ----------
+
+        void DrawCreatures()
+        {
+            LoadNames();
+            Header("Hành vi sinh vật");
+            CreatureBrain.Enabled = Check(CreatureBrain.Enabled, "Sinh vật săn nhau, ăn xác, theo kích cỡ slime (B2)");
+            Predator.Passive = Check(Predator.Passive, "Hòa bình: kẻ săn mồi không tấn công");
+            bool frozen = Check(Predator.Frozen && Prey.Frozen, "Đóng băng mọi sinh vật");
+            Predator.Frozen = frozen; Prey.Frozen = frozen;
+            Evolve.Creatures.CreatureMotor.Enabled = Check(Evolve.Creatures.CreatureMotor.Enabled, "Di chuyển mới cho quái (va vách, bước bậc, không vọt lên cầu); tắt = kiểu cũ");
+
+            Header("Cỡ và độ khó (chỉ áp cho quái tạo sau khi đổi)");
+            Say($"Cỡ quái ×{Evolve.Creatures.CaveTier.SizeScale:0.00}");
+            Evolve.Creatures.CaveTier.SizeScale = GUILayout.HorizontalSlider(Evolve.Creatures.CaveTier.SizeScale, 0.5f, 2f);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Độ khó: {(Evolve.Creatures.CaveTier.TierOverride < 0 ? "theo hang" : "tầng " + Evolve.Creatures.CaveTier.TierOverride)}", GUILayout.Width(150));
+            if (GUILayout.Button("Theo hang")) Evolve.Creatures.CaveTier.TierOverride = -1;
+            for (int t = 0; t <= 3; t++) if (GUILayout.Button(t.ToString(), GUILayout.Width(36))) Evolve.Creatures.CaveTier.TierOverride = t;
+            GUILayout.EndHorizontal();
+
+            Header($"Tạo sinh vật thử ({testCreatures.Count(c => c != null)} con)");
+            Vector3 front = player.transform.position + player.transform.forward * 3f + Vector3.right * 2f;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Con mồi gần (spawner)")) FindAnyObjectByType<PreySpawner>()?.SpawnAt(front);
+            if (GUILayout.Button("Kẻ săn gần (spawner)")) FindAnyObjectByType<PredatorSpawner>()?.SpawnAt(player.transform.position + Vector3.forward * 8f);
+            GUILayout.EndHorizontal();
+            showPrey = Fold(showPrey, $"Con mồi ({preyNames.Count})");
+            if (showPrey) foreach (var n in preyNames) if (GUILayout.Button(n)) SpawnTest(n, 3f, 12f, false);
+            showHunters = Fold(showHunters, $"Kẻ săn ({hunterNames.Count})");
+            if (showHunters) foreach (var n in hunterNames) if (GUILayout.Button(n)) SpawnTest(n, 15f, 40f, true);
+            showLords = Fold(showLords, $"Chúa Hang ({lordNames.Count})");
+            if (showLords) foreach (var n in lordNames) if (GUILayout.Button(n)) SpawnTest(n, 40f, 120f, true);
+
+            Header("Xác và dọn dẹp");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Xác lớn gần (Chó Xương canh)")) SpawnCarcass(2.2f, 90f);
+            if (GUILayout.Button("Xác nhỏ gần")) SpawnCarcass(0.7f, 20f);
+            GUILayout.EndHorizontal();
+            if (GUILayout.Button($"Hạ hết kẻ săn mồi ({Predator.Active.Count}) (vẫn rơi đồ)"))
+                foreach (var p in Predator.Active.ToList()) p.TakeDamage(99999f, player);
+            if (GUILayout.Button("Xóa sinh vật thử và xác")) { foreach (var c in testCreatures) if (c != null) Destroy(c); testCreatures.Clear(); foreach (var c in Carcass.Active.ToList()) if (c != null) Destroy(c.gameObject); }
+        }
+
+        // ---------- tab: combat ----------
+
+        void DrawCombat(SurvivalStats stats)
+        {
+            Header("Combat của slime: Vồ và Ghì Chặt");
+            Say("Vồ = chuột trái (đóng menu này trước). Tạo quái thử ngay trước mặt slime:");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Con mồi to (khối 14)", GUILayout.Height(30))) SpawnTest("Ốc Hồ", 14f, 40f, false);
+            if (GUILayout.Button("Kẻ săn (khối 18)", GUILayout.Height(30))) SpawnTest("Thằn Lằn Bờ Hồ", 18f, 60f, true);
+            if (GUILayout.Button("Chúa Hang (khối 35)", GUILayout.Height(30))) SpawnTest("Cóc Hồ Già", 35f, 120f, true);
+            GUILayout.EndHorizontal();
+            var latch = Evolve.Combat.LatchSession.Active;
+            Say(latch == null ? "Không đang bám." : $"Đang bám: lỗi {latch.Game.Faults}/{latch.Game.MaxFaults}, vùng xanh {latch.Game.ZoneWidth * 100f:0}%, năng lượng {stats.State.Energy:0}");
+            if (GUILayout.Button("Hồi đầy năng lượng")) { stats.State.Energy = stats.State.MaxEnergy; }
+
+            Header("Chiêu của quái (báo trước; né bằng Lách Né, phản công lúc quái kiệt sức)");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Thằn Lằn", GUILayout.Height(30))) SpawnTest("Thằn Lằn Bờ Hồ", 10f, 34f, true);
+            if (GUILayout.Button("Bọ Giáp", GUILayout.Height(30))) SpawnTest("Bọ Giáp Quặng", 18f, 52f, true);
+            if (GUILayout.Button("Rùa Pha Lê", GUILayout.Height(30))) SpawnTest("Rùa Pha Lê", 42f, 115f, true);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Bầy Muỗi (4)", GUILayout.Height(30))) for (int i = 0; i < 4; i++) SpawnTest("Muỗi Rêu", 1f, 8f, false);
+            if (GUILayout.Button("Chồn Khe (rình, 2)", GUILayout.Height(30))) for (int i = 0; i < 2; i++) SpawnTest("Chồn Khe", 16f, 54f, true);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Cáo Gió (Chúa Hang)", GUILayout.Height(30))) SpawnTest("Cáo Gió", 48f, 155f, true);
+            if (GUILayout.Button("Khỉ Hang (3)", GUILayout.Height(30))) for (int i = 0; i < 3; i++) SpawnTest("Khỉ Hang", 12f, 40f, true);
+            GUILayout.EndHorizontal();
+            if (GUILayout.Button("Xóa sinh vật thử")) { foreach (var c in testCreatures) if (c != null) Destroy(c); testCreatures.Clear(); }
+
+            Header("Pha hiện tại của quái trong 25 m");
+            bool any = false;
+            foreach (var cc in Evolve.Combat.CreatureCombat.All)
+                if (cc != null && (cc.transform.position - player.transform.position).sqrMagnitude < 625f) { Say($"  {cc.name.Replace("(Clone)", "")}: {cc.Status}"); any = true; }
+            if (!any) Say("  (không có quái có bộ chiêu quanh đây)");
+        }
+
+        // ---------- ecosystem (in the world tab) ----------
+
+        void DrawEcology()
+        {
+            Header("Sinh thái");
+            if (GUILayout.Button("Mô phỏng sinh thái 2 giờ chơi (kết quả ở Console)", GUILayout.Height(30))) RunEcologySim();
+            if (GUILayout.Button("In quần thể đang sống của mọi hang (Console)", GUILayout.Height(30)))
             {
                 var sb = new System.Text.StringBuilder("Quần thể đang sống (số con / sức chứa, no %):\n");
                 foreach (var r in EcologyRuntime.World.Regions)
