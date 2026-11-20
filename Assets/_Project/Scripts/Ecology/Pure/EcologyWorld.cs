@@ -75,7 +75,7 @@ namespace Evolve.Ecology
                             StarveRatePerMinute = s.StarveRatePerMinute, BodyFood = s.BodyFood, EscapeChance = s.EscapeChance, Count = 0,
                         });
                     if (colony.Diet.Count == 0) foreach (var d in s.Diet) colony.Diet.Add(d);
-                    int n2 = (int)System.Math.Ceiling(MoveShare * s.Available);
+                    int n2 = (int)System.Math.Ceiling(MoveShare * s.Available - 1e-3f);   // 0.2 x 10 must be 2, not 3: Unity's runtime keeps extra float precision
                     if (n2 > s.Available - 1) n2 = s.Available - 1;
                     int room = colony.Capacity - colony.Count;
                     if (n2 > room) n2 = room;
