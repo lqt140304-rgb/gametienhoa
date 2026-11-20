@@ -220,6 +220,13 @@ namespace Evolve.DevTools
             GUILayout.EndHorizontal();
             if (GUILayout.Button("Xóa sinh vật thử")) { foreach (var c in testCreatures) if (c != null) Destroy(c); testCreatures.Clear(); }
 
+            Header("Trang phục trùm (Cáo Gió): chỉnh vị trí, áp cho cáo tạo sau khi đổi");
+            Say($"Cao đầu {Evolve.Combat.LordRegalia.HeadHeight:0.00}, đầu ra trước {Evolve.Combat.LordRegalia.HeadForward:0.00}, cổ ra trước {Evolve.Combat.LordRegalia.NeckForward:0.00}, cỡ ×{Evolve.Combat.LordRegalia.Size:0.00}");
+            Evolve.Combat.LordRegalia.HeadHeight = GUILayout.HorizontalSlider(Evolve.Combat.LordRegalia.HeadHeight, 0.5f, 1.1f);
+            Evolve.Combat.LordRegalia.HeadForward = GUILayout.HorizontalSlider(Evolve.Combat.LordRegalia.HeadForward, 0.4f, 1.1f);
+            Evolve.Combat.LordRegalia.NeckForward = GUILayout.HorizontalSlider(Evolve.Combat.LordRegalia.NeckForward, 0.3f, 1.0f);
+            Evolve.Combat.LordRegalia.Size = GUILayout.HorizontalSlider(Evolve.Combat.LordRegalia.Size, 0.5f, 2f);
+
             Header("Pha hiện tại của quái trong 25 m");
             bool any = false;
             foreach (var cc in Evolve.Combat.CreatureCombat.All)
@@ -275,6 +282,7 @@ namespace Evolve.DevTools
             pos.y = Evolve.World.GroundHeight.At(pos.x, pos.z, pos.y) + prefab.transform.position.y;
             var go = Instantiate(prefab, pos, Quaternion.identity);
             if (go.TryGetComponent(out Prey prey)) prey.HomeCenter = pos;
+            CreatureTuning.Apply(go, CaveEcologySeed.CaveOfSpecies(CaveEcologySeed.IdByName(displayName)));   // the size, danger and costume it would have in its cave
             if (go.TryGetComponent(out Predator hunter)) hunter.SetHunger01(0.8f);   // hungry, so it goes hunting at once
             if (go.GetComponent<CreatureBrain>() == null) go.AddComponent<CreatureBrain>();
             if (go.GetComponent<Prey>() != null && go.GetComponent<PreyDefense>() == null && PreyDefenseSeed.FindBySpecies(displayName) != null) go.AddComponent<PreyDefense>();

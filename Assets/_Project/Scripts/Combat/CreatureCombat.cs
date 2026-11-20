@@ -354,7 +354,7 @@ namespace Evolve.Combat
             spearRoot = new GameObject("Giáo Gió").transform;
             spearRoot.SetParent(transform, false);
             spearRoot.localPosition = new Vector3(0f, Radius * 1.6f, -Radius * 0.5f);   // above the back, where the tails are
-            if (spearMat == null) spearMat = SkillFx.Gel(new Color(0.7f, 0.95f, 1f), 1f, 0.6f, 3f);
+            if (spearMat == null) spearMat = SkillFx.Gel(new Color(0.58f, 0.8f, 1f), 1f, 0.9f, 3.4f);   // pale sky blue, like a rasengan
             float size = Mathf.Clamp(Radius, 0.4f, 2f);
             for (int i = 0; i < m.SpearCount; i++)
             {

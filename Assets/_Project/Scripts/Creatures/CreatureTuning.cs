@@ -21,6 +21,7 @@ namespace Evolve.Creatures
             creature.transform.localScale *= k;
             if (creature.TryGetComponent(out CreatureMotor motor)) motor.Resize(k);
             if (creature.TryGetComponent(out CreatureLocomotion loco)) loco.ScaleBy(k);
+            if (role == CreatureRole.Lord && Evolve.Combat.LordRegalia.Has(creature.name)) Evolve.Combat.LordRegalia.Attach(creature);   // a boss is dressed like one
             if (creature.TryGetComponent(out Evolve.Combat.CreatureCombat combat))
             {
                 combat.TellScale = tier == 0 ? 1.3f : 1f;   // the start cavern gives the player longer to read the tell
