@@ -11,6 +11,7 @@ import random
 import sys
 import time
 
+import bmesh  # noqa: E402
 import bpy  # noqa: E402
 from mathutils import Euler, Vector  # noqa: E402
 
@@ -18,6 +19,61 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import kit_common as kc  # noqa: E402
 import build_cave_creatures_wave1 as w1  # noqa: E402
 import build_cave_creatures_wave2_nong as w2  # noqa: E402
+
+
+def _sculpt_remesh_into(dst_bm, dst_col, src_bm, voxel_size=0.016, smooth_iter=6,
+                        decimate_ratio=0.45, mat_index=0, color_fn=None):
+    """Hòa trộn toàn bộ khối chồng lấn trong src_bm bằng Voxel Remesh + Smooth để tạo bề mặt điêu khắc hữu cơ liền mạch,
+    sau đó tô Vertex Color theo vị trí/pháp tuyến và gộp vào dst_bm."""
+    tmp_mesh = bpy.data.meshes.new("_tmp_sculpt")
+    src_bm.to_mesh(tmp_mesh)
+    src_bm.free()
+
+    tmp_obj = bpy.data.objects.new("_tmp_sculpt_obj", tmp_mesh)
+    bpy.context.collection.objects.link(tmp_obj)
+    bpy.context.view_layer.objects.active = tmp_obj
+
+    rem = tmp_obj.modifiers.new("Remesh", 'REMESH')
+    rem.mode = 'VOXEL'
+    rem.voxel_size = voxel_size
+    rem.use_smooth_shade = True
+
+    sm = tmp_obj.modifiers.new("Smooth", 'SMOOTH')
+    sm.factor = 0.55
+    sm.iterations = smooth_iter
+
+    if 0.1 < decimate_ratio < 0.99:
+        dec = tmp_obj.modifiers.new("Decimate", 'DECIMATE')
+        dec.ratio = decimate_ratio
+
+    deps = bpy.context.evaluated_depsgraph_get()
+    eval_obj = tmp_obj.evaluated_get(deps)
+    eval_mesh = bpy.data.meshes.new_from_object(eval_obj)
+
+    res_bm = bmesh.new()
+    res_bm.from_mesh(eval_mesh)
+    res_bm.normal_update()
+
+    vert_map = {}
+    for v in res_bm.verts:
+        nv = dst_bm.verts.new(v.co)
+        vert_map[v.index] = nv
+    for f in res_bm.faces:
+        try:
+            nf = dst_bm.faces.new([vert_map[v.index] for v in f.verts])
+            nf.material_index = mat_index
+            nf.smooth = True
+            nrm = f.normal
+            for loop in nf.loops:
+                rgb = color_fn(loop.vert.co, nrm) if color_fn else (0.5, 0.5, 0.5)
+                loop[dst_col] = (*rgb, 1.0)
+        except ValueError:
+            pass
+
+    res_bm.free()
+    bpy.data.meshes.remove(eval_mesh)
+    bpy.data.objects.remove(tmp_obj, do_unlink=True)
+    bpy.data.meshes.remove(tmp_mesh)
 
 
 # ================================================================== HANG 6: HANG NẤM HUỲNH QUANG (4 LOÀI)
@@ -194,6 +250,7 @@ def build_23_ech_doc_dom(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def frog_skin(p, n):
         spot = math.sin(p.x * 26.0) * math.cos(p.y * 24.0) * math.sin(p.z * 22.0)
@@ -204,13 +261,23 @@ def build_23_ech_doc_dom(out_dir, prev_dir):
             base = w1._lerp3(base, (0.72, 0.82, 0.65), 0.6)
         return base
 
-    # Thân ếch ngồi rình săn mồi (nghiêng 28 độ) + đầu rộng
-    w2._add_sculpted_blob(bm, col, (0.0, 0.04, 0.20), (0.185, 0.235, 0.145), rot=(-0.42, 0.0, 0.0),
+    # Thân ếch ngồi rình săn mồi + đầu rộng + 4 chân + đùi sau bật nhảy điêu khắc liền mạch
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.04, 0.20), (0.185, 0.235, 0.145), rot=(-0.42, 0.0, 0.0),
                           segs=24, rings=16, mat_index=0, color_fn=frog_skin)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.18, 0.30), (0.165, 0.150, 0.095), rot=(-0.12, 0.0, 0.0),
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.18, 0.30), (0.165, 0.150, 0.095), rot=(-0.12, 0.0, 0.0),
                           segs=22, rings=14, mat_index=0, color_fn=frog_skin)
+    for sx in (-1.0, 1.0):
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.095, -0.21, 0.35), (0.042, 0.045, 0.032), segs=12, rings=8, mat_index=0, color_fn=frog_skin)
+        w1._add_tube(body_bm, body_col, [(sx * 0.14, -0.11, 0.19), (sx * 0.18, -0.16, 0.10), (sx * 0.15, -0.20, 0.018)],
+                     [0.038, 0.028, 0.022], sides=10, subdiv=1, mat_index=0, color_fn=frog_skin)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.17, 0.14, 0.16), (0.080, 0.118, 0.074), rot=(0.35, 0, sx * 0.25),
+                              segs=16, rings=10, mat_index=0, color_fn=frog_skin)
+        w1._add_tube(body_bm, body_col, [(sx * 0.21, 0.20, 0.15), (sx * 0.24, 0.04, 0.06), (sx * 0.22, 0.0, 0.018)],
+                     [0.042, 0.028, 0.022], sides=10, subdiv=1, mat_index=0, color_fn=frog_skin)
 
-    # ĐẶC TRƯNG KHẢ NĂNG (Phun Độc): Túi thanh quản phồng dưới cằm + 2 tuyến độc mang tai phát sáng
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.014, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=frog_skin)
+
+    # ĐẶC TRƯNG KHẢ NĂNG (Phun Độc): Túi thanh quản phồng dưới cằm + 2 tuyến độc mang tai phát sáng + mắt cam
     w2._add_sculpted_blob(bm, col, (0.0, -0.22, 0.21), (0.125, 0.115, 0.085),
                           segs=18, rings=12, mat_index=3, color_fn=lambda _p, _n: (0.72, 0.28, 0.94))
     for sx in (-1.0, 1.0):
@@ -218,18 +285,6 @@ def build_23_ech_doc_dom(out_dir, prev_dir):
                               segs=14, rings=10, mat_index=3, color_fn=lambda _p, _n: (0.86, 0.26, 0.96))
         w1._add_eye_bulb(bm, col, (sx * 0.095, -0.24, 0.375), 0.036, yaw=sx * 0.35,
                          eye_col=(0.98, 0.62, 0.12), mat_eye=3)
-
-    # 2 chân trước chống đất + 2 đùi sau gập khỏe bật nhảy
-    for sx in (-1.0, 1.0):
-        w2._add_jointed_limb(bm, col, [(sx * 0.14, -0.11, 0.19), (sx * 0.18, -0.16, 0.10), (sx * 0.15, -0.20, 0.015)],
-                             [0.036, 0.026, 0.020], claw_dir=(0, -1, 0), claw_len=0.03,
-                             mat_index=0, claw_mat=0, color_fn=frog_skin)
-        # Đùi sau to khỏe + cẳng chân gập Z
-        w2._add_sculpted_blob(bm, col, (sx * 0.17, 0.14, 0.16), (0.078, 0.115, 0.072), rot=(0.35, 0, sx * 0.25),
-                              segs=16, rings=10, mat_index=0, color_fn=frog_skin)
-        w2._add_jointed_limb(bm, col, [(sx * 0.21, 0.20, 0.15), (sx * 0.24, 0.04, 0.06), (sx * 0.22, 0.0, 0.015)],
-                             [0.040, 0.026, 0.020], claw_dir=(0, -1, 0), claw_len=0.04,
-                             mat_index=0, claw_mat=0, color_fn=frog_skin)
 
     bones = [
         ("Root", (0, 0.02, 0.18), (0, -0.12, 0.26), None, 0.28, 1.0),
@@ -512,6 +567,7 @@ def build_27_ky_nhong_lua(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def fire_skin(p, n):
         base = w1._lerp3((0.72, 0.14, 0.06), (0.98, 0.45, 0.10), 0.4 + 0.4 * math.sin(p.y * 16.0))
@@ -519,16 +575,24 @@ def build_27_ky_nhong_lua(out_dir, prev_dir):
             base = w1._lerp3(base, (0.98, 0.78, 0.28), 0.65)
         return base
 
-    # Thân kỳ nhông uốn S khỏe khoắn từ đầu tới chóp đuôi
-    pts = [(0.0, -0.44, 0.24), (0.02, -0.24, 0.20), (0.04, -0.02, 0.18),
+    # Thân kỳ nhông + đầu bò sát có hàm-má + vai/đùi + 4 chân điêu khắc liền mạch bằng Voxel Remesh
+    pts = [(0.0, -0.44, 0.25), (0.02, -0.24, 0.20), (0.04, -0.02, 0.18),
            (-0.02, 0.22, 0.16), (-0.08, 0.48, 0.11), (0.02, 0.74, 0.05)]
-    rads = [(0.085, 0.068), (0.095, 0.082), (0.115, 0.095),
-            (0.092, 0.078), (0.055, 0.048), (0.014, 0.014)]
-    w1._add_tube(bm, col, pts, rads, sides=20, subdiv=2, mat_index=0, color_fn=fire_skin)
+    rads = [(0.080, 0.064), (0.095, 0.082), (0.118, 0.098),
+            (0.094, 0.080), (0.055, 0.048), (0.014, 0.014)]
+    w1._add_tube(body_bm, body_col, pts, rads, sides=20, subdiv=2, mat_index=0, color_fn=fire_skin)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.48, 0.25), (0.085, 0.105, 0.060),
+                          disp_fn=lambda u: Vector((0.0, -0.03 * max(0.0, -u.y), 0.0)), segs=18, rings=12, mat_index=0, color_fn=fire_skin)
+    for sx, sy, hip_y, foot_y in [(-1, -1, -0.14, -0.22), (1, -1, -0.14, -0.22), (-1, 1, 0.20, 0.16), (1, 1, 0.20, 0.16)]:
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.09, hip_y, 0.17), (0.048, 0.062, 0.048), segs=12, rings=8, mat_index=0, color_fn=fire_skin)
+        w1._add_tube(body_bm, body_col, [(sx * 0.09, hip_y, 0.16), (sx * 0.20, hip_y - 0.02, 0.19), (sx * 0.24, foot_y, 0.018)],
+                     [0.036, 0.028, 0.022], sides=10, subdiv=1, mat_index=0, color_fn=fire_skin)
 
-    # Đầu + 2 mắt vàng rực + mào gai lưng phát sáng (Thân Nóng)
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.015, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=fire_skin)
+
+    # Đầu mắt vàng rực + mào gai lửa phát sáng dọc sống lưng + móng vuốt sắc nét
     for sx in (-1.0, 1.0):
-        w1._add_eye_bulb(bm, col, (sx * 0.062, -0.44, 0.28), 0.024, yaw=sx * 0.35, eye_col=(1.0, 0.85, 0.20), mat_eye=3)
+        w1._add_eye_bulb(bm, col, (sx * 0.062, -0.46, 0.285), 0.022, yaw=sx * 0.35, eye_col=(1.0, 0.85, 0.20), mat_eye=3)
     for i in range(8):
         t = i / 7.0
         y = -0.32 + t * 0.82
@@ -537,15 +601,6 @@ def build_27_ky_nhong_lua(out_dir, prev_dir):
         h = 0.095 * math.sin(t * math.pi * 0.85 + 0.2)
         w1._add_tube(bm, col, [(x, y, z), (x, y + 0.03, z + h)], [0.024, 0.004], sides=8, subdiv=0,
                      mat_index=3, color_fn=lambda _p, _n: (1.0, 0.48, 0.08))
-
-    # 4 chân bò khỏe có vuốt
-    for sx, sy, hip_y, foot_y in [(-1, -1, -0.14, -0.22), (1, -1, -0.14, -0.22), (-1, 1, 0.20, 0.16), (1, 1, 0.20, 0.16)]:
-        w2._add_jointed_limb(bm, col, [
-            (sx * 0.09, hip_y, 0.16),
-            (sx * 0.20, hip_y - 0.02, 0.19),
-            (sx * 0.24, foot_y, 0.015),
-        ], [0.036, 0.028, 0.020], claw_dir=(sx * 0.3, -0.8, 0.0), claw_len=0.035,
-            mat_index=0, color_fn=fire_skin)
 
     bones = [
         ("Root", (0, 0.0, 0.18), (0, -0.14, 0.19), None, 0.30, 1.0),
@@ -728,33 +783,35 @@ def build_30_chuot_gio(out_dir, prev_dir):
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def fur_col(p, n):
         return w1._lerp3((0.56, 0.60, 0.66), (0.86, 0.88, 0.92), 0.3 + 0.5 * max(0.0, -n.z + 0.3))
 
-    # Ghép nhiều khối cơ thể chồng lấn: Vai + Lưng gù + Hông/Đùi sau phồng + Đầu (sọ + má phúng phính + mõm)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.02, 0.12), (0.082, 0.095, 0.080), segs=18, rings=12, mat_index=0, color_fn=fur_col)
-    w2._add_sculpted_blob(bm, col, (0.0, 0.08, 0.13), (0.098, 0.110, 0.092), segs=20, rings=14, mat_index=0, color_fn=fur_col)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.14, 0.14), (0.068, 0.088, 0.062),
+    # Ghép nhiều khối cơ thể chồng lấn + Voxel Remesh liền mạch: Vai + Lưng gù + Hông/Đùi sau + Đầu + Má + 4 chân
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.02, 0.12), (0.082, 0.098, 0.080), segs=18, rings=12, mat_index=0, color_fn=fur_col)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.08, 0.13), (0.098, 0.115, 0.092), segs=20, rings=14, mat_index=0, color_fn=fur_col)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.14, 0.14), (0.068, 0.088, 0.062),
                           disp_fn=lambda u: Vector((0.0, -0.025 * max(0.0, -u.y), 0.0)),
                           segs=20, rings=12, mat_index=0, color_fn=fur_col)
     for sx in (-1.0, 1.0):
-        # Má phúng phính & đùi sau phồng tách khối rõ ràng
-        w2._add_sculpted_blob(bm, col, (sx * 0.044, -0.14, 0.125), (0.032, 0.038, 0.028), segs=12, rings=8, mat_index=0, color_fn=fur_col)
-        w2._add_sculpted_blob(bm, col, (sx * 0.068, 0.09, 0.095), (0.038, 0.052, 0.045), segs=14, rings=10, mat_index=0, color_fn=fur_col)
-    # Mũi hồng + 2 tai to tròn bắt gió
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.044, -0.14, 0.125), (0.032, 0.038, 0.028), segs=12, rings=8, mat_index=0, color_fn=fur_col)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.068, 0.09, 0.095), (0.038, 0.052, 0.045), segs=14, rings=10, mat_index=0, color_fn=fur_col)
+    for sx, sy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
+        w1._add_tube(body_bm, body_col, [(sx * 0.06, sy * 0.09, 0.08), (sx * 0.075, sy * 0.10, 0.015)],
+                     [0.022, 0.014], sides=8, subdiv=0, mat_index=0, color_fn=fur_col)
+
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.011, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=fur_col)
+
+    # Mũi hồng + 2 tai to tròn bắt gió + mắt + đuôi dài
     w2._add_sculpted_blob(bm, col, (0.0, -0.25, 0.135), (0.016, 0.016, 0.014), segs=10, rings=8, mat_index=0, color_fn=lambda _p, _n: (0.94, 0.62, 0.68))
     for sx in (-1.0, 1.0):
         w2._add_sculpted_blob(bm, col, (sx * 0.068, -0.10, 0.215), (0.045, 0.018, 0.052), rot=(0.2, sx * 0.35, -sx * 0.3),
                               segs=16, rings=10, mat_index=0, color_fn=lambda _p, _n: (0.88, 0.72, 0.76))
         w1._add_eye_bulb(bm, col, (sx * 0.044, -0.18, 0.16), 0.017, yaw=sx * 0.35, eye_col=(0.08, 0.08, 0.10), mat_eye=1)
 
-    # Đuôi dài uyển chuyển + 4 chân nhỏ nhanh nhẹn
     w1._add_tube(bm, col, [(0.0, 0.18, 0.10), (0.05, 0.34, 0.09), (-0.02, 0.50, 0.12)],
                  [0.018, 0.012, 0.005], sides=10, subdiv=1, mat_index=0, color_fn=lambda _p, _n: (0.86, 0.68, 0.72))
-    for sx, sy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
-        w2._add_jointed_limb(bm, col, [(sx * 0.06, sy * 0.09, 0.08), (sx * 0.075, sy * 0.10, 0.012)],
-                             [0.020, 0.012], claw_dir=(0, -1, 0), claw_len=0.02, mat_index=0, color_fn=fur_col)
 
     bones = [
         ("Root", (0, 0.04, 0.12), (0, -0.08, 0.13), None, 0.22, 1.0),
@@ -789,46 +846,57 @@ def build_30_chuot_gio(out_dir, prev_dir):
 
 def build_31_chon_khe(out_dir, prev_dir):
     """[S] Chồn Khe — Khả năng: Vồ.
-    Thân chồn thuôn dài cơ bắp, cổ uyển chuyển, 4 chân bật vồ khỏe, đuôi xù dài điều hướng."""
+    Điêu khắc liền mạch bằng Voxel Remesh + Smooth từ nhiều khối cơ bắp:
+    vai trước, lưng uốn, eo thắt, hông sau, đùi-cẳng-bàn có ngón, má lông, gờ mày và đuôi chồn xù."""
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def ferret_fur(p, n):
-        base = w1._lerp3((0.36, 0.28, 0.24), (0.68, 0.58, 0.48), 0.35 + 0.4 * max(0.0, n.z))
-        if p.y < -0.28 or p.y > 0.38:
-            base = w1._lerp3(base, (0.18, 0.16, 0.18), 0.55)
+        base = w1._lerp3((0.34, 0.25, 0.21), (0.72, 0.62, 0.50), 0.35 + 0.4 * max(0.0, n.z))
+        if p.y < -0.26 or p.y > 0.36:
+            base = w1._lerp3(base, (0.16, 0.14, 0.16), 0.60)
+        if n.z < -0.35 and p.y > -0.25 and p.y < 0.32:
+            base = w1._lerp3(base, (0.82, 0.75, 0.62), 0.55)
         return base
 
-    # Thân Chồn Khe ghép nhiều khối cơ bắp chồng khít (>=60% giao nhau) + lõi lưng liền mạch cho khớp xương gập tự nhiên
-    w1._add_tube(bm, col, [(0.0, -0.32, 0.27), (0.02, -0.10, 0.21), (-0.01, 0.12, 0.20), (0.0, 0.28, 0.22)],
+    # Khung cột sống + cơ bắp vai/lưng/eo/hông + đuôi chồn xù điêu khắc liền mạch
+    w1._add_tube(body_bm, body_col, [(0.0, -0.34, 0.28), (0.02, -0.10, 0.21), (-0.01, 0.12, 0.20), (0.0, 0.28, 0.22)],
                  [(0.068, 0.062), (0.088, 0.080), (0.088, 0.080), (0.082, 0.075)], sides=18, subdiv=2, mat_index=0, color_fn=ferret_fur)
-    w2._add_sculpted_blob(bm, col, (0.01, -0.22, 0.24), (0.088, 0.145, 0.082), rot=(-0.22, 0.0, 0.0), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
-    w2._add_sculpted_blob(bm, col, (0.02, -0.04, 0.20), (0.098, 0.155, 0.088), rot=(0.04, 0.0, -0.06), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
-    w2._add_sculpted_blob(bm, col, (-0.01, 0.14, 0.20), (0.096, 0.150, 0.088), rot=(0.08, 0.0, 0.05), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, 0.26, 0.22), (0.102, 0.135, 0.092), rot=(-0.06, 0.0, 0.0), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
-    # Đuôi chồn xù liền mạch (lõi uốn S + cụm lông chồn xếp lớp dày)
-    w1._add_tube(bm, col, [(0.0, 0.28, 0.22), (0.02, 0.44, 0.25), (0.06, 0.62, 0.27), (0.10, 0.78, 0.23)],
-                 [(0.075, 0.070), (0.082, 0.078), (0.072, 0.068), (0.026, 0.024)], sides=16, subdiv=2, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.01, -0.22, 0.24), (0.090, 0.145, 0.085), rot=(-0.22, 0.0, 0.0), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.02, -0.04, 0.20), (0.098, 0.155, 0.088), rot=(0.04, 0.0, -0.06), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (-0.01, 0.14, 0.20), (0.096, 0.150, 0.088), rot=(0.08, 0.0, 0.05), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.26, 0.22), (0.104, 0.135, 0.094), rot=(-0.06, 0.0, 0.0), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w1._add_tube(body_bm, body_col, [(0.0, 0.28, 0.22), (0.02, 0.44, 0.25), (0.06, 0.62, 0.27), (0.10, 0.78, 0.23)],
+                 [(0.078, 0.072), (0.085, 0.080), (0.074, 0.070), (0.024, 0.022)], sides=16, subdiv=2, mat_index=0, color_fn=ferret_fur)
 
-    # Đầu chồn ghép Sọ + 2 Má lông + Mõm nhọn + Mũi đen + Tai
-    w2._add_sculpted_blob(bm, col, (0.0, -0.37, 0.30), (0.072, 0.085, 0.062), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.47, 0.30), (0.048, 0.072, 0.042),
-                          disp_fn=lambda u: Vector((0.0, -0.025 * max(0.0, -u.y), 0.0)),
-                          segs=16, rings=10, mat_index=0, color_fn=ferret_fur)
+    # Đầu chồn + gờ lông mày + má + mõm + tai + bả vai/đùi/cẳng/bàn chân 3 ngón liền mạch
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.37, 0.30), (0.074, 0.088, 0.064), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.47, 0.30), (0.048, 0.075, 0.042),
+                          disp_fn=lambda u: Vector((0.0, -0.028 * max(0.0, -u.y), 0.0)), segs=16, rings=10, mat_index=0, color_fn=ferret_fur)
+    for sx in (-1.0, 1.0):
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.052, -0.40, 0.285), (0.040, 0.046, 0.032), segs=12, rings=8, mat_index=0, color_fn=ferret_fur)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.036, -0.44, 0.340), (0.020, 0.032, 0.015), segs=10, rings=8, mat_index=0, color_fn=ferret_fur)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.052, -0.38, 0.365), (0.024, 0.018, 0.034), segs=10, rings=8, mat_index=0, color_fn=ferret_fur)
+        # Bả vai trước & đùi sau cơ bắp + chân nối mượt
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.072, -0.19, 0.20), (0.044, 0.055, 0.052), segs=12, rings=8, mat_index=0, color_fn=ferret_fur)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.078, 0.23, 0.20), (0.052, 0.072, 0.062), segs=12, rings=10, mat_index=0, color_fn=ferret_fur)
+        for hip_y, knee_y, foot_y in [(-0.18, -0.20, -0.26), (0.22, 0.26, 0.20)]:
+            w1._add_tube(body_bm, body_col, [(sx * 0.08, hip_y, 0.17), (sx * 0.11, knee_y, 0.10), (sx * 0.10, foot_y, 0.018)],
+                         [0.036, 0.026, 0.022], sides=10, subdiv=1, mat_index=0, color_fn=ferret_fur)
+            w2._add_sculpted_blob(body_bm, body_col, (sx * 0.10, foot_y - 0.015, 0.016), (0.028, 0.034, 0.016), segs=10, rings=8, mat_index=0, color_fn=ferret_fur)
+
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.015, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=ferret_fur)
+
+    # Mũi bóng, mắt sáng & móng vuốt sắc gắn sau remesh để giữ độ sắc nét
     w2._add_sculpted_blob(bm, col, (0.0, -0.56, 0.295), (0.014, 0.014, 0.012), segs=10, rings=8, mat_index=1, color_fn=lambda _p, _n: (0.08, 0.08, 0.08))
     for sx in (-1.0, 1.0):
-        w2._add_sculpted_blob(bm, col, (sx * 0.052, -0.40, 0.285), (0.036, 0.042, 0.030), segs=12, rings=8, mat_index=0, color_fn=ferret_fur)
-        w2._add_sculpted_blob(bm, col, (sx * 0.055, 0.22, 0.19), (0.048, 0.068, 0.058), segs=12, rings=10, mat_index=0, color_fn=ferret_fur)
-        w2._add_sculpted_blob(bm, col, (sx * 0.052, -0.39, 0.365), (0.024, 0.016, 0.032),
-                              segs=10, rings=8, mat_index=0, color_fn=ferret_fur)
-        w1._add_eye_bulb(bm, col, (sx * 0.048, -0.46, 0.325), 0.017, yaw=sx * 0.35, eye_col=(0.95, 0.72, 0.22), mat_eye=3)
-
-    # 4 chân bật vồ cơ bắp
-    for sx, hip_y, knee_y, foot_y in [(-1, -0.18, -0.20, -0.26), (1, -0.18, -0.20, -0.26),
-                                      (-1, 0.22, 0.26, 0.20), (1, 0.22, 0.26, 0.20)]:
-        w2._add_jointed_limb(bm, col, [(sx * 0.08, hip_y, 0.17), (sx * 0.11, knee_y, 0.10), (sx * 0.10, foot_y, 0.015)],
-                             [0.036, 0.026, 0.020], claw_dir=(0, -1, 0), claw_len=0.03, mat_index=0, color_fn=ferret_fur)
+        w1._add_eye_bulb(bm, col, (sx * 0.048, -0.46, 0.326), 0.016, yaw=sx * 0.35, eye_col=(0.95, 0.72, 0.22), mat_eye=3)
+        for foot_y in (-0.26, 0.20):
+            for dx in (-0.014, 0.0, 0.014):
+                w1._add_tube(bm, col, [(sx * 0.10 + dx, foot_y - 0.035, 0.016), (sx * 0.10 + dx, foot_y - 0.058, 0.006)],
+                             [0.006, 0.002], sides=6, subdiv=0, mat_index=2, color_fn=lambda _p, _n: (0.12, 0.10, 0.10))
 
     bones = [
         ("Root", (0, 0.02, 0.20), (0, -0.10, 0.21), None, 0.28, 1.0),
@@ -871,45 +939,55 @@ def build_31_chon_khe(out_dir, prev_dir):
 
 def build_32_cao_gio(out_dir, prev_dir):
     """[C] Cáo Gió — Khả năng: Ảo Ảnh.
-    Chúa hang quý phái lông bạc, đôi tai cao nhọn, 3 chiếc đuôi xù uốn lượn phát sáng mờ ảo ảnh, 4 chân thanh thoát."""
+    Điêu khắc liền mạch bằng Voxel Remesh + Smooth: lồng ngực, bờm lông cổ nhiều lớp nhọn,
+    eo thắt, hông, bả vai-đùi-chân thon, đầu cáo có gờ mày-má-tai và 3 đuôi xù phát sáng ảo ảnh."""
     kc.new_scene()
     mats = w1._make_creature_materials()
     bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
 
     def silver_fur(p, n):
-        base = w1._lerp3((0.68, 0.74, 0.82), (0.94, 0.96, 1.0), 0.4 + 0.4 * max(0.0, n.z))
-        if p.z < 0.18:
-            base = w1._lerp3(base, (0.28, 0.34, 0.44), 0.55)
+        base = w1._lerp3((0.64, 0.72, 0.82), (0.95, 0.97, 1.0), 0.4 + 0.4 * max(0.0, n.z))
+        if p.z < 0.16:
+            base = w1._lerp3(base, (0.26, 0.32, 0.44), 0.60)
+        if p.y > 0.65:
+            base = w1._lerp3(base, (0.48, 0.94, 1.0), min(1.0, (p.y - 0.65) * 2.5))
         return base
 
     def mirage_tip(p, n):
         return w1._lerp3((0.72, 0.86, 0.98), (0.48, 0.94, 1.0), max(0.0, min(1.0, (p.y - 0.35) * 1.5)))
 
-    # Thân Cáo Gió ghép nhiều khối cơ bắp chồng khít (>=60% giao nhau) + lõi cột sống mượt
-    w1._add_tube(bm, col, [(0.0, -0.32, 0.49), (0.0, -0.14, 0.43), (0.0, 0.06, 0.40), (0.0, 0.28, 0.39)],
+    # Thân Cáo Gió ghép khung cột sống + Lồng ngực + Bờm lông cổ nhiều chùm + Eo + Hông
+    w1._add_tube(body_bm, body_col, [(0.0, -0.34, 0.49), (0.0, -0.14, 0.43), (0.0, 0.06, 0.40), (0.0, 0.28, 0.39)],
                  [(0.105, 0.100), (0.135, 0.125), (0.105, 0.100), (0.118, 0.112)], sides=20, subdiv=2, mat_index=0, color_fn=silver_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.16, 0.44), (0.145, 0.185, 0.145), rot=(-0.20, 0.0, 0.0), segs=22, rings=14, mat_index=0, color_fn=silver_fur)
-    # Bờm lông cổ 2 tầng xù mượt ôm quanh ức & vai
-    w2._add_sculpted_blob(bm, col, (0.0, -0.25, 0.47), (0.152, 0.145, 0.148), rot=(-0.32, 0.0, 0.0), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.28, 0.38), (0.112, 0.118, 0.115), rot=(-0.15, 0.0, 0.0), segs=16, rings=10, mat_index=0, color_fn=silver_fur)
-    # Eo thắt & Hông sau
-    w2._add_sculpted_blob(bm, col, (0.0, 0.06, 0.40), (0.108, 0.165, 0.105), segs=18, rings=12, mat_index=0, color_fn=silver_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, 0.24, 0.39), (0.126, 0.165, 0.120), rot=(0.08, 0.0, 0.0), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.16, 0.44), (0.145, 0.185, 0.145), rot=(-0.20, 0.0, 0.0), segs=22, rings=14, mat_index=0, color_fn=silver_fur)
+    # Bờm lông cổ nhọn nhiều lớp quanh ngực & vai
+    for ang_deg in (-60, -25, 0, 25, 60):
+        rad = math.radians(ang_deg)
+        w2._add_layered_feather(body_bm, body_col, (math.sin(rad) * 0.10, -0.24, 0.42),
+                                (math.sin(rad) * 0.4, 0.45, -0.75), (0, -1, 0.3),
+                                length=0.19, width=0.055, thickness=0.028, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.06, 0.40), (0.108, 0.165, 0.105), segs=18, rings=12, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.24, 0.39), (0.126, 0.165, 0.120), rot=(0.08, 0.0, 0.0), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
 
-    # Đầu cáo ghép Sọ + 2 Má lông + Mõm nhọn + Mũi đen + 2 Tai 2 lớp
-    w2._add_sculpted_blob(bm, col, (0.0, -0.39, 0.59), (0.105, 0.125, 0.098), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.52, 0.575), (0.064, 0.118, 0.056),
-                          disp_fn=lambda u: Vector((0.0, -0.05 * max(0.0, -u.y), 0.0)),
-                          segs=18, rings=12, mat_index=0, color_fn=silver_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.67, 0.57), (0.020, 0.020, 0.018), segs=12, rings=8, mat_index=1, color_fn=lambda _p, _n: (0.08, 0.08, 0.10))
+    # Đầu cáo thanh tú (Sọ + Gờ mày + Má lông + Mõm + Tai)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.39, 0.59), (0.105, 0.125, 0.098), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(body_bm, body_col, (0.0, -0.52, 0.575), (0.062, 0.120, 0.054),
+                          disp_fn=lambda u: Vector((0.0, -0.05 * max(0.0, -u.y), 0.0)), segs=18, rings=12, mat_index=0, color_fn=silver_fur)
     for sx in (-1.0, 1.0):
-        w2._add_sculpted_blob(bm, col, (sx * 0.075, -0.40, 0.57), (0.052, 0.068, 0.048), segs=14, rings=10, mat_index=0, color_fn=silver_fur)
-        w2._add_sculpted_blob(bm, col, (sx * 0.092, 0.24, 0.34), (0.058, 0.086, 0.085), rot=(0.2, 0, 0), segs=14, rings=10, mat_index=0, color_fn=silver_fur)
-        w1._add_tube(bm, col, [(sx * 0.065, -0.38, 0.65), (sx * 0.095, -0.36, 0.78), (sx * 0.11, -0.34, 0.89)],
-                     [0.044, 0.026, 0.004], sides=10, subdiv=1, mat_index=0, color_fn=silver_fur)
-        w1._add_eye_bulb(bm, col, (sx * 0.082, -0.48, 0.615), 0.024, yaw=sx * 0.35, eye_col=(0.38, 0.92, 1.0), mat_eye=3)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.075, -0.40, 0.57), (0.054, 0.068, 0.048), segs=14, rings=10, mat_index=0, color_fn=silver_fur)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.050, -0.46, 0.635), (0.025, 0.042, 0.018), segs=10, rings=8, mat_index=0, color_fn=silver_fur)
+        w1._add_tube(body_bm, body_col, [(sx * 0.065, -0.38, 0.65), (sx * 0.095, -0.36, 0.78), (sx * 0.11, -0.34, 0.89)],
+                     [0.046, 0.028, 0.008], sides=10, subdiv=1, mat_index=0, color_fn=silver_fur)
+        # Bả vai, đùi sau & 4 chân thon liền mạch
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.090, -0.18, 0.36), (0.052, 0.065, 0.075), segs=14, rings=10, mat_index=0, color_fn=silver_fur)
+        w2._add_sculpted_blob(body_bm, body_col, (sx * 0.094, 0.24, 0.34), (0.058, 0.086, 0.085), rot=(0.2, 0, 0), segs=14, rings=10, mat_index=0, color_fn=silver_fur)
+        for hip_y, foot_y in [(-0.18, -0.22), (0.24, 0.26)]:
+            w1._add_tube(body_bm, body_col, [(sx * 0.095, hip_y, 0.34), (sx * 0.105, hip_y + 0.03, 0.18), (sx * 0.098, foot_y, 0.020)],
+                         [0.042, 0.026, 0.020], sides=10, subdiv=1, mat_index=0, color_fn=silver_fur)
+            w2._add_sculpted_blob(body_bm, body_col, (sx * 0.098, foot_y - 0.018, 0.018), (0.028, 0.036, 0.016), segs=10, rings=8, mat_index=0, color_fn=silver_fur)
 
-    # ĐẶC TRƯNG KHẢ NĂNG (Ảo Ảnh): 3 đuôi xù liền mạch (gốc lông bạc + chóp lông phát sáng ảo ảnh + chùm lông xếp lớp)
+    # 3 đuôi xù liền mạch điêu khắc chung trong body_bm
     for sx, dz in [(-0.34, 0.02), (0.0, 0.16), (0.34, 0.02)]:
         t_pts = [
             (0.0, 0.34, 0.38),
@@ -917,20 +995,23 @@ def build_32_cao_gio(out_dir, prev_dir):
             (sx * 0.95, 0.76, 0.53 + dz),
             (sx * 1.12, 0.96, 0.46 + dz * 0.8),
         ]
-        w1._add_tube(bm, col, t_pts, [(0.055, 0.052), (0.095, 0.088), (0.102, 0.092), (0.026, 0.024)],
+        w1._add_tube(body_bm, body_col, t_pts, [(0.058, 0.054), (0.098, 0.090), (0.105, 0.095), (0.026, 0.024)],
                      sides=16, subdiv=2, mat_index=0, color_fn=silver_fur)
-        # Chùm lông chóp đuôi phát sáng ảo ảnh
+
+    _sculpt_remesh_into(bm, col, body_bm, voxel_size=0.018, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=silver_fur)
+
+    # Chi tiết sắc nét sau remesh: Mũi đen, mắt lam phát sáng, móng vuốt & chóp lông đuôi ảo ảnh
+    w2._add_sculpted_blob(bm, col, (0.0, -0.67, 0.57), (0.020, 0.020, 0.018), segs=12, rings=8, mat_index=1, color_fn=lambda _p, _n: (0.08, 0.08, 0.10))
+    for sx in (-1.0, 1.0):
+        w1._add_eye_bulb(bm, col, (sx * 0.078, -0.48, 0.610), 0.022, yaw=sx * 0.35, eye_col=(0.38, 0.92, 1.0), mat_eye=3)
+        for foot_y in (-0.22, 0.26):
+            for dx in (-0.014, 0.0, 0.014):
+                w1._add_tube(bm, col, [(sx * 0.098 + dx, foot_y - 0.04, 0.018), (sx * 0.098 + dx, foot_y - 0.068, 0.006)],
+                             [0.006, 0.002], sides=6, subdiv=0, mat_index=2, color_fn=lambda _p, _n: (0.14, 0.14, 0.18))
+    for sx, dz in [(-0.34, 0.02), (0.0, 0.16), (0.34, 0.02)]:
         w2._add_layered_feather(bm, col, (sx * 0.78, 0.68, 0.50 + dz * 0.8),
                                 (sx * 0.45, 0.85, -0.15), (0, 0, 1),
-                                length=0.38, width=0.075, thickness=0.042, mat_index=3, color_fn=mirage_tip)
-
-    # 4 chân cáo cao thanh thoát
-    for sx, hip_y, foot_y in [(-1, -0.18, -0.22), (1, -0.18, -0.22), (-1, 0.24, 0.26), (1, 0.24, 0.26)]:
-        w2._add_jointed_limb(bm, col, [
-            (sx * 0.095, hip_y, 0.34),
-            (sx * 0.105, hip_y + 0.03, 0.18),
-            (sx * 0.098, foot_y, 0.018),
-        ], [0.042, 0.026, 0.020], claw_dir=(0, -1, 0), claw_len=0.03, mat_index=0, color_fn=silver_fur)
+                                length=0.38, width=0.065, thickness=0.036, mat_index=3, color_fn=mirage_tip)
 
     bones = [
         ("Root", (0, 0.02, 0.40), (0, -0.14, 0.42), None, 0.38, 1.0),
