@@ -207,6 +207,31 @@ namespace Evolve.Ecology
             }
         }
 
+        /// <summary>
+        /// A creature a spawner placed in the scene becomes one head of the species' population: it takes an embodied slot
+        /// (so <see cref="EmbodyStep"/> only tops up what is missing), a kill lowers the count, and it is stored back when the region sleeps.
+        /// False (the creature stays a plain scene creature) for an unknown species, no free head, or a full global cap.
+        /// </summary>
+        public bool Adopt(GameObject go)
+        {
+            if (Population == null || go == null || NetWorld.IsClient) return false;
+            string key = Evolve.Creatures.SpeciesNames.Key(go.name);
+            for (int i = 0; i < species.Count; i++)
+            {
+                var so = species[i];
+                if (so == null || (Evolve.Creatures.SpeciesNames.Key(so.Id) != key && Evolve.Creatures.SpeciesNames.Key(so.name) != key)) continue;
+                var pop = PopulationOf(so);
+                if (pop == null || !pop.TryEmbody()) return false;
+                if (!PopulationCap.TryReserve()) { pop.Store(); return false; }
+                var ec = go.GetComponent<EmbodiedCreature>();
+                if (ec == null) ec = go.AddComponent<EmbodiedCreature>();
+                ec.Init(this, pop);
+                embodied.Add(ec);
+                return true;
+            }
+            return false;
+        }
+
         EmbodiedCreature Spawn(SpeciesSO so, SpeciesPopulation pop, Vector3 position, Vector3 home, float homeRadius)
         {
             float baseY = Evolve.World.GroundHeight.At(position.x, position.z, home.y) + so.Prefab.transform.position.y;
