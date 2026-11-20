@@ -313,6 +313,8 @@ namespace Evolve.EditorTools
             var driver = root.AddComponent<CreatureAnimDriver>();
             driver.Configure(anim, spec.ActionClipName);
 
+            if (AssetDatabase.LoadAssetAtPath<Object>(prefabPath) != null)
+                AssetDatabase.DeleteAsset(prefabPath);
             var saved = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             Object.DestroyImmediate(root);
             return saved;
