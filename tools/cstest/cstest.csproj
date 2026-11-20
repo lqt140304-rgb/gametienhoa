@@ -26,6 +26,7 @@
     <Compile Remove="../../Assets/_Project/Scripts/Maze/Pure/InteractiveFloraMath.cs" />
     <Compile Remove="../../Assets/_Project/Tests/EditMode/Maze/Pure/InteractiveFloraMathTests.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Player/BodySize.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Player/SlimeStep.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/CarcassStage.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Survival/HudLayout.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Traits/Pure/*.cs" />
@@ -34,6 +35,7 @@
     <Compile Include="../../Assets/_Project/Tests/EditMode/DeathLossRulesTests.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Traits/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/BodySizeTests.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/SlimeStepTests.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Creatures/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Creatures/*.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/SpeciesPopulation.cs" />
