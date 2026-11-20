@@ -46,23 +46,19 @@ namespace Evolve.Abilities
 
             var tint = Evolve.Swallow.SkillFxMath.FamilyColor(Family);
             var body = user.transform;
-            if (Root && taken < 1f) { Evolve.Visuals.SlimeGelAnimator.Tuck(user, t); SkillFx.Burst(SkillFx.Center(body), tint, 10, 1.4f, 0.12f, 0.6f, 0.2f, SkillFx.Radius(body)); }   // Thu Mình: a shell closes
-            if (BlockHits > 0) { SkillFx.Orbit(body, tint, 6 + 2 * (star3 ? Star3ExtraHits : 0), t); SkillFx.Shell(body, tint, t, 0.05f, 1.2f, 1.2f); }
-            if (Light > 0f)
-            {
-                SkillFx.Fireflies(body, Evolve.Swallow.SkillFxMath.GlowColor, t);
-                SkillFx.Shell(body, Evolve.Swallow.SkillFxMath.GlowColor, t, 0.08f, 1.4f, 1.6f);
-            }
+            if (Root && taken < 1f) { Evolve.Visuals.SlimeGelAnimator.Tuck(user, t); SkillFx.Shed(body, tint, 10, 1.4f); }   // Thu Mình: a shell closes
+            if (BlockHits > 0) SkillFx.Orbit(body, tint, 6 + 2 * (star3 ? Star3ExtraHits : 0), t);
+            if (Light > 0f) SkillFx.Fireflies(body, Evolve.Swallow.SkillFxMath.GlowColor, t);
             if (!star3) return true;
 
             if (Star3Heal > 0f && user.TryGetComponent(out SurvivalStats stats))
             {
                 stats.State.Heal(stats.State.MaxHealth * Star3Heal);
-                SkillFx.Burst(SkillFx.Center(body), Evolve.Swallow.SkillFxMath.FamilyColor(Evolve.Swallow.SkillFamily.Vitality), 16, 1.2f, 0.14f, 1f, 1f, SkillFx.Radius(body));
+                SkillFx.Shed(body, Evolve.Swallow.SkillFxMath.FamilyColor(Evolve.Swallow.SkillFamily.Vitality), 16, 1.2f, 0.14f, 1f);
             }
             if (Star3Dazzle > 0f)
             {
-                SkillFx.Ring(user.transform.position, Star3Dazzle, Evolve.Swallow.SkillFxMath.GlowColor, 0.5f, 0.2f);
+                SkillFx.Ring(user.transform.position, Star3Dazzle, Evolve.Swallow.SkillFxMath.GlowColor, 0.5f, Mathf.Min(0.9f, SkillFx.Radius(body) * 1.1f / Star3Dazzle));
                 foreach (var p in Prey.Active)
                     if (p != null && (p.transform.position - user.transform.position).sqrMagnitude <= Star3Dazzle * Star3Dazzle)
                         CreatureStatus.Stun(p, 1f);

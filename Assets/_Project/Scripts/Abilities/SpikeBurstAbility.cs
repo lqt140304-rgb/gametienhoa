@@ -78,7 +78,7 @@ namespace Evolve.Abilities
                 float angle = Mathf.Lerp(-SpreadAngle * 0.5f, SpreadAngle * 0.5f, t);
                 Vector3 d = Quaternion.AngleAxis(angle, Vector3.up) * aim;
                 // Spawn low, near the ground, where small creatures are.
-                SpikeProjectile.Spawn(origin + d * 0.6f + Vector3.down * SpawnDrop, d, Speed, Range, damage, stats);
+                SpikeProjectile.Spawn(origin + d * Mathf.Max(0.6f, SkillFx.Radius(user.transform) * 1.1f) + Vector3.down * SpawnDrop, d, Speed, Range, damage, stats);
             }
             return true;
         }

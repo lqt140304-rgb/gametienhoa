@@ -149,14 +149,15 @@ namespace Evolve.Abilities
         }
 
         /// <summary>Dust kicked out along the ground from a point (a shockwave).</summary>
-        public static void Dust(Vector3 center, float radius, Color c, int count = 26)
+        /// <param name="inner">Radius the dust starts from (outside the slime's body, which is see-through).</param>
+        public static void Dust(Vector3 center, float radius, Color c, int count = 26, float inner = 0f)
         {
             center.y = Evolve.World.GroundHeight.At(center.x, center.z, center.y - 0.4f) + 0.1f;
             for (int i = 0; i < count; i++)
             {
                 float a = Random.value * Mathf.PI * 2f;
                 var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
-                EmitOne(center + dir * radius * 0.2f, dir * radius * Random.Range(1.2f, 2.2f) + Vector3.up * Random.Range(0.3f, 1f),
+                EmitOne(center + dir * Mathf.Max(inner, radius * 0.2f), dir * radius * Random.Range(1.2f, 2.2f) + Vector3.up * Random.Range(0.3f, 1f),
                         c, Random.Range(0.12f, 0.24f), Random.Range(0.5f, 0.9f));
             }
         }
@@ -179,22 +180,19 @@ namespace Evolve.Abilities
             }, () => { Object.Destroy(t.gameObject); Object.Destroy(mat); });
         }
 
-        /// <summary>A translucent bubble round a body that swells in, breathes and thins out (Thu Mình, Phát Sáng, Bám Vách, a hit shrugged off).</summary>
-        public static void Shell(Transform body, Color c, float seconds, float fill = 0.14f, float rim = 2.2f, float scale = 1.25f)
+        /// <summary>Motes thrown off the body's surface (they start just outside it, never inside the see-through gel).</summary>
+        public static void Shed(Transform body, Color c, int count, float speed, float size = 0.12f, float life = 0.7f)
         {
             if (body == null) return;
-            var mat = Gel(c, fill, rim);
-            var t = Part("Shell", SkillFxMeshes.Sphere(), mat);
-            float radius = Radius(body);
-            FxRun.Begin("Shell", seconds, e =>
+            Vector3 centre = Center(body);
+            float r = Radius(body) * 1.15f;
+            for (int i = 0; i < count; i++)
             {
-                if (body == null) return false;
-                float k = SkillFxMath.Envelope(e, seconds, Mathf.Min(0.15f, seconds * 0.4f), Mathf.Min(0.35f, seconds * 0.5f));
-                t.position = Center(body);
-                t.localScale = Vector3.one * radius * 2f * scale * (1f + 0.03f * Mathf.Sin(e * 6f)) * Mathf.Lerp(0.85f, 1f, k);
-                Fade(mat, k);
-                return true;
-            }, () => { Object.Destroy(t.gameObject); Object.Destroy(mat); });
+                Vector3 d = Random.onUnitSphere;
+                d.y = Mathf.Abs(d.y) * 0.8f + 0.1f;
+                d.Normalize();
+                EmitOne(centre + d * r, d * speed * Random.Range(0.5f, 1f), c, size * Random.Range(0.7f, 1.3f), life * Random.Range(0.7f, 1.2f));
+            }
         }
 
         /// <summary>Crystal shards circling a body (Khiên Quặng). One shield per body: a new one replaces the old.</summary>
@@ -236,8 +234,8 @@ namespace Evolve.Abilities
         {
             if (body == null) return;
             if (shieldRuns.TryGetValue(body, out var run) && run != null) run.Finish();
-            Burst(Center(body), c, 24, 3.4f, 0.16f, 0.8f, 0.4f, Radius(body));
-            Ring(body.position, Radius(body) * 2.6f, c, 0.4f, 0.4f);
+            Shed(body, c, 24, 3.4f, 0.16f, 0.8f);
+            Ring(body.position, Radius(body) * 2.6f, c, 0.4f, 0.45f);
         }
 
         /// <summary>Warm motes drifting round a body (Phát Sáng).</summary>
@@ -341,25 +339,15 @@ namespace Evolve.Abilities
             starRuns[creature] = run;
         }
 
-        /// <summary>A fading ghost trail behind a body that dashes (Lách Né), with a few streaks of wind.</summary>
-        public static void Afterimage(GameObject user, Color c, Vector3 dir)
+        /// <summary>Lách Né: a few streaks of wind left behind, starting at the back of the body (no trail through the body).</summary>
+        public static void Wind(GameObject user, Color c, Vector3 dir)
         {
-            var go = new GameObject("Afterimage");
-            go.transform.SetParent(user.transform, false);
-            var mat = Gel(c, 1f, 0f, 1.4f);
-            var tr = go.AddComponent<TrailRenderer>();
+            if (user == null) return;
             float radius = Radius(user.transform);
-            tr.time = 0.35f; tr.minVertexDistance = 0.05f; tr.sharedMaterial = mat;
-            tr.widthCurve = new AnimationCurve(new Keyframe(0f, radius * 1.6f), new Keyframe(1f, 0f));
-            var g = new Gradient();
-            g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
-                      new[] { new GradientAlphaKey(0.7f, 0f), new GradientAlphaKey(0f, 1f) });
-            tr.colorGradient = g;
-            tr.shadowCastingMode = ShadowCastingMode.Off; tr.receiveShadows = false;
-            Vector3 centre = Center(user.transform);
-            for (int i = 0; i < 8; i++)
-                EmitOne(centre + Random.insideUnitSphere * radius, -dir * Random.Range(2f, 4f) + Vector3.up * 0.2f, Color.Lerp(c, Color.white, 0.5f), 0.1f, 0.4f);
-            FxRun.Begin("Afterimage", 0.8f, e => true, () => { Object.Destroy(go); Object.Destroy(mat); });
+            Vector3 back = Center(user.transform) - dir * radius * 1.2f;
+            Color pale = Color.Lerp(c, Color.white, 0.5f);
+            for (int i = 0; i < 10; i++)
+                EmitOne(back + Random.insideUnitSphere * radius * 0.6f, -dir * Random.Range(2f, 4f) + Vector3.up * 0.2f, pale, 0.1f, 0.4f);
         }
     }
 }

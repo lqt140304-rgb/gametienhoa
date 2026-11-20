@@ -66,12 +66,14 @@ namespace Evolve.Abilities
             var stone = Evolve.Swallow.SkillFxMath.FamilyColor(Evolve.Swallow.SkillFamily.Stone);
             if (charges < before)   // the shield ate a hit: it bursts on the last one, flashes on the others
             {
-                if (charges == 0) SkillFx.ShieldBreak(transform, stone); else SkillFx.Shell(transform, stone, 0.3f, 0.3f, 2f, 1.15f);
+                if (charges == 0) SkillFx.ShieldBreak(transform, stone); else SkillFx.Shed(transform, stone, 8, 2f);
             }
             else if (reduction > 0f && left > 0f && left < amount && Time.time >= nextFlash)   // Vỏ Cứng shrugged a hit off
             {
                 nextFlash = Time.time + 0.4f;
-                SkillFx.Shell(transform, stone, 0.3f, 0.25f, 2f, 1.1f);
+                SkillFx.Shed(transform, stone, 6, 1.6f, 0.1f, 0.5f);
+                var gel = GetComponentInChildren<Evolve.Visuals.SlimeGelAnimator>();
+                if (gel != null) gel.Jiggle(0.6f);   // the hide shrugs it off
             }
             return left;
         }

@@ -64,9 +64,11 @@ namespace Evolve.Abilities
                 foreach (var (creature, _) in inReach) SkillFx.Sting(user, SkillFx.Center(creature.transform), tint);   // a jab of the slime's own gel
             else
             {
-                SkillFx.Ring(c, Radius, tint);
-                SkillFx.Ring(c, Radius * 0.65f, tint, 0.4f, 0.1f);
-                SkillFx.Dust(c, Radius, tint);
+                // waves start at the body's edge, never under the see-through body
+                float edge = SkillFx.Radius(user.transform) * 1.1f;
+                SkillFx.Ring(c, Radius, tint, 0.55f, Mathf.Min(0.9f, edge / Radius));
+                SkillFx.Ring(c, Radius * 0.65f, tint, 0.4f, Mathf.Min(0.9f, edge / (Radius * 0.65f)));
+                SkillFx.Dust(c, Radius, tint, 26, edge);
             }
 
             if (Push > 0f)

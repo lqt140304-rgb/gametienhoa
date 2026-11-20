@@ -17,7 +17,10 @@ namespace Evolve.Abilities
         public override bool Activate(GameObject user, int stars)
         {
             user.TryGetComponent(out SurvivalStats owner);
-            Vector3 p = user.transform.position;
+            Vector3 ahead = Evolve.Player.AimController.AimDirection(user, user.transform.position, out _);
+            ahead.y = 0f;
+            if (ahead.sqrMagnitude < 0.01f) ahead = user.transform.forward;
+            Vector3 p = user.transform.position + ahead.normalized * (SkillFx.Radius(user.transform) * 1.1f + Radius);
             p.y = Evolve.World.GroundHeight.At(p.x, p.z, p.y - 0.4f);
             SpikeTrap.Spawn(p, Radius, Damage * StarPower(stars), Seconds, stars >= 3 ? Star3Stun : 0f, owner, Evolve.Swallow.SkillFxMath.FamilyColor(Family));
             return true;

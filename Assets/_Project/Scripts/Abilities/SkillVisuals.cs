@@ -1,29 +1,42 @@
 using System.Collections.Generic;
 using Evolve.Organs;
 using Evolve.Swallow;
+using Evolve.Visuals;
 using UnityEngine;
 
 namespace Evolve.Abilities
 {
     /// <summary>
-    /// The slime has no worn organs: the body part of an active move (spikes on the back, legs) exists only while the move is used.
-    /// It grows out of its socket, stays for the move's duration, then melts back into the body (SkillRules.VisualScale).
-    /// While spikes are out they hurt whoever bites the slime (ContactDamage, read by OrganHost).
+    /// The slime has no worn organs: the body part of an active move exists only while the move is used, and it is pulled out of the slime's own
+    /// body (SlimeGelAnimator.Limb), so it is one smooth piece with it: legs for Chạy Nước Rút, spikes on the back for Phóng Gai. They grow out,
+    /// stay for the move's duration and flow back in (SkillRules.VisualScale). While spikes are out they hurt whoever bites the slime
+    /// (ContactDamage, read by OrganHost). Cave skills draw their own limbs (SkillFx).
     /// </summary>
     public class SkillVisuals : MonoBehaviour
     {
         class Show
         {
             public OrganSO Organ;
-            public GameObject Visual;
-            public Vector3 BaseScale = Vector3.one;
             public float Start, Hold;
+            public readonly List<SlimeGelAnimator.Limb> Limbs = new List<SlimeGelAnimator.Limb>();
+            public Vector3[] Dirs;
+            public bool Legs;
         }
+
+        // legs: four, out to the sides and a little down; spikes: a fan over the back of the hump
+        static readonly Vector3[] LegDirs =
+        {
+            new Vector3(1f, -0.35f, 1f).normalized, new Vector3(-1f, -0.35f, 1f).normalized,
+            new Vector3(-1f, -0.35f, -1f).normalized, new Vector3(1f, -0.35f, -1f).normalized,
+        };
+        static readonly Vector3[] SpikeDirs =
+        {
+            new Vector3(0f, 1f, -0.45f).normalized, new Vector3(0.45f, 1f, -0.5f).normalized, new Vector3(-0.45f, 1f, -0.5f).normalized,
+            new Vector3(0.8f, 0.8f, -0.2f).normalized, new Vector3(-0.8f, 0.8f, -0.2f).normalized, new Vector3(0f, 0.75f, -0.9f).normalized,
+        };
 
         readonly Dictionary<OrganSO, Show> shows = new Dictionary<OrganSO, Show>();
         readonly List<OrganSO> done = new List<OrganSO>();
-        readonly Dictionary<OrganSlot, Transform> sockets = new Dictionary<OrganSlot, Transform>();
-        bool socketsFound;
 
         /// <summary>Damage dealt back to attackers from the spikes that are out right now.</summary>
         public float ContactDamage { get; private set; }
@@ -60,22 +73,20 @@ namespace Evolve.Abilities
                 existing.Hold = hold;
                 return;
             }
-            var show = new Show { Organ = organ, Start = Time.time, Hold = hold };
-            if (organ.VisualPrefab != null)
-            {
-                if (!socketsFound) FindSockets();
-                Transform parent = sockets.TryGetValue(organ.Slot, out var s) ? s : transform;
-                show.Visual = Instantiate(organ.VisualPrefab, parent, false);
-                show.BaseScale = show.Visual.transform.localScale;
-                show.Visual.transform.localScale = show.BaseScale * 0.001f;
-            }
+            bool legs = organ.GrantedAbility == null && organ.SpeedMultiplier > 1.01f;
+            bool spikes = organ.GrantedAbility is SpikeBurstAbility || organ.ContactDamage > 0f;
+            var show = new Show { Organ = organ, Start = Time.time, Hold = hold, Legs = legs, Dirs = legs ? LegDirs : spikes ? SpikeDirs : null };
+            if (show.Dirs != null)
+                foreach (var _ in show.Dirs)
+                {
+                    var limb = SlimeGelAnimator.AddLimb(gameObject);
+                    if (limb == null) break;
+                    limb.Local = true;
+                    if (legs) { limb.Width = 24f; limb.Sharp = 2.5f; limb.Squeeze = 0.35f; }
+                    else { limb.Width = 16f; limb.Sharp = 6f; limb.Squeeze = 0.5f; }
+                    show.Limbs.Add(limb);
+                }
             shows[organ] = show;
-        }
-
-        void FindSockets()
-        {
-            socketsFound = true;
-            foreach (var s in GetComponentsInChildren<OrganSocket>(true)) sockets[s.Slot] = s.transform;
         }
 
         void Update()
@@ -88,29 +99,31 @@ namespace Evolve.Abilities
                 float elapsed = Time.time - show.Start;
                 if (elapsed >= SkillRules.ShowSeconds(show.Hold)) { done.Add(kv.Key); continue; }
                 float k = SkillRules.VisualScale(elapsed, show.Hold);
-                if (show.Visual != null) show.Visual.transform.localScale = show.BaseScale * Mathf.Max(0.001f, k);
+                float length = show.Legs ? 0.32f : 0.3f;
+                for (int i = 0; i < show.Limbs.Count; i++)
+                {
+                    var limb = show.Limbs[i];
+                    // legs step in diagonal pairs; spikes just stand out
+                    float step = show.Legs ? 0.75f + 0.25f * Mathf.Sin(Time.time * 14f + (i % 2) * Mathf.PI) : 1f;
+                    limb.Target = SlimeGelAnimator.LimbCentre + show.Dirs[i] * (SlimeGelAnimator.SurfaceRadius + length);
+                    limb.Reach = k * step;
+                }
                 if (k >= 0.5f) contact += show.Organ.ContactDamage;
             }
-            foreach (var o in done)
-            {
-                if (shows[o].Visual != null) Destroy(shows[o].Visual);
-                shows.Remove(o);
-            }
+            foreach (var o in done) { Release(shows[o]); shows.Remove(o); }
             ContactDamage = contact;
         }
+
+        static void Release(Show show) { foreach (var l in show.Limbs) l.Remove(); show.Limbs.Clear(); }
 
         /// <summary>Death and respawn: every part goes away at once.</summary>
         public void ClearAll()
         {
-            foreach (var show in shows.Values) if (show.Visual != null) Destroy(show.Visual);
+            foreach (var show in shows.Values) Release(show);
             shows.Clear();
             ContactDamage = 0f;
         }
 
-        void OnDestroy()
-        {
-            foreach (var show in shows.Values) if (show.Visual != null) Destroy(show.Visual);
-            shows.Clear();
-        }
+        void OnDestroy() => ClearAll();
     }
 }

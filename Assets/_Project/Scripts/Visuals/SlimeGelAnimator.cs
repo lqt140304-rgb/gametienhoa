@@ -77,6 +77,8 @@ namespace Evolve.Visuals
         public sealed class Limb
         {
             public Vector3 Target;
+            /// <summary>True: Target is in the body's own space (legs, back spikes that move with it); false: a point in the world.</summary>
+            public bool Local;
             public float Reach, Width = 30f, Sharp = 5f, Squeeze = 0.6f;
             internal SlimeGelAnimator Owner;
             internal Vector3 Dir;
@@ -85,8 +87,9 @@ namespace Evolve.Visuals
         }
         readonly List<Limb> limbs = new List<Limb>();
         /// <summary>Where limbs grow from, in the body's own space (about the middle of the dome).</summary>
-        static readonly Vector3 LimbCentre = new Vector3(0f, -0.1f, 0f);
-        const float SurfaceRadius = 0.5f;
+        public static readonly Vector3 LimbCentre = new Vector3(0f, -0.1f, 0f);
+        /// <summary>About how far the body's surface is from LimbCentre; a limb's length is counted from there.</summary>
+        public const float SurfaceRadius = 0.5f;
         float tuckUntil, fTuck;
 
         /// <summary>Start a limb on this slime (null if it has no animated body). Call Remove when done.</summary>
@@ -347,7 +350,7 @@ namespace Evolve.Visuals
             fTuck = Mathf.Lerp(fTuck, Time.time < tuckUntil ? 1f : 0f, soft);
             foreach (var l in limbs)
             {
-                Vector3 v = transform.InverseTransformPoint(l.Target) - LimbCentre;
+                Vector3 v = (l.Local ? l.Target : transform.InverseTransformPoint(l.Target)) - LimbCentre;
                 float dist = v.magnitude;
                 l.Dir = dist > 1e-4f ? v / dist : Vector3.forward;
                 l.Length = Mathf.Max(0f, dist - SurfaceRadius) * Mathf.Clamp01(l.Reach);
