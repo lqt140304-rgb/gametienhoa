@@ -61,3 +61,22 @@ Thư viện kiểu chiêu: **Phóng** (Lunge), **Húc** (Charge), **Xoay** (Spin
 - **Muỗi Rêu chủ động, đi theo bầy:** muỗi đi tìm người chơi (một con phát hiện thì báo cả bầy trong 15 m), bám vào slime hút máu (1,5 máu mỗi giây). Người chơi đuổi muỗi bằng cách **nhảy, chạy nhanh (khoảng 3 m/s trở lên trong nửa giây), dùng kỹ năng tức thời, hoặc đánh trúng nó**. Bị đuổi thì muỗi sợ và bay đi **30 giây**; hết 30 giây mà người chơi vẫn ở gần (trong 15 m) thì quay lại hút tiếp. Muỗi vẫn là con mồi trong dữ liệu sinh thái.
 - **Dấu hiệu báo rõ ở hình dáng cơ thể:** dấu hiệu chính là **tư thế thân** (cúi người cuộn lại, cào đất cúi sừng, rụt mai co lại, xòe cánh giương vòi), làm đủ nổi bật để nhìn ra ngay cả khi nhìn từ xa. Phần làm được bằng code (co giãn, nghiêng, rung thân theo tiến độ gồng) làm ngay; phần hoạt hình và biến dạng mô hình thật (clip `Tell`, `Strike`, `Recover` cho từng loài) giao bên làm hang theo kế hoạch `docs/superpowers/handoff/2026-11-20-monster-tell-poses-for-cave-team.md`. Mã dùng clip của họ khi có, rơi về tư thế bằng code khi chưa có.
 - Đòn cảnh báo của chiêu vùng (Xoay Mai) thêm vòng tròn báo trên đất.
+
+## Lát 2: đánh xa, đánh rồi chạy, rình (đề xuất, chờ chủ dự án chốt)
+Cùng bộ máy chiêu của lát 1, thêm hai hình chiêu mới (**Băng Rơi**, **Gió Hú**), một kiểu kết thúc (**Rút Lui** sau đòn) và một trạng thái (**Rình**). Hai loài ở Khe Gió Hú (tầng Giữa) theo số liệu của bên làm hang: Chồn Khe (kẻ săn, khối 16, máu 54, cắn 16) và Cáo Gió (Chúa Hang, khối 48, máu 155, cắn 22).
+
+| Loài | Cơ sở ngoài đời | Chiêu | Gồng | Kiệt sức | Ghi chú |
+|---|---|---|---|---|---|
+| **Chồn Khe** (kẻ săn) | chồn nhanh nhẹn, ẩn nấp trong hang rồi vồ bất ngờ | **Rình**: nằm im ẩn mình, chỉ thấy đôi mắt sáng | không có | không có | người chơi vào trong 5 m thì bật ra |
+| | | **Vồ Xa**: phóng 8 m cắn, **rồi rút lui** chạy 6 m trong 1,5 giây, sau đó quay lại | 0,35 s (rình bật ra: 0,2 s) | 1,5 s (trong lúc chạy) | sát thương 16; cắn rồi bỏ chạy nên khó phản công |
+| **Cáo Gió** (Chúa Hang) | cáo nhanh, hơi giả tưởng dùng phép gió và băng | **Vồ Cắn** (pha 1): lao 4 m cắn | 0,5 s | 1,5 s | sát thương 22 |
+| | | **Băng Rơi** (pha 1, tầm 4 đến 12 m): đưa tay lên, một vòng đỏ hiện **dưới chân người chơi**; 1,2 giây sau cục băng rơi xuống chỗ vòng đó | 1,0 s | 1,5 s | trúng: 12 sát thương và **đóng băng** (đứng im) 1,5 s; bước ra khỏi vòng là tránh được |
+| | | **Gió Hú** (dưới 66% máu): ngẩng đầu hú, một luồng gió đẩy slime ra xa | 0,9 s | 1,5 s | lực đẩy giảm theo khối slime; **Thu Mình** và **Bám Vách** miễn đẩy |
+| | | **Gọi Bầy** (dưới 33% máu): gọi Chồn Khe trong 30 m | 1,0 s | 1,5 s | |
+
+- **Rình:** chồn không có mục tiêu thì nằm im ẩn mình (tắt hình, chỉ còn đôi mắt sáng nhỏ như một dấu hiệu) tại chỗ; người chơi lại gần trong 5 m (và không ở vùng an toàn) thì hiện ra và ra đòn nhanh (gồng 0,2 s). Hết đòn thì đi tuần bình thường, và rình lại sau 20 giây không có người chơi. Không cần dựng điểm nấp mới trong khoang: chồn rình ngay tại tổ hoặc chỗ nó đang đứng.
+- **Gió Hú:** lực đẩy theo hướng từ quái tới slime, kéo dài 1,2 giây, khoảng 6 m/s cho slime nhẹ nhất, giảm tỉ lệ nghịch với khối slime (khối ≥ 40 thì chỉ còn nửa); đang Thu Mình (đứng im) hoặc Bám Vách thì không bị đẩy.
+- Các số khác là bản tạm.
+- Hai loài vẫn là hai loài ở Khe Gió Hú đã có; không thêm loài mới. Khỉ vẫn để lát 3.
+- Giao bên làm hang: bản bổ sung clip cho Chồn Khe (rình nằm, bật ra, chạy trốn) và Cáo Gió (đưa tay phép, hú, gầm) làm sau khi chủ dự án chốt.
+
