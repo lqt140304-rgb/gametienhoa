@@ -117,5 +117,40 @@ namespace Evolve.Tests.EditMode
             CollectionAssert.AreEqual(a, b);
             for (int i = 1; i < a.Count; i++) Assert.AreNotEqual(a[i - 1], a[i]);
         }
+
+        [Test] public void Force_StartsAQuickWindup()
+        {
+            var s = new MoveScheduler(new[] { L() }, 1);
+            Assert.IsTrue(s.Force(L(), 0.2f));
+            for (float t = 0f; t < 0.15f; t += Dt) s.Update(Dt, true, 3f, 1f);
+            Assert.AreEqual(MovePhase.Windup, s.Phase);
+            for (float t = 0f; t < 0.1f; t += Dt) s.Update(Dt, true, 3f, 1f);
+            Assert.AreEqual(MovePhase.Active, s.Phase);
+        }
+
+        [Test] public void Force_WhenBusy_IsRefused()
+        {
+            var s = new MoveScheduler(new[] { L() }, 1);
+            s.Update(Dt, true, 3f, 1f);
+            Assert.AreEqual(MovePhase.Windup, s.Phase);
+            Assert.IsFalse(s.Force(L(), 0.2f));
+        }
+
+        [Test] public void Force_Ignores_TellScale()
+        {
+            var s = new MoveScheduler(new[] { L() }, 1) { TellScale = 2f };
+            s.Force(L(), 0.2f);
+            for (float t = 0f; t < 0.25f; t += Dt) s.Update(Dt, true, 3f, 1f);
+            Assert.AreEqual(MovePhase.Active, s.Phase);
+        }
+
+        [Test] public void Force_StartsTheCooldown()
+        {
+            var move = L();
+            var s = new MoveScheduler(new[] { move }, 1);
+            s.Force(move, 0.2f);
+            for (float t = 0f; t < 2.0f; t += Dt) s.Update(Dt, true, 3f, 1f);   // the whole cycle has run; the move's 2.5 s cooldown still holds it
+            Assert.AreEqual(MovePhase.Idle, s.Phase);
+        }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Evolve.Combat
 {
-    public enum MoveShape { Lunge, Charge, Spin, Drain, Call }
+    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust }
     public enum MovePhase { Idle, Windup, Active, Recover }
 
     /// <summary>One attack of a monster (data): its timing, reach, damage and when it unlocks.</summary>
@@ -12,6 +12,8 @@ namespace Evolve.Combat
         public string Name, Anim, TargetSpecies;
         public MoveShape Shape;
         public float Windup, Active, Recover, Cooldown, MinRange, MaxRange, Damage, Distance, Radius, Weight = 1f;
+        /// <summary>Metres it runs away from the player during Recover (hit and run); Force is the wind speed of a Gust; Freeze the seconds an ice block holds the player.</summary>
+        public float RetreatDistance, Force, Freeze;
         /// <summary>The move is usable while the monster's health fraction is at or below this (1 = always); lords unlock new moves as they lose health.</summary>
         public float UnlockBelow = 1f;
         /// <summary>Armoured while winding up and striking: a pounce bounces off.</summary>
@@ -51,6 +53,14 @@ namespace Evolve.Combat
         public bool Busy => Phase != MovePhase.Idle;
         public bool IsArmored => Current != null && Current.Armored && (Phase == MovePhase.Windup || Phase == MovePhase.Active);
         public float DamageTakenFactor => Phase == MovePhase.Recover ? RecoverDamageFactor : 1f;
+
+        /// <summary>Starts <paramref name="move"/> now with a windup of exactly <paramref name="windupSeconds"/> (an ambusher bursting out). Only when idle.</summary>
+        public bool Force(MoveDef move, float windupSeconds)
+        {
+            if (Phase != MovePhase.Idle || move == null) return false;
+            Current = move; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = Math.Max(0f, windupSeconds);
+            return true;
+        }
 
         public void Reset() { Phase = MovePhase.Idle; Current = null; PhaseTime = 0f; phaseLength = 0f; }
 
