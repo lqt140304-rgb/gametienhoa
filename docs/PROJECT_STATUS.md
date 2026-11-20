@@ -739,3 +739,24 @@ Bên làm hang (Antigravity) làm trên nhánh `maze-step3` (43 commit từ 2026
 - **Việc kế tiếp khi gộp:** nối `IMazeAdjacency` vào `EcologyWorld.Link` thay bảng nối tạm; điền `SpeciesSO.EscapeChance` từ `PreyDefenseSeed`; gắn `CreatureBrain` và `PreyDefense` vào prefab của họ (nên làm bằng một menu chạy lại được); xem lại `bodyMass`/máu mà họ đã đặt cho từng loài so với các ngưỡng kích cỡ slime.
 
 **Cập nhật mục 48:** nhánh `claude/unity-test-maze` đã gộp `maze-step3` vào `claude/unity-test` (không xung đột chữ). Điều chỉnh: bảng mê cung của bên làm hang đổi từ F1 sang F10 (F1 là menu thần chung, hai cửa sổ trên một phím chồng nhau); `tools/cstest/cstest.csproj` loại `InteractiveFloraMath` của họ khỏi bộ test ngoài Unity (dùng `Vector3` thật); menu `Evolve → Attach Creature Brains`; `PreyDefense.CallHelp` nhận tên prefab `ChimHangMe`. Hai test của họ (`MazeGenerator_IncludesWave2NongCaves`, `MazeGenerator_IncludesAllFourGiuaCaves`) đỏ ngay trên nhánh của họ: bộ sinh mê cung hạt giống 2026 không cho ra đủ các hang đợt 2 và 3. 260/262 test thuần xanh ngoài Unity (226 của phần lõi đều xanh).
+
+## 49. Di chuyển sinh vật, tổ và slime trườn qua đá
+
+Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
+- **Sinh vật** (`CreatureMotor`, `MovementRules`):
+  - Bám sàn theo collider thật, bị vách chặn thì đi vòng.
+  - Bậc và vực giới hạn theo kiểu di chuyển của loài (đi bộ, nhảy, leo, bay).
+  - Độ cao được làm mượt.
+  - Hết lỗi vọt lên cầu và nhảy mãi trước bục.
+  - Ô tắt ở menu thần, mục Kiểm thử.
+- **Tổ** (`ColonyRules`, trong `CreatureBrain`): con mồi cùng loài, cùng tổ, từ 5 con trở lên thì chia việc:
+  - 2 cặp đi kiếm ăn (3 cặp từ 10 con).
+  - 1 con do thám (2 con từ 8 con) chạy vòng mép.
+  - Số còn lại giữ tổ. Khi có kẻ săn hoặc slime trong 10 m quanh tổ, chúng báo cả tổ chạy.
+  - Ăn xác vẫn được ưu tiên trước việc của tổ.
+- **Slime** (`SlimeStep`, `SlimeController.StepUp`): bò qua đá hoặc bậc cao tới 40% bề ngang thân. Vách cao hơn thì không leo được.
+- **Gửi bên làm hang:** `docs/superpowers/handoff/2026-11-20-movement-for-cave-team.md` (sàn khoang cần collider mượt, vách, bục, cầu phải có collider).
+- **Chưa làm:**
+  - Sinh vật còn đi xuyên nhau.
+  - Mục tiêu của tổ rơi vào chỗ không tới được thì con đó đứng chờ tới lượt đổi hướng (khoảng 20 giây).
+  - Kẻ săn chưa có tổ.

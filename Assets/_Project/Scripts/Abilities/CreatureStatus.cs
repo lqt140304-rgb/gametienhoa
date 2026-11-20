@@ -58,7 +58,8 @@ namespace Evolve.Abilities
         {
             if (!Knocked) return;
             if (rb == null && !TryGetComponent(out rb)) return;
-            rb.MovePosition(Evolve.World.GroundHeight.Follow(rb.position + knockVelocity * Time.fixedDeltaTime, groundOffset));
+            if (TryGetComponent(out Evolve.Creatures.CreatureMotor m)) { if (!m.Move(knockVelocity, knockVelocity.magnitude, false)) knockUntil = 0f; }   // a wall stops the slide
+            else rb.MovePosition(Evolve.World.GroundHeight.Follow(rb.position + knockVelocity * Time.fixedDeltaTime, groundOffset));
         }
     }
 }

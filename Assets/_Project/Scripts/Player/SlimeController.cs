@@ -196,6 +196,12 @@ namespace Evolve.Player
             }
             Vector3 target = dir * speed;
             Vector3 horizontal = Vector3.MoveTowards(new Vector3(v.x, 0, v.z), target, acceleration * Time.fixedDeltaTime);
+            // A rock or ledge lower than SlimeStep.MaxStep: ooze up and over it instead of pushing into it. Walls stay walls.
+            if (dir.sqrMagnitude > 0.01f && v.y < 2f && StepUp(dir, out float climb))
+            {
+                rb.linearVelocity = new Vector3(horizontal.x * SlimeStep.ClimbForwardScale, climb, horizontal.z * SlimeStep.ClimbForwardScale);
+                return;
+            }
             // Hug the ground while crawling: on a slope the body moves along the surface (up or down it) instead of
             // bumping into each rise or flying off each dip, which read as stutter. It never presses into the ground
             // (that would stick it in place) and never cancels a hop or a fall.
@@ -269,6 +275,27 @@ namespace Evolve.Player
             Vector3 right = cameraTransform ? cameraTransform.right : Vector3.right;
             fwd.y = 0; right.y = 0;
             return Vector3.ClampMagnitude(fwd.normalized * input.y + right.normalized * input.x, 1f);
+        }
+
+        /// <summary>Is there a climbable lip right ahead? Rays: one low and forward to find its face, one down just past the face to find its top.</summary>
+        bool StepUp(Vector3 dir, out float climbSpeed)
+        {
+            climbSpeed = 0f;
+            if (col == null) return false;
+            Bounds b = col.bounds;
+            Vector3 flat = new Vector3(dir.x, 0f, dir.z).normalized;
+            float maxStep = SlimeStep.MaxStep(b.size.x);
+            Vector3 low = new Vector3(b.center.x, b.min.y + 0.05f, b.center.z);
+            if (!Physics.Raycast(low, flat, out var face, b.extents.x + 0.15f, groundMask, QueryTriggerInteraction.Ignore)
+                || face.collider.attachedRigidbody != null || face.normal.y > 0.6f) return false;   // nothing, a creature, or a walkable slope
+            Vector3 above = face.point + flat * 0.05f;
+            above.y = b.min.y + maxStep + 0.05f;
+            // starting inside a wall taller than maxStep this ray misses the wall and finds the floor: height ~0, no climb
+            if (!Physics.Raycast(above, Vector3.down, out var top, maxStep + 0.1f, groundMask, QueryTriggerInteraction.Ignore)) return false;
+            float height = top.point.y - b.min.y;
+            if (!SlimeStep.CanClimb(height, maxStep)) return false;
+            climbSpeed = SlimeStep.ClimbSpeed(height);
+            return true;
         }
 
         bool IsGrounded()

@@ -96,16 +96,16 @@ namespace Evolve.Creatures
         Rigidbody rb;
         Vector3 wanderDir;
         float nextTurn, fleeTime, tiredUntil;
+        CreatureMotor motor;
         bool caught;
         Evolve.World.VibrationEmitter emitter;
         float nextFleePulse;
 
-        float groundOffset;
         CreatureLocomotion locomotion;
 
         void Awake()
         {
-            groundOffset = Evolve.World.GroundHeight.OffsetOf(transform.position);
+            if (!TryGetComponent(out motor)) motor = gameObject.AddComponent<CreatureMotor>();
             rb = GetComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -165,7 +165,7 @@ namespace Evolve.Creatures
 
             if (dir.sqrMagnitude > 0.001f)
             {
-                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Boost * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject) * Time.fixedDeltaTime, groundOffset));
+                if (!motor.Move(dir, speed * Boost * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject))) nextTurn = 0f;   // boxed in: pick a new way
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.2f));
             }
 
