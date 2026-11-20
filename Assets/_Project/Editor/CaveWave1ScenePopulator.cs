@@ -14,8 +14,17 @@ namespace Evolve.EditorTools
     /// </summary>
     public static class CaveWave1ScenePopulator
     {
+        /// <summary>Local (x, z) of every nest the last <see cref="PopulateEcosystem"/> placed: the decorator lights a trail to them.</summary>
+        public static readonly List<Vector2> NestSpots = new List<Vector2>();
+
         public static void PopulateBirthCavern(Transform chamberRoot, Vector3 origin)
         {
+            // hunters leave a new slime alone around where it appears (spec: the start cavern is safe)
+            var safe = new GameObject("Vùng An Toàn");
+            safe.transform.SetParent(chamberRoot, false);
+            safe.transform.position = CavernLayout.SpawnPoint();
+            safe.AddComponent<SafeZone>().Radius = 25f;
+
             PopulateEcosystem(
                 chamberRoot,
                 origin,
@@ -198,8 +207,11 @@ namespace Evolve.EditorTools
             bool isBirth,
             string[] speciesNames,
             Vector2[] denOffsets,
-            int[] counts)
+            int[] counts,
+            IReadOnlyList<float> tunnelAnglesDeg = null,
+            ChamberPlan? plan = null)
         {
+            NestSpots.Clear();
             var ecoRoot = new GameObject("Hệ Sinh Thái Hang");
             ecoRoot.transform.SetParent(chamberRoot, false);
             ecoRoot.transform.localPosition = Vector3.zero;
@@ -227,6 +239,7 @@ namespace Evolve.EditorTools
             float chamberRadius = isBirth ? ChamberDensity.ReferenceRadius : MazeTerrainMath.DefaultChamberRadius;
             var taken = new List<(float X, float Z)>();
             foreach (var o in denOffsets) taken.Add((o.x, o.y));
+            if (plan.HasValue) { taken.Add(plan.Value.Beacon); taken.Add(plan.Value.Nook); }   // keep nests off the landmark and the hidden nook
 
             for (int i = 0; i < speciesNames.Length; i++)
             {
@@ -235,9 +248,14 @@ namespace Evolve.EditorTools
                 bool lord = spec.IsPredator && spec.IsLeader;   // a cave lord is one animal in one nest
                 int nests = lord ? 1 : ChamberDensity.NestsPerSpecies(chamberRadius);
                 int total = lord ? counts[i] : ChamberDensity.Scaled(counts[i], chamberRadius);
+                if (spec.IsPredator && !lord)   // a hunter's number also follows the cave's depth (same factor as the ecology model)
+                {
+                    string cave = CaveEcologySeed.CaveOfSpecies(CaveEcologySeed.IdByName(spName));
+                    total = Mathf.Max(1, Mathf.CeilToInt(total * CaveTier.DangerOf(CaveTier.Of(cave)).HunterCount - 1e-3f));
+                }
                 var spots = new List<Vector2> { denOffsets[i % denOffsets.Length] };
                 if (nests > 1)
-                    foreach (var e in ChamberDensity.NestPositions(nests - 1, chamberRadius * 0.74f, spName.GetHashCode(), null, taken))
+                    foreach (var e in ChamberDensity.NestPositions(nests - 1, chamberRadius * 0.74f, spName.GetHashCode(), tunnelAnglesDeg, taken))
                     {
                         spots.Add(new Vector2(e.X, e.Z));
                         taken.Add(e);
@@ -245,6 +263,7 @@ namespace Evolve.EditorTools
 
                 for (int n = 0; n < spots.Count; n++)
                 {
+                    NestSpots.Add(spots[n]);
                     Vector3 pos = SnapToFloor(origin, spots[n].x, spots[n].y, floorCollider, isBirth);
                     string label = spots.Count > 1 ? $"{spName} {n + 1}" : spName;
 
@@ -290,7 +309,7 @@ namespace Evolve.EditorTools
             }
         }
 
-        public static void PopulateBreathingMossChamber(Transform chamberRoot, Vector3 origin)
+        public static void PopulateBreathingMossChamber(Transform chamberRoot, Vector3 origin, IReadOnlyList<float> tunnelAnglesDeg = null, ChamberPlan? plan = null)
         {
             PopulateEcosystem(
                 chamberRoot,
@@ -305,7 +324,7 @@ namespace Evolve.EditorTools
                     new Vector2(-14f, -18f),
                     new Vector2(14f, -14f)
                 },
-                counts: new[] { 7, 7, 2, 1 });
+                counts: new[] { 7, 7, 2, 1 }, tunnelAnglesDeg, plan);
 
             var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
             shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
@@ -335,7 +354,7 @@ namespace Evolve.EditorTools
             mossGo.AddComponent<BreathingMossEncounter>().Configure(light, padRend);
         }
 
-        public static void PopulateAbandonedNestChamber(Transform chamberRoot, Vector3 origin)
+        public static void PopulateAbandonedNestChamber(Transform chamberRoot, Vector3 origin, IReadOnlyList<float> tunnelAnglesDeg = null, ChamberPlan? plan = null)
         {
             PopulateEcosystem(
                 chamberRoot,
@@ -349,7 +368,7 @@ namespace Evolve.EditorTools
                     new Vector2(18f, -14f),
                     new Vector2(0f, 20f)
                 },
-                counts: new[] { 7, 2, 1 });
+                counts: new[] { 7, 2, 1 }, tunnelAnglesDeg, plan);
 
             var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
             shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
@@ -376,7 +395,7 @@ namespace Evolve.EditorTools
             eggObj.AddComponent<LivingEggPickup>().Configure(encounter);
         }
 
-        public static void PopulateGlowMushroomChamber(Transform chamberRoot, Vector3 origin)
+        public static void PopulateGlowMushroomChamber(Transform chamberRoot, Vector3 origin, IReadOnlyList<float> tunnelAnglesDeg = null, ChamberPlan? plan = null)
         {
             PopulateEcosystem(
                 chamberRoot,
@@ -391,7 +410,7 @@ namespace Evolve.EditorTools
                     new Vector2(-14f, -16f),
                     new Vector2(18f, -14f)
                 },
-                counts: new[] { 6, 6, 2, 1 });
+                counts: new[] { 6, 6, 2, 1 }, tunnelAnglesDeg, plan);
 
             var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
             shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
@@ -420,7 +439,7 @@ namespace Evolve.EditorTools
             enc.RingGlowRenderers = ringRends;
         }
 
-        public static void PopulateHotSpringChamber(Transform chamberRoot, Vector3 origin)
+        public static void PopulateHotSpringChamber(Transform chamberRoot, Vector3 origin, IReadOnlyList<float> tunnelAnglesDeg = null, ChamberPlan? plan = null)
         {
             PopulateEcosystem(
                 chamberRoot,
@@ -435,7 +454,7 @@ namespace Evolve.EditorTools
                     new Vector2(-14f, -16f),
                     new Vector2(16f, -16f)
                 },
-                counts: new[] { 6, 5, 2, 1 });
+                counts: new[] { 6, 5, 2, 1 }, tunnelAnglesDeg, plan);
 
             var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
             shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
@@ -457,7 +476,7 @@ namespace Evolve.EditorTools
             enc.SteamGlowRenderer = wr;
         }
 
-        public static void PopulateHowlingWindChamber(Transform chamberRoot, Vector3 origin)
+        public static void PopulateHowlingWindChamber(Transform chamberRoot, Vector3 origin, IReadOnlyList<float> tunnelAnglesDeg = null, ChamberPlan? plan = null)
         {
             PopulateEcosystem(
                 chamberRoot,
@@ -472,7 +491,7 @@ namespace Evolve.EditorTools
                     new Vector2(-16f, -14f),
                     new Vector2(16f, -16f)
                 },
-                counts: new[] { 6, 6, 2, 1 });
+                counts: new[] { 6, 6, 2, 1 }, tunnelAnglesDeg, plan);
 
             var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
             shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>

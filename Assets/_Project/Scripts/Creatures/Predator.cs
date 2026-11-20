@@ -20,6 +20,18 @@ namespace Evolve.Creatures
         public static IReadOnlyList<Predator> Active => active;
         /// <summary>Debug: predators ignore players and never bite.</summary>
         public static bool Passive;
+
+        /// <summary>A gentle cave lord (start cavern) ignores players until one hurts it (<see cref="CaveTier.IsCalm"/>).</summary>
+        public bool Gentle { get; set; }
+        float provokedUntil;
+        bool Calm => CaveTier.IsCalm(Gentle, provokedUntil, Time.time);
+
+        /// <summary>Cave tier tuning: multiplies bite damage, detection range, and speeds (see CreatureTuning).</summary>
+        public void ScaleDanger(float damage, float detect, float speed, float size = 1f)
+        {
+            reachScale *= size;
+            biteDamage *= damage; detectRadius *= detect; chaseSpeed *= speed; patrolSpeed *= speed;
+        }
         /// <summary>Debug: predators stop moving.</summary>
         public static bool Frozen;
 
@@ -97,7 +109,10 @@ namespace Evolve.Creatures
         /// <summary>Client side: a copy of a predator that really lives on the host. It reports hits to the host.</summary>
         public bool IsReplica { get; set; }
 
-        const float BiteReach = 1.1f;
+        const float BaseBiteReach = 1.1f;
+        float reachScale = 1f;
+        /// <summary>How near (centre to centre) it must be to bite: grows with the creature, or a big lord could never reach prey pushed out of its body.</summary>
+        float BiteReach => BaseBiteReach * reachScale;
 
         public event Action<Predator> Killed;
 
@@ -232,11 +247,11 @@ namespace Evolve.Creatures
         // The damage is sent to the player's own machine.
         void BiteRemotePlayers()
         {
-            if (Passive || Time.time < nextBite) return;
+            if (Passive || Calm || Time.time < nextBite) return;
             Vector3 pos = rb.position;
             foreach (var p in SurvivalStats.All)
             {
-                if (!p.IsRemote || p.State.IsDead) continue;
+                if (!p.IsRemote || p.State.IsDead || SafeZone.Contains(p.transform.position)) continue;
                 Vector3 d = p.transform.position - pos; d.y = 0f;
                 if (d.sqrMagnitude > BiteReach * BiteReach) continue;
 
@@ -257,14 +272,14 @@ namespace Evolve.Creatures
         /// <summary>A prey called for help (Chim Non): go for this player.</summary>
         public void Provoke(SurvivalStats player)
         {
-            if (dead || IsReplica || Passive || player == null || player.State.IsDead || Time.time < blindUntil) return;
+            if (dead || IsReplica || Passive || Calm || player == null || player.State.IsDead || Time.time < blindUntil) return;
             target = player;
         }
 
         void UpdateTarget(Vector3 pos)
         {
-            if (Passive || Time.time < blindUntil) { target = null; return; }
-            if (target != null && TargetFilter != null && !TargetFilter(target)) target = null;
+            if (Passive || Calm || Time.time < blindUntil) { target = null; return; }
+            if (target != null && (SafeZone.Contains(target.transform.position) || (TargetFilter != null && !TargetFilter(target)))) target = null;
             if (target != null)
             {
                 if (target.State.IsDead || Vector3.Distance(pos, target.transform.position) > loseRadius
@@ -274,7 +289,7 @@ namespace Evolve.Creatures
             }
             foreach (var p in SurvivalStats.All)
             {
-                if (p.State.IsDead || (TargetFilter != null && !TargetFilter(p))) continue;
+                if (p.State.IsDead || SafeZone.Contains(p.transform.position) || (TargetFilter != null && !TargetFilter(p))) continue;
                 float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p) * Evolve.Abilities.BodyState.DetectMultiplier(p);   // Nhân Ngụy Sắc, Phát Sáng
                 if (Vector3.Distance(pos, p.transform.position) <= radius || Evolve.Traits.TraitSense.SmellsTrail(p, pos)) { target = p; break; }   // Vệt Mùi
             }
@@ -301,7 +316,7 @@ namespace Evolve.Creatures
                 return;
             }
             if (stats != null && stats.IsRemote) return; // remote players are handled by distance
-            if (Passive && stats != null)
+            if ((Passive || Calm) && stats != null)
             {
                 // Still takes ram damage in peaceful mode, but never bites back.
                 if (first && c.relativeVelocity.magnitude >= ramSpeed) TakeDamage(ramDamage, stats);
@@ -345,6 +360,7 @@ namespace Evolve.Creatures
                 return;
             }
             if (dead || amount <= 0f) return;
+            if (by != null && Gentle) { provokedUntil = Time.time + CaveTier.ProvokeSeconds; target = by; }   // a gentle lord fights back at whoever hurt it
             Health -= amount;
             retreatUntil = Time.time + retreatTime;
             ShowHit(amount);

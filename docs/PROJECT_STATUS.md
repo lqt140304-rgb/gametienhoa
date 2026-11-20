@@ -792,3 +792,18 @@ Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
   - Phải chạy lại `Evolve → Build Maze World (Step 3)` để thấy.
 - **Chưa làm:** sinh vật hang rộng chưa đi tuần quanh nhiều tổ, tổ phụ chưa bám sàn thật khi khoang không có collider sàn, chưa có công trình mới hoàn toàn (hiện lặp lại cụm cảnh sẵn có). Việc cần mô hình 3D mới thuộc bên làm hang.
 
+## 53. Kích cỡ theo vai trò, độ khó theo tầng, vùng trong khoang rộng
+
+Thiết kế: `docs/superpowers/specs/2026-11-20-wide-caves-size-danger-design.md`. Kế hoạch: `docs/superpowers/plans/2026-11-20-wide-caves-size-danger.md`.
+- **`Creatures/Pure/CaveTier.cs`:** tầng của hang (0 hang đầu, 1 Nông, 2 Giữa, 3 Sâu, hang lạ là 2), bảng độ khó, hệ số cỡ (con mồi ×0,85; kẻ săn ×1,2 đến 1,5; Chúa Hang ×2,4 đến 3,2, luôn rộng từ 3 m), luật "hiền" của Chúa Hang (30 giây sau đòn cuối), hình tròn vùng an toàn.
+- **Áp lúc chạy:** `CreatureTuning.Apply` (gọi từ `Region.Spawn` và `Region.Adopt`) đổi tỉ lệ, bước chân, sát thương, tầm phát hiện và tốc độ. Sinh vật tạo ngoài `Region` giữ cỡ cũ. `Predator.Gentle`, `ScaleDanger`; `CreatureMotor.Resize`; `CreatureLocomotion.ScaleBy`.
+- **Hang đầu an toàn:** `SafeZone` (25 m quanh điểm xuất hiện): kẻ săn bỏ qua slime trong vùng (kiểm trong `Predator`, nên cả kẻ săn không có não). Số kẻ săn nhân theo tầng ở cả cảnh (`PopulateEcosystem`) và mô hình (`CaveEcologySeed.Build(scaleOf, hunterScaleOf)`); mô phỏng 2 giờ có test.
+- **Menu thần:** thanh "Cỡ quái" và nút độ khó (`CaveTier.SizeScale`, `TierOverride`).
+- **Khoang rộng** (`Maze/Pure/ChamberZones.cs`, bộ dựng Editor): cụm cảnh có đèn đối diện cửa hầm chính, tổ tránh cửa hầm, đường mòn đèn mờ (tối đa 12 đèn), góc ẩn có vòng đá hở ra ngoài và khoáng bên trong. Phải chạy lại `Evolve → Build Maze World (Step 3)`.
+- **Chưa làm / chưa kiểm:**
+  - Co-op: máy khách không áp cỡ và độ khó (Region chỉ chạy trên máy chủ), nên sinh vật nhân bản trên máy khách vẫn cỡ prefab.
+  - Vườn Quặng Cầu Vồng và Vực Nứt Tím là khoang dựng sẵn từ mô hình Blender: chưa có cụm cảnh, đường mòn, góc ẩn; bán kính 75 m được giả định cho phần tổ.
+  - Cỡ và độ khó chỉ có hiệu lực ở sinh vật vào qua `Region`; các khoang dùng `PlaceCreatures` giữ như cũ.
+  - Chưa chạy trong Unity: toàn bộ phần dựng cảnh, kích cỡ, độ khó, FPS.
+  - Dự án chiến đấu đa dạng (đòn báo trước, trùm nhiều pha, yếu theo họ kỹ năng) là bản thiết kế riêng, chưa viết.
+

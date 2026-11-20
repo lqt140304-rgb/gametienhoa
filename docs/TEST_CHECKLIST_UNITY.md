@@ -136,6 +136,20 @@ Chạy `Evolve → Build Maze World (Step 3)` để dựng lại. Các thay đ�
 - [ ] Không có lỗi đỏ khi dựng lại. FPS không tụt rõ so với trước: nếu tụt, nói cho mình biết để giảm.
 - [ ] Con vừa thả ra (từ bộ tạo bầy) giờ tính vào quần thể: giết một con rồi in lại quần thể, số con trong hang giảm đúng một.
 
+### H4. Kích cỡ, độ khó theo tầng, vùng trong khoang (dựng lại mê cung trước)
+Menu thần (F1), mục Kiểm thử, có thanh "Cỡ quái ×" và nút "Độ khó: theo hang / 0 / 1 / 2 / 3". Chỉ quái tạo sau khi đổi mới nhận hệ số, nên đổi rồi chờ thêm hoặc vào hang khác.
+- [ ] **Cỡ:** con mồi nhỏ, kẻ săn lớn hơn, Chúa Hang to hơn hẳn slime lớn nhất (rộng từ 3 m). Slime nặng 35 đứng cạnh Chúa Hang vẫn nhỏ hơn rõ. Chúa Hang đi qua hầm được, không kẹt vách.
+- [ ] **Hang đầu an toàn:** quanh chỗ slime xuất hiện (25 m) kẻ săn không đuổi. Ra xa hơn thì có 1 Thằn Lằn (không phải 2) và nó cắn nhẹ hơn.
+- [ ] **Cóc Hồ Già hiền:** không đuổi slime. Đánh nó thì nó đánh trả (khoảng 30 giây), rất đau. Chạy xa và đợi thì nó bình tĩnh lại.
+- [ ] **Càng sâu càng khó:** đặt "Độ khó" lần lượt 0, 1, 2, 3 rồi tạo thêm kẻ săn thử: sát thương và tầm phát hiện tăng, ở 3 có nhiều kẻ săn hơn, Chúa Hang nhanh hơn.
+- [ ] **Khoang rộng có nhịp** (chỉ các khoang dựng bằng bộ dựng chủ đề: Rêu Thở, Tổ Bỏ Hoang, Nấm Huỳnh Quang, Suối Nước Nóng, Khe Gió Hú...):
+  - bước vào từ cửa hầm chính thấy ngay một cụm cảnh lớn có đèn phía đối diện;
+  - đèn mờ dẫn từ cụm cảnh tới các tổ;
+  - không có tổ ngay trước cửa hầm;
+  - một góc ẩn xa cửa hầm: vòng đá tảng hở một lối quay ra ngoài, trong có khoáng.
+- [ ] **FPS** trong khoang rộng không tụt rõ so với trước (đèn mờ tối đa 12 mỗi khoang).
+- [ ] Vườn Quặng Cầu Vồng và Vực Nứt Tím (khoang dựng sẵn bằng mô hình Blender) **không** có cụm cảnh, đèn và góc ẩn, nhưng có cỡ và độ khó mới. Báo mình nếu tổ ở đó nằm sai chỗ.
+
 ### I. Chưa làm được, đừng thử
 Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 
