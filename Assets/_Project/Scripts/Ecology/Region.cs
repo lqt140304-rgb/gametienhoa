@@ -25,16 +25,20 @@ namespace Evolve.Ecology
 
         readonly List<Den> dens = new List<Den>();
         readonly List<SpeciesPopulation> pops = new List<SpeciesPopulation>();
+        readonly Dictionary<SpeciesPopulation, int> seedDens = new Dictionary<SpeciesPopulation, int>();   // cave model: dens the balance was tuned for
         readonly List<EmbodiedCreature> embodied = new List<EmbodiedCreature>();
         readonly List<Den> candidates = new List<Den>();
         float timer;
 
         public RegionPopulation Population { get; private set; }
+        /// <summary>Ecology cave this region runs (B1 rich model from <see cref="EcologyRuntime"/>), or null for the old single-food model.</summary>
+        public string CaveId { get; private set; }
         public bool IsActive { get; private set; }
         public Vector3 Size => size;
 
         void Awake()
         {
+            if (!NetWorld.IsClient && TryUseCaveModel()) { RecountDens(); return; }
             Population = new RegionPopulation
             {
                 Food = startFood,
@@ -59,6 +63,44 @@ namespace Evolve.Ecology
             }
             RecountDens();
         }
+
+        /// <summary>
+        /// When the species list belongs to a known cave (CaveEcologySeed, matched by SpeciesSO id or name, e.g. "ThanLanBoHo"),
+        /// run that cave's rich population. Species of the list the seed lacks get an old-style entry in it so they still embody.
+        /// </summary>
+        bool TryUseCaveModel()
+        {
+            var ids = new string[species.Count];
+            string cave = null;
+            for (int i = 0; i < species.Count; i++)
+            {
+                var so = species[i];
+                if (so == null) continue;
+                ids[i] = CaveEcologySeed.IdByName(so.Id) ?? CaveEcologySeed.IdByName(so.name);
+                cave ??= CaveEcologySeed.CaveOfSpecies(ids[i]);
+            }
+            var pop = EcologyRuntime.Claim(cave);
+            if (pop == null) return false;
+            CaveId = cave;
+            Population = pop;
+            for (int i = 0; i < species.Count; i++)
+            {
+                var so = species[i];
+                if (so == null) { pops.Add(null); continue; }
+                var p = ids[i] != null ? pop.Get(ids[i]) : null;
+                if (p == null)
+                    p = pop.Get(so.Id) ?? pop.Add(new SpeciesPopulation
+                    {
+                        Id = so.Id, Count = so.StartCount, Capacity = so.Capacity, BirthsPerMinute = so.BirthsPerMinute,
+                        FoodPerHeadPerMinute = so.FoodPerHeadPerMinute, KillsPerHeadPerMinute = so.KillsPerHeadPerMinute, EscapeChance = so.EscapeChance,
+                    });
+                if (!seedDens.ContainsKey(p)) seedDens[p] = Mathf.Max(1, p.Dens);
+                pops.Add(p);
+            }
+            return true;
+        }
+
+        void OnDestroy() => EcologyRuntime.Release(CaveId);
 
         public void AddFood(float amount)
         {
@@ -88,7 +130,8 @@ namespace Evolve.Ecology
                 int n = 0;
                 for (int d = 0; d < dens.Count; d++)
                     if (dens[d] != null && !dens[d].Destroyed && dens[d].Species == species[i]) n++;
-                pops[i].Dens = n;
+                // cave model: a standing den keeps the tuned birth rate, razing them all stops births
+                pops[i].Dens = seedDens.TryGetValue(pops[i], out int tuned) ? (n > 0 ? tuned : 0) : n;
             }
         }
 
@@ -105,7 +148,7 @@ namespace Evolve.Ecology
 
         void Step()
         {
-            Population.Tick(tickSeconds / 60f);
+            if (CaveId != null) EcologyRuntime.Tick(); else Population.Tick(tickSeconds / 60f);
             IsActive = EvaluateActive();
             if (IsActive) EmbodyStep();
             else StoreAll();
@@ -185,10 +228,17 @@ namespace Evolve.Ecology
         public EmbodiedCreature TryEmbodyAt(SpeciesSO so, Vector3 position, Vector3 home, float homeRadius = 0f)
         {
             if (Population == null || so == null || so.Prefab == null) return null;
-            var pop = Population.Get(so.Id);
+            var pop = PopulationOf(so);
             if (pop == null || !pop.TryEmbody()) return null;
             if (!PopulationCap.TryReserve()) { pop.Store(); return null; }
             return Spawn(so, pop, position, home, homeRadius);
+        }
+
+        /// <summary>The population entry of a species of this region (cave ids differ from SpeciesSO ids, so do not use Population.Get(so.Id)).</summary>
+        public SpeciesPopulation PopulationOf(SpeciesSO so)
+        {
+            int i = species.IndexOf(so);
+            return so == null || Population == null ? null : i >= 0 && i < pops.Count && pops[i] != null ? pops[i] : Population.Get(so.Id);
         }
 
         void StoreAll()

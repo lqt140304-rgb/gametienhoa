@@ -55,6 +55,8 @@ namespace Evolve.World
               * NutrientEffects.SenseMultiplier(stats.State.Nutrient(NutrientKind.Vitamin))
               * DiseaseRules.SenseMultiplier(stats.State.Has(DiseaseKind.SporeBlur)) : 1f;
 
+        Evolve.Organs.OrganHost organs;
+
         void Awake()
         {
             stats = GetComponent<SurvivalStats>();
@@ -106,7 +108,8 @@ namespace Evolve.World
         void StartScan()
         {
             if (vision == null) vision = FindAnyObjectByType<MonochromeVision>();
-            scanRadius = radius * ScanRadiusFactor * SenseMul;   // the sound wave reaches half as far as the old light scan
+            if (organs == null) TryGetComponent(out organs);   // the host may be added after Awake
+            scanRadius = radius * ScanRadiusFactor * SenseMul * (organs != null ? organs.SonarRangeMultiplier : 1f);   // Sóng Dò Mạnh   // the sound wave reaches half as far as the old light scan
             scanStart = Time.time;
             readyAt = Time.time + cooldown;
             flashed.Clear();

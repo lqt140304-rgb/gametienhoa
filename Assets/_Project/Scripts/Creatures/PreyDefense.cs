@@ -138,7 +138,7 @@ namespace Evolve.Creatures
                 SkillFx.Burst(pos + Vector3.up * 0.2f, tint, 14, 1.2f, 0.16f, 1.2f, 0.3f, def.ObscureRadius * 0.3f);
             }
             if (def.SlowSeconds > 0f && def.SlowRadius > 0f) SlowPuddle.Spawn(pos, def.SlowRadius, def.SlowFraction, def.SlowSeconds);
-            if (def.TrapSeconds > 0f) SpikeTrap.Spawn(pos, 1.1f, def.TrapDamage, def.TrapSeconds, 0f, null, new Color(0.68f, 0.55f, 1f), true);
+            if (def.TrapSeconds > 0f) SpikeTrap.Spawn(pos, 1.1f, def.TrapDamage, def.TrapSeconds, 0f, null, new Color(0.68f, 0.55f, 1f), true, name);
             if (def.Decoy)
             {
                 SpawnDecoy();

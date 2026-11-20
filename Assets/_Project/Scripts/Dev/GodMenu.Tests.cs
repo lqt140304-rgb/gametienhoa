@@ -129,6 +129,17 @@ namespace Evolve.DevTools
 
             // ---- ecosystem ----
             if (GUILayout.Button("Mô phỏng sinh thái 2 giờ chơi (kết quả ở Console)")) RunEcologySim();
+            if (GUILayout.Button("In quần thể đang sống của mọi hang (Console)"))
+            {
+                var sb = new System.Text.StringBuilder("Quần thể đang sống (số con / sức chứa, no %):\n");
+                foreach (var r in EcologyRuntime.World.Regions)
+                {
+                    sb.Append($"  {r.Key} ({string.Join(", ", EcologyRuntime.World.Neighbours(r.Key))}):");
+                    foreach (var sp in r.Value.Species) sb.Append($" {CaveEcologySeed.NameOfId(sp.Id) ?? sp.Id}{(sp.Guest ? " (khách)" : "")} {sp.Count}/{sp.Capacity} {sp.Satiety * 100f:0}%;");
+                    sb.AppendLine();
+                }
+                Debug.Log(sb.ToString());
+            }
         }
 
         void SpawnTest(string displayName, float mass, float health, bool predator)
@@ -167,6 +178,8 @@ namespace Evolve.DevTools
         static void RunEcologySim()
         {
             var w = CaveEcologySeed.Build();
+            var maze = FindAnyObjectByType<Evolve.Maze.MazeWorldManager>();
+            int linked = maze != null && maze.Graph != null ? MazeEcologyLinks.Apply(w, maze.Graph) : -1;   // the real tunnels when a maze is loaded
             var sum = new Dictionary<string, float>(); var min = new Dictionary<string, int>(); var max = new Dictionary<string, int>();
             const int steps = 240;
             for (int i = 0; i < steps; i++)
@@ -181,7 +194,7 @@ namespace Evolve.DevTools
                         max[k] = max.TryGetValue(k, out var b) ? Mathf.Max(b, s.Count) : s.Count;
                     }
             }
-            var sb = new System.Text.StringBuilder("Mô phỏng sinh thái 120 phút (trung bình / ít nhất / nhiều nhất):\n");
+            var sb = new System.Text.StringBuilder($"Mô phỏng sinh thái 120 phút, {(linked < 0 ? "đường nối tạm" : $"đường nối theo mê cung thật ({linked} cặp hang)")} (trung bình / ít nhất / nhiều nhất):\n");
             foreach (var kv in sum.OrderBy(k => k.Key)) sb.AppendLine($"  {kv.Key}: {kv.Value / steps:0.0} / {min[kv.Key]} / {max[kv.Key]}");
             Debug.Log(sb.ToString());
         }

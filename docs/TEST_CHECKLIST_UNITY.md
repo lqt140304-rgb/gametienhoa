@@ -61,7 +61,7 @@ Bật "Vô hạn năng lượng" và "Không hồi chiêu". Bấm "Học kỹ n�
 - [ ] Hiệu năng: bật F4 xem có tụt khung hình khi dùng nhiều kỹ năng.
 
 ### D. Bị động và 5 ô (Biến Hình trong hang trú)
-- [ ] "Gắn tối đa bị động hang": Da Dày +10 máu tối đa; Vỏ Cứng bị cắn mất ít hơn; Sóng Dò Mạnh (chưa có tác dụng: đang chờ bên làm hang).
+- [ ] "Gắn tối đa bị động hang": Da Dày +10 máu tối đa; Vỏ Cứng bị cắn mất ít hơn; Sóng Dò Mạnh: vòng sóng dò (phím quét) đi xa hơn rõ, khoảng gấp 1,5.
 - [ ] Bảng Biến Hình hiện **5 ô bị động** thay cho các ô cơ thể; nặn, tháo hoạt động đúng.
 
 ### E. Con mồi chống trả (mục 43)
@@ -95,6 +95,7 @@ Tạo **cùng hang**: ví dụ kẻ săn `Thằn Lằn Bờ Hồ` + con mồi `B
 - [ ] Nhiễm bệnh thử rồi Hết bệnh; Hồi đầy; Bỏ 2 món vào Túi (mở Túi kiểm tra); câu Tiếng Vọng hiện trên màn hình.
 
 ### G2. Di chuyển (nhánh `claude/unity-test-maze`)
+- [ ] Cùng loài không cắn nhau: tạo 3 Thằn Lằn Bờ Hồ gần nhau, để chúng đói (khoảng 1–2 phút) rồi xem. Bẫy gai của Bọ Gai Tím không làm hại Bọ Gai Tím.
 - [ ] Sinh vật không đi xuyên nhau. Tạo 5 con cùng một chỗ: chúng tách dần ra, không bật văng.
 - [ ] Sinh vật không đi xuyên vách, đá lớn. Gặp vách thì đi vòng hoặc quay hướng khác, không đứng đâm đầu mãi.
 - [ ] Không còn con nhảy lên rồi rơi xuống liên tục trước bục cao. Con dưới gầm cầu không vọt lên mặt cầu.
@@ -118,8 +119,16 @@ Tạo **cùng hang**: ví dụ kẻ săn `Thằn Lằn Bờ Hồ` + con mồi `B
 ### H. Hệ sinh thái (số liệu)
 - [ ] "Mô phỏng sinh thái 2 giờ": Console in bảng 11 hang; con mồi trung bình 7–9, kẻ săn 1–2, Chúa Hang 1, không loài nào 0 liên tục.
 
+### H2. Sinh thái sống trong game (B1 nối vào hang)
+- [ ] Vào một hang có sinh vật. Bấm "In quần thể đang sống của mọi hang". Console phải in đủ 11 hang:
+  - mỗi hang có danh sách hang kề trong ngoặc. Khi có mê cung, danh sách này đi theo đường nối thật, sau khoảng 5 giây chơi;
+  - mỗi loài có số con, sức chứa và % no.
+- [ ] Đợi vài phút rồi in lại: số con thay đổi hợp lý, kẻ săn không ăn sạch con mồi, có loài di cư sang hang kề (ghi "(khách)").
+- [ ] "Mô phỏng sinh thái 2 giờ": dòng đầu ghi "đường nối theo mê cung thật (N cặp hang)" khi đang trong mê cung.
+- [ ] Không có lỗi đỏ khi vào hoặc ra hang, kể cả khi chuyển qua lại nhiều hang.
+
 ### I. Chưa làm được, đừng thử
-Co-op với nhiều người; Sóng Dò Mạnh kéo dài tầm quét; mô hình giàu của B1 chưa nối vào vùng hồ (`Region.cs` vẫn mô hình cũ); kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
+Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 
 ## 6. Gửi lại cho Claude
 - Ảnh Console (cả cảnh báo vàng nếu lặp nhiều).
