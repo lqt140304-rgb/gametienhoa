@@ -106,9 +106,10 @@ Co-op với nhiều người; Sóng Dò Mạnh kéo dài tầm quét; mô hình 
 - Danh sách mục không đạt ở mục 5.
 
 ## 7. Với mô hình thật của bên làm hang (nhánh `claude/unity-test-maze`)
-1. Chạy các menu tạo dữ liệu của bên làm hang (xem `docs/superpowers/handoff/maze-questions.md` và `PROJECT_STATUS.md`) để có prefab trong `Assets/_Project/Prefabs/Wildlife`, rồi `Evolve → Attach Creature Brains`. Console báo "CreatureBrain gắn vào N prefab, PreyDefense vào M".
+1. Chạy các menu tạo dữ liệu của bên làm hang (xem `docs/superpowers/handoff/maze-questions.md` và `PROJECT_STATUS.md`) để có prefab trong `Assets/_Project/Prefabs/Wildlife`, rồi `Evolve → Attach Creature Brains`. Console báo "CreatureBrain gắn vào N prefab, PreyDefense vào M, bảng rơi gene vào 12 prefab" (phải chạy `Create Cave Skills` trước, nếu không báo thiếu bảng rơi). Chạy lại sau khi bên làm hang dựng lại prefab.
 2. F10: dịch chuyển tới một hang có sinh vật (Hang Khởi Sinh, Vực Nứt Tím…), tạo sinh vật thật từ bảng của họ.
 - [ ] Kẻ săn thật (ví dụ Thằn Lằn Bờ Hồ) đói thì đuổi và ăn con mồi thật (Bọ Cánh Cứng Nhỏ) cùng hang; xác để lại.
+- [ ] **Bảng rơi:** nuốt xác hoặc con mồi sống của 12 loài đầu (Bọ Cánh Cứng Nhỏ, Ốc Hồ, Thằn Lằn Bờ Hồ, Cóc Hồ Già, Đom Đóm, Thỏ Lá, Bọ Giáp Quặng, Rùa Pha Lê, Dơi Âm Thoa, Bọ Gai Tím, Nhện Tinh Thể, Bọ Cạp Thạch Anh) rồi để Giải Mã: học được **đúng kỹ năng của loài đó** (ví dụ Ốc Hồ cho Thu Mình). Loài khác chưa có bảng rơi.
 - [ ] Con mồi thật dùng được phòng vệ (Ốc Hồ rụt vỏ, Thỏ Lá ngoằn ngoèo…). Hoạt hình của họ (chớp mắt, hàm, lưỡi) có chạy cùng không.
 - [ ] Kích cỡ: slime mới sinh bị kẻ săn đuổi, slime lớn thì kẻ săn né (khối prefab của họ khác khối thử của mình).
 - [ ] Ba kỳ ngộ có sẵn của họ (Tia Nắng Đầu Tiên, Cầu Vồng Trong Thân, Hợp Âm Tinh Thể) **giờ nhận phần thưởng thật**: no, mở màu Cầu Vồng (F3), gene Hiếm trở lên.
