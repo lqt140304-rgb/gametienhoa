@@ -40,6 +40,8 @@ namespace Evolve.Creatures
             p.HomeRadius = radius;
             p.Killed += _ => { alive--; nextSpawn = Time.time + respawnSeconds; };
             alive++;
+            var region = GetComponentInParent<Evolve.Ecology.Region>();
+            if (region != null) region.Adopt(p.gameObject);
         }
 
         void SpawnOne()
@@ -51,6 +53,8 @@ namespace Evolve.Creatures
             p.HomeRadius = radius;
             p.Killed += _ => { alive--; nextSpawn = Time.time + respawnSeconds; };
             alive++;
+            var region = GetComponentInParent<Evolve.Ecology.Region>();
+            if (region != null) region.Adopt(p.gameObject);
         }
 
         /// <summary>The prefab's height above the ground at (x, z); on a flat scene without a Terrain the ground is y = 0, as before.</summary>

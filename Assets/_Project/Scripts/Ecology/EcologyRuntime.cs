@@ -21,7 +21,10 @@ namespace Evolve.Ecology
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset() { world = null; claimed.Clear(); lastTick = -1f; linkedGraph = null; }
 
-        public static EcologyWorld World => world ??= CaveEcologySeed.Build();
+        /// <summary>The start cavern is small; every other cave is a wide maze chamber, so it holds proportionally more life.</summary>
+        public static float CaveScale(string caveId) => caveId == "khoi_sinh" ? 1f : Evolve.Maze.ChamberDensity.Multiplier(Evolve.Maze.MazeTerrainMath.DefaultChamberRadius);
+
+        public static EcologyWorld World => world ??= CaveEcologySeed.Build(CaveScale);
 
         /// <summary>The population of <paramref name="caveId"/> for the first Region that asks; null for an unknown cave or one already claimed
         /// (a second Region of the same cave keeps the old model so the two do not fight over den counts).</summary>

@@ -41,6 +41,7 @@ namespace Evolve.Creatures
             prey.HomeRadius = radius;
             prey.Caught += OnCaught;
             alive++;
+            Adopt(prey);
         }
 
         void SpawnOne()
@@ -54,10 +55,18 @@ namespace Evolve.Creatures
             prey.HomeRadius = radius;
             prey.Caught += OnCaught;
             alive++;
+            Adopt(prey);
         }
 
         /// <summary>The prefab's height above the ground at (x, z); on a flat scene without a Terrain the ground is y = 0, as before.</summary>
         Vector3 OnGround(float x, float z) => new Vector3(x, Evolve.World.GroundHeight.At(x, z, 0f) + prefab.transform.position.y, z);
+
+        /// <summary>In a cave with an ecology Region, the creature counts as a head of that species' population.</summary>
+        void Adopt(Prey p)
+        {
+            var region = GetComponentInParent<Evolve.Ecology.Region>();
+            if (region != null) region.Adopt(p.gameObject);
+        }
 
         void OnCaught(Prey p)
         {

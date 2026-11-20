@@ -129,7 +129,29 @@ namespace Evolve.Ecology
             return false;
         }
 
-        public static EcologyWorld Build()
+        /// <summary>
+        /// A fresh world. <paramref name="scaleOf"/> gives a cave's size factor (1 = the small start cavern the numbers were tuned for;
+        /// the wide maze chambers pass &gt; 1): prey and hunters, their births and the cave's pools grow by it, cave lords stay one.
+        /// </summary>
+        public static EcologyWorld Build(System.Func<string, float> scaleOf = null)
+        {
+            var w = Build0();
+            if (scaleOf != null)
+                foreach (var kv in w.Regions)
+                {
+                    float k = scaleOf(kv.Key);
+                    if (k <= 1.001f) continue;
+                    foreach (var p in kv.Value.Pools.Values) { p.Amount *= k; p.RegenPerMinute *= k; p.Capacity *= k; }
+                    foreach (var s in kv.Value.Species)
+                    {
+                        if (s.Capacity <= 1) continue;   // a lord
+                        s.Count = (int)System.Math.Ceiling(s.Count * k - 1e-3); s.Capacity = (int)System.Math.Ceiling(s.Capacity * k - 1e-3); s.BirthsPerMinute *= k;
+                    }
+                }
+            return w;
+        }
+
+        static EcologyWorld Build0()
         {
             var w = new EcologyWorld();
 
