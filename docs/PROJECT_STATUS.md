@@ -617,7 +617,7 @@ Checklist: (a) `Evolve → Create Traits` một lần; (b) Console sạch; (c) P
 
 ## 39. Lõi và Khuyết Điểm đợt 2: trạng thái và danh sách kiểm tra
 
-Kế hoạch `docs/superpowers/plans/2026-11-20-traits-wave2.md`. Kỳ ngộ mỗi hang (đề xuất cho bên làm hang, chờ duyệt): `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.
+Kế hoạch `docs/superpowers/plans/2026-11-20-traits-wave2.md`. 12 hang, kỳ ngộ, quái và kỹ năng (đã duyệt, giao cho bên làm hang): `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.
 
 - **Đã có hiệu ứng (mới):** Lõi Ngụy Sắc, Màng Thẩm Thấu, Quang Hợp, Ăn Mòn; Khuyết Điểm Dễ Bị Chú Ý, Vệt Mùi, Ngại Đông, Mau Khô, Bám Bùn. Tổng cộng 7/12 Lõi, 9/12 Khuyết Điểm.
 - Luật thuần `Traits/Pure/EnvTraitRules.cs` (+ `ScentTrail`), 137 test xanh ngoài Unity. Phần Unity (`PlayerTraits`, `TraitSense`, `LightShafts`, `Predator`, `Swallower`, `SurvivalState`) **chưa biên dịch trong Unity**.

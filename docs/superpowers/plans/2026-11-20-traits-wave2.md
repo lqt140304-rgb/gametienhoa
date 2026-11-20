@@ -34,4 +34,4 @@ Việc "cơ quan bù khuyết điểm" (`FlawDef.CompensatedBy`) cũng dựa tr�
 
 ## C. Kỳ ngộ mỗi hang
 
-Đề xuất riêng cho bên làm hang: `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.
+Đã duyệt: 12 hang, mỗi hang một kỳ ngộ, quái đặc trưng và kỹ năng hấp thụ được. Chi tiết và chia việc: `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.

@@ -1,39 +1,111 @@
-# Giao việc: Kỳ ngộ của từng hang (đề xuất, chờ chủ dự án duyệt)
+# Giao việc: 12 hang, kỳ ngộ, quái đặc trưng (đã duyệt 2026-11-20)
 
-Dành cho phiên làm mê cung (Antigravity). Đọc kèm `2026-11-19-maze-step3-brief.md` (ranh giới thư mục vẫn như cũ). **Phần nội dung kỳ ngộ dưới đây là đề xuất của phiên chính; chủ dự án duyệt hoặc sửa trước khi dựng.**
+Dành cho phiên làm mê cung (Antigravity). Đọc kèm `2026-11-19-maze-step3-brief.md`; ranh giới thư mục vẫn như cũ. Chủ dự án đã duyệt toàn bộ danh sách dưới đây.
 
 ## Ý chủ dự án
-Mỗi hang (khoang) có **một cơ chế kỳ ngộ riêng**, không hang nào giống hang nào.
+- **Mỗi hang một kỳ ngộ riêng**, kỳ ngộ là thứ làm nên hang đó (không gán ngẫu nhiên).
+- **Mỗi hang có quái đặc trưng**; giết rồi nuốt xác thì Giải Mã ra **kỹ năng của loài đó**.
+- **Kỹ năng chương 1 đơn giản, mỗi cái làm đúng một việc.** Sau này đạt cấp nhất định thì mở khóa **dung hợp** hai kỹ năng thành kỹ năng mới (chưa làm ở chương 1).
+- **Tạm chưa làm nội dung dưới nước** (không lặn, không hầm ngập, không quái dưới nước). Bơi nổi trên mặt nước giữ như hiện tại. Nước dâng / Chu Kỳ Lũ đã bỏ.
 
-## Luật chung (đề xuất)
-- **Mỗi khoang một kỳ ngộ**, gán theo hạt giống của vòng chơi (cùng seed ra cùng cách gán), giữ nguyên qua các lần tái tạo trong vòng. Hang Khởi Sinh và Khoang Phong Ấn có kỳ ngộ cố định.
-- **Không đánh dấu trên bản đồ, không nhiệm vụ.** Người chơi tự nhận ra nhờ dấu hiệu trong hang (ánh sáng, âm thanh, hình dạng lạ).
-- **Mỗi kỳ ngộ dùng một lần mỗi vòng**, kích hoạt bằng hành động của slime (nuốt, đứng yên, Sóng Dò, chui khe…), không bằng nút "tương tác".
-- Khi kích hoạt: **Tiếng Vọng nói một câu** (`Echo.Say`) và có một tiếng hiệu ứng.
-- Phần thưởng đi qua cơ chế sẵn có của slime (gene Giải Mã, khối, chỉ số sinh tồn, Lõi/Khuyết Điểm), không có đồ vật kiểu túi đồ RPG.
+## Luật chung
+- 12 hang chia 3 tầng (Nông, Giữa, Sâu); càng sâu càng tối, ít đồ ăn, quái mạnh hơn. Vị trí các hang trong mê cung **xáo mỗi vòng** (theo hạt giống), nhưng hang nào cũng luôn có kỳ ngộ và quái của nó. Hang Khởi Sinh luôn là điểm xuất phát; Khoang Phong Ấn luôn ở tầng Sâu.
+- **Kỳ ngộ:** không đánh dấu bản đồ, không nhiệm vụ. Có **dấu hiệu** nhìn hoặc nghe thấy được; kích hoạt bằng **hành động của cơ thể** (nuốt, đứng yên, Sóng Dò, chui khe…), không bằng nút tương tác; **một lần mỗi vòng**. Khi kích hoạt: Tiếng Vọng nói một câu (`Echo.Say`) và có một tiếng hiệu ứng.
+- **Quái:** dựng trên khung `Creatures/Predator` (săn) hoặc `Creatures/Prey` (bị săn) đang có. Cả hai có ô `drops` (`DropTableSO`): khi chết rơi xác mang gene theo bảng đó. Giữ đúng đường đi hiện tại: giết → nuốt xác → Giải Mã trong Túi → học kỹ năng.
 
-## 10 kỳ ngộ đề xuất (mỗi cái một kiểu khoang)
+## 12 hang
 
-| # | Khoang | Dấu hiệu | Cách kích hoạt | Phần thưởng |
-|---|---|---|---|---|
-| 1 | **Hang Tinh Thể Hát** | Tinh thể ngân nga khi có Sóng Dò | Dùng Sóng Dò, theo tiếng vang tìm tinh thể lõi rồi nuốt | Một gene Hiếm trở lên chắc chắn khi Giải Mã |
-| 2 | **Xác Cự Thú** | Một bộ xác khổng lồ, kẻ ăn xác lảng vảng | Giữ F hòa tan suốt ~60 giây, vừa làm vừa bị quấy | Khối lớn + một gene của loài cổ |
-| 3 | **Tổ Bỏ Hoang** | Ổ trứng nằm trong khe | Nuốt quả trứng còn sống; trứng nở trong Túi sau vài phút | Gene sinh vật lạ (một dòng không gặp ở nơi khác) |
-| 4 | **Vòng Nấm Huỳnh Quang** | Vòng nấm phát sáng theo nhịp | Đứng yên giữa vòng đúng lúc bào tử sáng rực | Đổi một Khuyết Điểm (rút lại ngẫu nhiên, có thể tệ hơn) |
-| 5 | **Suối Nước Nóng** | Hơi nóng, nước sủi | Ngâm đủ lâu khi nhiệt lên cao mà không chết | Tăng chịu nhiệt vĩnh viễn trong vòng |
-| 6 | **Khe Gió Hú** | Tiếng gió rít từ một khe rất hẹp | Chỉ slime nhỏ lọt (đọc `SlimeBody.Mass`) | Túi của một kẻ chuyển sinh trước: vài món trong bụng + một câu chuyện qua Tiếng Vọng |
-| 7 | **Hồ Tảo Sáng** | Mặt hồ có tảo phát sáng | Nổi yên trên hồ vào lúc Chu Kỳ Lũ đang lặng | Một lần hồi đầy năng lượng và no + đêm sau thấy rõ hơn (tầm nhìn rộng tạm thời) |
-| 8 | **Hóa Thạch Slime Cổ** | Hình slime đá hóa trên vách | Bò lên và đứng yên trên đó 5 giây | Tiếng Vọng kể chuyện cũ; Lõi được "khắc sâu": tăng nhẹ hiệu ứng Lõi trong vòng |
-| 9 | **Hang Tiếng Thở** (gần Khoang Phong Ấn) | Tiếng thở của sinh vật cổ to dần | Ngủ (đứng yên lâu) ngay trong hang mà không bị phát hiện | Gợi ý đường tới Khoang Phong Ấn qua Tiếng Vọng |
-| 10 | **Hang Khởi Sinh** (cố định) | Tia nắng qua lỗ trần chiếu xuống hồ | Nổi trong tia nắng lần đầu | Câu mở đầu của Tiếng Vọng + một lần no nhẹ (kỳ ngộ dạy cách chơi) |
+Ký hiệu: **CĐ** = kỹ năng chủ động (phím 1–5), **BĐ** = bị động (mang tối đa 3). **Họ** dùng cho dung hợp về sau.
 
-Muốn thêm thì giữ đúng khuôn: **dấu hiệu nhìn/nghe được → hành động bằng cơ thể → phần thưởng qua hệ thống sẵn có**.
+### Tầng Nông
 
-## Chia việc giữa hai phiên
-- **Bên làm hang:** gán kỳ ngộ cho khoang (luật thuần có test), dựng dấu hiệu và vùng kích hoạt trong khoang, gọi phần thưởng qua giao diện bên dưới. Không sửa `Scripts/Traits`, `Swallow`, `Survival`, `Player`.
-- **Phiên chính:** cung cấp giao diện phần thưởng `Evolve.Traits.EncounterRewards` (sẽ làm sau khi chủ dự án duyệt danh sách): `GrantGene(player, minRarity)`, `AddMass(player, kg)`, `RerollFlaw(player, seed)`, `AddHeatResistance(player, value)`, `RefillStats(player)`, `BoostCore(player)`, `GiveStomachItems(player, items)`, `Say(line)`.
-- **Đã có sẵn cho bên làm hang dùng ngay:** `Evolve.Traits.LightShafts.Register(center, radius, topY)` để khai báo tia sáng trong khoang (Nhân Quang Hợp đọc nó). Hang trú dùng `ShelterZone` như cũ (Nhân Màng Thẩm Thấu và Mau Khô coi hang trú là "có rêu ẩm").
+**1. Hang Khởi Sinh** (đã có: hồ, lỗ trần, tia nắng)
+- Kỳ ngộ *Tia Nắng Đầu Tiên*: nổi trong tia nắng qua lỗ trần lần đầu → Tiếng Vọng chào, một lần no nhẹ. Dạy cách chơi.
+- Quái: **Thằn Lằn Bờ Hồ** (săn, nhỏ; rình trên bờ, lao bắt côn trùng, chạy khi slime to hơn).
+- Kỹ năng: **Lưỡi Dài** (CĐ, họ Linh Hoạt): phóng lưỡi kéo con mồi nhỏ ở xa về miệng để nuốt.
 
-## Câu hỏi cho chủ dự án trước khi dựng
-1. Danh sách 10 kỳ ngộ trên có giữ không, bỏ hay thêm cái nào?
-2. Kỳ ngộ số 4 (đổi Khuyết Điểm) và số 8 (tăng Lõi) có quá mạnh không?
+**2. Vườn Quặng Cầu Vồng** (đã có: cây cối lung linh sắc màu, suối, quặng nhiều màu)
+- Kỳ ngộ *Cầu Vồng Trong Thân*: dấu hiệu là quặng mỗi màu phát sáng một kiểu, suối lấp lánh. Nuốt đủ quặng **5 màu khác nhau** trong hang (mỗi màu một viên) rồi ngâm mình xuống suối → thân slime đổi sắc cầu vồng, **mở khóa một màu mới** trong bảng màu slime, thêm một gene.
+- Quái: **Bọ Giáp Quặng** (săn, chậm, vỏ cứng, ăn quặng); **Đom Đóm Sắc Màu** (bị săn, bay lượn, phát sáng).
+- Kỹ năng: **Vỏ Cứng** (BĐ, họ Đá): nhận ít sát thương hơn 15%. **Phát Sáng** (CĐ, họ Âm Ảnh): tỏa sáng quanh mình 10 giây.
+
+**3. Hang Rêu Thở**
+- Kỳ ngộ *Hơi Thở Của Rêu*: thảm rêu sáng tối theo nhịp như đang thở. Nằm yên trên rêu đúng lúc rêu "thở ra" → hồi đầy và khỏi bệnh.
+- Quái: **Sên Rêu** (bị săn, rất chậm, để lại vệt nhầy).
+- Kỹ năng: **Tiết Nhớt** (CĐ, họ Độc): để lại vũng nhầy làm kẻ địch đi chậm.
+
+**4. Tổ Bỏ Hoang**
+- Kỳ ngộ *Quả Trứng Còn Sống*: ổ trứng nằm trong khe. Nuốt quả trứng còn sống; vài phút sau trứng nở trong Túi → một dòng gene lạ (không gặp ở nơi khác).
+- Quái: **Chim Hang Mẹ** (săn, canh tổ, bổ nhào từ trên cao).
+- Kỹ năng: **Nhảy Cao** (CĐ, họ Linh Hoạt): nảy cao gấp đôi, lên được gờ cao.
+
+### Tầng Giữa
+
+**5. Vực Nứt Tím** (đã có: vết nứt tinh thể tím u ám, gai nhọn)
+- Kỳ ngộ *Hợp Âm Tinh Thể*: ba tinh thể lớn ngân lên khi trúng Sóng Dò, mỗi cái một cao độ. Dùng Sóng Dò vào ba tinh thể theo thứ tự **từ trầm lên cao** → một vết nứt lớn rung, nứt toác, lộ **tinh thể lõi**; nuốt nó → chắc chắn một gene Hiếm trở lên. Gai nhọn khắp hang làm việc đi tìm có nguy hiểm.
+- Quái: **Nhện Tinh Thể** (săn, nấp trong vết nứt, bò trên vách); **Dơi Âm Thoa** (bị săn, bay theo đàn, kêu thành sóng âm).
+- Kỹ năng: **Bám Vách** (CĐ, họ Linh Hoạt): leo vách đứng vài giây. **Sóng Dò Mạnh** (BĐ, họ Âm Ảnh): Sóng Dò đi xa hơn 50%.
+
+**6. Hang Nấm Huỳnh Quang**
+- Kỳ ngộ *Vòng Nấm*: vòng nấm phát sáng theo nhịp, bào tử bay. Đứng giữa vòng đúng lúc bào tử sáng rực → **đổi một Khuyết Điểm** (rút lại ngẫu nhiên, có thể tệ hơn).
+- Quái: **Ếch Độc Đốm** (săn, nhảy, phun độc).
+- Kỹ năng: **Phun Độc** (CĐ, họ Độc): phun một tia độc, gây sát thương dần.
+
+**7. Suối Nước Nóng** (vũng nóng để ngâm trên mặt, không phải nước sâu)
+- Kỳ ngộ *Tôi Luyện*: hơi nóng bốc, nước sủi. Ngâm qua đợt nóng mà không chết → chịu nhiệt tốt hơn suốt vòng chơi.
+- Quái: **Cua Đá Nóng** (săn, đi ngang, vỏ nóng).
+- Kỹ năng: **Chịu Nhiệt** (BĐ, họ Đá): ở chỗ nóng lâu hơn.
+
+**8. Khe Gió Hú**
+- Kỳ ngộ *Túi Của Kẻ Đi Trước*: tiếng gió rít từ một khe rất hẹp, chỉ slime nhỏ lọt (đọc `SlimeBody.Mass` / `BodySize`). Bên trong là Túi của một kẻ chuyển sinh trước: vài món vào bụng và một câu chuyện qua Tiếng Vọng.
+- Quái: **Chuột Gió** (bị săn, nhỏ, chạy rất nhanh, chui khe).
+- Kỹ năng: **Thu Nhỏ** (CĐ, họ Linh Hoạt): co nhỏ 8 giây, lọt được khe hẹp.
+
+### Tầng Sâu
+
+**9. Nghĩa Địa Cự Thú**
+- Kỳ ngộ *Bữa Tiệc Cổ*: một bộ xác khổng lồ. Giữ F hòa tan suốt khoảng 60 giây, vừa làm vừa bị quấy → nhiều khối và một gene của loài cổ.
+- Quái: **Bọ Ăn Xác** (săn theo đàn nhỏ, tụ quanh xác).
+- Kỹ năng: **Tiết Axit** (CĐ, họ Độc): làm tan vách đá vụn, hòa tan xác nhanh.
+
+**10. Hang Hóa Thạch Slime Cổ**
+- Kỳ ngộ *Ký Ức Đá*: hình slime hóa đá trên vách. Bò lên và đứng yên 5 giây → Tiếng Vọng kể chuyện cũ; **Lõi mạnh lên một chút** trong vòng.
+- Quái: **Slime Đá** (săn, chậm, rất cứng).
+- Kỹ năng: **Hóa Đá** (CĐ, họ Đá): bất động 4 giây, không nhận sát thương.
+
+**11. Hang Tiếng Thở** (gần Khoang Phong Ấn)
+- Kỳ ngộ *Giấc Ngủ Cạnh Kẻ Cổ*: tiếng thở của sinh vật cổ to dần. Ngủ (đứng yên lâu) ngay trong hang mà không bị phát hiện → Tiếng Vọng gợi ý đường tới Khoang Phong Ấn.
+- Quái: **Kẻ Rình Bóng Tối** (săn, mù, nghe tiếng động mà săn).
+- Kỹ năng: **Ẩn Thân** (CĐ, họ Âm Ảnh): tàng hình 5 giây.
+
+**12. Khoang Phong Ấn**
+- Sinh vật cổ đại bị phong ấn (không giết được), bộ xương rồng. Chỉ lối ra khi slime đã tiến hóa ít nhất 2 lần (kết chương 1). Không có kỹ năng.
+
+Hang trú (nhỏ, lối vào hẹp, có rêu ẩm) rải xen giữa các hang như cũ, không tính vào 12 hang.
+
+## Kỹ năng là chìa khóa mở đường
+Nhiều kỹ năng là cách vượt chướng ngại tự nhiên (thiết kế mục 9.5): **Bám Vách** cho vách cao, **Tiết Axit** cho vách đá vụn, **Chịu Nhiệt** cho hầm nóng, **Sóng Dò Mạnh** cho vùng tối đặc, **Thu Nhỏ** cho khe nhỏ, **Nhảy Cao** cho gờ cao. Nên đặt các chướng ngại đó ở lối vào các hang khác, để hang này cho chìa mở hang kia.
+
+## Họ kỹ năng (cho dung hợp về sau)
+- **Linh Hoạt:** Lưỡi Dài, Nhảy Cao, Bám Vách, Thu Nhỏ.
+- **Đá:** Vỏ Cứng, Chịu Nhiệt, Hóa Đá.
+- **Độc:** Tiết Nhớt, Phun Độc, Tiết Axit.
+- **Âm Ảnh:** Phát Sáng, Sóng Dò Mạnh, Ẩn Thân.
+
+## Chia việc
+**Bên làm hang (Antigravity):**
+1. Dựng các hang còn thiếu (9 hang) theo chủ đề trên, xếp vào mê cung 3 tầng.
+2. Kỳ ngộ: dấu hiệu (ánh sáng, âm thanh, hình), vùng và điều kiện kích hoạt, luật thuần có test (thứ tự tinh thể, đủ 5 màu quặng, nhịp rêu, thời gian ngâm…). Khi đạt điều kiện thì gọi phần thưởng qua `EncounterRewards` (bên dưới).
+3. Quái: hình dáng, hành vi, nơi sống, số lượng; dựng trên `Predator`/`Prey`. Để trống ô `drops`; phiên chính tạo bảng rơi và gán.
+4. Chướng ngại ở lối vào hang: chỉ dựng **khung và điều kiện** (interface), vì kỹ năng chưa có.
+5. Khai báo tia sáng trong hang bằng `Evolve.Traits.LightShafts.Register(center, radius, topY)` (Nhân Quang Hợp đọc nó).
+
+**Phiên chính:**
+1. 13 kỹ năng mới (gene, cách hoạt động, hình phần cơ thể mọc ra khi dùng) và bảng rơi `DropTableSO` cho từng quái.
+2. `Evolve.Traits.EncounterRewards`: `GrantGene(player, minRarity)`, `GrantUniqueGene(player, id)`, `AddMass(player, kg)`, `RerollFlaw(player, seed)`, `AddHeatResistance(player, value)`, `RefillStats(player)`, `CureDiseases(player)`, `BoostCore(player)`, `UnlockColor(player, color)`, `GiveStomachItems(player, items)`, `Say(line)`.
+3. Mở khóa dung hợp: để sau chương 1.
+
+**Không đụng:** `Scripts/Traits`, `Swallow`, `Survival`, `Player`, `Abilities`. Cần gì ở đó thì ghi vào `docs/superpowers/handoff/maze-questions.md`.
+
+## Báo cáo
+Mỗi hang xong thì báo: đã dựng gì, kỳ ngộ kích hoạt thế nào, test nào, chưa làm gì. Không nói "xong" nếu chưa mở Unity kiểm. Đẩy lên nhánh riêng để phiên chính gộp.
