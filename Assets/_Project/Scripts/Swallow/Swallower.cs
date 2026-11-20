@@ -104,7 +104,8 @@ namespace Evolve.Swallow
             if (stats.State.IsDead) { Evolve.Audio.SlimeSfx.SetLoop("slime_dissolve", false); return; }
             if (traitsComp == null) traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
             // Dòng Máu Tham Lam: rarer genes come easier.
-            book.RareGeneBonus = traitsComp != null && traitsComp.HasCore(Evolve.Traits.LuckRules.CoreId) ? Evolve.Traits.TraitTuning.ThamLamFactor : 1f;
+            book.RareGeneBonus = traitsComp != null && traitsComp.HasCore(Evolve.Traits.LuckRules.CoreId)
+                ? Evolve.Traits.EncounterRewardRules.BoostMultiplier(Evolve.Traits.TraitTuning.ThamLamFactor, traitsComp.CoreBoost) : 1f;
             TickStomach(Time.deltaTime);
             UpdateCarcass(Time.deltaTime);
             Evolve.Audio.SlimeSfx.SetLoop("slime_dissolve", dissolve > 0.01f);   // a bubbling sound while a big carcass is being dissolved
@@ -116,8 +117,9 @@ namespace Evolve.Swallow
             if (traitsComp == null) traitsComp = GetComponent<Evolve.Traits.PlayerTraits>();
             return traitsComp != null && traitsComp.HasCore(Evolve.Traits.EnvTraitRules.AnMon);
         }
-        float AnMonNutrition() => Evolve.Traits.EnvTraitRules.AnMonNutritionMultiplier(HasAnMon());
-        float AnMonDissolve() => Evolve.Traits.EnvTraitRules.AnMonDissolveMultiplier(HasAnMon());
+        float CoreBoost() => traitsComp != null ? traitsComp.CoreBoost : 1f;
+        float AnMonNutrition() => Evolve.Traits.EncounterRewardRules.BoostMultiplier(Evolve.Traits.EnvTraitRules.AnMonNutritionMultiplier(HasAnMon()), CoreBoost());
+        float AnMonDissolve() => Evolve.Traits.EncounterRewardRules.BoostMultiplier(Evolve.Traits.EnvTraitRules.AnMonDissolveMultiplier(HasAnMon()), CoreBoost());
 
         void TickStomach(float dt)
         {

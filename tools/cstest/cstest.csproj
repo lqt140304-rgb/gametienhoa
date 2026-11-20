@@ -29,5 +29,6 @@
     <Compile Include="../../Assets/_Project/Tests/EditMode/DeathLossRulesTests.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Traits/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/BodySizeTests.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Visuals/Pure/*.cs" />
   </ItemGroup>
 </Project>

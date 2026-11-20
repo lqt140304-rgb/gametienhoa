@@ -34,6 +34,17 @@ namespace Evolve.Traits
         /// <summary>The scent trail (Vệt Mùi); only laid while the player has that flaw.</summary>
         public ScentTrail Trail => trail;
         public IReadOnlyList<string> FlawIds => flawIds;
+        int coreBoosts;
+        /// <summary>How much a cave encounter has strengthened the core this round: 1 = not at all, up to 1.45.</summary>
+        public float CoreBoost => EncounterRewardRules.CoreBoost(coreBoosts);
+        /// <summary>One more boost (up to EncounterRewardRules.MaxCoreBoosts per round). False when already at the top.</summary>
+        public bool AddCoreBoost()
+        {
+            if (coreBoosts >= EncounterRewardRules.MaxCoreBoosts) return false;
+            coreBoosts++;
+            Changed?.Invoke();
+            return true;
+        }
         public event Action Changed;
 
         void Awake()
@@ -88,10 +99,10 @@ namespace Evolve.Traits
 
             // Nhân Màng Thẩm Thấu
             state.HungerGainPerSec = EnvTraitRules.ThamThauGain(HasCore(EnvTraitRules.MangThamThau), speed, wetGround, slime.IsSwimming,
-                state.Hunger, state.MaxHunger, Time.time - lastHitAt);
+                state.Hunger, state.MaxHunger, Time.time - lastHitAt) * CoreBoost;
             // Nhân Quang Hợp (floating on the surface is fine; the slime never dives)
             state.EnergyBonusPerSec = HasCore(EnvTraitRules.QuangHop) && LightShafts.InLight(pos)
-                ? EnvTraitRules.QuangHopEnergy(true, true, false) : 0f;
+                ? EnvTraitRules.QuangHopEnergy(true, true, false) * CoreBoost : 0f;
             // Ngại Đông: count the creatures close by twice a second
             if (HasFlaw(EnvTraitRules.NgaiDong))
             {
@@ -110,7 +121,7 @@ namespace Evolve.Traits
             {
                 var p = new Vector2(pos.x, pos.z);
                 familiarity.Visit(p, Time.time);
-                mul *= familiarity.SpeedMultiplier(p, Time.time);
+                mul *= EncounterRewardRules.BoostMultiplier(familiarity.SpeedMultiplier(p, Time.time), CoreBoost);
             }
             slime.TraitSpeed = mul;
         }
@@ -140,7 +151,9 @@ namespace Evolve.Traits
 
         public void Set(string newCoreId, IReadOnlyList<string> newFlawIds)
         {
-            coreId = string.IsNullOrEmpty(newCoreId) ? null : newCoreId;
+            var next = string.IsNullOrEmpty(newCoreId) ? null : newCoreId;
+            if (next != coreId) coreBoosts = 0;   // a different core: the boost belonged to the old one
+            coreId = next;
             familiarity.Clear();
             trail.Clear();
             flawIds = newFlawIds != null ? new List<string>(newFlawIds).ToArray() : NoFlaws;
