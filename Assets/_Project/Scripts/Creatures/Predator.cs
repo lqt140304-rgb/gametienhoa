@@ -103,6 +103,7 @@ namespace Evolve.Creatures
         Rigidbody rb;
         SurvivalStats target;
         Vector3 wanderDir;
+        CreatureMotor motor;
         float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite, blindUntil, lastAteAt;
 
         // ---- scene behaviour (CreatureBrain sets these; with no brain the old behaviour runs) ----
@@ -116,11 +117,9 @@ namespace Evolve.Creatures
         public void NoteAte() => lastAteAt = Time.time;
         bool dead;
 
-        float groundOffset;
-
         void Awake()
         {
-            groundOffset = Evolve.World.GroundHeight.OffsetOf(transform.position);
+            if (!TryGetComponent(out motor)) motor = gameObject.AddComponent<CreatureMotor>();
             rb = GetComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -176,7 +175,7 @@ namespace Evolve.Creatures
 
             if (dir.sqrMagnitude > 0.001f && speed > 0f)
             {
-                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject) * Time.fixedDeltaTime, groundOffset));
+                if (!motor.Move(dir, speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject))) nextTurn = 0f;
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
             }
 
@@ -210,7 +209,7 @@ namespace Evolve.Creatures
             }
             if (dir.sqrMagnitude > 1e-7f)
             {
-                if (speed > 0f) rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir.normalized * speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject) * Time.fixedDeltaTime, groundOffset));
+                if (speed > 0f) motor.Move(dir, speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject));
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir.normalized), 0.15f));
             }
         }

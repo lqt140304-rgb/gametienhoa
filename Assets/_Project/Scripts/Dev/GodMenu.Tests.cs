@@ -88,6 +88,7 @@ namespace Evolve.DevTools
 
             // ---- creatures ----
             LoadNames();
+            Evolve.Creatures.CreatureMotor.Enabled = GUILayout.Toggle(Evolve.Creatures.CreatureMotor.Enabled, " Di chuyển mới cho quái (va vách, bước bậc, không vọt lên cầu); tắt = kiểu cũ");
             GUILayout.Label($"Sinh vật thử (đặt trước mặt slime, {testCreatures.Count(c => c != null)} con)");
             showPrey = GUILayout.Toggle(showPrey, $" Con mồi ({preyNames.Count})");
             if (showPrey) foreach (var n in preyNames) if (GUILayout.Button(n)) SpawnTest(n, 3f, 12f, false);
