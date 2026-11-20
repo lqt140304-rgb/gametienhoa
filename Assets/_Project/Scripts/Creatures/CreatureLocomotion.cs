@@ -253,7 +253,6 @@ namespace Evolve.Creatures
                     SmoothedGroundDelta = 0f
                 });
             }
-            }
         }
 
         void Update()
@@ -437,8 +436,8 @@ namespace Evolve.Creatures
                     return;
                 }
 
-                float hoverBob = Mathf.Sin(idleTime * 5.5f + stridePhase * 0.4f) * 0.04f;
-                modelRoot.localPosition = baseModelLocalPos + new Vector3(0f, hoverBob, 0f);
+                float hoverBob2 = Mathf.Sin(idleTime * 5.5f + stridePhase * 0.4f) * 0.04f;
+                modelRoot.localPosition = baseModelLocalPos + new Vector3(0f, hoverBob2, 0f);
                 return;
             }
 
