@@ -25,6 +25,11 @@ namespace Evolve.Abilities
 
         public bool Shielded => Time.time < shieldUntil && shieldCharges > 0;
         public bool Climbing => Time.time < climbUntil;
+        public bool Glowing => glow != null && glow.enabled;
+
+        /// <summary>Hunters spot a glowing slime (Phát Sáng) from further away. Read by Predator.</summary>
+        public static float DetectMultiplier(Component player) =>
+            player.TryGetComponent(out BodyState s) && s.Glowing ? Evolve.Swallow.CaveSkillMath.GlowDetectMultiplier : 1f;
 
         public static BodyState On(GameObject user) =>
             user.TryGetComponent(out BodyState s) ? s : user.AddComponent<BodyState>();

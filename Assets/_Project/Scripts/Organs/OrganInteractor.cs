@@ -45,7 +45,7 @@ namespace Evolve.Organs
         public void DropAllOnDeath()
         {
             var list = host.OrganList;
-            foreach (var o in list) host.Detach(o.Slot);
+            foreach (var o in list) host.Detach(o);
             LastDeathKept = 0;
             LastDeathLost = list.Count;
             DroppedOnDeath?.Invoke(0, list.Count);

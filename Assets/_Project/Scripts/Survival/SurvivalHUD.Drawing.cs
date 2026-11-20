@@ -416,7 +416,7 @@ namespace Evolve.Survival
             {
                 Label(new Rect(427,224,485,115),ability.Description);
                 Line(427,348,485);
-                Metric(new Rect(427,365,155,65),"NĂNG LƯỢNG",$"{ability.EnergyCost:0.#}");
+                Metric(new Rect(427,365,155,65),"NĂNG LƯỢNG",$"{ability.EnergyFor(level):0.#}");
                 Metric(new Rect(592,365,155,65),"HỒI CHIÊU",$"{ability.CooldownFor(level):0.#} giây");
                 Metric(new Rect(757,365,155,65),"TRẠNG THÁI",ReadyFor(chosenSkill));
                 Label(new Rect(427,454,485,70),"Giữ Tab để xem cách tính và hiệu ứng của kỹ năng.",small);
@@ -470,7 +470,7 @@ namespace Evolve.Survival
                 Label(new Rect(r.x,y,r.width,70),$"Lực đẩy: {dash.Force:0.#}\nVật cản có thể làm bạn dừng sớm.");y+=86;
             }
             else {Label(new Rect(r.x,y,r.width,90),ability.Description);y+=104;}
-            Label(new Rect(r.x,y,r.width,72),$"Tốn {ability.EnergyCost:0.#} năng lượng · Hồi {ability.CooldownFor(level):0.##} giây\nHồi chiêu gốc {ability.Cooldown:0.##} giây{(level>=3?" × 0,75 ở cấp 3":"")}",small);
+            Label(new Rect(r.x,y,r.width,72),$"Tốn {ability.EnergyFor(level):0.#} năng lượng · Hồi {ability.CooldownFor(level):0.##} giây\nHồi chiêu gốc {ability.Cooldown:0.##} giây{(ability.UsesStars?"":level>=3?" × 0,75 ở cấp 3":"")}",small);
         }
         void DrawBodyDossier(Rect r)
         {

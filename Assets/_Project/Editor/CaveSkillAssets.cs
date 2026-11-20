@@ -55,14 +55,15 @@ namespace Evolve.EditorTools
             _ => OrganSlot.Legs,
         };
 
-        static AbilitySO Ability(CaveSkillDef d, string path)
+        static CaveAbility Ability(CaveSkillDef d, string path)
         {
-            AbilitySO a;
+            CaveAbility a;
             switch (d.Shape)
             {
                 case SkillShape.Area:
                     var area = Replace<AreaAbility>(path);
-                    area.Radius = d.Radius; area.Push = d.Push; area.Damage = d.Damage; area.StunSeconds = d.StunSeconds; area.NearestOnly = d.NearestOnly;
+                    area.Radius = d.Radius; area.Push = d.Push; area.Damage = d.Damage; area.StunSeconds = d.StunSeconds; area.MaxTargets = d.MaxTargets;
+                    area.Star3Stun = d.Star3Stun; area.Star3Targets = d.Star3Targets;
                     a = area; break;
                 case SkillShape.Leap:
                     var leap = Replace<LeapAbility>(path);
@@ -70,20 +71,23 @@ namespace Evolve.EditorTools
                     a = leap; break;
                 case SkillShape.Pull:
                     var pull = Replace<PullAbility>(path);
-                    pull.Distance = d.Distance;
+                    pull.Distance = d.Distance; pull.MaxTargets = Mathf.Max(1, d.MaxTargets); pull.Star3Targets = d.Star3Targets;
                     a = pull; break;
                 case SkillShape.Trap:
                     var trap = Replace<TrapAbility>(path);
-                    trap.Radius = d.Radius; trap.Damage = d.Damage; trap.Seconds = d.Seconds;
+                    trap.Radius = d.Radius; trap.Damage = d.Damage; trap.Seconds = d.Seconds; trap.Star3Stun = d.Star3Stun;
                     a = trap; break;
                 default:
                     var body = Replace<BodyStateAbility>(path);
                     body.Seconds = d.Seconds; body.DamageTaken = d.DamageTaken; body.BlockHits = d.BlockHits;
                     body.Root = d.Root; body.Light = d.Light; body.Climb = d.Climb;
+                    body.Star3Heal = d.Star3Heal; body.Star3ExtraHits = d.Star3ExtraHits; body.Star3DamageTaken = d.Star3DamageTaken; body.Star3Dazzle = d.Star3Dazzle;
                     a = body; break;
             }
             a.DisplayName = d.Skill;
-            a.Description = d.Description;
+            a.Description = $"{d.Description}\n★3: {d.Star3}";
+            a.Star3Text = d.Star3;
+            a.Star3EnergyFactor = d.Star3EnergyFactor;
             a.Cooldown = d.Cooldown;
             a.EnergyCost = d.Energy;
             EditorUtility.SetDirty(a);
@@ -91,7 +95,7 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>Load the asset at the path; if it is missing or of another ability class (the table changed shape), make it anew.</summary>
-        static T Replace<T>(string path) where T : AbilitySO
+        static T Replace<T>(string path) where T : CaveAbility
         {
             var existing = AssetDatabase.LoadAssetAtPath<AbilitySO>(path);
             if (existing is T same) return same;

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Evolve.Organs
 {
     /// <summary>Result of asking whether an organ can be attached.</summary>
-    public enum AttachCheck { Ok, AlreadyOwned, SlotOccupied, NoRoom, LackNutrient }
+    public enum AttachCheck { Ok, AlreadyOwned, NoRoom, LackNutrient }
 
     /// <summary>Result of asking Biến Hình to sculpt an organ.</summary>
     public enum SculptResult { Ok, NotInShelter, Unknown, NoMass, Blocked, NotPassive }
@@ -25,7 +25,7 @@ namespace Evolve.Organs
         /// <summary>Passives (eyes included) are hidden: the body stays smooth. Flip to true to show their models again.</summary>
         public const bool ShowsOnBody = false;
 
-        [Tooltip("Max number of organs the body can hold (0 = unlimited, one per slot)")]
+        [Tooltip("Max number of organs the body can hold (0 = only the SkillRules.MaxPassives cap)")]
         [SerializeField] int maxOrgans = 0;
         [Tooltip("Extra effect per level above 1 (0.25 = Lv2 +25%, Lv3 +50%)")]
         [SerializeField] float levelBonus = 0.25f;
@@ -44,7 +44,7 @@ namespace Evolve.Organs
         }
 
         readonly List<Entry> order = new List<Entry>();
-        readonly Dictionary<OrganSlot, Entry> organs = new Dictionary<OrganSlot, Entry>();
+        readonly Dictionary<OrganSO, Entry> organs = new Dictionary<OrganSO, Entry>();   // passives fill passive slots, not body slots
         readonly Dictionary<OrganSlot, Transform> sockets = new Dictionary<OrganSlot, Transform>();
         SurvivalStats stats;
         Evolve.Swallow.Swallower swallower;
@@ -112,10 +112,8 @@ namespace Evolve.Organs
 
         public bool Knows(OrganSO organ) { var b = Book; return b != null && b.Knows(organ); }
 
-        public bool Has(OrganSO organ) => organ != null && organs.TryGetValue(organ.Slot, out var e) && e.Organ == organ;
+        public bool Has(OrganSO organ) => organ != null && organs.ContainsKey(organ);
 
-        /// <summary>The organ currently in a slot, or null.</summary>
-        public OrganSO GetInSlot(OrganSlot slot) => organs.TryGetValue(slot, out var e) ? e.Organ : null;
 
         /// <summary>
         /// The worn organs as (slot, integrity 0..1) pairs, for flaw compensation. Integrity is 1 minus the organ's Decay
@@ -136,18 +134,16 @@ namespace Evolve.Organs
         public AttachCheck Check(OrganSO organ)
         {
             if (Has(organ)) return AttachCheck.AlreadyOwned;
-            // The body must hold enough of the nutrient this organ needs (both for a free slot and for a replacement).
+            // The body must hold enough of the nutrient this organ needs.
             var st = stats != null ? stats : GetComponent<SurvivalStats>(); // Awake may not have run yet (EditMode tests)
             bool lacks = st != null && !st.IsRemote && st.State.IsLacking(organ.EffectiveNutrient);
-            if (organs.ContainsKey(organ.Slot)) return lacks ? AttachCheck.LackNutrient : AttachCheck.SlotOccupied;
             if (maxOrgans > 0 && organs.Count >= maxOrgans) return AttachCheck.NoRoom;
-            if (organs.Count >= Evolve.Swallow.SkillRules.MaxPassives) return AttachCheck.NoRoom;   // at most 3 passives
+            if (organs.Count >= Evolve.Swallow.SkillRules.MaxPassives) return AttachCheck.NoRoom;   // at most SkillRules.MaxPassives
             return lacks ? AttachCheck.LackNutrient : AttachCheck.Ok;
         }
 
         /// <summary>
-        /// Biến Hình: sculpt a learned organ from body mass, only in a shelter. An organ already in that slot is
-        /// removed first and gives half its cost back. The organ comes in at its stars in the book.
+        /// Biến Hình: sculpt a learned passive from body mass into a free passive slot, only in a shelter. The organ comes in at its stars in the book.
         /// </summary>
         public SculptResult TrySculpt(OrganSO organ, Evolve.Swallow.AnalysisBook book, Evolve.Swallow.SlimeBody body, bool inShelter)
         {
@@ -156,22 +152,19 @@ namespace Evolve.Organs
             if (!inShelter) return SculptResult.NotInShelter;
             if (book == null || !book.Knows(organ)) return SculptResult.Unknown;
             var check = Check(organ);
-            if (check != AttachCheck.Ok && check != AttachCheck.SlotOccupied) return SculptResult.Blocked;
+            if (check != AttachCheck.Ok) return SculptResult.Blocked;
             var rarity = Evolve.Swallow.AnalysisRules.FromTier(organ.Tier);
-            var old = GetInSlot(organ.Slot);
-            float refund = old != null ? Evolve.Swallow.MassRules.Refund(Evolve.Swallow.AnalysisRules.FromTier(old.Tier)) : 0f;
-            if (body == null || !Evolve.Swallow.MassRules.CanSculpt(true, true, body.Mass + refund, rarity)) return SculptResult.NoMass;
-            if (old != null) { Detach(organ.Slot); body.AddMass(refund); }
+            if (body == null || !Evolve.Swallow.MassRules.CanSculpt(true, true, body.Mass, rarity)) return SculptResult.NoMass;
             body.TrySpend(Evolve.Swallow.MassRules.SculptCost(rarity));
             TryAttach(organ, Mathf.Max(1, book.StarsOf(organ)));
             return SculptResult.Ok;
         }
 
         /// <summary>Biến Hình: take an organ off (shelter only) and get half its mass back. The organ stays learned.</summary>
-        public bool Remove(OrganSlot slot, Evolve.Swallow.SlimeBody body, bool inShelter)
+        public bool Remove(OrganSO organ, Evolve.Swallow.SlimeBody body, bool inShelter)
         {
             if (!inShelter) return false;
-            var old = Detach(slot);
+            var old = Detach(organ);
             if (old == null) return false;
             if (body != null) body.AddMass(Evolve.Swallow.MassRules.Refund(Evolve.Swallow.AnalysisRules.FromTier(old.Tier)));
             return true;
@@ -187,7 +180,7 @@ namespace Evolve.Organs
         void SetLevel(OrganSO organ, int stars)
         {
             if (!Has(organ)) return;
-            var e = organs[organ.Slot];
+            var e = organs[organ];
             stars = Mathf.Clamp(stars, 1, MaxLevel);
             if (stars <= e.Level) return;
             e.Level = stars;
@@ -197,21 +190,19 @@ namespace Evolve.Organs
         }
 
         /// <summary>Growth 0..1 while a new organ grows in, or -1 if not owned.</summary>
-        public float GetGrowth(OrganSO organ) => Has(organ) ? organs[organ.Slot].Shown : -1f;
+        public float GetGrowth(OrganSO organ) => Has(organ) ? organs[organ].Shown : -1f;
 
         /// <summary>Stars of the organ (1..MaxLevel); -1 if not owned.</summary>
-        public int GetLevel(OrganSO organ) => Has(organ) ? organs[organ.Slot].Level : -1;
+        public int GetLevel(OrganSO organ) => Has(organ) ? organs[organ].Level : -1;
 
-        public bool IsMaxed(OrganSO organ) => Has(organ) && organs[organ.Slot].Maxed;
+        public bool IsMaxed(OrganSO organ) => Has(organ) && organs[organ].Maxed;
 
-        /// <summary>Attach (or replace) the organ in its slot at a level (stars). No mass, shelter or book check: use TrySculpt for play.</summary>
+        /// <summary>Attach the passive at a level (stars). No mass, shelter or book check: use TrySculpt for play.</summary>
         public bool TryAttach(OrganSO organ, int level = 1)
         {
             if (organ == null) return false;
             var check = Check(organ);
             if (check == AttachCheck.AlreadyOwned || check == AttachCheck.NoRoom || check == AttachCheck.LackNutrient) return false;
-
-            if (organs.ContainsKey(organ.Slot)) Detach(organ.Slot);
 
             var entry = new Entry { Organ = organ, Level = Mathf.Clamp(level, 1, MaxLevel) };
             if (organ.VisualPrefab != null && ShowsOnBody)   // no passive shows on the body (spec 6.1): the slime stays smooth; eyes are felt as sight, not seen
@@ -220,7 +211,7 @@ namespace Evolve.Organs
                 entry.Visual = Instantiate(organ.VisualPrefab, parent, false);
                 entry.VisualScale = entry.Visual.transform.localScale;
             }
-            organs[organ.Slot] = entry;
+            organs[organ] = entry;
             order.Add(entry);
             ApplyVisual(entry);
             Recalculate();
@@ -228,12 +219,12 @@ namespace Evolve.Organs
             return true;
         }
 
-        /// <summary>Remove the organ in a slot. Returns it, or null if empty.</summary>
-        public OrganSO Detach(OrganSlot slot)
+        /// <summary>Remove a passive. Returns it, or null if it was not worn.</summary>
+        public OrganSO Detach(OrganSO organ)
         {
-            if (!organs.TryGetValue(slot, out var e)) return null;
+            if (organ == null || !organs.TryGetValue(organ, out var e)) return null;
             if (e.Visual != null) Destroy(e.Visual);
-            organs.Remove(slot);
+            organs.Remove(organ);
             order.Remove(e);
             Recalculate();
             Removed?.Invoke(e.Organ);
@@ -254,10 +245,10 @@ namespace Evolve.Organs
         {
             if (organ == null) return;
             level = Mathf.Clamp(level, 1, MaxLevel);
-            if (Has(organ) && organs[organ.Slot].Level > level) Detach(organ.Slot);
+            if (Has(organ) && organs[organ].Level > level) Detach(organ);
             if (!Has(organ)) TryAttach(organ, level);
             if (!Has(organ)) return;
-            var e = organs[organ.Slot];
+            var e = organs[organ];
             e.Level = level;
             e.Shown = 1f;
             Recalculate();
@@ -311,12 +302,12 @@ namespace Evolve.Organs
 
             var organ = dissolve.Organ;
             Debug.Log($"{name}: {organ.DisplayName} tan vì thiếu {NutrientKinds.SlimeName(organ.EffectiveNutrient)}");
-            Detach(organ.Slot);
+            Detach(organ);
             Dissolved?.Invoke(organ);
         }
 
         /// <summary>0 healthy .. 1 dissolved; -1 if not owned.</summary>
-        public float GetDecay(OrganSO organ) => Has(organ) ? organs[organ.Slot].Decay : -1f;
+        public float GetDecay(OrganSO organ) => Has(organ) ? organs[organ].Decay : -1f;
 
         void ApplyVisual(Entry e)
         {

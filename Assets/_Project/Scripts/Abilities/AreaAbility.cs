@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Evolve.Creatures;
 using Evolve.Survival;
 using UnityEngine;
@@ -6,49 +7,56 @@ namespace Evolve.Abilities
 {
     /// <summary>
     /// Shared shape "around me" (Ợ Chấn, Châm Choáng; later Nổ Bào Tử, Đập Đất, Gầm…): pushes, hurts and/or stuns creatures
-    /// within <see cref="Radius"/>; <see cref="NearestOnly"/> hits just the closest one (a sting). Power by stars scales push,
-    /// damage and stun. Loose rigidbodies (props) are pushed too.
+    /// within <see cref="Radius"/>, all of them or only the nearest <see cref="MaxTargets"/>. Loose rigidbodies (props) are pushed too.
     /// </summary>
     [CreateAssetMenu(menuName = "Evolve/Abilities/Area", fileName = "AreaSO")]
-    public class AreaAbility : AbilitySO
+    public class AreaAbility : CaveAbility
     {
         public float Radius = 4f;
         [Tooltip("Push speed at the centre, m/s (40% at the edge)")]
         public float Push;
         public float Damage;
         public float StunSeconds;
-        public bool NearestOnly;
+        [Tooltip("0 = every creature in reach, else only the nearest few")]
+        public int MaxTargets;
+        [Header("★3")]
+        public float Star3Stun;
+        [Tooltip("MaxTargets at ★3 (0 = unchanged)")]
+        public int Star3Targets;
 
         const float KnockSeconds = 0.35f;
 
-        public override bool Activate(GameObject user) => Activate(user, 2);
-
-        public override bool Activate(GameObject user, int level)
+        public override bool Activate(GameObject user, int stars)
         {
             Vector3 c = user.transform.position;
             user.TryGetComponent(out SurvivalStats by);
-            float power = Power(level);
+            float power = StarPower(stars);
+            int max = stars >= 3 && Star3Targets > 0 ? Star3Targets : MaxTargets;
+            float stun = StunSeconds * power + (stars >= 3 ? Star3Stun : 0f);
 
-            Component nearest = null;
-            float best = float.MaxValue;
+            var inReach = new List<(Component c, float d)>();
             void Consider(Component creature)
             {
                 if (creature == null) return;
                 Vector3 d = creature.transform.position - c; d.y = 0f;
-                float dist = d.magnitude;
-                if (dist > Radius) return;
-                if (NearestOnly) { if (dist < best) { best = dist; nearest = creature; } return; }
-                Hit(creature, d, dist, power, by);
+                if (d.magnitude <= Radius) inReach.Add((creature, d.magnitude));
             }
             foreach (var p in Predator.Active) Consider(p);
             foreach (var p in Prey.Active) Consider(p);
-
-            if (NearestOnly)
+            if (max > 0)
             {
-                if (nearest == null) return false;   // nothing in reach: no cooldown spent
-                Vector3 d = nearest.transform.position - c; d.y = 0f;
-                Hit(nearest, d, d.magnitude, power, by);
-                return true;
+                if (inReach.Count == 0) return false;   // a sting with nothing in reach: no cooldown spent
+                inReach.Sort((a, b) => a.d.CompareTo(b.d));
+                if (inReach.Count > max) inReach.RemoveRange(max, inReach.Count - max);
+            }
+
+            foreach (var (creature, dist) in inReach)
+            {
+                Vector3 flat = creature.transform.position - c; flat.y = 0f;
+                if (Push > 0f && flat.sqrMagnitude > 1e-4f)
+                    CreatureStatus.Knock(creature, flat.normalized * Push * power * Evolve.Swallow.CaveSkillMath.Falloff(dist, Radius), KnockSeconds);
+                if (stun > 0f) CreatureStatus.Stun(creature, stun);
+                if (Damage > 0f && creature is IDamageable target) target.TakeDamage(Damage * power, by);
             }
 
             if (Push > 0f)
@@ -60,14 +68,6 @@ namespace Evolve.Abilities
                     rb.AddForce(d.normalized * Push * power * Evolve.Swallow.CaveSkillMath.Falloff(d.magnitude, Radius) + Vector3.up * 2f, ForceMode.VelocityChange);
                 }
             return true;
-        }
-
-        void Hit(Component creature, Vector3 flat, float dist, float power, SurvivalStats by)
-        {
-            if (Push > 0f && flat.sqrMagnitude > 1e-4f)
-                CreatureStatus.Knock(creature, flat.normalized * Push * power * Evolve.Swallow.CaveSkillMath.Falloff(dist, Radius), KnockSeconds);
-            if (StunSeconds > 0f) CreatureStatus.Stun(creature, StunSeconds * power);
-            if (Damage > 0f && creature is IDamageable target) target.TakeDamage(Damage * power, by);
         }
     }
 }

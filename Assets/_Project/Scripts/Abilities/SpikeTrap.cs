@@ -5,14 +5,14 @@ using UnityEngine;
 
 namespace Evolve.Abilities
 {
-    /// <summary>A patch of crystal spikes (Cắm Gai). Each creature that steps in is hurt once; the patch melts away after its time.</summary>
+    /// <summary>A patch of crystal spikes (Cắm Gai). Each creature that steps in is hurt once (and stunned at ★3); the patch melts away after its time.</summary>
     public class SpikeTrap : MonoBehaviour
     {
-        float radius, damage, until;
+        float radius, damage, stun, until;
         SurvivalStats owner;
         readonly HashSet<Component> hurt = new HashSet<Component>();
 
-        public static SpikeTrap Spawn(Vector3 at, float radius, float damage, float seconds, SurvivalStats owner)
+        public static SpikeTrap Spawn(Vector3 at, float radius, float damage, float seconds, float stun, SurvivalStats owner)
         {
             var go = new GameObject("SpikeTrap");
             go.transform.position = at;
@@ -28,7 +28,7 @@ namespace Evolve.Abilities
                 spike.GetComponent<Renderer>().material.color = new Color(0.62f, 0.38f, 0.95f);
             }
             var trap = go.AddComponent<SpikeTrap>();
-            trap.radius = radius; trap.damage = damage; trap.owner = owner; trap.until = Time.time + seconds;
+            trap.radius = radius; trap.damage = damage; trap.stun = stun; trap.owner = owner; trap.until = Time.time + seconds;
             return trap;
         }
 
@@ -46,6 +46,7 @@ namespace Evolve.Abilities
             Vector3 d = creature.transform.position - c; d.y = 0f;
             if (d.sqrMagnitude > radius * radius) return;
             hurt.Add(creature);
+            if (stun > 0f) CreatureStatus.Stun(creature, stun);
             if (creature is IDamageable target) target.TakeDamage(damage, owner);
         }
     }

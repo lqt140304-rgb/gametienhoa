@@ -15,7 +15,7 @@ namespace Evolve.Tests.EditMode
 
         [Test] public void AbilityLevel_FromStars_StarTwoAlreadyUpgrades() { Assert.AreEqual(2, SkillRules.AbilityLevel(1)); Assert.AreEqual(3, SkillRules.AbilityLevel(2)); Assert.AreEqual(3, SkillRules.AbilityLevel(3)); }
         [Test] public void SprintSeconds_GrowWithStars() { Assert.AreEqual(4f, SkillRules.SprintSeconds(1)); Assert.AreEqual(5f, SkillRules.SprintSeconds(2)); Assert.AreEqual(6f, SkillRules.SprintSeconds(3)); }
-        [Test] public void MaxPassives_Is3() => Assert.AreEqual(3, SkillRules.MaxPassives);
+        [Test] public void MaxPassives_Is5() => Assert.AreEqual(5, SkillRules.MaxPassives);
 
         [Test]
         public void VisualScale_GrowsHoldsThenRetracts()

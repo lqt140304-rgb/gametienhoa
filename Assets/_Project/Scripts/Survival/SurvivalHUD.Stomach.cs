@@ -10,14 +10,13 @@ namespace Evolve.Survival
         Swallower swallowerRef;
         SlimeBody bodyRef;
         int chosenItem = -1;
-        OrganSlot chosenSlot = OrganSlot.Eyes;
+        int chosenPassive;
         string sculptNotice = "";
         string echoText;
         float echoUntil;
         GUIStyle echoStyle, hintStyle;
 
         // Passives only (spec 6.1): eyes and skin (heat membrane). Legs and back genes are active moves, on keys 1-5 (K).
-        static readonly OrganSlot[] BodySlots = { OrganSlot.Eyes, OrganSlot.Skin };
 
         Swallower SwallowerRef => swallowerRef != null ? swallowerRef : swallowerRef = stats != null ? stats.GetComponent<Swallower>() : null;
         SlimeBody BodyRef => bodyRef != null ? bodyRef : bodyRef = stats != null ? stats.GetComponent<SlimeBody>() : null;
@@ -106,49 +105,50 @@ namespace Evolve.Survival
             }
         }
 
-        /// <summary>Biến Hình: four body slots on the left; on the right, what Giải Mã has learned for the chosen slot.</summary>
+        /// <summary>Biến Hình: the passive slots on the left; on the right, the chosen passive and the learned ones that can fill a free slot.</summary>
         void DrawOrgansPanel()
         {
             if (organs == null) { Label(new Rect(30, 140, 900, 50), "Không có dữ liệu cơ quan."); return; }
             var book = organs.Book; var body = BodyRef; bool shelter = stats.State.InShelter;
-            Label(new Rect(25, 128, 330, 25), $"BỊ ĐỘNG {organs.Count}/{SkillRules.MaxPassives} · khối {BodyMass:0.#}", small);
-            for (int i = 0; i < BodySlots.Length; i++)
+            var worn = organs.OrganList;
+            Label(new Rect(25, 128, 330, 25), $"BỊ ĐỘNG {worn.Count}/{SkillRules.MaxPassives} · khối {BodyMass:0.#}", small);
+            for (int i = 0; i < SkillRules.MaxPassives; i++)
             {
-                var slot = BodySlots[i]; var o = organs.GetInSlot(slot);
-                string label = $"{OrganInteractor.SlotName(slot)}\n{(o == null ? "— trống —" : $"{o.DisplayName} {Stars(organs.GetLevel(o))}")}";
-                if (Button(new Rect(25, 169 + i * 83, 300, 74), label, chosenSlot == slot)) { chosenSlot = slot; sculptNotice = ""; }
+                var o = i < worn.Count ? worn[i] : null;
+                string label = $"Ô {i + 1}\n{(o == null ? "— trống —" : $"{o.DisplayName} {Stars(organs.GetLevel(o))}")}";
+                if (Button(new Rect(25, 160 + i * 66, 300, 58), label, chosenPassive == i)) { chosenPassive = i; sculptNotice = ""; }
             }
 
             float x = 360, w = 850;
             Label(new Rect(x, 128, w, 25), shelter ? "Đang ở hang trú: có thể nặn lại cơ thể." : "Chỉ nặn lại cơ thể được trong hang trú.", small);
-            var cur = organs.GetInSlot(chosenSlot);
+            var cur = chosenPassive < worn.Count ? worn[chosenPassive] : null;
             float y = 160;
             if (cur != null)
             {
                 float refund = MassRules.Refund(AnalysisRules.FromTier(cur.Tier));
                 Label(new Rect(x, y, w - 240, 50), $"{OrganTiers.Tag(cur.Tier)} {cur.DisplayName} {Stars(organs.GetLevel(cur))}\n{cur.Description}", text);
-                WithEnabled(shelter, () => { if (Button(new Rect(x + w - 230, y + 6, 230, 36), $"Tháo (+{refund:0.#} khối)")) { organs.Remove(chosenSlot, body, shelter); sculptNotice = ""; } });
+                WithEnabled(shelter, () => { if (Button(new Rect(x + w - 230, y + 6, 230, 36), $"Tháo (+{refund:0.#} khối)")) { organs.Remove(cur, body, shelter); sculptNotice = ""; } });
                 y += 70;
             }
             Line(x, y, w); y += 10;
-            Label(new Rect(x, y, w, 22), "ĐÃ HỌC CHO VỊ TRÍ NÀY", small); y += 26;
+            Label(new Rect(x, y, w, 22), "BỊ ĐỘNG ĐÃ HỌC", small); y += 26;
             int rows = 0;
+            bool full = worn.Count >= SkillRules.MaxPassives;
             if (book != null)
                 foreach (var o in book.Known)
                 {
-                    if (o.Use != GeneUse.Passive || o.Slot != chosenSlot || o == cur || rows >= 5) continue;
+                    if (o.Use != GeneUse.Passive || organs.Has(o) || rows >= 6) continue;
                     var rarity = AnalysisRules.FromTier(o.Tier);
                     float cost = MassRules.SculptCost(rarity);
                     var prev = GUI.color; GUI.color = RarityColor(rarity);
                     Label(new Rect(x, y + 6, w - 240, 26), $"{o.DisplayName} {Stars(book.StarsOf(o))} · {cost:0.#} khối", text);
                     GUI.color = prev;
                     var organ = o;
-                    float refundCur = cur != null ? MassRules.Refund(AnalysisRules.FromTier(cur.Tier)) : 0f;
-                    string block = MassRules.SculptBlockReason(shelter, BodyMass, refundCur, rarity);
+                    string block = full ? $"Đã đủ {SkillRules.MaxPassives} ô: tháo bớt một cái." : MassRules.SculptBlockReason(shelter, BodyMass, 0f, rarity);
                     if (block != null && shelter) Label(new Rect(x + w - 560, y + 6, 320, 26), block, small);
                     WithEnabled(block == null, () =>
                     {
-                        if (!Button(new Rect(x + w - 230, y, 230, 36), cur == null ? "Nặn" : "Nặn thay")) return;
+                        if (!Button(new Rect(x + w - 230, y, 230, 36), "Nặn")) return;
                         var r = organs.TrySculpt(organ, book, body, shelter);
                         sculptNotice = r switch
                         {
@@ -163,7 +163,7 @@ namespace Evolve.Survival
                     });
                     y += 44; rows++;
                 }
-            if (rows == 0) Label(new Rect(x, y, w, 50), "Chưa học được kỹ năng bị động nào cho vị trí này.\nChiêu chủ động (gai, chạy nhanh...) ở bảng K, đổi ở đâu cũng được.", text);
+            if (rows == 0) Label(new Rect(x, y, w, 50), "Chưa có kỹ năng bị động nào khác để nặn.\nChiêu chủ động (gai, chạy nhanh...) ở bảng K, đổi ở đâu cũng được.", text);
             if (sculptNotice.Length > 0) Label(new Rect(x, 545, w, 26), sculptNotice, text);
         }
 

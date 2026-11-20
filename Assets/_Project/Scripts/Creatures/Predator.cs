@@ -204,7 +204,7 @@ namespace Evolve.Creatures
             foreach (var p in SurvivalStats.All)
             {
                 if (p.State.IsDead) continue;
-                float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p);   // Nhân Ngụy Sắc
+                float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p) * Evolve.Abilities.BodyState.DetectMultiplier(p);   // Nhân Ngụy Sắc, Phát Sáng
                 if (Vector3.Distance(pos, p.transform.position) <= radius || Evolve.Traits.TraitSense.SmellsTrail(p, pos)) { target = p; break; }   // Vệt Mùi
             }
         }

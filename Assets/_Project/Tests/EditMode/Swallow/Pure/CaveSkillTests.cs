@@ -93,6 +93,30 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(0f, CaveSkillMath.Falloff(1f, 0f));
         }
 
+        [Test] public void ChamChoang_StunsWithoutDamage() => Assert.AreEqual(0f, Wave1.Single(d => d.Id == "skill.cham_choang").Damage);
+
+        [Test] public void Energy_ThreeAtOnce_ButNotFour()
+        {
+            var costs = Wave1.Where(d => d.Shape != SkillShape.Passive).Select(d => d.Energy).OrderBy(e => e).ToList();
+            Assert.LessOrEqual(costs.Skip(costs.Count - 3).Sum(), 100f);   // the 3 dearest fit a full bar (MaxEnergy 100)
+            Assert.Greater(costs.Take(4).Sum(), 100f);                     // no 4 fit: no spamming
+        }
+
+        [Test] public void Actives_HaveAStar3Extra()
+        {
+            foreach (var d in Wave1.Where(d => d.Shape != SkillShape.Passive)) Assert.IsNotEmpty(d.Star3, d.Id);
+        }
+
+        [Test] public void StarPower_SmallSteps()
+        {
+            Assert.AreEqual(1f, CaveSkillMath.StarPower(1), 1e-4f);
+            Assert.AreEqual(1.1f, CaveSkillMath.StarPower(2), 1e-4f);
+            Assert.AreEqual(1.2f, CaveSkillMath.StarPower(3), 1e-4f);
+            Assert.AreEqual(1.2f, CaveSkillMath.StarPower(9), 1e-4f);
+            Assert.AreEqual(12f, CaveSkillMath.StarCooldown(12f, 1), 1e-4f);
+            Assert.AreEqual(10.8f, CaveSkillMath.StarCooldown(12f, 3), 1e-4f);
+        }
+
         [Test] public void TierOf_Role()
         {
             Assert.AreEqual(OrganTier.C, CaveSkillMath.TierOf('M'));

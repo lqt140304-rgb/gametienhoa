@@ -25,6 +25,12 @@ namespace Evolve.Abilities
         /// <summary>Cooldown at an organ level (proposed: Lv3 is 25% shorter).</summary>
         public virtual float CooldownFor(int level) => level >= 3 ? Cooldown * 0.75f : Cooldown;
 
+        /// <summary>True when Activate, CooldownFor and EnergyFor take the gene's stars (1..3) instead of the old Lv2/Lv3 scale.</summary>
+        public virtual bool UsesStars => false;
+
+        /// <summary>Energy one use costs at a level (stars for a move that UsesStars).</summary>
+        public virtual float EnergyFor(int level) => EnergyCost;
+
         /// <summary>Effect strength multiplier at an organ level (proposed: Lv3 is 50% stronger).</summary>
         public static float Power(int level) => level >= 3 ? 1.5f : 1f;
     }

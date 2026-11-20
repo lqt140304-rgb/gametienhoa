@@ -7,11 +7,11 @@ namespace Evolve.Swallow
 
     /// <summary>
     /// Rules for turning learned genes into skills (spec 6.1). The slime has no worn organs: passives are always on
-    /// (at most 3, changed only in a shelter); active moves grow their body part only while they are used.
+    /// (at most MaxPassives, changed only in a shelter); active moves grow their body part only while they are used.
     /// </summary>
     public static class SkillRules
     {
-        public const int MaxPassives = 3;
+        public const int MaxPassives = 5;
         public const float SprintCooldown = 10f;
         public const float SprintEnergy = 15f;
         /// <summary>A body part grows out in this long, stays out while the move lasts, and melts back in this long.</summary>

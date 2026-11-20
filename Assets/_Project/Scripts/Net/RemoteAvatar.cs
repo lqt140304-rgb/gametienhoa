@@ -156,7 +156,7 @@ namespace Evolve.Net
                     organs.MirrorOrgan(organ, levels[i]);
                 }
             foreach (var have in organs.OrganList)
-                if (!wanted.Contains(have)) organs.Detach(have.Slot);
+                if (!wanted.Contains(have)) organs.Detach(have);
         }
 
         internal static OrganSO FindOrgan(string name)

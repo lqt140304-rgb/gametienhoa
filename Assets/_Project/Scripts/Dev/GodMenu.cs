@@ -155,7 +155,6 @@ namespace Evolve.DevTools
                     }
                     else
                     {
-                        if (host.GetInSlot(o.Slot) != null) host.Detach(o.Slot);
                         host.TryAttach(o);
                         if (growInstantly) host.DebugGrowAll();
                     }
@@ -168,7 +167,7 @@ namespace Evolve.DevTools
             if (GUILayout.Button("Mọi cơ quan Lv2") && host != null) host.DebugSetLevel(2);
             if (GUILayout.Button("Mọi cơ quan Lv3") && host != null) host.DebugSetLevel(3);
             if (GUILayout.Button("Tháo hết (biến mất)") && host != null)
-                foreach (var o in host.OrganList) host.Detach(o.Slot);
+                foreach (var o in host.OrganList) host.Detach(o);
             GUILayout.EndHorizontal();
             if (GUILayout.Button("Thử luật mất xác: mất hết cơ quan đang gắn") && interactor != null) interactor.DropAllOnDeath();
 

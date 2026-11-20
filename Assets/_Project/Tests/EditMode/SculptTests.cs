@@ -87,14 +87,14 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
-        public void TrySculpt_ReplacesSlot_RefundsOld()
+        public void TrySculpt_SameBodySlot_BothKept()
         {
+            body.SetMass(20f);
             var a = Organ("LegA", OrganTier.B); var b = Organ("LegB", OrganTier.C);
             Learn(a); Learn(b);
-            host.TrySculpt(a, swallower.Book, body, true);          // 10 - 4 = 6
-            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(b, swallower.Book, body, true)); // 6 + 2 - 2 = 6
-            Assert.AreEqual(6f, body.Mass, 1e-4f);
-            Assert.IsTrue(host.Has(b)); Assert.IsFalse(host.Has(a));
+            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(a, swallower.Book, body, true));
+            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(b, swallower.Book, body, true));   // passives fill passive slots, not body slots
+            Assert.IsTrue(host.Has(a)); Assert.IsTrue(host.Has(b));
         }
 
         [Test]
@@ -102,8 +102,8 @@ namespace Evolve.Tests.EditMode
         {
             var o = Organ("Leg", OrganTier.B); Learn(o);
             host.TrySculpt(o, swallower.Book, body, true);           // 6
-            Assert.IsFalse(host.Remove(o.Slot, body, false));
-            Assert.IsTrue(host.Remove(o.Slot, body, true));          // +2
+            Assert.IsFalse(host.Remove(o, body, false));
+            Assert.IsTrue(host.Remove(o, body, true));          // +2
             Assert.AreEqual(8f, body.Mass, 1e-4f);
             Assert.IsTrue(host.Knows(o));
         }
@@ -129,18 +129,17 @@ namespace Evolve.Tests.EditMode
         }
 
         [Test]
-        public void Passives_CapAt3()
+        public void Passives_CapAtMax()
         {
-            body.SetMass(40f);
-            var a = Organ("A", OrganTier.C, OrganSlot.Eyes); var b = Organ("B", OrganTier.C, OrganSlot.Skin);
-            var c = Organ("C", OrganTier.C, OrganSlot.Back); var d = Organ("D", OrganTier.C, OrganSlot.Legs);
-            foreach (var o in new[] { a, b, c, d }) Learn(o);
-            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(a, swallower.Book, body, true));
-            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(b, swallower.Book, body, true));
-            Assert.AreEqual(SculptResult.Ok, host.TrySculpt(c, swallower.Book, body, true));
-            Assert.AreEqual(AttachCheck.NoRoom, host.Check(d));
-            Assert.AreEqual(SculptResult.Blocked, host.TrySculpt(d, swallower.Book, body, true));
-            Assert.AreEqual(34f, body.Mass, 1e-4f);   // the refused fourth cost nothing
+            body.SetMass(60f);
+            var all = new List<OrganSO>();
+            for (int i = 0; i <= SkillRules.MaxPassives; i++) { var o = Organ("P" + i, OrganTier.C); Learn(o); all.Add(o); }
+            for (int i = 0; i < SkillRules.MaxPassives; i++) Assert.AreEqual(SculptResult.Ok, host.TrySculpt(all[i], swallower.Book, body, true));
+            var extra = all[SkillRules.MaxPassives];
+            float mass = body.Mass;
+            Assert.AreEqual(AttachCheck.NoRoom, host.Check(extra));
+            Assert.AreEqual(SculptResult.Blocked, host.TrySculpt(extra, swallower.Book, body, true));
+            Assert.AreEqual(mass, body.Mass, 1e-4f);   // the refused one cost nothing
         }
 
         [Test]

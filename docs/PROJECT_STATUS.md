@@ -643,11 +643,12 @@ Giao việc: mục A của `docs/superpowers/handoff/2026-11-20-core-systems-bri
 - **Móc nhỏ ngoài thư mục A** (mỗi chỗ 1–2 dòng): `SurvivalState.IncomingDamage` (khiên, Thu Mình, Vỏ Cứng lọc đòn), `Prey`/`Predator` đứng yên và không cắn khi bị choáng/đẩy (`CreatureStatus`), `GodMenu` liệt kê gene trong `Resources/CaveSkills`.
 - **Menu** `Evolve → Create Cave Skills` (`Editor/CaveSkillAssets.cs`): tạo/cập nhật `Gene_*`, `Skill_*`, `DropTable_*` trong `Resources/CaveSkills`. Chạy lại không nhân đôi.
 - 147 test thuần xanh (thêm 10 ở `Tests/EditMode/Swallow/Pure/CaveSkillTests.cs`). **Phần Unity chưa biên dịch lần nào.**
+- **Chỉnh theo chủ dự án (đợt 2):** Châm Choáng chỉ choáng, không sát thương; Phát Sáng làm kẻ săn thấy từ xa hơn ×1,5; sao chỉ mạnh hơn chút (★2 +10%, ★3 +20%, hồi chiêu −5%/−10%) và mỗi kỹ năng có một cơ chế nhỏ ở ★3 (`CaveAbility`, trường `Star3*`); bị động **không chiếm ô cơ thể** nữa mà chiếm **5 ô bị động** (`SkillRules.MaxPassives = 5`, `OrganHost` giữ theo gene, bảng Biến Hình hiện 5 ô); năng lượng theo độ mạnh: nhẹ 25, vừa 30, mạnh 35 (đầy thanh 100 đủ 3 kỹ năng, không đủ 4); gene Chúa Hang là A.
 - **Chưa làm / còn chờ:**
   - Sóng Dò Mạnh: số đã có (`OrganHost.SonarRangeMultiplier`) nhưng `World/VibrationSense` (thư mục bên làm hang) cần nhân bán kính quét với số này. Một dòng, cần bên giữ `World/` đồng ý.
   - Tiếng kỹ năng: script `tools/voice/generate_skill_sfx.sh` (9 tiếng, nhẹ, sạch) đã viết; môi trường đám mây này chưa có khóa ElevenLabs nên chưa tạo file. Thiếu file thì im.
   - Gắn `DropTable_*` vào ô `drops` của từng loài trong hang (loài do bên làm hang dựng).
   - Co-op: kỹ năng của client chưa tác động lên sinh vật ở máy chủ (choáng/đẩy chỉ chạy ở máy mô phỏng sinh vật).
-  - Bị động chiếm một ô cơ thể: đá → Lưng, sinh lực → Da, âm ảnh → Mắt, còn lại → Chân. Sóng Dò Mạnh chung ô Mắt với Mắt cũ.
+  - Hình kỹ năng (visual): mới có bụi gai tạm của Cắm Gai và đèn của Phát Sáng.
 
 Checklist: (a) `Evolve → Create Cave Skills` một lần; (b) Console sạch; (c) Play, mở menu thần, bấm "Học chiêu"/"Nhận bị động" từng kỹ năng; (d) Da Dày: máu tối đa +10; Vỏ Cứng: bị cắn mất ít hơn; (e) Thu Mình: đứng im 3 giây, bị cắn mất nửa; (f) Khiên Quặng: cú cắn đầu tiên trong 5 giây không mất máu; (g) Phát Sáng: có đèn quanh slime 10 giây; (h) Lách Né: lách ngang ~2 m; (i) Lưỡi Dài: ngắm con mồi trong 6 m, nó bị kéo về trước mặt và đứng yên chốc lát; (j) Ợ Chấn: sinh vật quanh 4 m bị đẩy văng; (k) Cắm Gai: bụi gai tím ở chân, sinh vật dẫm vào mất máu, 20 giây thì mất; (l) Bám Vách: lao vào vách rồi dùng, slime bò lên; (m) Châm Choáng: con gần nhất trong 2,5 m đứng im 1 giây, không cắn.

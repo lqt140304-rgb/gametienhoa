@@ -79,7 +79,8 @@ namespace Evolve.Abilities
         public int LevelFor(OrganSO organ)
         {
             int stars = Mathf.Max(1, StarsOf(organ));
-            return AbilityFor(organ) is SprintAbility ? stars : SkillRules.AbilityLevel(stars);
+            var ability = AbilityFor(organ);
+            return ability is SprintAbility || ability.UsesStars ? stars : SkillRules.AbilityLevel(stars);
         }
 
         /// <summary>Every learned active move (what the skill menu lists).</summary>
@@ -179,9 +180,9 @@ namespace Evolve.Abilities
                 Fail($"{ability.DisplayName} đang hồi chiêu ({t - Time.time:0.0}s)");
                 return;
             }
-            if (stats.State.Energy < ability.EnergyCost)
+            if (stats.State.Energy < ability.EnergyFor(level))
             {
-                Fail($"thiếu năng lượng cho {ability.DisplayName} ({stats.State.Energy:0}/{ability.EnergyCost:0})");
+                Fail($"thiếu năng lượng cho {ability.DisplayName} ({stats.State.Energy:0}/{ability.EnergyFor(level):0})");
                 return;
             }
             if (pending) { Fail("đang tụ lực"); return; }
@@ -201,9 +202,9 @@ namespace Evolve.Abilities
             if (delay > 0f) yield return new WaitForSeconds(delay);
             pending = false;
             if (stats.State.IsDead) yield break;
-            if (stats.State.Energy < ability.EnergyCost) { Fail($"thiếu năng lượng cho {ability.DisplayName}"); yield break; }
+            if (stats.State.Energy < ability.EnergyFor(level)) { Fail($"thiếu năng lượng cho {ability.DisplayName}"); yield break; }
             if (!ability.Activate(gameObject, level)) { Fail($"{ability.DisplayName} không dùng được lúc này"); yield break; }
-            stats.State.TrySpendEnergy(ability.EnergyCost);
+            stats.State.TrySpendEnergy(ability.EnergyFor(level));
             readyAt[organ] = Time.time + ability.CooldownFor(level);
             FailureReason = "";
             Evolve.Audio.SlimeSfx.Play("skill_" + organ.name.Replace("Gene_", ""));   // cave skills: tools/voice/generate_skill_sfx.sh; others are silent
