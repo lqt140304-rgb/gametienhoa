@@ -48,3 +48,13 @@ Mã đã chạy được bằng tư thế tạm. Trigger đặt theo `<Anim>` c�
 | Cáo Gió, Gió Hú (`Howl`) | 0,9 giây: ngửa đầu hít sâu, lông dựng, ngực nở | 1,2 giây: hú, lông và đuôi tung bay như bị gió thổi | 1,5 giây: gục đầu thở |
 | Cáo Gió, Gọi Bầy (`Roar`) | 1,0 giây: chồm lên, ngửa mặt | 0,1 giây: gầm | 1,5 giây: thở |
 
+## Bổ sung lát 3: Khỉ Hang
+Loài mới, xem `2026-11-20-monkey-species-for-cave-team.md` cho phần loài. Trigger: `Tell_Throw`/`Strike_Throw`/`Recover_Throw` (Ném Đá), `Tell_Attack`/`Strike_Attack`/`Recover_Attack` (Cắn Vặt), `Tell_Perch`/`Strike_Perch` (Nhảy Bục), `Tell_Roar`/`Strike_Roar`/`Recover_Roar` (Hú Báo Động). Khóa loài để tắt tư thế tạm: `khihang`.
+
+| Chiêu | Gồng | Ra đòn | Kiệt sức |
+|---|---|---|---|
+| Ném Đá (`Throw`) | 0,9 giây: ngả người ra sau, một tay giơ cao cầm đá, mắt dán vào người chơi | 0,1 giây: vung tay ném | 1,0 giây: tay thả xuống, thở |
+| Cắn Vặt (`Attack`) | 0,4 giây: cúi thấp, nhe răng | 0,2 giây: vồ tới | 0,8 giây: quay ngoắt **chạy lùi** |
+| Nhảy Bục (`Perch`) | 0,5 giây: cúi xuống, hai chân đạp mạnh | 0,8 giây: bay theo cung lên chỗ cao, tay chân duỗi | không (đứng trên cao ném đá) |
+| Hú Báo Động (`Roar`) | 0,8 giây: ngửa đầu há miệng, hai tay vỗ ngực | 0,1 giây: hú | 1,0 giây: thở |
+

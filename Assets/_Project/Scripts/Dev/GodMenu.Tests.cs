@@ -145,6 +145,7 @@ namespace Evolve.DevTools
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Chồn Khe (rình, 2 con)")) for (int i = 0; i < 2; i++) SpawnTest("Chồn Khe", 16f, 54f, true);
             if (GUILayout.Button("Cáo Gió (Chúa Hang)")) SpawnTest("Cáo Gió", 48f, 155f, true);
+            if (GUILayout.Button("Khỉ Hang (3)")) for (int i = 0; i < 3; i++) SpawnTest("Khỉ Hang", 12f, 40f, true);
             GUILayout.EndHorizontal();
             foreach (var cc in Evolve.Combat.CreatureCombat.All)
                 if (cc != null && (cc.transform.position - player.transform.position).sqrMagnitude < 625f) GUILayout.Label($"  {cc.name.Replace("(Clone)", "")}: {cc.Status}");

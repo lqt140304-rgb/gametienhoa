@@ -839,3 +839,13 @@ Thiết kế: mục "Lát 2" trong `docs/superpowers/specs/2026-11-20-monster-co
 - **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Vầng sáng mắt và vòng băng chưa được xem trong bóng tối của hang. Chồn Khe chỉ rình slime nhỏ hơn khoảng 1,2 lần khối của nó (luật kích cỡ có sẵn).
 - Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H7.
 
+## 57. Chiến đấu của quái, lát 3: Khỉ Hang (đã làm khung, chưa kiểm trong Unity)
+
+Thiết kế: mục "Lát 3" trong `docs/superpowers/specs/2026-11-20-monster-combat-movesets-design.md`. Kế hoạch: `docs/superpowers/plans/2026-11-20-monster-combat-slice3.md`.
+- **Luật thuần có test:** `ThrowRules` (cung ném và nhảy, trúng bán kính), `PerchRules` (chọn bục cao 1,5 đến 3 m, xa người chơi hơn khỉ), bộ lọc `MoveScheduler.Allow`, bộ chiêu `khihang` (Ném Đá, Cắn Vặt, Nhảy Bục, Hú Báo Động), tư thế `Throw`.
+- **Mã Unity:** `MonsterProjectile` (viên đá bay theo cung, trúng thì gây sát thương, tự dọn), `CreatureCombat` thêm Ném Đá, quét tìm bục và nhảy lên theo cung, ở trên chỉ ném đá và hú (tầm ném 16 m), nhảy xuống về chỗ cũ, tự xuống nếu mất mục tiêu quá 3 giây.
+- **Loài mới giao bên làm hang:** `docs/superpowers/handoff/2026-11-20-monkey-species-for-cave-team.md` (mô hình, bộ xương, clip, `SpeciesSO` và prefab, dữ liệu sinh thái cho Vườn Đá Hổ Phách, bảng rơi gene, ánh xạ tầng).
+- **Chưa làm:** khỉ giật đồ trong bụng slime; khỉ leo cây hoặc vách đứng thật (cần điểm leo); loài chưa nằm trong hang nào nên chưa gặp được ngoài menu thần; yếu theo họ kỹ năng; dấu hiệu báo trên máy khách co-op.
+- **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Tìm bục dùng tia từ trên xuống, có thể chọn nhầm chỗ trên bản đồ nhiều gờ nhỏ. Khỉ chưa có trong bảng sinh thái nên `CaveTier.RoleOf` coi nó là con mồi (hệ số kích cỡ và tầng chỉ đúng sau khi bên làm hang thêm loài vào sinh thái như một kẻ săn).
+- Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H8.
+

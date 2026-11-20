@@ -187,6 +187,15 @@ Menu thần (F1), mục Kiểm thử, dòng "Combat quái": nút "Chồn Khe (r�
 - [ ] Chồn ẩn bị choáng hoặc bị hạ gục khi đang ẩn: hình hiện lại, mắt biến mất, không đứng đơ.
 - [ ] Không có lỗi đỏ khi chồn ẩn rồi hiện nhiều lần, hoặc khi cục băng rơi lúc slime đã chết hoặc đã chạy xa.
 
+### H8. Chiến đấu của quái, lát 3: Khỉ Hang (loài mới)
+Menu thần (F1), mục Kiểm thử, dòng "Combat quái": nút "Khỉ Hang (3)" (con thử hình cầu, đặt tên đúng loài). Khỉ Hang chưa có trong dữ liệu sinh thái, mô hình hay prefab: bên làm hang sẽ thêm (xem `docs/superpowers/handoff/2026-11-20-monkey-species-for-cave-team.md`).
+- [ ] **Ném Đá** (cách 5 đến 14 m): khỉ ngả người giơ tay ra sau khoảng 0,9 giây, rồi một viên đá nhỏ nâu bay theo cung tới **chỗ bạn đứng lúc ném**, khoảng 0,9 giây. Đứng yên thì trúng (9 máu), bước sang bên thì tránh được.
+- [ ] **Cắn Vặt** (dưới 2,5 m): cúi người rồi phóng 2 m cắn, sau đó **chạy lùi 4 m**.
+- [ ] **Nhảy Bục:** khi bạn ở trong 6 m và quanh khỉ có bục hoặc gờ đá cao 1,5 đến 3 m (trong 7 m, phía xa bạn hơn): khỉ cúi đạp chân rồi nhảy lên theo cung. Trên đó khoảng 8 giây nó chỉ ném đá (tầm tới 16 m) và hú, không cắn. Rồi nhảy xuống về chỗ cũ. Không có bục thì nó không nhảy, không tốn hồi chiêu.
+- [ ] **Hú Báo Động** (máu dưới 66%): khỉ ngửa đầu hú, các Khỉ Hang trong 30 m kéo tới.
+- [ ] Khỉ bị choáng hoặc bị hạ gục khi đang trên bục: không treo lơ lửng, nhảy xuống hoặc biến mất sạch. Viên đá đang bay mà bạn chết hoặc khỉ bị hủy: viên đá tự biến mất, không lỗi đỏ.
+- [ ] Vồ vào khỉ đang kiệt sức thì được; vồ lúc khỉ ở trên bục (trong 4 m) cũng thử được.
+
 ### I. Chưa làm được, đừng thử
 Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 
