@@ -122,7 +122,8 @@ namespace Evolve.Creatures
                 else if (d < inp.RivalDist) { inp.RivalDist = d; rivalT = h.transform; inp.RivalRatio = h.BodyMass / myMass; inp.HasRival = true; }
             }
 
-            var seek = scavenger ? NearestEdible(pos, CreatureBehaviorRules.ScavengeRange, 0f, out float seekDist) : null;
+            float seekDist = 0f;
+            var seek = scavenger ? NearestEdible(pos, CreatureBehaviorRules.ScavengeRange, 0f, out seekDist) : null;
             if (seek != null) { inp.HasCarcass = true; inp.CarcassDist = seekDist; }
             Carcass guarded = null; Transform intruder = null; bool intruderIsPlayer = false;
             if (guardian)
