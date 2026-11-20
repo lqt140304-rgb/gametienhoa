@@ -114,6 +114,7 @@ namespace Evolve.Traits
 
         public void Tick(float time, float instability)
         {
+            if (sq1 == null || sq2 == null || ring1 == null || backGlow == null) return;
             sq1.localRotation = Quaternion.Euler(0f, 0f, time * 9f);
             sq2.localRotation = Quaternion.Euler(0f, 0f, 45f - time * 9f);
             ring1.localRotation = Quaternion.Euler(0f, 0f, time * 5f);
