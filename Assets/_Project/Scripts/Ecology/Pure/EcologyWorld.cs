@@ -33,6 +33,9 @@ namespace Evolve.Ecology
             if (!lb.Contains(a)) lb.Add(a);
         }
 
+        /// <summary>Forget every tunnel (before laying the real maze's, see MazeEcologyLinks).</summary>
+        public void ClearLinks() => links.Clear();
+
         public IReadOnlyList<string> Neighbours(string id) => links.TryGetValue(id, out var l) ? l : (IReadOnlyList<string>)new string[0];
 
         public void Tick(float minutes)

@@ -167,6 +167,8 @@ namespace Evolve.DevTools
         static void RunEcologySim()
         {
             var w = CaveEcologySeed.Build();
+            var maze = FindAnyObjectByType<Evolve.Maze.MazeWorldManager>();
+            int linked = maze != null && maze.Graph != null ? MazeEcologyLinks.Apply(w, maze.Graph) : -1;   // the real tunnels when a maze is loaded
             var sum = new Dictionary<string, float>(); var min = new Dictionary<string, int>(); var max = new Dictionary<string, int>();
             const int steps = 240;
             for (int i = 0; i < steps; i++)
@@ -181,7 +183,7 @@ namespace Evolve.DevTools
                         max[k] = max.TryGetValue(k, out var b) ? Mathf.Max(b, s.Count) : s.Count;
                     }
             }
-            var sb = new System.Text.StringBuilder("Mô phỏng sinh thái 120 phút (trung bình / ít nhất / nhiều nhất):\n");
+            var sb = new System.Text.StringBuilder($"Mô phỏng sinh thái 120 phút, {(linked < 0 ? "đường nối tạm" : $"đường nối theo mê cung thật ({linked} cặp hang)")} (trung bình / ít nhất / nhiều nhất):\n");
             foreach (var kv in sum.OrderBy(k => k.Key)) sb.AppendLine($"  {kv.Key}: {kv.Value / steps:0.0} / {min[kv.Key]} / {max[kv.Key]}");
             Debug.Log(sb.ToString());
         }
