@@ -196,6 +196,18 @@ Menu thần (F1), mục Kiểm thử, dòng "Combat quái": nút "Khỉ Hang (3)
 - [ ] Khỉ bị choáng hoặc bị hạ gục khi đang trên bục: không treo lơ lửng, nhảy xuống hoặc biến mất sạch. Viên đá đang bay mà bạn chết hoặc khỉ bị hủy: viên đá tự biến mất, không lỗi đỏ.
 - [ ] Vồ vào khỉ đang kiệt sức thì được; vồ lúc khỉ ở trên bục (trong 4 m) cũng thử được.
 
+### Khu thử sạch sẽ (TestArena)
+Menu `Evolve → Build Test Arena` dựng scene `Assets/_Project/Scenes/TestArena.unity`: sàn phẳng 60 m có lưới 3 m, tường cao 5 m bao quanh, ánh sáng sáng đều (không sương mù, không tối, không bộ lọc xám của hang), không có quái sẵn (tạo bằng menu thần F1). Mở scene này rồi bấm Play. Các vật thử:
+- **Đá nhỏ** cao 0,2, 0,3, 0,45, 0,6, 0,9 m, ở phía đông (x từ 5): slime phải bò qua đá thấp, không qua được đá cao.
+- **Tường cao 2 m** phía tây bắc (-8, 6): không leo được.
+- **Dốc 12 độ** phía bắc (0, 15).
+- **Bục cao 1,5 m** (14, -8) và **2,5 m** (-14, -8): chỗ khỉ nhảy lên.
+- **Cầu** cao 3 m phía nam (-10, -20) có khoảng trống bên dưới: thử quái đi dưới cầu không vọt lên.
+- **Tường thấp** màu đỏ (12, -20): thử Bọ Giáp Húc đâm vách thì choáng.
+- **8 cột** quanh vòng bán kính 20 m: chỗ nấp, chỗ Chồn Khe rình.
+- **8 cục thức ăn** quanh slime.
+Slime xuất hiện ở giữa (0, 0). Nhớ đóng F1 trước khi bấm chuột trái để Vồ.
+
 ### I. Chưa làm được, đừng thử
 Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 

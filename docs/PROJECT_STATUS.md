@@ -849,3 +849,7 @@ Thiết kế: mục "Lát 3" trong `docs/superpowers/specs/2026-11-20-monster-co
 - **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Tìm bục dùng tia từ trên xuống, có thể chọn nhầm chỗ trên bản đồ nhiều gờ nhỏ. Khỉ chưa có trong bảng sinh thái nên `CaveTier.RoleOf` coi nó là con mồi (hệ số kích cỡ và tầng chỉ đúng sau khi bên làm hang thêm loài vào sinh thái như một kẻ săn).
 - Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H8.
 
+## 58. Khu thử sạch sẽ (TestArena)
+
+`Editor/TestArenaBuilder.cs`, menu `Evolve → Build Test Arena`: dựng `Scenes/TestArena.unity` (sàn phẳng 60 m có lưới, tường bao, ánh sáng sáng đều, các vật thử đá, tường, dốc, bục, cầu, cột; dùng lại slime, camera, HUD của cảnh thử cũ, bỏ bộ lọc tầm nhìn tối). Không đụng cài đặt build. Danh sách vật thử và vị trí: `docs/TEST_CHECKLIST_UNITY.md` mục "Khu thử sạch sẽ". Chưa chạy trong Unity.
+
