@@ -152,5 +152,18 @@ namespace Evolve.Tests.EditMode
             for (float t = 0f; t < 2.0f; t += Dt) s.Update(Dt, true, 3f, 1f);   // the whole cycle has run; the move's 2.5 s cooldown still holds it
             Assert.AreEqual(MovePhase.Idle, s.Phase);
         }
+
+        [Test] public void Allow_FiltersOutMoves()
+        {
+            var s = new MoveScheduler(new[] { L("A", 0f), L("B", 0f) }, 1) { Allow = m => m.Name != "B" };
+            CollectionAssert.DoesNotContain(Run(s, 30f, 3f), "B");
+        }
+
+        [Test] public void Allow_Null_ChangesNothing()
+        {
+            var s = new MoveScheduler(new[] { L() }, 1);
+            Assert.IsNull(s.Allow);
+            Assert.AreEqual(1, Run(s, 3f, 3f).Count);
+        }
     }
 }

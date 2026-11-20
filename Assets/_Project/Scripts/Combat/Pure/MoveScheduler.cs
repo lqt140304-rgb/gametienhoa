@@ -41,6 +41,8 @@ namespace Evolve.Combat
         public float PhaseTime { get; private set; }
         /// <summary>Multiplies the windup time (the start cavern gives the player longer to read the tell).</summary>
         public float TellScale { get; set; } = 1f;
+        /// <summary>Optional filter: a move for which this returns false is never picked (e.g. a perch jump when there is no ledge).</summary>
+        public Func<MoveDef, bool> Allow;
 
         public MoveScheduler(IReadOnlyList<MoveDef> moves, int seed)
         {
@@ -108,7 +110,7 @@ namespace Evolve.Combat
             for (int i = 0; i < moves.Count; i++)
             {
                 var m = moves[i];
-                if (cooldownLeft[i] > 0f || health01 > m.UnlockBelow + Eps || distance < m.MinRange || distance > m.MaxRange) continue;
+                if (cooldownLeft[i] > 0f || health01 > m.UnlockBelow + Eps || distance < m.MinRange || distance > m.MaxRange || (Allow != null && !Allow(m))) continue;
                 ok.Add(i);
             }
             if (ok.Count == 0) return null;
