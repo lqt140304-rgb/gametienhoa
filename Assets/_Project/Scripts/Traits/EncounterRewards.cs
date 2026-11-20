@@ -54,8 +54,11 @@ namespace Evolve.Traits
 
         static int Seed(int seed) => seed != 0 ? seed : Random.Range(1, int.MaxValue);
 
+        /// <summary>The cave team's call: minRarity 0 = Thường, 1 = Hiếm, 2 = Quý, 3 = Huyền thoại. (Their bridge finds this by name and argument count: keep one method with these two parameters.)</summary>
+        public static string GrantGene(GameObject player, int minRarity) => GrantGene(player, (GeneRarity)Mathf.Clamp(minRarity, 0, 3), 0);
+
         /// <summary>Teaches a gene the player does not know yet, of at least this rarity. Returns its name, or null when none is left (then give mass instead).</summary>
-        public static string GrantGene(GameObject player, GeneRarity minRarity, int seed = 0)
+        public static string GrantGene(GameObject player, GeneRarity minRarity, int seed)
         {
             if (!IsLocal(player) || !player.TryGetComponent(out Swallower swallower)) return null;
             var all = AllGenes();
@@ -133,10 +136,24 @@ namespace Evolve.Traits
         }
 
         /// <summary>Unlocks a special slime colour for good (<see cref="ColorUnlocks.Rainbow"/>): it shows in the colour menu (F3). True when new.</summary>
-        public static bool UnlockColor(GameObject player, string colorId) => IsLocal(player) && SlimeColor.Unlock(colorId);
+        public static bool UnlockFinish(GameObject player, string finishId) => IsLocal(player) && SlimeColor.Unlock(finishId);
+
+        /// <summary>
+        /// The cave team's call (Cầu Vồng Trong Thân passes the colour): a plain colour is already free with the F3 sliders, so what is unlocked is the
+        /// Cầu Vồng finish. (Their bridge finds this by name and argument count: keep one method with these two parameters.)
+        /// </summary>
+        public static bool UnlockColor(GameObject player, Color color) => UnlockFinish(player, ColorUnlocks.Rainbow);
+
+        /// <summary>The cave team's call: item names. Each becomes a small item in the Túi. (Their bridge finds this by name and argument count: keep one method with these two parameters.)</summary>
+        public static bool GiveStomachItems(GameObject player, string[] items)
+        {
+            var list = new List<EncounterItem>();
+            if (items != null) foreach (var label in items) list.Add(new EncounterItem { Label = label, Mass = 0.5f, Nutrition = 5f, Food = FoodKind.PreyMeat });
+            return GiveItems(player, list) > 0;
+        }
 
         /// <summary>Puts things in the Túi; returns how many fitted (the rest are lost: the Túi was full).</summary>
-        public static int GiveStomachItems(GameObject player, IEnumerable<EncounterItem> items)
+        public static int GiveItems(GameObject player, IEnumerable<EncounterItem> items)
         {
             if (!IsLocal(player) || items == null || !player.TryGetComponent(out Swallower swallower)) return 0;
             int added = 0;

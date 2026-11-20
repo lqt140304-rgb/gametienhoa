@@ -72,7 +72,7 @@ namespace Evolve.Ecology
         static System.Collections.Generic.Dictionary<string, string> idByName;
         static EcologyWorld reference;
 
-        static string Normalize(string name) => name == null ? "" : name.Replace("(Clone)", "").Trim().ToLowerInvariant();
+        static string Normalize(string name) => Evolve.Creatures.SpeciesNames.Key(name);   // "Thằn Lằn Bờ Hồ" and the prefab name "ThanLanBoHo" are the same species
 
         static System.Collections.Generic.Dictionary<string, string> Names()
         {

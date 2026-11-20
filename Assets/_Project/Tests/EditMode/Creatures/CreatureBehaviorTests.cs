@@ -106,6 +106,8 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual("coc_ho_gia", CaveEcologySeed.IdByName("Cóc Hồ Già (Clone)"));
             Assert.AreEqual("bo_canh_cung", CaveEcologySeed.IdByName("bọ cánh cứng nhỏ"));
             Assert.AreEqual("Chó Xương", CaveEcologySeed.NameOfId("cho_xuong"));
+            Assert.AreEqual("tham_lan_bo_ho", CaveEcologySeed.IdByName("ThanLanBoHo"));          // prefab name written without accents
+            Assert.AreEqual("cho_xuong", CaveEcologySeed.IdByName("ChoXuong(Clone)"));
             Assert.IsNull(CaveEcologySeed.IdByName("Con Gì Đó"));
             CollectionAssert.AreEquivalent(new[] { "Thằn Lằn Bờ Hồ", "Bọ Cánh Cứng Nhỏ" }, CaveEcologySeed.DietSpeciesNames("coc_ho_gia"));   // Cóc eats both
             CollectionAssert.AreEquivalent(new[] { "Tắc Kè Đá" }, CaveEcologySeed.DietSpeciesNames("slime_da"));

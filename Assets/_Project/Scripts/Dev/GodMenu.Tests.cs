@@ -104,7 +104,7 @@ namespace Evolve.DevTools
             // ---- rewards ----
             GUILayout.Label("Phần thưởng kỳ ngộ (EncounterRewards)");
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Gene Hiếm+")) testNotice = "Gene: " + (EncounterRewards.GrantGene(go, GeneRarity.Rare) ?? "không còn gene nào");
+            if (GUILayout.Button("Gene Hiếm+")) testNotice = "Gene: " + (EncounterRewards.GrantGene(go, (int)GeneRarity.Rare) ?? "không còn gene nào");
             if (GUILayout.Button("Gene Lạ")) testNotice = "Gene riêng: " + (EncounterRewards.GrantUniqueGene(go, "gene_la") ?? "không có (chạy Evolve → Create Encounter Genes) hoặc đã biết");
             if (GUILayout.Button("Gene Cổ")) testNotice = "Gene riêng: " + (EncounterRewards.GrantUniqueGene(go, "gene_loai_co") ?? "không có hoặc đã biết");
             GUILayout.EndHorizontal();
@@ -115,7 +115,7 @@ namespace Evolve.DevTools
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Lõi mạnh lên")) testNotice = EncounterRewards.BoostCore(go) ? "Lõi mạnh lên" : "đã tối đa hoặc không có Lõi";
-            if (GUILayout.Button("Mở màu Cầu Vồng")) testNotice = EncounterRewards.UnlockColor(go, ColorUnlocks.Rainbow) ? "Đã mở khóa Cầu Vồng (F3 để bật)" : "đã mở từ trước";
+            if (GUILayout.Button("Mở màu Cầu Vồng")) testNotice = EncounterRewards.UnlockFinish(go, ColorUnlocks.Rainbow) ? "Đã mở khóa Cầu Vồng (F3 để bật)" : "đã mở từ trước";
             if (GUILayout.Button("Câu Tiếng Vọng")) EncounterRewards.Say("«Thử: Tiếng Vọng nói một câu.»");
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
@@ -124,7 +124,7 @@ namespace Evolve.DevTools
             if (GUILayout.Button("Hồi đầy")) testNotice = EncounterRewards.RefillStats(go) ? "đã hồi đầy" : "không được";
             GUILayout.EndHorizontal();
             if (GUILayout.Button("Bỏ 2 món vào Túi"))
-                testNotice = $"Vào Túi: {EncounterRewards.GiveStomachItems(go, new[] { new EncounterItem { Label = "Mẩu xương cũ", Mass = 1f, Nutrition = 10f, Food = FoodKind.PreyMeat }, new EncounterItem { Label = "Hạt lạ", Mass = 0.5f, Nutrition = 5f, Food = FoodKind.PreyMeat } })} món";
+                testNotice = $"Vào Túi: {EncounterRewards.GiveItems(go, new[] { new EncounterItem { Label = "Mẩu xương cũ", Mass = 1f, Nutrition = 10f, Food = FoodKind.PreyMeat }, new EncounterItem { Label = "Hạt lạ", Mass = 0.5f, Nutrition = 5f, Food = FoodKind.PreyMeat } })} món";
 
             // ---- ecosystem ----
             if (GUILayout.Button("Mô phỏng sinh thái 2 giờ chơi (kết quả ở Console)")) RunEcologySim();

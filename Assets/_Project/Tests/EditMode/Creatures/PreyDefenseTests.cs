@@ -46,6 +46,9 @@ namespace Evolve.Tests.EditMode
         {
             Assert.AreEqual("oc_ho", PreyDefenseSeed.FindBySpecies("Ốc Hồ (Clone)").Id);
             Assert.AreEqual("tho_la", PreyDefenseSeed.FindBySpecies(" thỏ lá ").Id);
+            Assert.AreEqual("oc_ho", PreyDefenseSeed.FindBySpecies("OcHo").Id);               // the cave team's prefab names: PascalCase, no accents
+            Assert.AreEqual("tho_la", PreyDefenseSeed.FindBySpecies("ThoLa(Clone)").Id);
+            Assert.AreEqual("bo_canh_cung", PreyDefenseSeed.FindBySpecies("BoCanhCungNho (1)").Id);
             Assert.IsNull(PreyDefenseSeed.FindBySpecies("Cóc Hồ Già"));
             Assert.IsNull(PreyDefenseSeed.FindBySpecies(null));
         }

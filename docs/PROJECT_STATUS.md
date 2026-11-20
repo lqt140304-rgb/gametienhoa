@@ -730,3 +730,10 @@ Checklist (khi vào được Unity): (a) Console sạch; (b) `Evolve → Create 
 ## 47. Nhánh gộp để thử trong Unity
 
 `claude/unity-test` gộp mọi nhánh (kỹ năng hang và hình ảnh, phần thưởng kỳ ngộ, phòng vệ con mồi, hệ sinh thái B1 và B2). Hướng dẫn kéo nhánh, các menu cần chạy và danh sách kiểm thử: `docs/TEST_CHECKLIST_UNITY.md`. Menu thần (F1) có thêm mục "Kiểm thử": đặt khối slime, học kỹ năng ★1/★3, tạo sinh vật thử đúng tên loài, tạo xác, gọi từng phần thưởng kỳ ngộ, chạy mô phỏng sinh thái.
+
+## 48. Đối chiếu với việc của bên làm hang (nhánh `maze-step3`)
+
+Bên làm hang (Antigravity) làm trên nhánh `maze-step3` (43 commit từ 2026-11-19): mê cung 12–16 khoang chia 3 tầng, hang trú, vách và địa hình, kỳ ngộ và bẫy, 8 hang đầu (Khởi Sinh, Vườn Quặng, Vực Nứt Tím, Rêu Thở, Tổ Bỏ Hoang, Nấm Huỳnh Quang, Suối Nước Nóng, Khe Gió Hú) với **32 sinh vật có mô hình, khung xương và hoạt hình** (chớp mắt, hàm, lưỡi, đuôi), `SpeciesSO` và prefab `Prey`/`Predator`, giao diện hỏi hang kề `IMazeAdjacency`, `MazeGodPanel` (F1) có dịch chuyển, tạo 32 sinh vật và thử hoạt hình. **Chưa có:** tầng Sâu (Nghĩa Địa Cự Thú, Hóa Thạch Slime Cổ, Hang Tiếng Thở, Khoang Phong Ấn: 12 sinh vật nữa), `drops` còn để trống.
+- Các nhánh của phần lõi (`claude/unity-test` và các nhánh gộp vào) **chưa chứa** nhánh `maze-step3`. Hai bên cùng sửa `Dev/GodMenu.cs` và `tools/cstest/cstest.csproj` nên khi gộp sẽ có xung đột nhỏ ở hai file này.
+- Đã khớp để hai bên chạy được cùng nhau: (1) cầu nối `EncounterRewardBridge` gọi `EncounterRewards` đúng chữ ký (`UnlockColor(GameObject, Color)`, `GrantGene(GameObject, int)`, `GiveStomachItems(GameObject, string[])`), có test giữ; (2) `PreyDefense`, `CreatureBrain` nhận tên prefab kiểu `ThanLanBoHo` (không dấu) lẫn tên hiển thị.
+- **Việc kế tiếp khi gộp:** nối `IMazeAdjacency` vào `EcologyWorld.Link` thay bảng nối tạm; điền `SpeciesSO.EscapeChance` từ `PreyDefenseSeed`; gắn `CreatureBrain` và `PreyDefense` vào prefab của họ (nên làm bằng một menu chạy lại được); xem lại `bodyMass`/máu mà họ đã đặt cho từng loài so với các ngưỡng kích cỡ slime.

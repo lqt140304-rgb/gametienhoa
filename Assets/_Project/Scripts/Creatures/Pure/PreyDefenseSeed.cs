@@ -63,12 +63,12 @@ namespace Evolve.Creatures
             return d;
         }
 
-        /// <summary>The defence of a species by its display name (a prefab named "Ốc Hồ", "Ốc Hồ (Clone)"), or null.</summary>
+        /// <summary>The defence of a species by its name in any spelling ("Ốc Hồ", "OcHo", "OcHo(Clone)"), or null.</summary>
         public static PreyDefenseDef FindBySpecies(string name)
         {
-            if (string.IsNullOrEmpty(name)) return null;
-            name = name.Replace("(Clone)", "").Trim();
-            foreach (var d in All) if (string.Equals(d.Species, name, System.StringComparison.OrdinalIgnoreCase)) return d;
+            string key = SpeciesNames.Key(name);
+            if (key.Length == 0) return null;
+            foreach (var d in All) if (SpeciesNames.Key(d.Species) == key) return d;
             return null;
         }
 
