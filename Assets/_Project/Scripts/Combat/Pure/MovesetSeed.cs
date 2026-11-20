@@ -33,6 +33,14 @@ namespace Evolve.Combat
             // Chồn Khe: hides, bursts out, bites from afar and runs (hit and run)
             weaselLeap = new MoveDef { Name = "Vồ Xa", Shape = MoveShape.Lunge, Windup = 0.35f, Active = 0.5f, Recover = 1.5f, Cooldown = 4f, MinRange = 3f, MaxRange = 9f, Distance = 8f, Damage = 16f, RetreatDistance = 6f, Anim = "Attack" };
             sets["chonkhe"] = new[] { weaselLeap };
+            // Khỉ Hang (a new species): throws rocks on an arc, bites and backs off, leaps up to a ledge to throw from above, calls the troop
+            sets["khihang"] = new[]
+            {
+                new MoveDef { Name = "Ném Đá", Shape = MoveShape.Throw, Windup = 0.9f, Active = 0.1f, Recover = 1.0f, Cooldown = 3f, MinRange = 5f, MaxRange = 14f, FlightSeconds = 0.9f, Damage = 9f, Anim = "Throw" },
+                new MoveDef { Name = "Cắn Vặt", Shape = MoveShape.Lunge, Windup = 0.4f, Active = 0.2f, Recover = 0.8f, Cooldown = 2f, MinRange = 0f, MaxRange = 2.5f, Distance = 2f, Damage = 8f, RetreatDistance = 4f, Anim = "Attack" },
+                new MoveDef { Name = "Nhảy Bục", Shape = MoveShape.Perch, Windup = 0.5f, Active = 0.8f, Recover = 0f, Cooldown = 15f, MinRange = 0f, MaxRange = 6f, Distance = 7f, MinHeight = 1.5f, MaxHeight = 3f, PerchSeconds = 8f, Anim = "Perch" },
+                new MoveDef { Name = "Hú Báo Động", Shape = MoveShape.Call, Windup = 0.8f, Active = 0.1f, Recover = 1.0f, Cooldown = 20f, MinRange = 0f, MaxRange = 30f, Radius = 30f, TargetSpecies = SpeciesNames.Key("Khỉ Hang"), UnlockBelow = 0.66f, Anim = "Roar" },
+            };
             // Cáo Gió (cave lord): bite, falling ice, wind, then calls the weasels
             sets["caogio"] = new[]
             {
@@ -72,6 +80,8 @@ namespace Evolve.Combat
                 case MoveShape.Drain: return PoseKind.Hover;
                 case MoveShape.Spin: return PoseKind.Spin;
                 case MoveShape.IceDrop: return PoseKind.Cast;
+                case MoveShape.Throw: return PoseKind.Throw;
+                case MoveShape.Perch: return PoseKind.Crouch;
                 case MoveShape.Gust: return PoseKind.Roar;
                 default: return PoseKind.Roar;
             }

@@ -104,5 +104,43 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(PoseKind.Cast, MovesetSeed.PoseOf(One("CaoGio", "Băng Rơi")));
             Assert.AreEqual(PoseKind.Roar, MovesetSeed.PoseOf(One("CaoGio", "Gió Hú")));
         }
+
+        [Test] public void Monkey_Seed_ByAnyName()
+        {
+            foreach (var n in new[] { "Khỉ Hang", "KhiHang(Clone)" })
+                CollectionAssert.AreEqual(new[] { "Ném Đá", "Cắn Vặt", "Nhảy Bục", "Hú Báo Động" }, MovesetSeed.For(n).Select(m => m.Name).ToArray());
+        }
+
+        [Test] public void Monkey_Numbers_MatchTheSpec()
+        {
+            var rock = One("KhiHang", "Ném Đá"); var bite = One("KhiHang", "Cắn Vặt"); var perch = One("KhiHang", "Nhảy Bục"); var alarm = One("KhiHang", "Hú Báo Động");
+            Assert.AreEqual(MoveShape.Throw, rock.Shape);
+            Assert.AreEqual(0.9f, rock.Windup); Assert.AreEqual(0.1f, rock.Active); Assert.AreEqual(1.0f, rock.Recover); Assert.AreEqual(3f, rock.Cooldown);
+            Assert.AreEqual(5f, rock.MinRange); Assert.AreEqual(14f, rock.MaxRange); Assert.AreEqual(0.9f, rock.FlightSeconds); Assert.AreEqual(9f, rock.Damage);
+            Assert.AreEqual(0.4f, bite.Windup); Assert.AreEqual(0.2f, bite.Active); Assert.AreEqual(0.8f, bite.Recover); Assert.AreEqual(2f, bite.Distance);
+            Assert.AreEqual(8f, bite.Damage); Assert.AreEqual(2.5f, bite.MaxRange); Assert.AreEqual(4f, bite.RetreatDistance); Assert.AreEqual(2f, bite.Cooldown);
+            Assert.AreEqual(MoveShape.Perch, perch.Shape);
+            Assert.AreEqual(0.5f, perch.Windup); Assert.AreEqual(0.8f, perch.Active); Assert.AreEqual(8f, perch.PerchSeconds); Assert.AreEqual(1.5f, perch.MinHeight);
+            Assert.AreEqual(3f, perch.MaxHeight); Assert.AreEqual(7f, perch.Distance); Assert.AreEqual(6f, perch.MaxRange); Assert.AreEqual(15f, perch.Cooldown);
+            Assert.AreEqual(0.8f, alarm.Windup); Assert.AreEqual(0.1f, alarm.Active); Assert.AreEqual(1.0f, alarm.Recover); Assert.AreEqual(30f, alarm.Radius);
+            Assert.AreEqual(0.66f, alarm.UnlockBelow); Assert.AreEqual(20f, alarm.Cooldown); Assert.AreEqual(SpeciesNames.Key("Khỉ Hang"), alarm.TargetSpecies);
+        }
+
+        [Test] public void PoseOf_ThrowAndPerch()
+        {
+            Assert.AreEqual(PoseKind.Throw, MovesetSeed.PoseOf(One("KhiHang", "Ném Đá")));
+            Assert.AreEqual(PoseKind.Crouch, MovesetSeed.PoseOf(One("KhiHang", "Nhảy Bục")));
+        }
+
+        [Test] public void Throw_RangeGate_FiveToFourteen()
+        {
+            var rock = One("KhiHang", "Ném Đá");
+            foreach (var (dist, starts) in new[] { (3f, false), (8f, true), (15f, false) })
+            {
+                var sched = new MoveScheduler(new[] { rock }, 1); bool started = false;
+                for (float t = 0f; t < 2f; t += 0.05f) { sched.Update(0.05f, true, dist, 1f); started |= sched.Busy; }
+                Assert.AreEqual(starts, started, "distance " + dist);
+            }
+        }
     }
 }

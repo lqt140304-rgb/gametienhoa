@@ -2,7 +2,7 @@ using System;
 
 namespace Evolve.Combat
 {
-    public enum PoseKind { Crouch, HornDown, Withdraw, Hover, Spin, Roar, Cast }
+    public enum PoseKind { Crouch, HornDown, Withdraw, Hover, Spin, Roar, Cast, Throw }
 
     /// <summary>A body pose as offsets from the creature's normal shape: scale per axis, nose pitch, a small shift, and a shake strength.</summary>
     public struct Pose
@@ -36,6 +36,7 @@ namespace Evolve.Combat
                 case PoseKind.Hover: p.ScaleX = 0.95f; p.ScaleY = 1.15f; p.ScaleZ = 0.95f; p.PitchDeg = -10f; p.OffsetY = 0.5f; p.Shake = 0.3f; break;   // up and quivering
                 case PoseKind.Spin: p.ScaleX = 1.1f; p.ScaleY = 0.85f; p.ScaleZ = 1.1f; p.Shake = 1f; break;
                 case PoseKind.Cast: p.ScaleY = 1.15f; p.PitchDeg = -12f; p.OffsetY = 0.2f; p.Shake = 0.4f; break;                          // raises a paw, casting
+                case PoseKind.Throw: p.ScaleY = 1.15f; p.PitchDeg = -20f; p.OffsetZ = -0.15f; p.Shake = 0.2f; break;                        // arm cocked back, leaning away
                 case PoseKind.Roar: p.ScaleY = 1.2f; p.ScaleZ = 1.1f; p.PitchDeg = -15f; p.Shake = 0.5f; break;                             // rears up
             }
             return p;
