@@ -11,7 +11,7 @@ namespace Evolve.Maze
     {
         public const int MinChambers = 12;
         public const int MaxChambers = 16;
-        public const int DefaultChambers = 14;
+        public const int DefaultChambers = 18;
 
         public static MazeGraph Generate(int seed, int chamberCount = DefaultChambers)
         {
