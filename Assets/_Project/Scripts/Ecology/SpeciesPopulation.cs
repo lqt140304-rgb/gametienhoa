@@ -13,6 +13,8 @@ namespace Evolve.Ecology
         /// <summary>null = eats region food.</summary>
         public string PreyId;
         public float KillsPerHeadPerMinute;
+        /// <summary>Share of hunts on this species that fail because it escapes (0..0.95); see Creatures/Pure/PreyDefenseSeed.</summary>
+        public float EscapeChance;
 
         // Fractional accumulators (floored when they reach a whole number).
         /// <summary>Set during Tick; whether the species had enough food/prey for births.</summary>

@@ -29,5 +29,11 @@
     <Compile Include="../../Assets/_Project/Tests/EditMode/DeathLossRulesTests.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Traits/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/BodySizeTests.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Creatures/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/Creatures/*.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Ecology/SpeciesPopulation.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Ecology/RegionPopulation.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Ecology/PopulationCap.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/RegionPopulationTests.cs" />
   </ItemGroup>
 </Project>

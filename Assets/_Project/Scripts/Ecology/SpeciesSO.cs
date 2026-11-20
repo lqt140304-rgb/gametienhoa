@@ -16,5 +16,7 @@ namespace Evolve.Ecology
         [Tooltip("null = eats region food")]
         public SpeciesSO Prey;
         public float KillsPerHeadPerMinute;
+        [Tooltip("Share of hunts on it that fail (its defence, see PreyDefenseSeed)")]
+        [Range(0, 0.95f)] public float EscapeChance;
     }
 }

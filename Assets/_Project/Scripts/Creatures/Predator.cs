@@ -63,6 +63,7 @@ namespace Evolve.Creatures
         public bool IsChasing => target != null;
         public bool IsTired => Time.time < tiredUntil;
         public float MaxHealth => maxHealth;
+        public float BodyMass => bodyMass;
 
         float netFraction = 1f, predictedFraction = 1f, predictedUntil;
 
@@ -100,7 +101,7 @@ namespace Evolve.Creatures
         Rigidbody rb;
         SurvivalStats target;
         Vector3 wanderDir;
-        float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite;
+        float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite, blindUntil;
         bool dead;
 
         float groundOffset;
@@ -161,7 +162,7 @@ namespace Evolve.Creatures
 
             if (dir.sqrMagnitude > 0.001f && speed > 0f)
             {
-                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Time.fixedDeltaTime, groundOffset));
+                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject) * Time.fixedDeltaTime, groundOffset));
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
             }
 
@@ -191,9 +192,19 @@ namespace Evolve.Creatures
             }
         }
 
+        /// <summary>Prey defence (flash, smoke, hiding): drop the target and ignore everyone for a while.</summary>
+        public void LoseTarget(float seconds) { target = null; blindUntil = Mathf.Max(blindUntil, Time.time + seconds); }
+
+        /// <summary>A prey called for help (Chim Non): go for this player.</summary>
+        public void Provoke(SurvivalStats player)
+        {
+            if (dead || IsReplica || Passive || player == null || player.State.IsDead || Time.time < blindUntil) return;
+            target = player;
+        }
+
         void UpdateTarget(Vector3 pos)
         {
-            if (Passive) { target = null; return; }
+            if (Passive || Time.time < blindUntil) { target = null; return; }
             if (target != null)
             {
                 if (target.State.IsDead || Vector3.Distance(pos, target.transform.position) > loseRadius

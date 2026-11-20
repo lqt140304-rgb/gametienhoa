@@ -15,6 +15,7 @@ namespace Evolve.Abilities
         const float GrowSeconds = 0.22f, Stagger = 0.04f, MeltSeconds = 0.8f;
 
         float radius, damage, stun, born, until;
+        bool hostile;
         SurvivalStats owner;
         Color tint;
         Material mat;
@@ -22,12 +23,13 @@ namespace Evolve.Abilities
         Vector3[] fullSize;
         readonly HashSet<Component> hurt = new HashSet<Component>();
 
-        public static SpikeTrap Spawn(Vector3 at, float radius, float damage, float seconds, float stun, SurvivalStats owner, Color tint)
+        /// <param name="hostile">A creature laid it: it hurts players too (a slime's own trap never does).</param>
+        public static SpikeTrap Spawn(Vector3 at, float radius, float damage, float seconds, float stun, SurvivalStats owner, Color tint, bool hostile = false)
         {
             var go = new GameObject("SpikeTrap");
             go.transform.position = at;
             var trap = go.AddComponent<SpikeTrap>();
-            trap.radius = radius; trap.damage = damage; trap.stun = stun; trap.owner = owner; trap.tint = tint;
+            trap.radius = radius; trap.damage = damage; trap.stun = stun; trap.owner = owner; trap.tint = tint; trap.hostile = hostile;
             trap.born = Time.time; trap.until = Time.time + seconds;
             trap.mat = SkillFx.Gel(tint, 0.3f, 1.4f, 1.8f);
 
@@ -78,6 +80,17 @@ namespace Evolve.Abilities
             Vector3 c = transform.position;
             foreach (var p in Predator.Active) Check(p, c);
             foreach (var p in Prey.Active) Check(p, c);
+            if (hostile) foreach (var p in SurvivalStats.All) CheckPlayer(p, c);
+        }
+
+        void CheckPlayer(SurvivalStats p, Vector3 c)
+        {
+            if (p == null || p.IsRemote || p.State.IsDead || hurt.Contains(p)) return;
+            Vector3 d = p.transform.position - c; d.y = 0f;
+            if (d.sqrMagnitude > radius * radius) return;
+            hurt.Add(p);
+            SkillFx.Burst(p.transform.position + Vector3.up * 0.2f, tint, 10, 2.5f, 0.12f, 0.5f, 0.6f, 0.2f);
+            p.State.Damage(damage);
         }
 
         void OnDestroy() { if (mat != null) Destroy(mat); }

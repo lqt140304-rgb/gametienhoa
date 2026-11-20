@@ -14,7 +14,7 @@ namespace Evolve.Abilities
     {
         const float ClimbSpeed = 3f, WallReach = 0.9f;
 
-        float damageUntil, rootUntil, shieldUntil, lightUntil, climbUntil, nextFlash, nextChip;
+        float damageUntil, rootUntil, shieldUntil, lightUntil, climbUntil, nextFlash, nextChip, slowUntil, slowFraction;
         float damageMultiplier = 1f;
         int shieldCharges;
         Light glow;
@@ -82,6 +82,12 @@ namespace Evolve.Abilities
         public void Root(float seconds) => rootUntil = Time.time + seconds;
         public void Shield(int hits, float seconds) { shieldCharges = hits; shieldUntil = Time.time + seconds; }
         public void Climb(float seconds) => climbUntil = Time.time + seconds;
+        /// <summary>Slowed by a creature's defence (a slime puddle, a numbing bite). shortcut: damps the speed each physics step; tune the 0.08 when it is seen in play.</summary>
+        public void Slow(float fraction, float seconds)
+        {
+            slowFraction = Mathf.Clamp(fraction, 0f, 0.9f);
+            slowUntil = Time.time + seconds;
+        }
 
         public void Glow(float range, float seconds)
         {
@@ -123,6 +129,11 @@ namespace Evolve.Abilities
             if (flat.sqrMagnitude > 0.04f) lastMoveDir = flat.normalized;
 
             if (Time.time < rootUntil) rb.linearVelocity = new Vector3(0f, Mathf.Min(0f, v.y), 0f);
+            else if (Time.time < slowUntil)
+            {
+                float k = 1f - slowFraction * 0.08f;
+                rb.linearVelocity = new Vector3(v.x * k, v.y, v.z * k);
+            }
 
             // Bám Vách: pushing against a wall while the skill runs walks the body up it.
             if (Climbing && lastMoveDir != Vector3.zero

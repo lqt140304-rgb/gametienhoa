@@ -93,5 +93,29 @@ namespace Evolve.Tests.EditMode
             Assert.IsTrue(PopulationCap.TryReserve());
             Assert.AreEqual(PopulationCap.Max, PopulationCap.Embodied);
         }
+
+        [Test]
+        public void PreyThatEscape_AreCaughtLessOften()
+        {
+            var plain = Region(0f);
+            var preyA = plain.Add(new SpeciesPopulation { Id = "prey", Count = 100, Capacity = 200 });
+            plain.Add(new SpeciesPopulation { Id = "pred", Count = 5, Capacity = 5, PreyId = "prey", KillsPerHeadPerMinute = 2f });
+            var brave = Region(0f);
+            var preyB = brave.Add(new SpeciesPopulation { Id = "prey", Count = 100, Capacity = 200, EscapeChance = 0.5f });
+            brave.Add(new SpeciesPopulation { Id = "pred", Count = 5, Capacity = 5, PreyId = "prey", KillsPerHeadPerMinute = 2f });
+            plain.Tick(1f); brave.Tick(1f);
+            Assert.AreEqual(90, preyA.Count);   // 5 hunters x 2 kills
+            Assert.AreEqual(95, preyB.Count);   // half of the hunts fail
+        }
+
+        [Test]
+        public void EscapeChance_NeverMakesPreyUntouchable()
+        {
+            var r = Region(0f);
+            var prey = r.Add(new SpeciesPopulation { Id = "prey", Count = 100, Capacity = 200, EscapeChance = 5f });
+            r.Add(new SpeciesPopulation { Id = "pred", Count = 10, Capacity = 10, PreyId = "prey", KillsPerHeadPerMinute = 10f });
+            r.Tick(10f);
+            Assert.Less(prey.Count, 100);   // capped at 95% escapes
+        }
     }
 }

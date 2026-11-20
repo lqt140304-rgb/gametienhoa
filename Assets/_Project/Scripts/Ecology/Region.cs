@@ -54,6 +54,7 @@ namespace Evolve.Ecology
                     FoodPerHeadPerMinute = so.FoodPerHeadPerMinute,
                     PreyId = so.Prey != null ? so.Prey.Id : null,
                     KillsPerHeadPerMinute = so.KillsPerHeadPerMinute,
+                    EscapeChance = so.EscapeChance,
                 }));
             }
             RecountDens();

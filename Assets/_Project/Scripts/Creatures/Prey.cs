@@ -40,6 +40,27 @@ namespace Evolve.Creatures
         public bool IsTired => tiredUntil > Time.time;
         public float Health { get; private set; }
         public float MaxHealth => maxHealth;
+        public float BodyMass => bodyMass;
+
+        // ---- defence hooks (PreyDefense sets them) ----
+        /// <summary>Speed multiplier while it runs (a skill).</summary>
+        public float Boost { get; set; } = 1f;
+        /// <summary>Until this time it flees from a threat at any distance.</summary>
+        public float ForceFleeUntil { get; set; }
+        public bool Zigzag { get; set; }
+        /// <summary>No vibration pulse while it flees (Bướm Đêm).</summary>
+        public bool Silent { get; set; }
+        /// <summary>Damage taken as a share (0.5 = half) while it guards.</summary>
+        public float DamageTakenMultiplier { get; set; } = 1f;
+        /// <summary>Return true to stop a slime from catching it this moment.</summary>
+        public System.Func<SurvivalStats, bool> CatchVeto { get; set; }
+        /// <summary>A slime touched it (before the catch).</summary>
+        public event Action<SurvivalStats> Touched;
+        /// <summary>It took damage (amount, attacker).</summary>
+        public event Action<float, SurvivalStats> Damaged;
+        /// <summary>It can run again: no tiredness.</summary>
+        public void RefreshStamina() { fleeTime = 0f; tiredUntil = 0f; }
+        public void Heal(float amount) { if (amount > 0f) Health = Mathf.Min(maxHealth, Health + amount); }
 
         float netFraction = 1f, predictedFraction = 1f, predictedUntil;
 
@@ -103,12 +124,12 @@ namespace Evolve.Creatures
             {
                 dir = Vector3.zero; speed = 0f;
             }
-            else if (threat != null && dist < fleeRadius)
+            else if (threat != null && (dist < fleeRadius || Time.time < ForceFleeUntil))
             {
                 dir = pos - threat.position; dir.y = 0f; dir.Normalize();
                 speed = fleeSpeed;
                 fleeTime += Time.fixedDeltaTime;
-                if (emitter != null && Time.time >= nextFleePulse) { emitter.Pulse(0.4f); nextFleePulse = Time.time + 0.5f; }
+                if (emitter != null && !Silent && Time.time >= nextFleePulse) { emitter.Pulse(0.4f); nextFleePulse = Time.time + 0.5f; }
                 if (fleeTime >= stamina) { tiredUntil = Time.time + restTime; fleeTime = 0f; }
             }
             else
@@ -123,6 +144,9 @@ namespace Evolve.Creatures
                 dir = wanderDir; speed = wanderSpeed;
             }
 
+            if (Zigzag && threat != null && Time.time < ForceFleeUntil && dir.sqrMagnitude > 0.001f)
+                dir = Quaternion.Euler(0f, Mathf.Sin(Time.time * 9f) * 35f, 0f) * dir;   // weaves while it runs
+
             // Stay near home: steer back toward the centre when near the edge.
             Vector3 fromHome = pos - HomeCenter; fromHome.y = 0f;
             if (fromHome.magnitude > HomeRadius * 0.8f)
@@ -130,7 +154,7 @@ namespace Evolve.Creatures
 
             if (dir.sqrMagnitude > 0.001f)
             {
-                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Time.fixedDeltaTime, groundOffset));
+                rb.MovePosition(Evolve.World.GroundHeight.Follow(pos + dir * speed * Boost * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject) * Time.fixedDeltaTime, groundOffset));
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.2f));
             }
 
@@ -146,7 +170,7 @@ namespace Evolve.Creatures
             {
                 if (!p.IsRemote || p.State.IsDead) continue;
                 Vector3 d = p.transform.position - pos; d.y = 0f;
-                if (d.sqrMagnitude <= CatchRadius * CatchRadius) { Catch(p); return; }
+                if (d.sqrMagnitude <= CatchRadius * CatchRadius) { TryCatch(p); return; }
             }
         }
 
@@ -159,6 +183,14 @@ namespace Evolve.Creatures
                 float d = Vector3.Distance(pos, p.transform.position);
                 if (d < dist) { dist = d; best = p.transform; }
             }
+            // hunters are threats too (a prey flees from whatever hunts it)
+            if (!Predator.Passive)
+                foreach (var h in Predator.Active)
+                {
+                    if (h == null) continue;
+                    float d = Vector3.Distance(pos, h.transform.position);
+                    if (d < dist) { dist = d; best = h.transform; }
+                }
             return best;
         }
 
@@ -167,7 +199,7 @@ namespace Evolve.Creatures
             if (caught || IsReplica) return;
             var stats = c.collider.GetComponentInParent<SurvivalStats>();
             if (stats == null || stats.State.IsDead || stats.IsRemote) return;
-            Catch(stats);
+            TryCatch(stats);
         }
 
         /// <summary>Hurt the prey (spikes and so on). At 0 health it dies and rewards the attacker like a catch.</summary>
@@ -188,8 +220,10 @@ namespace Evolve.Creatures
             }
             if (caught || amount <= 0f) return;
 
+            amount *= DamageTakenMultiplier;
             Health -= amount;
             ShowHit(amount);
+            Damaged?.Invoke(amount, by);
             if (Health > 0f) return;
 
             if (by != null) Catch(by);
@@ -206,6 +240,14 @@ namespace Evolve.Creatures
         {
             HitFlash.Play(gameObject);
             CombatEvents.Raise(transform, amount);
+        }
+
+        /// <summary>A slime reached it: its defence may stop the catch (guarding, slipping out of the grab).</summary>
+        void TryCatch(SurvivalStats stats)
+        {
+            Touched?.Invoke(stats);
+            if (caught || (CatchVeto != null && CatchVeto(stats))) return;
+            Catch(stats);
         }
 
         void Catch(SurvivalStats stats)

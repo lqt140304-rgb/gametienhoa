@@ -9,7 +9,7 @@ namespace Evolve.Abilities
     /// </summary>
     public class CreatureStatus : MonoBehaviour
     {
-        float stunUntil, knockUntil, groundOffset;
+        float stunUntil, knockUntil, groundOffset, slowUntil, slowFraction;
         Vector3 knockVelocity;
         Rigidbody rb;
 
@@ -20,7 +20,20 @@ namespace Evolve.Abilities
         public static bool Holds(GameObject creature) =>
             creature.TryGetComponent(out CreatureStatus s) && (s.Stunned || s.Knocked);
 
-        static CreatureStatus On(Component creature) =>
+        /// <summary>Speed multiplier from a slow (1 = none). Prey and Predator multiply their own speed by it.</summary>
+        public static float SpeedFactor(GameObject creature) =>
+            creature.TryGetComponent(out CreatureStatus s) && Time.time < s.slowUntil ? 1f - s.slowFraction : 1f;
+
+        /// <summary>Slow the creature by this share (0..0.9) for a while; the stronger slow wins while two overlap.</summary>
+        public static void Slow(Component creature, float fraction, float seconds)
+        {
+            var s = On(creature);
+            fraction = Mathf.Clamp(fraction, 0f, 0.9f);
+            if (Time.time >= s.slowUntil || fraction >= s.slowFraction) s.slowFraction = fraction;
+            s.slowUntil = Mathf.Max(s.slowUntil, Time.time + seconds);
+        }
+
+        static CreatureStatus On(Component creature) =
             creature.TryGetComponent(out CreatureStatus s) ? s : creature.gameObject.AddComponent<CreatureStatus>();
 
         /// <summary>Hold the creature still. <paramref name="stars"/> shows stars over its head (not wanted for a pulled prey, which is only held to be swallowed).</summary>

@@ -69,7 +69,8 @@ namespace Evolve.Ecology
                 if (s.PreyId == null) continue;
                 var prey = Get(s.PreyId);
                 if (prey == null || prey == s) continue;
-                s.KillAccum += s.Count * s.KillsPerHeadPerMinute * minutes;
+                float escape = prey.EscapeChance < 0f ? 0f : prey.EscapeChance > 0.95f ? 0.95f : prey.EscapeChance;   // prey that fight back are caught less often
+                s.KillAccum += s.Count * s.KillsPerHeadPerMinute * minutes * (1f - escape);
                 int whole = (int)System.Math.Floor(s.KillAccum + Eps);
                 int kills = whole < prey.Available ? whole : prey.Available;
                 for (int k = 0; k < kills; k++) prey.Kill(false);

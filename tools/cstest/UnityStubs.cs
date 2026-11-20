@@ -21,6 +21,8 @@ namespace UnityEngine
         public static bool Approximately(float a, float b) => Math.Abs(a - b) < 1e-6f;
     }
     public static class Debug { public static void Log(object o) { } public static void LogWarning(object o) { } }
+    public enum RuntimeInitializeLoadType { SubsystemRegistration }
+    [AttributeUsage(AttributeTargets.Method)] public class RuntimeInitializeOnLoadMethodAttribute : Attribute { public RuntimeInitializeOnLoadMethodAttribute(RuntimeInitializeLoadType t) { } }
     [AttributeUsage(AttributeTargets.All)] public class TooltipAttribute : Attribute { public TooltipAttribute(string s) { } }
     [AttributeUsage(AttributeTargets.All)] public class HeaderAttribute : Attribute { public HeaderAttribute(string s) { } }
     [AttributeUsage(AttributeTargets.All)] public class TextAreaAttribute : Attribute { }
