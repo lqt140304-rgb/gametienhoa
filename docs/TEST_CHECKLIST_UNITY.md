@@ -94,6 +94,26 @@ Tạo **cùng hang**: ví dụ kẻ săn `Thằn Lằn Bờ Hồ` + con mồi `B
 - [ ] **Mở màu Cầu Vồng:** F3 hiện ô "Cầu Vồng"; bật thì thân đổi sắc liên tục; tắt rồi bật lại Play vẫn còn khóa.
 - [ ] Nhiễm bệnh thử rồi Hết bệnh; Hồi đầy; Bỏ 2 món vào Túi (mở Túi kiểm tra); câu Tiếng Vọng hiện trên màn hình.
 
+### G2. Di chuyển (nhánh `claude/unity-test-maze`)
+- [ ] Sinh vật không đi xuyên vách, đá lớn. Gặp vách thì đi vòng hoặc quay hướng khác, không đứng đâm đầu mãi.
+- [ ] Không còn con nhảy lên rồi rơi xuống liên tục trước bục cao. Con dưới gầm cầu không vọt lên mặt cầu.
+- [ ] Đi trên sàn gồ ghề: hoạt hình không giật.
+- [ ] Loài khác nhau di chuyển khác nhau:
+  - Thỏ Lá, Dế Gió nhảy lên được bục khoảng 0,9 m.
+  - Nhện, Thằn Lằn leo được bậc khoảng 1,5 m.
+  - Dơi, Đom Đóm không sợ vực.
+  - Ốc Hồ chỉ qua bậc thấp.
+- [ ] Ô "Di chuyển mới cho quái" ở mục Kiểm thử: tắt thì quay về kiểu cũ, để so sánh.
+- [ ] **Tổ:** tạo khoảng 8 con mồi cùng loài một chỗ (nút trong "Sinh vật thử"). Phải thấy:
+  - 2 cặp đi cạnh nhau ra ngoài kiếm ăn, khoảng 20 giây đổi hướng.
+  - 1–2 con chạy vòng mép.
+  - Số còn lại quanh tổ.
+  - Slime đến gần tổ khoảng 10 m thì cả tổ bỏ chạy.
+- [ ] **Slime:**
+  - Bò qua đá nhỏ, bậc thấp (khoảng 40% bề ngang thân), chậm và đều, không đứng đâm đầu.
+  - Vách cao hơn thì không leo được.
+  - Slime lớn qua được đá lớn hơn.
+
 ### H. Hệ sinh thái (số liệu)
 - [ ] "Mô phỏng sinh thái 2 giờ": Console in bảng 11 hang; con mồi trung bình 7–9, kẻ săn 1–2, Chúa Hang 1, không loài nào 0 liên tục.
 
