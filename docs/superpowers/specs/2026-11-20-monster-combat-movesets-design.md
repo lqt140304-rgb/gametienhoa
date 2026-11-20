@@ -80,3 +80,19 @@ Cùng bộ máy chiêu của lát 1, thêm hai hình chiêu mới (**Băng Rơi*
 - Hai loài vẫn là hai loài ở Khe Gió Hú đã có; không thêm loài mới. Khỉ vẫn để lát 3.
 - Giao bên làm hang: bản bổ sung clip cho Chồn Khe (rình nằm, bật ra, chạy trốn) và Cáo Gió (đưa tay phép, hú, gầm) làm sau khi chủ dự án chốt.
 
+## Lát 3: Khỉ ném đá và leo trèo (đề xuất, chờ chủ dự án chốt)
+Khỉ là loài **mới** (chưa có trong dữ liệu sinh thái, mô hình hay prefab của bên làm hang). Lát 3 làm phần chiến đấu và một con thử trong menu thần; đặt loài vào một hang cụ thể, mô hình và hoạt hình là việc giao bên làm hang.
+
+**Loài đề xuất: Khỉ Hang** (kẻ săn nhỏ, nhanh): khối 12, máu 40, cắn 8, tốc độ đi 1,3 và chạy 3,0 (khỉ nhanh hơn kẻ săn thường); cơ sở ngoài đời: khỉ ném đá và trái cây vào kẻ lạ, leo trèo giỏi và nhảy lên cao, sống thành đàn, kêu báo động cho đàn.
+
+| Chiêu | Cơ sở ngoài đời | Gồng | Ra đòn | Kiệt sức | Ghi chú |
+|---|---|---|---|---|---|
+| **Ném Đá** (tầm 5 đến 14 m) | khỉ ném đá và vật cứng | 0,9 s: giơ tay ra sau, nghiêng người | 0,1 s: ném, viên đá bay theo **cung** tới **vị trí người chơi lúc ném**, bay 0,9 s | 1,0 s | sát thương 9; đứng yên thì trúng, bước sang bên thì tránh được; có bóng báo chỗ rơi? (không, chỉ nhìn đá bay) |
+| **Cắn Vặt** (tầm dưới 2,5 m) | khỉ cắn khi bị dồn | 0,4 s | 0,2 s phóng 2 m | 0,8 s, rồi **chạy lùi 4 m** | sát thương 8 |
+| **Nhảy Bục** (người chơi trong 6 m, có chỗ cao 1,5 đến 3 m trong 7 m) | khỉ nhảy lên cao để thoát và nhìn | 0,5 s: cúi, đạp chân | 0,8 s: nhảy theo cung lên chỗ cao | không | trên cao 8 giây ném đá tầm 5 đến 16 m, rồi nhảy xuống; không có chỗ cao thì bỏ qua chiêu này |
+| **Hú Báo Động** (máu dưới 66%) | khỉ kêu gọi đàn | 0,8 s: ngửa đầu há miệng | 0,1 s | 1,0 s | gọi Khỉ Hang trong 30 m |
+
+- **Leo trèo** làm theo cách đơn giản: khỉ **tự tìm chỗ cao** (bục, gờ đá cao 1,5 đến 3 m) quanh nó bằng quét tia và nhảy lên theo cung, không cần điểm nấp đặt tay. Nếu muốn khỉ leo cây hoặc vách đứng thật thì cần bên làm hang đặt điểm leo.
+- **Không làm ở lát 3:** khỉ giật đồ trong bụng slime (đề xuất để sau, sau khi chủ dự án thử ném đá).
+- Số liệu khác là bản tạm.
+
