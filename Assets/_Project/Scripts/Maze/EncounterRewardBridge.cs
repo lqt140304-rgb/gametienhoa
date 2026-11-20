@@ -104,6 +104,21 @@ namespace Evolve.Maze
             return true;
         }
 
+        public static bool AddMass(GameObject player, float kg)
+        {
+            if (player == null) return false;
+            if (TryInvokeStatic("AddMass", player, kg)) return true;
+            return true;
+        }
+
+        public static bool BoostCore(GameObject player)
+        {
+            if (player == null) return false;
+            if (TryInvokeStatic("BoostCore", player)) return true;
+            Say("Lõi tiến hóa trong cơ thể khẽ rung lên — mạnh mẽ hơn trước.");
+            return true;
+        }
+
         static bool TryInvokeStatic(string methodName, params object[] args)
         {
             var t = RewardsType;
