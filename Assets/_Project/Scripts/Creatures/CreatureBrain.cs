@@ -22,6 +22,7 @@ namespace Evolve.Creatures
         [SerializeField] string speciesId;
 
         const float ThinkSeconds = 0.5f, EatReach = 1.8f, HunterBite = 8f, ScavengerBite = 2f;
+        const float KeeperWatch = 10f;
         const float SlimeSeen = 10f, GuardRadius = 6f, GuardMinSize = 1.2f, GuardLook = 15f, ThreatNear = 6f;
 
         Predator pred;
@@ -174,18 +175,60 @@ namespace Evolve.Creatures
 
         void ThinkScavengingPrey()
         {
-            if (!scavenger) { prey.Goal = null; return; }
             Vector3 pos = transform.position;
+            if (scavenger && Scavenge(pos)) return;
+            ThinkColony(pos);
+        }
+
+        bool Scavenge(Vector3 pos)
+        {
             var c = NearestEdible(pos, CreatureBehaviorRules.ScavengeRange, 0f, out float d);
-            bool threat = false;
-            foreach (var p in SurvivalStats.All) if (p != null && !p.State.IsDead && Flat(pos, p.transform.position) <= ThreatNear) { threat = true; break; }
-            if (!threat) foreach (var h in Predator.Active) if (h != null && Flat(pos, h.transform.position) <= ThreatNear) { threat = true; break; }
-            if (CreatureBehaviorRules.PreyScavenges(c != null, d, threat))
+            if (!CreatureBehaviorRules.PreyScavenges(c != null, d, ThreatWithin(pos, ThreatNear))) return false;
+            prey.Goal = c.transform.position;
+            if (d <= EatReach) c.EatBy(ScavengerBite);
+            return true;
+        }
+
+        static bool ThreatWithin(Vector3 pos, float range)
+        {
+            foreach (var p in SurvivalStats.All) if (p != null && !p.State.IsDead && Flat(pos, p.transform.position) <= range) return true;
+            foreach (var h in Predator.Active) if (h != null && Flat(pos, h.transform.position) <= range) return true;
+            return false;
+        }
+
+        bool SameNest(Prey o) =>
+            o != null && !o.IsReplica && (o.HomeCenter - prey.HomeCenter).sqrMagnitude < 4f && o.TryGetComponent(out CreatureBrain b) && b.id == id;
+
+        /// <summary>A crowded nest splits into jobs (<see cref="ColonyRules"/>): pairs forage out and back, scouts circle the edge,
+        /// keepers stay home and, when danger nears the nest, send everyone running.</summary>
+        void ThinkColony(Vector3 pos)
+        {
+            Vector3 nest = prey.HomeCenter;
+            float r = prey.HomeRadius;
+            int index = 0, count = 0;
+            foreach (var o in Prey.Active) if (SameNest(o)) { count++; if (o.NetId < prey.NetId) index++; }
+            if (count < ColonyRules.MinColony) { prey.Goal = null; return; }   // too few for jobs: wander as before
+
+            float a;
+            switch (ColonyRules.RoleOf(index, count))
             {
-                prey.Goal = c.transform.position;
-                if (d <= EatReach) c.EatBy(ScavengerBite);
+                case ColonyRole.Forager:
+                    a = ColonyRules.ForageAngle(ColonyRules.PairOf(index) + (int)(nest.x * 7f + nest.z * 13f), Time.time);
+                    Vector3 out_ = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    prey.Goal = nest + out_ * r * 0.6f + Vector3.Cross(Vector3.up, out_) * (index % 2 == 0 ? -0.8f : 0.8f);   // partners side by side
+                    break;
+                case ColonyRole.Scout:
+                    a = ColonyRules.ScoutAngle(index % 2, 2, Time.time);
+                    prey.Goal = nest + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r * 0.85f;
+                    break;
+                default:
+                    a = index * 2.4f;
+                    prey.Goal = nest + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 2f;
+                    if (ThreatWithin(nest, KeeperWatch))
+                        foreach (var o in Prey.Active)
+                            if (SameNest(o) && Flat(o.transform.position, nest) <= r) o.ForceFleeUntil = Mathf.Max(o.ForceFleeUntil, Time.time + 3f);
+                    break;
             }
-            else prey.Goal = null;
         }
     }
 }
