@@ -62,6 +62,7 @@ namespace Evolve.Creatures
         float turnRate;
         float stridePhase;
         float idleTime;
+        float locomotionLayerWeight = 1f;
         bool isFlier;
         bool initialized;
 
@@ -248,14 +249,30 @@ namespace Evolve.Creatures
                 stridePhase += (smoothSpeed * dt / Mathf.Max(0.25f, strideLength)) * Mathf.PI * 2f;
             idleTime += dt;
 
+            bool inCombatAnim = IsPlayingCombatState();
+            locomotionLayerWeight = Mathf.MoveTowards(locomotionLayerWeight, inCombatAnim ? 0f : 1f, 8f * dt);
+
             if (animator != null)
             {
                 animator.SetFloat(SpeedHash, smoothSpeed);
-                if (smoothSpeed > 0.08f)
+                if (!inCombatAnim && smoothSpeed > 0.08f)
                     animator.speed = Mathf.Clamp(smoothSpeed / Mathf.Max(0.25f, referenceWalkSpeed), 0.65f, 2.2f);
                 else
                     animator.speed = 1f;
             }
+        }
+
+        bool IsPlayingCombatState()
+        {
+            if (animator == null || animator.runtimeAnimatorController == null) return false;
+            var cur = animator.GetCurrentAnimatorStateInfo(0);
+            if (!cur.IsName("Idle") && !cur.IsName("Walk")) return true;
+            if (animator.IsInTransition(0))
+            {
+                var next = animator.GetNextAnimatorStateInfo(0);
+                if (!next.IsName("Idle") && !next.IsName("Walk")) return true;
+            }
+            return false;
         }
 
         void LateUpdate()
@@ -337,11 +354,13 @@ namespace Evolve.Creatures
 
         void ApplyProceduralGaitAndFootGrounding(float dt)
         {
-            float moveBlend = Mathf.Clamp01(smoothSpeed / 0.2f);
+            if (locomotionLayerWeight <= 0.005f) return;
+
+            float moveBlend = Mathf.Clamp01(smoothSpeed / 0.2f) * locomotionLayerWeight;
 
             if (wings.Count > 0)
             {
-                ApplyWingFlapping(moveBlend);
+                ApplyWingFlapping(moveBlend, locomotionLayerWeight);
                 if (isFlier) return;
             }
 
@@ -415,7 +434,7 @@ namespace Evolve.Creatures
             }
         }
 
-        void ApplyWingFlapping(float moveBlend)
+        void ApplyWingFlapping(float moveBlend, float weight)
         {
             float flapFreq = Mathf.Lerp(9.5f, 16.5f, moveBlend);
             float basePhase = idleTime * flapFreq + stridePhase * 0.5f;
@@ -435,9 +454,10 @@ namespace Evolve.Creatures
                 float flapDeg = sideSign * wave * amp;
                 float featherDeg = Mathf.Cos(basePhase + phaseOffset) * 10f * (0.4f + 0.6f * moveBlend);
 
-                w.Bone.localRotation = w.RestLocalRot
+                Quaternion targetRot = w.RestLocalRot
                     * Quaternion.AngleAxis(flapDeg, w.LocalFlapAxis)
                     * Quaternion.AngleAxis(featherDeg, w.LocalTwistAxis);
+                w.Bone.localRotation = Quaternion.Slerp(w.Bone.localRotation, targetRot, weight);
             }
         }
 

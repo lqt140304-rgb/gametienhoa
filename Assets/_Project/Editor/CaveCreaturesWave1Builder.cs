@@ -215,19 +215,62 @@ namespace Evolve.EditorTools
             }
 
             if (!string.IsNullOrEmpty(spec.ActionClipName) && spec.ActionClipName != "Hit" &&
-                clips.TryGetValue(spec.ActionClipName, out var actClip))
+                clips.TryGetValue(spec.ActionClipName, out var actClip) &&
+                !clips.ContainsKey("Tell_" + spec.ActionClipName))
             {
                 var actState = sm.AddState(spec.ActionClipName);
                 actState.motion = actClip;
                 var anyToAct = sm.AddAnyStateTransition(actState);
                 anyToAct.AddCondition(AnimatorConditionMode.If, 0f, spec.ActionClipName);
                 anyToAct.hasExitTime = false;
-                anyToAct.duration = 0.10f;
+                anyToAct.canTransitionToSelf = false;
+                anyToAct.duration = 0.14f;
 
                 var back = actState.AddTransition(idleState);
                 back.hasExitTime = true;
-                back.exitTime = 0.92f;
-                back.duration = 0.15f;
+                back.exitTime = 0.90f;
+                back.duration = 0.20f;
+            }
+
+            // Các state chiêu chiến đấu (Tell_*, Strike_*, Recover_*, Stun, Feed, Flee) với crossfade mượt
+            foreach (var kv in clips)
+            {
+                string cname = kv.Key;
+                bool isTell = cname.StartsWith("Tell_");
+                bool isStrike = cname.StartsWith("Strike_");
+                bool isRecover = cname.StartsWith("Recover_");
+                bool isExtra = cname == "Stun" || cname == "Feed" || cname == "Flee";
+                if (!isTell && !isStrike && !isRecover && !isExtra) continue;
+
+                ctrl.AddParameter(cname, AnimatorControllerParameterType.Trigger);
+                var st = sm.AddState(cname);
+                st.motion = kv.Value;
+
+                var anyTo = sm.AddAnyStateTransition(st);
+                anyTo.AddCondition(AnimatorConditionMode.If, 0f, cname);
+                anyTo.hasExitTime = false;
+                anyTo.canTransitionToSelf = false;
+                anyTo.duration = isStrike ? 0.08f : 0.16f;
+
+                if (isRecover || cname == "Stun")
+                {
+                    var backIdle = st.AddTransition(idleState);
+                    backIdle.hasExitTime = true;
+                    backIdle.exitTime = 0.90f;
+                    backIdle.duration = 0.25f;
+
+                    var backWalk = st.AddTransition(walkState);
+                    backWalk.AddCondition(AnimatorConditionMode.Greater, 0.12f, "Speed");
+                    backWalk.hasExitTime = false;
+                    backWalk.duration = 0.22f;
+                }
+                else if (cname == "Flee" || cname == "Feed")
+                {
+                    var backIdle = st.AddTransition(idleState);
+                    backIdle.AddCondition(AnimatorConditionMode.Less, 0.08f, "Speed");
+                    backIdle.hasExitTime = false;
+                    backIdle.duration = 0.22f;
+                }
             }
 
             EditorUtility.SetDirty(ctrl);
@@ -270,6 +313,7 @@ namespace Evolve.EditorTools
             var anim = visual.GetComponentInChildren<Animator>(true);
             if (anim == null) anim = visual.AddComponent<Animator>();
             anim.runtimeAnimatorController = controller;
+            anim.applyRootMotion = false;
 
             var loco = root.AddComponent<CreatureLocomotion>();
             loco.Configure(spec.Radius, spec.MoveSpeed);

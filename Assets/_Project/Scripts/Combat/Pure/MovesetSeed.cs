@@ -65,7 +65,15 @@ namespace Evolve.Combat
         /// Species (by <c>SpeciesNames.Key</c>) whose real animation clips for these moves exist (Tell_*, Strike_*, Recover_* triggers; see the
         /// cave-team handoff). For them CreatureCombat stops drawing the stand-in body pose. Empty until the cave team delivers clips.
         /// </summary>
-        public static readonly HashSet<string> AuthoredClips = new HashSet<string>();
+        public static readonly HashSet<string> AuthoredClips = new HashSet<string>
+        {
+            "thanlanboho",
+            "bogiapquang",
+            "muoireu",
+            "ruaphale",
+            "chonkhe",
+            "caogio",
+        };
 
         public static bool Has(string speciesIdOrName) => For(speciesIdOrName).Count > 0;
 
