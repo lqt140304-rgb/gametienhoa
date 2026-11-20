@@ -11,11 +11,13 @@ namespace Evolve.Combat
     /// </summary>
     public static class SwallowCinematic
     {
+        static bool playing;
         const float RealSeconds = 2f, SlowScale = 0.3f, FovFactor = 0.72f;
 
         public static void Play(SurvivalStats slime)
         {
-            if (slime == null || slime.IsRemote) return;
+            if (slime == null || slime.IsRemote || playing) return;   // one at a time: a second would remember the slowed time scale as normal
+            playing = true;
             new GameObject("SwallowCinematic").AddComponent<Runner>();
         }
 
@@ -44,6 +46,7 @@ namespace Evolve.Combat
 
             void OnDestroy()
             {
+                playing = false;
                 Time.timeScale = oldScale;
                 if (cam != null) cam.fieldOfView = oldFov;
             }
