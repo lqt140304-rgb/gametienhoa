@@ -36,6 +36,13 @@ namespace Evolve.Creatures
             footOffset = Floor(p, p.y + 1f, 6f, out float g) ? p.y - g : World.GroundHeight.OffsetOf(p);
         }
 
+        /// <summary>The creature was scaled by <paramref name="k"/> (see CreatureTuning): its reach over ledges and drops grows with it.</summary>
+        public void Resize(float k)
+        {
+            radius *= k;
+            Profile = new MoveProfile(Profile.Style, Profile.MaxStepUp * k, Profile.MaxDrop * k);
+        }
+
         /// <summary>Move along flat <paramref name="dir"/> at <paramref name="speed"/> for one physics step. False when every way was blocked.</summary>
         public bool Move(Vector3 dir, float speed, bool detour = true)
         {

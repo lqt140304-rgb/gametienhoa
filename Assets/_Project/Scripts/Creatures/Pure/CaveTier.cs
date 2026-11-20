@@ -63,6 +63,15 @@ namespace Evolve.Creatures
         /// <summary>Prey, hunter or cave lord, from the ecology seed (hunters have 3 slots and a floor of one, lords one slot). Unknown = prey.</summary>
         public static CreatureRole RoleOf(string speciesIdOrName)
         {
+            string key = speciesIdOrName ?? "";
+            if (roles.TryGetValue(key, out var cached)) return cached;
+            return roles[key] = FindRole(speciesIdOrName);
+        }
+
+        static readonly Dictionary<string, CreatureRole> roles = new Dictionary<string, CreatureRole>();   // the seed is built once per name, not per spawn
+
+        static CreatureRole FindRole(string speciesIdOrName)
+        {
             string id = CaveEcologySeed.IdByName(speciesIdOrName) ?? speciesIdOrName;
             string cave = CaveEcologySeed.CaveOfSpecies(id);
             if (cave == null) return CreatureRole.Prey;

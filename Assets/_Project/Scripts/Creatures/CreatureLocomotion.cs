@@ -81,6 +81,13 @@ namespace Evolve.Creatures
             strideLength = Mathf.Clamp(radius * 1.6f, 0.4f, 1.4f);
         }
 
+        /// <summary>The creature was scaled by <paramref name="k"/> (see CreatureTuning): its feet and stride grow with it.</summary>
+        public void ScaleBy(float k)
+        {
+            footprintRadius *= k;
+            strideLength *= k;
+        }
+
         public void PlayHit()
         {
             if (animator != null && HasTrigger("Hit"))
