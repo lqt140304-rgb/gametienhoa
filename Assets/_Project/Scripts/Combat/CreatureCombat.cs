@@ -58,6 +58,14 @@ namespace Evolve.Combat
         float retreatLeft;
         static readonly Color IceColor = new Color(0.55f, 0.85f, 1f);
 
+        // ---------- wind spears (Cáo Gió) ----------
+        Transform spearRoot;
+        readonly List<Transform> spears = new List<Transform>();
+        int spearsLaunched;
+        float orbitStart, nextOrbitSound;
+        static Material spearMat;
+        const float OrbitDegPerSecond = 540f;
+
         enum PerchState { None, Jumping, Perched, Dropping }
         PerchState perch;
         Vector3 perchFrom, perchTo, perchOrigin, ledgePoint;
@@ -101,6 +109,7 @@ namespace Evolve.Combat
             SkillBar.SkillUsed -= OnSkillUsed;
             if (prey != null) prey.Damaged -= OnDamaged;
             scheduler?.Reset();
+            ClearSpears();
             SetHidden(false);
             RestoreModel();
         }
@@ -145,6 +154,7 @@ namespace Evolve.Combat
             if (HostPaused())
             {
                 scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
+                ClearSpears();
                 if (ambush != null && ambush.State == AmbushState.Lurking) { ambush.Update(0f, 0f); ambush.StrikeDone(); }   // stunned or killed while hiding: it shows itself
                 SetHidden(false);
                 return;
@@ -222,6 +232,7 @@ namespace Evolve.Combat
             else if (phase == MovePhase.Recover)
             {
                 loco?.PlayAction("Recover_" + m.Anim);
+                ClearSpears();   // any spear not yet thrown fades away
                 if (m.RetreatDistance > 0f)   // hit and run: it bolts away from the player
                 {
                     retreatLeft = m.RetreatDistance;
@@ -236,6 +247,7 @@ namespace Evolve.Combat
         {
             loco?.PlayAction(m.Anim);
             loco?.PlayAction("Tell_" + m.Anim);
+            if (m.Shape == MoveShape.Spears) MakeSpears(m);
             if (m.Shape == MoveShape.Spin || m.Shape == MoveShape.Call)
                 SkillFx.Ring(transform.position, m.Radius, TellColor, m.Windup * tellScale, 0.3f);   // a ring on the ground shows how far the blow reaches
         }
@@ -260,6 +272,7 @@ namespace Evolve.Combat
         void TickStrike(MoveDef m)
         {
             if (m.Shape == MoveShape.Gust) { Gust(m); return; }
+            if (m.Shape == MoveShape.Spears) { TickSpears(m); return; }
             if (m.Shape != MoveShape.Lunge && m.Shape != MoveShape.Charge) return;
             if (m.Active > 0f && motor != null && !motor.Move(strikeDir, m.Distance / m.Active))
             {
@@ -332,6 +345,69 @@ namespace Evolve.Combat
             perchFrom = rb.position; perchTo = perchOrigin; perchFlight = DropSeconds;
             perchVel = ThrowRules.Launch(perchFrom.x, perchFrom.y, perchFrom.z, perchTo.x, perchTo.y, perchTo.z, perchFlight);
             perchT = 0f; perch = PerchState.Dropping;
+        }
+
+        /// <summary>Three spears of wind appear above the tails and circle there for the whole windup: the tell.</summary>
+        void MakeSpears(MoveDef m)
+        {
+            ClearSpears();
+            spearRoot = new GameObject("Giáo Gió").transform;
+            spearRoot.SetParent(transform, false);
+            spearRoot.localPosition = new Vector3(0f, Radius * 1.6f, -Radius * 0.5f);   // above the back, where the tails are
+            if (spearMat == null) spearMat = SkillFx.Gel(new Color(0.7f, 0.95f, 1f), 1f, 0.6f, 3f);
+            float size = Mathf.Clamp(Radius, 0.4f, 2f);
+            for (int i = 0; i < m.SpearCount; i++)
+            {
+                var sp = GameObject.CreatePrimitive(PrimitiveType.Capsule).transform;
+                Destroy(sp.GetComponent<Collider>());
+                sp.name = "Mũi Giáo";
+                sp.SetParent(spearRoot, false);
+                sp.localScale = new Vector3(0.09f, 0.5f, 0.09f) * size;
+                sp.GetComponent<MeshRenderer>().sharedMaterial = spearMat;
+                var trail = sp.gameObject.AddComponent<TrailRenderer>();
+                trail.time = 0.3f; trail.startWidth = 0.14f * size; trail.endWidth = 0f; trail.sharedMaterial = spearMat; trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                spears.Add(sp);
+            }
+            spearsLaunched = 0; orbitStart = Time.time;
+            ProceduralSfx.Play(ProceduralSfx.Kind.SpearOrbit, transform.position, 0.8f);
+            nextOrbitSound = Time.time + 0.45f;
+        }
+
+        void UpdateSpears()
+        {
+            if (spearRoot == null || scheduler == null) return;
+            float t = Time.time - orbitStart, radius = Radius * 0.9f;
+            for (int i = spearsLaunched; i < spears.Count; i++)
+            {
+                if (spears[i] == null) continue;
+                var o = SpearRules.OrbitOffset(i, spears.Count, t, radius, OrbitDegPerSecond, 0f);
+                spears[i].localPosition = new Vector3(o.x, o.y, o.z);
+                float h = SpearRules.OrbitHeadingDeg(i, spears.Count, t, OrbitDegPerSecond) * Mathf.Deg2Rad;
+                spears[i].localRotation = Quaternion.FromToRotation(Vector3.up, new Vector3(Mathf.Cos(h), 0f, Mathf.Sin(h)));
+            }
+            if (Time.time >= nextOrbitSound && spearsLaunched < spears.Count) { ProceduralSfx.Play(ProceduralSfx.Kind.SpearOrbit, transform.position, 0.5f); nextOrbitSound = Time.time + 0.45f; }
+        }
+
+        /// <summary>Throws the spears one after another during the strike, each at where the player is at that moment.</summary>
+        void TickSpears(MoveDef m)
+        {
+            float t = scheduler.PhaseTime;
+            while (spearsLaunched < spears.Count && t + 1e-4f >= SpearRules.LaunchTime(spearsLaunched, m.LaunchInterval))
+            {
+                var sp = spears[spearsLaunched++];
+                if (sp == null) continue;
+                Vector3 aim = target != null ? target.transform.position + Vector3.up * 0.3f : sp.position + transform.forward * 10f;
+                ProceduralSfx.Play(ProceduralSfx.Kind.SpearLaunch, sp.position, 1f);
+                MonsterSpear.Launch(sp, aim, m.SpearSpeed, m.Damage * DamageScale, m.Force);
+            }
+        }
+
+        /// <summary>Removes the spears still circling (the ones already thrown fly on by themselves) and the circle's pivot.</summary>
+        void ClearSpears()
+        {
+            for (int i = spearsLaunched; i < spears.Count; i++) if (spears[i] != null) Destroy(spears[i].gameObject);
+            spears.Clear(); spearsLaunched = 0;
+            if (spearRoot != null) { Destroy(spearRoot.gameObject); spearRoot = null; }
         }
 
         void Gust(MoveDef m)
@@ -440,6 +516,7 @@ namespace Evolve.Combat
 
         void LateUpdate()
         {
+            UpdateSpears();
             if (model == null || scheduler == null) return;
             Pose pose = Pose.Identity;
             var m = scheduler.Current;
