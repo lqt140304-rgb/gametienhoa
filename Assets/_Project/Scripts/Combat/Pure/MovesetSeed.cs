@@ -21,13 +21,19 @@ namespace Evolve.Combat
             {
                 new MoveDef { Name = "Cắn Cổ", Shape = MoveShape.Lunge, Windup = 0.5f, Active = 0.2f, Recover = 1.5f, Cooldown = 2f, MinRange = 0f, MaxRange = 2.5f, Distance = 2.5f, Damage = 22f, Anim = "Attack" },
                 new MoveDef { Name = "Rụt Mai–Lao", Shape = MoveShape.Charge, Windup = 0.8f, Active = 1.5f, Recover = 1.5f, Cooldown = 5f, MinRange = 3f, MaxRange = 8f, Distance = 6f, Damage = 18f, Armored = true, Anim = "Retract" },
-                new MoveDef { Name = "Xoay Mai", Shape = MoveShape.Spin, Windup = 0.8f, Active = 1.2f, Recover = 1.5f, Cooldown = 6f, MinRange = 0f, MaxRange = 4.5f, Radius = 4f, Damage = 8f, Armored = true, Anim = "Retract", UnlockBelow = 0.66f },
-                new MoveDef { Name = "Gọi Bầy", Shape = MoveShape.Call, Windup = 1.0f, Active = 0.1f, Recover = 1.5f, Cooldown = 20f, MinRange = 0f, MaxRange = 25f, Radius = 25f, TargetSpecies = SpeciesNames.Key("Bọ Giáp Quặng"), Anim = "Action", UnlockBelow = 0.33f },
+                new MoveDef { Name = "Xoay Mai", Shape = MoveShape.Spin, Windup = 0.8f, Active = 1.2f, Recover = 1.5f, Cooldown = 6f, MinRange = 0f, MaxRange = 4.5f, Radius = 4f, Damage = 8f, Armored = true, Anim = "Spin", UnlockBelow = 0.66f },
+                new MoveDef { Name = "Gọi Bầy", Shape = MoveShape.Call, Windup = 1.0f, Active = 0.1f, Recover = 1.5f, Cooldown = 20f, MinRange = 0f, MaxRange = 25f, Radius = 25f, TargetSpecies = SpeciesNames.Key("Bọ Giáp Quặng"), Anim = "Roar", UnlockBelow = 0.33f },
             } },
         };
 
         public static IReadOnlyList<MoveDef> For(string speciesIdOrName) =>
             !string.IsNullOrEmpty(speciesIdOrName) && sets.TryGetValue(SpeciesNames.Key(speciesIdOrName), out var s) ? s : None;
+
+        /// <summary>
+        /// Species (by <c>SpeciesNames.Key</c>) whose real animation clips for these moves exist (Tell_*, Strike_*, Recover_* triggers; see the
+        /// cave-team handoff). For them CreatureCombat stops drawing the stand-in body pose. Empty until the cave team delivers clips.
+        /// </summary>
+        public static readonly HashSet<string> AuthoredClips = new HashSet<string>();
 
         public static bool Has(string speciesIdOrName) => For(speciesIdOrName).Count > 0;
 

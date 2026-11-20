@@ -164,6 +164,17 @@ Menu thần (F1), mục Kiểm thử, dòng "Combat": tạo con mồi to, kẻ s
 - [ ] **Hết năng lượng** giữa trận: vùng xanh hẹp lại, trận vẫn chạy, không lỗi.
 - [ ] Không có lỗi đỏ trong Console, không bị kẹt trên không sau khi bám hay buông. Khi bấm vào menu thần hay HUD không vô tình vồ.
 
+### H6. Chiến đấu của quái: chiêu báo trước
+Menu thần (F1), mục Kiểm thử, dòng "Combat quái": tạo Thằn Lằn, Bọ Giáp, Rùa Pha Lê, Bầy Muỗi. Dòng bên dưới hiện pha hiện tại (Idle, Windup, Active, Recover) của quái trong 25 m. Học Lách Né để thử né. Hang đầu chậm hơn: đổi "Độ khó" thử từng tầng.
+- [ ] **Thằn Lằn (Rình-Vọt):** đứng im cúi người cuộn lại khoảng 0,6 giây (thân thấp rõ, hơi lùi), rồi phóng 3 m. Né sang bên thì nó trượt qua, rồi ngồi kiệt sức khoảng 1 giây: đánh nó lúc này thấy đau gấp rưỡi.
+- [ ] **Bọ Giáp (Húc):** cào đất cúi sừng 0,9 giây rung nhẹ, rồi lao thẳng 7 m. Né sang bên thì nó chạy qua. Lúc cúi sừng và lao thì **vồ bị bật ra** (có giáp); lúc kiệt sức thì vồ được. Cho nó đâm vào vách: nó choáng khoảng 2 giây rồi mới kiệt sức.
+- [ ] **Rùa Pha Lê:** pha 1 có Cắn Cổ (tầm gần) và Rụt Mai–Lao (rụt vào mai rồi lao, có giáp). Máu dưới 66%: thêm Xoay Mai (có vòng đỏ trên đất báo tầm, đẩy lùi). Máu dưới 33%: thêm Gọi Bầy (Bọ Giáp trong 25 m kéo tới). Giữa các đòn nó có khoảng kiệt sức 1,5 giây.
+- [ ] **Dấu hiệu rõ ở hình dáng:** nhìn từ camera sau lưng slime, ở khoảng 8 m, vẫn nhận ra quái sắp ra đòn nhờ tư thế thân (không cần nhìn thanh máu hay chữ).
+- [ ] **Bầy Muỗi:** vài con bay tới slime (một con phát hiện thì cả bầy trong 15 m cùng tới), đậu lên người và hút máu (khoảng 1,5 mỗi giây). Thoát bằng: nhảy (Space), dùng kỹ năng, đánh trúng nó, hoặc chạy nhanh khoảng nửa giây (khoảng 3 m/s). Muỗi bị đuổi thì bay đi, **30 giây sau** nếu slime còn trong 15 m thì quay lại hút tiếp; ra xa thì không quay lại.
+- [ ] Quái không có mục tiêu (slime trong vùng an toàn hang đầu, Chúa Hang hiền ở hang đầu) thì không gồng, không ra đòn.
+- [ ] Không có lỗi đỏ khi quái chết giữa lúc gồng; quái không đứng đơ mãi (Busy kẹt) sau khi bị choáng, bị hất hay mất mục tiêu.
+- [ ] Vồ vào quái đang kiệt sức: bám được và vào mini game như thường.
+
 ### I. Chưa làm được, đừng thử
 Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 

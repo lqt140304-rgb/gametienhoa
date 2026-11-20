@@ -818,3 +818,14 @@ Thiết kế: `docs/superpowers/specs/2026-11-20-slime-combat-latch-design.md`. 
 - **Chưa làm:** Vồ Xa của Chồn Khe (đợt 3 chưa có dữ liệu kỹ năng); kỹ năng hang tác động mini game và co-op (spec mục 2.5); cảnh nuốt đầy đủ (thân phình, rung màn hình); tiếng hiệu ứng riêng cho tiêu hóa, siết và thoát; hoạt hình quái giãy; né (dash) lấy từ kỹ năng của quái.
 - **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Space vừa là siết (khi có cảnh báo) vừa là buông (khi không). Kẻ săn nhỏ hơn slime vẫn vào mini game chứ không nuốt sống.
 - Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H5.
+
+## 55. Chiến đấu của quái: bộ chiêu dùng chung, lát 1 (đã làm khung, chưa kiểm trong Unity)
+
+Thiết kế: `docs/superpowers/specs/2026-11-20-monster-combat-movesets-design.md`. Kế hoạch: `docs/superpowers/plans/2026-11-20-monster-combat-movesets.md`.
+- **Luật thuần có test** (`Scripts/Combat/Pure/`): `MoveScheduler` (gồng, ra đòn, kiệt sức, chọn chiêu theo tầm, máu, hồi chiêu; sát thương gấp rưỡi lúc kiệt sức; giáp), `LeechRules` (muỗi: săn, bám hút, bị đuổi, sợ 30 giây, quay lại), `TellPose` (tư thế thân theo nhịp chiêu), `MovesetSeed` (bốn loài: Thằn Lằn Bờ Hồ Rình-Vọt, Bọ Giáp Quặng Húc, Muỗi Rêu Chích-Hút, Rùa Pha Lê bốn chiêu theo pha).
+- **Mã Unity** (`Combat/CreatureCombat`, thêm bởi `Predator.Awake` và `Prey.Awake` khi loài có bộ chiêu): chạy bộ chiêu, di chuyển và gây sát thương theo hình chiêu, vòng đỏ báo tầm cho chiêu vùng, tạm dừng hành vi chủ khi `Busy`, bật trigger hoạt hình `Tell_*`, `Strike_*`, `Recover_*`, tư thế thân bằng code. Vồ của slime bật ra khi quái có giáp. `SkillBar.SkillUsed` cho muỗi biết khi slime dùng kỹ năng.
+- **Giao bên làm hang:** hoạt hình và biến dạng mô hình theo bảng trong `docs/superpowers/handoff/2026-11-20-monster-tell-poses-for-cave-team.md`; giao xong loài nào thì thêm khóa loài vào `MovesetSeed.AuthoredClips` để tắt tư thế tạm.
+- **Chưa làm:** lát 2 (Cáo Gió phép băng và gió, Chồn Khe đánh rồi chạy, rình ở góc khuất); lát 3 (Khỉ); yếu theo họ kỹ năng; ánh xạ chiêu quái thành kỹ năng người chơi; dấu hiệu báo cho người chơi co-op trên máy khách; tiếng cho từng chiêu.
+- **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Tư thế tạm nhân lên `localScale` của nút `Model` và có thể chồng với `CreatureLocomotion`. Muỗi chỉ nhắm slime cục bộ; người chơi co-op từ xa vẫn bị cắn theo luật cũ. Số liệu là bản tạm.
+- Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H6.
+

@@ -123,7 +123,7 @@ namespace Evolve.Combat
             float health = pred != null ? pred.HealthFraction : prey != null ? prey.HealthFraction : 1f;
             float dist = target != null ? Flat(target.transform.position - transform.position).magnitude : float.MaxValue;
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, dist, health);
-            if (scheduler.Phase == MovePhase.Windup && prevPhase != MovePhase.Windup) BeginWindup(scheduler.Current);
+            if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null) BeginStrike(started);
             prevPhase = scheduler.Phase;
 
@@ -137,9 +137,19 @@ namespace Evolve.Combat
             if (d.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(d), 0.25f));
         }
 
+        /// <summary>Animation triggers by phase, named after the move's Anim ("Tell_Attack", "Strike_Attack", "Recover_Attack"); a missing trigger is skipped.</summary>
+        void OnPhase(MovePhase phase, MoveDef m)
+        {
+            if (m == null) return;
+            if (phase == MovePhase.Windup) BeginWindup(m);
+            else if (phase == MovePhase.Active) loco?.PlayAction("Strike_" + m.Anim);
+            else if (phase == MovePhase.Recover) loco?.PlayAction("Recover_" + m.Anim);
+        }
+
         void BeginWindup(MoveDef m)
         {
             loco?.PlayAction(m.Anim);
+            loco?.PlayAction("Tell_" + m.Anim);
             if (m.Shape == MoveShape.Spin || m.Shape == MoveShape.Call)
                 SkillFx.Ring(transform.position, m.Radius, TellColor, m.Windup * tellScale, 0.3f);   // a ring on the ground shows how far the blow reaches
         }
@@ -158,7 +168,7 @@ namespace Evolve.Combat
             if (m.Shape != MoveShape.Lunge && m.Shape != MoveShape.Charge) return;
             if (m.Active > 0f && motor != null && !motor.Move(strikeDir, m.Distance / m.Active))
             {
-                if (m.Shape == MoveShape.Charge) { CreatureStatus.Stun(this, 2f); scheduler.Stun(2f); return; }   // hit a wall: dazed
+                if (m.Shape == MoveShape.Charge) { CreatureStatus.Stun(this, 2f); scheduler.Stun(2f); loco?.PlayAction("Stun"); return; }   // hit a wall: dazed
             }
             if (!hitDone && target != null && Flat(target.transform.position - transform.position).magnitude <= Radius + HitReach) { Hurt(m, Radius + HitReach); hitDone = true; }
         }
@@ -223,6 +233,11 @@ namespace Evolve.Combat
                     if (target != null) Fly(transform.position - target.transform.position, ScaredSpeed);
                     break;
             }
+            if (leech.State != prevLeech)
+            {
+                if (leech.State == LeechState.Drain) loco?.PlayAction("Feed");
+                else if (leech.State == LeechState.Scared) loco?.PlayAction("Flee");
+            }
             if (prevLeech == LeechState.Drain && leech.State != LeechState.Drain) drainAccum = 0f;
             prevLeech = leech.State;
         }
@@ -247,6 +262,7 @@ namespace Evolve.Combat
                 if (leech.State != LeechState.Idle) pose = TellPose.Evaluate(PoseKind.Hover, MovePhase.Windup, 1f);   // a quivering mosquito while it hunts and feeds
             }
             else if (m != null) pose = TellPose.Evaluate(MovesetSeed.PoseOf(m), scheduler.Phase, scheduler.Progress01);
+            if (MovesetSeed.AuthoredClips.Contains(SpeciesNames.Key(name))) pose = Pose.Identity;   // the real clips carry the body language
             Apply(pose);
         }
 
