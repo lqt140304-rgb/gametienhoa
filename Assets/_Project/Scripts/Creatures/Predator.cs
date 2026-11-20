@@ -27,8 +27,9 @@ namespace Evolve.Creatures
         bool Calm => CaveTier.IsCalm(Gentle, provokedUntil, Time.time);
 
         /// <summary>Cave tier tuning: multiplies bite damage, detection range, and speeds (see CreatureTuning).</summary>
-        public void ScaleDanger(float damage, float detect, float speed)
+        public void ScaleDanger(float damage, float detect, float speed, float size = 1f)
         {
+            reachScale *= size;
             biteDamage *= damage; detectRadius *= detect; chaseSpeed *= speed; patrolSpeed *= speed;
         }
         /// <summary>Debug: predators stop moving.</summary>
@@ -108,7 +109,10 @@ namespace Evolve.Creatures
         /// <summary>Client side: a copy of a predator that really lives on the host. It reports hits to the host.</summary>
         public bool IsReplica { get; set; }
 
-        const float BiteReach = 1.1f;
+        const float BaseBiteReach = 1.1f;
+        float reachScale = 1f;
+        /// <summary>How near (centre to centre) it must be to bite: grows with the creature, or a big lord could never reach prey pushed out of its body.</summary>
+        float BiteReach => BaseBiteReach * reachScale;
 
         public event Action<Predator> Killed;
 

@@ -24,7 +24,7 @@ namespace Evolve.Creatures
             if (creature.TryGetComponent(out Predator hunter))
             {
                 var danger = CaveTier.DangerOf(tier);
-                hunter.ScaleDanger(danger.Damage, danger.Detect, role == CreatureRole.Lord ? danger.LordSpeed : 1f);
+                hunter.ScaleDanger(danger.Damage, danger.Detect, role == CreatureRole.Lord ? danger.LordSpeed : 1f, k);
                 hunter.Gentle = role == CreatureRole.Lord && danger.LordGentle;
             }
         }
