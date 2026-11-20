@@ -25,7 +25,7 @@ namespace Evolve.World
                 if (custom.HasValue) return custom.Value;
             }
             var terrain = Terrain.activeTerrain;
-            if (terrain == null) return fallbackY;
+            if (terrain == null || terrain.terrainData == null) return fallbackY;   // a Terrain whose data asset is missing counts as flat ground
             Vector3 tPos = terrain.transform.position;
             Vector3 tSize = terrain.terrainData.size;
             if (x < tPos.x || x > tPos.x + tSize.x || z < tPos.z || z > tPos.z + tSize.z)
