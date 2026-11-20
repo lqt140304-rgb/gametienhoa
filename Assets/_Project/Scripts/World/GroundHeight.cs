@@ -12,7 +12,7 @@ namespace Evolve.World
         public static float At(float x, float z, float fallbackY)
         {
             var terrain = Terrain.activeTerrain;
-            if (terrain == null) return fallbackY;
+            if (terrain == null || terrain.terrainData == null) return fallbackY;   // a Terrain whose data asset is missing counts as flat ground
             return terrain.SampleHeight(new Vector3(x, 0f, z)) + terrain.transform.position.y;
         }
 
