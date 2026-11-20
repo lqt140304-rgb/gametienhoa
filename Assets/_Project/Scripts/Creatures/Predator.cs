@@ -107,7 +107,7 @@ namespace Evolve.Creatures
 
         // ---- scene behaviour (CreatureBrain sets these; with no brain the old behaviour runs) ----
         /// <summary>What the brain wants now; None = patrol and hunt the players as before.</summary>
-        public PredatorIntent Intent;
+        [NonSerialized] public PredatorIntent Intent;
         /// <summary>Which players it may hunt (a slime much bigger than it is not hunted); null = all.</summary>
         public Func<SurvivalStats, bool> TargetFilter;
         const float FullSeconds = 60f, HungerRiseSeconds = 120f;

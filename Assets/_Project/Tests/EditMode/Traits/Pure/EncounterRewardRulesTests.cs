@@ -21,7 +21,7 @@ namespace Evolve.Tests.EditMode
             for (int seed = 0; seed < 200; seed++)
             {
                 string id = EncounterRewardRules.PickGene(Pool(), known, GeneRarity.Rare, seed);
-                Assert.That(id, Is.AnyOf("e1", "l1"), "seed " + seed);   // r1 is known, commons are too weak
+                CollectionAssert.Contains(new[] { "e1", "l1" }, id, "seed " + seed);   // r1 is known, commons are too weak
             }
         }
 
