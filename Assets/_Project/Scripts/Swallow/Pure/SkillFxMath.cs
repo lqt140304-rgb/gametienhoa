@@ -19,8 +19,6 @@ namespace Evolve.Swallow
 
         /// <summary>Phát Sáng is warm lamplight, whatever its family.</summary>
         public static readonly Color GlowColor = new Color(1.00f, 0.90f, 0.55f);
-        /// <summary>The Lưỡi Dài tongue is pink.</summary>
-        public static readonly Color TongueColor = new Color(0.95f, 0.45f, 0.62f);
 
         /// <summary>0 at the start and the end, 1 in the middle: rises over fadeIn, falls over the last fadeOut seconds.</summary>
         public static float Envelope(float t, float total, float fadeIn, float fadeOut)
@@ -46,5 +44,27 @@ namespace Evolve.Swallow
             float m = 1f - Mathf.Clamp01(k);
             return 1f - m * m * m;
         }
+
+        /// <summary>
+        /// Thickness of a gel limb at fraction f (0 at the body, 1 at the tip): tapers from baseR to tipR, flares out where it leaves the body
+        /// (flare), swells into a knob near the tip (bulb), and closes to a round point over the last cap of its length.
+        /// </summary>
+        public static float PseudopodRadius(float f, float baseR, float tipR, float flare, float bulb, float cap)
+        {
+            f = Mathf.Clamp01(f);
+            float root = Mathf.Clamp01(1f - f / 0.18f);
+            float knob = Mathf.Clamp01((f - 0.78f) / 0.1f);
+            float r = (baseR + (tipR - baseR) * f) * (1f + flare * root * root) * (1f + bulb * knob);
+            if (cap > 0f && f > 1f - cap)
+            {
+                float u = (f - (1f - cap)) / cap;
+                r *= (float)System.Math.Sqrt(System.Math.Max(0.0, 1.0 - u * u));
+            }
+            return r;
+        }
+
+        /// <summary>How far a limb has reached (0..1): shoots out over outSeconds, stays, draws back over the last backSeconds. Fast out, soft landing.</summary>
+        public static float Reach(float t, float total, float outSeconds, float backSeconds) =>
+            EaseOutCubic(Envelope(t, total, outSeconds, backSeconds));
     }
 }

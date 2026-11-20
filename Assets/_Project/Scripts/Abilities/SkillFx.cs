@@ -256,59 +256,83 @@ namespace Evolve.Abilities
             });
         }
 
-        /// <summary>A wobbling tongue shoots from one body to another and stays stuck to it while it is dragged in (Lưỡi Dài).</summary>
-        public static void Tongue(Transform user, Transform prey, Color c)
+        // ---------- limbs the slime forms from its own gel ----------
+
+        /// <summary>A copy of the slime's own body material (same colour, shine and see-through, as the player chose it), for limbs made of its gel.</summary>
+        static Material GelMaterial(GameObject user)
         {
-            if (user == null || prey == null) return;
-            const int points = 14;
-            const float shoot = 0.1f, life = 0.5f;
-            var go = new GameObject("Tongue") { layer = 2 };
-            var lr = go.AddComponent<LineRenderer>();
-            var mat = Gel(c, 1f, 0f, 1.6f);
-            lr.sharedMaterial = mat; lr.positionCount = points; lr.useWorldSpace = true; lr.numCapVertices = 6;
-            lr.shadowCastingMode = ShadowCastingMode.Off; lr.receiveShadows = false;
-            lr.widthCurve = new AnimationCurve(new Keyframe(0f, 0.16f), new Keyframe(0.7f, 0.1f), new Keyframe(1f, 0.05f));
-            lr.widthMultiplier = Mathf.Clamp(Radius(user) * 2f, 0.6f, 2f);
-            bool hit = false;
-            FxRun.Begin("Tongue", life, e =>
-            {
-                if (user == null || prey == null) return false;
-                Vector3 a = Center(user), b = Center(prey);
-                float reach = Mathf.Clamp01(e / shoot);
-                Vector3 tip = Vector3.Lerp(a, b, reach);
-                Vector3 side = Vector3.Cross(Vector3.up, b - a).normalized;
-                for (int i = 0; i < points; i++)
-                {
-                    float f = i / (points - 1f);
-                    float wob = Mathf.Sin(f * Mathf.PI) * Mathf.Sin(e * 30f + f * 8f) * 0.08f * (1f - reach * 0.7f);
-                    lr.SetPosition(i, Vector3.Lerp(a, tip, f) + side * wob);
-                }
-                Fade(mat, 1f - Mathf.Clamp01((e - 0.38f) / 0.12f));
-                if (!hit && reach >= 1f) { hit = true; Burst(tip, c, 10, 1.6f, 0.12f, 0.5f, 0.3f, 0.15f); }
-                return true;
-            }, () => { Object.Destroy(go); Object.Destroy(mat); });
+            var tint = user != null ? user.GetComponentInChildren<Evolve.Visuals.SlimeGelTint>() : null;
+            var r = tint != null ? tint.GetComponent<Renderer>() : null;
+            if (r == null || r.sharedMaterial == null) return Gel(Evolve.Visuals.SlimeColor.Current, 0.6f, 1f);   // no body found: a plain glow in its colour
+            var m = new Material(r.sharedMaterial);
+            if (m.HasProperty("_Cull")) m.SetFloat("_Cull", 0f);   // seen from both sides, so the tube is right whichever way it faces
+            return m;
         }
 
-        /// <summary>A crystal sting jabbed from one point to another (Châm Choáng).</summary>
-        public static void Sting(Vector3 from, Vector3 to, Color c)
+        /// <summary>
+        /// Runs one gel limb: it forms out of the body toward a target point (which may move), stays, then is drawn back into the body.
+        /// reachAt gives the target each frame (return false to stop early).
+        /// </summary>
+        static void Limb(GameObject user, string name, float seconds, float outSeconds, float backSeconds, System.Func<Vector3> target,
+                         float baseK, float tipK, float flare, float bulb, float cap, float wobbleK, System.Action onReach = null)
         {
-            Vector3 d = to - from;
-            float len = d.magnitude;
-            if (len < 0.05f) return;
-            var mat = Gel(c, 0.4f, 1.3f, 2.2f);
-            var t = Part("Sting", SkillFxMeshes.Crystal(), mat);
-            var rot = Quaternion.FromToRotation(Vector3.up, d / len);
-            bool hit = false;
-            FxRun.Begin("Sting", 0.4f, e =>
+            if (user == null) return;
+            var mat = GelMaterial(user);
+            var limb = new Pseudopod(mat);
+            float radius = Radius(user.transform);
+            bool reached = false;
+            FxRun.Begin(name, seconds, e =>
             {
-                float k = Mathf.Clamp01(e / 0.08f);
-                t.SetPositionAndRotation(from, rot);
-                t.localScale = new Vector3(0.22f, len * k, 0.22f);
-                Fade(mat, 1f - Mathf.Clamp01((e - 0.15f) / 0.25f));
-                if (!hit && k >= 1f) { hit = true; Burst(to, c, 12, 2.4f, 0.12f, 0.5f, 0.4f, 0.1f); Ring(to, 0.8f, c, 0.35f, 0.1f); }
+                if (user == null) return false;
+                float reach = SkillFxMath.Reach(e, seconds, outSeconds, backSeconds);
+                limb.Set(Center(user.transform), target(), reach, e, radius * baseK, radius * tipK, flare, bulb, cap, radius * wobbleK);
+                if (!reached && e >= outSeconds) { reached = true; onReach?.Invoke(); }
+                return true;
+            }, limb.Dispose);
+        }
+
+        /// <summary>Lưỡi Dài: the slime shoots out a tongue of its own gel with a sticky knob at the tip; it stays on the prey while it is dragged in, then draws back into the body.</summary>
+        public static void Tongue(GameObject user, Transform prey)
+        {
+            if (user == null || prey == null) return;
+            Limb(user, "Tongue", 0.55f, 0.1f, 0.14f, () => prey != null ? Center(prey) : Center(user.transform), 0.4f, 0.17f, 0.7f, 0.8f, 0.1f, 0.12f,
+                 () => { if (prey != null) Burst(Center(prey), SlimeBodyColor(), 8, 1.3f, 0.1f, 0.5f, 0.3f, 0.12f); });
+        }
+
+        /// <summary>Châm Choáng: the slime hardens a pointed spike of its own gel and jabs it at the target, then pulls it back in.</summary>
+        public static void Sting(GameObject user, Vector3 to, Color impact)
+        {
+            if (user == null) return;
+            Limb(user, "Sting", 0.38f, 0.07f, 0.16f, () => to, 0.32f, 0.05f, 0.5f, 0f, 0.04f, 0f,
+                 () => { Burst(to, impact, 12, 2.4f, 0.12f, 0.5f, 0.4f, 0.1f); Ring(to, 0.8f, impact, 0.35f, 0.1f); });
+        }
+
+        /// <summary>Bám Vách: a little foot of gel presses against the wall at a point, holds a moment and melts back into the body.</summary>
+        public static void Foot(GameObject user, Vector3 wallPoint, Color chips, float seconds = 0.45f)
+        {
+            Limb(user, "Foot", seconds, 0.1f, 0.14f, () => wallPoint, 0.3f, 0.2f, 0.5f, 0.5f, 0.2f, 0f,
+                 () => Burst(wallPoint, chips, 3, 0.8f, 0.08f, 0.5f, 0.2f, 0.06f));
+        }
+
+        /// <summary>Thu Mình: the slime thickens its own skin into a hard shell: a second layer of its own gel swells round the body, holds and thins back.</summary>
+        public static void GelShell(GameObject user, float seconds)
+        {
+            if (user == null) return;
+            var mat = GelMaterial(user);
+            var t = Part("GelShell", SkillFxMeshes.Sphere(), mat);
+            float radius = Radius(user.transform);
+            FxRun.Begin("GelShell", seconds, e =>
+            {
+                if (user == null) return false;
+                float k = SkillFxMath.Envelope(e, seconds, Mathf.Min(0.2f, seconds * 0.4f), Mathf.Min(0.4f, seconds * 0.5f));
+                t.position = Center(user.transform);
+                t.localScale = Vector3.one * radius * 2f * Mathf.Lerp(0.9f, 1.16f, SkillFxMath.EaseOutBack(k)) * (1f + 0.015f * Mathf.Sin(e * 8f));
                 return true;
             }, () => { Object.Destroy(t.gameObject); Object.Destroy(mat); });
         }
+
+        /// <summary>The colour of the slime's body (for droplets thrown off a gel limb).</summary>
+        static Color SlimeBodyColor() => Evolve.Visuals.SlimeColor.Current;
 
         /// <summary>Stars circling above a stunned creature's head. Stunning it again while they are out only extends them.</summary>
         public static void Stars(Component creature, float seconds)

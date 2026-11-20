@@ -101,11 +101,15 @@ namespace Evolve.Abilities
         void Update()
         {
             if (glow != null && glow.enabled && Time.time >= lightUntil) glow.enabled = false;
-            // Bám Vách: rock chips fall off the wall while the body walks up it
-            if (Climbing && rb != null && rb.linearVelocity.y > 0.5f && Time.time >= nextChip)
+            // Bám Vách: little feet of gel press on the wall and melt back, one after another, while the body walks up it
+            if (Climbing && rb != null && lastMoveDir != Vector3.zero && rb.linearVelocity.y > 0.5f && Time.time >= nextChip)
             {
-                nextChip = Time.time + 0.09f;
-                SkillFx.Burst(rb.position + lastMoveDir * 0.5f, Evolve.Swallow.SkillFxMath.FamilyColor(Evolve.Swallow.SkillFamily.Agility), 2, 0.5f, 0.1f, 0.6f, 0f, 0.1f);
+                nextChip = Time.time + 0.16f;
+                float r = SkillFx.Radius(transform);
+                Vector3 side = Vector3.Cross(Vector3.up, lastMoveDir);
+                Vector3 from = rb.position + side * Random.Range(-0.8f, 0.8f) * r + Vector3.up * Random.Range(-0.3f, 0.5f) * r;
+                if (Physics.Raycast(from, lastMoveDir, out var hit, r + WallReach, ~0, QueryTriggerInteraction.Ignore))
+                    SkillFx.Foot(gameObject, hit.point + hit.normal * 0.02f, Evolve.Swallow.SkillFxMath.FamilyColor(Evolve.Swallow.SkillFamily.Stone));
             }
         }
 

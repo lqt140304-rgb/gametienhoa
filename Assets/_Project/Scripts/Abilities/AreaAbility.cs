@@ -61,7 +61,7 @@ namespace Evolve.Abilities
 
             var tint = Evolve.Swallow.SkillFxMath.FamilyColor(Family);
             if (max > 0)
-                foreach (var (creature, _) in inReach) SkillFx.Sting(SkillFx.Center(user.transform), SkillFx.Center(creature.transform), tint);   // a jab
+                foreach (var (creature, _) in inReach) SkillFx.Sting(user, SkillFx.Center(creature.transform), tint);   // a jab of the slime's own gel
             else
             {
                 SkillFx.Ring(c, Radius, tint);
