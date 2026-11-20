@@ -184,7 +184,7 @@ namespace Evolve.DevTools
             bool frozen = GUILayout.Toggle(Predator.Frozen && Prey.Frozen, " Đóng băng mọi sinh vật");
             Predator.Frozen = frozen; Prey.Frozen = frozen;
 
-            DrawTestSection(s, slimeBody, swallower);   // GodMenu.Tests.cs
+            DrawTestSection(player, slimeBody, swallower);   // GodMenu.Tests.cs
 
             Header("Thế giới");
             GUILayout.BeginHorizontal();
