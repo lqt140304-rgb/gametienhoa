@@ -21,7 +21,18 @@ namespace Evolve.Traits
         readonly FamiliarityGrid familiarity = new FamiliarityGrid();
         readonly List<(OrganSlot slot, float integrity)> worn = new List<(OrganSlot, float)>();
 
+        readonly ScentTrail trail = new ScentTrail();
+        float stillSeconds, lastHitAt = -1e6f, drySeconds, leftWaterAt = -1e6f, nextCrowdCheck;
+        bool wasWading;
+        int crowd;
+        Vector3 lastPos;
+        bool hasLastPos;
+
         public string CoreId => coreId;
+        /// <summary>How long the body has not moved (Nhân Ngụy Sắc); reset by a hit.</summary>
+        public float StillSeconds => stillSeconds;
+        /// <summary>The scent trail (Vệt Mùi); only laid while the player has that flaw.</summary>
+        public ScentTrail Trail => trail;
         public IReadOnlyList<string> FlawIds => flawIds;
         public event Action Changed;
 
@@ -49,23 +60,68 @@ namespace Evolve.Traits
         // Run Rẩy: a hit freezes the body for a moment.
         void OnDamaged(float amount)
         {
+            stillSeconds = 0f;           // Ngụy Sắc is lost when hit
+            lastHitAt = Time.time;       // Màng Thẩm Thấu pauses
             if (slime != null && HasFlaw(FlawRules.RunRay)) slime.FreezeFor(FlawRules.HitFreezeSeconds(FlawStrength(FlawRules.RunRay)));
         }
 
-        // Nhân Quen Đất: the ground under the player becomes familiar; swimming is not covered.
         void Update()
         {
-            if (stats != null && slime != null)   // flags that change the local body; a remote avatar's numbers come from its owner
+            float dt = Time.deltaTime;
+            var pos = transform.position;
+            float speed = hasLastPos && dt > 0f ? new Vector2(pos.x - lastPos.x, pos.z - lastPos.z).magnitude / dt : 0f;
+            lastPos = pos; hasLastPos = true;
+
+            // tracked on every avatar (the host's predators read them for remote players too)
+            bool moving = stats != null ? stats.IsMoving : speed > EnvTraitRules.ThamThauStillSpeed;
+            stillSeconds = moving ? 0f : stillSeconds + dt;
+            if (HasFlaw(EnvTraitRules.VetMui)) trail.Visit(pos.x, pos.z, Time.time); else if (trail.Count > 0) trail.Clear();
+
+            if (stats == null || slime == null) return;   // the rest changes the local body; a remote avatar's numbers come from its owner
+            var state = stats.State;
+            state.HungerBurnMultiplier = FlawRules.HungerBurnMultiplier(FlawStrength(FlawRules.DoiSom));
+            state.AbsorbFlawStrength = FlawStrength(FlawRules.DaDayKen);
+
+            bool wading = slime.IsWading;
+            bool wetGround = wading || state.InShelter;                                   // shallow water, or the damp moss of a shelter
+            bool wet = wetGround || slime.IsSwimming || state.InCleanWater;
+
+            // Nhân Màng Thẩm Thấu
+            state.HungerGainPerSec = EnvTraitRules.ThamThauGain(HasCore(EnvTraitRules.MangThamThau), speed, wetGround, slime.IsSwimming,
+                state.Hunger, state.MaxHunger, Time.time - lastHitAt);
+            // Nhân Quang Hợp (floating on the surface is fine; the slime never dives)
+            state.EnergyBonusPerSec = HasCore(EnvTraitRules.QuangHop) && LightShafts.InLight(pos)
+                ? EnvTraitRules.QuangHopEnergy(true, true, false) : 0f;
+            // Ngại Đông: count the creatures close by twice a second
+            if (HasFlaw(EnvTraitRules.NgaiDong))
             {
-                var state = stats.State;
-                state.HungerBurnMultiplier = FlawRules.HungerBurnMultiplier(FlawStrength(FlawRules.DoiSom));
-                state.AbsorbFlawStrength = FlawStrength(FlawRules.DaDayKen);
+                if (Time.time >= nextCrowdCheck) { nextCrowdCheck = Time.time + 0.5f; crowd = CountCreatures(pos, EnvTraitRules.CrowdRadius); }
+                state.EnergyRegenMultiplier = EnvTraitRules.CrowdRegen(crowd, FlawStrength(EnvTraitRules.NgaiDong));
             }
-            if (slime == null) return;
-            if (!HasCore("core.quen_dat") || slime.IsSwimming) { slime.TraitSpeed = 1f; return; }
-            var p = new Vector2(transform.position.x, transform.position.z);
-            familiarity.Visit(p, Time.time);
-            slime.TraitSpeed = familiarity.SpeedMultiplier(p, Time.time);
+            else state.EnergyRegenMultiplier = 1f;
+
+            // speed: Nhân Quen Đất x Mau Khô x Bám Bùn
+            drySeconds = wet ? 0f : drySeconds + dt;
+            if (wasWading && !wading) leftWaterAt = Time.time;
+            wasWading = wading;
+            float mul = EnvTraitRules.DrySpeed(drySeconds, FlawStrength(EnvTraitRules.MauKho))
+                      * EnvTraitRules.MudSpeed(wading ? -1f : Time.time - leftWaterAt, FlawStrength(EnvTraitRules.BamBun));
+            if (HasCore("core.quen_dat") && !slime.IsSwimming)
+            {
+                var p = new Vector2(pos.x, pos.z);
+                familiarity.Visit(p, Time.time);
+                mul *= familiarity.SpeedMultiplier(p, Time.time);
+            }
+            slime.TraitSpeed = mul;
+        }
+
+        static int CountCreatures(Vector3 at, float radius)
+        {
+            float r2 = radius * radius;
+            int n = 0;
+            foreach (var c in Evolve.Creatures.Prey.Active) if (c != null && (c.transform.position - at).sqrMagnitude <= r2) n++;
+            foreach (var c in Evolve.Creatures.Predator.Active) if (c != null && (c.transform.position - at).sqrMagnitude <= r2) n++;
+            return n;
         }
 
         public bool HasCore(string id) => coreId != null && coreId == id;
@@ -86,6 +142,7 @@ namespace Evolve.Traits
         {
             coreId = string.IsNullOrEmpty(newCoreId) ? null : newCoreId;
             familiarity.Clear();
+            trail.Clear();
             flawIds = newFlawIds != null ? new List<string>(newFlawIds).ToArray() : NoFlaws;
             Changed?.Invoke();
         }

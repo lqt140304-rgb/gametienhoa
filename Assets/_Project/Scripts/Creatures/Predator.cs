@@ -151,6 +151,8 @@ namespace Evolve.Creatures
                     nextTurn = Time.time + UnityEngine.Random.Range(3f, 6f);
                 }
                 dir = wanderDir; speed = patrolSpeed;
+                var lure = Evolve.Traits.TraitSense.Lure(pos);   // Dễ Bị Chú Ý: drift toward the player instead of wandering
+                if (lure != null) dir = (Flat(lure.transform.position - pos) * 0.8f + wanderDir * 0.2f).normalized;
 
                 Vector3 fromHome = Flat(pos - HomeCenter, false);
                 if (fromHome.magnitude > HomeRadius * 0.8f)
@@ -202,8 +204,8 @@ namespace Evolve.Creatures
             foreach (var p in SurvivalStats.All)
             {
                 if (p.State.IsDead) continue;
-                float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor);
-                if (Vector3.Distance(pos, p.transform.position) <= radius) { target = p; break; }
+                float radius = detectRadius * (p.IsMoving ? 1f : stillDetectFactor) * Evolve.Traits.TraitSense.DetectMultiplier(p);   // Nhân Ngụy Sắc
+                if (Vector3.Distance(pos, p.transform.position) <= radius || Evolve.Traits.TraitSense.SmellsTrail(p, pos)) { target = p; break; }   // Vệt Mùi
             }
         }
 

@@ -114,6 +114,12 @@ namespace Evolve.Survival
         [NonSerialized] public float HungerBurnMultiplier = 1f;
         /// <summary>Dạ Dày Kén: how strongly the sluggish stomach is felt (0 = no such flaw).</summary>
         [NonSerialized] public float AbsorbFlawStrength;
+        /// <summary>Nhân Màng Thẩm Thấu: hunger points gained per second right now (0 = none).</summary>
+        [NonSerialized] public float HungerGainPerSec;
+        /// <summary>Nhân Quang Hợp: extra energy per second right now (comes even while starving).</summary>
+        [NonSerialized] public float EnergyBonusPerSec;
+        /// <summary>Ngại Đông: multiplies energy regeneration.</summary>
+        [NonSerialized] public float EnergyRegenMultiplier = 1f;
         /// <summary>Raised with the amount whenever a hit from outside lands (Run Rẩy listens).</summary>
         public event Action<float> Damaged;
         [NonSerialized] float clock;
@@ -181,7 +187,7 @@ namespace Evolve.Survival
 
             // Metabolism only burns food while active; resting costs nothing.
             float burn = (isMoving ? cfg.HungerDecayPerSec : 0f) + (isSprinting ? cfg.SprintHungerPerSec : 0f);
-            Hunger = Clamp(Hunger - burn * HungerBurnMultiplier * dt, MaxHunger);
+            Hunger = Clamp(Hunger - burn * HungerBurnMultiplier * dt + HungerGainPerSec * dt, MaxHunger);
 
             // Energy comes back even while moving, just slower than when resting. Not while starving.
             if (Hunger > 0f)
@@ -190,8 +196,10 @@ namespace Evolve.Survival
                 if (InShelter) regen *= cfg.ShelterEnergyRegenMultiplier;
                 regen *= StressEffects.EnergyRegenMultiplier(Stress, cfg);
                 regen *= NutrientEffects.EnergyRegenMultiplier(Nutrients[(int)NutrientKind.Iron]);
+                regen *= EnergyRegenMultiplier;
                 Energy = Clamp(Energy + regen * dt, MaxEnergy);
             }
+            if (EnergyBonusPerSec > 0f) Energy = Clamp(Energy + EnergyBonusPerSec * dt, MaxEnergy);
 
             // Anaemia (low Huyết Thiết) lowers the maximum health; low Sợi Nhầy slows healing.
             float healthCap = MaxHealth * NutrientEffects.MaxHealthMultiplier(Nutrients[(int)NutrientKind.Iron]);

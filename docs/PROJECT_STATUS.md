@@ -614,3 +614,14 @@ Spec `docs/superpowers/specs/2026-11-20-birth-scene-system-collapse-design.md`, 
 - Test ngoài Unity: 131 test xanh (`tools/cstest/run.sh`). **Toàn bộ phần Unity của bản 3 (BirthStage, Glitch, Frames, Fx, Cards, Slam, Gifts, Audio, Scene) chưa từng biên dịch hay xem trong Unity.** Chưa làm: ô video Veo, Dị Tượng, hiệu ứng thật cho Phân Thân và các Lõi ghi "chưa có hiệu ứng".
 
 Checklist: (a) `Evolve → Create Traits` một lần; (b) Console sạch; (c) Play: nền tối, không thấy slime/hang/HUD, nhiễu và rung lúc đầu; (d) chữ gõ có tiếng, nhạc nền ù; (e) mỗi Ân Điển một cảnh và một tiếng; (f) bài tự xáo và lật, Lõi có hiệu ứng theo độ hiếm; (g) tên đập vào nghiêng trái/phải kèm rung; (h) "Kết nối ổn định" rồi điều khiển được slime; (i) Space/Tab bỏ qua được; (j) chết rồi R: không chạy lại.
+
+## 39. Lõi và Khuyết Điểm đợt 2: trạng thái và danh sách kiểm tra
+
+Kế hoạch `docs/superpowers/plans/2026-11-20-traits-wave2.md`. Kỳ ngộ mỗi hang (đề xuất cho bên làm hang, chờ duyệt): `docs/superpowers/handoff/2026-11-20-cave-encounters-brief.md`.
+
+- **Đã có hiệu ứng (mới):** Lõi Ngụy Sắc, Màng Thẩm Thấu, Quang Hợp, Ăn Mòn; Khuyết Điểm Dễ Bị Chú Ý, Vệt Mùi, Ngại Đông, Mau Khô, Bám Bùn. Tổng cộng 7/12 Lõi, 9/12 Khuyết Điểm.
+- Luật thuần `Traits/Pure/EnvTraitRules.cs` (+ `ScentTrail`), 137 test xanh ngoài Unity. Phần Unity (`PlayerTraits`, `TraitSense`, `LightShafts`, `Predator`, `Swallower`, `SurvivalState`) **chưa biên dịch trong Unity**.
+- "Rêu ẩm" tạm hiểu là **hang trú**; "bùn" chưa có nên Bám Bùn chỉ tính nước nông. Tia sáng: tia nắng qua lỗ trần Hang Khởi Sinh (rơi xuống hồ: nổi trên mặt nước trong tia sáng là được); hang khác khai báo bằng `LightShafts.Register`.
+- Chờ nền: Thích Nghi, Phản Chấn, Cộng Sinh, Bám Dính, Thần Tốc, Mờ Trong Tối, Lạ Vùng, Cơ Quan Mau Mòn (xem kế hoạch, mục B).
+
+Checklist: (a) chạy `Evolve → Create Traits` lại (để lá bài bỏ chữ "chưa có hiệu ứng"); (b) Console sạch; (c) dùng menu thần (GodMenu) hoặc chơi nhiều lần để thử từng thứ: Ngụy Sắc đứng yên 2 giây thì kẻ săn mồi đi sát mới thấy; Vệt Mùi bị lần theo dù đã chạy xa; Dễ Bị Chú Ý kẻ săn mồi lảng vảng lại gần; Màng Thẩm Thấu đứng yên ở nước nông thấy no tăng tới 60%; Quang Hợp nổi trong tia nắng thấy năng lượng tăng nhanh; Ăn Mòn giữ F hòa tan nhanh hơn; Mau Khô ở cạn lâu thì chậm, chạm nước hết; Bám Bùn lên bờ còn chậm 2 giây.
