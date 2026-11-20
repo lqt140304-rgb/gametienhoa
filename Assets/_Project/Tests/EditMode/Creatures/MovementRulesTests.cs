@@ -14,6 +14,22 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(MoveStyle.Walker, MovementRules.For("").Style);
         }
 
+        [Test] public void WaterAndSlopeRules_PerSpecies()
+        {
+            var thanLan = MovementRules.For("ThanLanBoHo");
+            Assert.IsTrue(thanLan.AvoidsWater, "ThanLanBoHo must avoid water");
+            Assert.IsFalse(thanLan.CanSwim, "ThanLanBoHo cannot swim");
+
+            var thoLa = MovementRules.For("ThoLa");
+            Assert.IsTrue(thoLa.AvoidsWater, "ThoLa must avoid water");
+            Assert.IsFalse(thoLa.CanSwim, "ThoLa cannot swim");
+
+            var cocHoGia = MovementRules.For("CocHoGia");
+            Assert.IsFalse(cocHoGia.AvoidsWater, "CocHoGia does not avoid water");
+            Assert.IsTrue(cocHoGia.CanSwim, "CocHoGia can swim in water");
+            Assert.GreaterOrEqual(cocHoGia.MaxClimbSlope, 0.85f, "CocHoGia avoids climbing steep cavern walls");
+        }
+
         [Test] public void Walker_StepsSmallRocks_NotWallsOrCliffs()
         {
             var w = MovementRules.Walker;

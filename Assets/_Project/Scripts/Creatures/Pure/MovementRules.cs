@@ -13,8 +13,22 @@ namespace Evolve.Creatures
         public readonly float MaxStepUp;
         /// <summary>Deepest drop it walks off; deeper is a ledge it turns away from.</summary>
         public readonly float MaxDrop;
+        /// <summary>True when this creature avoids water (turns back at shore).</summary>
+        public readonly bool AvoidsWater;
+        /// <summary>True when this creature can swim in water.</summary>
+        public readonly bool CanSwim;
+        /// <summary>Normal.y threshold for walkable surfaces (0.7f = 45 deg, 0.88f = 28 deg avoids steep cliffs).</summary>
+        public readonly float MaxClimbSlope;
 
-        public MoveProfile(MoveStyle style, float up, float drop) { Style = style; MaxStepUp = up; MaxDrop = drop; }
+        public MoveProfile(MoveStyle style, float up, float drop, bool avoidsWater = false, bool canSwim = false, float maxClimbSlope = 0.7f)
+        {
+            Style = style;
+            MaxStepUp = up;
+            MaxDrop = drop;
+            AvoidsWater = avoidsWater;
+            CanSwim = canSwim;
+            MaxClimbSlope = maxClimbSlope;
+        }
     }
 
     /// <summary>Pure movement rules for creatures (kept out of Unity so they can be tested).</summary>
@@ -24,6 +38,18 @@ namespace Evolve.Creatures
         public static readonly MoveProfile Hopper = new MoveProfile(MoveStyle.Hopper, 0.9f, 1.5f);
         public static readonly MoveProfile Climber = new MoveProfile(MoveStyle.Climber, 1.5f, 2.0f);
         public static readonly MoveProfile Flyer = new MoveProfile(MoveStyle.Flyer, 2.5f, 100f);
+
+        // Custom profiles for specific species
+        public static readonly MoveProfile ThanLanBoHoProfile = new MoveProfile(MoveStyle.Climber, 1.5f, 2.0f, avoidsWater: true);
+        public static readonly MoveProfile ThoLaProfile = new MoveProfile(MoveStyle.Hopper, 0.9f, 1.5f, avoidsWater: true);
+        public static readonly MoveProfile CocHoGiaProfile = new MoveProfile(MoveStyle.Hopper, 0.55f, 1.2f, avoidsWater: false, canSwim: true, maxClimbSlope: 0.88f);
+
+        static readonly Dictionary<string, MoveProfile> customProfiles = new Dictionary<string, MoveProfile>
+        {
+            { "thanlanboho", ThanLanBoHoProfile },
+            { "thola", ThoLaProfile },
+            { "cochogia", CocHoGiaProfile },
+        };
 
         // species key (SpeciesNames.Key) → style; anything not listed walks
         static readonly Dictionary<string, MoveStyle> styles = new Dictionary<string, MoveStyle>
@@ -37,7 +63,9 @@ namespace Evolve.Creatures
 
         public static MoveProfile For(string speciesOrObjectName)
         {
-            if (!styles.TryGetValue(SpeciesNames.Key(speciesOrObjectName), out var s)) return Walker;
+            string key = SpeciesNames.Key(speciesOrObjectName);
+            if (customProfiles.TryGetValue(key, out var cp)) return cp;
+            if (!styles.TryGetValue(key, out var s)) return Walker;
             return s switch { MoveStyle.Flyer => Flyer, MoveStyle.Hopper => Hopper, MoveStyle.Climber => Climber, _ => Walker };
         }
 

@@ -38,7 +38,7 @@ namespace Evolve.EditorTools
                     new Vector2(-16f, -11f),
                     new Vector2(15f, -12f)
                 },
-                counts: new[] { 7, 7, 2, 1 });
+                counts: new[] { 7, 3, 2, 1 });
 
             // Kỳ ngộ 1: Tia Nắng Đầu Tiên (ngay vùng tia nắng qua lỗ trần trên mặt hồ)
             var sunGo = new GameObject("Kỳ Ngộ - Tia Nắng Đầu Tiên");

@@ -84,7 +84,7 @@ namespace Evolve.EditorTools
         {
             // Hang 1: Hang Khởi Sinh
             new CreatureSpec("BoCanhCungNho", "Bọ Cánh Cứng Nhỏ", "BirthLake", false, false, "Hit", 0.28f, 0.55f, 0.55f, 1.5f, 10f, 2f, 14f, 0f, 8, 22),
-            new CreatureSpec("OcHo", "Ốc Hồ", "BirthLake", false, false, "Retract", 0.30f, 0.60f, 0.30f, 0.7f, 14f, 3f, 16f, 0f, 8, 20),
+            new CreatureSpec("OcHo", "Ốc Hồ", "BirthLake", false, false, "Retract", 0.30f, 0.60f, 0.30f, 0.7f, 14f, 3f, 16f, 0f, 4, 8),
             new CreatureSpec("ThanLanBoHo", "Thằn Lằn Bờ Hồ", "BirthLake", true, false, "Attack", 0.38f, 1.25f, 0.95f, 2.2f, 34f, 10f, 28f, 10f, 3, 8, "BoCanhCungNho"),
             new CreatureSpec("CocHoGia", "Cóc Hồ Già", "BirthLake", true, true, "Attack", 0.78f, 1.65f, 0.55f, 1.3f, 85f, 32f, 55f, 18f, 1, 2, "ThanLanBoHo"),
 
@@ -271,6 +271,91 @@ namespace Evolve.EditorTools
                     backIdle.hasExitTime = false;
                     backIdle.duration = 0.22f;
                 }
+            }
+
+            // Hỗ trợ animation Bơi (Swim) cho Cóc Hồ Già
+            if (clips.TryGetValue("Swim", out var swimClip))
+            {
+                ctrl.AddParameter("Swimming", AnimatorControllerParameterType.Bool);
+                ctrl.AddParameter("Swim", AnimatorControllerParameterType.Trigger);
+                var swimState = sm.AddState("Swim");
+                swimState.motion = swimClip;
+
+                var idleToSwim = idleState.AddTransition(swimState);
+                idleToSwim.AddCondition(AnimatorConditionMode.If, 0f, "Swimming");
+                idleToSwim.hasExitTime = false;
+                idleToSwim.duration = 0.20f;
+
+                var walkToSwim = walkState.AddTransition(swimState);
+                walkToSwim.AddCondition(AnimatorConditionMode.If, 0f, "Swimming");
+                walkToSwim.hasExitTime = false;
+                walkToSwim.duration = 0.20f;
+
+                var swimToIdle = swimState.AddTransition(idleState);
+                swimToIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, "Swimming");
+                swimToIdle.hasExitTime = false;
+                swimToIdle.duration = 0.22f;
+
+                var anyToSwim = sm.AddAnyStateTransition(swimState);
+                anyToSwim.AddCondition(AnimatorConditionMode.If, 0f, "Swim");
+                anyToSwim.hasExitTime = false;
+                anyToSwim.canTransitionToSelf = false;
+                anyToSwim.duration = 0.18f;
+            }
+
+            // Hỗ trợ animation Đậu nghỉ (Perch) cho Đom Đóm Sắc Màu
+            if (clips.TryGetValue("Perch", out var perchClip))
+            {
+                ctrl.AddParameter("Perching", AnimatorControllerParameterType.Bool);
+                ctrl.AddParameter("Perch", AnimatorControllerParameterType.Trigger);
+                var perchState = sm.AddState("Perch");
+                perchState.motion = perchClip;
+
+                var idleToPerch = idleState.AddTransition(perchState);
+                idleToPerch.AddCondition(AnimatorConditionMode.If, 0f, "Perching");
+                idleToPerch.hasExitTime = false;
+                idleToPerch.duration = 0.25f;
+
+                var perchToIdle = perchState.AddTransition(idleState);
+                perchToIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, "Perching");
+                perchToIdle.hasExitTime = false;
+                perchToIdle.duration = 0.25f;
+
+                var anyToPerch = sm.AddAnyStateTransition(perchState);
+                anyToPerch.AddCondition(AnimatorConditionMode.If, 0f, "Perch");
+                anyToPerch.hasExitTime = false;
+                anyToPerch.canTransitionToSelf = false;
+                anyToPerch.duration = 0.20f;
+            }
+
+            // Hỗ trợ animation Bay nhẹ (Fly) cho Bọ Cánh Cứng Nhỏ
+            if (clips.TryGetValue("Fly", out var flyClip))
+            {
+                ctrl.AddParameter("Flying", AnimatorControllerParameterType.Bool);
+                ctrl.AddParameter("Fly", AnimatorControllerParameterType.Trigger);
+                var flyState = sm.AddState("Fly");
+                flyState.motion = flyClip;
+
+                var idleToFly = idleState.AddTransition(flyState);
+                idleToFly.AddCondition(AnimatorConditionMode.If, 0f, "Flying");
+                idleToFly.hasExitTime = false;
+                idleToFly.duration = 0.15f;
+
+                var walkToFly = walkState.AddTransition(flyState);
+                walkToFly.AddCondition(AnimatorConditionMode.If, 0f, "Flying");
+                walkToFly.hasExitTime = false;
+                walkToFly.duration = 0.15f;
+
+                var flyToIdle = flyState.AddTransition(idleState);
+                flyToIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, "Flying");
+                flyToIdle.hasExitTime = false;
+                flyToIdle.duration = 0.18f;
+
+                var anyToFly = sm.AddAnyStateTransition(flyState);
+                anyToFly.AddCondition(AnimatorConditionMode.If, 0f, "Fly");
+                anyToFly.hasExitTime = false;
+                anyToFly.canTransitionToSelf = false;
+                anyToFly.duration = 0.15f;
             }
 
             EditorUtility.SetDirty(ctrl);

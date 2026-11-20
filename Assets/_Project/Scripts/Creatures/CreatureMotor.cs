@@ -66,10 +66,24 @@ namespace Evolve.Creatures
                 Vector3 d = Quaternion.Euler(0f, MovementRules.DetourAngles[i], 0f) * dir;
                 if (Wall(pos, footY, d, step)) continue;
                 Vector3 next = Separate(pos + d * step);
+
+                // Water avoidance: creatures that cannot enter water turn back at shore
+                if (Profile.AvoidsWater && World.WaterField.DepthAt(next.x, next.z) > 0.05f) continue;
+
                 float groundY = Floor(next, footY + Profile.MaxStepUp, Profile.MaxStepUp + Profile.MaxDrop + 0.2f, out float g)
                     ? g : World.GroundHeight.At(next.x, next.z, footY);
                 if (!MovementRules.CanEnter(footY, groundY, Profile)) continue;
-                next.y = MovementRules.SmoothY(pos.y, groundY + footOffset, Time.fixedDeltaTime);
+
+                if (Profile.CanSwim && World.WaterField.DepthAt(next.x, next.z) > 0.15f)
+                {
+                    float swimTargetY = World.WaterField.Level - 0.22f;
+                    next.y = MovementRules.SmoothY(pos.y, swimTargetY, Time.fixedDeltaTime);
+                }
+                else
+                {
+                    next.y = MovementRules.SmoothY(pos.y, groundY + footOffset, Time.fixedDeltaTime);
+                }
+
                 rb.MovePosition(next);
                 return true;
             }
@@ -117,12 +131,13 @@ namespace Evolve.Creatures
             float r = radius * 0.7f;
             Vector3 from = new Vector3(pos.x, footY + Profile.MaxStepUp + r + 0.02f, pos.z);
             int n = Physics.SphereCastNonAlloc(from, r, dir, hits, step + radius * 0.4f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            float minWalkableNormalY = Profile.MaxClimbSlope > 0.01f ? Profile.MaxClimbSlope : 0.7f;
             for (int i = 0; i < n; i++)
             {
                 var h = hits[i];
                 if (h.collider.attachedRigidbody != null) continue;     // other creatures and the slime are not walls
                 if (h.distance <= 0f) continue;                          // already overlapping (bad spawn): let it walk out
-                if (h.normal.y > 0.7f) continue;                         // a slope it can walk up
+                if (h.normal.y > minWalkableNormalY) continue;           // a slope it can walk up
                 return true;
             }
             return false;

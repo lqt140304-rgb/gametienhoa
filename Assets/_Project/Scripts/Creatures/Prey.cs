@@ -174,13 +174,40 @@ namespace Evolve.Creatures
             if (fromHome.magnitude > HomeRadius * 0.8f)
                 dir = (dir - fromHome.normalized * 1.5f).normalized;
 
+            if (motor != null && motor.Profile.AvoidsWater)
+            {
+                Vector3 probe = pos + dir * 1.2f;
+                if (Evolve.World.WaterField.DepthAt(probe.x, probe.z) > 0.05f)
+                {
+                    Vector3 away = SteerAwayFromWater(pos);
+                    if (away.sqrMagnitude > 0.01f) dir = away;
+                }
+            }
+
             if (dir.sqrMagnitude > 0.001f)
             {
-                if (!motor.Move(dir, speed * Boost * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject))) nextTurn = 0f;   // boxed in: pick a new way
+                if (!motor.Move(dir, speed * Boost * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject)))
+                {
+                    float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                    wanderDir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    nextTurn = Time.time + UnityEngine.Random.Range(1.2f, 2.5f);
+                }
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.2f));
             }
 
             CheckRemoteCatch();
+        }
+
+        Vector3 SteerAwayFromWater(Vector3 pos)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                float ang = i * (Mathf.PI * 2f / 8f);
+                Vector3 d = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
+                Vector3 p = pos + d * 2.0f;
+                if (Evolve.World.WaterField.DepthAt(p.x, p.z) <= 0.02f) return d;
+            }
+            return pos.sqrMagnitude > 0.1f ? -new Vector3(pos.x, 0f, pos.z).normalized : Vector3.forward;
         }
 
         // Remote players have no collider here (they are ghosts), so they catch by getting close.

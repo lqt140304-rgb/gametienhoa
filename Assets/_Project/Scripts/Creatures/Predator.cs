@@ -206,15 +206,53 @@ namespace Evolve.Creatures
                 Vector3 fromHome = Flat(pos - HomeCenter, false);
                 if (fromHome.magnitude > HomeRadius * 0.8f)
                     dir = (dir - fromHome.normalized * 1.5f).normalized;
+
+                if (motor != null && motor.Profile.AvoidsWater)
+                {
+                    Vector3 probe = pos + dir * 1.5f;
+                    if (Evolve.World.WaterField.DepthAt(probe.x, probe.z) > 0.05f)
+                    {
+                        Vector3 away = SteerAwayFromWater(pos);
+                        if (away.sqrMagnitude > 0.01f) dir = away;
+                    }
+                }
+
+                // Cóc Hồ Già: ở lòng hồ và bờ thoai thoải, không trèo lên vách hang dốc đứng
+                if (motor != null && motor.Profile.CanSwim && (name.IndexOf("CocHoGia", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("coc_ho_gia", StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    float distFromCenter = Evolve.World.CavernLayout.RadiusFromCenter(pos.x, pos.z);
+                    if (distFromCenter > Evolve.World.CavernLayout.FloorRadius - 3.5f)
+                    {
+                        Vector3 toCenter = new Vector3(-pos.x, 0f, -pos.z).normalized;
+                        dir = (dir + toCenter * 2.2f).normalized;
+                    }
+                }
             }
 
             if (dir.sqrMagnitude > 0.001f && speed > 0f)
             {
-                if (!motor.Move(dir, speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject))) nextTurn = 0f;
+                if (!motor.Move(dir, speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject)))
+                {
+                    float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                    wanderDir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    nextTurn = Time.time + UnityEngine.Random.Range(1.8f, 3.5f);
+                }
                 rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
             }
 
             BiteRemotePlayers();
+        }
+
+        Vector3 SteerAwayFromWater(Vector3 pos)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                float ang = i * (Mathf.PI * 2f / 8f);
+                Vector3 d = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
+                Vector3 p = pos + d * 2.0f;
+                if (Evolve.World.WaterField.DepthAt(p.x, p.z) <= 0.02f) return d;
+            }
+            return pos.sqrMagnitude > 0.1f ? -new Vector3(pos.x, 0f, pos.z).normalized : Vector3.forward;
         }
 
         /// <summary>Carries out the brain's intent: chase and bite a creature, walk to a point, hold, or run.</summary>

@@ -27,6 +27,14 @@ namespace Evolve.Ecology
             return s;
         }
 
+        static SpeciesPopulation SnailPrey(string id, params DietEntry[] diet)
+        {
+            var s = Prey(id, diet);
+            s.Count = 3;
+            s.Capacity = 5;
+            return s;
+        }
+
         static SpeciesPopulation Hunter(string id, params DietEntry[] diet)
         {
             var s = new SpeciesPopulation { Id = id, Count = 2, Capacity = 3, Dens = 1, BirthsPerMinute = 0.15f, MealsPerHeadPerMinute = HunterMeals, Floor = 1, RecoverMinutes = 6f, BodyFood = 1f };
@@ -159,7 +167,7 @@ namespace Evolve.Ecology
             var w = new EcologyWorld();
 
             Cave(w, "khoi_sinh", "reu_ven_ho",
-                Prey("bo_canh_cung", Pool("reu_ven_ho")), Prey("oc_ho", Pool("reu_ven_ho")),
+                Prey("bo_canh_cung", Pool("reu_ven_ho")), SnailPrey("oc_ho", Pool("reu_ven_ho")),
                 Hunter("tham_lan_bo_ho", Eat("bo_canh_cung"), Eat("oc_ho", 0.3f)),
                 Lord("coc_ho_gia", Eat("tham_lan_bo_ho"), Eat("bo_canh_cung")));
 
