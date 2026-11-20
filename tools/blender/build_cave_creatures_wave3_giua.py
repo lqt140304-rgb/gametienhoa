@@ -42,19 +42,27 @@ def build_21_nam_di_bo(out_dir, prev_dir):
                  [(0.115, 0.115), (0.085, 0.085), (0.072, 0.072)], sides=20, subdiv=2,
                  mat_index=0, color_fn=stalk_col)
 
-    # Mũ nấm phồng 3D có gợn sóng viền mũ + đốm phát sáng kháng độc
+    # Mũ nấm nhám hữu cơ (hết bóng nhựa) + tầng mang nấm xếp tỏa tròn dưới mũ + vòng cổ nấm + đốm bào tử phát sáng
     w2._add_sculpted_blob(
-        bm, col, (0.0, -0.02, 0.46), (0.24, 0.24, 0.12),
+        bm, col, (0.0, -0.02, 0.47), (0.24, 0.24, 0.11),
         segs=28, rings=16,
-        disp_fn=lambda u: Vector((0.0, 0.0, 0.018 * math.sin(math.atan2(u.y, u.x) * 7.0) * (1.0 - abs(u.z)) - 0.03 * max(0.0, -u.z))),
-        mat_index=3, color_fn=cap_col,
+        disp_fn=lambda u: Vector((0.0, 0.0, 0.018 * math.sin(math.atan2(u.y, u.x) * 7.0) * (1.0 - abs(u.z)) - 0.04 * max(0.0, -u.z))),
+        mat_index=0, color_fn=cap_col,
     )
+    # Tầng mang nấm (gills) xếp tỏa tròn dưới mũ
+    for k in range(12):
+        ang = k * (math.pi * 2.0 / 12.0)
+        w2._add_layered_feather(bm, col, (math.cos(ang) * 0.06, -0.02 + math.sin(ang) * 0.06, 0.39),
+                                (math.cos(ang), math.sin(ang), 0.12), (0, 0, 1),
+                                length=0.16, width=0.024, thickness=0.014, mat_index=0, color_fn=stalk_col)
+    # Vòng váy cổ nấm trên cuống
+    w2._add_sculpted_blob(bm, col, (0.0, -0.01, 0.34), (0.115, 0.115, 0.028), segs=18, rings=8, mat_index=0, color_fn=stalk_col)
     # 5 đốm bào tử phát sáng trên đỉnh mũ
     for k in range(5):
         ang = k * (2.0 * math.pi / 5.0) + 0.3
-        r = 0.11
-        w2._add_sculpted_blob(bm, col, (math.cos(ang) * r, -0.02 + math.sin(ang) * r, 0.55),
-                              (0.032, 0.032, 0.020), segs=12, rings=8, mat_index=3,
+        r = 0.12
+        w2._add_sculpted_blob(bm, col, (math.cos(ang) * r, -0.02 + math.sin(ang) * r, 0.56),
+                              (0.032, 0.032, 0.022), segs=12, rings=8, mat_index=3,
                               color_fn=lambda _p, _n: (0.65, 1.0, 0.92))
 
     # 2 mắt nhỏ thân thiện trên cuống nấm
@@ -282,14 +290,19 @@ def build_24_nam_khong_lo(out_dir, prev_dir):
                  [(0.28, 0.28), (0.21, 0.21), (0.18, 0.18)], sides=24, subdiv=2, mat_index=0, color_fn=bark_stalk)
     w2._add_sculpted_blob(bm, col, (0.0, 0.0, 0.68), (0.28, 0.28, 0.06), segs=24, rings=10, mat_index=0, color_fn=bark_stalk)
 
-    # Mũ nấm khổng lồ 2 tầng uy nghi + các bọc bào tử chín phồng sắp nổ (Nổ Bào Tử)
+    # Mũ nấm khổng lồ nhám hữu cơ 2 tầng + tầng mang nấm xếp tỏa + các bọc bào tử chín phát sáng sắp nổ
     w2._add_sculpted_blob(
         bm, col, (0.0, 0.0, 0.96), (0.64, 0.64, 0.24),
         segs=32, rings=18,
         disp_fn=lambda u: Vector((0.0, 0.0, 0.032 * math.sin(math.atan2(u.y, u.x) * 8.0) * (1.0 - abs(u.z)) - 0.06 * max(0.0, -u.z))),
-        mat_index=3, color_fn=giant_cap,
+        mat_index=0, color_fn=giant_cap,
     )
-    w2._add_sculpted_blob(bm, col, (0.0, 0.0, 1.18), (0.36, 0.36, 0.14), segs=24, rings=12, mat_index=3, color_fn=giant_cap)
+    w2._add_sculpted_blob(bm, col, (0.0, 0.0, 1.18), (0.36, 0.36, 0.14), segs=24, rings=12, mat_index=0, color_fn=giant_cap)
+    for k in range(16):
+        ang = k * (math.pi * 2.0 / 16.0)
+        w2._add_layered_feather(bm, col, (math.cos(ang) * 0.18, math.sin(ang) * 0.18, 0.80),
+                                (math.cos(ang), math.sin(ang), 0.10), (0, 0, 1),
+                                length=0.42, width=0.055, thickness=0.024, mat_index=0, color_fn=bark_stalk)
 
     # 6 bọc bào tử phồng căng quanh vành mũ + 3 mắt phát sáng trên thân
     for k in range(6):
@@ -719,11 +732,16 @@ def build_30_chuot_gio(out_dir, prev_dir):
     def fur_col(p, n):
         return w1._lerp3((0.56, 0.60, 0.66), (0.86, 0.88, 0.92), 0.3 + 0.5 * max(0.0, -n.z + 0.3))
 
-    # Thân chuột thuôn giọt nước + đầu mũi nhọn
-    w2._add_sculpted_blob(bm, col, (0.0, 0.04, 0.12), (0.095, 0.150, 0.088), segs=22, rings=14, mat_index=0, color_fn=fur_col)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.14, 0.14), (0.072, 0.092, 0.065),
+    # Ghép nhiều khối cơ thể chồng lấn: Vai + Lưng gù + Hông/Đùi sau phồng + Đầu (sọ + má phúng phính + mõm)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.02, 0.12), (0.082, 0.095, 0.080), segs=18, rings=12, mat_index=0, color_fn=fur_col)
+    w2._add_sculpted_blob(bm, col, (0.0, 0.08, 0.13), (0.098, 0.110, 0.092), segs=20, rings=14, mat_index=0, color_fn=fur_col)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.14, 0.14), (0.068, 0.088, 0.062),
                           disp_fn=lambda u: Vector((0.0, -0.025 * max(0.0, -u.y), 0.0)),
                           segs=20, rings=12, mat_index=0, color_fn=fur_col)
+    for sx in (-1.0, 1.0):
+        # Má phúng phính & đùi sau phồng tách khối rõ ràng
+        w2._add_sculpted_blob(bm, col, (sx * 0.044, -0.14, 0.125), (0.032, 0.038, 0.028), segs=12, rings=8, mat_index=0, color_fn=fur_col)
+        w2._add_sculpted_blob(bm, col, (sx * 0.068, 0.09, 0.095), (0.038, 0.052, 0.045), segs=14, rings=10, mat_index=0, color_fn=fur_col)
     # Mũi hồng + 2 tai to tròn bắt gió
     w2._add_sculpted_blob(bm, col, (0.0, -0.25, 0.135), (0.016, 0.016, 0.014), segs=10, rings=8, mat_index=0, color_fn=lambda _p, _n: (0.94, 0.62, 0.68))
     for sx in (-1.0, 1.0):
@@ -782,47 +800,58 @@ def build_31_chon_khe(out_dir, prev_dir):
             base = w1._lerp3(base, (0.18, 0.16, 0.18), 0.55)
         return base
 
-    # Thân chồn uốn S mềm mại + đầu thuôn có mõm nhọn + đuôi xù dài
-    pts = [(0.0, -0.42, 0.30), (0.02, -0.24, 0.24), (0.03, -0.02, 0.19),
-           (-0.02, 0.24, 0.21), (0.04, 0.50, 0.28), (0.09, 0.74, 0.24)]
-    rads = [(0.068, 0.060), (0.088, 0.082), (0.105, 0.092),
-            (0.112, 0.095), (0.082, 0.078), (0.038, 0.036)]
-    w1._add_tube(bm, col, pts, rads, sides=20, subdiv=2, mat_index=0, color_fn=ferret_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.46, 0.31), (0.068, 0.095, 0.058),
-                          disp_fn=lambda u: Vector((0.0, -0.03 * max(0.0, -u.y), 0.0)),
-                          segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.57, 0.30), (0.014, 0.014, 0.012), segs=10, rings=8, mat_index=1, color_fn=lambda _p, _n: (0.08, 0.08, 0.08))
+    # Thân Chồn Khe ghép nhiều khối cơ bắp chồng khít (>=60% giao nhau) + lõi lưng liền mạch cho khớp xương gập tự nhiên
+    w1._add_tube(bm, col, [(0.0, -0.32, 0.27), (0.02, -0.10, 0.21), (-0.01, 0.12, 0.20), (0.0, 0.28, 0.22)],
+                 [(0.068, 0.062), (0.088, 0.080), (0.088, 0.080), (0.082, 0.075)], sides=18, subdiv=2, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(bm, col, (0.01, -0.22, 0.24), (0.088, 0.145, 0.082), rot=(-0.22, 0.0, 0.0), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(bm, col, (0.02, -0.04, 0.20), (0.098, 0.155, 0.088), rot=(0.04, 0.0, -0.06), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(bm, col, (-0.01, 0.14, 0.20), (0.096, 0.150, 0.088), rot=(0.08, 0.0, 0.05), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, 0.26, 0.22), (0.102, 0.135, 0.092), rot=(-0.06, 0.0, 0.0), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    # Đuôi chồn xù liền mạch (lõi uốn S + cụm lông chồn xếp lớp dày)
+    w1._add_tube(bm, col, [(0.0, 0.28, 0.22), (0.02, 0.44, 0.25), (0.06, 0.62, 0.27), (0.10, 0.78, 0.23)],
+                 [(0.075, 0.070), (0.082, 0.078), (0.072, 0.068), (0.026, 0.024)], sides=16, subdiv=2, mat_index=0, color_fn=ferret_fur)
+
+    # Đầu chồn ghép Sọ + 2 Má lông + Mõm nhọn + Mũi đen + Tai
+    w2._add_sculpted_blob(bm, col, (0.0, -0.37, 0.30), (0.072, 0.085, 0.062), segs=18, rings=12, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.47, 0.30), (0.048, 0.072, 0.042),
+                          disp_fn=lambda u: Vector((0.0, -0.025 * max(0.0, -u.y), 0.0)),
+                          segs=16, rings=10, mat_index=0, color_fn=ferret_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.56, 0.295), (0.014, 0.014, 0.012), segs=10, rings=8, mat_index=1, color_fn=lambda _p, _n: (0.08, 0.08, 0.08))
     for sx in (-1.0, 1.0):
-        w2._add_sculpted_blob(bm, col, (sx * 0.052, -0.42, 0.365), (0.022, 0.015, 0.030),
+        w2._add_sculpted_blob(bm, col, (sx * 0.052, -0.40, 0.285), (0.036, 0.042, 0.030), segs=12, rings=8, mat_index=0, color_fn=ferret_fur)
+        w2._add_sculpted_blob(bm, col, (sx * 0.055, 0.22, 0.19), (0.048, 0.068, 0.058), segs=12, rings=10, mat_index=0, color_fn=ferret_fur)
+        w2._add_sculpted_blob(bm, col, (sx * 0.052, -0.39, 0.365), (0.024, 0.016, 0.032),
                               segs=10, rings=8, mat_index=0, color_fn=ferret_fur)
-        w1._add_eye_bulb(bm, col, (sx * 0.048, -0.50, 0.325), 0.018, yaw=sx * 0.35, eye_col=(0.95, 0.72, 0.22), mat_eye=3)
+        w1._add_eye_bulb(bm, col, (sx * 0.048, -0.46, 0.325), 0.017, yaw=sx * 0.35, eye_col=(0.95, 0.72, 0.22), mat_eye=3)
 
     # 4 chân bật vồ cơ bắp
-    for sx, hip_y, knee_y, foot_y in [(-1, -0.14, -0.16, -0.24), (1, -0.14, -0.16, -0.24),
+    for sx, hip_y, knee_y, foot_y in [(-1, -0.18, -0.20, -0.26), (1, -0.18, -0.20, -0.26),
                                       (-1, 0.22, 0.26, 0.20), (1, 0.22, 0.26, 0.20)]:
         w2._add_jointed_limb(bm, col, [(sx * 0.08, hip_y, 0.17), (sx * 0.11, knee_y, 0.10), (sx * 0.10, foot_y, 0.015)],
                              [0.036, 0.026, 0.020], claw_dir=(0, -1, 0), claw_len=0.03, mat_index=0, color_fn=ferret_fur)
 
     bones = [
-        ("Root", (0, 0.04, 0.20), (0, -0.12, 0.22), None, 0.30, 1.0),
-        ("Head", (0, -0.26, 0.24), (0, -0.48, 0.28), "Root", 0.22, 2.2),
-        ("Tail", (0, 0.26, 0.22), (0.08, 0.74, 0.22), "Root", 0.24, 2.2),
+        ("Root", (0, 0.02, 0.20), (0, -0.10, 0.21), None, 0.28, 1.0),
+        ("Spine_Front", (0, -0.12, 0.21), (0, -0.28, 0.25), "Root", 0.24, 2.0),
+        ("Head", (0, -0.30, 0.26), (0, -0.52, 0.30), "Spine_Front", 0.22, 2.2),
+        ("Hip", (0, 0.12, 0.20), (0, 0.28, 0.22), "Root", 0.24, 2.0),
+        ("Tail", (0, 0.30, 0.23), (0.09, 0.74, 0.24), "Hip", 0.24, 2.2),
     ]
     clips = {
         "Idle": (1, 44, [
-            (1, {"Head": {"rot": (0.06, 0, 0.08)}, "Tail": {"rot": (0.06, 0, -0.10)}}),
-            (22, {"Head": {"rot": (-0.06, 0, -0.08)}, "Tail": {"rot": (-0.06, 0, 0.10)}}),
-            (44, {"Head": {"rot": (0.06, 0, 0.08)}, "Tail": {"rot": (0.06, 0, -0.10)}}),
+            (1, {"Spine_Front": {"rot": (0.04, 0, 0.06)}, "Head": {"rot": (0.06, 0, 0.08)}, "Tail": {"rot": (0.06, 0, -0.10)}}),
+            (22, {"Spine_Front": {"rot": (-0.04, 0, -0.06)}, "Head": {"rot": (-0.06, 0, -0.08)}, "Tail": {"rot": (-0.06, 0, 0.10)}}),
+            (44, {"Spine_Front": {"rot": (0.04, 0, 0.06)}, "Head": {"rot": (0.06, 0, 0.08)}, "Tail": {"rot": (0.06, 0, -0.10)}}),
         ]),
         "Walk": (1, 18, [
-            (1, {"Root": {"loc": (0, 0, 0.0), "rot": (0.14, 0, 0)}}),
-            (9, {"Root": {"loc": (0, -0.05, 0.12), "rot": (-0.16, 0, 0)}}),
-            (18, {"Root": {"loc": (0, 0, 0.0), "rot": (0.14, 0, 0)}}),
+            (1, {"Root": {"loc": (0, 0, 0.0), "rot": (0.12, 0, 0)}, "Spine_Front": {"rot": (0.14, 0, 0)}, "Hip": {"rot": (-0.12, 0, 0)}}),
+            (9, {"Root": {"loc": (0, -0.05, 0.12), "rot": (-0.14, 0, 0)}, "Spine_Front": {"rot": (-0.14, 0, 0)}, "Hip": {"rot": (0.14, 0, 0)}}),
+            (18, {"Root": {"loc": (0, 0, 0.0), "rot": (0.12, 0, 0)}, "Spine_Front": {"rot": (0.14, 0, 0)}, "Hip": {"rot": (-0.12, 0, 0)}}),
         ]),
         "Attack": (1, 22, [
             (1, {"Root": {"loc": (0, 0, 0)}}),
-            (7, {"Root": {"loc": (0, 0.14, -0.04), "rot": (0.24, 0, 0)}}),
-            (14, {"Root": {"loc": (0, -0.34, 0.18), "rot": (-0.28, 0, 0)}}),
+            (7, {"Root": {"loc": (0, 0.14, -0.04), "rot": (0.24, 0, 0)}, "Spine_Front": {"rot": (0.22, 0, 0)}}),
+            (14, {"Root": {"loc": (0, -0.34, 0.18), "rot": (-0.28, 0, 0)}, "Spine_Front": {"rot": (-0.24, 0, 0)}}),
             (22, {"Root": {"loc": (0, 0, 0)}}),
         ]),
         "Hit": (1, 18, [
@@ -856,31 +885,44 @@ def build_32_cao_gio(out_dir, prev_dir):
     def mirage_tip(p, n):
         return w1._lerp3((0.72, 0.86, 0.98), (0.48, 0.94, 1.0), max(0.0, min(1.0, (p.y - 0.35) * 1.5)))
 
-    # Thân cáo thon dài uyển chuyển + bờm ngực xù
-    w1._add_tube(bm, col, [(0.0, -0.34, 0.48), (0.0, -0.14, 0.42), (0.0, 0.14, 0.40), (0.0, 0.36, 0.38)],
-                 [(0.115, 0.110), (0.145, 0.135), (0.135, 0.125), (0.105, 0.098)],
-                 sides=22, subdiv=2, mat_index=0, color_fn=silver_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.24, 0.44), (0.155, 0.145, 0.165), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
+    # Thân Cáo Gió ghép nhiều khối cơ bắp chồng khít (>=60% giao nhau) + lõi cột sống mượt
+    w1._add_tube(bm, col, [(0.0, -0.32, 0.49), (0.0, -0.14, 0.43), (0.0, 0.06, 0.40), (0.0, 0.28, 0.39)],
+                 [(0.105, 0.100), (0.135, 0.125), (0.105, 0.100), (0.118, 0.112)], sides=20, subdiv=2, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.16, 0.44), (0.145, 0.185, 0.145), rot=(-0.20, 0.0, 0.0), segs=22, rings=14, mat_index=0, color_fn=silver_fur)
+    # Bờm lông cổ 2 tầng xù mượt ôm quanh ức & vai
+    w2._add_sculpted_blob(bm, col, (0.0, -0.25, 0.47), (0.152, 0.145, 0.148), rot=(-0.32, 0.0, 0.0), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.28, 0.38), (0.112, 0.118, 0.115), rot=(-0.15, 0.0, 0.0), segs=16, rings=10, mat_index=0, color_fn=silver_fur)
+    # Eo thắt & Hông sau
+    w2._add_sculpted_blob(bm, col, (0.0, 0.06, 0.40), (0.108, 0.165, 0.105), segs=18, rings=12, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, 0.24, 0.39), (0.126, 0.165, 0.120), rot=(0.08, 0.0, 0.0), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
 
-    # Đầu cáo thanh tú, mõm nhọn, mũi đen, 2 tai cao nhọn + mắt sáng lam rõ nét
-    w2._add_sculpted_blob(bm, col, (0.0, -0.44, 0.58), (0.112, 0.145, 0.102),
-                          disp_fn=lambda u: Vector((0.0, -0.09 * max(0.0, -u.y), 0.0)),
-                          segs=22, rings=14, mat_index=0, color_fn=silver_fur)
-    w2._add_sculpted_blob(bm, col, (0.0, -0.66, 0.575), (0.020, 0.020, 0.018), segs=12, rings=8, mat_index=1, color_fn=lambda _p, _n: (0.08, 0.08, 0.10))
+    # Đầu cáo ghép Sọ + 2 Má lông + Mõm nhọn + Mũi đen + 2 Tai 2 lớp
+    w2._add_sculpted_blob(bm, col, (0.0, -0.39, 0.59), (0.105, 0.125, 0.098), segs=20, rings=12, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.52, 0.575), (0.064, 0.118, 0.056),
+                          disp_fn=lambda u: Vector((0.0, -0.05 * max(0.0, -u.y), 0.0)),
+                          segs=18, rings=12, mat_index=0, color_fn=silver_fur)
+    w2._add_sculpted_blob(bm, col, (0.0, -0.67, 0.57), (0.020, 0.020, 0.018), segs=12, rings=8, mat_index=1, color_fn=lambda _p, _n: (0.08, 0.08, 0.10))
     for sx in (-1.0, 1.0):
-        w1._add_tube(bm, col, [(sx * 0.065, -0.40, 0.65), (sx * 0.095, -0.38, 0.78), (sx * 0.11, -0.36, 0.88)],
-                     [0.042, 0.024, 0.004], sides=10, subdiv=1, mat_index=0, color_fn=silver_fur)
-        w1._add_eye_bulb(bm, col, (sx * 0.088, -0.50, 0.615), 0.026, yaw=sx * 0.35, eye_col=(0.38, 0.92, 1.0), mat_eye=3)
+        w2._add_sculpted_blob(bm, col, (sx * 0.075, -0.40, 0.57), (0.052, 0.068, 0.048), segs=14, rings=10, mat_index=0, color_fn=silver_fur)
+        w2._add_sculpted_blob(bm, col, (sx * 0.092, 0.24, 0.34), (0.058, 0.086, 0.085), rot=(0.2, 0, 0), segs=14, rings=10, mat_index=0, color_fn=silver_fur)
+        w1._add_tube(bm, col, [(sx * 0.065, -0.38, 0.65), (sx * 0.095, -0.36, 0.78), (sx * 0.11, -0.34, 0.89)],
+                     [0.044, 0.026, 0.004], sides=10, subdiv=1, mat_index=0, color_fn=silver_fur)
+        w1._add_eye_bulb(bm, col, (sx * 0.082, -0.48, 0.615), 0.024, yaw=sx * 0.35, eye_col=(0.38, 0.92, 1.0), mat_eye=3)
 
-    # ĐẶC TRƯNG KHẢ NĂNG (Ảo Ảnh): 3 đuôi xù tách 3 hướng uốn lượn phát sáng lam-bạc
-    for sx, dz, mat_t in [(-0.34, 0.02, 3), (0.0, 0.16, 3), (0.34, 0.02, 3)]:
-        w1._add_tube(bm, col, [
+    # ĐẶC TRƯNG KHẢ NĂNG (Ảo Ảnh): 3 đuôi xù liền mạch (gốc lông bạc + chóp lông phát sáng ảo ảnh + chùm lông xếp lớp)
+    for sx, dz in [(-0.34, 0.02), (0.0, 0.16), (0.34, 0.02)]:
+        t_pts = [
             (0.0, 0.34, 0.38),
-            (sx * 0.65, 0.56, 0.44 + dz),
-            (sx * 1.35, 0.82, 0.52 + dz),
-            (sx * 1.15, 1.02, 0.40 + dz),
-        ], [(0.052, 0.052), (0.088, 0.082), (0.096, 0.088), (0.024, 0.024)],
-            sides=16, subdiv=2, mat_index=mat_t, color_fn=mirage_tip)
+            (sx * 0.45, 0.54, 0.45 + dz * 0.5),
+            (sx * 0.95, 0.76, 0.53 + dz),
+            (sx * 1.12, 0.96, 0.46 + dz * 0.8),
+        ]
+        w1._add_tube(bm, col, t_pts, [(0.055, 0.052), (0.095, 0.088), (0.102, 0.092), (0.026, 0.024)],
+                     sides=16, subdiv=2, mat_index=0, color_fn=silver_fur)
+        # Chùm lông chóp đuôi phát sáng ảo ảnh
+        w2._add_layered_feather(bm, col, (sx * 0.78, 0.68, 0.50 + dz * 0.8),
+                                (sx * 0.45, 0.85, -0.15), (0, 0, 1),
+                                length=0.38, width=0.075, thickness=0.042, mat_index=3, color_fn=mirage_tip)
 
     # 4 chân cáo cao thanh thoát
     for sx, hip_y, foot_y in [(-1, -0.18, -0.22), (1, -0.18, -0.22), (-1, 0.24, 0.26), (1, 0.24, 0.26)]:
