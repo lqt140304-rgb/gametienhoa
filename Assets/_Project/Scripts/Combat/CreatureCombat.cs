@@ -24,7 +24,7 @@ namespace Evolve.Combat
         public float DamageScale { get; set; } = 1f;
         float tellScale = 1f;
         public float TellScale { get => tellScale; set { tellScale = value; if (scheduler != null) scheduler.TellScale = value; } }
-        public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking));
+        public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking) || perch != PerchState.None);
         /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
@@ -58,6 +58,15 @@ namespace Evolve.Combat
         float retreatLeft;
         static readonly Color IceColor = new Color(0.55f, 0.85f, 1f);
 
+        enum PerchState { None, Jumping, Perched, Dropping }
+        PerchState perch;
+        Vector3 perchFrom, perchTo, perchOrigin, ledgePoint;
+        (float vx, float vy, float vz) perchVel;
+        float perchT, perchFlight, perchUntil, noTargetFor, nextLedgeCheck;
+        bool ledgeFound;
+        readonly List<Ledge> ledgeBuffer = new List<Ledge>();
+        const float DropSeconds = 0.6f;
+
         /// <summary>A lurking creature: hidden, only a pair of glowing eyes shows.</summary>
         public bool IsHidden => hidden;
 
@@ -68,6 +77,8 @@ namespace Evolve.Combat
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
+            foreach (var mv in moves) if (mv.Shape == MoveShape.Perch)
+                scheduler.Allow = m => perch == PerchState.Perched ? (m.Shape == MoveShape.Throw || m.Shape == MoveShape.Call) : m.Shape != MoveShape.Perch || FindLedge(m);   // on a ledge it only throws and calls; a leap needs a ledge to leap to
             pred = GetComponent<Predator>(); prey = GetComponent<Prey>();
             motor = GetComponent<CreatureMotor>(); loco = GetComponent<CreatureLocomotion>(); rb = GetComponent<Rigidbody>();
             col = GetComponentInChildren<Collider>();
@@ -130,6 +141,7 @@ namespace Evolve.Combat
 
         void FixedUpdate()
         {
+            TickPerch();
             if (HostPaused())
             {
                 scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
@@ -148,7 +160,8 @@ namespace Evolve.Combat
                 else if (ambush.State == AmbushState.Lurking) { if (!hidden) SetHidden(true); scheduler.Reset(); prevPhase = MovePhase.Idle; return; }
                 else if (ambush.State == AmbushState.Revealed && !scheduler.Busy) ambush.StrikeDone();
             }
-            var started = scheduler.Update(Time.fixedDeltaTime, target != null, dist, health);
+            noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
+            var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null) BeginStrike(started);
             prevPhase = scheduler.Phase;
@@ -237,6 +250,9 @@ namespace Evolve.Combat
                 iceSpot = target.transform.position; iceArmed = true;
                 SkillFx.Ring(iceSpot, m.Radius, IceColor, m.Active, 0.3f);   // the ring under the player's feet: step out before the block falls
             }
+            if (m.Shape == MoveShape.Throw && target != null)
+                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale);
+            if (m.Shape == MoveShape.Perch) BeginPerch(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);
         }
@@ -250,6 +266,72 @@ namespace Evolve.Combat
                 if (m.Shape == MoveShape.Charge) { CreatureStatus.Stun(this, 2f); scheduler.Stun(2f); loco?.PlayAction("Stun"); return; }   // hit a wall: dazed
             }
             if (!hitDone && target != null && Flat(target.transform.position - transform.position).magnitude <= Radius + HitReach) { Hurt(m, Radius + HitReach); hitDone = true; }
+        }
+
+        // ---------- leaping up to a ledge ----------
+
+        /// <summary>Is there a ledge worth leaping to? Looks at 16 directions and 3 distances around the creature, at most twice a second.</summary>
+        bool FindLedge(MoveDef m)
+        {
+            if (Time.time < nextLedgeCheck) return ledgeFound;
+            nextLedgeCheck = Time.time + 0.5f;
+            ledgeFound = false;
+            if (target == null) return false;
+            Vector3 pos = rb.position;
+            ledgeBuffer.Clear();
+            for (int d = 0; d < 16; d++)
+                foreach (float r in new[] { 3f, 5f, 7f })
+                {
+                    if (r > m.Distance) continue;
+                    float a = d * Mathf.PI * 2f / 16f;
+                    var at = new Vector3(pos.x + Mathf.Cos(a) * r, pos.y + m.MaxHeight + 1f, pos.z + Mathf.Sin(a) * r);
+                    if (Physics.Raycast(at, Vector3.down, out var hit, m.MaxHeight + 3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) && hit.normal.y > 0.7f && hit.collider.attachedRigidbody == null)
+                        ledgeBuffer.Add(new Ledge(hit.point.x, hit.point.y, hit.point.z));
+                }
+            Vector3 tp = target.transform.position;
+            float groundY = Evolve.World.GroundHeight.At(pos.x, pos.z, pos.y);
+            int best = PerchRules.PickLedge(ledgeBuffer, pos.x, groundY, pos.z, tp.x, tp.z, m.MinHeight, m.MaxHeight, m.Distance);
+            if (best < 0) return false;
+            var l = ledgeBuffer[best];
+            ledgePoint = new Vector3(l.X, l.Y, l.Z);
+            return ledgeFound = true;
+        }
+
+        void BeginPerch(MoveDef m)
+        {
+            if (!ledgeFound) return;   // Allow checked it a moment ago; the ledge can vanish between checks
+            Vector3 pos = rb.position;
+            float offset = pos.y - Evolve.World.GroundHeight.At(pos.x, pos.z, pos.y);   // how high the pivot sits above the ground
+            perchOrigin = pos; perchFrom = pos;
+            perchTo = new Vector3(ledgePoint.x, ledgePoint.y + offset, ledgePoint.z);
+            perchFlight = Mathf.Max(0.1f, m.Active);
+            perchVel = ThrowRules.Launch(perchFrom.x, perchFrom.y, perchFrom.z, perchTo.x, perchTo.y, perchTo.z, perchFlight);
+            perchT = 0f; perch = PerchState.Jumping;
+            perchUntil = Time.time + m.Active + m.PerchSeconds;
+        }
+
+        void TickPerch()
+        {
+            if (perch == PerchState.None) return;
+            if (perch == PerchState.Perched)
+            {
+                if (!scheduler.Busy && (Time.time >= perchUntil || noTargetFor > 3f)) StartDrop();
+                return;
+            }
+            perchT += Time.fixedDeltaTime;
+            var p = ThrowRules.PositionAt(perchFrom.x, perchFrom.y, perchFrom.z, perchVel, Mathf.Min(perchT, perchFlight));
+            rb.MovePosition(new Vector3(p.x, p.y, p.z));
+            if (perchT < perchFlight) return;
+            if (perch == PerchState.Jumping) { perch = PerchState.Perched; return; }
+            perch = PerchState.None;   // back on the ground
+            nextLedgeCheck = 0f;
+        }
+
+        void StartDrop()
+        {
+            perchFrom = rb.position; perchTo = perchOrigin; perchFlight = DropSeconds;
+            perchVel = ThrowRules.Launch(perchFrom.x, perchFrom.y, perchFrom.z, perchTo.x, perchTo.y, perchTo.z, perchFlight);
+            perchT = 0f; perch = PerchState.Dropping;
         }
 
         void Gust(MoveDef m)
