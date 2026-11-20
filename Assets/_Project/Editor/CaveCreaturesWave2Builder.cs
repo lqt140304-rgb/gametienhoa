@@ -21,6 +21,9 @@ namespace Evolve.EditorTools
             new CaveCreaturesWave1Builder.CreatureSpec("ChimNon", "Chim Non", "AbandonedNest", false, false, "Hit", 0.24f, 0.50f, 0.75f, 1.8f, 12f, 2.5f, 15f, 0f, 8, 22),
             new CaveCreaturesWave1Builder.CreatureSpec("RanTromTrung", "Rắn Trộm Trứng", "AbandonedNest", true, false, "Attack", 0.36f, 1.55f, 1.05f, 2.5f, 40f, 11f, 32f, 14f, 3, 8, "ChimNon"),
             new CaveCreaturesWave1Builder.CreatureSpec("ChimHangMe", "Chim Hang Mẹ", "AbandonedNest", true, true, "Attack", 1.05f, 2.40f, 1.25f, 3.0f, 110f, 36f, 60f, 22f, 1, 2, "RanTromTrung"),
+
+            // Hang Vườn Đá Hổ Phách (Tầng Nông): Khỉ Hang
+            new CaveCreaturesWave1Builder.CreatureSpec("KhiHang", "Khỉ Hang", "AmberPebbleGarden", true, false, "Throw", 0.35f, 0.90f, 1.3f, 3.0f, 40f, 12f, 30f, 8f, 2, 3, "BoCanhCungNho"),
         };
 
         [MenuItem("Evolve/Build Wave 2 Nong Creatures & Prefabs")]

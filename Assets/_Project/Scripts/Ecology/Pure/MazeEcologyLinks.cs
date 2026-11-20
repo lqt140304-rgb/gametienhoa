@@ -18,6 +18,7 @@ namespace Evolve.Ecology
             ChamberTheme.LumaMushroomGrove => "vuon_quang",
             ChamberTheme.BreathingMoss => "reu_tho",
             ChamberTheme.AbandonedNest => "to_bo_hoang",
+            ChamberTheme.AmberPebbleGarden => "vuon_da",
             ChamberTheme.CrystalVein => "vuc_nut_tim",
             ChamberTheme.GlowMushroomCavern => "nam_huynh_quang",
             ChamberTheme.HotSpringCavern => "suoi_nuoc_nong",

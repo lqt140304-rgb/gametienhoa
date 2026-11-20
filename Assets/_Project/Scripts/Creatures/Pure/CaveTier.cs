@@ -29,7 +29,7 @@ namespace Evolve.Creatures
         static readonly Dictionary<string, int> tiers = new Dictionary<string, int>
         {
             { "khoi_sinh", 0 },
-            { "vuon_quang", 1 }, { "reu_tho", 1 }, { "to_bo_hoang", 1 },
+            { "vuon_quang", 1 }, { "reu_tho", 1 }, { "to_bo_hoang", 1 }, { "vuon_da", 1 },
             { "vuc_nut_tim", 2 }, { "nam_huynh_quang", 2 }, { "suoi_nuoc_nong", 2 }, { "khe_gio_hu", 2 },
             { "nghia_dia", 3 }, { "hoa_thach", 3 }, { "tieng_tho", 3 },
         };

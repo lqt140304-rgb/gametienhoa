@@ -33,10 +33,10 @@ namespace Evolve.Tests.EditMode
 
         static void Run(EcologyWorld w, Trace t, int steps) { for (int i = 0; i < steps; i++) { w.Tick(Step); t.Watch(w); } }
 
-        [Test] public void Seed_HasAllElevenCaves_FourSpeciesEach_AndEveryDietPointsAtSomethingReal()
+        [Test] public void Seed_HasAllTwelveCaves_FourSpeciesEach_AndEveryDietPointsAtSomethingReal()
         {
             var w = CaveEcologySeed.Build();
-            Assert.AreEqual(11, w.Regions.Count);
+            Assert.AreEqual(12, w.Regions.Count);
             foreach (var r in w.Regions)
             {
                 Assert.AreEqual(4, r.Value.Species.Count, r.Key);

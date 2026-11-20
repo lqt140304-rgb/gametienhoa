@@ -1088,6 +1088,157 @@ def build_20_chim_hang_me(out_dir, prev_dir):
     )
 
 
+def build_33_khi_hang(out_dir, prev_dir):
+    """[C] Khỉ Hang — Vườn Đá Hổ Phách (Tầng Nông).
+    Dáng thon (~0.7m rộng, ~0.9m dài thân), tay dài, đuôi dài, điêu khắc liền mạch Voxel Remesh + Smooth."""
+    kc.new_scene()
+    mats = w1._make_creature_materials()
+    bm, col, flat = w1._new_bm()
+    body_bm, body_col, _ = w1._new_bm()
+
+    def monkey_fur(p, n):
+        base = w1._lerp3((0.46, 0.28, 0.14), (0.76, 0.50, 0.22), 0.35 + 0.45 * max(0.0, n.z))
+        # Ngực & bụng sáng hơn
+        if p.y < -0.05 and p.z < 0.52 and abs(p.x) < 0.14:
+            base = w1._lerp3(base, (0.86, 0.72, 0.52), 0.55)
+        return base
+
+    def pale_skin(p, n):
+        return w1._lerp3((0.76, 0.58, 0.42), (0.90, 0.76, 0.60), 0.5 + 0.3 * max(0.0, n.z))
+
+    # Thân thon linh hoạt (cổ -> ngực -> eo -> hông)
+    w1._add_tube(body_bm, body_col,
+                 [(0.0, -0.22, 0.56), (0.0, -0.08, 0.46), (0.0, 0.12, 0.36), (0.0, 0.30, 0.32)],
+                 [(0.11, 0.10), (0.145, 0.13), (0.11, 0.10), (0.125, 0.115)],
+                 sides=20, subdiv=2, mat_index=0, color_fn=monkey_fur)
+    _add_sculpted_blob(body_bm, body_col, (0.0, -0.10, 0.46), (0.155, 0.16, 0.145), rot=(-0.25, 0, 0), segs=20, rings=14, mat_index=0, color_fn=monkey_fur)
+    _add_sculpted_blob(body_bm, body_col, (0.0, 0.26, 0.33), (0.13, 0.14, 0.12), segs=18, rings=12, mat_index=0, color_fn=monkey_fur)
+
+    # Đầu tròn, gờ mày, tai tròn vểnh, mõm sáng
+    _add_sculpted_blob(body_bm, body_col, (0.0, -0.32, 0.66), (0.125, 0.13, 0.125), segs=20, rings=14, mat_index=0, color_fn=monkey_fur)
+    _add_sculpted_blob(body_bm, body_col, (0.0, -0.42, 0.62), (0.085, 0.085, 0.075), segs=16, rings=12, mat_index=0, color_fn=pale_skin)
+    for sx in (-1.0, 1.0):
+        # Tai khỉ to tròn
+        _add_sculpted_blob(body_bm, body_col, (sx * 0.135, -0.30, 0.68), (0.045, 0.025, 0.055), rot=(0, 0, sx * 0.25), segs=12, rings=8, mat_index=0, color_fn=pale_skin)
+        # Vai & Tay dài (~0.35m mỗi bên -> tổng sải rộng ~0.7m)
+        _add_sculpted_blob(body_bm, body_col, (sx * 0.14, -0.12, 0.46), (0.068, 0.068, 0.068), segs=14, rings=10, mat_index=0, color_fn=monkey_fur)
+        w1._add_tube(body_bm, body_col,
+                     [(sx * 0.15, -0.12, 0.46), (sx * 0.28, -0.18, 0.26), (sx * 0.31, -0.26, 0.05)],
+                     [0.052, 0.042, 0.036], sides=14, subdiv=2, mat_index=0, color_fn=monkey_fur)
+        _add_sculpted_blob(body_bm, body_col, (sx * 0.31, -0.28, 0.035), (0.048, 0.058, 0.026), segs=12, rings=8, mat_index=0, color_fn=pale_skin)
+        # Chân sau gập linh hoạt
+        _add_sculpted_blob(body_bm, body_col, (sx * 0.11, 0.28, 0.32), (0.065, 0.075, 0.075), segs=14, rings=10, mat_index=0, color_fn=monkey_fur)
+        w1._add_tube(body_bm, body_col,
+                     [(sx * 0.12, 0.28, 0.32), (sx * 0.18, 0.22, 0.16), (sx * 0.16, 0.30, 0.03)],
+                     [0.048, 0.038, 0.030], sides=12, subdiv=2, mat_index=0, color_fn=monkey_fur)
+        _add_sculpted_blob(body_bm, body_col, (sx * 0.16, 0.28, 0.025), (0.040, 0.055, 0.022), segs=12, rings=8, mat_index=0, color_fn=pale_skin)
+
+    # Đuôi dài cong chữ S (~0.6m)
+    w1._add_tube(body_bm, body_col,
+                 [(0.0, 0.36, 0.34), (0.0, 0.58, 0.44), (0.04, 0.78, 0.62), (0.0, 0.90, 0.80)],
+                 [0.038, 0.030, 0.024, 0.014], sides=12, subdiv=2, mat_index=0, color_fn=monkey_fur)
+
+    w1._sculpt_remesh_into(bm, col, body_bm, voxel_size=0.017, smooth_iter=6, decimate_ratio=0.45, mat_index=0, color_fn=monkey_fur)
+
+    # Mắt sáng sắc nét, lỗ mũi
+    for sx in (-1.0, 1.0):
+        w1._add_eye_bulb(bm, col, (sx * 0.052, -0.41, 0.68), 0.022, yaw=sx * 0.22, eye_col=(0.98, 0.72, 0.18), mat_eye=2)
+        _add_sculpted_blob(bm, col, (sx * 0.018, -0.49, 0.635), (0.010, 0.008, 0.008), segs=8, rings=6, mat_index=1, color_fn=lambda _p, _n: (0.12, 0.08, 0.06))
+
+    bones = [
+        ("Root", (0, 0.06, 0.38), (0, -0.10, 0.44), None, 0.36, 1.0),
+        ("Spine", (0, -0.10, 0.44), (0, -0.22, 0.56), "Root", 0.26, 1.8),
+        ("Head", (0, -0.24, 0.58), (0, -0.44, 0.68), "Spine", 0.24, 2.3),
+        ("Arm_L", (-0.15, -0.12, 0.46), (-0.31, -0.28, 0.04), "Spine", 0.18, 2.5),
+        ("Arm_R", (0.15, -0.12, 0.46), (0.31, -0.28, 0.04), "Spine", 0.18, 2.5),
+        ("Leg_L", (-0.12, 0.28, 0.32), (-0.16, 0.28, 0.03), "Root", 0.18, 2.5),
+        ("Leg_R", (0.12, 0.28, 0.32), (0.16, 0.28, 0.03), "Root", 0.18, 2.5),
+        ("Tail1", (0, 0.36, 0.34), (0.02, 0.68, 0.52), "Root", 0.18, 2.2),
+        ("Tail2", (0.02, 0.68, 0.52), (0, 0.90, 0.80), "Tail1", 0.18, 2.4),
+    ]
+    clips = {
+        "Idle": (1, 48, [
+            (1, {"Spine": {"rot": (0.05, 0, 0.06)}, "Head": {"rot": (-0.06, 0, 0.10)}, "Tail1": {"rot": (0.08, 0, 0.16)}, "Tail2": {"rot": (0.10, 0, -0.20)}}),
+            (24, {"Spine": {"rot": (-0.05, 0, -0.06)}, "Head": {"rot": (0.05, 0, -0.12)}, "Tail1": {"rot": (-0.08, 0, -0.16)}, "Tail2": {"rot": (-0.10, 0, 0.22)}}),
+            (48, {"Spine": {"rot": (0.05, 0, 0.06)}, "Head": {"rot": (-0.06, 0, 0.10)}, "Tail1": {"rot": (0.08, 0, 0.16)}, "Tail2": {"rot": (0.10, 0, -0.20)}}),
+        ]),
+        "Walk": (1, 20, [
+            (1, {"Root": {"loc": (0, 0, 0.02)}, "Arm_L": {"rot": (0.48, 0, 0)}, "Leg_R": {"rot": (0.48, 0, 0)}, "Arm_R": {"rot": (-0.42, 0, 0)}, "Leg_L": {"rot": (-0.42, 0, 0)}, "Tail1": {"rot": (0, 0, 0.22)}}),
+            (10, {"Root": {"loc": (0, 0, 0.08)}, "Arm_L": {"rot": (-0.42, 0, 0)}, "Leg_R": {"rot": (-0.42, 0, 0)}, "Arm_R": {"rot": (0.48, 0, 0)}, "Leg_L": {"rot": (0.48, 0, 0)}, "Tail1": {"rot": (0, 0, -0.22)}}),
+            (20, {"Root": {"loc": (0, 0, 0.02)}, "Arm_L": {"rot": (0.48, 0, 0)}, "Leg_R": {"rot": (0.48, 0, 0)}, "Arm_R": {"rot": (-0.42, 0, 0)}, "Leg_L": {"rot": (-0.42, 0, 0)}, "Tail1": {"rot": (0, 0, 0.22)}}),
+        ]),
+        "Tell_Throw": (1, 36, [
+            (1, {"Spine": {"rot": (0, 0, 0)}, "Arm_R": {"rot": (0, 0, 0)}}),
+            (12, {"Root": {"rot": (0.28, 0, 0)}, "Spine": {"rot": (-0.36, 0.20, 0)}, "Head": {"rot": (0.18, -0.18, 0)}, "Arm_R": {"rot": (-2.25, 0, -0.28)}, "Arm_L": {"rot": (-0.45, 0, 0.25)}}),
+            (36, {"Root": {"rot": (0.32, 0, 0)}, "Spine": {"rot": (-0.40, 0.24, 0)}, "Head": {"rot": (0.20, -0.22, 0)}, "Arm_R": {"rot": (-2.35, 0, -0.32)}, "Arm_L": {"rot": (-0.50, 0, 0.28)}}),
+        ]),
+        "Strike_Throw": (1, 14, [
+            (1, {"Spine": {"rot": (-0.35, 0.20, 0)}, "Arm_R": {"rot": (-2.20, 0, -0.25)}}),
+            (6, {"Root": {"rot": (-0.22, 0, 0)}, "Spine": {"rot": (0.38, -0.25, 0)}, "Arm_R": {"rot": (0.65, 0, 0.15)}}),
+            (14, {"Root": {"rot": (-0.10, 0, 0)}, "Spine": {"rot": (0.18, -0.10, 0)}, "Arm_R": {"rot": (0.30, 0, 0)}}),
+        ]),
+        "Recover_Throw": (1, 30, [
+            (1, {"Root": {"rot": (0.06, 0, 0)}, "Spine": {"rot": (0.24, 0, 0)}, "Arm_R": {"rot": (0.18, 0, 0)}, "Arm_L": {"rot": (0.18, 0, 0)}}),
+            (15, {"Spine": {"rot": (0.28, 0, 0), "scale": (1.05, 1.0, 0.95)}, "Head": {"rot": (0.20, 0, 0)}}),
+            (30, {"Root": {"rot": (0, 0, 0)}, "Spine": {"rot": (0, 0, 0), "scale": (1, 1, 1)}, "Head": {"rot": (0, 0, 0)}, "Arm_R": {"rot": (0, 0, 0)}, "Arm_L": {"rot": (0, 0, 0)}}),
+        ]),
+        "Tell_Attack": (1, 28, [
+            (1, {"Root": {"loc": (0, 0, 0)}, "Spine": {"rot": (0, 0, 0)}}),
+            (10, {"Root": {"loc": (0, 0.04, -0.08), "rot": (-0.18, 0, 0)}, "Spine": {"rot": (0.25, 0, 0)}, "Head": {"rot": (-0.28, 0, 0)}, "Jaw": {"rot": (0.45, 0, 0)}}),
+            (28, {"Root": {"loc": (0, 0.05, -0.09), "rot": (-0.20, 0, 0)}, "Spine": {"rot": (0.28, 0, 0)}, "Head": {"rot": (-0.30, 0, 0)}, "Jaw": {"rot": (0.50, 0, 0)}}),
+        ]),
+        "Strike_Attack": (1, 14, [
+            (1, {"Root": {"loc": (0, -0.04, 0.06), "rot": (-0.22, 0, 0)}, "Jaw": {"rot": (0.55, 0, 0)}}),
+            (6, {"Root": {"loc": (0, -0.22, 0.14), "rot": (-0.28, 0, 0)}, "Arm_L": {"rot": (-0.85, 0, 0)}, "Arm_R": {"rot": (-0.85, 0, 0)}, "Jaw": {"rot": (0.62, 0, 0)}}),
+            (14, {"Root": {"loc": (0, -0.06, 0.02), "rot": (-0.08, 0, 0)}, "Jaw": {"rot": (0.18, 0, 0)}}),
+        ]),
+        "Recover_Attack": (1, 16, [
+            (1, {"Root": {"loc": (0, 0.04, 0.02), "rot": (0.12, 0, 0)}, "Arm_L": {"rot": (-0.42, 0, 0)}, "Leg_R": {"rot": (-0.42, 0, 0)}, "Arm_R": {"rot": (0.48, 0, 0)}, "Leg_L": {"rot": (0.48, 0, 0)}}),
+            (8, {"Root": {"loc": (0, 0.08, 0.06), "rot": (0.16, 0, 0)}, "Arm_L": {"rot": (0.48, 0, 0)}, "Leg_R": {"rot": (0.48, 0, 0)}, "Arm_R": {"rot": (-0.42, 0, 0)}, "Leg_L": {"rot": (-0.42, 0, 0)}}),
+            (16, {"Root": {"loc": (0, 0.04, 0.02), "rot": (0.12, 0, 0)}, "Arm_L": {"rot": (-0.42, 0, 0)}, "Leg_R": {"rot": (-0.42, 0, 0)}, "Arm_R": {"rot": (0.48, 0, 0)}, "Leg_L": {"rot": (0.48, 0, 0)}}),
+        ]),
+        "Tell_Perch": (1, 28, [
+            (1, {"Root": {"loc": (0, 0, 0)}, "Leg_L": {"rot": (0, 0, 0)}, "Leg_R": {"rot": (0, 0, 0)}}),
+            (12, {"Root": {"loc": (0, 0.04, -0.14), "rot": (-0.24, 0, 0)}, "Spine": {"rot": (0.34, 0, 0)}, "Leg_L": {"rot": (-0.75, 0, 0)}, "Leg_R": {"rot": (-0.75, 0, 0)}, "Arm_L": {"rot": (0.40, 0, 0)}, "Arm_R": {"rot": (0.40, 0, 0)}}),
+            (28, {"Root": {"loc": (0, 0.05, -0.15), "rot": (-0.26, 0, 0)}, "Spine": {"rot": (0.38, 0, 0)}, "Leg_L": {"rot": (-0.80, 0, 0)}, "Leg_R": {"rot": (-0.80, 0, 0)}}),
+        ]),
+        "Strike_Perch": (1, 24, [
+            (1, {"Root": {"loc": (0, 0, 0.10), "rot": (0.38, 0, 0)}, "Arm_L": {"rot": (-1.35, 0, 0.25)}, "Arm_R": {"rot": (-1.35, 0, -0.25)}, "Leg_L": {"rot": (0.65, 0, 0)}, "Leg_R": {"rot": (0.65, 0, 0)}}),
+            (12, {"Root": {"loc": (0, 0, 0.16), "rot": (0.12, 0, 0)}, "Arm_L": {"rot": (-1.50, 0, 0.30)}, "Arm_R": {"rot": (-1.50, 0, -0.30)}, "Leg_L": {"rot": (0.75, 0, 0)}, "Leg_R": {"rot": (0.75, 0, 0)}, "Tail1": {"rot": (0.35, 0, 0)}}),
+            (24, {"Root": {"loc": (0, 0, 0.04), "rot": (-0.18, 0, 0)}, "Arm_L": {"rot": (-0.45, 0, 0)}, "Arm_R": {"rot": (-0.45, 0, 0)}, "Leg_L": {"rot": (-0.30, 0, 0)}, "Leg_R": {"rot": (-0.30, 0, 0)}}),
+        ]),
+        "Tell_Roar": (1, 34, [
+            (1, {"Root": {"rot": (0, 0, 0)}, "Head": {"rot": (0, 0, 0)}}),
+            (10, {"Root": {"loc": (0, 0, 0.10), "rot": (0.32, 0, 0)}, "Head": {"rot": (-0.38, 0, 0)}, "Jaw": {"rot": (0.55, 0, 0)}, "Arm_L": {"rot": (-0.95, 0, 0.45)}, "Arm_R": {"rot": (-0.95, 0, -0.45)}}),
+            (18, {"Root": {"loc": (0, 0, 0.12), "rot": (0.35, 0, 0)}, "Head": {"rot": (-0.42, 0, 0)}, "Jaw": {"rot": (0.60, 0, 0)}, "Arm_L": {"rot": (-0.70, 0, -0.35)}, "Arm_R": {"rot": (-0.70, 0, 0.35)}}),
+            (26, {"Root": {"loc": (0, 0, 0.10), "rot": (0.32, 0, 0)}, "Head": {"rot": (-0.38, 0, 0)}, "Jaw": {"rot": (0.58, 0, 0)}, "Arm_L": {"rot": (-0.95, 0, 0.45)}, "Arm_R": {"rot": (-0.95, 0, -0.45)}}),
+            (34, {"Root": {"loc": (0, 0, 0.12), "rot": (0.35, 0, 0)}, "Head": {"rot": (-0.42, 0, 0)}, "Jaw": {"rot": (0.60, 0, 0)}, "Arm_L": {"rot": (-0.70, 0, -0.35)}, "Arm_R": {"rot": (-0.70, 0, 0.35)}}),
+        ]),
+        "Strike_Roar": (1, 14, [
+            (1, {"Root": {"loc": (0, 0, 0.12), "rot": (0.36, 0, 0)}, "Head": {"rot": (-0.45, 0, 0)}, "Jaw": {"rot": (0.68, 0, 0)}}),
+            (7, {"Root": {"loc": (0, 0, 0.14), "rot": (0.38, 0, 0), "scale": (1.06, 1.06, 1.06)}, "Head": {"rot": (-0.50, 0, 0)}, "Jaw": {"rot": (0.75, 0, 0)}, "Arm_L": {"rot": (-1.10, 0, 0.35)}, "Arm_R": {"rot": (-1.10, 0, -0.35)}}),
+            (14, {"Root": {"loc": (0, 0, 0.06), "rot": (0.18, 0, 0), "scale": (1, 1, 1)}, "Jaw": {"rot": (0.35, 0, 0)}}),
+        ]),
+        "Recover_Roar": (1, 30, [
+            (1, {"Root": {"loc": (0, 0, 0.02), "rot": (0.08, 0, 0)}, "Head": {"rot": (0.20, 0, 0)}, "Jaw": {"rot": (0.30, 0, 0)}}),
+            (15, {"Root": {"loc": (0, 0, 0), "scale": (1.04, 1.0, 0.96)}, "Head": {"rot": (0.24, 0, 0)}, "Jaw": {"rot": (0.34, 0, 0)}}),
+            (30, {"Root": {"loc": (0, 0, 0), "rot": (0, 0, 0), "scale": (1, 1, 1)}, "Head": {"rot": (0, 0, 0)}, "Jaw": {"rot": (0, 0, 0)}, "Arm_L": {"rot": (0, 0, 0)}, "Arm_R": {"rot": (0, 0, 0)}}),
+        ]),
+        "Hit": (1, 18, [
+            (1, {"Root": {"rot": (0, 0, 0)}}),
+            (6, {"Root": {"rot": (-0.22, 0.25, 0.20)}}),
+            (18, {"Root": {"rot": (0, 0, 0)}}),
+        ]),
+    }
+
+    w1._finalize_and_export(
+        bm, flat, mats, "Creature_KhiHang",
+        os.path.join(out_dir, "Creature_KhiHang.fbx") if out_dir else None,
+        os.path.join(prev_dir, "creature_33_khi_hang.png") if prev_dir else None,
+        bone_specs=bones, clips_spec=clips,
+    )
+
+
 BUILDERS = [
     ("sen_reu", build_13_sen_reu),
     ("muoi_reu", build_14_muoi_reu),
@@ -1097,6 +1248,7 @@ BUILDERS = [
     ("trung_la", build_18_trung_la),
     ("ran_trom_trung", build_19_ran_trom_trung),
     ("chim_hang_me", build_20_chim_hang_me),
+    ("khi_hang", build_33_khi_hang),
 ]
 
 

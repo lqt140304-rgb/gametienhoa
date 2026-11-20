@@ -395,6 +395,23 @@ namespace Evolve.EditorTools
             eggObj.AddComponent<LivingEggPickup>().Configure(encounter);
         }
 
+        public static void PopulateAmberPebbleGardenChamber(Transform chamberRoot, Vector3 origin, IReadOnlyList<float> tunnelAnglesDeg = null, ChamberPlan? plan = null)
+        {
+            PopulateEcosystem(
+                chamberRoot,
+                origin,
+                null,
+                isBirth: false,
+                speciesNames: new[] { "BoCanhCungNho", "ThoLa", "KhiHang" },
+                denOffsets: new[]
+                {
+                    new Vector2(-18f, 12f),
+                    new Vector2(18f, -10f),
+                    new Vector2(0f, 18f)
+                },
+                counts: new[] { 7, 7, 3 }, tunnelAnglesDeg, plan);
+        }
+
         public static void PopulateGlowMushroomChamber(Transform chamberRoot, Vector3 origin, IReadOnlyList<float> tunnelAnglesDeg = null, ChamberPlan? plan = null)
         {
             PopulateEcosystem(

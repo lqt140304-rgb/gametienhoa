@@ -52,7 +52,7 @@ namespace Evolve.Ecology
 
         public static readonly string[] CaveIds =
         {
-            "khoi_sinh", "vuon_quang", "reu_tho", "to_bo_hoang", "vuc_nut_tim", "nam_huynh_quang", "suoi_nuoc_nong", "khe_gio_hu", "nghia_dia", "hoa_thach", "tieng_tho",
+            "khoi_sinh", "vuon_quang", "reu_tho", "to_bo_hoang", "vuon_da", "vuc_nut_tim", "nam_huynh_quang", "suoi_nuoc_nong", "khe_gio_hu", "nghia_dia", "hoa_thach", "tieng_tho",
         };
 
         /// <summary>The cave lord that guards big carcasses and drives off every other creature (and the slime) that comes near.</summary>
@@ -61,10 +61,10 @@ namespace Evolve.Ecology
         static readonly System.Collections.Generic.Dictionary<string, string> hunterAndLordNames = new System.Collections.Generic.Dictionary<string, string>
         {
             { "trung_la", "Trứng Lạ" },
-            { "tham_lan_bo_ho", "Thằn Lằn Bờ Hồ" }, { "bo_giap_quang", "Bọ Giáp Quặng" }, { "ret_reu", "Rết Rêu" }, { "ran_trom_trung", "Rắn Trộm Trứng" },
+            { "tham_lan_bo_ho", "Thằn Lằn Bờ Hồ" }, { "bo_giap_quang", "Bọ Giáp Quặng" }, { "ret_reu", "Rết Rêu" }, { "ran_trom_trung", "Rắn Trộm Trứng" }, { "khi_hang", "Khỉ Hang" },
             { "nhen_tinh_the", "Nhện Tinh Thể" }, { "ech_doc_dom", "Ếch Độc Đốm" }, { "ky_nhong_lua", "Kỳ Nhông Lửa" }, { "chon_khe", "Chồn Khe" },
             { "bo_an_xac", "Bọ Ăn Xác" }, { "slime_da", "Slime Đá" }, { "ke_rinh_bong_toi", "Kẻ Rình Bóng Tối" },
-            { "coc_ho_gia", "Cóc Hồ Già" }, { "rua_pha_le", "Rùa Pha Lê" }, { "reu_me", "Rêu Mẹ" }, { "chim_hang_me", "Chim Hang Mẹ" },
+            { "coc_ho_gia", "Cóc Hồ Già" }, { "rua_pha_le", "Rùa Pha Lê" }, { "reu_me", "Rêu Mẹ" }, { "chim_hang_me", "Chim Hang Mẹ" }, { "golem_ho_phach", "Golem Hổ Phách" },
             { "bo_cap_thach_anh", "Bọ Cạp Thạch Anh" }, { "nam_khong_lo", "Nấm Khổng Lồ" }, { "ran_dung_nham", "Rắn Dung Nham" }, { "cao_gio", "Cáo Gió" },
             { "cho_xuong", "Chó Xương" }, { "golem_thach_anh", "Golem Thạch Anh" }, { "bong_hut", "Bóng Hút" },
         };
@@ -179,6 +179,11 @@ namespace Evolve.Ecology
                 Hunter("ran_trom_trung", Eat("trung_la"), Eat("chim_non", 0.5f)),
                 Lord("chim_hang_me", Visit("khe_gio_hu", "de_gio", 0.6f), Visit("khe_gio_hu", "chuot_gio", 0.6f)));
 
+            Cave(w, "vuon_da", "reu_ho_phach",
+                Prey("bo_ho_phach", Pool("reu_ho_phach")), Prey("de_ho_phach", Pool("reu_ho_phach")),
+                Hunter("khi_hang", Eat("bo_ho_phach"), Eat("de_ho_phach", 0.5f)),
+                Lord("golem_ho_phach", Eat("khi_hang", 0.5f), Eat("bo_ho_phach")));
+
             Cave(w, "vuc_nut_tim", "tinh_the_vun",
                 Prey("bo_gai_tim", Pool("tinh_the_vun")),
                 Prey("doi_am_thoa", Visit("nam_huynh_quang", "buom_bao_tu", 0.5f), Visit("tieng_tho", "buom_dem", 0.5f)),
@@ -218,7 +223,7 @@ namespace Evolve.Ecology
             // tunnels between caves: a placeholder chain until the maze graph exists
             foreach (var t in new[]
             {
-                ("khoi_sinh", "vuon_quang"), ("khoi_sinh", "reu_tho"), ("khoi_sinh", "to_bo_hoang"), ("vuon_quang", "vuc_nut_tim"),
+                ("khoi_sinh", "vuon_quang"), ("khoi_sinh", "reu_tho"), ("khoi_sinh", "to_bo_hoang"), ("khoi_sinh", "vuon_da"), ("vuon_quang", "vuc_nut_tim"),
                 ("reu_tho", "nam_huynh_quang"), ("to_bo_hoang", "khe_gio_hu"), ("vuc_nut_tim", "nam_huynh_quang"), ("vuc_nut_tim", "tieng_tho"),
                 ("nam_huynh_quang", "suoi_nuoc_nong"), ("suoi_nuoc_nong", "khe_gio_hu"), ("khe_gio_hu", "nghia_dia"), ("nghia_dia", "hoa_thach"), ("hoa_thach", "tieng_tho"),
             }) w.Link(t.Item1, t.Item2);

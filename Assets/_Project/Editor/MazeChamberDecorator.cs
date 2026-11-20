@@ -83,6 +83,8 @@ namespace Evolve.EditorTools
                 CaveWave1ScenePopulator.PopulateBreathingMossChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else if (node.Theme == ChamberTheme.AbandonedNest)
                 CaveWave1ScenePopulator.PopulateAbandonedNestChamber(parent, parent.position, tunnelAnglesDeg, plan);
+            else if (node.Theme == ChamberTheme.AmberPebbleGarden)
+                CaveWave1ScenePopulator.PopulateAmberPebbleGardenChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else if (node.Theme == ChamberTheme.GlowMushroomCavern)
                 CaveWave1ScenePopulator.PopulateGlowMushroomChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else if (node.Theme == ChamberTheme.HotSpringCavern)

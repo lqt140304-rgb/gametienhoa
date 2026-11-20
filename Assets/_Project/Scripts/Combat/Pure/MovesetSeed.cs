@@ -73,6 +73,7 @@ namespace Evolve.Combat
             "ruaphale",
             "chonkhe",
             "caogio",
+            "khihang",
         };
 
         public static bool Has(string speciesIdOrName) => For(speciesIdOrName).Count > 0;
