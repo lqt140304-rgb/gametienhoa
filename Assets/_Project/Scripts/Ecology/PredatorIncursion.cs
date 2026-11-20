@@ -44,13 +44,13 @@ namespace Evolve.Ecology
             if (current != null) return; // at most one B embodied at a time
             var pop = region.Population;
             if (pop == null) return;
-            var predPop = pop.Get(predator.Id);
+            var predPop = region.PopulationOf(predator);
             if (predPop == null) return;
 
             int prey = 0;
             if (predator.Prey != null)
             {
-                var preyPop = pop.Get(predator.Prey.Id);
+                var preyPop = region.PopulationOf(predator.Prey) ?? pop.Get(predator.Prey.Id);
                 if (preyPop != null) prey = preyPop.Count;
             }
             if (!IncursionRule.ShouldEnter(predPop, prey, preyThreshold, minutesSinceLastHunt, patrolEveryMinutes)) return;

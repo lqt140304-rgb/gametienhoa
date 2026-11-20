@@ -39,5 +39,13 @@ namespace Evolve.Tests.EditMode
             foreach (var cave in inMaze) Assert.Greater(w.Neighbours(cave).Count, 0, cave);   // the maze is connected
             foreach (var cave in CaveEcologySeed.CaveIds.Where(c => !inMaze.Contains(c))) Assert.AreEqual(0, w.Neighbours(cave).Count, cave);
         }
+
+        [Test] public void CaveOfSpecies_ByPrefabName()
+        {
+            Assert.AreEqual("khoi_sinh", CaveEcologySeed.CaveOfSpecies(CaveEcologySeed.IdByName("ThanLanBoHo")));
+            Assert.AreEqual("vuc_nut_tim", CaveEcologySeed.CaveOfSpecies("nhen_tinh_the"));
+            Assert.IsNull(CaveEcologySeed.CaveOfSpecies("khong_co"));
+            Assert.IsNull(CaveEcologySeed.CaveOfSpecies(null));
+        }
     }
 }

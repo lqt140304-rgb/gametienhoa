@@ -102,6 +102,15 @@ namespace Evolve.Ecology
             return null;
         }
 
+        /// <summary>The cave (region id) a species lives in, or null.</summary>
+        public static string CaveOfSpecies(string id)
+        {
+            if (id == null) return null;
+            reference = reference ?? Build();
+            foreach (var r in reference.Regions) if (r.Value.Get(id) != null) return r.Key;
+            return null;
+        }
+
         /// <summary>Display names of the species (in its own cave) that this species eats: where a hunter looks for prey in the scene.</summary>
         public static System.Collections.Generic.List<string> DietSpeciesNames(string id)
         {

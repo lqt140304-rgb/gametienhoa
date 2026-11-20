@@ -760,3 +760,18 @@ Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
 - **Chưa làm:**
   - Mục tiêu của tổ rơi vào chỗ không tới được thì con đó đứng chờ tới lượt đổi hướng (khoảng 20 giây).
   - Kẻ săn chưa có tổ.
+
+## 50. Sóng Dò Mạnh, đường nối theo mê cung, sinh thái sống
+
+- **Sóng Dò Mạnh:** vòng quét của `VibrationSense` nhân với `OrganHost.SonarRangeMultiplier` (gấp 1,5 với gene này).
+- **Đường nối theo mê cung** (`Ecology/Pure/MazeEcologyLinks.cs`):
+  - Hai hang có sinh vật được tính là kề nhau khi đi được từ hang này sang hang kia chỉ qua những khoang không có sinh vật (hang trú, ngõ cụt, khoang chưa có hệ sinh thái).
+  - Hang được nhận theo chủ đề khoang. Ví dụ `CrystalVein` là Vực Nứt Tím.
+  - Hóa Thạch và Tiếng Thở chưa có chủ đề khoang, nên chưa nối với hang nào.
+- **Sinh thái sống** (`Ecology/EcologyRuntime.cs`): một `EcologyWorld` B1 chung cho cả game.
+  - `Region` của hang nào (nhận ra qua loài trong danh sách, ví dụ `ThanLanBoHo`) thì dùng quần thể giàu của hang đó thay cho mô hình một nguồn thức ăn cũ.
+  - Cả thế giới cập nhật mỗi 5 giây, kể cả các hang người chơi không ở.
+  - Tổ thật trong cảnh: còn ít nhất một tổ thì giữ tốc độ đẻ đã cân bằng, phá hết tổ thì ngừng đẻ.
+  - Cảnh cũ (hồ ngầm, không thuộc hang nào) vẫn chạy mô hình cũ.
+  - Menu thần có thêm nút "In quần thể đang sống của mọi hang".
+

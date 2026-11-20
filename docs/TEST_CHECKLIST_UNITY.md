@@ -119,8 +119,16 @@ Tạo **cùng hang**: ví dụ kẻ săn `Thằn Lằn Bờ Hồ` + con mồi `B
 ### H. Hệ sinh thái (số liệu)
 - [ ] "Mô phỏng sinh thái 2 giờ": Console in bảng 11 hang; con mồi trung bình 7–9, kẻ săn 1–2, Chúa Hang 1, không loài nào 0 liên tục.
 
+### H2. Sinh thái sống trong game (B1 nối vào hang)
+- [ ] Vào một hang có sinh vật. Bấm "In quần thể đang sống của mọi hang". Console phải in đủ 11 hang:
+  - mỗi hang có danh sách hang kề trong ngoặc. Khi có mê cung, danh sách này đi theo đường nối thật, sau khoảng 5 giây chơi;
+  - mỗi loài có số con, sức chứa và % no.
+- [ ] Đợi vài phút rồi in lại: số con thay đổi hợp lý, kẻ săn không ăn sạch con mồi, có loài di cư sang hang kề (ghi "(khách)").
+- [ ] "Mô phỏng sinh thái 2 giờ": dòng đầu ghi "đường nối theo mê cung thật (N cặp hang)" khi đang trong mê cung.
+- [ ] Không có lỗi đỏ khi vào hoặc ra hang, kể cả khi chuyển qua lại nhiều hang.
+
 ### I. Chưa làm được, đừng thử
-Co-op với nhiều người; mô hình giàu của B1 chưa nối vào vùng hồ (`Region.cs` vẫn mô hình cũ); kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
+Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 
 ## 6. Gửi lại cho Claude
 - Ảnh Console (cả cảnh báo vàng nếu lặp nhiều).
