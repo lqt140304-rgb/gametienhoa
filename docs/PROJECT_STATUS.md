@@ -748,6 +748,7 @@ Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
   - Bậc và vực giới hạn theo kiểu di chuyển của loài (đi bộ, nhảy, leo, bay).
   - Độ cao được làm mượt.
   - Hết lỗi vọt lên cầu và nhảy mãi trước bục.
+  - Sinh vật không đi xuyên nhau: con đang đi bị đẩy ngang ra khỏi con khác, con đứng yên chồng lên nhau thì tách dần (tối đa 10 cm mỗi bước vật lý). Slime vốn đã va chạm với sinh vật nhờ vật lý.
   - Ô tắt ở menu thần, mục Kiểm thử.
 - **Tổ** (`ColonyRules`, trong `CreatureBrain`): con mồi cùng loài, cùng tổ, từ 5 con trở lên thì chia việc:
   - 2 cặp đi kiếm ăn (3 cặp từ 10 con).
@@ -757,6 +758,5 @@ Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
 - **Slime** (`SlimeStep`, `SlimeController.StepUp`): bò qua đá hoặc bậc cao tới 40% bề ngang thân. Vách cao hơn thì không leo được.
 - **Gửi bên làm hang:** `docs/superpowers/handoff/2026-11-20-movement-for-cave-team.md` (sàn khoang cần collider mượt, vách, bục, cầu phải có collider).
 - **Chưa làm:**
-  - Sinh vật còn đi xuyên nhau.
   - Mục tiêu của tổ rơi vào chỗ không tới được thì con đó đứng chờ tới lượt đổi hướng (khoảng 20 giây).
   - Kẻ săn chưa có tổ.

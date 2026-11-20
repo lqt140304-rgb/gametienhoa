@@ -95,6 +95,7 @@ Tạo **cùng hang**: ví dụ kẻ săn `Thằn Lằn Bờ Hồ` + con mồi `B
 - [ ] Nhiễm bệnh thử rồi Hết bệnh; Hồi đầy; Bỏ 2 món vào Túi (mở Túi kiểm tra); câu Tiếng Vọng hiện trên màn hình.
 
 ### G2. Di chuyển (nhánh `claude/unity-test-maze`)
+- [ ] Sinh vật không đi xuyên nhau. Tạo 5 con cùng một chỗ: chúng tách dần ra, không bật văng.
 - [ ] Sinh vật không đi xuyên vách, đá lớn. Gặp vách thì đi vòng hoặc quay hướng khác, không đứng đâm đầu mãi.
 - [ ] Không còn con nhảy lên rồi rơi xuống liên tục trước bục cao. Con dưới gầm cầu không vọt lên mặt cầu.
 - [ ] Đi trên sàn gồ ghề: hoạt hình không giật.
