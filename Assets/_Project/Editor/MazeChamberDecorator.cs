@@ -75,18 +75,23 @@ namespace Evolve.EditorTools
 
             // 4. Thức ăn (Nutrient) & Sinh vật & Ánh sáng đa tầng
             PlaceForageNutrients(parent, node, seed, chamberRadius, tunnelAnglesDeg, profile, glowMat, rnd);
+            bool wide = chamberRadius >= 60f && node.Theme != ChamberTheme.SealedDragonTomb;
+            var plan = ChamberZones.Plan(chamberRadius, tunnelAnglesDeg, seed, 0);   // beacon and nook; the nests are chosen per species by the populator
+            if (wide) PlaceBeacon(parent, node, seed, chamberRadius, tunnelAnglesDeg, plan, accentLightColor);
+            CaveWave1ScenePopulator.NestSpots.Clear();
             if (node.Theme == ChamberTheme.BreathingMoss)
-                CaveWave1ScenePopulator.PopulateBreathingMossChamber(parent, parent.position);
+                CaveWave1ScenePopulator.PopulateBreathingMossChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else if (node.Theme == ChamberTheme.AbandonedNest)
-                CaveWave1ScenePopulator.PopulateAbandonedNestChamber(parent, parent.position);
+                CaveWave1ScenePopulator.PopulateAbandonedNestChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else if (node.Theme == ChamberTheme.GlowMushroomCavern)
-                CaveWave1ScenePopulator.PopulateGlowMushroomChamber(parent, parent.position);
+                CaveWave1ScenePopulator.PopulateGlowMushroomChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else if (node.Theme == ChamberTheme.HotSpringCavern)
-                CaveWave1ScenePopulator.PopulateHotSpringChamber(parent, parent.position);
+                CaveWave1ScenePopulator.PopulateHotSpringChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else if (node.Theme == ChamberTheme.HowlingWindGorge)
-                CaveWave1ScenePopulator.PopulateHowlingWindChamber(parent, parent.position);
+                CaveWave1ScenePopulator.PopulateHowlingWindChamber(parent, parent.position, tunnelAnglesDeg, plan);
             else
                 PlaceCreatures(parent, node, chamberRadius, profile, rnd);
+            if (wide) PlaceTrailAndNook(parent, node, seed, chamberRadius, tunnelAnglesDeg, plan, profile, glowMat, wallMat, accentLightColor, rnd);
             var lights = BuildChamberLighting(parent, profile, mainLightColor, accentLightColor);
 
             // 5. Tình Huống Môi Trường Động gắn với chủ đề
@@ -812,6 +817,87 @@ namespace Evolve.EditorTools
                     copy.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
                 }
             }
+        }
+
+        /// <summary>A big landmark across from the main entrance, lit so it is seen as the player walks in: a bigger copy of the theme's tallest landmark.</summary>
+        static void PlaceBeacon(Transform parent, ChamberNode node, int seed, float chamberRadius, IReadOnlyList<float> tunnelAnglesDeg, ChamberPlan plan, Color accent)
+        {
+            var group = parent.Find("Đại Cảnh Chủ Đề");
+            if (group == null) return;
+            Transform tallest = null; float best = 0f;
+            foreach (Transform c in group)
+            {
+                if (c.name.StartsWith("Hồ")) continue;
+                float h = 0f;
+                foreach (var r in c.GetComponentsInChildren<Renderer>()) h = Mathf.Max(h, r.bounds.size.y);
+                if (h > best) { best = h; tallest = c; }
+            }
+            if (tallest == null) return;
+            float sink = MazeTerrainMath.GroundHeightAt(tallest.localPosition.x, tallest.localPosition.z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) - tallest.localPosition.y;
+            var beacon = Object.Instantiate(tallest.gameObject, group);
+            beacon.name = "Dấu Hiệu Từ Cửa Hầm";
+            beacon.transform.localPosition = new Vector3(plan.Beacon.X, MazeTerrainMath.GroundHeightAt(plan.Beacon.X, plan.Beacon.Z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) - sink, plan.Beacon.Z);
+            beacon.transform.localScale = tallest.localScale * 1.25f;
+            var light = new GameObject("Ánh Sáng Dấu Hiệu").AddComponent<Light>();
+            light.transform.SetParent(beacon.transform, false);
+            light.transform.localPosition = new Vector3(0f, best * 0.6f, 0f);
+            light.type = LightType.Point; light.range = 24f; light.intensity = 6f; light.color = accent; light.shadows = LightShadows.None;
+        }
+
+        /// <summary>A few faint lights from the beacon to each nest (the path between life), and a hidden nook with a mineral reward.</summary>
+        static void PlaceTrailAndNook(Transform parent, ChamberNode node, int seed, float chamberRadius, IReadOnlyList<float> tunnelAnglesDeg, ChamberPlan plan,
+            ChamberThemeProfile profile, Material glowMat, Material wallMat, Color accent, System.Random rnd)
+        {
+            var group = new GameObject("Đường Mòn Và Góc Ẩn").transform;
+            group.SetParent(parent, false);
+            const int maxTrailLights = 12;   // shortcut: a hard cap protects frame rate, raise it if the profiler allows
+            int lights = 0;
+            var from = new Vector2(plan.Beacon.X, plan.Beacon.Z);
+            var seen = new List<Vector2>();
+            foreach (var spot in CaveWave1ScenePopulator.NestSpots)
+            {
+                if (seen.Exists(o => (o - spot).sqrMagnitude < 25f)) continue;   // species share nests: one trail per place
+                seen.Add(spot);
+                float len = Vector2.Distance(from, spot);
+                for (float d = 12f; d < len - 6f && lights < maxTrailLights; d += 18f, lights++)
+                {
+                    Vector2 p = Vector2.Lerp(from, spot, d / len);
+                    var l = new GameObject("Đèn Mờ Đường Mòn").AddComponent<Light>();
+                    l.transform.SetParent(group, false);
+                    l.transform.localPosition = new Vector3(p.x, MazeTerrainMath.GroundHeightAt(p.x, p.y, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) + 0.8f, p.y);
+                    l.type = LightType.Point; l.range = 8f; l.intensity = 0.6f; l.color = accent; l.shadows = LightShadows.None;
+                }
+            }
+
+            // hidden nook: a ring of boulders open outward (away from the centre), minerals inside
+            float openingDeg = plan.NookOpeningDeg;
+            const int ring = 6;
+            for (int i = 0; i < ring; i++)
+            {
+                float a = openingDeg + (i + 0.5f) * 360f / ring;
+                if (Mathf.Abs(Mathf.DeltaAngle(a, openingDeg)) < 35f) continue;
+                float x = plan.Nook.X + Mathf.Cos(a * Mathf.Deg2Rad) * 3.2f, z = plan.Nook.Z + Mathf.Sin(a * Mathf.Deg2Rad) * 3.2f;
+                float y = MazeTerrainMath.GroundHeightAt(x, z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
+                MazeTerrainMesh.PlaceFramingBoulder(group, new Vector3(x, y - 0.65f, z), Mathf.Lerp(1.6f, 2.4f, (float)rnd.NextDouble()), seed + 31 * i, wallMat);
+            }
+            ThemeForageItem reward = null;
+            foreach (var item in profile.ForageItems) if (item.IsMineral) { reward = item; break; }
+            if (reward == null && profile.ForageItems.Count > 0) reward = profile.ForageItems[0];
+            if (reward != null)
+            {
+                var nookGroup = new GameObject("Kho Báu Góc Ẩn").transform;
+                nookGroup.SetParent(group, false);
+                for (int i = 0; i < 4; i++)
+                {
+                    float a = i * 90f * Mathf.Deg2Rad;
+                    float x = plan.Nook.X + Mathf.Cos(a) * 1.2f, z = plan.Nook.Z + Mathf.Sin(a) * 1.2f;
+                    CreateNutrientObject(nookGroup, reward, new Vector3(x, MazeTerrainMath.GroundHeightAt(x, z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) - 0.05f, z), glowMat, rnd);
+                }
+            }
+            var glow = new GameObject("Ánh Sáng Góc Ẩn").AddComponent<Light>();
+            glow.transform.SetParent(group, false);
+            glow.transform.localPosition = new Vector3(plan.Nook.X, MazeTerrainMath.GroundHeightAt(plan.Nook.X, plan.Nook.Z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) + 1.2f, plan.Nook.Z);
+            glow.type = LightType.Point; glow.range = 7f; glow.intensity = 1.2f; glow.color = accent; glow.shadows = LightShadows.None;
         }
 
         static GameObject PlaceGroundedModel(
