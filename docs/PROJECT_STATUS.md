@@ -860,3 +860,11 @@ Thiết kế: mục "Lát 3" trong `docs/superpowers/specs/2026-11-20-monster-co
 - **Cảnh báo "Setting linear velocity of a kinematic body":** các chỗ đặt vận tốc hoặc đẩy lực lên thân kinematic (chế độ ma, đóng băng) giờ bỏ qua thân kinematic (`SlimeController`, `BodyState`, `LatchSession`, `Pounce`, đòn của quái, `Combat/Impulse`). Chưa biết chắc chỗ nào đã gây ra cảnh báo của bạn vì ảnh không có dòng gọi.
 - Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H7.
 
+## 60. Cáo Gió giống trùm hơn: cỡ thật, trang phục, giáo màu Rasengan
+
+- **Cỡ:** nguyên nhân cáo "hơi nhỏ" khi thử là quái tạo bằng menu thần bỏ qua `CreatureTuning` (không có hệ số cỡ, độ khó, trang phục). Nay menu thần gọi `CreatureTuning.Apply` với hang của loài, nên quái thử nhận cỡ như trong hang (trùm ×2,4 đến 3,2 theo tầng). Trong hang thật, `Region` đã áp từ trước.
+- **Trang phục** (`Combat/LordRegalia`, hình học thuần có test ở `Combat/Pure/RegaliaMeshes`): vương miện vàng 5 mũi có ngọc xanh nhạt, khăn vòng cổ, áo choàng gió phấp phới (lưới 6 x 8 đỉnh, sóng theo thời gian, cập nhật mỗi khung hình), ghim vàng, bùa ngực phát sáng có vòng xoay. Đặt chỗ theo hộp bao của mô hình (hướng trước là +Z) nên có thể lệch; menu thần tab Combat có bốn thanh chỉnh. Chỉ Cáo Gió có bộ trang trí (`LordRegalia.Has`).
+- **Giáo Gió** đổi sang xanh da trời nhạt `(0,58 0,8 1)`, viền sáng mạnh, kiểu Rasengan.
+- **Chưa làm:** trang phục cho Chúa Hang khác; áo choàng chưa va chạm với thân; mô hình ba đuôi và trang phục vẽ tay (bên làm hang) chưa có. Chưa chạy trong Unity, vị trí các món là chỗ dễ sai nhất.
+- Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H7.
+

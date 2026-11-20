@@ -61,3 +61,6 @@ Loài mới, xem `2026-11-20-monkey-species-for-cave-team.md` cho phần loài. 
 ## Đổi chiêu Cáo Gió (cập nhật mới nhất)
 Cáo Gió không còn Băng Rơi và Gió Hú; chiêu mới là **Giáo Gió**: 3 mũi giáo gió **xoay vòng liên tục trên các đuôi** rồi phóng đi. Clip `Tell_Cast` (gồng 1,3 giây): cáo ngồi chồm hoặc đứng thẳng, **ba chiếc đuôi dựng lên và xoay chậm**, mỗi đuôi có một mũi giáo xoay quanh; `Strike_Cast` (0,9 giây): ba đuôi vung lần lượt cách nhau 0,3 giây theo từng mũi giáo bay đi; `Recover_Cast` (1,6 giây): đuôi rũ xuống, thở. **Mô hình Cáo Gió cần ba chiếc đuôi** (kiểu cáo ba đuôi) để chiêu này đẹp. Hiện mã vẽ ba mũi giáo xoay ở phía trên lưng cáo như chỗ tạm; khi có mô hình ba đuôi, báo lại vị trí gốc từng đuôi (tên xương) để mã gắn giáo xoay đúng đuôi.
 
+## Trang phục Cáo Gió (cập nhật mới nhất)
+Chủ dự án thấy Cáo Gió nhỏ và thiếu cảm giác trùm, nên phía lõi đã đeo cho nó trang phục dựng bằng mã (vương miện vàng, khăn xanh nhạt, áo choàng gió, bùa ngực phát sáng) và màu giáo xanh da trời nhạt kiểu Rasengan. Đó là đồ tạm. Nếu các bạn làm mũ, áo, khăn thật trong Blender cho Cáo Gió (và mô hình ba đuôi), báo lại để phía lõi tắt bộ trang trí bằng mã cho loài này (`LordRegalia.Has` chỉ trả đúng cho `caogio`; đổi thành `false` hoặc xóa dòng gắn trong `CreatureTuning`).
+
