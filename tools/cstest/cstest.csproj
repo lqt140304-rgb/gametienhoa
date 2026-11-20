@@ -37,6 +37,8 @@
     <Compile Include="../../Assets/_Project/Tests/EditMode/BodySizeTests.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/SlimeStepTests.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Creatures/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Combat/Pure/*.cs" />
+    <Compile Include="../../Assets/_Project/Tests/EditMode/Combat/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Creatures/*.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/SpeciesPopulation.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/RegionPopulation.cs" />
