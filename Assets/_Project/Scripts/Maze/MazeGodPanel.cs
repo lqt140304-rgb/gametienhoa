@@ -101,20 +101,20 @@ namespace Evolve.Maze
         {
             if (!Application.isEditor && !Debug.isDebugBuild) return;
             if (FindAnyObjectByType<MazeGodPanel>() != null) return;
-            var go = new GameObject("Maze God Panel (F1)");
+            var go = new GameObject("Maze God Panel (F10)");   // F1 is the shared god menu (GodMenu): two windows on one key sat on top of each other
             DontDestroyOnLoad(go);
             go.AddComponent<MazeGodPanel>();
         }
 
         void Update()
         {
-            if (KeyPressed.F1()) open = !open;
+            if (KeyPressed.F10()) open = !open;
         }
 
         void OnGUI()
         {
             if (!open) return;
-            window = GUILayout.Window(WindowId, window, DrawWindow, "God Menu — Mê Cung & Sinh Vật 3D (F1)");
+            window = GUILayout.Window(WindowId, window, DrawWindow, "God Menu — Mê Cung & Sinh Vật 3D (F10)");
         }
 
         void DrawWindow(int id)

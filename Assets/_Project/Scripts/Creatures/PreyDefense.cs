@@ -229,7 +229,7 @@ namespace Evolve.Creatures
             foreach (var h in Predator.Active)
             {
                 if (h == null || (h.transform.position - transform.position).sqrMagnitude > r2) continue;
-                if (h.name.Replace("(Clone)", "").Trim().StartsWith(def.HelperName, System.StringComparison.OrdinalIgnoreCase)) h.Provoke(player);
+                if (SpeciesNames.Key(h.name) == SpeciesNames.Key(def.HelperName)) h.Provoke(player);   // "Chim Hang Mẹ" or the prefab name "ChimHangMe"
             }
         }
     }

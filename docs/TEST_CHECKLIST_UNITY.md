@@ -1,5 +1,7 @@
 # Danh sách việc cần làm và kiểm thử trong Unity
 
+> **Nhánh `claude/unity-test-maze`** = nhánh `claude/unity-test` + toàn bộ việc của bên làm hang (`maze-step3`: mê cung, 8 hang, 32 sinh vật có mô hình và hoạt hình). Dùng nhánh này để thử với mô hình thật; `claude/unity-test` giữ nguyên để thử riêng phần của Claude. Thêm trên nhánh này: menu **`Evolve → Attach Creature Brains`** (chạy một lần sau khi chạy các menu tạo dữ liệu của bên làm hang để họ có prefab): gắn não và phòng vệ vào 32 prefab sinh vật. Bảng mê cung của bên làm hang mở bằng **F10**; menu thần của Claude vẫn là **F1**. Hai test của bên làm hang (`MazeGenerator_IncludesWave2NongCaves`, `MazeGenerator_IncludesAllFourGiuaCaves`) báo đỏ trên chính nhánh của họ: không phải do Claude.
+
 Mọi thứ đã làm trong phiên này đã gộp vào **một nhánh duy nhất: `claude/unity-test`**. Phần Unity **chưa từng biên dịch**: việc đầu tiên là xem Console. Khi gặp lỗi hoặc thứ gì lạ, chụp ảnh gửi cho Claude (ảnh Console hoặc video), ghi rõ làm bước nào.
 
 ## 1. Kéo nhánh
@@ -19,7 +21,7 @@ Các nhánh nhỏ (chỉ cần nếu muốn tách): `claude/quirky-carson-xnvto6
 ## 3. Test Runner
 `Window → General → Test Runner → EditMode → Run All`. Báo lại số test đỏ (nếu có) kèm tên. Ngoài Unity, 226 test thuần đã xanh.
 
-## 4. Menu thần (F1) có gì mới
+## 4. Menu thần (F1; bảng mê cung của bên làm hang là F10) có gì mới
 Mục **"Kiểm thử"** (cuộn xuống dưới "Sinh vật"):
 - **Kích cỡ slime:** nút 3, 10, 20, 40, 80 để đặt khối.
 - **Kỹ năng hang:** học 9 kỹ năng chủ động ★1, lên ★3 hết, gắn tối đa bị động hang.
@@ -102,3 +104,11 @@ Co-op với nhiều người; Sóng Dò Mạnh kéo dài tầm quét; mô hình 
 - Ảnh Console (cả cảnh báo vàng nếu lặp nhiều).
 - Kỹ năng nào hình xấu, chói, sai chỗ, kèm video ngắn nếu được.
 - Danh sách mục không đạt ở mục 5.
+
+## 7. Với mô hình thật của bên làm hang (nhánh `claude/unity-test-maze`)
+1. Chạy các menu tạo dữ liệu của bên làm hang (xem `docs/superpowers/handoff/maze-questions.md` và `PROJECT_STATUS.md`) để có prefab trong `Assets/_Project/Prefabs/Wildlife`, rồi `Evolve → Attach Creature Brains`. Console báo "CreatureBrain gắn vào N prefab, PreyDefense vào M".
+2. F10: dịch chuyển tới một hang có sinh vật (Hang Khởi Sinh, Vực Nứt Tím…), tạo sinh vật thật từ bảng của họ.
+- [ ] Kẻ săn thật (ví dụ Thằn Lằn Bờ Hồ) đói thì đuổi và ăn con mồi thật (Bọ Cánh Cứng Nhỏ) cùng hang; xác để lại.
+- [ ] Con mồi thật dùng được phòng vệ (Ốc Hồ rụt vỏ, Thỏ Lá ngoằn ngoèo…). Hoạt hình của họ (chớp mắt, hàm, lưỡi) có chạy cùng không.
+- [ ] Kích cỡ: slime mới sinh bị kẻ săn đuổi, slime lớn thì kẻ săn né (khối prefab của họ khác khối thử của mình).
+- [ ] Ba kỳ ngộ có sẵn của họ (Tia Nắng Đầu Tiên, Cầu Vồng Trong Thân, Hợp Âm Tinh Thể) **giờ nhận phần thưởng thật**: no, mở màu Cầu Vồng (F3), gene Hiếm trở lên.

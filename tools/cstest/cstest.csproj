@@ -22,6 +22,9 @@
     <Compile Include="../../Assets/_Project/Tests/EditMode/Swallow/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Maze/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Maze/Pure/*.cs" />
+    <!-- the cave team wrote this one against the real UnityEngine (Vector3 maths): it is tested in the Unity Test Runner, not here -->
+    <Compile Remove="../../Assets/_Project/Scripts/Maze/Pure/InteractiveFloraMath.cs" />
+    <Compile Remove="../../Assets/_Project/Tests/EditMode/Maze/Pure/InteractiveFloraMathTests.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Player/BodySize.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/CarcassStage.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Survival/HudLayout.cs" />
