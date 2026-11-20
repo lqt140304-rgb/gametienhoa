@@ -718,10 +718,180 @@ def _apply_organic_voxel_remesh(bm, flat_faces):
 _WAVE1_AUTO_REMESH = False
 
 
+# Cấu hình bổ sung xương & animation Mắt (nhắm/mở) - Miệng (há/ngậm) - Lưỡi (thò/thụt) - Đuôi (vẫy/lơ lửng)
+# eye: (x_off, y, z) | jaw: (x, y, z) hoặc None | tongue: (len, col) hoặc None | tail_mode: "wag" | "float" | None
+_SPECIES_FACIAL_SPEC = {
+    "Creature_BoCanhCungNho": {"eye": (0.048, -0.25, 0.18), "jaw": (0.0, -0.27, 0.14), "tongue": None, "tail_mode": None},
+    "Creature_OcHo": {"eye": (0.045, -0.35, 0.18), "jaw": (0.0, -0.30, 0.08), "tongue": (0.05, (0.82, 0.44, 0.48)), "tail_mode": "wag"},
+    "Creature_ThanLanBoHo": {"eye": (0.078, -0.64, 0.32), "jaw": (0.06, -0.66, 0.22), "tongue": (0.12, (0.82, 0.16, 0.26)), "tail_mode": "wag"},
+    "Creature_CocHoGia": {"eye": (0.14, -0.28, 0.42), "jaw": (0.0, -0.32, 0.26), "tongue": (0.14, (0.86, 0.24, 0.34)), "tail_mode": None},
+    "Creature_DomDomSacMau": {"eye": (0.036, -0.24, 0.38), "jaw": (0.0, -0.25, 0.34), "tongue": None, "tail_mode": "float"},
+    "Creature_ThoLa": {"eye": (0.082, -0.40, 0.415), "jaw": (0.04, -0.46, 0.34), "tongue": (0.06, (0.88, 0.38, 0.44)), "tail_mode": "wag"},
+    "Creature_BoGiapQuang": {"eye": (0.055, -0.28, 0.22), "jaw": (0.0, -0.30, 0.16), "tongue": None, "tail_mode": None},
+    "Creature_RuaPhaLe": {"eye": (0.065, -0.42, 0.28), "jaw": (0.0, -0.44, 0.22), "tongue": (0.08, (0.84, 0.28, 0.36)), "tail_mode": "wag"},
+    "Creature_DoiAmThoa": {"eye": (0.068, -0.23, 0.56), "jaw": (0.02, -0.22, 0.48), "tongue": (0.05, (0.82, 0.22, 0.36)), "tail_mode": "float"},
+    "Creature_BoGaiTim": {"eye": (0.052, -0.25, 0.20), "jaw": (0.0, -0.27, 0.15), "tongue": None, "tail_mode": None},
+    "Creature_NhenTinhThe": {"eye": (0.045, -0.28, 0.24), "jaw": (0.0, -0.29, 0.19), "tongue": None, "tail_mode": "float"},
+    "Creature_BoCapThachAnh": {"eye": (0.048, -0.32, 0.22), "jaw": (0.0, -0.34, 0.17), "tongue": None, "tail_mode": "float"},
+    "Creature_SenReu": {"eye": (0.095, -0.54, 0.29), "jaw": (0.04, -0.44, 0.10), "tongue": (0.06, (0.76, 0.42, 0.48)), "tail_mode": "wag"},
+    "Creature_MuoiReu": {"eye": (0.048, -0.28, 0.445), "jaw": (0.0, -0.29, 0.41), "tongue": None, "tail_mode": "float"},
+    "Creature_RetReu": {"eye": (0.055, -0.62, 0.155), "jaw": (0.0, -0.64, 0.11), "tongue": (0.07, (0.72, 0.22, 0.54)), "tail_mode": "wag"},
+    "Creature_ReuMe": {"eye": (0.09, -0.34, 0.33), "jaw": None, "tongue": None, "tail_mode": None},
+    "Creature_ChimNon": {"eye": (0.085, -0.175, 0.365), "jaw": (0.0, -0.19, 0.322), "tongue": (0.05, (0.88, 0.36, 0.42)), "tail_mode": "float"},
+    "Creature_RanTromTrung": {"eye": (0.052, -0.50, 0.368), "jaw": (0.0, -0.48, 0.31), "tongue": (0.11, (0.94, 0.18, 0.24)), "tail_mode": "wag"},
+    "Creature_ChimHangMe": {"eye": (0.122, -0.40, 0.945), "jaw": (0.0, -0.45, 0.88), "tongue": (0.07, (0.86, 0.28, 0.34)), "tail_mode": "float"},
+    "Creature_NamDiBo": {"eye": (0.048, -0.088, 0.30), "jaw": None, "tongue": None, "tail_mode": None},
+    "Creature_BuomBaoTu": {"eye": (0.042, -0.23, 0.455), "jaw": (0.0, -0.23, 0.42), "tongue": None, "tail_mode": "float"},
+    "Creature_EchDocDom": {"eye": (0.095, -0.24, 0.375), "jaw": (0.0, -0.25, 0.26), "tongue": (0.12, (0.86, 0.26, 0.62)), "tail_mode": None},
+    "Creature_NamKhongLo": {"eye": (0.10, -0.20, 0.50), "jaw": None, "tongue": None, "tail_mode": None},
+    "Creature_OcLuuHuynh": {"eye": (0.045, -0.25, 0.085), "jaw": (0.0, -0.25, 0.05), "tongue": (0.05, (0.88, 0.46, 0.32)), "tail_mode": "wag"},
+    "Creature_CuaDaNong": {"eye": (0.075, -0.175, 0.245), "jaw": (0.0, -0.18, 0.16), "tongue": None, "tail_mode": None},
+    "Creature_KyNhongLua": {"eye": (0.062, -0.46, 0.285), "jaw": (0.0, -0.48, 0.22), "tongue": (0.10, (0.96, 0.32, 0.18)), "tail_mode": "wag"},
+    "Creature_RanDungNham": {"eye": (0.095, -0.72, 0.73), "jaw": (0.0, -0.68, 0.61), "tongue": (0.14, (1.0, 0.46, 0.12)), "tail_mode": "wag"},
+    "Creature_DeGio": {"eye": (0.048, -0.22, 0.18), "jaw": (0.0, -0.22, 0.14), "tongue": None, "tail_mode": None},
+    "Creature_ChuotGio": {"eye": (0.044, -0.18, 0.16), "jaw": (0.0, -0.20, 0.115), "tongue": (0.05, (0.92, 0.44, 0.52)), "tail_mode": "wag"},
+    "Creature_ChonKhe": {"eye": (0.048, -0.46, 0.326), "jaw": (0.0, -0.46, 0.275), "tongue": (0.07, (0.90, 0.34, 0.42)), "tail_mode": "wag"},
+    "Creature_CaoGio": {"eye": (0.078, -0.48, 0.610), "jaw": (0.0, -0.50, 0.54), "tongue": (0.08, (0.90, 0.36, 0.46)), "tail_mode": "float"},
+}
+
+
+def _merge_clip_poses(poses, extra_by_frame):
+    """Gộp keyframe mới (extra_by_frame: {frame: {bone: dict}}) vào danh sách poses sẵn có."""
+    by_f = {}
+    for f, pdict in poses:
+        by_f.setdefault(f, {})
+        for bname, vals in pdict.items():
+            by_f[f].setdefault(bname, {}).update(vals)
+    for f, pdict in extra_by_frame.items():
+        by_f.setdefault(f, {})
+        for bname, vals in pdict.items():
+            by_f[f].setdefault(bname, {}).update(vals)
+    return sorted(by_f.items(), key=lambda kv: kv[0])
+
+
+def _augment_facial_and_tail_rig(bm, col_layer, mesh_name, bone_specs, clips_spec):
+    """Tự động bổ sung xương Mắt (nhắm/mở), Miệng/Hàm (há/ngậm), Lưỡi (thò/thụt) và chuyển động Đuôi (vẫy/lơ lửng)."""
+    spec = _SPECIES_FACIAL_SPEC.get(mesh_name)
+    if not spec or not bone_specs or not clips_spec:
+        return bone_specs, clips_spec
+
+    bones = list(bone_specs)
+    existing = {b[0] for b in bones}
+    head_parent = "Head" if "Head" in existing else ("Cap" if "Cap" in existing else "Root")
+
+    # 1. Xương Mắt (nhắm/mở độc lập)
+    ex, ey, ez = spec["eye"]
+    if "Eye_L" not in existing:
+        bones.append(("Eye_L", (-ex, ey + 0.015, ez), (-ex, ey - 0.025, ez), head_parent, 0.048, 5.5))
+    if "Eye_R" not in existing:
+        bones.append(("Eye_R", (ex, ey + 0.015, ez), (ex, ey - 0.025, ez), head_parent, 0.048, 5.5))
+
+    # 2. Xương Miệng / Hàm dưới (há/ngậm)
+    jaw = spec.get("jaw")
+    has_jaw = jaw is not None
+    if has_jaw and "Jaw" not in existing:
+        jx, jy, jz = jaw
+        bones.append(("Jaw", (jx, jy + 0.03, jz), (jx, jy - 0.07, jz - 0.01), head_parent, 0.085, 4.5))
+
+    # 3. Xương Lưỡi + Hình học Lưỡi 3D nếu chưa có
+    tongue = spec.get("tongue")
+    has_tongue = tongue is not None
+    if has_tongue and jaw is not None:
+        tlen, tcol = tongue
+        jx, jy, jz = jaw
+        if "Tongue" not in existing:
+            _add_tube(
+                bm, col_layer,
+                [(jx, jy + 0.01, jz + 0.015), (jx, jy - tlen * 0.55, jz + 0.012), (jx, jy - tlen, jz + 0.005)],
+                [0.016, 0.013, 0.008], sides=8, subdiv=1, mat_index=5,
+                color_fn=lambda _p, _n: tcol,
+            )
+            bones.append(("Tongue", (jx, jy + 0.01, jz + 0.015), (jx, jy - tlen, jz + 0.005), head_parent, 0.055, 6.0))
+
+    # 4. Tìm xương Đuôi sẵn có
+    tail_bones = [b[0] for b in bones if b[0] in ("Tail", "Tail1", "Tail2", "Tail_C", "Tail_L", "Tail_R")]
+    tail_mode = spec.get("tail_mode")
+
+    # 5. Chèn keyframes vào từng clip (Idle, Walk, Attack/Action, Hit)
+    new_clips = {}
+    for cname, (sf, ef, poses) in clips_spec.items():
+        mid = max(sf + 1, (sf + ef) // 2)
+        blink_s = max(sf + 1, int(sf + (ef - sf) * 0.42))
+        blink_m = min(ef - 1, blink_s + 2)
+        blink_e = min(ef - 1, blink_m + 2)
+
+        extra = {}
+        if cname == "Idle":
+            extra[sf] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            extra[blink_s] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            extra[blink_m] = {"Eye_L": {"scale": (1, 1, 0.08)}, "Eye_R": {"scale": (1, 1, 0.08)}}
+            extra[blink_e] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            extra[ef] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            if has_jaw:
+                extra[sf]["Jaw"] = {"rot": (0.04, 0, 0)}
+                extra.setdefault(mid, {})["Jaw"] = {"rot": (0.24, 0, 0)}
+                extra[ef]["Jaw"] = {"rot": (0.04, 0, 0)}
+            if has_tongue:
+                extra[sf]["Tongue"] = {"scale": (1, 0.22, 1)}
+                extra.setdefault(mid, {})["Tongue"] = {"scale": (1, 0.92, 1)}
+                extra[ef]["Tongue"] = {"scale": (1, 0.22, 1)}
+        elif cname == "Walk":
+            if has_jaw:
+                extra[sf] = {"Jaw": {"rot": (0.08, 0, 0)}}
+                extra[mid] = {"Jaw": {"rot": (0.20, 0, 0)}}
+                extra[ef] = {"Jaw": {"rot": (0.08, 0, 0)}}
+            if has_tongue:
+                extra.setdefault(sf, {})["Tongue"] = {"scale": (1, 0.25, 1)}
+                extra.setdefault(mid, {})["Tongue"] = {"scale": (1, 0.65, 1)}
+                extra.setdefault(ef, {})["Tongue"] = {"scale": (1, 0.25, 1)}
+        elif cname in ("Attack", "Action"):
+            peak = max(sf + 1, int(sf + (ef - sf) * 0.45))
+            extra[sf] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            extra[peak] = {"Eye_L": {"scale": (1.12, 1.12, 1.12)}, "Eye_R": {"scale": (1.12, 1.12, 1.12)}}
+            extra[ef] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            if has_jaw:
+                extra[sf]["Jaw"] = {"rot": (0.05, 0, 0)}
+                extra[peak]["Jaw"] = {"rot": (0.48, 0, 0)}
+                extra[ef]["Jaw"] = {"rot": (0.05, 0, 0)}
+            if has_tongue:
+                extra[sf]["Tongue"] = {"scale": (1, 0.20, 1)}
+                extra[peak]["Tongue"] = {"scale": (1, 1.38, 1)}
+                extra[ef]["Tongue"] = {"scale": (1, 0.20, 1)}
+        elif cname == "Hit":
+            hit_f = max(sf + 1, int(sf + (ef - sf) * 0.33))
+            extra[sf] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            extra[hit_f] = {"Eye_L": {"scale": (1, 1, 0.10)}, "Eye_R": {"scale": (1, 1, 0.10)}}
+            extra[ef] = {"Eye_L": {"scale": (1, 1, 1)}, "Eye_R": {"scale": (1, 1, 1)}}
+            if has_jaw:
+                extra[sf]["Jaw"] = {"rot": (0.04, 0, 0)}
+                extra[hit_f]["Jaw"] = {"rot": (0.42, 0, 0)}
+                extra[ef]["Jaw"] = {"rot": (0.04, 0, 0)}
+
+        # Đuôi vẫy hoặc lơ lửng tùy loài trong Idle/Walk
+        if tail_bones and cname in ("Idle", "Walk"):
+            amp = 0.24 if cname == "Walk" else 0.14
+            for tb in tail_bones:
+                if tail_mode == "wag":
+                    extra.setdefault(sf, {}).setdefault(tb, {"rot": (0.0, 0.0, amp)})
+                    extra.setdefault(mid, {}).setdefault(tb, {"rot": (0.0, 0.0, -amp)})
+                    extra.setdefault(ef, {}).setdefault(tb, {"rot": (0.0, 0.0, amp)})
+                elif tail_mode == "float":
+                    extra.setdefault(sf, {}).setdefault(tb, {"rot": (amp * 0.7, 0.0, 0.06)})
+                    extra.setdefault(mid, {}).setdefault(tb, {"rot": (-amp * 0.7, 0.0, -0.06)})
+                    extra.setdefault(ef, {}).setdefault(tb, {"rot": (amp * 0.7, 0.0, 0.06)})
+
+        new_clips[cname] = (sf, ef, _merge_clip_poses(poses, extra))
+
+    return bones, new_clips
+
+
 def _finalize_and_export(bm, flat_faces, mats, mesh_name, fbx_path, preview_path,
                          bone_specs=None, clips_spec=None, remesh_organic=False):
     if remesh_organic or _WAVE1_AUTO_REMESH:
         _apply_organic_voxel_remesh(bm, flat_faces)
+    col_layer = bm.loops.layers.color.get("Col")
+    if col_layer is not None and bone_specs and clips_spec:
+        bone_specs, clips_spec = _augment_facial_and_tail_rig(bm, col_layer, mesh_name, bone_specs, clips_spec)
     bm.normal_update()
     bm.faces.index_update()
     flat_indices = {f.index for f in flat_faces if f.is_valid}
