@@ -129,6 +129,14 @@ namespace Evolve.DevTools
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Nhiễm bệnh thử")) { stats.State.Infect(DiseaseKind.RottenGel); stats.State.Infect(DiseaseKind.SporeBlur); }
             if (GUILayout.Button("Hết bệnh")) testNotice = EncounterRewards.CureDiseases(go) ? "đã chữa" : "không được";
+            GUILayout.Label("Combat: Vồ (chuột trái) và Ghì Chặt. Tạo quái thử ngay trước mặt slime:");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Con mồi to (khối 14)")) SpawnTest("Ốc Hồ", 14f, 40f, false);
+            if (GUILayout.Button("Kẻ săn (khối 18)")) SpawnTest("Thằn Lằn Bờ Hồ", 18f, 60f, true);
+            if (GUILayout.Button("Chúa Hang (khối 35)")) SpawnTest("Cóc Hồ Già", 35f, 120f, true);
+            GUILayout.EndHorizontal();
+            var latch = Evolve.Combat.LatchSession.Active;
+            GUILayout.Label(latch == null ? "Không đang bám." : $"Đang bám: lỗi {latch.Game.Faults}/{latch.Game.MaxFaults}, vùng xanh {latch.Game.ZoneWidth * 100f:0}%, năng lượng {stats.State.Energy:0}");
             if (GUILayout.Button("Hồi đầy")) testNotice = EncounterRewards.RefillStats(go) ? "đã hồi đầy" : "không được";
             GUILayout.EndHorizontal();
             if (GUILayout.Button("Bỏ 2 món vào Túi"))
