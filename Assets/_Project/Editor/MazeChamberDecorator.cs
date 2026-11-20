@@ -883,7 +883,7 @@ namespace Evolve.EditorTools
                 float y = MazeTerrainMath.GroundHeightAt(x, z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
                 MazeTerrainMesh.PlaceFramingBoulder(group, new Vector3(x, y - 0.65f, z), Mathf.Lerp(1.6f, 2.4f, (float)rnd.NextDouble()), seed + 31 * i, wallMat);
             }
-            ThemeForageItem reward = null;
+            ThemeForageItem? reward = null;
             foreach (var item in profile.ForageItems) if (item.IsMineral) { reward = item; break; }
             if (reward == null && profile.ForageItems.Count > 0) reward = profile.ForageItems[0];
             if (reward != null)
@@ -894,7 +894,7 @@ namespace Evolve.EditorTools
                 {
                     float a = i * 90f * Mathf.Deg2Rad;
                     float x = plan.Nook.X + Mathf.Cos(a) * 1.2f, z = plan.Nook.Z + Mathf.Sin(a) * 1.2f;
-                    CreateNutrientObject(nookGroup, reward, new Vector3(x, MazeTerrainMath.GroundHeightAt(x, z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) - 0.05f, z), glowMat, rnd);
+                    CreateNutrientObject(nookGroup, reward.Value, new Vector3(x, MazeTerrainMath.GroundHeightAt(x, z, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge) - 0.05f, z), glowMat, rnd);
                 }
             }
             var glow = new GameObject("Ánh Sáng Góc Ẩn").AddComponent<Light>();
