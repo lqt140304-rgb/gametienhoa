@@ -21,6 +21,17 @@ namespace Evolve.Creatures
             public float SmoothedGroundDelta;
         }
 
+        struct WingInfo
+        {
+            public Transform Bone;
+            public Quaternion RestLocalRot;
+            public Vector3 LocalFlapAxis;
+            public Vector3 LocalTwistAxis;
+            public bool IsRight;
+            public bool IsOuterSegment;
+            public bool IsHindWing;
+        }
+
         [Header("Terrain Adaptation")]
         [SerializeField] float footprintRadius = 0.45f;
         [SerializeField] float maxTiltAngle = 38f;
@@ -42,7 +53,7 @@ namespace Evolve.Creatures
         Transform rootBone;
         Transform headBone;
         readonly List<Transform> tailBones = new List<Transform>();
-        readonly List<Transform> wingBones = new List<Transform>();
+        readonly List<WingInfo> wings = new List<WingInfo>();
         readonly List<LegInfo> legs = new List<LegInfo>();
 
         Vector3 prevWorldPos;
@@ -118,14 +129,14 @@ namespace Evolve.Creatures
                 strideLength = Mathf.Clamp(cap.radius * 1.6f, 0.4f, 1.4f);
             }
 
-            isFlier = wingBones.Count > 0 && legs.Count <= 2;
+            isFlier = wings.Count > 0;
         }
 
         void DiscoverBones()
         {
             legs.Clear();
             tailBones.Clear();
-            wingBones.Clear();
+            wings.Clear();
 
             var all = modelRoot.GetComponentsInChildren<Transform>(true);
             var rawLegs = new List<(Transform bone, bool isRight, float zPos)>();
@@ -143,7 +154,27 @@ namespace Evolve.Creatures
                 else if (n.StartsWith("Tail", StringComparison.OrdinalIgnoreCase))
                     tailBones.Add(tr);
                 else if (n.StartsWith("Wing", StringComparison.OrdinalIgnoreCase))
-                    wingBones.Add(tr);
+                {
+                    Vector3 localPos = transform.InverseTransformPoint(tr.position);
+                    bool right = n.Contains("_R") || n.Contains("FR") || n.Contains("BR") ||
+                                 (!n.Contains("_L") && !n.Contains("FL") && !n.Contains("BL") && localPos.x >= 0f);
+                    bool outer = n.EndsWith("2", StringComparison.Ordinal);
+                    bool hind = n.Contains("BL") || n.Contains("BR");
+                    Vector3 flapAxis = tr.InverseTransformDirection(transform.forward);
+                    if (flapAxis.sqrMagnitude < 1e-5f) flapAxis = Vector3.forward;
+                    Vector3 twistAxis = tr.InverseTransformDirection(right ? transform.right : -transform.right);
+                    if (twistAxis.sqrMagnitude < 1e-5f) twistAxis = Vector3.up;
+                    wings.Add(new WingInfo
+                    {
+                        Bone = tr,
+                        RestLocalRot = tr.localRotation,
+                        LocalFlapAxis = flapAxis.normalized,
+                        LocalTwistAxis = twistAxis.normalized,
+                        IsRight = right,
+                        IsOuterSegment = outer,
+                        IsHindWing = hind
+                    });
+                }
                 else if (n.StartsWith("Leg", StringComparison.OrdinalIgnoreCase) || n.StartsWith("Limb", StringComparison.OrdinalIgnoreCase))
                 {
                     Vector3 localPos = transform.InverseTransformPoint(tr.position);
@@ -301,6 +332,12 @@ namespace Evolve.Creatures
         {
             float moveBlend = Mathf.Clamp01(smoothSpeed / 0.2f);
 
+            if (wings.Count > 0)
+            {
+                ApplyWingFlapping(moveBlend);
+                if (isFlier) return;
+            }
+
             if (legs.Count == 0 && !isFlier)
             {
                 // Legless crawler (snails, snakes): subtle lateral wave on root/tail while moving
@@ -368,6 +405,32 @@ namespace Evolve.Creatures
 
                 float sideSign = leg.IsRight ? 1f : -1f;
                 leg.Bone.localRotation *= Quaternion.Euler(swingAngle, 0f, sideSign * (liftAngle + ikAdaptAngle));
+            }
+        }
+
+        void ApplyWingFlapping(float moveBlend)
+        {
+            float flapFreq = Mathf.Lerp(9.5f, 16.5f, moveBlend);
+            float basePhase = idleTime * flapFreq + stridePhase * 0.5f;
+            float baseAmp = Mathf.Lerp(22f, 48f, moveBlend);
+
+            for (int i = 0; i < wings.Count; i++)
+            {
+                var w = wings[i];
+                if (w.Bone == null) continue;
+
+                float phaseOffset = w.IsOuterSegment ? -0.58f : (w.IsHindWing ? -0.35f : 0f);
+                float amp = w.IsOuterSegment ? baseAmp * 0.62f : (w.IsHindWing ? baseAmp * 0.78f : baseAmp);
+                float wave = Mathf.Sin(basePhase + phaseOffset);
+
+                // Right wing (+X): +angle around forward (+Z) lifts UP; Left wing (-X): -angle lifts UP
+                float sideSign = w.IsRight ? 1f : -1f;
+                float flapDeg = sideSign * wave * amp;
+                float featherDeg = Mathf.Cos(basePhase + phaseOffset) * 10f * (0.4f + 0.6f * moveBlend);
+
+                w.Bone.localRotation = w.RestLocalRot
+                    * Quaternion.AngleAxis(flapDeg, w.LocalFlapAxis)
+                    * Quaternion.AngleAxis(featherDeg, w.LocalTwistAxis);
             }
         }
 

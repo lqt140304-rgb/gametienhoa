@@ -546,6 +546,8 @@ def _add_bone(arm_data, name, head, tail, parent=None):
     b.tail = Vector(tail)
     if (b.tail - b.head).length < 1e-4:
         b.tail = b.head + Vector((0.0, -0.05, 0.0))
+    if name.startswith("Wing"):
+        b.align_roll(Vector((0.0, 0.0, 1.0)))
     if parent is not None:
         b.parent = parent
     return b
@@ -586,6 +588,9 @@ def _key_pose(arm_obj, frame, pose_dict):
             continue
         pb.rotation_mode = "QUATERNION"
         rot = vals.get("rot", (0.0, 0.0, 0.0))
+        if bname.startswith("Wing"):
+            rx, ry, rz = rot
+            rot = (ry * 1.15, rz * 0.25, rx)
         loc = vals.get("loc", (0.0, 0.0, 0.0))
         scl = vals.get("scale", (1.0, 1.0, 1.0))
         pb.rotation_quaternion = Euler(rot, "XYZ").to_quaternion()
