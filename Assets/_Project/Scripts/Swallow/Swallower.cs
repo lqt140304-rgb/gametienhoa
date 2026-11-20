@@ -64,6 +64,12 @@ namespace Evolve.Swallow
             return true;
         }
 
+        /// <summary>Swallow a carcass at once whatever its size: the end of a latch fight, digested in place and as fresh as it gets.</summary>
+        public void SwallowCarcassNow(Carcass c)
+        {
+            if (c != null) SwallowCarcass(c, c.GetComponent<CarcassSample>());
+        }
+
         public void Touch(Carcass c)
         {
             if (touching == c) return;
