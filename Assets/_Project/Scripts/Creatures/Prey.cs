@@ -101,6 +101,7 @@ namespace Evolve.Creatures
         float nextFleePulse;
 
         float groundOffset;
+        CreatureLocomotion locomotion;
 
         void Awake()
         {
@@ -110,6 +111,7 @@ namespace Evolve.Creatures
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             NetId = NetWorld.NextId();
             TryGetComponent(out emitter);
+            if (!TryGetComponent(out locomotion)) locomotion = gameObject.AddComponent<CreatureLocomotion>();
             Health = maxHealth;
         }
 
@@ -270,6 +272,7 @@ namespace Evolve.Creatures
         void ShowHit(float amount)
         {
             HitFlash.Play(gameObject);
+            locomotion?.PlayHit();
             CombatEvents.Raise(transform, amount);
         }
 

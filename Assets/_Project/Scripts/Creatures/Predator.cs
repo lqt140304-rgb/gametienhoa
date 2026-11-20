@@ -88,6 +88,7 @@ namespace Evolve.Creatures
         void ShowHit(float amount)
         {
             HitFlash.Play(gameObject);
+            locomotion?.PlayHit();
             CombatEvents.Raise(transform, amount);
         }
 
@@ -117,6 +118,7 @@ namespace Evolve.Creatures
         bool dead;
 
         float groundOffset;
+        CreatureLocomotion locomotion;
 
         void Awake()
         {
@@ -124,6 +126,7 @@ namespace Evolve.Creatures
             rb = GetComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
+            if (!TryGetComponent(out locomotion)) locomotion = gameObject.AddComponent<CreatureLocomotion>();
             Health = maxHealth;
             lastAteAt = Time.time - UnityEngine.Random.Range(0f, FullSeconds + HungerRiseSeconds * 0.5f);   // they start at different hunger
             HomeCenter = transform.position;
@@ -219,6 +222,7 @@ namespace Evolve.Creatures
         void Strike(Transform victim, bool meal)
         {
             if (victim == null || !victim.TryGetComponent(out IDamageable damageable)) return;
+            locomotion?.PlayAction("Attack");
             damageable.TakeDamage(biteDamage, null);
             bool dead = damageable is Prey p ? p.Health <= 0f : damageable is Predator h && h.Health <= 0f;
             if (dead && meal) NoteAte();   // a rival's body is no meal: the scavengers get it

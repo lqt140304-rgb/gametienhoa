@@ -121,9 +121,7 @@ namespace Evolve.EditorTools
             EnsureDir(PrefabDir);
             EnsureDir(SpeciesDir);
 
-            var vcMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_VC.mat");
-            var glowMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Rock_Glow.mat");
-            var orgMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Materials/Wildlife_Organic.mat") ?? vcMat;
+            EnsureCreatureMaterials(out var orgMat, out var chitinMat, out var glowMat);
 
             var speciesAssets = new Dictionary<string, SpeciesSO>();
 
@@ -139,7 +137,7 @@ namespace Evolve.EditorTools
                 }
 
                 var controller = BuildAnimatorController(spec, fbxPath);
-                var prefab = BuildCreaturePrefab(spec, fbx, controller, orgMat, vcMat, glowMat);
+                var prefab = BuildCreaturePrefab(spec, fbx, controller, orgMat, chitinMat, glowMat);
                 var species = BuildSpeciesSO(spec, prefab);
                 speciesAssets[spec.PascalName] = species;
             }
@@ -273,6 +271,9 @@ namespace Evolve.EditorTools
             if (anim == null) anim = visual.AddComponent<Animator>();
             anim.runtimeAnimatorController = controller;
 
+            var loco = root.AddComponent<CreatureLocomotion>();
+            loco.Configure(spec.Radius, spec.MoveSpeed);
+
             var rb = root.AddComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.useGravity = true;
@@ -348,6 +349,44 @@ namespace Evolve.EditorTools
         {
             var go = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabDir}/{pascalName}.prefab");
             return go != null ? go.GetComponent<T>() : null;
+        }
+
+        static void EnsureCreatureMaterials(out Material orgMat, out Material chitinMat, out Material glowMat)
+        {
+            var shader = Shader.Find("Evolve/CreatureVertexColor") ?? Shader.Find("Evolve/RockVertexColor");
+            orgMat = UpsertCreatureMat("Assets/_Project/Materials/Wildlife_Organic.mat", shader,
+                linearBlend: 0.25f, fill: 0.44f, subsurface: 0.24f, smoothness: 0.30f, spec: 0.16f, rim: 0.26f, glow: 0f);
+            chitinMat = UpsertCreatureMat("Assets/_Project/Materials/Wildlife_Chitin.mat", shader,
+                linearBlend: 0.25f, fill: 0.40f, subsurface: 0.06f, smoothness: 0.62f, spec: 0.45f, rim: 0.32f, glow: 0f);
+            glowMat = UpsertCreatureMat("Assets/_Project/Materials/Wildlife_Crystal_Glow.mat", shader,
+                linearBlend: 0.20f, fill: 0.35f, subsurface: 0.10f, smoothness: 0.72f, spec: 0.55f, rim: 0.40f, glow: 0.85f);
+        }
+
+        static Material UpsertCreatureMat(
+            string path, Shader shader,
+            float linearBlend, float fill, float subsurface, float smoothness, float spec, float rim, float glow)
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(shader);
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            else if (shader != null && mat.shader != shader)
+            {
+                mat.shader = shader;
+            }
+
+            if (mat.HasProperty("_Tint")) mat.SetColor("_Tint", Color.white);
+            if (mat.HasProperty("_LinearBlend")) mat.SetFloat("_LinearBlend", linearBlend);
+            if (mat.HasProperty("_Fill")) mat.SetFloat("_Fill", fill);
+            if (mat.HasProperty("_Subsurface")) mat.SetFloat("_Subsurface", subsurface);
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
+            if (mat.HasProperty("_SpecStrength")) mat.SetFloat("_SpecStrength", spec);
+            if (mat.HasProperty("_RimStrength")) mat.SetFloat("_RimStrength", rim);
+            if (mat.HasProperty("_Glow")) mat.SetFloat("_Glow", glow);
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         static void EnsureDir(string assetDir)
