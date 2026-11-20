@@ -127,6 +127,15 @@ Tạo **cùng hang**: ví dụ kẻ săn `Thằn Lằn Bờ Hồ` + con mồi `B
 - [ ] "Mô phỏng sinh thái 2 giờ": dòng đầu ghi "đường nối theo mê cung thật (N cặp hang)" khi đang trong mê cung.
 - [ ] Không có lỗi đỏ khi vào hoặc ra hang, kể cả khi chuyển qua lại nhiều hang.
 
+### H3. Khoang rộng đỡ trống (phải dựng lại mê cung trước)
+Chạy `Evolve → Build Maze World (Step 3)` để dựng lại. Các thay đổi này nằm ở bước dựng, nên cảnh cũ không đổi.
+- [ ] Ở một khoang 75 m (ví dụ Vườn Quặng Cầu Vồng), đi ra xa tâm: ở ba vùng quanh sàn đều gặp sinh vật, không chỉ quanh tâm.
+- [ ] Trong cảnh (Hierarchy, "Hệ Sinh Thái Hang") mỗi loài có 3 tổ, riêng Chúa Hang chỉ 1. Hang Khởi Sinh vẫn 1 tổ mỗi loài như cũ.
+- [ ] Nhiều cây, đá tảng và thức ăn hơn, nhìn không còn trống. Cụm cảnh chủ đề (nấm khổng lồ, tinh thể, đá vách…) lặp lại ở hai vòng ngoài, không đặt ngay trước cửa hầm.
+- [ ] "In quần thể đang sống của mọi hang": hang rộng có số con gần gấp đôi hang cũ (con mồi 15 thay vì 8), Chúa Hang vẫn 1.
+- [ ] Không có lỗi đỏ khi dựng lại. FPS không tụt rõ so với trước: nếu tụt, nói cho mình biết để giảm.
+- [ ] Con vừa thả ra (từ bộ tạo bầy) giờ tính vào quần thể: giết một con rồi in lại quần thể, số con trong hang giảm đúng một.
+
 ### I. Chưa làm được, đừng thử
 Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 

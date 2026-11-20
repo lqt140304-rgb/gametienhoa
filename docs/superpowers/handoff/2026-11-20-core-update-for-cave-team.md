@@ -20,8 +20,20 @@ Nhánh chung để thử: `claude/unity-test-maze`. Đã gộp commit `f928881` 
 7. **Hệ sinh thái chạy thật:** `Region` của hang nào (nhận ra qua tên loài như `ThanLanBoHo`) dùng quần thể B1 của hang đó. Đường nối giữa các hang đi theo đồ thị mê cung của các bạn (`MazeGraph` qua `IMazeAdjacency`).
    - Hang nhận ra qua chủ đề khoang (`MazeEcologyLinks.CaveOf`). Hóa Thạch Slime Cổ và Hang Tiếng Thở chưa có chủ đề khoang riêng, nên chưa nối với hang nào. Khi các bạn thêm hai chủ đề này, báo mình thêm một dòng.
 
+## Cập nhật (chủ dự án đã quyết): con của bộ tạo bầy giờ tính vào quần thể
+- `Region.Adopt`: con do `PreySpawner` / `PredatorSpawner` thả ra (nằm dưới `Region` của hang) chiếm một chỗ trong quần thể. `Region` chỉ tạo thêm phần còn thiếu, giết một con thì quần thể giảm một. Cảnh của các bạn không phải đổi.
+- Con thả ở chỗ không có `Region` ở trên (các khoang dùng `PlaceCreatures` của `MazeChamberDecorator`) vẫn là sinh vật thường, không tính vào mô hình.
+
+## Mình đã sửa thẳng trong file Editor của các bạn (xem khi gộp)
+Chủ dự án thấy các khoang rộng 75 m còn trống so với Hang Khởi Sinh, nên mình thêm `Maze/Pure/ChamberDensity.cs` (số lượng và vị trí tổ theo bán kính khoang, có test) và dùng nó ở hai file:
+- `CaveWave1ScenePopulator.PopulateEcosystem`: hang rộng có 3 tổ mỗi loài rải khắp sàn (Chúa Hang 1 tổ), tổng số con nhân khoảng 1,875 lần. Hang Khởi Sinh (bán kính 40) không đổi.
+- `MazeChamberDecorator`: cây cỏ, đá tảng, thức ăn và số con trong `PlaceCreatures` nhân theo bán kính. Cụm cảnh chủ đề (`BuildGrandThemeLandmarks`) được lặp lại trên hai vòng ngoài (`ScatterLandmarkCopies`).
+- Mô hình sinh thái cũng được nhân tương ứng cho hang rộng (`CaveEcologySeed.Build(scaleOf)`, 2 giờ mô phỏng vẫn đạt).
+- Nếu các bạn đang sửa hai file này, gộp nhánh cẩn thận. Muốn chỉnh độ dày thì chỉnh `ChamberDensity.Multiplier`.
+- Giới hạn: hang rộng nào chưa có `Populate*` riêng thì chỉ được tăng cây, đá, thức ăn và số con ở `PlaceCreatures`; vị trí tổ phụ dùng chiều cao tạm của khoang (chưa bám sàn thật).
+
 ## Cần các bạn xem (có thể là lỗi ở cảnh)
-**Mỗi loài đang bị tạo hai lần.**
+**(Đã xử lý ở trên)** Trước đó mỗi loài bị tạo hai lần.
 - Bộ tạo bầy `PreySpawner` / `PredatorSpawner` do `CaveWave1ScenePopulator` và `MazeChamberDecorator` đặt thả ngay một bầy khi vào hang.
 - `Region` lại tạo thêm con từ tổ (`Den`) theo số liệu quần thể.
 - Con của bộ tạo bầy không nằm trong quần thể, nên slime ăn chúng thì quần thể không giảm.

@@ -222,49 +222,67 @@ namespace Evolve.EditorTools
                 spArr.GetArrayElementAtIndex(i).objectReferenceValue = speciesList[i];
             regSo.ApplyModifiedPropertiesWithoutUndo();
 
+            // The counts and nest spots were laid out for the small start cavern. A wide maze chamber gets proportionally more heads
+            // (matching the scaled population in EcologyRuntime) in several nests spread over the whole floor.
+            float chamberRadius = isBirth ? ChamberDensity.ReferenceRadius : MazeTerrainMath.DefaultChamberRadius;
+            var taken = new List<(float X, float Z)>();
+            foreach (var o in denOffsets) taken.Add((o.x, o.y));
+
             for (int i = 0; i < speciesNames.Length; i++)
             {
                 string spName = speciesNames[i];
-                Vector2 off = denOffsets[i % denOffsets.Length];
-                Vector3 pos = SnapToFloor(origin, off.x, off.y, floorCollider, isBirth);
-
-                // Đặt Tổ (Den)
-                var denGo = new GameObject($"Tổ ({spName})");
-                denGo.transform.SetParent(ecoRoot.transform, false);
-                denGo.transform.position = pos;
-                var den = denGo.AddComponent<Den>();
-                den.Species = CaveCreaturesWave1Builder.LoadSpeciesSO(spName);
-                den.Region = region;
-
-                // Spawner trực tiếp để khoang có sinh vật ngay khi bước vào
                 var spec = FindSpec(spName);
-                if (!spec.IsPredator)
-                {
-                    var preyPrefab = CaveCreaturesWave1Builder.LoadWave1CreaturePrefab<Prey>(spName);
-                    if (preyPrefab != null)
+                bool lord = spec.IsPredator && spec.IsLeader;   // a cave lord is one animal in one nest
+                int nests = lord ? 1 : ChamberDensity.NestsPerSpecies(chamberRadius);
+                int total = lord ? counts[i] : ChamberDensity.Scaled(counts[i], chamberRadius);
+                var spots = new List<Vector2> { denOffsets[i % denOffsets.Length] };
+                if (nests > 1)
+                    foreach (var e in ChamberDensity.NestPositions(nests - 1, chamberRadius * 0.74f, spName.GetHashCode(), null, taken))
                     {
-                        var spawnerGo = new GameObject($"Bầy ({spName})");
+                        spots.Add(new Vector2(e.X, e.Z));
+                        taken.Add(e);
+                    }
+
+                for (int n = 0; n < spots.Count; n++)
+                {
+                    Vector3 pos = SnapToFloor(origin, spots[n].x, spots[n].y, floorCollider, isBirth);
+                    string label = spots.Count > 1 ? $"{spName} {n + 1}" : spName;
+
+                    // Đặt Tổ (Den)
+                    var denGo = new GameObject($"Tổ ({label})");
+                    denGo.transform.SetParent(ecoRoot.transform, false);
+                    denGo.transform.position = pos;
+                    var den = denGo.AddComponent<Den>();
+                    den.Species = CaveCreaturesWave1Builder.LoadSpeciesSO(spName);
+                    den.Region = region;
+
+                    // Spawner trực tiếp để khoang có sinh vật ngay khi bước vào
+                    int heads = ChamberDensity.Share(total, spots.Count, n);
+                    if (heads <= 0) continue;
+                    if (!spec.IsPredator)
+                    {
+                        var preyPrefab = CaveCreaturesWave1Builder.LoadWave1CreaturePrefab<Prey>(spName);
+                        if (preyPrefab == null) continue;
+                        var spawnerGo = new GameObject($"Bầy ({label})");
                         spawnerGo.transform.SetParent(ecoRoot.transform, false);
                         spawnerGo.transform.position = pos;
                         var spSo = new SerializedObject(spawnerGo.AddComponent<PreySpawner>());
                         spSo.FindProperty("prefab").objectReferenceValue = preyPrefab;
-                        spSo.FindProperty("count").intValue = counts[i];
+                        spSo.FindProperty("count").intValue = heads;
                         spSo.FindProperty("radius").floatValue = 16f;
                         spSo.FindProperty("minDistanceFromCenter").floatValue = 2f;
                         spSo.ApplyModifiedPropertiesWithoutUndo();
                     }
-                }
-                else
-                {
-                    var predPrefab = CaveCreaturesWave1Builder.LoadWave1CreaturePrefab<Predator>(spName);
-                    if (predPrefab != null)
+                    else
                     {
-                        var spawnerGo = new GameObject($"Lãnh Địa ({spName})");
+                        var predPrefab = CaveCreaturesWave1Builder.LoadWave1CreaturePrefab<Predator>(spName);
+                        if (predPrefab == null) continue;
+                        var spawnerGo = new GameObject($"Lãnh Địa ({label})");
                         spawnerGo.transform.SetParent(ecoRoot.transform, false);
                         spawnerGo.transform.position = pos;
                         var spSo = new SerializedObject(spawnerGo.AddComponent<PredatorSpawner>());
                         spSo.FindProperty("prefab").objectReferenceValue = predPrefab;
-                        spSo.FindProperty("count").intValue = counts[i];
+                        spSo.FindProperty("count").intValue = heads;
                         spSo.FindProperty("radius").floatValue = spec.IsLeader ? 8f : 18f;
                         spSo.ApplyModifiedPropertiesWithoutUndo();
                     }

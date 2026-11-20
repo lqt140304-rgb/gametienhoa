@@ -67,6 +67,24 @@ namespace Evolve.Tests.EditMode
                     Assert.GreaterOrEqual(s.Count, s.Floor, r.Key + "/" + s.Id);
         }
 
+        [Test] public void WideCaves_TwoHours_ScaledPopulationsStayAliveAndInBounds()
+        {
+            var w = CaveEcologySeed.Build(id => id == "khoi_sinh" ? 1f : 1.875f);
+            Assert.AreEqual(15, w.Find("vuon_quang").Species[0].Count);   // 8 prey heads ×1.875
+            Assert.AreEqual(1, w.Find("vuon_quang").Species[3].Count);    // the lord stays one
+            Assert.AreEqual(8, w.Find("khoi_sinh").Species[0].Count);     // the start cavern is unchanged
+            var t = new Trace();
+            Run(w, t, Steps);
+            foreach (var kv in t.Longest0)
+            {
+                bool lord = w.Regions.Values.Any(r => kv.Key.EndsWith("/" + r.Species[3].Id));
+                Assert.LessOrEqual(kv.Value * Step, lord ? 10f : 12f, kv.Key + " was at zero for " + kv.Value * Step + " min");
+            }
+            foreach (var r in w.Regions)
+                foreach (var s in r.Value.Species.Where(s => !s.Guest))
+                    Assert.LessOrEqual(s.Count, s.Capacity + 1, r.Key + "/" + s.Id);
+        }
+
         [Test] public void TwoHours_PreyAndHunters_StayAlive_OnAverage()
         {
             var w = CaveEcologySeed.Build();

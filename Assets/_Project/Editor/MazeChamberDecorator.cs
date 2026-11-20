@@ -778,6 +778,40 @@ namespace Evolve.EditorTools
                     PlaceGroundedModel(landmarkGroup, "CrystalCluster_1", 10f, -8f, 2.6f, 120f, 0.6f, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge, glowMat);
                     break;
             }
+
+            if (chamberRadius >= 60f && node.Theme != ChamberTheme.SealedDragonTomb)
+                ScatterLandmarkCopies(landmarkGroup, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
+        }
+
+        /// <summary>
+        /// The theme's landmark set sits within about 20 m of the centre, which leaves most of a 75 m chamber bare. Repeat the set on two
+        /// outer rings (turned about a third of a circle each time, never in front of a tunnel mouth) so the whole floor has something to find.
+        /// </summary>
+        static void ScatterLandmarkCopies(Transform group, int seed, float chamberRadius, IReadOnlyList<float> tunnelAnglesDeg, bool hasHighLedge)
+        {
+            var rnd = new System.Random(seed ^ 0x5eed);
+            var originals = new List<Transform>();
+            foreach (Transform c in group) if (!c.name.StartsWith("Hồ")) originals.Add(c);   // a pool stays one pool
+            float usable = chamberRadius * 0.74f;
+            for (int ring = 1; ring <= 2; ring++)
+            {
+                float turn = ring * 120f + (float)(rnd.NextDouble() * 30.0 - 15.0);
+                float pull = ring == 1 ? 0.5f : 0.82f;
+                foreach (var o in originals)
+                {
+                    Vector3 lp = o.localPosition;
+                    float r0 = new Vector2(lp.x, lp.z).magnitude;
+                    float angle = (r0 < 0.5f ? ring * 70f : Mathf.Atan2(lp.z, lp.x) * Mathf.Rad2Deg) + turn;
+                    if (IsNearAnyAngle(angle, tunnelAnglesDeg, 22f)) continue;
+                    float r = Mathf.Min(usable, usable * pull + r0 * 0.4f);
+                    float x = Mathf.Cos(angle * Mathf.Deg2Rad) * r, z = Mathf.Sin(angle * Mathf.Deg2Rad) * r;
+                    float sink = MazeTerrainMath.GroundHeightAt(lp.x, lp.z, seed, chamberRadius, tunnelAnglesDeg, hasHighLedge) - lp.y;   // keep how deep it is rooted
+                    var copy = Object.Instantiate(o.gameObject, group);
+                    copy.name = o.name;
+                    copy.transform.localPosition = new Vector3(x, MazeTerrainMath.GroundHeightAt(x, z, seed, chamberRadius, tunnelAnglesDeg, hasHighLedge) - sink, z);
+                    copy.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 360f, 0f);
+                }
+            }
         }
 
         static GameObject PlaceGroundedModel(
@@ -825,7 +859,7 @@ namespace Evolve.EditorTools
             // 1. Thảm thực vật mặt đất (nhấn chân nhẹ -0.18m để không bao giờ lơ lửng trên dốc nghiêng)
             if (profile.FloorFloraModels.Count > 0)
             {
-                int propCount = node.Depth == ChamberDepth.Nong ? 75 : (node.Depth == ChamberDepth.Giua ? 55 : 40);
+                int propCount = ChamberDensity.Scaled(node.Depth == ChamberDepth.Nong ? 75 : (node.Depth == ChamberDepth.Giua ? 55 : 40), chamberRadius);
                 var tuftPoints = new List<Vector3>(80);
 
                 for (int i = 0; i < propCount; i++)
@@ -857,7 +891,7 @@ namespace Evolve.EditorTools
             }
 
             // 2. Đá tảng lớn cắm sâu gốc -0.65m vào sườn đồi (tuyệt đối không lơ lửng)
-            for (int rIdx = 0; rIdx < 24; rIdx++)
+            for (int rIdx = 0, boulders = ChamberDensity.Scaled(24, chamberRadius); rIdx < boulders; rIdx++)
             {
                 if (!TryPickFloorPoint(usableRadius, 7f, tunnelAnglesDeg, rnd, out float rx, out float rz)) continue;
                 float ry = MazeTerrainMath.GroundHeightAt(rx, rz, seed, chamberRadius, tunnelAnglesDeg, node.HasHighLedge);
@@ -882,7 +916,7 @@ namespace Evolve.EditorTools
             forageGroup.SetParent(parent, false);
             float usableRadius = chamberRadius * 0.70f;
 
-            for (int i = 0; i < profile.ForageCount; i++)
+            for (int i = 0, forage = ChamberDensity.Scaled(profile.ForageCount, chamberRadius); i < forage; i++)
             {
                 var item = profile.ForageItems[i % profile.ForageItems.Count];
                 if (!TryPickFloorPoint(usableRadius, 5.0f, tunnelAnglesDeg, rnd, out float lx, out float lz)) continue;
@@ -1042,7 +1076,7 @@ namespace Evolve.EditorTools
                     spawnerGo.transform.localPosition = new Vector3(-12f, 0f, -10f);
                     var so = new SerializedObject(spawnerGo.AddComponent<PreySpawner>());
                     so.FindProperty("prefab").objectReferenceValue = preyPrefab;
-                    so.FindProperty("count").intValue = profile.PreyCount;
+                    so.FindProperty("count").intValue = ChamberDensity.Scaled(profile.PreyCount, chamberRadius);
                     so.FindProperty("radius").floatValue = chamberRadius * 0.50f;
                     so.FindProperty("minDistanceFromCenter").floatValue = 3.0f;
                     so.ApplyModifiedPropertiesWithoutUndo();
@@ -1060,7 +1094,7 @@ namespace Evolve.EditorTools
                     spawnerGo.transform.localPosition = new Vector3(12f, 0f, 14f);
                     var so = new SerializedObject(spawnerGo.AddComponent<PredatorSpawner>());
                     so.FindProperty("prefab").objectReferenceValue = predPrefab;
-                    so.FindProperty("count").intValue = profile.PredatorCount;
+                    so.FindProperty("count").intValue = ChamberDensity.Scaled(profile.PredatorCount, chamberRadius);
                     so.FindProperty("radius").floatValue = chamberRadius * 0.45f;
                     so.ApplyModifiedPropertiesWithoutUndo();
                 }

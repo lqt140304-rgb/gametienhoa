@@ -781,3 +781,14 @@ Nhánh `claude/movement`, đã gộp vào `claude/unity-test-maze`.
 - Thông tin gửi lại họ: `docs/superpowers/handoff/2026-11-20-core-update-for-cave-team.md`.
 - **Việc còn treo cần chủ dự án chọn:** mỗi loài đang được tạo hai lần, từ bộ tạo bầy (`PreySpawner`/`PredatorSpawner`) và từ `Region` qua tổ. Cách A (đề xuất): tính con của bộ tạo bầy vào quần thể, `Region` chỉ tạo bù phần thiếu. Cách B: tắt bộ tạo bầy ở hang đã có mô hình B1.
 
+## 52. Cách A (bộ tạo bầy tính vào quần thể) và khoang rộng đỡ trống
+
+- **Cách A:** `Region.Adopt(go)`, gọi từ `PreySpawner` và `PredatorSpawner`. Con thả ra dưới `Region` của hang thành một đầu của quần thể (chiếm chỗ `Embodied`, chết thì quần thể giảm, hang ngủ thì cất lại). Việc treo ở mục 51 đã xong.
+- **Khoang rộng:** các khoang 75 m chỉ có chừng đó sinh vật và cảnh như Hang Khởi Sinh, nên:
+  - `Maze/Pure/ChamberDensity`: hệ số theo bán kính (40 m là 1, 75 m là 1,875, tối đa 3), số tổ mỗi loài (3 tổ từ 70 m), cách chia con vào tổ, và vị trí tổ phụ rải trên vòng 40–85% bán kính sàn, tránh cửa hầm, cách nhau ít nhất 20 m.
+  - `CaveWave1ScenePopulator`: hang rộng có 3 tổ mỗi loài, Chúa Hang 1 tổ, số con nhân hệ số.
+  - `MazeChamberDecorator`: cây, đá tảng, thức ăn và con ở các khoang thường nhân hệ số, cụm cảnh chủ đề lặp lại ở hai vòng ngoài.
+  - `CaveEcologySeed.Build(scaleOf)`: mô hình sinh thái nhân con mồi, kẻ săn, sinh sản và bể thức ăn cho hang rộng (Chúa Hang vẫn 1, Hang Khởi Sinh không đổi). Có test mô phỏng 2 giờ.
+  - Phải chạy lại `Evolve → Build Maze World (Step 3)` để thấy.
+- **Chưa làm:** sinh vật hang rộng chưa đi tuần quanh nhiều tổ, tổ phụ chưa bám sàn thật khi khoang không có collider sàn, chưa có công trình mới hoàn toàn (hiện lặp lại cụm cảnh sẵn có). Việc cần mô hình 3D mới thuộc bên làm hang.
+
