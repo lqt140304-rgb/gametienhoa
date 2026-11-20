@@ -47,13 +47,17 @@ namespace Evolve.Swallow
             Apply();
         }
 
+        /// <summary>Re-apply max health (a passive such as Da Dày changed).</summary>
+        public void Refresh() => Apply();
+
         void Apply()
         {
             if (stats == null) stats = GetComponent<SurvivalStats>();
             if (stats != null && !stats.IsRemote)
             {
                 var s = stats.State;
-                s.MaxHealth = MassRules.MaxHealth(mass);
+                var host = GetComponent<Evolve.Organs.OrganHost>();
+                s.MaxHealth = MassRules.MaxHealth(mass) + (host != null ? host.MaxHealthBonus : 0f);
                 if (s.Health > s.MaxHealth) s.Health = s.MaxHealth;
             }
             Changed?.Invoke();

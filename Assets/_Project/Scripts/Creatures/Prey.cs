@@ -93,7 +93,7 @@ namespace Evolve.Creatures
 
         void FixedUpdate()
         {
-            if (Frozen || IsReplica) return;
+            if (Frozen || IsReplica || Evolve.Abilities.CreatureStatus.Holds(gameObject)) return;   // stunned or knocked by a skill
             Vector3 pos = rb.position;
             Vector3 dir;
             float speed;

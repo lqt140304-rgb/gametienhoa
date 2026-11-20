@@ -60,6 +60,10 @@ namespace Evolve.Organs
         /// <summary>Set by SkillVisuals when it is added to the body.</summary>
         public Evolve.Abilities.SkillVisuals Visuals { get; set; }
         public float HeatResistance { get; private set; }
+        /// <summary>Passive cave skills: extra max health (Da Dày), share of damage blocked (Vỏ Cứng), Sóng Dò reach (Sóng Dò Mạnh).</summary>
+        public float MaxHealthBonus { get; private set; }
+        public float DamageReduction { get; private set; }
+        public float SonarRangeMultiplier { get; private set; } = 1f;
         public IEnumerable<OrganSO> Organs { get { foreach (var e in order) yield return e.Organ; } }
 
         /// <summary>Raised when an organ is attached.</summary>
@@ -327,7 +331,7 @@ namespace Evolve.Organs
 
         void Recalculate()
         {
-            float speed = 1f, sight = 0f, contact = 0f, heat = 0f;
+            float speed = 1f, sight = 0f, contact = 0f, heat = 0f, hp = 0f, reduce = 0f, sonar = 1f;
             foreach (var e in order)
             {
                 ApplyVisual(e);
@@ -337,6 +341,9 @@ namespace Evolve.Organs
                 if (e.Organ.GrantsSight) sight = Mathf.Max(sight, k);
                 contact += e.Organ.ContactDamage * k;
                 heat += e.Organ.HeatResistance * k;
+                hp += e.Organ.MaxHealthBonus * k;
+                reduce += e.Organ.DamageReduction * k;
+                sonar = Mathf.Max(sonar, 1f + (e.Organ.SonarRangeMultiplier - 1f) * k);
             }
             if (stats != null && stats.State.NutrientLoad != null)
             {
@@ -348,6 +355,9 @@ namespace Evolve.Organs
             passiveContact = contact;
             HeatResistance = heat;
             if (stats != null) stats.State.HeatResistance = heat;
+            DamageReduction = reduce;
+            SonarRangeMultiplier = sonar;
+            if (!Mathf.Approximately(hp, MaxHealthBonus)) { MaxHealthBonus = hp; if (TryGetComponent(out Evolve.Swallow.SlimeBody body)) body.Refresh(); }
             Changed?.Invoke();
         }
     }

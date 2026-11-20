@@ -21,10 +21,10 @@ namespace Evolve.Swallow
         /// Sorts a gene by what its organ data says: an own move is always Active; eyes and heat resistance are Passive;
         /// extra speed becomes the Sprint move (Active); spikes without a move are a Passive thorn skin.
         /// </summary>
-        public static GeneUse UseOf(bool hasAbility, bool grantsSight, float heatResistance, float speedMultiplier, float contactDamage)
+        public static GeneUse UseOf(bool hasAbility, bool grantsSight, float heatResistance, float speedMultiplier, float contactDamage, bool otherPassive = false)
         {
             if (hasAbility) return GeneUse.Active;
-            if (grantsSight || heatResistance > 0f) return GeneUse.Passive;
+            if (grantsSight || heatResistance > 0f || otherPassive) return GeneUse.Passive;
             if (speedMultiplier > 1.01f) return GeneUse.Active;
             if (contactDamage > 0f) return GeneUse.Passive;
             return GeneUse.None;

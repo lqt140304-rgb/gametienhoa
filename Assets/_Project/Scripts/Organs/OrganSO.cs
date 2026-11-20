@@ -42,7 +42,11 @@ namespace Evolve.Organs
 
         /// <summary>What this gene is as a skill: a passive that is always on (eyes, heat membrane) or an active move on keys 1-5.</summary>
         public Evolve.Swallow.GeneUse Use =>
-            Evolve.Swallow.SkillRules.UseOf(GrantedAbility != null, GrantsSight, HeatResistance, SpeedMultiplier, ContactDamage);
+            Evolve.Swallow.SkillRules.UseOf(GrantedAbility != null, GrantsSight, HeatResistance, SpeedMultiplier, ContactDamage,
+                MaxHealthBonus > 0f || DamageReduction > 0f || SonarRangeMultiplier > 1.01f);
+
+        [Tooltip("Skill family, for fusing two skills after chapter 1")]
+        public Evolve.Swallow.SkillFamily Family;
 
         [Header("Effects (passives only; an active move's body part appears only while it is used)")]
         [Tooltip("Gives colour vision and long view range")]
@@ -53,5 +57,11 @@ namespace Evolve.Organs
         public float HeatResistance;
         [Tooltip("Damage dealt back to a creature that bites this body")]
         public float ContactDamage;
+        [Tooltip("Extra maximum health (Da Dày)")]
+        public float MaxHealthBonus;
+        [Tooltip("Share of incoming damage blocked, 0..1 (Vỏ Cứng)")]
+        [Range(0, 0.8f)] public float DamageReduction;
+        [Tooltip("Multiplies how far Sóng Dò reaches (Sóng Dò Mạnh)")]
+        public float SonarRangeMultiplier = 1f;
     }
 }

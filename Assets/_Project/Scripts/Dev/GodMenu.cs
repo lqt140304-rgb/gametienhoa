@@ -213,7 +213,7 @@ namespace Evolve.DevTools
         }
 
         static IEnumerable<OrganSO> AllOrgans() =>
-            Resources.FindObjectsOfTypeAll<OrganSO>()
+            Resources.LoadAll<OrganSO>("CaveSkills").Concat(Resources.FindObjectsOfTypeAll<OrganSO>()).Distinct()   // cave skill genes are not in any scene yet
                 .Where(o => !string.IsNullOrEmpty(o.DisplayName))
                 .OrderBy(o => o.Tier).ThenBy(o => o.DisplayName);
 

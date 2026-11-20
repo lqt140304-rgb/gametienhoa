@@ -121,7 +121,7 @@ namespace Evolve.Creatures
 
         void FixedUpdate()
         {
-            if (dead || Frozen || IsReplica) return;
+            if (dead || Frozen || IsReplica || Evolve.Abilities.CreatureStatus.Holds(gameObject)) return;   // stunned or knocked by a skill
             Vector3 pos = rb.position;
             UpdateTarget(pos);
 
@@ -244,7 +244,7 @@ namespace Evolve.Creatures
                 TakeDamage(ramDamage, stats);
             if (dead) return;
 
-            if (Time.time < nextBite) return;
+            if (Time.time < nextBite || Evolve.Abilities.CreatureStatus.Holds(gameObject)) return;
             nextBite = Time.time + biteCooldown;
             target = stats;
 

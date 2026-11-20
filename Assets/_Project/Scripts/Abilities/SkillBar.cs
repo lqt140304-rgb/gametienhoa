@@ -44,6 +44,7 @@ namespace Evolve.Abilities
         {
             stats = GetComponent<SurvivalStats>();
             host = GetComponent<OrganHost>();
+            BodyState.On(gameObject);   // always there: it applies Vỏ Cứng and the timed states of body skills
         }
 
         void OnDestroy() { foreach (var s in sprints.Values) if (s != null) Destroy(s); sprints.Clear(); }
@@ -186,7 +187,7 @@ namespace Evolve.Abilities
             if (pending) { Fail("đang tụ lực"); return; }
 
             // The body winds up first; the skill leaves at the moment the animation releases.
-            var motion = ability is BurstDashAbility || ability is ChargeAbility || ability is SprintAbility
+            var motion = ability is BurstDashAbility || ability is ChargeAbility || ability is SprintAbility || ability is LeapAbility
                 ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release;
             Evolve.Visuals.SlimeGelAnimator.Play(gameObject, motion);
             StartCoroutine(FireAfter(Evolve.Visuals.SlimeGelAnimator.WindUp(motion), organ, ability, level));
@@ -205,6 +206,7 @@ namespace Evolve.Abilities
             stats.State.TrySpendEnergy(ability.EnergyCost);
             readyAt[organ] = Time.time + ability.CooldownFor(level);
             FailureReason = "";
+            Evolve.Audio.SlimeSfx.Play("skill_" + organ.name.Replace("Gene_", ""));   // cave skills: tools/voice/generate_skill_sfx.sh; others are silent
             // The body part (spikes, legs) grows out for the move and melts back in while it cools down.
             if (visuals == null) visuals = GetComponent<SkillVisuals>();
             if (visuals == null) visuals = gameObject.AddComponent<SkillVisuals>();

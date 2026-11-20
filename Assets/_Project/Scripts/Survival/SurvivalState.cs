@@ -371,10 +371,15 @@ namespace Evolve.Survival
             Changed?.Invoke();
         }
 
+        /// <summary>Filters a hit before it lands (shield, Thu Mình, Vỏ Cứng). Set by Abilities/BodyState.</summary>
+        [NonSerialized] public Func<float, float> IncomingDamage;
+
         /// <summary>Damage from outside (a bite): also adds stress. Needs/temperature damage uses ApplyDamage.</summary>
         public void Damage(float amount)
         {
             if (IsDead || Invulnerable) return;
+            if (IncomingDamage != null) amount = IncomingDamage(amount);   // skill defences (Abilities/BodyState)
+            if (amount <= 0f) return;
             if (amount > 0f) Damaged?.Invoke(amount);
             if (Config != null && amount > 0f) Stress = StressClamp(Stress + amount * Config.StressPerDamage);
             if (amount >= DiseaseRules.HitMinDamage) TryInfect(DiseaseKind.RottenGel, DiseaseRules.HitChance); // an infected wound
