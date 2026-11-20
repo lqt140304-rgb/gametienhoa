@@ -63,3 +63,7 @@ Kiểm: luật thuần có test; phần Unity chủ dự án thử theo checklis
 - Khi quái đang trong chiêu có **giáp/không ngắt được**, vồ bật ra (không bám được); khi quái **hở sau chiêu** thì vồ dễ trúng hơn: đây là cách người chơi trừng phạt lúc quái hở.
 - Quái thoát: gọi lại cho bên quái để chuyển sang trạng thái bỏ chạy và nhớ slime.
 - Hai phiên thống nhất tên và chỗ đặt các trường này trước khi code; ghi vào `docs/superpowers/handoff/` nếu cần.
+
+## Cập nhật thực hiện (2026-11-20)
+Đã làm các bước 1 đến 6 của mục 5 (xem `docs/PROJECT_STATUS.md` mục 54 và kế hoạch `docs/superpowers/plans/2026-11-20-slime-combat-latch.md`). **Chưa làm:** bước 7 (đổi tên Vồ của Chồn Khe thành Vồ Xa), vì Chồn Khe thuộc đợt 3 và chưa có dữ liệu kỹ năng; bước 8 (kỹ năng hang tác động mini game, co-op). Cảnh nuốt chỉ gồm chậm thời gian và camera áp sát. Mọi số lấy từ mục 4 và 2.3. Né (dash) là kỹ năng học từ quái, không có sẵn.
+

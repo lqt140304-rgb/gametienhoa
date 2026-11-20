@@ -808,6 +808,13 @@ Thiết kế: `docs/superpowers/specs/2026-11-20-wide-caves-size-danger-design.m
   - Dự án chiến đấu đa dạng (đòn báo trước, trùm nhiều pha, yếu theo họ kỹ năng) là bản thiết kế riêng, chưa viết.
 
 
-## 54. Combat của slime: Vồ – Bám – Tiêu Hóa (đã duyệt, chưa làm)
+## 54. Combat của slime: Vồ – Bám – Tiêu Hóa (đã làm khung, chưa kiểm trong Unity)
 
-Thiết kế và kế hoạch: `docs/superpowers/specs/2026-11-20-slime-combat-latch-design.md`. Vồ là hành động cơ bản; con to hơn thì bám lên và vào mini game Ghì Chặt (giữ chấm trong vùng xanh để tiêu hóa, sai 3–5 lần tùy loài thì quái thoát, quái khỏe thì khó hơn), có điểm yếu, cú giãy mạnh, giai đoạn tuyệt vọng, cảnh nuốt chửng khi kết liễu. Phần khớp với phiên làm combat của quái: mục 6 của file. Kỹ năng có điều kiện (Đạn Nước, Tan Chảy): chưa chốt cách mở, hỏi chủ dự án trước.
+Thiết kế: `docs/superpowers/specs/2026-11-20-slime-combat-latch-design.md`. Kế hoạch: `docs/superpowers/plans/2026-11-20-slime-combat-latch.md`.
+- **Luật thuần có test** (`Scripts/Combat/Pure/`): `LatchGame` (mini game: chấm, vùng xanh, khúc vàng, ân hạn, lỗi, cú giãy mạnh và siết, giai đoạn tuyệt vọng, năng lượng, hệ số kích cỡ), `PounceRules` (nuốt sống, bám, hay bật ra; chọn mục tiêu gần trước mặt), `StruggleSeed` (hồ sơ giãy theo vai trò: con mồi, kẻ săn, Chúa Hang).
+- **Mã Unity** (`Scripts/Combat/`): `Pounce` (chuột trái, gắn vào slime từ `SkillBar.Awake`), `LatchSession` (slime cưỡi lên quái, chạy mini game, gây sát thương tiêu hóa mỗi 0,25 giây, kết thúc sạch), `LatchHud` (IMGUI), `SwallowCinematic` (chậm thời gian và camera áp sát khoảng 2 giây, bỏ qua được).
+- **Móc nhỏ:** `Prey.Latched/RememberSlimeUntil/PounceCatch`, `Predator.Latched/RememberSlimeUntil`, `Swallower.SwallowCarcassNow`. Quái chết khi đang bị bám để lại xác để nuốt tại chỗ (xác mới nhất, giữ gene).
+- **Lối tắt:** menu thần (F1), mục Kiểm thử, dòng "Combat".
+- **Chưa làm:** Vồ Xa của Chồn Khe (đợt 3 chưa có dữ liệu kỹ năng); kỹ năng hang tác động mini game và co-op (spec mục 2.5); cảnh nuốt đầy đủ (thân phình, rung màn hình); tiếng hiệu ứng riêng cho tiêu hóa, siết và thoát; hoạt hình quái giãy; né (dash) lấy từ kỹ năng của quái.
+- **Rủi ro biết trước:** toàn bộ phần Unity chưa chạy lần nào. Space vừa là siết (khi có cảnh báo) vừa là buông (khi không). Kẻ săn nhỏ hơn slime vẫn vào mini game chứ không nuốt sống.
+- Danh sách kiểm: `docs/TEST_CHECKLIST_UNITY.md` mục H5.

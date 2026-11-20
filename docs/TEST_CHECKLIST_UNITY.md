@@ -150,6 +150,20 @@ Menu thần (F1), mục Kiểm thử, có thanh "Cỡ quái ×" và nút "Độ 
 - [ ] **FPS** trong khoang rộng không tụt rõ so với trước (đèn mờ tối đa 12 mỗi khoang).
 - [ ] Vườn Quặng Cầu Vồng và Vực Nứt Tím (khoang dựng sẵn bằng mô hình Blender) **không** có cụm cảnh, đèn và góc ẩn, nhưng có cỡ và độ khó mới. Báo mình nếu tổ ở đó nằm sai chỗ.
 
+### H5. Combat của slime: Vồ và Ghì Chặt
+Menu thần (F1), mục Kiểm thử, dòng "Combat": tạo con mồi to, kẻ săn, hoặc Chúa Hang thử trước mặt slime. Cho slime vô hạn năng lượng và bất tử nếu cần thử lâu.
+- [ ] **Vồ ngoài tầm:** bấm chuột trái khi không có quái trong khoảng 4 m phía trước camera: không có gì xảy ra, năng lượng không giảm.
+- [ ] **Vồ con nhỏ hơn slime** (khối từ 0,8 lần khối slime trở xuống, ví dụ Ốc Hồ khối 3 khi slime khối 10): slime bật tới và nuốt sống ngay.
+- [ ] **Vồ con to hơn:** slime bật tới, leo lên lưng quái, hiện thanh Ghì Chặt (vùng xanh, khúc vàng, chấm trắng, "còn N lần sai").
+- [ ] **Chơi mini game:** giữ A/D hoặc kéo chuột để kéo chấm về vùng xanh. Trong vùng xanh quái mất máu đều (khoảng 8 mỗi giây, gấp đôi trên khúc vàng). Ngoài vùng quá 0,25 giây thì sai một lần; hết lượt thì quái hất slime xuống và bỏ chạy vài giây.
+- [ ] **Cú giãy mạnh** (kẻ săn, Chúa Hang): hiện chữ đỏ "GIÃY MẠNH! BẤM SPACE" khoảng nửa giây. Bấm Space đúng lúc thì vùng xanh rộng ra vài giây. Không bấm thì sai một lần.
+- [ ] **Buông:** bấm Space khi không có cảnh báo thì slime nhảy xuống. Quái được thả, không kẹt.
+- [ ] **Quái chết khi đang bám:** slime nuốt tại chỗ (cảnh chậm và camera áp sát khoảng 2 giây, Escape hoặc chuột trái để bỏ qua). Mở Túi: có xác mới nhất, Giải Mã cho gene.
+- [ ] **Quái nhớ slime:** quái thoát chạy xa hơn và lần sau cảnh giác hơn (con mồi bỏ chạy từ xa hơn khoảng 1,5 lần).
+- [ ] **Quá to:** quái nặng hơn 4 lần khối slime thì slime bật ra, hiện dòng "Quá to để vồ".
+- [ ] **Hết năng lượng** giữa trận: vùng xanh hẹp lại, trận vẫn chạy, không lỗi.
+- [ ] Không có lỗi đỏ trong Console, không bị kẹt trên không sau khi bám hay buông. Khi bấm vào menu thần hay HUD không vô tình vồ.
+
 ### I. Chưa làm được, đừng thử
 Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 
