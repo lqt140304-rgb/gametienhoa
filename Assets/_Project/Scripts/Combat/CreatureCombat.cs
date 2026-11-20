@@ -24,7 +24,7 @@ namespace Evolve.Combat
         public float DamageScale { get; set; } = 1f;
         float tellScale = 1f;
         public float TellScale { get => tellScale; set { tellScale = value; if (scheduler != null) scheduler.TellScale = value; } }
-        public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle));
+        public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking));
         /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
@@ -49,6 +49,17 @@ namespace Evolve.Combat
         bool hitDone, hopFlag, skillFlag, hitFlag;
         float drainAccum;
         LeechState prevLeech;
+        AmbushRules ambush;
+        Renderer[] renderers;
+        GameObject eyes;
+        static Material eyeMat;
+        bool hidden, iceArmed;
+        Vector3 iceSpot, retreatDir;
+        float retreatLeft;
+        static readonly Color IceColor = new Color(0.55f, 0.85f, 1f);
+
+        /// <summary>A lurking creature: hidden, only a pair of glowing eyes shows.</summary>
+        public bool IsHidden => hidden;
 
         void Awake()
         {
@@ -56,12 +67,14 @@ namespace Evolve.Combat
             if (moves.Count == 0) { enabled = false; return; }
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
+            if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
             pred = GetComponent<Predator>(); prey = GetComponent<Prey>();
             motor = GetComponent<CreatureMotor>(); loco = GetComponent<CreatureLocomotion>(); rb = GetComponent<Rigidbody>();
             col = GetComponentInChildren<Collider>();
             model = transform.Find("Model");
             if (model == null) foreach (var r in GetComponentsInChildren<Renderer>()) { model = r.transform; break; }
             if (model != null) baseScale = model.localScale;
+            if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
         }
 
         void OnEnable()
@@ -77,6 +90,7 @@ namespace Evolve.Combat
             SkillBar.SkillUsed -= OnSkillUsed;
             if (prey != null) prey.Damaged -= OnDamaged;
             scheduler?.Reset();
+            SetHidden(false);
             RestoreModel();
         }
 
@@ -116,12 +130,24 @@ namespace Evolve.Combat
 
         void FixedUpdate()
         {
-            if (HostPaused()) { scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; return; }
+            if (HostPaused())
+            {
+                scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
+                if (ambush != null && ambush.State == AmbushState.Lurking) { ambush.Update(0f, 0f); ambush.StrikeDone(); }   // stunned or killed while hiding: it shows itself
+                SetHidden(false);
+                return;
+            }
             target = FindTarget();
             if (leech != null) { FixedLeech(); return; }
 
             float health = pred != null ? pred.HealthFraction : prey != null ? prey.HealthFraction : 1f;
             float dist = target != null ? Flat(target.transform.position - transform.position).magnitude : float.MaxValue;
+            if (ambush != null)
+            {
+                if (ambush.Update(Time.fixedDeltaTime, dist)) { SetHidden(false); scheduler.Force(MovesetSeed.AmbushMove(name), 0.2f); }   // bursts out with a quick tell
+                else if (ambush.State == AmbushState.Lurking) { if (!hidden) SetHidden(true); scheduler.Reset(); prevPhase = MovePhase.Idle; return; }
+                else if (ambush.State == AmbushState.Revealed && !scheduler.Busy) ambush.StrikeDone();
+            }
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, dist, health);
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null) BeginStrike(started);
@@ -129,6 +155,43 @@ namespace Evolve.Combat
 
             if (target != null && scheduler.Phase == MovePhase.Windup) FaceTarget();
             if (scheduler.Phase == MovePhase.Active) TickStrike(scheduler.Current);
+            else if (scheduler.Phase == MovePhase.Recover && retreatLeft > 0f) TickRetreat(scheduler.Current);
+        }
+
+        void TickRetreat(MoveDef m)
+        {
+            float speed = m.RetreatDistance / Mathf.Max(0.1f, m.Recover);
+            if (motor == null || !motor.Move(retreatDir, speed)) { retreatLeft = 0f; return; }   // a wall stops the run
+            retreatLeft -= speed * Time.fixedDeltaTime;
+        }
+
+        // ---------- lurking ----------
+
+        void SetHidden(bool h)
+        {
+            if (renderers == null || h == hidden) return;
+            hidden = h;
+            foreach (var r in renderers) if (r != null) r.enabled = !h;
+            if (h) MakeEyes(); else if (eyes != null) Destroy(eyes);
+        }
+
+        void MakeEyes()
+        {
+            if (eyeMat == null) eyeMat = SkillFx.Gel(new Color(1f, 0.8f, 0.25f), 1f, 0f, 3f);
+            eyes = new GameObject("Mắt Rình");
+            eyes.transform.SetParent(transform, false);
+            eyes.transform.localPosition = Vector3.up * Radius * 0.9f + Vector3.forward * Radius * 0.6f;
+            for (int i = -1; i <= 1; i += 2)
+            {
+                var eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                Destroy(eye.GetComponent<Collider>());
+                eye.transform.SetParent(eyes.transform, false);
+                eye.transform.localPosition = Vector3.right * 0.1f * i;
+                eye.transform.localScale = Vector3.one * 0.08f;
+                eye.GetComponent<MeshRenderer>().sharedMaterial = eyeMat;
+            }
+            var light = eyes.AddComponent<Light>();
+            light.type = LightType.Point; light.range = 2.5f; light.intensity = 1.2f; light.color = new Color(1f, 0.8f, 0.3f); light.shadows = LightShadows.None;
         }
 
         void FaceTarget()
@@ -143,7 +206,17 @@ namespace Evolve.Combat
             if (m == null) return;
             if (phase == MovePhase.Windup) BeginWindup(m);
             else if (phase == MovePhase.Active) loco?.PlayAction("Strike_" + m.Anim);
-            else if (phase == MovePhase.Recover) loco?.PlayAction("Recover_" + m.Anim);
+            else if (phase == MovePhase.Recover)
+            {
+                loco?.PlayAction("Recover_" + m.Anim);
+                if (m.RetreatDistance > 0f)   // hit and run: it bolts away from the player
+                {
+                    retreatLeft = m.RetreatDistance;
+                    Vector3 away = target != null ? Flat(transform.position - target.transform.position) : -transform.forward;
+                    retreatDir = away.sqrMagnitude > 1e-4f ? away.normalized : -transform.forward;
+                }
+                if (m.Shape == MoveShape.IceDrop) IceImpact(m);
+            }
         }
 
         void BeginWindup(MoveDef m)
@@ -159,18 +232,49 @@ namespace Evolve.Combat
             hitDone = false;
             strikeDir = target != null ? Flat(target.transform.position - transform.position).normalized : transform.forward;
             if (strikeDir.sqrMagnitude < 1e-4f) strikeDir = transform.forward;
+            if (m.Shape == MoveShape.IceDrop && target != null)
+            {
+                iceSpot = target.transform.position; iceArmed = true;
+                SkillFx.Ring(iceSpot, m.Radius, IceColor, m.Active, 0.3f);   // the ring under the player's feet: step out before the block falls
+            }
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);
         }
 
         void TickStrike(MoveDef m)
         {
+            if (m.Shape == MoveShape.Gust) { Gust(m); return; }
             if (m.Shape != MoveShape.Lunge && m.Shape != MoveShape.Charge) return;
             if (m.Active > 0f && motor != null && !motor.Move(strikeDir, m.Distance / m.Active))
             {
                 if (m.Shape == MoveShape.Charge) { CreatureStatus.Stun(this, 2f); scheduler.Stun(2f); loco?.PlayAction("Stun"); return; }   // hit a wall: dazed
             }
             if (!hitDone && target != null && Flat(target.transform.position - transform.position).magnitude <= Radius + HitReach) { Hurt(m, Radius + HitReach); hitDone = true; }
+        }
+
+        void Gust(MoveDef m)
+        {
+            if (target == null) return;
+            Vector3 away = Flat(target.transform.position - transform.position);
+            if (away.magnitude > m.MaxRange) return;
+            bool holds = (target.TryGetComponent(out BodyState bs) && (bs.Rooted || bs.Climbing)) || LatchSession.Active != null;   // Thu Mình, Bám Vách, or already gripping something
+            float mass = target.TryGetComponent(out Evolve.Swallow.SlimeBody body) ? body.Mass : 10f;
+            float speed = WindRules.PushSpeed(m.Force, mass, holds);
+            if (speed > 0f) WindPush.Apply(target, away.normalized * speed, 0.15f);
+        }
+
+        /// <summary>The ice block lands where the ring was: anyone still standing in it is hurt and frozen.</summary>
+        void IceImpact(MoveDef m)
+        {
+            if (!iceArmed) return;
+            iceArmed = false;
+            foreach (var p in SurvivalStats.All)
+            {
+                if (p == null || p.IsRemote || p.State.IsDead || Flat(p.transform.position - iceSpot).magnitude > m.Radius) continue;
+                p.State.Damage(m.Damage * DamageScale);
+                BodyState.On(p.gameObject).Root(m.Freeze);
+                if (p.TryGetComponent(out Evolve.Player.SlimeController sc)) sc.FreezeFor(m.Freeze);
+            }
         }
 
         void Hurt(MoveDef m, float reach)

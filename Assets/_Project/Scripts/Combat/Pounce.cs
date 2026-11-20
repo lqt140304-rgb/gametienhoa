@@ -73,7 +73,7 @@ namespace Evolve.Combat
 
         void Add(Component c, bool replica, bool latched)
         {
-            if (replica) return;
+            if (replica || (c.TryGetComponent(out CreatureCombat cc) && cc.IsHidden)) return;   // a lurking creature cannot be seen, so it cannot be pounced
             candidates.Add(new Candidate(c.transform.position.x, c.transform.position.z, latched));
             creatures.Add(c);
         }
