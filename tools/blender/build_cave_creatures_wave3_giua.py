@@ -196,12 +196,11 @@ def build_23_ech_doc_dom(out_dir, prev_dir):
 
     def frog_skin(p, n):
         spot = math.sin(p.x * 26.0) * math.cos(p.y * 24.0) * math.sin(p.z * 22.0)
-        if spot > 0.42:
-            return (0.94, 0.36, 0.88)
+        spot_t = w1._clamp01((spot - 0.30) * 3.5)
         base = w1._lerp3((0.12, 0.16, 0.34), (0.22, 0.48, 0.42), 0.45 + 0.4 * max(0.0, n.z))
-        if n.z < -0.25:
-            base = w1._lerp3(base, (0.72, 0.82, 0.65), 0.6)
-        return base
+        belly_t = w1._clamp01((-n.z - 0.10) * 2.0)
+        base = w1._lerp3(base, (0.72, 0.82, 0.65), belly_t * 0.65)
+        return w1._lerp3(base, (0.94, 0.36, 0.88), spot_t)
 
     # Thân ếch ngồi rình săn mồi + đầu rộng + 4 chân + đùi sau bật nhảy điêu khắc liền mạch
     w2._add_sculpted_blob(body_bm, body_col, (0.0, 0.04, 0.20), (0.185, 0.235, 0.145), rot=(-0.42, 0.0, 0.0),
@@ -520,9 +519,8 @@ def build_27_ky_nhong_lua(out_dir, prev_dir):
 
     def fire_skin(p, n):
         base = w1._lerp3((0.72, 0.14, 0.06), (0.98, 0.45, 0.10), 0.4 + 0.4 * math.sin(p.y * 16.0))
-        if n.z < -0.25:
-            base = w1._lerp3(base, (0.98, 0.78, 0.28), 0.65)
-        return base
+        belly_t = w1._clamp01((-n.z - 0.10) * 2.0)
+        return w1._lerp3(base, (0.98, 0.78, 0.28), belly_t * 0.70)
 
     # Thân kỳ nhông + đầu bò sát có hàm-má + vai/đùi + 4 chân điêu khắc liền mạch bằng Voxel Remesh
     pts = [(0.0, -0.44, 0.25), (0.02, -0.24, 0.20), (0.04, -0.02, 0.18),
@@ -806,11 +804,12 @@ def build_31_chon_khe(out_dir, prev_dir):
 
     def ferret_fur(p, n):
         base = w1._lerp3((0.34, 0.25, 0.21), (0.72, 0.62, 0.50), 0.35 + 0.4 * max(0.0, n.z))
-        if p.y < -0.26 or p.y > 0.36:
-            base = w1._lerp3(base, (0.16, 0.14, 0.16), 0.60)
-        if n.z < -0.35 and p.y > -0.25 and p.y < 0.32:
-            base = w1._lerp3(base, (0.82, 0.75, 0.62), 0.55)
-        return base
+        head_t = w1._clamp01((-p.y - 0.18) * 4.5)
+        tail_t = w1._clamp01((p.y - 0.28) * 4.5)
+        dark_t = max(head_t, tail_t)
+        base = w1._lerp3(base, (0.16, 0.14, 0.16), dark_t * 0.65)
+        belly_t = w1._clamp01((-n.z - 0.15) * 2.2) * (1.0 - dark_t)
+        return w1._lerp3(base, (0.82, 0.75, 0.62), belly_t * 0.60)
 
     # Khung cột sống + cơ bắp vai/lưng/eo/hông + đuôi chồn xù điêu khắc liền mạch
     w1._add_tube(body_bm, body_col, [(0.0, -0.34, 0.28), (0.02, -0.10, 0.21), (-0.01, 0.12, 0.20), (0.0, 0.28, 0.22)],

@@ -510,9 +510,8 @@ def build_16_reu_me(out_dir, prev_dir):
     def bark_moss(p, n):
         noise = 0.5 + 0.5 * math.sin(p.x * 11.0 + p.y * 13.0 + p.z * 9.0)
         base = w1._lerp3((0.16, 0.22, 0.10), (0.28, 0.52, 0.20), noise)
-        if n.z > 0.35:
-            base = w1._lerp3(base, (0.36, 0.68, 0.26), 0.55)
-        return base
+        top_t = w1._clamp01((n.z - 0.15) * 1.35)
+        return w1._lerp3(base, (0.36, 0.68, 0.26), top_t * 0.60)
 
     def regen_glow(p, n):
         return w1._lerp3((0.28, 0.92, 0.45), (0.78, 1.0, 0.52), 0.5 + 0.5 * math.sin(p.z * 16.0))

@@ -142,7 +142,13 @@ def _make_creature_materials():
         bsdf.inputs["Specular IOR Level"].default_value = 0.90
     nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
 
-    return [m_org, m_chi, m_cry]
+    m_cry2 = m_cry.copy()
+    m_cry2.name = "Wildlife_Glow_Emissive"
+    m_wing = m_org.copy()
+    m_wing.name = "Wildlife_Wing_Membrane"
+    m_detail = m_org.copy()
+    m_detail.name = "Wildlife_Detail_Separate"
+    return [m_org, m_chi, m_cry, m_cry2, m_wing, m_detail]
 
 
 # ------------------------------------------------------------------ Thư viện Hình Khối Giải Phẫu 3D (Mọi chi tiết có bề dày 3D thật)
@@ -154,7 +160,7 @@ def _new_bm():
 
 
 def _sculpt_remesh_into(dst_bm, dst_col, src_bm, voxel_size=0.016, smooth_iter=6,
-                        decimate_ratio=0.45, mat_index=0, color_fn=None):
+                        decimate_ratio=0.74, mat_index=0, color_fn=None):
     """Hòa trộn toàn bộ khối chồng lấn trong src_bm bằng Voxel Remesh + Smooth để tạo bề mặt điêu khắc hữu cơ liền mạch,
     sau đó tô Vertex Color theo vị trí/pháp tuyến và gộp vào dst_bm."""
     tmp_mesh = bpy.data.meshes.new("_tmp_sculpt")
@@ -706,7 +712,7 @@ def _apply_organic_voxel_remesh(bm, flat_faces):
         return idx_to_col.get(idx, (0.5, 0.5, 0.5))
 
     _sculpt_remesh_into(bm, col_layer, org_bm, voxel_size=voxel_size, smooth_iter=6,
-                        decimate_ratio=0.45, mat_index=0, color_fn=lookup_col)
+                        decimate_ratio=0.74, mat_index=0, color_fn=lookup_col)
 
 
 _WAVE1_AUTO_REMESH = False
@@ -1072,7 +1078,7 @@ def build_03_than_lan_bo_ho(out_dir, prev_dir):
     _add_tube(
         bm, col,
         [(0.07, -0.71, 0.22), (0.11, -0.85, 0.21), (0.14, -0.97, 0.18), (0.10, -1.05, 0.16)],
-        [0.020, 0.015, 0.011, 0.016], sides=10, subdiv=2, mat_index=0,
+        [0.020, 0.015, 0.011, 0.016], sides=10, subdiv=2, mat_index=5,
         color_fn=lambda _p, _n: (0.82, 0.16, 0.26),
     )
 
@@ -1082,7 +1088,7 @@ def build_03_than_lan_bo_ho(out_dir, prev_dir):
         h_fin = 0.075 * (1.0 - k / len(spine_pts) * 0.55)
         _add_crystal_prism(
             bm, col, bp + Vector((0, 0, rz * 0.62)),
-            Vector((0, 0.35, 0.94)), h_fin, 0.022, 0.010, sides=4, mat_index=0,
+            Vector((0, 0.35, 0.94)), h_fin, 0.022, 0.010, sides=4, mat_index=5,
             color_fn=lambda _p, _n: (0.36, 0.52, 0.16), flat_faces=flat
         )
 
@@ -1408,8 +1414,8 @@ def build_06_tho_la(out_dir, prev_dir):
     for sx in (-1.0, 1.0):
         _add_ellipsoid(bm, col, (0.03 + sx * 0.068, -0.42, 0.365), (0.052, 0.052, 0.044), segs=12, rings=8, mat_index=0, color_fn=lambda _p, _n: (0.72, 0.66, 0.48))
         for wy in (0.0, 0.015):
-            _add_tube(bm, col, [(0.03 + sx * 0.05, -0.47, 0.36 + wy), (0.03 + sx * 0.14, -0.49, 0.35 + wy * 1.4)], [0.004, 0.002], sides=5, subdiv=0, mat_index=0, color_fn=lambda _p, _n: (0.86, 0.84, 0.74))
-    _add_ellipsoid(bm, col, (0.045, -0.51, 0.37), (0.025, 0.020, 0.018), segs=10, rings=6, mat_index=0, color_fn=lambda _p, _n: (0.82, 0.42, 0.42))
+            _add_tube(bm, col, [(0.03 + sx * 0.05, -0.47, 0.36 + wy), (0.03 + sx * 0.14, -0.49, 0.35 + wy * 1.4)], [0.004, 0.002], sides=5, subdiv=0, mat_index=5, color_fn=lambda _p, _n: (0.86, 0.84, 0.74))
+    _add_ellipsoid(bm, col, (0.045, -0.51, 0.37), (0.025, 0.020, 0.018), segs=10, rings=6, mat_index=5, color_fn=lambda _p, _n: (0.82, 0.42, 0.42))
 
     # Mắt to long lanh + Đôi tai lá bất đối xứng (1 tai vểnh nghe, 1 tai hơi ngả mềm) + nụ hoa Luma nhỏ
     ear_dirs = [(-1.0, Vector((-0.34, 0.38, 0.86)), 0.39), (1.0, Vector((0.46, 0.24, 0.82)), 0.41)]
@@ -1418,12 +1424,12 @@ def build_06_tho_la(out_dir, prev_dir):
         _add_3d_leaf_blade(
             bm, col, (0.03 + sx * 0.055, -0.31, 0.46),
             edir, Vector((0.0, -1.0, 0.3)),
-            elen, 0.115, thickness=0.018, curl=0.14, vein_mat=0, color_fn=leaf_ear_col
+            elen, 0.115, thickness=0.018, curl=0.14, vein_mat=5, color_fn=leaf_ear_col
         )
         _add_3d_leaf_blade(
             bm, col, (0.02 + sx * 0.075, -0.22, 0.31),
             Vector((sx * 0.38, 0.35, -0.68)), Vector((0.0, -1.0, 0.0)),
-            0.14, 0.056, thickness=0.014, curl=0.05, vein_mat=0, color_fn=leaf_ear_col
+            0.14, 0.056, thickness=0.014, curl=0.05, vein_mat=5, color_fn=leaf_ear_col
         )
     # Nụ sương Luma phát sáng nhẹ đính bên gốc tai & chùm lá đuôi
     _add_luma_bud(bm, col, (0.08, -0.30, 0.47), Vector((0.4, -0.2, 0.9)), size=0.024, hue=0.16)
@@ -1433,7 +1439,7 @@ def build_06_tho_la(out_dir, prev_dir):
         _add_3d_leaf_blade(
             bm, col, (0.0, 0.34, 0.22),
             Vector((math.sin(ang_s) * 0.45, math.cos(ang_s) * 0.85, pitch)), Vector((0.0, 0.0, 1.0)),
-            0.20, 0.068, thickness=0.014, curl=0.10, vein_mat=0, color_fn=leaf_ear_col
+            0.20, 0.068, thickness=0.014, curl=0.10, vein_mat=5, color_fn=leaf_ear_col
         )
 
     # 2 chân sau gập đàn hồi + chân trước phải hơi nhấc nhẹ sinh động
@@ -1722,7 +1728,7 @@ def build_09_doi_am_thoa(out_dir, prev_dir):
             [0.020, 0.019, 0.017, 0.010], sides=6, subdiv=1, mat_index=2, color_fn=violet_glow, flat_faces=flat, is_flat=True
         )
         # Tai dơi vểnh thu âm
-        _add_3d_leaf_blade(bm, col, (sx * 0.075, -0.14, 0.59), Vector((sx * 0.42, 0.18, 0.88)), Vector((0.0, -1.0, 0.0)), 0.16, 0.045, thickness=0.012, curl=0.08, vein_mat=0, color_fn=bat_fur)
+        _add_3d_leaf_blade(bm, col, (sx * 0.075, -0.14, 0.59), Vector((sx * 0.42, 0.18, 0.88)), Vector((0.0, -1.0, 0.0)), 0.16, 0.045, thickness=0.012, curl=0.08, vein_mat=5, color_fn=bat_fur)
         _add_eye_bulb(bm, col, (sx * 0.068, -0.23, 0.56), 0.022, yaw=sx * 0.45, eye_col=(0.94, 0.18, 0.52))
 
     # Đôi cánh sải ~1.18m có xương ngón tay + màng cánh 3D căng liền giữa các đốt xương
@@ -1736,7 +1742,7 @@ def build_09_doi_am_thoa(out_dir, prev_dir):
         hip = Vector((sx * 0.09, 0.18, 0.40))
         for p_a, p_b in [(shoulder, elbow), (elbow, wrist), (wrist, tip1), (wrist, tip2), (wrist, tip3)]:
             _add_tube(bm, col, [p_a, p_b], [0.020, 0.011], sides=8, subdiv=0, mat_index=1, color_fn=bat_fur)
-        _add_wing_panel_3d(bm, col, wrist, [elbow, shoulder, hip, tip3, tip2, tip1], thickness=0.012, mat_index=0, color_fn=lambda p, _n: _lerp3((0.16, 0.06, 0.26), (0.38, 0.10, 0.56), _clamp01(abs(p.x) * 1.4)))
+        _add_wing_panel_3d(bm, col, wrist, [elbow, shoulder, hip, tip3, tip2, tip1], thickness=0.012, mat_index=4, color_fn=lambda p, _n: _lerp3((0.16, 0.06, 0.26), (0.38, 0.10, 0.56), _clamp01(abs(p.x) * 1.4)))
         # Móng chân sau bám nhẹ dưới sàn
         _add_tube(bm, col, [(sx * 0.06, 0.20, 0.38), (sx * 0.08, 0.26, 0.18), (sx * 0.07, 0.22, 0.01)], [0.022, 0.015, 0.008], sides=8, subdiv=1, mat_index=0, color_fn=bat_fur)
 
