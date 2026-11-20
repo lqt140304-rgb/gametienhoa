@@ -143,6 +143,8 @@ namespace Evolve.Creatures
         /// <summary>0 = just ate, 1 = starving: after a minute fed it gets hungry over two more.</summary>
         public float Hunger01 => Mathf.Clamp01((Time.time - lastAteAt - FullSeconds) / HungerRiseSeconds);
         public void NoteAte() => lastAteAt = Time.time;
+        /// <summary>Sets how hungry it is right now (0 fed, 1 starving); the god menu spawns test hunters hungry so they go hunting at once.</summary>
+        public void SetHunger01(float h) => lastAteAt = Time.time - FullSeconds - Mathf.Clamp01(h) * HungerRiseSeconds;
         bool dead;
 
         CreatureLocomotion locomotion;
@@ -156,7 +158,7 @@ namespace Evolve.Creatures
             if (!TryGetComponent(out locomotion)) locomotion = gameObject.AddComponent<CreatureLocomotion>();
             if (Evolve.Combat.MovesetSeed.Has(name) && !TryGetComponent(out combat)) combat = gameObject.AddComponent<Evolve.Combat.CreatureCombat>();   // telegraphed attacks
             Health = maxHealth;
-            lastAteAt = Time.time - UnityEngine.Random.Range(0f, FullSeconds + HungerRiseSeconds * 0.5f);   // they start at different hunger
+            lastAteAt = Time.time - UnityEngine.Random.Range(FullSeconds + HungerRiseSeconds * 0.1f, FullSeconds + HungerRiseSeconds * 0.7f);   // they start at different, already noticeable hunger, so they hunt soon
             HomeCenter = transform.position;
             NetId = NetWorld.NextId();
         }
@@ -352,7 +354,7 @@ namespace Evolve.Creatures
             stats.State.Damage(biteDamage);
             var playerRb = stats.GetComponent<Rigidbody>();
             if (playerRb != null)
-                playerRb.AddForce(Flat(stats.transform.position - transform.position) * knockback + Vector3.up * 2f, ForceMode.VelocityChange);
+                if (!playerRb.isKinematic) playerRb.AddForce(Flat(stats.transform.position - transform.position) * knockback + Vector3.up * 2f, ForceMode.VelocityChange);
             retreatUntil = Time.time + retreatTime;
 
             if (host != null && host.ContactDamage > 0f) TakeDamage(host.ContactDamage, stats);

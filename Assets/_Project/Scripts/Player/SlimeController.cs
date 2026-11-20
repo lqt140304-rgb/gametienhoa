@@ -161,7 +161,8 @@ namespace Evolve.Player
         void FixedUpdate()
         {
             if (stats.State.IsDead) return;
-            if (stats.Frozen) { rb.linearVelocity = Vector3.zero; return; }   // the pre-game picking space: the body stays where it is
+            if (stats.Frozen) { if (!rb.isKinematic) rb.linearVelocity = Vector3.zero; return; }   // the pre-game picking space: the body stays where it is
+            if (rb.isKinematic) return;   // flown by hand (ghost mode): a kinematic body takes no velocity
             UpdateBodyScale();
             Vector3 dir = GetMoveDirection();
             if (Time.time < frozenUntil) dir = Vector3.zero;   // Run Rẩy

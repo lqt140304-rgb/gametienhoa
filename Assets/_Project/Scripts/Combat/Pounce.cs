@@ -96,12 +96,12 @@ namespace Evolve.Combat
 
             if (outcome == PounceOutcome.Bounce)
             {
-                rb.AddForce(-to.normalized * 5f + Vector3.up * 3f, ForceMode.VelocityChange);
+                Impulse.Kick(rb, -to.normalized * 5f + Vector3.up * 3f);
                 if (controller != null) controller.FreezeFor(0.4f);
                 Echo.Say("«Quá to để vồ.»");
                 return;
             }
-            rb.AddForce(to.normalized * Lunge + Vector3.up * 2f, ForceMode.VelocityChange);
+            Impulse.Kick(rb, to.normalized * Lunge + Vector3.up * 2f);
             if (outcome == PounceOutcome.SwallowWhole && target is Prey prey) { prey.PounceCatch(stats); return; }
             // a hunter small enough to swallow is still held and digested (hunters leave a carcass to learn from)
             LatchSession.Begin(stats, target, StruggleSeed.For(target.name));

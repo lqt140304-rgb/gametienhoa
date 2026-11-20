@@ -120,5 +120,12 @@ namespace Evolve.Tests.EditMode
             foreach (var id in new[] { "tho_la", "coc_ho_gia", "slime_da" }) Assert.IsFalse(CaveEcologySeed.EatsCarcass(id), id);
             Assert.AreEqual("cho_xuong", CaveEcologySeed.GuardianId);
         }
+
+        [Test] public void Hunter_HuntsPreyWhenOnlyALittleHungry()
+        {
+            var inp = Base(); inp.HasPrey = true; inp.PreyDist = 6f;
+            inp.Hunger = 0.25f; Assert.AreEqual(HunterMode.ChasePrey, CreatureBehaviorRules.DecideHunter(inp));
+            inp.Hunger = 0.1f; Assert.AreEqual(HunterMode.Wander, CreatureBehaviorRules.DecideHunter(inp));   // a full belly does not hunt
+        }
     }
 }

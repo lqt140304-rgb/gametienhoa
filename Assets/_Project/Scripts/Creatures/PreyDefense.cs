@@ -189,7 +189,7 @@ namespace Evolve.Creatures
                 else
                 {
                     if (dmg > 0f) player.State.Damage(dmg);
-                    if (def.CounterPush > 0f && player.TryGetComponent(out Rigidbody rb)) rb.AddForce(knock + Vector3.up * 1.5f, ForceMode.VelocityChange);
+                    if (def.CounterPush > 0f && player.TryGetComponent(out Rigidbody rb) && !rb.isKinematic) rb.AddForce(knock + Vector3.up * 1.5f, ForceMode.VelocityChange);
                     if (def.CounterSlow > 0f) BodyState.On(player.gameObject).Slow(def.CounterSlow, def.CounterSlowSeconds);
                     if (def.CounterInfect == InfectKind.Spore) player.State.TryInfect(DiseaseKind.SporeBlur, 0.6f);
                     else if (def.CounterInfect == InfectKind.Rot) player.State.TryInfect(DiseaseKind.RottenGel, 0.6f);

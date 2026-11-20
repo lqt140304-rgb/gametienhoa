@@ -275,6 +275,7 @@ namespace Evolve.DevTools
             pos.y = Evolve.World.GroundHeight.At(pos.x, pos.z, pos.y) + prefab.transform.position.y;
             var go = Instantiate(prefab, pos, Quaternion.identity);
             if (go.TryGetComponent(out Prey prey)) prey.HomeCenter = pos;
+            if (go.TryGetComponent(out Predator hunter)) hunter.SetHunger01(0.8f);   // hungry, so it goes hunting at once
             if (go.GetComponent<CreatureBrain>() == null) go.AddComponent<CreatureBrain>();
             if (go.GetComponent<Prey>() != null && go.GetComponent<PreyDefense>() == null && PreyDefenseSeed.FindBySpecies(displayName) != null) go.AddComponent<PreyDefense>();
             testCreatures.Add(go);
@@ -294,7 +295,7 @@ namespace Evolve.DevTools
             sphere.transform.position = pos;
             sphere.GetComponent<Renderer>().material.color = predator ? Color.Lerp(new Color(0.85f, 0.4f, 0.3f), new Color(0.5f, 0.1f, 0.2f), Mathf.InverseLerp(15f, 40f, mass)) : new Color(0.9f, 0.8f, 0.4f);
             sphere.AddComponent<Rigidbody>();   // made kinematic by Prey / Predator
-            if (predator) sphere.AddComponent<Predator>().SetStats(mass, health);
+            if (predator) { var hunter = sphere.AddComponent<Predator>(); hunter.SetStats(mass, health); hunter.SetHunger01(0.8f); }   // hungry, so it goes hunting at once
             else
             {
                 var prey = sphere.AddComponent<Prey>();

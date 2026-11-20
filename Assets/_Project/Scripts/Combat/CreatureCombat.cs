@@ -368,7 +368,7 @@ namespace Evolve.Combat
                 if (away.magnitude > reach) continue;
                 p.State.Damage(m.Damage * DamageScale);
                 var prb = p.GetComponent<Rigidbody>();
-                if (prb != null) prb.AddForce(away.normalized * 5f + Vector3.up * 2f, ForceMode.VelocityChange);
+                Impulse.Kick(prb, away.normalized * 5f + Vector3.up * 2f);
                 if (m.Shape != MoveShape.Spin) break;   // a lunge or a charge hits one player
             }
         }

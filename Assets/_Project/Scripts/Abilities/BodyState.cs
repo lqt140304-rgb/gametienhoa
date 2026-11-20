@@ -124,7 +124,7 @@ namespace Evolve.Abilities
 
         void FixedUpdate()
         {
-            if (rb == null) return;
+            if (rb == null || rb.isKinematic) return;   // a kinematic body (ghost mode) takes no velocity
             Vector3 v = rb.linearVelocity;
             Vector3 flat = new Vector3(v.x, 0f, v.z);
             if (flat.sqrMagnitude > 0.04f) lastMoveDir = flat.normalized;

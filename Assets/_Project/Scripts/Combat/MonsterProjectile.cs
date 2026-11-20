@@ -38,7 +38,7 @@ namespace Evolve.Combat
                 if (!ThrowRules.Hits(pos.x, pos.y, pos.z, c.x, c.y, c.z, radius)) continue;
                 p.State.Damage(damage);
                 var prb = p.GetComponent<Rigidbody>();
-                if (prb != null) prb.AddForce((p.transform.position - transform.position).normalized * 3f + Vector3.up, ForceMode.VelocityChange);
+                Impulse.Kick(prb, (p.transform.position - transform.position).normalized * 3f + Vector3.up);
                 Destroy(gameObject);
                 return;
             }

@@ -97,7 +97,7 @@ namespace Evolve.Combat
                 var b = monsterCol.bounds;
                 Vector3 right = Camera.main != null ? Camera.main.transform.right : Vector3.right;
                 Vector3 top = b.center + Vector3.up * (b.extents.y + 0.35f) + right * ((Game.Dot - 0.5f) * b.extents.x * 2f);
-                rb.linearVelocity = Vector3.zero;
+                if (!rb.isKinematic) rb.linearVelocity = Vector3.zero;
                 rb.MovePosition(Vector3.Lerp(rb.position, top, 0.35f));
             }
             if (controller != null) controller.FreezeFor(0.2f);
@@ -126,7 +126,7 @@ namespace Evolve.Combat
             if (state == LatchState.Escaped && monster != null)
             {
                 Vector3 away = (transform.position - monster.transform.position); away.y = 0f;
-                if (rb != null) rb.AddForce(away.normalized * 4f + Vector3.up * 3f, ForceMode.VelocityChange);
+                Impulse.Kick(rb, away.normalized * 4f + Vector3.up * 3f);
                 if (controller != null) controller.FreezeFor(0.5f);
                 if (monsterSurvives)   // it hurts and runs, and it remembers this slime
                 {

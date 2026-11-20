@@ -37,7 +37,7 @@ namespace Evolve.Creatures
         /// <summary>A prey fears a slime that could swallow it whole (the swallow rule: the prey is at most 80% of the slime's mass).</summary>
         public const float SwallowShare = 0.8f;
 
-        public const float AvoidRange = 8f, PreySense = 12f, HungerToHunt = 0.4f, HungerToScavenge = 0.25f;
+        public const float AvoidRange = 8f, PreySense = 12f, HungerToHunt = 0.2f, HungerToScavenge = 0.25f;
         public const float RivalRange = 6f, RivalAvoidRatio = 1.3f, RivalFightRatio = 1.0f, RivalFightHunger = 0.5f;
         public const float GuardHome = 3f, ScavengeRange = 20f;
 
