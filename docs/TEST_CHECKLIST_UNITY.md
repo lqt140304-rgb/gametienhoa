@@ -61,7 +61,7 @@ Bật "Vô hạn năng lượng" và "Không hồi chiêu". Bấm "Học kỹ n�
 - [ ] Hiệu năng: bật F4 xem có tụt khung hình khi dùng nhiều kỹ năng.
 
 ### D. Bị động và 5 ô (Biến Hình trong hang trú)
-- [ ] "Gắn tối đa bị động hang": Da Dày +10 máu tối đa; Vỏ Cứng bị cắn mất ít hơn; Sóng Dò Mạnh (chưa có tác dụng: đang chờ bên làm hang).
+- [ ] "Gắn tối đa bị động hang": Da Dày +10 máu tối đa; Vỏ Cứng bị cắn mất ít hơn; Sóng Dò Mạnh: vòng sóng dò (phím quét) đi xa hơn rõ, khoảng gấp 1,5.
 - [ ] Bảng Biến Hình hiện **5 ô bị động** thay cho các ô cơ thể; nặn, tháo hoạt động đúng.
 
 ### E. Con mồi chống trả (mục 43)
@@ -120,7 +120,7 @@ Tạo **cùng hang**: ví dụ kẻ săn `Thằn Lằn Bờ Hồ` + con mồi `B
 - [ ] "Mô phỏng sinh thái 2 giờ": Console in bảng 11 hang; con mồi trung bình 7–9, kẻ săn 1–2, Chúa Hang 1, không loài nào 0 liên tục.
 
 ### I. Chưa làm được, đừng thử
-Co-op với nhiều người; Sóng Dò Mạnh kéo dài tầm quét; mô hình giàu của B1 chưa nối vào vùng hồ (`Region.cs` vẫn mô hình cũ); kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
+Co-op với nhiều người; mô hình giàu của B1 chưa nối vào vùng hồ (`Region.cs` vẫn mô hình cũ); kẻ săn vòng qua vật cản; mesh Blender; âm thanh kỳ ngộ.
 
 ## 6. Gửi lại cho Claude
 - Ảnh Console (cả cảnh báo vàng nếu lặp nhiều).
