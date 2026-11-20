@@ -106,6 +106,8 @@ namespace Evolve.Maze
         public static readonly ChamberTheme[] NongThemes =
         {
             ChamberTheme.LumaMushroomGrove,
+            ChamberTheme.BreathingMoss,
+            ChamberTheme.AbandonedNest,
             ChamberTheme.RootCanopy,
             ChamberTheme.DampReedHollow,
             ChamberTheme.AmberPebbleGarden
@@ -255,6 +257,63 @@ namespace Evolve.Maze
                 11,
                 new[] { "Prey" }, 5,
                 new[] { "Predator" }, 1),
+
+            [ChamberTheme.AmberPebbleGarden] = new ChamberThemeProfile(
+                ChamberTheme.AmberPebbleGarden,
+                "Vườn Đá Hổ Phách",
+                new MazeColor(0.28f, 0.24f, 0.16f),
+                new MazeColor(0.30f, 0.25f, 0.18f),
+                0.18f, 0.14f,
+                new MazeColor(1.00f, 0.80f, 0.42f), 2.5f,
+                new MazeColor(0.96f, 0.55f, 0.20f), 1.8f,
+                new[] { "Flora_Pebbles_0", "Flora_Fern_0", "Flora_Flower_0", "BulbPlant_0" },
+                new[] { "HangRoot_0" },
+                new[]
+                {
+                    new ThemeForageItem("Forage_AmberBud", "Nụ Hổ Phách", FoodKind.AmberBud),
+                    new ThemeForageItem("Forage_LimeCrystal", "Đá Vôi", FoodKind.LimeCrystal, isMineral: true)
+                },
+                9,
+                new[] { "Prey" }, 4,
+                new[] { "Predator" }, 1),
+
+            [ChamberTheme.BreathingMoss] = new ChamberThemeProfile(
+                ChamberTheme.BreathingMoss,
+                "Hang Rêu Thở",
+                new MazeColor(0.14f, 0.30f, 0.18f),
+                new MazeColor(0.18f, 0.26f, 0.20f),
+                0.15f, 0.14f,
+                new MazeColor(0.42f, 0.94f, 0.62f), 2.5f,
+                new MazeColor(0.30f, 0.86f, 0.72f), 1.8f,
+                new[] { "Flora_Moss_0", "Flora_Moss_1", "Flora_Fern_0", "Flora_Clover_0" },
+                new[] { "Flora_Vine_0", "HangRoot_0" },
+                new[]
+                {
+                    new ThemeForageItem("Forage_MossClump", "Rêu Sáng", FoodKind.GlowMoss),
+                    new ThemeForageItem("Forage_SweetRoot", "Cỏ Ngọt", FoodKind.SweetRoot)
+                },
+                10,
+                new[] { "SenReu", "MuoiReu" }, 6,
+                new[] { "RetReu", "ReuMe" }, 2),
+
+            [ChamberTheme.AbandonedNest] = new ChamberThemeProfile(
+                ChamberTheme.AbandonedNest,
+                "Tổ Bỏ Hoang",
+                new MazeColor(0.28f, 0.24f, 0.17f),
+                new MazeColor(0.26f, 0.22f, 0.18f),
+                0.12f, 0.16f,
+                new MazeColor(0.95f, 0.84f, 0.56f), 2.4f,
+                new MazeColor(0.45f, 0.85f, 0.80f), 1.6f,
+                new[] { "Flora_Twigs_0", "Flora_Moss_0", "Flora_Leaves_0", "Flora_RootArc_0" },
+                new[] { "HangRoot_0", "VaultStalactite_0" },
+                new[]
+                {
+                    new ThemeForageItem("Forage_SweetRoot", "Cỏ Ngọt", FoodKind.SweetRoot),
+                    new ThemeForageItem("Forage_MossClump", "Rêu Sáng", FoodKind.GlowMoss)
+                },
+                8,
+                new[] { "ChimNon" }, 6,
+                new[] { "RanTromTrung", "ChimHangMe" }, 2),
 
             [ChamberTheme.AmberPebbleGarden] = new ChamberThemeProfile(
                 ChamberTheme.AmberPebbleGarden,

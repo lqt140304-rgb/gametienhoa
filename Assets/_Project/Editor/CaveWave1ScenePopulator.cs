@@ -272,9 +272,97 @@ namespace Evolve.EditorTools
             }
         }
 
+        public static void PopulateBreathingMossChamber(Transform chamberRoot, Vector3 origin)
+        {
+            PopulateEcosystem(
+                chamberRoot,
+                origin,
+                null,
+                isBirth: false,
+                speciesNames: new[] { "SenReu", "MuoiReu", "RetReu", "ReuMe" },
+                denOffsets: new[]
+                {
+                    new Vector2(-18f, 12f),
+                    new Vector2(18f, 10f),
+                    new Vector2(-14f, -18f),
+                    new Vector2(14f, -14f)
+                },
+                counts: new[] { 7, 7, 2, 1 });
+
+            var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
+            shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
+            {
+                new ChamberLightShaftRegistrar.ShaftSpec { localCenter = new Vector3(0f, 0f, 0f), radius = 7f, topLocalY = 24f },
+            });
+
+            // Kỳ ngộ: Hơi Thở Của Rêu (thảm rêu phát sáng theo nhịp thở)
+            var mossGo = new GameObject("Kỳ Ngộ - Hơi Thở Của Rêu");
+            mossGo.transform.SetParent(chamberRoot, false);
+            mossGo.transform.position = SnapToFloor(origin, 0f, 0f, null, false);
+            var pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pad.name = "Thảm Rêu Thở";
+            pad.transform.SetParent(mossGo.transform, false);
+            pad.transform.localScale = new Vector3(9f, 0.25f, 9f);
+            var padRend = pad.GetComponent<Renderer>();
+            if (padRend != null) padRend.sharedMaterial = LakeGround.OpaqueMaterial("BreathingMossPad", new Color(0.22f, 0.86f, 0.50f), 0.2f, false, new Color(0.18f, 0.72f, 0.42f));
+            var col = mossGo.AddComponent<SphereCollider>();
+            col.radius = 5.0f;
+            col.isTrigger = true;
+            var light = new GameObject("Ánh Sáng Rêu Thở").AddComponent<Light>();
+            light.transform.SetParent(mossGo.transform, false);
+            light.transform.localPosition = Vector3.up * 3.5f;
+            light.type = LightType.Point;
+            light.range = 24f;
+            light.color = new Color(0.35f, 0.96f, 0.60f);
+            mossGo.AddComponent<BreathingMossEncounter>().Configure(light, padRend);
+        }
+
+        public static void PopulateAbandonedNestChamber(Transform chamberRoot, Vector3 origin)
+        {
+            PopulateEcosystem(
+                chamberRoot,
+                origin,
+                null,
+                isBirth: false,
+                speciesNames: new[] { "ChimNon", "RanTromTrung", "ChimHangMe" },
+                denOffsets: new[]
+                {
+                    new Vector2(-16f, 10f),
+                    new Vector2(18f, -14f),
+                    new Vector2(0f, 20f)
+                },
+                counts: new[] { 7, 2, 1 });
+
+            var shaftHost = chamberRoot.gameObject.AddComponent<ChamberLightShaftRegistrar>();
+            shaftHost.Configure(new List<ChamberLightShaftRegistrar.ShaftSpec>
+            {
+                new ChamberLightShaftRegistrar.ShaftSpec { localCenter = new Vector3(0f, 0f, 12f), radius = 6.5f, topLocalY = 26f },
+            });
+
+            // Kỳ ngộ: Quả Trứng Còn Sống trong khe tổ
+            var encGo = new GameObject("Kỳ Ngộ - Quả Trứng Còn Sống");
+            encGo.transform.SetParent(chamberRoot, false);
+            encGo.transform.position = SnapToFloor(origin, 0f, 12f, null, false);
+            var encounter = encGo.AddComponent<LivingEggEncounter>();
+
+            var eggFbx = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Models/Wildlife/Creature_TrungLa.fbx");
+            GameObject eggObj = eggFbx != null
+                ? (GameObject)PrefabUtility.InstantiatePrefab(eggFbx, encGo.transform)
+                : GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            eggObj.name = "Trứng Lạ";
+            eggObj.transform.localPosition = Vector3.zero;
+            eggObj.transform.localScale = Vector3.one * 1.4f;
+            var sc = eggObj.AddComponent<SphereCollider>();
+            sc.radius = 0.9f;
+            sc.isTrigger = true;
+            eggObj.AddComponent<LivingEggPickup>().Configure(encounter);
+        }
+
         static CaveCreaturesWave1Builder.CreatureSpec FindSpec(string pascalName)
         {
             foreach (var s in CaveCreaturesWave1Builder.Specs)
+                if (s.PascalName == pascalName) return s;
+            foreach (var s in CaveCreaturesWave2Builder.Specs)
                 if (s.PascalName == pascalName) return s;
             return default;
         }

@@ -77,6 +77,8 @@ namespace Evolve.Maze
         RootCanopy = 11,
         DampReedHollow = 12,
         AmberPebbleGarden = 13,
+        BreathingMoss = 14,
+        AbandonedNest = 15,
 
         // Tầng Giữa
         LimestoneStalactite = 20,

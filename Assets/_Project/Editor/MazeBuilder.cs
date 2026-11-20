@@ -51,6 +51,7 @@ namespace Evolve.EditorTools
             PropInstaller.EnsureRocks();
             PropInstaller.EnsureLandmarks();
             CaveCreaturesWave1Builder.EnsureAll();
+            CaveCreaturesWave2Builder.EnsureAll();
 
             // Dọn cả Cavern Maze Wall cũ (nếu có) để không bị 2 bộ miệng hang trùng nhau
             var oldWall = GameObject.Find("Cavern Maze Wall");

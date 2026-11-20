@@ -64,6 +64,23 @@ namespace Evolve.Maze
             Debug.Log($"[Kỳ Ngộ] Đã ghi nhận phần thưởng Gene (độ hiếm >= {minRarity}) — chờ Evolve.Traits.EncounterRewards.");
         }
 
+        public static void GrantUniqueGene(GameObject player, string uniqueId)
+        {
+            if (player == null) return;
+            if (TryInvokeStatic("GrantUniqueGene", player, uniqueId)) return;
+            Debug.Log($"[Kỳ Ngộ] Đã ghi nhận phần thưởng Gene lạ '{uniqueId}' — chờ Evolve.Traits.EncounterRewards.");
+        }
+
+        public static void CureDiseases(GameObject player)
+        {
+            if (player == null) return;
+            if (TryInvokeStatic("CureDiseases", player)) return;
+
+            var stats = player.GetComponent<SurvivalStats>();
+            if (stats != null)
+                stats.State.Health = stats.State.MaxHealth;
+        }
+
         static bool TryInvokeStatic(string methodName, params object[] args)
         {
             var t = RewardsType;

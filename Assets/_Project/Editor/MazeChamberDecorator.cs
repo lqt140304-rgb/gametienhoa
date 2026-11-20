@@ -75,7 +75,12 @@ namespace Evolve.EditorTools
 
             // 4. Thức ăn (Nutrient) & Sinh vật & Ánh sáng đa tầng
             PlaceForageNutrients(parent, node, seed, chamberRadius, tunnelAnglesDeg, profile, glowMat, rnd);
-            PlaceCreatures(parent, node, chamberRadius, profile, rnd);
+            if (node.Theme == ChamberTheme.BreathingMoss)
+                CaveWave1ScenePopulator.PopulateBreathingMossChamber(parent, parent.position);
+            else if (node.Theme == ChamberTheme.AbandonedNest)
+                CaveWave1ScenePopulator.PopulateAbandonedNestChamber(parent, parent.position);
+            else
+                PlaceCreatures(parent, node, chamberRadius, profile, rnd);
             var lights = BuildChamberLighting(parent, profile, mainLightColor, accentLightColor);
 
             // 5. Tình Huống Môi Trường Động gắn với chủ đề

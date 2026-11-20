@@ -11,7 +11,7 @@ namespace Evolve.Maze
     /// </summary>
     public class MazeWorldManager : MonoBehaviour
     {
-        public const int CurrentBuildVersion = 6;
+        public const int CurrentBuildVersion = 7;
 
         [SerializeField] int seed = 2026;
         [SerializeField] int chamberCount = MazeGenerator.DefaultChambers;

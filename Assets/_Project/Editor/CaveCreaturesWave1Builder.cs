@@ -112,6 +112,11 @@ namespace Evolve.EditorTools
 
         public static void EnsureAll()
         {
+            BuildBatch(Specs);
+        }
+
+        public static void BuildBatch(CreatureSpec[] specs)
+        {
             EnsureDir(ControllerDir);
             EnsureDir(PrefabDir);
             EnsureDir(SpeciesDir);
@@ -122,14 +127,14 @@ namespace Evolve.EditorTools
 
             var speciesAssets = new Dictionary<string, SpeciesSO>();
 
-            for (int i = 0; i < Specs.Length; i++)
+            for (int i = 0; i < specs.Length; i++)
             {
-                var spec = Specs[i];
+                var spec = specs[i];
                 string fbxPath = $"{ModelDir}/Creature_{spec.PascalName}.fbx";
                 var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
                 if (fbx == null)
                 {
-                    Debug.LogWarning($"[Wave1Creatures] Thiếu FBX: {fbxPath}");
+                    Debug.LogWarning($"[WaveCreatures] Thiếu FBX: {fbxPath}");
                     continue;
                 }
 
@@ -140,9 +145,9 @@ namespace Evolve.EditorTools
             }
 
             // Liên kết chuỗi thức ăn Prey trên SpeciesSO
-            for (int i = 0; i < Specs.Length; i++)
+            for (int i = 0; i < specs.Length; i++)
             {
-                var spec = Specs[i];
+                var spec = specs[i];
                 if (string.IsNullOrEmpty(spec.PreyId)) continue;
                 if (speciesAssets.TryGetValue(spec.PascalName, out var pred) &&
                     speciesAssets.TryGetValue(spec.PreyId, out var prey))

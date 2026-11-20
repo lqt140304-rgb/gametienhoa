@@ -63,7 +63,9 @@ namespace Evolve.Maze
             rng.Shuffle(giuaThemes);
             rng.Shuffle(sauThemes);
 
-            // Đảm bảo 2 khoang mẫu handcrafted (Luma & Crystal) luôn xuất hiện trong đồ thị
+            // Đảm bảo các khoang Tầng Nông & Giữa đã dựng (Luma, Hang Rêu Thở, Tổ Bỏ Hoang, Crystal) luôn xuất hiện
+            MoveToFront(nongThemes, ChamberTheme.AbandonedNest);
+            MoveToFront(nongThemes, ChamberTheme.BreathingMoss);
             MoveToFront(nongThemes, ChamberTheme.LumaMushroomGrove);
             MoveToFront(giuaThemes, ChamberTheme.CrystalVein);
 
