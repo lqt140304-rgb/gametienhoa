@@ -6,7 +6,7 @@ namespace Evolve.Combat
     /// <summary>
     /// Body language of the Meshy Chó Xương ("ChoXuong (Meshy)"), turned from its rig bones by code (it has no animation clips): the neck chain
     /// spine.009-.011 lifts or lowers the head, the jaw bone opens (a tiny JawTip child tells which way is open), a forepaw (Shin_FL/FR) rises and
-    /// rakes for the claw, following <see cref="HoundRules"/> for the move in progress. It breathes at rest, rolls its back as it runs, and flinches when
+    /// rakes for the claw, the legs fold back while it leaps, following <see cref="HoundRules"/> for the move in progress. It breathes at rest, rolls its back as it runs, and flinches when
     /// hit; a heavy hit staggers it for a moment. Its tells are read 1.5 times slower than the other creatures'. CreatureLocomotion keeps driving the
     /// legs, Root, Head and the tail chain. Every bone gets its own axis (the same world axis written in that bone's frame); directions are measured at start.
     /// </summary>
@@ -24,8 +24,9 @@ namespace Evolve.Combat
         Part[] neck;
         Part jaw, back;
         Part[] paw = new Part[2];   // 0 = left, 1 = right
+        Part[] legs = new Part[4];   // Leg_FL, Leg_FR, Leg_BL, Leg_BR
         Transform jawTip, head;
-        float neckSign = 1f, jawSign = 1f, pawSign = 1f;
+        float neckSign = 1f, jawSign = 1f, pawSign = 1f, tuckSign = 1f, tuck;
         float pitch, jawDeg, quiver, pawDeg, flinchT = 99f, lastHealth = -1f, runPhase, moving;
         bool flinchHeavy, wasClaw;
         int clawCount;
@@ -41,6 +42,7 @@ namespace Evolve.Combat
             if (combat != null) combat.TellScale *= TellSlowdown;
             pred = GetComponent<Predator>();
             Transform n9 = null, n10 = null, n11 = null, back7 = null, jawT = null, shinL = null, shinR = null, footL = null, footR = null;
+            var legT = new Transform[4];
             foreach (var t in GetComponentsInChildren<Transform>(true))
                 switch (t.name)
                 {
@@ -55,10 +57,15 @@ namespace Evolve.Combat
                     case "Shin_FR": shinR = t; break;
                     case "Foot_FL": footL = t; break;
                     case "Foot_FR": footR = t; break;
+                    case "Leg_FL": legT[0] = t; break;
+                    case "Leg_FR": legT[1] = t; break;
+                    case "Leg_BL": legT[2] = t; break;
+                    case "Leg_BR": legT[3] = t; break;
                 }
             lastPos = transform.position;
             if (pred != null) lastHealth = pred.Health;
             neck = new[] { Make(n9), Make(n10), Make(n11) };
+            for (int i = 0; i < 4; i++) legs[i] = Make(legT[i]);
             jaw = Make(jawT); back = Make(back7); paw[0] = Make(shinL); paw[1] = Make(shinR);
             if (neck[0] != null && head != null)
             {
@@ -73,6 +80,13 @@ namespace Evolve.Combat
                 jaw.T.localRotation = jaw.Rest * Quaternion.AngleAxis(10f, jaw.Pitch);
                 jawSign = jawTip.position.y < y ? 1f : -1f;   // which way opens the mouth (the tip goes down)
                 jaw.T.localRotation = jaw.Rest;
+            }
+            if (legs[0] != null && footL != null)
+            {
+                float f = Vector3.Dot(footL.position, transform.forward);
+                legs[0].T.localRotation = legs[0].Rest * Quaternion.AngleAxis(10f, legs[0].Pitch);
+                tuckSign = Vector3.Dot(footL.position, transform.forward) < f ? 1f : -1f;   // which way swings the foot back (a leaping dog trails its legs)
+                legs[0].T.localRotation = legs[0].Rest;
             }
             if (paw[0] != null && footL != null)
             {
@@ -105,13 +119,16 @@ namespace Evolve.Combat
             float flinch = HoundRules.Flinch(flinchT, flinchHeavy);
 
             HoundPose target = default;
-            bool claw = false;
+            bool claw = false, leaping = false;
             if (combat != null && combat.CurrentMove != null && combat.Phase != MovePhase.Idle)
             {
                 string anim = combat.CurrentMove.Anim;
                 target = HoundRules.Evaluate(anim, combat.Phase, combat.PhaseProgress);
                 claw = anim == "Claw";
+                leaping = combat.Phase == MovePhase.Active && (anim == "Pounce" || anim == "Leap");
             }
+            if (TryGetComponent(out HoundPin pin) && pin.Chomping)   // clamped on the player: the jaw works, the head worries
+                target = new HoundPose { NeckPitch = -8f + Mathf.Sin(t * 7f) * 8f, JawDeg = 12f + Mathf.Sin(t * 10f) * 11f, Quiver = 0.5f };
             if (claw && !wasClaw) clawCount++;   // alternate the paw: left, right, left...
             wasClaw = claw;
             float k = 1f - Mathf.Exp(-9f * dt);   // eased, so a quick phase does not snap the bones
@@ -134,6 +151,13 @@ namespace Evolve.Combat
             for (int i = 0; i < 2; i++)
                 if (paw[i] != null)
                     paw[i].T.localRotation = paw[i].Rest * Quaternion.AngleAxis(i == side ? pawSign * pawDeg : 0f, paw[i].Pitch);
+
+            // leaping: the legs fold back instead of paddling (CreatureLocomotion has just written them for this frame)
+            tuck = Mathf.MoveTowards(tuck, leaping ? 1f : 0f, dt * 9f);
+            if (tuck > 0.001f)
+                for (int i = 0; i < 4; i++)
+                    if (legs[i] != null)
+                        legs[i].T.localRotation = Quaternion.Slerp(legs[i].T.localRotation, legs[i].Rest * Quaternion.AngleAxis(tuckSign * 60f, legs[i].Pitch), tuck);
 
             // running: the back rolls with the stride
             if (back != null)

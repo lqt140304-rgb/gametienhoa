@@ -54,8 +54,21 @@ def main(blend, mesh_name, arm_name, prefix):
     pts = [mesh.matrix_world @ v.co for v in mesh.data.vertices]
     for nm in segs:
         mesh.vertex_groups.new(name=RENAME.get(nm, nm))
+    # a leg bone only moves the leg: nothing farther than LEG_REACH from it, and nothing above its hip joint (that is the ribs and the back)
+    LEG_REACH = 0.18
+    leg_names = [n for n in segs if n.startswith(("front_", "thigh", "shin", "foot", "toe"))]
+    ceiling = {"front_": max((segs[n][0].z for n in leg_names if n.startswith("front_thigh")), default=9e9) - 0.03,
+               "rear": max((segs[n][0].z for n in leg_names if n.startswith("thigh")), default=9e9) - 0.03}
+
+    def cap(p, nm, d):
+        if nm not in leg_names:
+            return d
+        top = ceiling["front_"] if nm.startswith("front_") else ceiling["rear"]
+        return 1e3 if d > LEG_REACH or p.z > top else d
+
     for i, p in enumerate(pts):
-        ds = sorted((rq.seg_dist(p, a, b), nm) for nm, (a, b) in segs.items())[:3]
+        ds = sorted((cap(p, nm, rq.seg_dist(p, a, b)), nm) for nm, (a, b) in segs.items())[:3]
+        ds = [(d, nm) for d, nm in ds if d < 1e3] or sorted((rq.seg_dist(p, a, b), nm) for nm, (a, b) in segs.items() if nm not in leg_names)[:3]
         ws = [1.0 / (max(d, 0.01) ** 4) for d, _ in ds]
         total = sum(ws)
         for (d, nm), w in zip(ds, ws):

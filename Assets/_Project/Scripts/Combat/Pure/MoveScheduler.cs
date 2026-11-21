@@ -25,6 +25,8 @@ namespace Evolve.Combat
         public float UnlockBelow = 1f;
         /// <summary>Armoured while winding up and striking: a pounce bounces off.</summary>
         public bool Armored;
+        /// <summary>A lunge that lands head first clamps on and starts the pin mini game (see PinGame) instead of knocking the player away.</summary>
+        public bool Pins;
     }
 
     /// <summary>

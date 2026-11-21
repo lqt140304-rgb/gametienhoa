@@ -292,7 +292,14 @@ namespace Evolve.Combat
             {
                 if (m.Shape == MoveShape.Charge) { CreatureStatus.Stun(this, 2f); scheduler.Stun(2f); loco?.PlayAction("Stun"); return; }   // hit a wall: dazed
             }
-            if (!hitDone && target != null && Flat(target.transform.position - transform.position).magnitude <= Radius + HitReach) { Hurt(m, Radius + HitReach); hitDone = true; }
+            if (!hitDone && target != null && Flat(target.transform.position - transform.position).magnitude <= Radius + HitReach)
+            {
+                Vector3 to = Flat(target.transform.position - transform.position);
+                if (m.Pins && Vector3.Dot(transform.forward, to.normalized) > 0.5f && HoundPin.Begin(this, target))
+                    target.State.Damage(m.Damage * DamageScale);   // head first: it clamps on (HoundPin), no knock-back
+                else Hurt(m, Radius + HitReach);
+                hitDone = true;
+            }
         }
 
         // ---------- leaping up to a ledge ----------
