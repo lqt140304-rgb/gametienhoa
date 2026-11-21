@@ -3,10 +3,10 @@ using UnityEngine;
 namespace Evolve.Combat
 {
     /// <summary>
-    /// Wings and beak for the Meshy Chim Hang Mẹ (prefab "ChimHangMe (Meshy)"), driven from its rig bones:
-    /// Pinion_L1/L2 and Pinion_R1/R2 (the two segments of each wing; called Pinion, not Wing, so CreatureLocomotion keeps stepping on the legs),
-    /// Beak (the lower beak, modelled open) with a tiny BeakTip child. Wings hold, flutter when it walks and beat hard while it fights;
-    /// the beak shuts at rest and opens for a trembling screech now and then and during moves.
+    /// Wings and beak for the Meshy Chim Hang Mẹ (prefab "ChimHangMe (Meshy)"), driven from its rig bones: Pinion_L1/L2/L3 and Pinion_R1/R2/R3
+    /// (three segments per wing, shoulder to wing tip; called Pinion, not Wing, so CreatureLocomotion keeps stepping on the legs), Root, Beak (the lower
+    /// beak, modelled open) with a tiny BeakTip child. The wings fold in against the body at rest, open when it moves and spread wide and beat hard in
+    /// a fight (a fast downstroke, an elbow that bends on the upstroke, a small bob of the body); the beak shuts at rest and opens for a trembling screech.
     /// Which way each bone must turn is measured at start, so no bone axis is assumed. Runs after the other animation (LateUpdate).
     /// </summary>
     public class BirdRigFx : MonoBehaviour
@@ -16,14 +16,16 @@ namespace Evolve.Combat
         public static BirdRigFx Attach(GameObject creature) =>
             creature == null || creature.GetComponent<BirdRigFx>() != null ? null : creature.AddComponent<BirdRigFx>();
 
-        class Wing { public Transform Inner, Outer; public Quaternion InnerRest, OuterRest; public Vector3 AxisInner, AxisOuter; public float Sign = 1f; }
+        class Seg { public Transform T; public Quaternion Rest; public Vector3 Lift, Swing; }
+        class Wing { public Seg[] S = new Seg[3]; public float LiftSign = 1f, SwingSign = 1f; }
 
         const float BeakClosedDeg = 26f;
         Wing[] wings;
-        Transform beak, beakTip;
+        Transform beak, beakTip, root;
+        Vector3 rootRest, rootUp;
         Quaternion beakRest;
         Vector3 beakAxis;
-        float beakSign = 1f, open, beat, nextScreech, screechT = -1f;
+        float beakSign = 1f, open, spread, beat, nextScreech, screechT = -1f, phase;
         CreatureCombat combat;
         Vector3 lastPos;
         float moving;
@@ -31,19 +33,19 @@ namespace Evolve.Combat
         void Start()
         {
             combat = GetComponent<CreatureCombat>();
-            Transform l1 = null, l2 = null, r1 = null, r2 = null;
+            Transform[,] w = new Transform[2, 3];
             foreach (var t in GetComponentsInChildren<Transform>(true))
-                switch (t.name)
-                {
-                    case "Pinion_L1": l1 = t; break;
-                    case "Pinion_L2": l2 = t; break;
-                    case "Pinion_R1": r1 = t; break;
-                    case "Pinion_R2": r2 = t; break;
-                    case "Beak": beak = t; break;
-                    case "BeakTip": beakTip = t; break;
-                }
+            {
+                string n = t.name;
+                if (n.Length == 9 && n.StartsWith("Pinion_") && (n[7] == 'L' || n[7] == 'R') && n[8] >= '1' && n[8] <= '3') w[n[7] == 'L' ? 0 : 1, n[8] - '1'] = t;
+                else if (n == "Beak") beak = t;
+                else if (n == "BeakTip") beakTip = t;
+                else if (n == "Root") root = t;
+            }
             lastPos = transform.position;
-            wings = new[] { MakeWing(l1, l2), MakeWing(r1, r2) };
+            wings = new Wing[2];
+            for (int i = 0; i < 2; i++) wings[i] = MakeWing(w[i, 0], w[i, 1], w[i, 2]);
+            if (root != null) { rootRest = root.localPosition; rootUp = root.parent != null ? root.parent.InverseTransformDirection(transform.up) : transform.up; }
             if (beak != null && beakTip != null)
             {
                 beakRest = beak.localRotation;
@@ -56,19 +58,24 @@ namespace Evolve.Combat
             nextScreech = Time.time + Random.Range(4f, 8f);
         }
 
-        Wing MakeWing(Transform inner, Transform outer)
+        Wing MakeWing(Transform a, Transform b, Transform c)
         {
-            if (inner == null) return null;
-            var w = new Wing { Inner = inner, Outer = outer, InnerRest = inner.localRotation, AxisInner = inner.InverseTransformDirection(transform.forward) };
-            if (outer != null) { w.OuterRest = outer.localRotation; w.AxisOuter = outer.InverseTransformDirection(transform.forward); }
-            if (outer != null)
-            {
-                float y = outer.position.y;
-                inner.localRotation = w.InnerRest * Quaternion.AngleAxis(10f, w.AxisInner);
-                w.Sign = outer.position.y > y ? 1f : -1f;   // which way lifts the wing tip
-                inner.localRotation = w.InnerRest;
-            }
-            return w;
+            if (a == null || b == null) return null;
+            var wing = new Wing();
+            var ts = new[] { a, b, c };
+            for (int i = 0; i < 3; i++)
+                if (ts[i] != null)
+                    wing.S[i] = new Seg { T = ts[i], Rest = ts[i].localRotation, Lift = ts[i].InverseTransformDirection(transform.forward), Swing = ts[i].InverseTransformDirection(transform.up) };
+            // lift: turning about the creature's forward axis raises or lowers the tip; swing: turning about up sweeps the tip toward the tail or the head
+            float y = b.position.y;
+            a.localRotation = wing.S[0].Rest * Quaternion.AngleAxis(10f, wing.S[0].Lift);
+            wing.LiftSign = b.position.y > y ? 1f : -1f;
+            a.localRotation = wing.S[0].Rest;
+            float f = Vector3.Dot(b.position, transform.forward);
+            a.localRotation = wing.S[0].Rest * Quaternion.AngleAxis(10f, wing.S[0].Swing);
+            wing.SwingSign = Vector3.Dot(b.position, transform.forward) < f ? 1f : -1f;   // + sweeps the wing back
+            a.localRotation = wing.S[0].Rest;
+            return wing;
         }
 
         void LateUpdate()
@@ -78,21 +85,36 @@ namespace Evolve.Combat
             moving = Mathf.MoveTowards(moving, Mathf.Clamp01(speed / 1.5f), dt * 4f);
             bool busy = combat != null && combat.Busy;
             beat = Mathf.MoveTowards(beat, busy ? 1f : 0f, dt * 4f);
+            // folded at rest (0), half open walking, wide open and beating in a fight (1)
+            spread = Mathf.MoveTowards(spread, Mathf.Max(beat, 0.55f * moving), dt * 3f);
 
-            // wings: a slow breathing flutter at rest, bigger when walking, hard beats in a fight
-            float amp = 3f + 6f * moving + 32f * beat;
-            float f = 0.6f + 0.8f * moving + 2.4f * beat;
-            float w = 6.2832f * f * t;
+            float freq = 0.5f + 0.9f * moving + 2.6f * beat;
+            phase += 6.2832f * freq * dt;
+            float s = Mathf.Sin(phase);
+            float stroke = s > 0f ? s : s * 1.7f;   // the up stroke is slower than the power stroke down
+            float amp = 6f + 10f * moving + 48f * beat;
+            float fold = 1f - spread;
+
             if (wings != null)
                 foreach (var wing in wings)
                 {
                     if (wing == null) continue;
-                    wing.Inner.localRotation = wing.InnerRest * Quaternion.AngleAxis(wing.Sign * Mathf.Sin(w) * amp, wing.AxisInner);
-                    if (wing.Outer != null)
-                        wing.Outer.localRotation = wing.OuterRest * Quaternion.AngleAxis(wing.Sign * Mathf.Sin(w - 0.7f) * amp * 1.4f, wing.AxisOuter);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var seg = wing.S[i];
+                        if (seg == null) continue;
+                        float lag = Mathf.Sin(phase - 0.6f * i);
+                        float flap = (i == 0 ? stroke : (lag > 0f ? lag : lag * 1.7f) * 1.25f) * amp;   // outer segments lag and swing wider
+                        float sweep = fold * (i == 0 ? 55f : i == 1 ? 80f : 60f) - beat * (i == 2 ? 12f * Mathf.Max(0f, -s) : 0f);
+                        seg.T.localRotation = seg.Rest * Quaternion.AngleAxis(wing.SwingSign * sweep, seg.Swing) * Quaternion.AngleAxis(wing.LiftSign * flap, seg.Lift);
+                    }
                 }
 
-            // beak: shut at rest, open and trembling while screeching or fighting
+            // the body dips and lifts with the beats
+            if (root != null && beat > 0.01f)
+                root.localPosition = rootRest + rootUp * (0.05f * beat * Mathf.Max(0f, s) * (1f / Mathf.Max(0.0001f, root.parent != null ? root.parent.lossyScale.y : 1f)));
+            else if (root != null) root.localPosition = rootRest;
+
             if (beak != null && beakTip != null)
             {
                 if (screechT < 0f && !busy && t > nextScreech) { screechT = 0f; nextScreech = t + Random.Range(7f, 12f); }

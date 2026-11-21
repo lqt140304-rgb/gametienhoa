@@ -9,8 +9,7 @@ namespace Evolve.EditorTools
 {
     /// <summary>
     /// Menu Evolve → Build Golem Thạch Anh (Meshy) Prefab. The golem came out of Meshy's auto-rig (a humanoid skeleton with its own walking and running
-    /// clips), so it is animated by an Animator, not by CreatureLocomotion's bone names. This sets the three FBX files up (Generic rig, the clips
-    /// sharing the model's avatar, looping), builds an Animator Controller (Idle, Walk, Run on the "Speed" float that CreatureAnimDriver feeds) and a
+    /// clips), so it is animated by an Animator, not by CreatureLocomotion's bone names. This sets the three FBX files up (Humanoid rig: each file makes its own avatar, Unity retargets the clips; looping), builds an Animator Controller (Idle, Walk, Run on the "Speed" float that CreatureAnimDriver feeds) and a
     /// prefab "GolemThachAnh (Meshy)" with the same components the cave team's creatures get (kinematic body, capsule, Predator as a lord).
     /// The cave team has no Golem Thạch Anh prefab yet, so the numbers below are ours; they can replace them.
     /// </summary>
@@ -30,15 +29,15 @@ namespace Evolve.EditorTools
                 if (AssetDatabase.LoadAssetAtPath<Object>(p) == null) { Debug.LogError("[Meshy] Chưa có " + p); return; }
 
             var main = (ModelImporter)AssetImporter.GetAtPath(Model);
-            main.animationType = ModelImporterAnimationType.Generic;
+            main.animationType = ModelImporterAnimationType.Human;   // Meshy's clips come from a rig with another rest pose: Humanoid retargets them
             main.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             main.importAnimation = false;
             main.SaveAndReimport();
             var avatar = AssetDatabase.LoadAllAssetsAtPath(Model).OfType<Avatar>().FirstOrDefault();
-            if (avatar == null) { Debug.LogError("[Meshy] Mô hình golem không tạo được Avatar (kiểm tra xương)."); return; }
+            if (avatar == null || !avatar.isValid || !avatar.isHuman) { Debug.LogError("[Meshy] Avatar Humanoid của golem không hợp lệ: mở Creature_GolemThachAnh_Meshy.fbx, tab Rig, bấm Configure để ghép xương."); return; }
 
-            var walk = SetupClip(WalkFbx, "Walk", avatar);
-            var run = SetupClip(RunFbx, "Run", avatar);
+            var walk = SetupClip(WalkFbx, "Walk");
+            var run = SetupClip(RunFbx, "Run");
             if (walk == null || run == null) { Debug.LogError("[Meshy] Không đọc được clip đi hoặc chạy."); return; }
 
             var controller = BuildController(walk, run);
@@ -65,8 +64,8 @@ namespace Evolve.EditorTools
 
             var pred = root.AddComponent<Predator>();
             var so = new SerializedObject(pred);
-            so.FindProperty("patrolSpeed").floatValue = 0.9f;
-            so.FindProperty("chaseSpeed").floatValue = 1.8f;
+            so.FindProperty("patrolSpeed").floatValue = 1.6f;
+            so.FindProperty("chaseSpeed").floatValue = 3.4f;
             so.FindProperty("biteDamage").floatValue = 40f;
             so.FindProperty("maxHealth").floatValue = 260f;
             so.FindProperty("nutrition").floatValue = 90f;
@@ -85,12 +84,11 @@ namespace Evolve.EditorTools
             Debug.Log("[Meshy] Đã tạo " + PrefabPath);
         }
 
-        static AnimationClip SetupClip(string path, string name, Avatar avatar)
+        static AnimationClip SetupClip(string path, string name)
         {
             var mi = (ModelImporter)AssetImporter.GetAtPath(path);
-            mi.animationType = ModelImporterAnimationType.Generic;
-            mi.avatarSetup = ModelImporterAvatarSetup.CopyFromOther;
-            mi.sourceAvatar = avatar;
+            mi.animationType = ModelImporterAnimationType.Human;      // the clip's own rig makes its own avatar, so each rest pose is retargeted
+            mi.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             mi.importAnimation = true;
             mi.materialImportMode = ModelImporterMaterialImportMode.None;
             var clips = mi.defaultClipAnimations;
@@ -99,6 +97,7 @@ namespace Evolve.EditorTools
             c.name = name;
             c.loopTime = true;
             c.loopPose = true;
+            c.lockRootHeightY = true; c.lockRootRotation = true; c.lockRootPositionXZ = true;   // it walks by being moved, not by root motion
             mi.clipAnimations = new[] { c };
             mi.SaveAndReimport();
             return AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().FirstOrDefault(x => x.name == name);
@@ -114,13 +113,13 @@ namespace Evolve.EditorTools
             ctrl.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
             var sm = ctrl.layers[0].stateMachine;
             var idle = sm.AddState("Idle");   // no clip: the model stays in its A-pose rest
-            var w = sm.AddState("Walk"); w.motion = walk; w.speed = 0.8f;   // a heavy walker
+            var w = sm.AddState("Walk"); w.motion = walk; w.speed = 1f;
             var r = sm.AddState("Run"); r.motion = run;
             sm.defaultState = idle;
             Link(idle, w, AnimatorConditionMode.Greater, 0.08f);
             Link(w, idle, AnimatorConditionMode.Less, 0.08f);
-            Link(w, r, AnimatorConditionMode.Greater, 1.4f);
-            Link(r, w, AnimatorConditionMode.Less, 1.4f);
+            Link(w, r, AnimatorConditionMode.Greater, 2.4f);
+            Link(r, w, AnimatorConditionMode.Less, 2.4f);
             EditorUtility.SetDirty(ctrl);
             return ctrl;
         }

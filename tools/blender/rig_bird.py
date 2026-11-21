@@ -66,9 +66,21 @@ def main(src, dst):
         ds = sorted((rq.seg_dist(p, V(BONES[nm][0]) + lift, V(BONES[nm][1]) + lift), nm) for nm in body)[:3]
         ws = [1.0 / (max(d, 0.01) ** 4) for d, _ in ds]
         total = sum(ws)
+        weights = {nm: w / total for (d, nm), w in zip(ds, ws)}
+        # the wing (outside the body, above the legs) follows its three segments by how far along the span the vertex is, so every feather moves
+        ax = abs(p.x)
+        if ax > 0.10 and p.z > lift.z - 0.12:
+            side = "L" if p.x > 0 else "R"
+            u = (ax - 0.14) / 0.81
+            s3 = smooth((u - 0.69) / 0.12)
+            s2 = smooth((u - 0.32) / 0.12)
+            wing = {"Pinion_%s1" % side: 1.0 - s2, "Pinion_%s2" % side: s2 - s3, "Pinion_%s3" % side: s3}
+            m = smooth((ax - 0.10) / 0.10)
+            weights = {nm: (1 - m) * weights.get(nm, 0.0) + m * wing.get(nm, 0.0) for nm in set(weights) | set(wing)}
         w_beak = beak.get(i, 0.0)
-        for (d, nm), w in zip(ds, ws):
-            mesh_obj.vertex_groups[nm].add([i], (w / total) * (1.0 - w_beak), "REPLACE")
+        for nm, w in weights.items():
+            if w > 1e-4:
+                mesh_obj.vertex_groups[nm].add([i], w * (1.0 - w_beak), "REPLACE")
         if w_beak > 0.0:
             mesh_obj.vertex_groups["Beak"].add([i], w_beak, "REPLACE")
     me.polygons.foreach_set("use_smooth", [True] * len(me.polygons))
