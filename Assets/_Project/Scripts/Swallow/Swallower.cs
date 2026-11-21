@@ -65,10 +65,8 @@ namespace Evolve.Swallow
         }
 
         /// <summary>Swallow a carcass at once whatever its size: the end of a latch fight, digested in place and as fresh as it gets.</summary>
-        public void SwallowCarcassNow(Carcass c)
-        {
-            if (c != null) SwallowCarcass(c, c.GetComponent<CarcassSample>());
-        }
+        public bool SwallowCarcassNow(Carcass c) =>
+            c != null && SwallowCarcass(c, c.GetComponent<CarcassSample>());
 
         public void Touch(Carcass c)
         {
@@ -162,11 +160,11 @@ namespace Evolve.Swallow
             if (dissolve >= 1f) SwallowCarcass(touching, sample);
         }
 
-        void SwallowCarcass(Carcass c, CarcassSample sample)
+        bool SwallowCarcass(Carcass c, CarcassSample sample)
         {
             dissolve = 0f;
             float quality = SwallowRules.CarcassQuality(c.Stage, c.Decay.ElapsedMinutes);
-            if (quality <= 0f) return;
+            if (quality <= 0f) return false;
             if (sample != null) quality = Mathf.Min(quality, sample.QualityCap);
             var item = new StomachItem
             {
@@ -177,12 +175,13 @@ namespace Evolve.Swallow
                 Genes = sample != null ? new List<Gene>(sample.Genes) : new List<Gene>(),
                 Quality = quality
             };
-            if (!stomach.TryAdd(item)) { Echo.Say("«Túi Không Đáy đã đầy.»"); return; }
+            if (!stomach.TryAdd(item)) { Echo.Say("«Túi Không Đáy đã đầy.»"); return false; }
             if (c.Stage == CarcassStage.Rotten) stats.State.TryInfect(DiseaseKind.RottenGel, DiseaseRules.RottenBiteChance);
             Evolve.Visuals.SlimeGelAnimator.Play(gameObject, Evolve.Visuals.GelMotion.Gulp);
             Evolve.Audio.SlimeSfx.Play("slime_swallow");
             touching = null;
             Destroy(c.gameObject);
+            return true;
         }
     }
 }

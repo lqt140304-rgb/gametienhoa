@@ -91,6 +91,7 @@ namespace Evolve.Visuals
         /// <summary>About how far the body's surface is from LimbCentre; a limb's length is counted from there.</summary>
         public const float SurfaceRadius = 0.5f;
         float tuckUntil, fTuck;
+        internal float LatchFlatten { get; set; }
 
         /// <summary>Start a limb on this slime (null if it has no animated body). Call Remove when done.</summary>
         public static Limb AddLimb(GameObject slime)
@@ -371,7 +372,7 @@ namespace Evolve.Visuals
 
             // Standing still (only breathing): every second frame is plenty.
             bool still = fMove * locoK < 0.02f && activeTime < 0f && Mathf.Abs(fLand) < 0.002f
-                && Mathf.Abs(jig) < 0.002f && leanPos.sqrMagnitude < 4e-6f && dead < 0.01f && limbs.Count == 0 && fTuck < 0.001f;
+                && Mathf.Abs(jig) < 0.002f && leanPos.sqrMagnitude < 4e-6f && dead < 0.01f && limbs.Count == 0 && fTuck < 0.001f && LatchFlatten < 0.001f;
             if (still && (frameCount & 1) == 0) return;
 
             for (int i = 0; i < baseVertices.Length; i++) work[i] = baseVertices[i] + Offset(baseVertices[i]);
@@ -499,6 +500,12 @@ namespace Evolve.Visuals
                 if (k <= 0f) continue;
                 Vector3 perp = rel - l.Dir * Vector3.Dot(rel, l.Dir);
                 o += l.Dir * (l.Length * k) - perp * (l.Squeeze * k * Mathf.Min(1f, l.Length * 2f));
+            }
+
+            if (LatchFlatten > 0f)
+            {
+                o.y = Mathf.Lerp(o.y, SlimeMeshBuilder.Bottom - b.y, LatchFlatten * (1f - dead));
+                o += outward * 0.18f * LatchFlatten * rn;
             }
 
             // Dead: the body slumps into a flat puddle.

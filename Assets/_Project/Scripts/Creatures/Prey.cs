@@ -59,7 +59,7 @@ namespace Evolve.Creatures
         public float RememberSlimeUntil { get; set; }
 
         /// <summary>A pounce (Vồ) by a slime that can swallow it whole: the normal catch.</summary>
-        public void PounceCatch(SurvivalStats by) => TryCatch(by);
+        public bool PounceCatch(SurvivalStats by) => TryCatch(by);
         public bool Zigzag { get; set; }
         /// <summary>No vibration pulse while it flees (Bướm Đêm).</summary>
         public bool Silent { get; set; }
@@ -315,14 +315,14 @@ namespace Evolve.Creatures
         }
 
         /// <summary>A slime reached it: its defence may stop the catch (guarding, slipping out of the grab).</summary>
-        void TryCatch(SurvivalStats stats)
+        bool TryCatch(SurvivalStats stats)
         {
             Touched?.Invoke(stats);
-            if (caught || (CatchVeto != null && CatchVeto(stats))) return;
-            Catch(stats);
+            if (caught || (CatchVeto != null && CatchVeto(stats))) return false;
+            return Catch(stats);
         }
 
-        void Catch(SurvivalStats stats)
+        bool Catch(SurvivalStats stats)
         {
             caught = true;
 
@@ -344,6 +344,7 @@ namespace Evolve.Creatures
             Caught?.Invoke(this);
             if (TryGetComponent(out Evolve.Ecology.EmbodiedCreature ec)) ec.NotifyKilled();
             Destroy(gameObject);
+            return swallowed;
         }
 
         string Label => name.Replace("(Clone)", "").Trim();
