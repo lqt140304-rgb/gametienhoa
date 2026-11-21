@@ -90,7 +90,12 @@ def main(src, dst):
     mesh_obj = next(o for o in bpy.data.objects if o.type == "MESH")
     low = min(v.co.z for v in mesh_obj.data.vertices)
     mesh_obj.data.transform(mathutils.Matrix.Translation((0, 0, -low)))   # AI models are centred: put the feet on Z=0
-    eyes = export_textures(mesh_obj, os.path.splitext(dst)[0])
+    kit = dst.endswith(".blend")   # a .blend is a hand-rigging kit: textured mesh + named bones, not yet skinned
+    if kit:
+        mat = mesh_obj.active_material
+        eyes = find_eyes(mesh_obj, [l.from_node for l in mat.node_tree.links if l.to_socket.name == "Base Color"][0].image)
+    else:
+        eyes = export_textures(mesh_obj, os.path.splitext(dst)[0])
     vs = [v.co.copy() for v in mesh_obj.data.vertices]
     zs = [v.z for v in vs]
     zmin, zmax = min(zs), max(zs)
@@ -139,6 +144,13 @@ def main(src, dst):
         if par:
             eb[nm].parent = eb[par]
     bpy.ops.object.mode_set(mode="OBJECT")
+
+    if kit:
+        mesh_obj.data.polygons.foreach_set("use_smooth", [True] * len(mesh_obj.data.polygons))
+        bpy.ops.file.pack_all()
+        bpy.ops.wm.save_as_mainfile(filepath=dst, compress=True)
+        print("OK kit", dst, "bones:", ", ".join(bones))
+        return
 
     # weights: nearest 3 bones, falling off with distance^4
     for nm in bones:
