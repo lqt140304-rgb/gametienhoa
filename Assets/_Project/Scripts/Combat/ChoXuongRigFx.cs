@@ -10,6 +10,7 @@ namespace Evolve.Combat
     /// hit; a heavy hit staggers it for a moment. Its tells are read 1.5 times slower than the other creatures'. CreatureLocomotion keeps driving the
     /// legs, Root, Head and the tail chain. Every bone gets its own axis (the same world axis written in that bone's frame); directions are measured at start.
     /// </summary>
+    [DefaultExecutionOrder(70)]   // after CreatureLocomotion (50) and CreatureCombat (60), which restore Model's transform each LateUpdate
     public class ChoXuongRigFx : MonoBehaviour
     {
         public static bool Has(string name) => !string.IsNullOrEmpty(name) && name.Contains("(Meshy)") && SpeciesNames.Key(name) == "choxuong";

@@ -9,6 +9,7 @@ namespace Evolve.Combat
     /// a fight (a fast downstroke, an elbow that bends on the upstroke, a small bob of the body); the beak shuts at rest and opens for a trembling screech.
     /// Which way each bone must turn is measured at start, so no bone axis is assumed. Runs after the other animation (LateUpdate).
     /// </summary>
+    [DefaultExecutionOrder(70)]   // after CreatureLocomotion (50) and CreatureCombat (60), which restore Model's transform each LateUpdate
     public class BirdRigFx : MonoBehaviour
     {
         public static bool Has(string name) => !string.IsNullOrEmpty(name) && name.Contains("(Meshy)") && Creatures.SpeciesNames.Key(name) == "chimhangme";
