@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Evolve.Combat
 {
-    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden, Meteor }
+    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden, Meteor, Swoop, WindSlash, Talon }
     public enum MovePhase { Idle, Windup, Active, Recover }
 
     /// <summary>What a move is for in a boss's standard kit: two Normal attacks, one Ranged, one Special (it holds the player in a mini game), one Ultimate near the end of its health.</summary>

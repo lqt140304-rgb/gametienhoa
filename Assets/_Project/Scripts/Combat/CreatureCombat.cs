@@ -112,6 +112,7 @@ namespace Evolve.Combat
         Vector3 strikeDir;
         float strikeDist;
         bool hound, golem;
+        BirdMoves bird;   // Chim Hang Mẹ's flying moves (Swoop, WindSlash, Talon): it moves the body while they run
         bool hitDone, hopFlag, skillFlag, hitFlag;
         float drainAccum;
         LeechState prevLeech;
@@ -153,7 +154,10 @@ namespace Evolve.Combat
             golem = SpeciesNames.Key(name) == "golemthachanh";
             if (ChoXuongRigFx.Has(name)) ChoXuongRigFx.Attach(gameObject);   // attach the rig effects here as well as in CreatureTuning: a creature that never passed through a cave still gets them
             if (GolemRigFx.Has(name)) GolemRigFx.Attach(gameObject);
+            if (BirdRigFx.Has(name)) BirdRigFx.Attach(gameObject);
+            if (SpeciesNames.Key(name) == "chimhangme" && !TryGetComponent(out bird)) bird = gameObject.AddComponent<BirdMoves>();
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale, MinIdle = CircleRules.IdleSeconds(name) };
+            if (bird != null) scheduler.Allow = m => bird.CanUse(m, target);   // a grab needs a player it can carry
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
             foreach (var mv in moves) if (mv.Shape == MoveShape.Perch)
@@ -350,6 +354,7 @@ namespace Evolve.Combat
             if (prey != null) prey.Damaged -= OnDamaged;
             scheduler?.Reset();
             ClearSpears(); EndMeteor();
+            bird?.Abort();
             SetHidden(false);
             RestoreModel();
         }
@@ -396,6 +401,7 @@ namespace Evolve.Combat
             {
                 scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
                 ClearSpears(); EndMeteor();
+                bird?.Abort();   // stunned or killed in the air: it lets go of the player and falls
                 if (ambush != null && ambush.State == AmbushState.Lurking) { ambush.Update(0f, 0f); ambush.StrikeDone(); }   // stunned or killed while hiding: it shows itself
                 SetHidden(false);
                 return;
@@ -412,7 +418,7 @@ namespace Evolve.Combat
                 else if (ambush.State == AmbushState.Revealed && !scheduler.Busy) ambush.StrikeDone();
             }
             noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
-            scheduler.HoldRecover = meteorActive && volley != null && volley.Stage != VolleyStage.Done;   // the rock volley is not cut short by the recover time: the last rock is always pulled and thrown
+            scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null) BeginStrike(started);
@@ -424,6 +430,7 @@ namespace Evolve.Combat
                 else if (scheduler.Phase == MovePhase.Active) TickLeapFall(scheduler.Current);
                 else if (scheduler.Phase == MovePhase.Recover) TickVolley(scheduler.Current);
             }
+            bird?.Tick(scheduler.Current, scheduler.Phase, scheduler.Progress01, scheduler.PhaseTime, target);
             if (target != null && scheduler.Phase == MovePhase.Windup) FaceTarget();
             if (scheduler.Phase == MovePhase.Active) TickStrike(scheduler.Current);
             else if (scheduler.Phase == MovePhase.Recover && retreatLeft > 0f) TickRetreat(scheduler.Current);

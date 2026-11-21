@@ -3,10 +3,11 @@ using UnityEngine;
 namespace Evolve.Combat
 {
     /// <summary>
-    /// Wings and beak for the Meshy Chim Hang Mẹ (prefab "ChimHangMe (Meshy)"), driven from its rig bones: Pinion_L1/L2/L3 and Pinion_R1/R2/R3
-    /// (three segments per wing, shoulder to wing tip; called Pinion, not Wing, so CreatureLocomotion keeps stepping on the legs), Root, Beak (the lower
-    /// beak, modelled open) with a tiny BeakTip child. The wings fold in against the body at rest, open when it moves and spread wide and beat hard in
-    /// a fight (a fast downstroke, an elbow that bends on the upstroke, a small bob of the body); the beak shuts at rest and opens for a trembling screech.
+    /// The body of the Meshy Chim Hang Mẹ (prefab "ChimHangMe (Meshy)"), turned from its rig bones: Pinion_L1/L2/L3 and Pinion_R1/R2/R3 (three segments per wing, shoulder to tip; called Pinion, not Wing,
+    /// so CreatureLocomotion keeps stepping on the legs), Root, Head, Tail1, Leg_L/Leg_R, Beak (the lower beak, modelled open) with a tiny BeakTip child.
+    /// What the bones do comes from a <see cref="BirdPose"/> (from <see cref="BirdMoves"/> in a move or in the air, otherwise folded wings and a flutter when it walks):
+    /// the wings beat and draw in on every up stroke (<see cref="WingRules"/>), the legs tuck up under the belly or reach out for a grab, the body pitches nose down in a dive and nose up in a flare,
+    /// the head stays more level than the body, the tail balances against it, the beak opens. While it flies in from far away the whole model is lifted off the ground.
     /// Which way each bone must turn is measured at start, so no bone axis is assumed. Runs after the other animation (LateUpdate).
     /// </summary>
     [DefaultExecutionOrder(70)]   // after CreatureLocomotion (50) and CreatureCombat (60), which restore Model's transform each LateUpdate
@@ -19,22 +20,41 @@ namespace Evolve.Combat
 
         class Seg { public Transform T; public Quaternion Rest; public Vector3 Lift, Swing; }
         class Wing { public Seg[] S = new Seg[3]; public float LiftSign = 1f, SwingSign = 1f; }
+        /// <summary>A bone turned on top of what CreatureLocomotion wrote this frame (it writes the root, head, tail and legs itself); if it left the bone alone, it still holds our last turn, so we start from what we remembered.</summary>
+        class Part { public Transform T; public Quaternion Base, Written; public bool Has; public Vector3 Axis; }
 
-        const float BeakClosedDeg = 26f;
+        const float BeakClosedDeg = 26f, TuckDeg = 85f, ReachDeg = 55f;
         Wing[] wings;
-        Transform beak, beakTip, root;
+        Transform beak, beakTip, root, model;
+        Part rootPart, headPart, tailPart, legL, legR;
         Vector3 rootRest, rootUp;
         Quaternion beakRest;
         Vector3 beakAxis;
-        float beakSign = 1f, open, spread, beat, nextScreech, screechT = -1f, phase;
+        float beakSign = 1f, pitchSign = 1f, open, nextScreech, screechT = -1f, phase, moving;
+        BirdPose pose;
         CreatureCombat combat;
-        Vector3 lastPos;
-        float moving;
+        BirdMoves bird;
+        Vector3 lastPos, lastLift, lastWritten;
+
+        static Part Make(Transform t, Transform creature) => t == null ? null : new Part { T = t, Axis = t.InverseTransformDirection(creature.right).normalized };
+
+        static void Put(Part p, Quaternion extra)
+        {
+            if (p == null) return;
+            var cur = p.T.localRotation;
+            Quaternion b = p.Has && Quaternion.Angle(cur, p.Written) < 0.01f ? p.Base : cur;
+            p.Base = b;
+            p.T.localRotation = b * extra;
+            p.Written = p.T.localRotation; p.Has = true;
+        }
 
         void Start()
         {
             combat = GetComponent<CreatureCombat>();
+            bird = GetComponent<BirdMoves>();
+            model = transform.Find("Model");
             Transform[,] w = new Transform[2, 3];
+            Transform head = null, tail = null, lL = null, lR = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
                 string n = t.name;
@@ -42,11 +62,16 @@ namespace Evolve.Combat
                 else if (n == "Beak") beak = t;
                 else if (n == "BeakTip") beakTip = t;
                 else if (n == "Root") root = t;
+                else if (n == "Head") head = t;
+                else if (n == "Tail1") tail = t;
+                else if (n == "Leg_L") lL = t;
+                else if (n == "Leg_R") lR = t;
             }
             lastPos = transform.position;
             wings = new Wing[2];
             for (int i = 0; i < 2; i++) wings[i] = MakeWing(w[i, 0], w[i, 1], w[i, 2]);
             if (root != null) { rootRest = root.localPosition; rootUp = root.parent != null ? root.parent.InverseTransformDirection(transform.up) : transform.up; }
+            rootPart = Make(root, transform); headPart = Make(head, transform); tailPart = Make(tail, transform); legL = Make(lL, transform); legR = Make(lR, transform);
             if (beak != null && beakTip != null)
             {
                 beakRest = beak.localRotation;
@@ -56,7 +81,18 @@ namespace Evolve.Combat
                 beakSign = beakTip.position.y > y ? 1f : -1f;   // which way raises the lower beak, i.e. shuts it
                 beak.localRotation = beakRest;
             }
+            // pitch: turning the root about the creature's right axis by +angle either drops the head (nose down) or raises it; the same turn swings the feet backwards (tucks the legs)
+            Transform probe = beakTip != null ? beakTip : head;
+            if (root != null && probe != null)
+            {
+                var rest = root.localRotation;
+                float y = probe.position.y;
+                root.localRotation = rest * Quaternion.AngleAxis(10f, rootPart.Axis);
+                pitchSign = probe.position.y < y ? 1f : -1f;   // + = nose down
+                root.localRotation = rest;
+            }
             nextScreech = Time.time + Random.Range(4f, 8f);
+            Debug.Log($"[BirdRigFx] {name}: cánh L(lift {(wings[0] != null ? wings[0].LiftSign : 0)}, sweep {(wings[0] != null ? wings[0].SwingSign : 0)}) R(lift {(wings[1] != null ? wings[1].LiftSign : 0)}, sweep {(wings[1] != null ? wings[1].SwingSign : 0)}), cúi {pitchSign}, chân {(legL != null && legR != null ? "có" : "THIẾU")}, đầu {(headPart != null ? "có" : "thiếu")}, đuôi {(tailPart != null ? "có" : "thiếu")}");
         }
 
         Wing MakeWing(Transform a, Transform b, Transform c)
@@ -84,17 +120,17 @@ namespace Evolve.Combat
             float dt = Mathf.Max(Time.deltaTime, 1e-4f), t = Time.time;
             float speed = (transform.position - lastPos).magnitude / dt; lastPos = transform.position;
             moving = Mathf.MoveTowards(moving, Mathf.Clamp01(speed / 1.5f), dt * 4f);
-            bool busy = combat != null && combat.Busy;
-            beat = Mathf.MoveTowards(beat, busy ? 1f : 0f, dt * 4f);
-            // folded at rest (0), half open walking, wide open and beating in a fight (1)
-            spread = Mathf.MoveTowards(spread, Mathf.Max(beat, 0.55f * moving), dt * 3f);
 
-            float freq = 0.5f + 0.9f * moving + 2.6f * beat;
-            phase += 6.2832f * freq * dt;
-            float s = Mathf.Sin(phase);
-            float stroke = s > 0f ? s : s * 1.7f;   // the up stroke is slower than the power stroke down
-            float amp = 6f + 10f * moving + 48f * beat;
-            float fold = 1f - spread;
+            bool scripted = bird != null && bird.PoseActive;
+            bool busy = combat != null && combat.Busy;
+            BirdPose target;
+            if (scripted) target = bird.Pose;                                                        // a move, or flying
+            else if (busy) target = new BirdPose { Spread = 1f, Beat = 1f, Beak = 1f };             // some move this rig has no pose for
+            else target = new BirdPose { Spread = 0.55f * moving };                                  // folded at rest, half open walking
+            pose = BirdPose.Lerp(pose, target, 1f - Mathf.Exp(-(scripted ? 12f : 4f) * dt));
+
+            phase += 6.2832f * WingRules.Frequency(pose.Beat, moving) * dt;
+            if (phase > 1000f) phase %= 6.2832f;
 
             if (wings != null)
                 foreach (var wing in wings)
@@ -104,28 +140,47 @@ namespace Evolve.Combat
                     {
                         var seg = wing.S[i];
                         if (seg == null) continue;
-                        float lag = Mathf.Sin(phase - 0.6f * i);
-                        float flap = (i == 0 ? stroke : (lag > 0f ? lag : lag * 1.7f) * 1.25f) * amp;   // outer segments lag and swing wider
-                        float sweep = fold * (i == 0 ? 55f : i == 1 ? 80f : 60f) - beat * (i == 2 ? 12f * Mathf.Max(0f, -s) : 0f);
-                        seg.T.localRotation = seg.Rest * Quaternion.AngleAxis(wing.SwingSign * sweep, seg.Swing) * Quaternion.AngleAxis(wing.LiftSign * flap, seg.Lift);
+                        WingRules.Segment(i, phase, pose, moving, out float lift, out float sweep);
+                        seg.T.localRotation = seg.Rest * Quaternion.AngleAxis(wing.SwingSign * sweep, seg.Swing) * Quaternion.AngleAxis(wing.LiftSign * lift, seg.Lift);
                     }
                 }
 
             // the body dips and lifts with the beats
-            if (root != null && beat > 0.01f)
-                root.localPosition = rootRest + rootUp * (0.05f * beat * Mathf.Max(0f, s) * (1f / Mathf.Max(0.0001f, root.parent != null ? root.parent.lossyScale.y : 1f)));
+            if (root != null && pose.Beat > 0.01f)
+                root.localPosition = rootRest + rootUp * (0.05f * pose.Beat * Mathf.Max(0f, Mathf.Sin(phase)) * (1f / Mathf.Max(0.0001f, root.parent != null ? root.parent.lossyScale.y : 1f)));
             else if (root != null) root.localPosition = rootRest;
+
+            // the body bends and the legs tuck: nose down in a dive, up in a flare; the head stays more level, the tail balances
+            float pitch = pose.Pitch * pitchSign;
+            if (rootPart != null) Put(rootPart, Quaternion.AngleAxis(pitch, rootPart.Axis));
+            if (headPart != null) Put(headPart, Quaternion.AngleAxis(-0.5f * pitch, headPart.Axis));
+            if (tailPart != null) Put(tailPart, Quaternion.AngleAxis(-0.4f * pitch, tailPart.Axis));
+            float leg = (pose.Legs >= 0f ? pose.Legs * TuckDeg : pose.Legs * ReachDeg) * pitchSign;   // + (in the nose-down sense) swings the feet back: tucked; - swings them forward: reaching
+            if (legL != null) Put(legL, Quaternion.AngleAxis(leg, legL.Axis));
+            if (legR != null) Put(legR, Quaternion.AngleAxis(leg, legR.Axis));
 
             if (beak != null && beakTip != null)
             {
-                if (screechT < 0f && !busy && t > nextScreech) { screechT = 0f; nextScreech = t + Random.Range(7f, 12f); }
+                if (screechT < 0f && !busy && !scripted && t > nextScreech) { screechT = 0f; nextScreech = t + Random.Range(7f, 12f); }
                 float screech = 0f;
                 if (screechT >= 0f) { screechT += dt; screech = Mathf.Sin(Mathf.Clamp01(screechT / 1.1f) * Mathf.PI); if (screechT > 1.1f) screechT = -1f; }
-                float target = Mathf.Max(busy ? 1f : 0f, Mathf.Clamp01(screech * 1.6f));
-                open = Mathf.MoveTowards(open, target, dt * 8f);
+                float want = Mathf.Max(pose.Beak, Mathf.Clamp01(screech * 1.6f));
+                open = Mathf.MoveTowards(open, want, dt * 8f);
                 float quiver = open > 0.5f ? Mathf.Sin(t * 110f) * 2.5f * open : 0f;
                 beak.localRotation = beakRest * Quaternion.AngleAxis(beakSign * (BeakClosedDeg * (1f - open) + quiver), beakAxis);
             }
+
+            if (model != null) ApplyLift(bird != null ? bird.CruiseLift : 0f);
+        }
+
+        /// <summary>The model alone rises while the bird flies in from afar (its body still walks). CreatureLocomotion rewrites the model's position every frame, so this is added on top each frame; if it did not, ours is taken off first.</summary>
+        void ApplyLift(float lift)
+        {
+            if (lastLift != Vector3.zero && (model.localPosition - lastWritten).sqrMagnitude < 1e-8f) model.localPosition -= lastLift;
+            Vector3 add = Vector3.zero;
+            if (lift > 0.001f) add = (model.parent != null ? model.parent : transform).InverseTransformVector(Vector3.up * lift);
+            model.localPosition += add;
+            lastLift = add; lastWritten = model.localPosition;
         }
     }
 }

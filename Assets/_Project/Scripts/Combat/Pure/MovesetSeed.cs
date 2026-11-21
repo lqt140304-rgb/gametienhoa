@@ -61,6 +61,17 @@ namespace Evolve.Combat
                 new MoveDef { Name = "Phun Xương", Role = MoveRole.Ranged, Shape = MoveShape.Throw, Windup = 0.9f, Active = 0.1f, Recover = 1.4f, Cooldown = 7f, MinRange = 6f, MaxRange = 16f, FlightSeconds = 0.8f, Damage = 14f, Anim = "Spit" },
                 new MoveDef { Name = "Triệu Hồi", Role = MoveRole.Ultimate, Shape = MoveShape.Summon, Windup = 1.4f, Active = 0.2f, Recover = 1.5f, Cooldown = 40f, MinRange = 0f, MaxRange = 20f, Radius = 4f, SummonCount = 3, SummonSeconds = 25f, UnlockBelow = 0.25f, Anim = "Howl" },
             };
+            // Chim Hang Mẹ (cave lord, a vulture): pecks up close, cuts the air with both wings, dives from the sky, and snatches the player up in its talons, throws them into the sky and rakes them as they fall (BirdMoves; numbers provisional)
+            sets["chimhangme"] = new[]
+            {
+                new MoveDef { Name = "Mổ", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.45f, Active = 0.2f, Recover = 1.1f, Cooldown = 2.5f, MinRange = 0f, MaxRange = 3.2f, Distance = 1.4f, Damage = 14f, RetreatDistance = 6f, Anim = "Peck" },   // hit and run: it flutters back 6 m, which puts the player back in range of the sky moves (they need 3-5 m)
+                // two chops of the wings, each throws one blade of wind from each wing tip (Damage and Force are per blade, SpearSpeed is how fast they fly)
+                new MoveDef { Name = "Chém Gió", Role = MoveRole.Ranged, Shape = MoveShape.WindSlash, Windup = 0.9f, Active = 0.8f, Recover = 1.2f, Cooldown = 5f, MinRange = 3f, MaxRange = 16f, Damage = 15f, Force = 6f, SpearSpeed = 24f, Anim = "Slash" },
+                // climbs over the player flapping, then drops on the marked circle (Radius) with its wings folded
+                new MoveDef { Name = "Bổ Nhào", Role = MoveRole.Special, Shape = MoveShape.Swoop, Windup = 1.7f, Active = 0.6f, Recover = 1.8f, Cooldown = 14f, MinRange = 5f, MaxRange = 18f, AbortBeyond = 22f, Radius = 3f, Damage = 28f, Force = 8f, Freeze = 0.4f, Anim = "Swoop" },
+                // the dash catches (Damage) and carries, tosses and rakes (MissileDamage per pass); a dash that catches nothing leaves it open to a counter
+                new MoveDef { Name = "Quắp", Role = MoveRole.Special, Shape = MoveShape.Talon, Windup = 1.1f, Active = 0.6f, Recover = 1.6f, Cooldown = 20f, MinRange = 4f, MaxRange = 13f, AbortBeyond = 16f, Damage = 8f, MissileDamage = 7f, Anim = "Talon" },
+            };
             // Cáo Gió (cave lord): a bite, then three wind spears circling above its tails and thrown one after another, then it calls the weasels
             sets["caogio"] = new[]
             {
@@ -101,7 +112,7 @@ namespace Evolve.Combat
         public static float PoseStrength(string speciesIdOrName)
         {
             string key = SpeciesNames.Key(speciesIdOrName ?? "");
-            return key == "choxuong" ? 0.4f : key == "golemthachanh" ? 0.35f : 1f;
+            return key == "choxuong" ? 0.4f : key == "golemthachanh" ? 0.35f : key == "chimhangme" ? 0f : 1f;   // the bird pitches and spreads its own bones (BirdRigFx)
         }
 
         /// <summary>The body language of a move: by shape, except the shell moves (animation "Retract") tuck in.</summary>
