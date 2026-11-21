@@ -8,7 +8,7 @@ namespace Evolve.EditorTools
     /// Menu Evolve → Build Meshy Static Prefabs. Cóc Hồ Già, Rắn Dung Nham, Bọ Cạp Thạch Anh and Chó Xương have a Meshy model but no bones yet:
     /// this puts each model into a prefab named "... (Meshy)" so you can see its look, size and colours in the game (it moves stiffly, with no
     /// animation). The first three copy the cave team's prefab (same stats and scripts); Chó Xương has no cave prefab yet, so it is built from
-    /// scratch with our own numbers (a lord Predator). The old prefabs are untouched; the god menu (F1) prefers the "(Meshy)" ones.
+    /// scratch with our own numbers (a lord Predator); its model is rigged (Root, Head, Tail1-5, Leg_*), so it gets CreatureLocomotion too. The old prefabs are untouched; the god menu (F1) prefers the "(Meshy)" ones.
     /// </summary>
     public static class MeshyStaticPrefabBuilder
     {
@@ -33,6 +33,10 @@ namespace Evolve.EditorTools
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = Quaternion.identity;
             model.transform.localScale = Vector3.one;
+
+            if (model.GetComponentInChildren<Animator>(true) == null) model.AddComponent<Animator>();   // CreatureLocomotion looks for one
+            var loco = root.AddComponent<CreatureLocomotion>();   // drives the rig's Root, Head, Tail1-5 and Leg_FL/FR/BL/BR bones (Chó Xương has them)
+            loco.Configure(radius, patrol);
 
             var rb = root.AddComponent<Rigidbody>();
             rb.isKinematic = true;

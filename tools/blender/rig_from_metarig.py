@@ -1,0 +1,87 @@
+"""Skin a mesh to a Rigify cat/dog METARIG used as a plain skeleton (no Generate), name its bones for CreatureLocomotion and export an FBX.
+
+    python -I tools/blender/rig_from_metarig.py file.blend Mesh_0 metarig.001 out/Creature_Name
+
+Bone heat ("With Automatic Weights") fails on the dense Meshy meshes, so weights come from the distance to each bone (like rig_quadruped.py).
+Renames: spine.004 -> Root, face -> Head, spine.003/.002/.001/spine/spine.012 -> Tail1..5, front_thigh.L/R -> Leg_FL/FR, thigh.L/R -> Leg_BL/BR
+(each leg keeps only its first bone named Leg_*, lower bones become Shin_*/Foot_*/Toe_*, because CreatureLocomotion treats every Leg* bone as a leg).
+Textures are not written: reuse the model's <name>_albedo.png and _mask.png.
+"""
+import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bpy  # must come before mathutils
+import mathutils
+
+import rig_quadruped as rq
+
+V = mathutils.Vector
+RENAME = {
+    "spine.004": "Root", "face": "Head", "spine.003": "Tail1", "spine.002": "Tail2", "spine.001": "Tail3", "spine": "Tail4", "spine.012": "Tail5",
+    "front_thigh.L": "Leg_FL", "front_shin.L": "Shin_FL", "front_foot.L": "Foot_FL",
+    "front_thigh.R": "Leg_FR", "front_shin.R": "Shin_FR", "front_foot.R": "Foot_FR",
+    "thigh.L": "Leg_BL", "shin.L": "Shin_BL", "foot.L": "Foot_BL", "toe.L": "Toe_BL",
+    "thigh.R": "Leg_BR", "shin.R": "Shin_BR", "foot.R": "Foot_BR", "toe.R": "Toe_BR",
+}
+
+
+def keep(n):
+    return n.startswith(("spine", "shoulder", "front_", "pelvis", "thigh", "shin", "foot", "toe")) or n in ("face", "jaw")
+
+
+def main(blend, mesh_name, arm_name, prefix):
+    bpy.ops.wm.open_mainfile(filepath=blend)
+    mesh = bpy.data.objects[mesh_name]
+    arm = bpy.data.objects[arm_name]
+    for o in list(bpy.data.objects):
+        if o not in (mesh, arm):
+            bpy.data.objects.remove(o)
+    for b in arm.data.bones:
+        b.use_deform = keep(b.name)
+    for o in bpy.data.objects:
+        o.select_set(False)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.mode_set(mode="EDIT")
+    for b in list(arm.data.edit_bones):
+        if not keep(b.name):
+            arm.data.edit_bones.remove(b)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    segs = {}
+    for b in arm.data.bones:
+        segs[b.name] = (arm.matrix_world @ b.head_local, arm.matrix_world @ b.tail_local)
+    pts = [mesh.matrix_world @ v.co for v in mesh.data.vertices]
+    for nm in segs:
+        mesh.vertex_groups.new(name=RENAME.get(nm, nm))
+    for i, p in enumerate(pts):
+        ds = sorted((rq.seg_dist(p, a, b), nm) for nm, (a, b) in segs.items())[:3]
+        ws = [1.0 / (max(d, 0.01) ** 4) for d, _ in ds]
+        total = sum(ws)
+        for (d, nm), w in zip(ds, ws):
+            mesh.vertex_groups[RENAME.get(nm, nm)].add([i], w / total, "REPLACE")
+    bpy.ops.object.mode_set(mode="EDIT")
+    for nm, new in RENAME.items():
+        if nm in arm.data.edit_bones:
+            arm.data.edit_bones[nm].name = new
+    bpy.ops.object.mode_set(mode="OBJECT")
+    mesh.parent = arm
+    mesh.matrix_parent_inverse = arm.matrix_world.inverted()   # the armature object is offset: keep the mesh where it was
+    mod = mesh.modifiers.new("Armature", "ARMATURE")
+    mod.object = arm
+    low = min(p.z for p in pts)
+    arm.location.z -= low   # feet on Z=0; the mesh follows its parent
+    mesh.data.polygons.foreach_set("use_smooth", [True] * len(mesh.data.polygons))
+    os.makedirs(os.path.dirname(os.path.abspath(prefix)), exist_ok=True)
+    for o in bpy.data.objects:
+        o.select_set(o in (arm, mesh))
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.export_scene.fbx(
+        filepath=prefix + ".fbx", use_selection=True, apply_unit_scale=True, apply_scale_options="FBX_SCALE_ALL",
+        axis_forward="-Z", axis_up="Y", bake_space_transform=True, mesh_smooth_type="FACE", add_leaf_bones=False,
+        path_mode="STRIP", bake_anim=False, use_armature_deform_only=True)
+    print("OK", prefix + ".fbx", "bones:", ", ".join(b.name for b in arm.data.bones))
+
+
+if __name__ == "__main__":
+    main(*sys.argv[-4:])
