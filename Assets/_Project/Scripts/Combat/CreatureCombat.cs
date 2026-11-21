@@ -42,7 +42,7 @@ namespace Evolve.Combat
             }
             float d = Flat(to).magnitude;
             if (d <= standOff) return 0f;
-            return d > 9f ? Mathf.Max(chase, 4.5f) : d > 5f ? Mathf.Max(chase, 3f) : chase;
+            return d > 9f ? Mathf.Max(chase, 3.8f) : d > 5f ? Mathf.Max(chase, 2.6f) : chase;
         }
                 public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
         float faintUntil, faintStart;

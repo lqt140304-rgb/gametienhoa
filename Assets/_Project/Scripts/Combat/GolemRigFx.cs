@@ -24,7 +24,7 @@ namespace Evolve.Combat
         Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
-        float flinchT = 9f;   // seconds since the last blow it took
+        float legLen, lastRun, flinchT = 9f;   // seconds since the last blow it took
         ArmPose pose;
         Light coreLight;
         float lastHealth = -1f, flickerUntil;
@@ -93,6 +93,7 @@ namespace Evolve.Combat
             spine = Make(chest); armL = Make(aL); armR = Make(aR); foreL = Make(fL); foreR = Make(fR);
             thighL = Make(tL); thighR = Make(tR); kneeL = Make(kL); kneeR = Make(kR); footL = Make(ftL); footR = Make(ftR);
             footTipL = ftL;
+            if (hips != null && ftL != null) legLen = Mathf.Max(0.2f, hips.position.y - ftL.position.y);   // hip to ankle at rest, in world metres
             if (pred != null) lastHealth = pred.Health;
             steps = FootstepFx.Attach(gameObject, "Golem/golem_step", ProceduralSfx.Kind.HoundThud, new Color(0.58f, 0.52f, 0.45f), true);
             BuildCrystals(chest);
@@ -198,11 +199,11 @@ namespace Evolve.Combat
             float speed = moved / dt;
             walkWeight = Mathf.MoveTowards(walkWeight, speed > 0.15f && speed < 16f && !gripping && !airborne ? 1f : 0f, dt * 4f);   // not in the air, and not the fall to the marked spot (16+ m/s)
             float prev = phase;
-            if (!airborne && speed < 16f) phase += GaitRules.PhaseAdvance(moved, Stride * scale);
+            if (!airborne && speed < 16f) phase += GaitRules.PhaseAdvance(moved, legLen > 0.2f ? 4f * legLen * Mathf.Sin(HipDeg * (1f + 0.8f * lastRun) * Mathf.Deg2Rad) : Stride * scale);   // one cycle = two steps of 2 L sin(angle): the planted foot then moves back exactly as fast as the body goes forward, so it does not slide
             if (walkWeight > 0.3f) { if (FootstepRules.Contacts(prev, phase, new[] { 0.25f, 0.75f }) > 0 && steps != null) steps.StepNow(); }
             if (phase > 1000f) phase = phase % 1f;
             float ph = phase % 1f;
-            float run = GaitRules.RunBlend(speed) * walkWeight;   // the dash to a spike is a run: wider swing, deeper knees, leaning in
+            float run = GaitRules.RunBlend(speed) * walkWeight; lastRun = run;   // the dash to a spike is a run: wider swing, deeper knees, leaning in
             float hipA = HipDeg * (1f + 0.8f * run), kneeA = KneeDeg * (1f + run);
             float hipL = GaitRules.Hip(ph, 0, hipA) * walkWeight, hipR = GaitRules.Hip(ph, 1, hipA) * walkWeight;
             float kneeLd = GaitRules.Knee(ph, 0, kneeA) * walkWeight, kneeRd = GaitRules.Knee(ph, 1, kneeA) * walkWeight;
@@ -222,8 +223,12 @@ namespace Evolve.Combat
                 var cur = hips.localPosition;
                 Vector3 b = hipsHas && (cur - hipsWritten).sqrMagnitude < 1e-10f ? hipsBase : cur;   // the Animator wrote it this frame, or it still holds our last value
                 hipsBase = b;
-                float drop = Mathf.Clamp(GaitRules.Bob(ph, BobMeters * scale) * walkWeight, -0.2f * scale, 0f) - crouch * 0.38f * scale + tuck * 0.1f * scale;   // the crouch sinks the body; the tuck lifts the knees under it
-                drop = Mathf.Clamp(drop, -0.5f * scale, 0.15f * scale);
+                // A swung leg reaches less far down, so the body must sink by exactly what the deepest foot lost or the feet hang in the air:
+                // depth of a leg = half its length times cos(thigh angle) plus cos(shin angle); the shin is the thigh angle minus the knee bend.
+                float DepthOf(float hipDeg, float kneeDeg) => 0.5f * (Mathf.Cos(hipDeg * Mathf.Deg2Rad) + Mathf.Cos((hipDeg - kneeDeg) * Mathf.Deg2Rad));
+                float deepest = Mathf.Max(DepthOf(hipL, kneeLd), DepthOf(hipR, kneeRd));
+                float drop = -Mathf.Clamp01(1f - deepest) * legLen * (1f - Mathf.Clamp01(tuck * 1.5f));   // in the air (tucked) it is not on the ground: no sinking
+                drop = Mathf.Clamp(drop, -0.6f * legLen, 0f);
                 Vector3 side = Vector3.zero;   // no sideways hip sway: it read as the golem weaving left and right as it walks
                 Vector3 world = Vector3.up * drop + side;
                 Vector3 down = hips.parent != null ? hips.parent.InverseTransformVector(world) : world;
