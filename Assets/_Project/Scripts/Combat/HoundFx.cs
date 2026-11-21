@@ -47,7 +47,7 @@ namespace Evolve.Combat
                     break;
                 case "Spit":
                     if (phase == MovePhase.Windup) ProceduralSfx.Play(K, p, 0.7f);
-                    else if (phase == MovePhase.Active) { ProceduralSfx.Play(ProceduralSfx.Kind.SpearLaunch, p, 0.8f); SkillFx.Burst(p + Vector3.up * 0.6f * scale, Bone, 10, 3f, 0.08f, 0.5f); }
+                    else if (phase == MovePhase.Active) { ProceduralSfx.Play(ProceduralSfx.Kind.HoundSpit, p, 1f); SkillFx.Burst(p + Vector3.up * 0.6f * scale, Bone, 10, 3f, 0.08f, 0.5f); }
                     break;
             }
         }
@@ -60,10 +60,19 @@ namespace Evolve.Combat
             SkillFx.Ring(p, 2.2f * scale, Dust, 0.5f, 0.2f);
         }
 
+        /// <summary>It is hit: a short angry rasp (not more than one every 0.4 s).</summary>
+        static float lastHurt = -10f;
+        public static void Hurt(Vector3 p)
+        {
+            if (Time.time - lastHurt < 0.4f) return;
+            lastHurt = Time.time;
+            ProceduralSfx.Play(ProceduralSfx.Kind.HoundHurt, p, 0.9f);
+        }
+
         /// <summary>A bone shard lands or hits.</summary>
         public static void ShardImpact(Vector3 p)
         {
-            ProceduralSfx.Play(ProceduralSfx.Kind.HoundSnap, p, 0.7f);
+            ProceduralSfx.Play(ProceduralSfx.Kind.HoundShatter, p, 0.9f);
             SkillFx.Burst(p, Bone, 14, 4f, 0.09f, 0.6f);
             SkillFx.Ring(p, 0.9f, Bone, 0.35f, 0.2f);
         }

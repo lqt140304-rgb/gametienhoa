@@ -162,6 +162,7 @@ namespace Evolve.Combat
                 if (lastHealth > 0f && hp < lastHealth - 0.01f)
                 {
                     flinchT = 0f;
+                    HoundFx.Hurt(transform.position);
                     flinchHeavy = HoundRules.IsHeavy(lastHealth - hp, pred.MaxHealth);
                     if (flinchHeavy && combat != null) combat.Stagger(HoundRules.HeavyFlinchSeconds);
                 }

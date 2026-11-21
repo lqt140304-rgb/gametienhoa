@@ -256,7 +256,7 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. C
 - [ ] **Cắn Nghiền** (gần): hàm há rộng rồi đớp khép lại thật nhanh.
 - [ ] **Chỉ nhảy khi đủ tầm:** đứng cách chó 3–5,5 m thì nó mới nén thân rồi vồ; đứng xa hơn thì nó tiến lại gần (hoặc phun xương) chứ không nhảy; nó đã nén thân mà bạn chạy ra xa quá ~7,5 m thì **nó hủy, đứng dậy chứ không lao vào khoảng không**; vồ rơi đúng chỗ bạn đứng (không vọt quá).
 - [ ] **Phun Xương** (cách 6–16 m): ngửa đầu há miệng rồi hất đầu, mảnh xương trắng xoay bay theo vòng cung kèm vệt trắng, trúng thì mất ~14 máu và vỡ tung; tránh được bằng cách chạy ngang.
-- [ ] **Âm thanh:** gầm khi báo trước Vồ, tiếng lao nặng, tiếng đập khi tiếp đất kèm bụi; Cắn có tiếng hàm đớp; Gầm có tiếng gầm dài và vòng sóng; Triệu Hồi có tiếng hú và đất bùng bụi; Phun Xương có tiếng vút. Âm lượng hợp lý (không chát, không quá nhỏ), báo lại nếu chói.
+- [ ] **Âm thanh:** gầm khi báo trước Vồ, tiếng lao nặng, tiếng đập khi tiếp đất kèm bụi; Cắn có tiếng hàm đớp; Gầm có tiếng gầm dài và vòng sóng; Triệu Hồi có tiếng hú và đất bùng bụi; Phun Xương có tiếng vút. Âm là **tiếng thật (ElevenLabs)**, dứt khoát và nặng; chó trúng đòn thì có tiếng gừ ngắn. Báo lại tiếng nào chưa hợp (ghi tên chiêu) hoặc quá to nhỏ: mình tạo lại từng tiếng bằng `ONLY=hound_roar tools/voice/generate_hound_sfx.sh`.
 - [ ] **Cào Xé** (gần, ≤ 3,5 m): ngẩng đầu và giơ một chân trước lên rồi quét xuống; lần sau đổi chân kia.
 - [ ] Động tác rõ, **không giật**: báo trước đủ chậm để nhìn ra (nhanh hơn thì báo, ghi chiêu nào).
 - [ ] Cỡ Chó Xương bằng khoảng một nửa bản đầu; hồi chiêu dài hơn trước (không ra đòn dồn dập).
