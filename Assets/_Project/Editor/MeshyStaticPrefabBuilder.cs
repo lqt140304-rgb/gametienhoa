@@ -23,7 +23,7 @@ namespace Evolve.EditorTools
         {
             foreach (var n in new[] { "CocHoGia", "RanDungNham", "BoCapThachAnh" })
                 MeshyFoxPrefabBuilder.Build(Prefabs + n + ".prefab", Models + "Creature_" + n + "_Meshy.fbx", Prefabs + n + " (Meshy).prefab", n + " (Meshy)");
-            BuildFromScratch("ChoXuong", 0.55f, 1.9f, 1.1f, 2.4f, 190f, 38f, 70f, 120f, 0.5f);   // half the size Meshy made it: 30%, 10% and 20% smaller in three steps
+            BuildFromScratch("ChoXuong", 0.55f, 1.9f, 1.1f, 2.4f, 190f, 38f, 70f, 120f, 0.25f);   // a quarter of the size Meshy made it (30%, 10%, 20%, then 50% smaller); cave tuning still scales a lord up by tier
         }
 
         static void BuildFromScratch(string name, float radius, float height, float patrol, float chase, float health, float bite, float nutrition, float mass, float scale = 1f)
@@ -106,6 +106,7 @@ namespace Evolve.EditorTools
             ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
             ctrl.AddParameter("WalkRate", AnimatorControllerParameterType.Float);
             ctrl.AddParameter("Alarming", AnimatorControllerParameterType.Bool);
+            ctrl.AddParameter("Busy", AnimatorControllerParameterType.Bool);   // a move is in progress (ChoXuongRigFx feeds it): when it ends or is cancelled every pounce clip falls back to Idle
             ctrl.AddParameter("Hit", AnimatorControllerParameterType.Trigger);
             ctrl.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
             foreach (var t in new[] { "Tell_Pounce", "Strike_Pounce", "Recover_Pounce" }) ctrl.AddParameter(t, AnimatorControllerParameterType.Trigger);
@@ -116,6 +117,11 @@ namespace Evolve.EditorTools
             var strike = sm.AddState("Pounce_Strike"); strike.motion = found["Pounce_Strike"];
             var recover = sm.AddState("Pounce_Recover"); recover.motion = found["Pounce_Recover"];
             sm.defaultState = idle;
+            foreach (var st in new[] { tell, strike, recover })   // first in line: the move is over (target died, stunned, reset), so never stay frozen in a pounce pose
+            {
+                var off = st.AddTransition(idle); off.AddCondition(AnimatorConditionMode.IfNot, 0, "Busy"); off.hasExitTime = false; off.duration = 0.25f;
+            }
+            var autoRecover = strike.AddTransition(recover); autoRecover.hasExitTime = true; autoRecover.exitTime = 1f; autoRecover.duration = 0.1f;   // the strike clip ends: land even if the trigger was missed
             Link(idle, walk, 0.1f, true);
             Link(walk, idle, 0.1f, false);
             var anyTell = sm.AddAnyStateTransition(tell); anyTell.AddCondition(AnimatorConditionMode.If, 0, "Tell_Pounce"); anyTell.hasExitTime = false; anyTell.duration = 0.12f; anyTell.canTransitionToSelf = false;

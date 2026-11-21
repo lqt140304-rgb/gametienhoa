@@ -136,6 +136,7 @@ namespace Evolve.Combat
             walkSpeed = Mathf.Lerp(walkSpeed, sp, 1f - Mathf.Exp(-8f * dt));
             float stride = 1.4f * Mathf.Max(0.1f, animator.transform.lossyScale.y);   // metres one Walk cycle covers: a 1.26 m dog, scaled
             animator.SetFloat("WalkRate", Mathf.Clamp(walkSpeed / stride, 0.2f, 3f));
+            animator.SetBool("Busy", combat != null && combat.Phase != MovePhase.Idle);
         }
         Vector3 walkLast;
 
