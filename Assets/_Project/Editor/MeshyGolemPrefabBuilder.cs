@@ -1,0 +1,136 @@
+using System.Linq;
+using UnityEditor;
+using UnityEditor.Animations;
+using UnityEngine;
+using Evolve.Creatures;
+using Evolve.Maze;
+
+namespace Evolve.EditorTools
+{
+    /// <summary>
+    /// Menu Evolve → Build Golem Thạch Anh (Meshy) Prefab. The golem came out of Meshy's auto-rig (a humanoid skeleton with its own walking and running
+    /// clips), so it is animated by an Animator, not by CreatureLocomotion's bone names. This sets the three FBX files up (Generic rig, the clips
+    /// sharing the model's avatar, looping), builds an Animator Controller (Idle, Walk, Run on the "Speed" float that CreatureAnimDriver feeds) and a
+    /// prefab "GolemThachAnh (Meshy)" with the same components the cave team's creatures get (kinematic body, capsule, Predator as a lord).
+    /// The cave team has no Golem Thạch Anh prefab yet, so the numbers below are ours; they can replace them.
+    /// </summary>
+    public static class MeshyGolemPrefabBuilder
+    {
+        const string Dir = "Assets/_Project/Models/Wildlife/Meshy";
+        const string Model = Dir + "/Creature_GolemThachAnh_Meshy.fbx";
+        const string WalkFbx = Dir + "/Creature_GolemThachAnh_Meshy_Walk.fbx";
+        const string RunFbx = Dir + "/Creature_GolemThachAnh_Meshy_Run.fbx";
+        const string ControllerPath = Dir + "/Creature_GolemThachAnh_Meshy.controller";
+        const string PrefabPath = "Assets/_Project/Prefabs/Wildlife/GolemThachAnh (Meshy).prefab";
+
+        [MenuItem("Evolve/Build Golem Thạch Anh (Meshy) Prefab")]
+        static void Build()
+        {
+            foreach (var p in new[] { Model, WalkFbx, RunFbx })
+                if (AssetDatabase.LoadAssetAtPath<Object>(p) == null) { Debug.LogError("[Meshy] Chưa có " + p); return; }
+
+            var main = (ModelImporter)AssetImporter.GetAtPath(Model);
+            main.animationType = ModelImporterAnimationType.Generic;
+            main.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            main.importAnimation = false;
+            main.SaveAndReimport();
+            var avatar = AssetDatabase.LoadAllAssetsAtPath(Model).OfType<Avatar>().FirstOrDefault();
+            if (avatar == null) { Debug.LogError("[Meshy] Mô hình golem không tạo được Avatar (kiểm tra xương)."); return; }
+
+            var walk = SetupClip(WalkFbx, "Walk", avatar);
+            var run = SetupClip(RunFbx, "Run", avatar);
+            if (walk == null || run == null) { Debug.LogError("[Meshy] Không đọc được clip đi hoặc chạy."); return; }
+
+            var controller = BuildController(walk, run);
+            var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(Model);
+            var root = new GameObject("GolemThachAnh (Meshy)");
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx, root.transform);
+            model.name = "Model";
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+            model.transform.localScale = Vector3.one;
+            var anim = model.GetComponentInChildren<Animator>(true) ?? model.AddComponent<Animator>();
+            anim.runtimeAnimatorController = controller;
+            anim.avatar = avatar;
+            anim.applyRootMotion = false;
+
+            var rb = root.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            rb.useGravity = true;
+            var col = root.AddComponent<CapsuleCollider>();   // a biped stands tall: capsule along Y
+            col.direction = 1;
+            col.radius = 0.85f;
+            col.height = 2.5f;
+            col.center = new Vector3(0f, 1.25f, 0f);
+
+            var pred = root.AddComponent<Predator>();
+            var so = new SerializedObject(pred);
+            so.FindProperty("patrolSpeed").floatValue = 0.9f;
+            so.FindProperty("chaseSpeed").floatValue = 1.8f;
+            so.FindProperty("biteDamage").floatValue = 40f;
+            so.FindProperty("maxHealth").floatValue = 260f;
+            so.FindProperty("nutrition").floatValue = 90f;
+            so.FindProperty("bodyMass").floatValue = 140f;
+            so.FindProperty("isLeader").boolValue = true;
+            so.FindProperty("drops").objectReferenceValue = null;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            var driver = root.AddComponent<CreatureAnimDriver>();
+            driver.Configure(anim, "Attack");
+
+            if (AssetDatabase.LoadAssetAtPath<Object>(PrefabPath) != null) AssetDatabase.DeleteAsset(PrefabPath);
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            Object.DestroyImmediate(root);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Meshy] Đã tạo " + PrefabPath);
+        }
+
+        static AnimationClip SetupClip(string path, string name, Avatar avatar)
+        {
+            var mi = (ModelImporter)AssetImporter.GetAtPath(path);
+            mi.animationType = ModelImporterAnimationType.Generic;
+            mi.avatarSetup = ModelImporterAvatarSetup.CopyFromOther;
+            mi.sourceAvatar = avatar;
+            mi.importAnimation = true;
+            mi.materialImportMode = ModelImporterMaterialImportMode.None;
+            var clips = mi.defaultClipAnimations;
+            if (clips.Length == 0) return null;
+            var c = clips[0];
+            c.name = name;
+            c.loopTime = true;
+            c.loopPose = true;
+            mi.clipAnimations = new[] { c };
+            mi.SaveAndReimport();
+            return AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().FirstOrDefault(x => x.name == name);
+        }
+
+        static AnimatorController BuildController(AnimationClip walk, AnimationClip run)
+        {
+            if (AssetDatabase.LoadAssetAtPath<Object>(ControllerPath) != null) AssetDatabase.DeleteAsset(ControllerPath);
+            var ctrl = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
+            ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
+            ctrl.AddParameter("Alarming", AnimatorControllerParameterType.Bool);
+            ctrl.AddParameter("Hit", AnimatorControllerParameterType.Trigger);
+            ctrl.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
+            var sm = ctrl.layers[0].stateMachine;
+            var idle = sm.AddState("Idle");   // no clip: the model stays in its A-pose rest
+            var w = sm.AddState("Walk"); w.motion = walk; w.speed = 0.8f;   // a heavy walker
+            var r = sm.AddState("Run"); r.motion = run;
+            sm.defaultState = idle;
+            Link(idle, w, AnimatorConditionMode.Greater, 0.08f);
+            Link(w, idle, AnimatorConditionMode.Less, 0.08f);
+            Link(w, r, AnimatorConditionMode.Greater, 1.4f);
+            Link(r, w, AnimatorConditionMode.Less, 1.4f);
+            EditorUtility.SetDirty(ctrl);
+            return ctrl;
+        }
+
+        static void Link(AnimatorState from, AnimatorState to, AnimatorConditionMode mode, float threshold)
+        {
+            var t = from.AddTransition(to);
+            t.AddCondition(mode, threshold, "Speed");
+            t.hasExitTime = false;
+            t.duration = 0.2f;
+        }
+    }
+}
