@@ -30,7 +30,7 @@ namespace Evolve.Combat
         /// <summary>The player this creature's moves are aimed at, if within <paramref name="radius"/> metres: the body must walk toward it even when the Predator's own sight has lost it (otherwise it wanders off while its moves still fire).</summary>
         public SurvivalStats EngagedTarget(float radius) =>
             target != null && Flat(target.transform.position - transform.position).sqrMagnitude <= radius * radius ? target : null;
-                float standOff = -1f;
+                float standOff = -1f; bool standing;
         /// <summary>How fast the body should walk toward the player: 0 once it is inside striking distance (it stands and faces them), a run when far, otherwise <paramref name="chase"/>. The body used to push into the player at 1.4 m/s forever.</summary>
         public float ApproachSpeed(float chase, Vector3 to)
         {
@@ -41,7 +41,8 @@ namespace Evolve.Combat
                 if (standOff > 50f) standOff = 3f;
             }
             float d = Flat(to).magnitude;
-            if (d <= standOff) return 0f;
+            if (standing) { if (d > standOff * 1.3f) standing = false; else return 0f; }   // hysteresis: once it has stopped it does not creep forward and stop again every time the player shuffles
+            else if (d <= standOff) { standing = true; return 0f; }
             return d > 9f ? Mathf.Max(chase, 3.8f) : d > 5f ? Mathf.Max(chase, 2.6f) : chase;
         }
                 public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
