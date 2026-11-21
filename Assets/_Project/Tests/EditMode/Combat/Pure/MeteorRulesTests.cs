@@ -37,39 +37,46 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(0, SpikeRules.Ring(0f, 0f, 0, 5f, 0f).Length);
         }
 
-        [Test] public void Volley_GetsUpFirst_ThenWalksPullsAndThrowsOnceForEverySpike_ThenIsDone()
+        [Test] public void Volley_GetsUp_Roars_ThenForEverySpikeWalksPullsThrowsAndReleases_ThenIsDone()
         {
             var v = new VolleyFsm(3);
             Assert.AreEqual(VolleyStage.Rise, v.Stage);   // it lands crouched and does not fetch a spike at once
-            int starts = 0, picked = 0, threw = 0, order = 0;
-            for (int i = 0; i < 2000 && v.Stage != VolleyStage.Done; i++)
+            int roars = 0, starts = 0, picked = 0, threw = 0, order = 0;
+            var seen = new System.Collections.Generic.List<VolleyStage>();
+            for (int i = 0; i < 4000 && v.Stage != VolleyStage.Done; i++)
             {
+                if (seen.Count == 0 || seen[seen.Count - 1] != v.Stage) seen.Add(v.Stage);
                 var e = v.Update(0.05f, v.Stage == VolleyStage.Walk && v.StageTime > 0.3f);   // it arrives after 0.3 s of walking
+                if (e == VolleyEvent.Roared) roars++;
                 if (e == VolleyEvent.PullStart) starts++;
                 if (e == VolleyEvent.Picked) { picked++; Assert.AreEqual(order, v.Index); }
                 if (e == VolleyEvent.Threw) { threw++; order++; }
             }
-            Assert.AreEqual(3, starts); Assert.AreEqual(3, picked); Assert.AreEqual(3, threw); Assert.AreEqual(VolleyStage.Done, v.Stage);
+            Assert.AreEqual(1, roars); Assert.AreEqual(3, starts); Assert.AreEqual(3, picked); Assert.AreEqual(3, threw); Assert.AreEqual(VolleyStage.Done, v.Stage);
+            Assert.AreEqual(VolleyStage.Rise, seen[0]); Assert.AreEqual(VolleyStage.Roar, seen[1]); Assert.AreEqual(VolleyStage.Walk, seen[2]);   // the roar comes before any spike is touched
             Assert.AreEqual(VolleyEvent.None, v.Update(0.5f, true));
         }
 
-        [Test] public void Volley_NoSpikeIsTouchedDuringTheRise_AndThePullTakesItsTime()
+        [Test] public void Volley_EachStageTakesItsTime_ASlowHeavyRhythm()
         {
             var v = new VolleyFsm(1);
-            Assert.AreEqual(VolleyEvent.None, v.Update(VolleyFsm.RiseSeconds - 0.1f, true));        // still getting up even though "arrived"
-            Assert.AreEqual(VolleyStage.Rise, v.Stage);
-            v.Update(0.2f, false); Assert.AreEqual(VolleyStage.Walk, v.Stage);
+            Assert.AreEqual(VolleyEvent.None, v.Update(VolleyFsm.RiseSeconds - 0.1f, true)); Assert.AreEqual(VolleyStage.Rise, v.Stage);   // still getting up even though "arrived"
+            Assert.AreEqual(VolleyEvent.Roared, v.Update(0.2f, true)); Assert.AreEqual(VolleyStage.Roar, v.Stage);
+            Assert.AreEqual(VolleyEvent.None, v.Update(VolleyFsm.RoarSeconds - 0.1f, true)); Assert.AreEqual(VolleyStage.Roar, v.Stage);
+            v.Update(0.2f, true); Assert.AreEqual(VolleyStage.Walk, v.Stage);
             Assert.AreEqual(VolleyEvent.PullStart, v.Update(0.1f, true)); Assert.AreEqual(VolleyStage.Pull, v.Stage);
             Assert.AreEqual(VolleyEvent.None, v.Update(VolleyFsm.PullSeconds - 0.1f, true));        // pulling slowly
             Assert.AreEqual(VolleyEvent.Picked, v.Update(0.2f, true)); Assert.AreEqual(VolleyStage.Hold, v.Stage);
             Assert.AreEqual(VolleyEvent.None, v.Update(VolleyFsm.HoldSeconds - 0.1f, true));
-            Assert.AreEqual(VolleyEvent.Threw, v.Update(0.2f, true)); Assert.AreEqual(VolleyStage.Done, v.Stage);
+            Assert.AreEqual(VolleyEvent.Threw, v.Update(0.2f, true)); Assert.AreEqual(VolleyStage.Release, v.Stage);   // the follow-through of the throw
+            Assert.AreEqual(VolleyEvent.None, v.Update(VolleyFsm.ReleaseSeconds - 0.1f, true)); Assert.AreEqual(VolleyStage.Release, v.Stage);
+            v.Update(0.2f, true); Assert.AreEqual(VolleyStage.Done, v.Stage);
         }
 
         [Test] public void Volley_GivesUpWalkingAfterATimeout_AndPullsWhereItStands()
         {
             var v = new VolleyFsm(2);
-            v.Update(VolleyFsm.RiseSeconds + 0.01f, false);
+            v.Update(VolleyFsm.RiseSeconds + 0.01f, false); v.Update(VolleyFsm.RoarSeconds + 0.01f, false);
             VolleyEvent e = VolleyEvent.None; float t = 0f;
             while (e != VolleyEvent.PullStart && t < 6f) { e = v.Update(0.1f, false); t += 0.1f; }   // a wall in the way: it never arrives
             Assert.AreEqual(VolleyEvent.PullStart, e); Assert.AreEqual(VolleyFsm.WalkTimeout, t, 0.15f);
@@ -78,7 +85,14 @@ namespace Evolve.Tests.EditMode
         [Test] public void Volley_TheWholeKitFitsInsideTheRecoverTime()
         {
             var golem = MovesetSeed.For("Golem Thạch Anh").Single(m => m.Shape == MoveShape.Meteor);
-            Assert.LessOrEqual(VolleyFsm.RiseSeconds + golem.SpikeCount * (1.2f + VolleyFsm.PullSeconds + VolleyFsm.HoldSeconds), golem.Recover);   // with walks of about a second and a bit, every rock is thrown before the recover ends
+            float all = VolleyFsm.RiseSeconds + VolleyFsm.RoarSeconds + golem.SpikeCount * (1.2f + VolleyFsm.PullSeconds + VolleyFsm.HoldSeconds + VolleyFsm.ReleaseSeconds);
+            Assert.LessOrEqual(all, golem.Recover);   // with walks of about a second and a bit, every rock is thrown before the recover ends
+        }
+
+        [Test] public void Meteor_HasARoarThatThrowsThePlayerBack()
+        {
+            var golem = MovesetSeed.For("Golem Thạch Anh").Single(m => m.Shape == MoveShape.Meteor);
+            Assert.GreaterOrEqual(golem.RoarRadius, 10f); Assert.GreaterOrEqual(golem.RoarForce, 10f);
         }
 
         [Test] public void Charge_StartsSlowAndBuildsUp_AndCoversExactlyTheMovesDistance()

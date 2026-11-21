@@ -9,7 +9,7 @@
 ## Đã làm
 | Trùm | Đánh xa | Nội tại | Thường 1 | Thường 2 | Đặc biệt (mini game) | Tuyệt chiêu |
 |---|---|---|---|---|---|---|
-| **Golem Thạch Anh** | Ném Đá (tảng 1 m, rơi cũng nổ 2,5 m) | **Thân Tinh Thể**: −20% sát thương, tinh thể mọc ra khi máu ≤ 66% (−35%), hồi 1%/giây sau 8 giây yên | Nện Đấm (gần, 28) | Đập Đất (vùng 5,5 m, hất văng, 32) | **Giáng Thạch** (nhảy lên trời, vòng báo dưới đất, lao xuống; gai đá mọc quanh; nhổ gai phi liên tục. Câu đố né, không có mini game giữ) | **Lõi Nổ** (vùng 8 m, 40) |
+| **Golem Thạch Anh** | (không có Ném Đá thường: đá ném nằm trong Giáng Thạch) | **Thân Tinh Thể**: −20% sát thương, tinh thể mọc ra khi máu ≤ 66% (−35%), hồi 1%/giây sau 8 giây yên | Nện Đấm (gần, 28) | Đập Đất (vùng 5,5 m, hất văng, 32) | **Giáng Thạch** (nhảy lên trời, vòng báo dưới đất, lao xuống; gai đá mọc quanh; nhổ gai phi liên tục. Câu đố né, không có mini game giữ) | **Lõi Nổ** (vùng 8 m, 40) |
 | **Chó Xương** | Phun Xương (mảnh xương xoay, 14) | **Khát Máu**: chạy nhanh hơn 25% khi máu ≤ 50% | Cắn Nghiền (20) | Cào Xé (16) | **Vồ** (lao rồi cắn chặt, ấn xen kẽ A/D) | **Triệu Hồi** (3 con chó nhỏ chui từ đất) |
 
 Gầm và Nhảy Vượt của Chó Xương không còn trong bộ chiêu (mã vẫn giữ); Giáp Tinh Thể của Golem thành phần nội tại.

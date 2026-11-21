@@ -9,16 +9,16 @@ namespace Evolve.Tests.EditMode
     {
         static MoveDef Move(string name) => MovesetSeed.For("Golem Thạch Anh").Single(m => m.Name == name);
 
-        [Test] public void Golem_HasItsSixMoves_ByAnyName()
+        [Test] public void Golem_HasItsFiveMoves_ByAnyName()
         {
-            foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(6, MovesetSeed.For(n).Count, n);
+            foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(5, MovesetSeed.For(n).Count, n);
             Assert.IsTrue(MovesetSeed.Has("Golem Thạch Anh"));
-            var punch = Move("Nện Đấm"); var sweep = Move("Quét Tay"); var rocks = Move("Ném Đá"); var rush = Move("Húc Đầu"); var meteor = Move("Giáng Thạch"); var blast = Move("Lõi Nổ");
+            var punch = Move("Nện Đấm"); var sweep = Move("Quét Tay"); var rush = Move("Húc Đầu"); var meteor = Move("Giáng Thạch"); var blast = Move("Lõi Nổ");
             Assert.IsFalse(MovesetSeed.For("Golem Thạch Anh").Any(m => m.Name == "Đập Đất"));   // replaced by the close normal attack
             // heavy: slow tells, long recoveries, hard knock-back and a short stun
             Assert.AreEqual(MoveShape.Lunge, punch.Shape); Assert.AreEqual(0.9f, punch.Windup); Assert.AreEqual(3.5f, punch.MaxRange); Assert.AreEqual(28f, punch.Damage); Assert.AreEqual(6f, punch.Force);
             Assert.AreEqual(MoveRole.Normal, sweep.Role); Assert.AreEqual(MoveShape.Spin, sweep.Shape); Assert.AreEqual(0f, sweep.MinRange); Assert.LessOrEqual(sweep.MaxRange, 4f); Assert.AreEqual("Sweep", sweep.Anim);   // close range
-            Assert.AreEqual(MoveRole.Ranged, rocks.Role); Assert.AreEqual(MoveShape.Throw, rocks.Shape); Assert.AreEqual("Lob", rocks.Anim); Assert.GreaterOrEqual(rocks.Windup, 2f); Assert.AreEqual(5f, rocks.MinRange); Assert.AreEqual(18f, rocks.MaxRange); Assert.AreEqual(1.1f, rocks.FlightSeconds); Assert.Greater(rocks.MissileSize, 1f); Assert.AreEqual(8f, rocks.Cooldown);
+            Assert.IsFalse(MovesetSeed.For("Golem Thạch Anh").Any(m => m.Name == "Ném Đá"));   // no plain rock throw: the rocks come from Giáng Thạch
             Assert.AreEqual(MoveRole.Combo, rush.Role); Assert.AreEqual(MoveShape.Charge, rush.Shape); Assert.IsTrue(rush.Ramp); Assert.IsTrue(rush.Armored); Assert.AreEqual("Rush", rush.Anim); Assert.AreEqual(12f, rush.Distance); Assert.GreaterOrEqual(rush.MinRange, 4f);
             Assert.AreEqual(MoveShape.Meteor, meteor.Shape); Assert.AreEqual(MoveRole.Special, meteor.Role); Assert.IsTrue(meteor.Dodge); Assert.AreEqual(4f, meteor.MinRange); Assert.AreEqual(16f, meteor.MaxRange); Assert.AreEqual(2.4f, meteor.Windup); Assert.AreEqual(0.35f, meteor.Active);
             Assert.AreEqual(4.2f, meteor.Radius); Assert.AreEqual(30f, meteor.Damage); Assert.AreEqual(4, meteor.SpikeCount); Assert.AreEqual(6.5f, meteor.SpikeRadius); Assert.AreEqual(18f, meteor.MissileDamage); Assert.AreEqual(0.8f, meteor.MissileSize); Assert.AreEqual(1.0f, meteor.RecoverFactor);

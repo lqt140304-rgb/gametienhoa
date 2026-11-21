@@ -36,7 +36,6 @@ namespace Evolve.Combat
                 case "Meteor": windup = new ArmPose { Raise = 150f, Hunch = -10f, Glow = 0.3f }; strike = new ArmPose { Raise = -10f, Hunch = 32f, Glow = 0.6f, Crouch = 0.9f }; return;   // arms thrown up to leap, both fists driven down on the landing
                 case "Hurt": windup = new ArmPose { Hunch = -22f, Raise = 25f, Glow = 0.5f, Crouch = 0.1f }; strike = windup; return;   // thrown back by a blow
                 case "Sweep": windup = new ArmPose { Spread = 70f, Raise = 20f, Hunch = 6f, Twist = 40f, Stance = 0.3f, Crouch = 0.2f }; strike = new ArmPose { Spread = 20f, Raise = 35f, Hunch = 14f, Twist = -45f, Stance = 0.5f, Crouch = 0.3f, Glow = 0.3f }; return;   // an arm drawn wide, then swept across in front of it
-                case "Lob": windup = new ArmPose { Raise = 150f, Hunch = -14f, Glow = 0.2f }; strike = new ArmPose { Raise = 40f, Hunch = 42f, Crouch = 0.35f, Glow = 0.4f }; return;   // the rock overhead in both hands, then thrown down and forward as the body folds
                 case "Rush": windup = new ArmPose { Raise = 150f, Hunch = 30f, Crouch = 0.45f }; strike = new ArmPose { Raise = 150f, Hunch = 42f, Crouch = 0.3f, Glow = 0.5f }; return;   // both arms wrapped over the head, the body low, head first
                 case "Dizzy": windup = new ArmPose { Hunch = 28f, Raise = -8f, Crouch = 0.15f }; strike = windup; return;
                 case "Harden": windup = new ArmPose { Raise = 40f, Hunch = 18f, Glow = 0.6f, Crouch = 0.55f }; strike = windup; return;
@@ -55,23 +54,14 @@ namespace Evolve.Combat
                     var w = ArmPose.Lerp(rest, windup, Smooth(progress01));
                     if (anim == "CoreBlast") w.Glow = progress01 * progress01;   // the core brightens slowly, then fast
                     if (anim == "Meteor") return MeteorWindup(progress01);
-                    if (anim == "Lob") return Lob(progress01);
                     if (anim == "Hurt") return ArmPose.Lerp(rest, windup, Smooth(progress01 / 0.3f));
                     return w;
                 case MovePhase.Active:
                     if (anim == "Meteor") { var d = ArmPose.Lerp(windup, strike, Smooth(progress01)); d.Tuck = 1f - Smooth(progress01 / 0.5f); d.Crouch = progress01 > 0.8f ? strike.Crouch * Smooth((progress01 - 0.8f) / 0.2f) : 0f; return d; }   // legs reach down for the ground, then the landing is absorbed
-                    return ArmPose.Lerp(windup, strike, anim == "Slam" || anim == "Throw" || anim == "Punch" || anim == "Lob" || anim == "Sweep" ? Smooth(progress01 / 0.5f) : Smooth(progress01));
+                    return ArmPose.Lerp(windup, strike, anim == "Slam" || anim == "Throw" || anim == "Punch" || anim == "Sweep" ? Smooth(progress01 / 0.5f) : Smooth(progress01));
                 case MovePhase.Recover: return ArmPose.Lerp(anim == "Hurt" ? windup : strike, rest, Smooth(progress01));
                 default: return rest;
             }
-        }
-
-        /// <summary>Ném Đá: bends down and takes a big rock from the ground (first 45%), lifts it over the head in both hands (to 85%), holds it there, then the strike folds the body forward.</summary>
-        static ArmPose Lob(float p)
-        {
-            if (p < 0.45f) { float k = Smooth(p / 0.45f); return new ArmPose { Raise = -10f * k, Hunch = 48f * k, Crouch = 0.7f * k, Glow = 0.1f }; }   // hands down to the rock
-            float u = Smooth((p - 0.45f) / 0.4f);
-            return new ArmPose { Raise = -10f + 160f * u, Hunch = 48f - 62f * u, Crouch = 0.7f * (1f - u), Glow = 0.2f * u };
         }
 
         /// <summary>Giáng Thạch before the jump: points at the player (first 20%), then gathers and crouches deep (to 45%), then throws its arms up as it springs and tucks its legs.</summary>
@@ -92,7 +82,9 @@ namespace Evolve.Combat
             {
                 case VolleyStage.Rise: { float k = 1f - Smooth(seconds / VolleyFsm.RiseSeconds); return new ArmPose { Crouch = 0.9f * k, Hunch = 24f * k, Raise = -5f * k }; }
                 case VolleyStage.Pull: { float k = Smooth(seconds / 0.4f); return new ArmPose { Raise = 55f * k, Hunch = 32f * k, Crouch = 0.35f * k, Glow = 0.25f * k }; }   // arms round the column, leaning back as it comes out
-                case VolleyStage.Hold: { float k = Smooth(seconds / 0.3f); return new ArmPose { Raise = 55f * k, Back = 140f * k, Hunch = -6f * k, Stance = 0.5f * k, Twist = -22f * k, Glow = 0.3f * k }; }   // a javelin: one arm back, the other pointing at the target
+                case VolleyStage.Roar: { float k = Smooth(seconds / 0.5f) * (1f - Smooth((seconds - (VolleyFsm.RoarSeconds - 0.4f)) / 0.4f)); return new ArmPose { Raise = 45f * k, Spread = 55f * k, Hunch = -24f * k, Glow = k, Stance = 0.2f * k }; }   // head thrown back, arms wide, the core blazing
+                case VolleyStage.Hold: { float k = Smooth(seconds / 0.5f); return new ArmPose { Raise = 110f * k, Back = -40f * k, Hunch = -12f * k, Stance = 0.3f * k, Twist = -15f * k, Glow = 0.3f * k }; }   // the column carried over the head: the right arm high (110 + 40), the left up beside it
+                case VolleyStage.Release: { float k = Smooth(seconds / 0.15f) * (1f - Smooth((seconds - 0.5f) / 0.3f)); return new ArmPose { Raise = 70f * k, Back = -60f * k, Hunch = 30f * k, Twist = 30f * k, Stance = 0.8f * k, Crouch = 0.15f * k }; }   // the follow-through: leaning through the throw, the left arm out, the right folded by the head
                 default: return default;
             }
         }

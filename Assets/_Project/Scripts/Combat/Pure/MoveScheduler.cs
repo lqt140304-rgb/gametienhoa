@@ -44,6 +44,8 @@ namespace Evolve.Combat
         /// <summary>Damage multiplier while it recovers (open to a counter): 1.5 normally; a move whose recovery is itself an attack (the golem's rock volley) says 1.</summary>
         /// <summary>A charge that starts slowly and speeds up (see <see cref="ChargeRules"/>) instead of running at one speed.</summary>
         public bool Ramp;
+        /// <summary>A roar after a landing: the radius and the knock-back strength (metres per second) of its shock wave; 0 for none.</summary>
+        public float RoarRadius, RoarForce;
         public float RecoverFactor = 1.5f;
         /// <summary>Harden: the damage multiplier while the move is in its Active phase (the crystal armour holds); 1 = none.</summary>
         public float DamageTakenFactor = 1f;

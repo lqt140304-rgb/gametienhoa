@@ -33,10 +33,6 @@ namespace Evolve.Combat
                     if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.7f, ProceduralSfx.Kind.HoundGrowlShort);
                     else if (phase == MovePhase.Active) { Sfx("golem_throw", p, 0.9f, ProceduralSfx.Kind.HoundSwipe); ImpactFx.Thump(p, 0.18f, 0.4f, 18f); SkillFx.Dust(p, m.Radius * 0.6f, Dust, 28); SkillFx.Ring(p, m.Radius, Dust, 0.4f, 0.2f); }
                     break;
-                case "Lob":
-                    if (phase == MovePhase.Windup) { Sfx("golem_grunt", p, 0.9f, ProceduralSfx.Kind.HoundGrowlShort); SkillFx.Dust(p + golem.transform.forward * 1.2f * scale, 1.2f * scale, Dust, 20); }   // it tears a rock out of the ground
-                    else if (phase == MovePhase.Active) { Sfx("golem_throw", p, 1f, ProceduralSfx.Kind.HoundLunge); ImpactFx.Thump(p, 0.15f, 0.5f, 20f); }
-                    break;
                 case "Rush":
                     if (phase == MovePhase.Windup) { Sfx("golem_core_charge", p, 0.8f, ProceduralSfx.Kind.HoundHowl); ImpactFx.Thump(p, 0.05f, 0.5f, 20f); }
                     else if (phase == MovePhase.Active) { Sfx("golem_leap", p, 0.9f, ProceduralSfx.Kind.HoundLunge); SkillFx.Dust(p, 2.5f * scale, Dust, 40); }
@@ -69,6 +65,15 @@ namespace Evolve.Combat
                     }
                     break;
             }
+        }
+
+        /// <summary>The roar after the landing: a huge bellow and a sound wave that runs out as rings and shakes the ground.</summary>
+        public static void Roar(Vector3 at, float radius)
+        {
+            Sfx("golem_roar", at, 1f, ProceduralSfx.Kind.HoundRoar);
+            ImpactFx.Thump(at, 0.45f, 1.8f, 36f);
+            for (int i = 1; i <= 4; i++) SkillFx.Ring(at + Vector3.up * 0.15f, radius * i / 4f, new Color(0.9f, 0.85f, 0.7f), 0.5f + 0.2f * i, 0.1f);   // the sound wave: rings going out one after another
+            SkillFx.Dust(at, radius * 0.7f, Dust, 80, radius * 0.2f);
         }
 
         /// <summary>It stretches an arm toward the player: the aim before it leaps.</summary>

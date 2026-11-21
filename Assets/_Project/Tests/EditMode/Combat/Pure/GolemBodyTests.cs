@@ -35,7 +35,7 @@ namespace Evolve.Tests
 
         [Test] public void EveryBodyValue_StaysInItsLimits_AndRestIsZero()
         {
-            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt", "Sweep", "Lob", "Rush", "Dizzy" })
+            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt", "Sweep", "Rush", "Dizzy" })
             {
                 foreach (var ph in new[] { MovePhase.Windup, MovePhase.Active, MovePhase.Recover })
                     for (float t = 0f; t <= 1f; t += 0.1f)
@@ -68,14 +68,6 @@ namespace Evolve.Tests
             Assert.Greater(LeapRules.Height(MovePhase.Windup, 0.7f), 0f);
         }
 
-        [Test] public void Lob_BendsDownToTheRock_LiftsItOverTheHeadWithBothArms_ThenFoldsForwardToThrow()
-        {
-            Assert.Greater(P("Lob", MovePhase.Windup, 0.45f).Hunch, 40f); Assert.Greater(P("Lob", MovePhase.Windup, 0.45f).Crouch, 0.5f);   // down at the rock
-            Assert.Greater(P("Lob", MovePhase.Windup, 0.9f).Raise, 130f); Assert.Less(P("Lob", MovePhase.Windup, 0.9f).Hunch, 0f);        // overhead, leaning back
-            Assert.Greater(P("Lob", MovePhase.Active, 1f).Hunch, 35f); Assert.Less(P("Lob", MovePhase.Active, 1f).Raise, 60f);             // folded forward, arms thrown down
-            Assert.AreEqual(0f, P("Lob", MovePhase.Windup, 0.9f).Back);                                                                    // both arms together: no one-armed cock
-        }
-
         [Test] public void Rush_CoversTheHeadWithBothArms_AndStaysLow()
         {
             var r = P("Rush", MovePhase.Active, 0.5f);
@@ -88,12 +80,17 @@ namespace Evolve.Tests
             Assert.Less(P("Sweep", MovePhase.Active, 1f).Twist, -20f);
         }
 
-        [Test] public void VolleyPoses_RiseFromACrouch_HugTheColumn_ThenAimLikeAJavelin()
+        [Test] public void VolleyPoses_RiseFromACrouch_Roar_HugTheColumn_CarryItOverTheHead_AndFollowThrough()
         {
             Assert.Greater(GolemRules.Volley(VolleyStage.Rise, 0f).Crouch, 0.8f); Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Rise, VolleyFsm.RiseSeconds).Crouch, 1e-3f);
+            var roar = GolemRules.Volley(VolleyStage.Roar, 1f);
+            Assert.Less(roar.Hunch, -15f); Assert.Greater(roar.Spread, 40f); Assert.Greater(roar.Glow, 0.7f);                         // head thrown back, arms wide, the core blazing
             Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 1f).Raise, 40f); Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 1f).Hunch, 25f);
-            var j = GolemRules.Volley(VolleyStage.Hold, 1f);
-            Assert.Greater(j.Back, 100f); Assert.Greater(j.Raise, 40f);                                // right arm back, the left pointing forward
+            var carry = GolemRules.Volley(VolleyStage.Hold, 1f);
+            Assert.Greater(carry.Raise - carry.Back, 130f); Assert.Greater(carry.Raise, 90f); Assert.Less(carry.Hunch, 0f);              // the right arm high over the head with the column, the left up beside it
+            var after = GolemRules.Volley(VolleyStage.Release, 0.3f);
+            Assert.Greater(after.Hunch, 25f); Assert.Greater(after.Twist, 20f); Assert.Greater(after.Stance, 0.6f);                      // leaning through the throw, the front foot out
+            Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Release, VolleyFsm.ReleaseSeconds).Hunch, 1e-3f);                         // and back to rest before the next spike
             Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Walk, 1f).Crouch); Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Done, 1f).Raise);
         }
     }

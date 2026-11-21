@@ -42,8 +42,8 @@ namespace Evolve.Combat
         }
     }
 
-    public enum VolleyStage { Rise, Walk, Pull, Hold, Done }
-    public enum VolleyEvent { None, PullStart, Picked, Threw }
+    public enum VolleyStage { Rise, Roar, Walk, Pull, Hold, Release, Done }
+    public enum VolleyEvent { None, Roared, PullStart, Picked, Threw }
 
     /// <summary>The speed of a charge that starts slowly and builds up: a factor on the average speed, 0.3 at the start and 1.7 at the end, so the distance covered is exactly the move's distance.</summary>
     public static class ChargeRules
@@ -52,13 +52,13 @@ namespace Evolve.Combat
     }
 
     /// <summary>
-    /// The rock volley after the landing: it first gets up from its crouch (<see cref="RiseSeconds"/>), then for each spike walks to it (until it is there, or <see cref="WalkTimeout"/> if something is in the way),
+    /// The rock volley after the landing: it first gets up from its crouch (<see cref="RiseSeconds"/>) and roars (<see cref="VolleyEvent.Roared"/>, <see cref="RoarSeconds"/>), then for each spike walks to it (until it is there, or <see cref="WalkTimeout"/> if something is in the way),
     /// pulls it out of the ground slowly with both arms (<see cref="VolleyEvent.PullStart"/>, then <see cref="VolleyEvent.Picked"/> after <see cref="PullSeconds"/>), holds it <see cref="HoldSeconds"/> to aim like a javelin,
-    /// throws it (<see cref="VolleyEvent.Threw"/>) and goes to the next one, until none is left.
+    /// throws it (<see cref="VolleyEvent.Threw"/>), holds the follow-through <see cref="ReleaseSeconds"/> and goes to the next one, until none is left.
     /// </summary>
     public sealed class VolleyFsm
     {
-        public const float RiseSeconds = 1.2f, WalkTimeout = 3f, PullSeconds = 1.1f, HoldSeconds = 0.6f;
+        public const float RiseSeconds = 1.2f, RoarSeconds = 2f, WalkTimeout = 3f, PullSeconds = 1.1f, HoldSeconds = 0.6f, ReleaseSeconds = 0.8f;
 
         readonly int spikes;
         public VolleyFsm(int spikeCount) { spikes = Math.Max(0, spikeCount); Stage = spikes == 0 ? VolleyStage.Done : VolleyStage.Rise; }
@@ -76,7 +76,10 @@ namespace Evolve.Combat
             switch (Stage)
             {
                 case VolleyStage.Rise:
-                    if (StageTime >= RiseSeconds) { Stage = VolleyStage.Walk; StageTime = 0f; }
+                    if (StageTime < RiseSeconds) return VolleyEvent.None;
+                    Stage = VolleyStage.Roar; StageTime = 0f; return VolleyEvent.Roared;
+                case VolleyStage.Roar:
+                    if (StageTime >= RoarSeconds) { Stage = VolleyStage.Walk; StageTime = 0f; }
                     return VolleyEvent.None;
                 case VolleyStage.Walk:
                     if (!arrived && StageTime < WalkTimeout) return VolleyEvent.None;
@@ -84,11 +87,14 @@ namespace Evolve.Combat
                 case VolleyStage.Pull:
                     if (StageTime < PullSeconds) return VolleyEvent.None;
                     Stage = VolleyStage.Hold; StageTime = 0f; return VolleyEvent.Picked;
-                default:
+                case VolleyStage.Hold:
                     if (StageTime < HoldSeconds) return VolleyEvent.None;
+                    Stage = VolleyStage.Release; StageTime = 0f; return VolleyEvent.Threw;
+                default:   // Release: the follow-through of the throw, then the next spike
+                    if (StageTime < ReleaseSeconds) return VolleyEvent.None;
                     Index++; StageTime = 0f;
                     Stage = Index >= spikes ? VolleyStage.Done : VolleyStage.Walk;
-                    return VolleyEvent.Threw;
+                    return VolleyEvent.None;
             }
         }
     }

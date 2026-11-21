@@ -20,6 +20,7 @@ golem_core_blast|1.2|a huge energy explosion from a stone golem core, a massive 
 golem_step|0.6|one single very heavy footstep of a colossal stone giant on a stone floor, a deep dull thud with a grinding rock crunch, tight and short, no reverb tail
 golem_leap|1.0|a colossal stone golem crouching then leaping high into the air, a deep straining grunt, rock cracking under its feet and a heavy rushing whoosh upward, powerful
 golem_spikes|0.9|sharp stone spikes bursting up out of the ground all around, a loud cracking and grinding eruption of rock, debris scattering, decisive and heavy
+golem_roar|2.5|a colossal stone golem bellowing one enormous earth-shaking roar, a deep thundering rumbling bellow with grinding rock in the chest, rising then booming outward like a shock wave, huge and terrifying, ends with a rocky rumble
 golem_hurt|0.6|a short pained rumble of a stone golem being hit, cracking rock and a low grunt, abrupt and heavy
 T
 while IFS='|' read -r -u 3 id secs prompt; do

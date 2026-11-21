@@ -228,7 +228,8 @@ namespace Evolve.Combat
         {
             if (volley == null) { SnapToGround(); return; }   // knocked out of the leap before it landed
             if (volley.Stage == VolleyStage.Done) return;
-            if (volley.Stage == VolleyStage.Rise) { volley.Update(Time.fixedDeltaTime, false); return; }   // getting up from the landing crouch: nothing else yet
+            if (volley.Stage == VolleyStage.Rise) { if (volley.Update(Time.fixedDeltaTime, false) == VolleyEvent.Roared) ShockRoar(m); return; }   // getting up from the landing crouch, then the roar
+            if (volley.Stage == VolleyStage.Roar || volley.Stage == VolleyStage.Release) { volley.Update(Time.fixedDeltaTime, false); return; }   // roaring, or holding the follow-through of a throw
             var spike = volley.Index < spikeObjs.Count ? spikeObjs[volley.Index] : null;
             if (spike == null) { volley.Update(VolleyFsm.WalkTimeout, true); return; }   // the spike is gone: skip it
             Vector3 to = Flat(spike.transform.position - transform.position);
@@ -249,6 +250,23 @@ namespace Evolve.Combat
                 spike.Grab(rightHand != null ? rightHand : transform);
             }
             else if (e == VolleyEvent.Threw) ThrowHeld(m);
+        }
+
+        /// <summary>The roar after the landing: a shock wave of sound throws every player in range back.</summary>
+        void ShockRoar(MoveDef m)
+        {
+            Vector3 at = transform.position;
+            GolemFx.Roar(at, m.RoarRadius);
+            foreach (var p in SurvivalStats.All)
+            {
+                if (p == null || p.IsRemote || p.State.IsDead) continue;
+                Vector3 away = Flat(p.transform.position - at);
+                if (away.magnitude > m.RoarRadius) continue;
+                if (away.sqrMagnitude < 1e-4f) away = transform.forward;
+                float k = 1f - 0.5f * Mathf.Clamp01(away.magnitude / m.RoarRadius);   // the closer, the harder
+                Impulse.Kick(p.GetComponent<Rigidbody>(), away.normalized * m.RoarForce * k + Vector3.up * m.RoarForce * 0.35f * k);
+                if (p.TryGetComponent(out Evolve.Player.SlimeController sc)) sc.FreezeFor(0.6f);
+            }
         }
 
         void ThrowHeld(MoveDef m)
@@ -483,7 +501,7 @@ namespace Evolve.Combat
                 SkillFx.Ring(iceSpot, m.Radius, IceColor, m.Active, 0.3f);   // the ring under the player's feet: step out before the block falls
             }
             if (m.Shape == MoveShape.Throw && target != null)
-                MonsterProjectile.Launch(TryGetComponent(out GolemRigFx rig) && rig.RockPosition(out var rockAt) ? rockAt : transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
+                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
             if (m.Shape == MoveShape.Perch) BeginPerch(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);

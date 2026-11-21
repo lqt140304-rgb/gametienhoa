@@ -15,16 +15,17 @@ namespace Evolve.Tests.EditMode
             {
                 var moves = MovesetSeed.For(boss);
                 Assert.AreEqual(2, moves.Count(m => m.Role == MoveRole.Normal), boss + " normal");
-                Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Ranged), boss + " ranged");
+                int ranged = moves.Count(m => m.Role == MoveRole.Ranged);
+                Assert.IsTrue(ranged == 1 || (ranged == 0 && moves.Single(m => m.Role == MoveRole.Special).SpikeCount > 0), boss + " ranged: one ranged skill, or a special that throws a volley of rocks from afar");
                 Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Special), boss + " special");
                 Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Ultimate), boss + " ultimate");
                 Assert.LessOrEqual(moves.Count(m => m.Role == MoveRole.Combo), 1, boss + ": at most one extra combo skill (a charge or other connector)");
-                Assert.AreEqual(5 + moves.Count(m => m.Role == MoveRole.Combo), moves.Count, boss + " total");
+                Assert.AreEqual(4 + ranged + moves.Count(m => m.Role == MoveRole.Combo), moves.Count, boss + " total");
                 var special = moves.Single(m => m.Role == MoveRole.Special);
                 Assert.IsTrue(special.Pins || special.Dodge, boss + ": the special skill is a challenge: it holds the player in a mini game (Pins) or sets a dodge puzzle (Dodge)");
                 Assert.LessOrEqual(moves.Single(m => m.Role == MoveRole.Ultimate).UnlockBelow, 0.25f + 1e-4f, boss + ": the ultimate comes near the end of its health");
                 Assert.IsTrue(moves.Where(m => m.Role != MoveRole.Ultimate).All(m => m.UnlockBelow >= 1f - 1e-4f), boss + ": the other four are always available");
-                Assert.IsTrue(moves.Single(m => m.Role == MoveRole.Ranged).MinRange >= 5f, boss + ": the ranged skill is for distance");
+                Assert.IsTrue(moves.Where(m => m.Role == MoveRole.Ranged).All(m => m.MinRange >= 5f), boss + ": the ranged skill is for distance");
                 Assert.IsTrue(PassiveRules.Has(boss), boss + " has a passive");
             }
         }

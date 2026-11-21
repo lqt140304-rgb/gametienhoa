@@ -156,33 +156,6 @@ namespace Evolve.Combat
             }
         }
 
-        // ---- the rock of Ném Đá: torn out of the ground in front of it, lifted overhead in both hands, thrown from there
-        GameObject boulder; Vector3 rockAt; bool rockShown;
-        /// <summary>Where the rock in its hands is (so the throw leaves from there), while it holds one.</summary>
-        public bool RockPosition(out Vector3 at) { at = rockAt; return rockShown; }
-
-        void UpdateBoulder(float scale)
-        {
-            bool lob = combat != null && combat.CurrentMove != null && combat.CurrentMove.Anim == "Lob" && combat.Phase == MovePhase.Windup;
-            if (!lob) { if (boulder != null && boulder.activeSelf) boulder.SetActive(false); rockShown = false; return; }
-            if (boulder == null)
-            {
-                boulder = GameObject.CreatePrimitive(PrimitiveType.Sphere); boulder.name = "Tảng Đá";
-                Destroy(boulder.GetComponent<Collider>());
-                var mr = boulder.GetComponent<MeshRenderer>(); mr.sharedMaterial = Evolve.Abilities.SkillFx.Gel(new Color(0.42f, 0.38f, 0.34f), 1f, 0.15f, 0.9f); mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                boulder.transform.localScale = new Vector3(1f, 0.82f, 0.94f) * 1.0f * scale;
-            }
-            float p = combat.PhaseProgress;
-            Vector3 ground = transform.position + transform.forward * 1.1f * scale + Vector3.up * 0.4f * scale;
-            Vector3 hands = handL != null && handR != null ? (handL.position + handR.position) * 0.5f : transform.position + Vector3.up * 2f * scale;
-            hands += Vector3.up * 0.45f * scale * Mathf.SmoothStep(0f, 1f, (p - 0.5f) / 0.3f);   // overhead, the rock sits above the hands
-            rockAt = Vector3.Lerp(ground, hands, Mathf.SmoothStep(0f, 1f, (p - 0.3f) / 0.2f));
-            boulder.transform.position = rockAt; boulder.transform.Rotate(0f, 40f * Time.deltaTime, 0f);
-            boulder.SetActive(true); rockShown = true;
-        }
-
-        void OnDisable() { if (boulder != null) Destroy(boulder); }
-
         void LateUpdate()
         {
             float dt = Mathf.Max(Time.deltaTime, 1e-4f), t = Time.time;
@@ -285,7 +258,6 @@ namespace Evolve.Combat
             Arm(armL, foreL, +1f, -(hipL - crouchHip - stance * 22f) * swing);
             Arm(armR, foreR, -1f, -(hipR - crouchHip + stance * 22f) * swing);
 
-            UpdateBoulder(scale);
             if (coreLight != null)
             {
                 float flicker = t < flickerUntil ? 0.6f + 0.4f * Mathf.Sin(t * 60f) : 0f;
