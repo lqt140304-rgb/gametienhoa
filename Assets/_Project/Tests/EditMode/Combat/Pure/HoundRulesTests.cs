@@ -79,5 +79,19 @@ namespace Evolve.Tests.EditMode
             Assert.Less(HoundRules.FaintAngle(1.9f, 2f), HoundRules.FaintRollDeg);
             Assert.AreEqual(0f, HoundRules.FaintAngle(2f, 2f), 1e-3f); Assert.AreEqual(0f, HoundRules.FaintAngle(-1f, 2f));
         }
+
+        [Test] public void LungeDistance_ReachesTheTarget_NotMore_AndNeverBeyondTheMoveLimit()
+        {
+            Assert.AreEqual(4.5f, HoundRules.LungeDistance(4f, 5.5f), 1e-4f);   // the target 4 m away: 4 m plus a little
+            Assert.AreEqual(5.5f, HoundRules.LungeDistance(9f, 5.5f), 1e-4f);   // far: the most the move can cover
+            Assert.AreEqual(1f, HoundRules.LungeDistance(0.2f, 5.5f), 1e-4f);  // close: still a real hop
+        }
+
+        [Test] public void Spit_ThrowsTheHeadBackThenSnapsItForward()
+        {
+            Assert.Greater(HoundRules.Evaluate("Spit", MovePhase.Windup, 1f).NeckPitch, 30f);
+            Assert.Greater(HoundRules.Evaluate("Spit", MovePhase.Windup, 1f).JawDeg, 15f);
+            Assert.Less(HoundRules.Evaluate("Spit", MovePhase.Active, 1f).NeckPitch, 0f);
+        }
     }
 }

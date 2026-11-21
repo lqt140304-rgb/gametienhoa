@@ -156,18 +156,21 @@ namespace Evolve.Tests.EditMode
             }
         }
 
-        [Test] public void ChoXuong_HasItsSixMoves_ByAnyName()
+        [Test] public void ChoXuong_HasItsSevenMoves_ByAnyName()
         {
-            foreach (var n in new[] { "Chó Xương", "ChoXuong (Meshy)(Clone)", "choxuong" }) Assert.AreEqual(6, MovesetSeed.For(n).Count, n);
+            foreach (var n in new[] { "Chó Xương", "ChoXuong (Meshy)(Clone)", "choxuong" }) Assert.AreEqual(7, MovesetSeed.For(n).Count, n);
             Assert.IsTrue(MovesetSeed.Has("Chó Xương"));
             var pounce = One("ChoXuong", "Vồ"); var bite = One("ChoXuong", "Cắn Nghiền"); var leap = One("ChoXuong", "Nhảy Vượt"); var roar = One("ChoXuong", "Gầm"); var howl = One("ChoXuong", "Triệu Hồi");
-            Assert.AreEqual(0.9f, pounce.Windup); Assert.AreEqual(0.6f, pounce.Active); Assert.AreEqual(24f, pounce.Damage); Assert.AreEqual(5f, pounce.Distance); Assert.AreEqual(1.8f, pounce.Recover);
+            Assert.AreEqual(0.9f, pounce.Windup); Assert.AreEqual(0.6f, pounce.Active); Assert.AreEqual(24f, pounce.Damage); Assert.AreEqual(5.5f, pounce.Distance); Assert.AreEqual(1.8f, pounce.Recover);
             Assert.IsTrue(pounce.Pins); Assert.IsFalse(bite.Pins); Assert.IsFalse(One("ChoXuong", "Cào Xé").Pins);   // only the pounce pins its prey
             Assert.AreEqual(0.35f, bite.Windup); Assert.AreEqual(20f, bite.Damage); Assert.AreEqual(2.5f, bite.MaxRange);
             Assert.AreEqual(MoveShape.Perch, leap.Shape); Assert.AreEqual(6f, leap.Distance); Assert.AreEqual(1.5f, leap.MaxHeight);
             Assert.AreEqual(MoveShape.Roar, roar.Shape); Assert.AreEqual(0.9f, roar.Windup); Assert.AreEqual(8f, roar.Radius); Assert.AreEqual(4f, roar.FearSeconds); Assert.AreEqual(0.8f, roar.Freeze); Assert.AreEqual(0.66f, roar.UnlockBelow);
             Assert.AreEqual(MoveShape.Summon, howl.Shape); Assert.AreEqual(3, howl.SummonCount); Assert.AreEqual(25f, howl.SummonSeconds); Assert.AreEqual(4f, howl.Radius); Assert.AreEqual(0.66f, howl.UnlockBelow); Assert.AreEqual(30f, howl.Cooldown);
             Assert.AreEqual(4.5f, pounce.Cooldown); Assert.AreEqual(3f, bite.Cooldown); Assert.AreEqual(5f, One("ChoXuong", "Cào Xé").Cooldown); Assert.AreEqual(15f, leap.Cooldown); Assert.AreEqual(28f, roar.Cooldown);   // slower than the first try
+            var spit = One("ChoXuong", "Phun Xương");
+            Assert.AreEqual(MoveShape.Throw, spit.Shape); Assert.AreEqual(6f, spit.MinRange); Assert.AreEqual(16f, spit.MaxRange); Assert.AreEqual(0.9f, spit.Windup); Assert.AreEqual(14f, spit.Damage); Assert.AreEqual(7f, spit.Cooldown); Assert.AreEqual(PoseKind.Throw, MovesetSeed.PoseOf(spit));
+            Assert.AreEqual(3f, pounce.MinRange); Assert.AreEqual(5.5f, pounce.MaxRange); Assert.AreEqual(7.5f, pounce.AbortBeyond);   // it only jumps when the target is in reach, and gives up if it slips away
             var claw = One("ChoXuong", "Cào Xé");
             Assert.AreEqual(0.55f, claw.Windup); Assert.AreEqual(16f, claw.Damage); Assert.AreEqual(3.5f, claw.MaxRange); Assert.AreEqual(1f, claw.UnlockBelow); Assert.AreEqual(PoseKind.Crouch, MovesetSeed.PoseOf(claw));
             Assert.AreEqual(0.4f, MovesetSeed.PoseStrength("Chó Xương")); Assert.AreEqual(1f, MovesetSeed.PoseStrength("Cáo Gió")); Assert.AreEqual(1f, MovesetSeed.PoseStrength(null));

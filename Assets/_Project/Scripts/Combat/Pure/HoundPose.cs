@@ -31,6 +31,7 @@ namespace Evolve.Combat
                 case "Bite": windup = P(8f, 24f); strike = P(-6f, 0f); return;
                 case "Roar": windup = P(35f, 24f, 0.5f); strike = P(35f, 24f, 1f); return;
                 case "Howl": windup = P(50f, 20f, 0.3f); strike = P(50f, 20f, 0.6f); return;
+                case "Spit": windup = P(40f, 24f, 0.2f); strike = P(-18f, 24f); return;   // the head goes back with the mouth open, then snaps forward and spits
                 case "Leap": windup = P(-10f, 0f); strike = P(15f, 6f); return;
                 case "Claw": windup = P(12f, 6f, 0f, 55f); strike = P(-12f, 12f, 0f, -20f); return;   // a forepaw rises, then rakes down
                 default: windup = P(0f, 0f); strike = P(0f, 0f); return;
@@ -60,6 +61,9 @@ namespace Evolve.Combat
             float x = 1f - secondsSinceHit / len;
             return x * x;
         }
+
+        /// <summary>How far the pounce travels: to the target plus half a metre, at most what the move allows and at least a real hop.</summary>
+        public static float LungeDistance(float targetDistance, float moveDistance) => Math.Min(moveDistance, Math.Max(1f, targetDistance + 0.5f));
 
         /// <summary>How far a leg swings forward from its rest (negative = back) in degrees: in the leap the front legs reach out and the hind legs trail straight back; while pinning the front paws reach over the catch.</summary>
         public static float LegSwingDeg(string anim, MovePhase phase, bool pinning, bool front)

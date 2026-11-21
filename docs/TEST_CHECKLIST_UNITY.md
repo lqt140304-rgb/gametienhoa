@@ -254,6 +254,9 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. C
 - [ ] **Vồ (clip Pounce):** nén thân rồi lao ~5 m, **bốn chân duỗi thẳng lúc lao (chân trước vươn ra, chân sau thẳng ra sau, không chạy chân)**, đầu vươn lên, hàm há; vồ hụt thì chó **lăn ra nằm nghiêng ngất ~2 s** rồi bật dậy (đánh nó lúc này thấy đau gấp rưỡi).
 - [ ] **Vồ trúng (đầu hướng về slime):** chó cắn chặt vào slime, hai chân trước ép lên; slime đứng yên và mất máu liên tục (~6/giây); hiện thanh vàng và chữ "ẤN A RỒI D LIÊN TỤC"; ấn xen kẽ A và D thì thanh đầy, slime thoát, chó bị hất lùi và loạng choạng ~1,2 s (đánh nó lúc này thấy đau gấp rưỡi); ấn một phím liên tục không có tác dụng; không ấn thì sau 8 s chó tự nhả.
 - [ ] **Cắn Nghiền** (gần): hàm há rộng rồi đớp khép lại thật nhanh.
+- [ ] **Chỉ nhảy khi đủ tầm:** đứng cách chó 3–5,5 m thì nó mới nén thân rồi vồ; đứng xa hơn thì nó tiến lại gần (hoặc phun xương) chứ không nhảy; nó đã nén thân mà bạn chạy ra xa quá ~7,5 m thì **nó hủy, đứng dậy chứ không lao vào khoảng không**; vồ rơi đúng chỗ bạn đứng (không vọt quá).
+- [ ] **Phun Xương** (cách 6–16 m): ngửa đầu há miệng rồi hất đầu, mảnh xương trắng xoay bay theo vòng cung kèm vệt trắng, trúng thì mất ~14 máu và vỡ tung; tránh được bằng cách chạy ngang.
+- [ ] **Âm thanh:** gầm khi báo trước Vồ, tiếng lao nặng, tiếng đập khi tiếp đất kèm bụi; Cắn có tiếng hàm đớp; Gầm có tiếng gầm dài và vòng sóng; Triệu Hồi có tiếng hú và đất bùng bụi; Phun Xương có tiếng vút. Âm lượng hợp lý (không chát, không quá nhỏ), báo lại nếu chói.
 - [ ] **Cào Xé** (gần, ≤ 3,5 m): ngẩng đầu và giơ một chân trước lên rồi quét xuống; lần sau đổi chân kia.
 - [ ] Động tác rõ, **không giật**: báo trước đủ chậm để nhìn ra (nhanh hơn thì báo, ghi chiêu nào).
 - [ ] Cỡ Chó Xương bằng khoảng một nửa bản đầu; hồi chiêu dài hơn trước (không ra đòn dồn dập).

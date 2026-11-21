@@ -165,5 +165,27 @@ namespace Evolve.Tests.EditMode
             Assert.IsNull(s.Allow);
             Assert.AreEqual(1, Run(s, 3f, 3f).Count);
         }
+
+        [Test] public void AMoveWithAbortBeyond_DropsItsWindup_WhenTheTargetSlipsOutOfReach_WithoutSpendingItsCooldown()
+        {
+            var m = new MoveDef { Name = "Vồ", Shape = MoveShape.Lunge, Windup = 1f, Active = 0.5f, Recover = 1f, Cooldown = 5f, MinRange = 3f, MaxRange = 5.5f, AbortBeyond = 7.5f, Distance = 5.5f };
+            var s = new MoveScheduler(new[] { m }, 1);
+            s.Update(0.02f, true, 4f, 1f);
+            Assert.AreEqual(MovePhase.Windup, s.Phase);
+            s.Update(0.3f, true, 9f, 1f);   // it ran away during the tell
+            Assert.AreEqual(MovePhase.Idle, s.Phase);
+            s.Update(0.02f, true, 4f, 1f);   // no cooldown was spent: it can try again at once
+            Assert.AreEqual(MovePhase.Windup, s.Phase);
+        }
+
+        [Test] public void AMoveWithAbortBeyond_StillStrikes_WhileTheTargetStaysClose()
+        {
+            var m = new MoveDef { Name = "Vồ", Shape = MoveShape.Lunge, Windup = 0.5f, Active = 0.5f, Recover = 1f, Cooldown = 5f, MinRange = 3f, MaxRange = 5.5f, AbortBeyond = 7.5f, Distance = 5.5f };
+            var s = new MoveScheduler(new[] { m }, 1);
+            s.Update(0.02f, true, 4f, 1f);
+            MoveDef started = null;
+            for (int i = 0; i < 40 && started == null; i++) started = s.Update(0.02f, true, 7f, 1f);   // drifted back a little, still inside the abort limit
+            Assert.AreSame(m, started);
+        }
     }
 }

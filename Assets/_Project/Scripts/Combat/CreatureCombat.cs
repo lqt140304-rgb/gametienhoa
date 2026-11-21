@@ -79,6 +79,8 @@ namespace Evolve.Combat
         SurvivalStats target;
         MovePhase prevPhase;
         Vector3 strikeDir;
+        float strikeDist;
+        bool hound;
         bool hitDone, hopFlag, skillFlag, hitFlag;
         float drainAccum;
         LeechState prevLeech;
@@ -116,6 +118,7 @@ namespace Evolve.Combat
             moves = MovesetSeed.For(name);
             if (moves.Count == 0) { enabled = false; return; }
             poseStrength = MovesetSeed.PoseStrength(name);
+            hound = SpeciesNames.Key(name) == "choxuong";
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
@@ -261,6 +264,7 @@ namespace Evolve.Combat
         void OnPhase(MovePhase phase, MoveDef m)
         {
             if (m == null) return;
+            if (hound) HoundFx.OnPhase(this, phase, m);
             if (phase == MovePhase.Windup) BeginWindup(m);
             else if (phase == MovePhase.Active) loco?.PlayAction("Strike_" + m.Anim);
             else if (phase == MovePhase.Recover)
@@ -292,13 +296,15 @@ namespace Evolve.Combat
             hitDone = false;
             strikeDir = target != null ? Flat(target.transform.position - transform.position).normalized : transform.forward;
             if (strikeDir.sqrMagnitude < 1e-4f) strikeDir = transform.forward;
+            // a pounce that must land covers the distance to the target (plus a little), not always its full length
+            strikeDist = m.Pins && target != null ? HoundRules.LungeDistance(Flat(target.transform.position - transform.position).magnitude, m.Distance) : m.Distance;
             if (m.Shape == MoveShape.IceDrop && target != null)
             {
                 iceSpot = target.transform.position; iceArmed = true;
                 SkillFx.Ring(iceSpot, m.Radius, IceColor, m.Active, 0.3f);   // the ring under the player's feet: step out before the block falls
             }
             if (m.Shape == MoveShape.Throw && target != null)
-                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale);
+                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, 0.6f, m.Anim == "Spit");
             if (m.Shape == MoveShape.Perch) BeginPerch(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);
@@ -311,7 +317,7 @@ namespace Evolve.Combat
             if (m.Shape == MoveShape.Gust) { Gust(m); return; }
             if (m.Shape == MoveShape.Spears) { TickSpears(m); return; }
             if (m.Shape != MoveShape.Lunge && m.Shape != MoveShape.Charge) return;
-            if (m.Active > 0f && motor != null && !motor.Move(strikeDir, m.Distance / m.Active))
+            if (m.Active > 0f && motor != null && !motor.Move(strikeDir, strikeDist / m.Active))
             {
                 if (m.Shape == MoveShape.Charge) { CreatureStatus.Stun(this, 2f); scheduler.Stun(2f); loco?.PlayAction("Stun"); return; }   // hit a wall: dazed
             }

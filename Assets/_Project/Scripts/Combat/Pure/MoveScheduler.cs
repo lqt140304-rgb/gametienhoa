@@ -30,6 +30,8 @@ namespace Evolve.Combat
         public bool Armored;
         /// <summary>A lunge that lands head first clamps on and starts the pin mini game (see PinGame) instead of knocking the player away.</summary>
         public bool Pins;
+        /// <summary>If the target is farther than this while the move winds up, the windup is dropped (the cooldown is not spent): a move that must land does not leap at nothing. 0 = never.</summary>
+        public float AbortBeyond;
     }
 
     /// <summary>
@@ -97,7 +99,7 @@ namespace Evolve.Combat
                 Current = pick; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = pick.Windup * Math.Max(0.01f, TellScale);
                 return null;
             }
-            if (Phase == MovePhase.Windup && !hasTarget) { Reset(); return null; }
+            if (Phase == MovePhase.Windup && (!hasTarget || (Current.AbortBeyond > 0f && targetDistance > Current.AbortBeyond))) { Reset(); return null; }
 
             PhaseTime += dt;
             if (PhaseTime + Eps < phaseLength) return null;
