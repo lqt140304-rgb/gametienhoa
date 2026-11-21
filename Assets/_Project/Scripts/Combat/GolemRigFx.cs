@@ -30,7 +30,7 @@ namespace Evolve.Combat
         CreatureCombat combat;
         Predator pred;
         FootstepFx steps;
-        Vector3 lastPos, hipsBase, hipsWritten; bool hipsHas;
+        Vector3 lastPos, hipsBase, hipsWritten; bool hipsHas;   // the hips' LOCAL position (a world position changes whenever the whole golem walks)
         float phase, walkWeight;
 
         /// <summary>Turn a bone by <paramref name="extra"/> on top of what the Animator wrote this frame; if the Animator left the bone alone it still holds last frame's turn, so start from the pose we remembered.</summary>
@@ -192,13 +192,15 @@ namespace Evolve.Combat
             if (kneeR != null) Put(kneeR, Quaternion.AngleAxis(kneeSign * kneeRd, kneeR.Right));
             if (footL != null) Put(footL, Quaternion.AngleAxis(-hipSign * hipL * 0.5f + kneeSign * kneeLd * 0.35f, footL.Right));   // the sole stays roughly level
             if (footR != null) Put(footR, Quaternion.AngleAxis(-hipSign * hipR * 0.5f + kneeSign * kneeRd * 0.35f, footR.Right));
-            if (hips != null)   // the body sinks at each footfall
+            if (hips != null)   // the body sinks at each footfall; kept in local space and capped, so it can never creep down into the floor
             {
-                var cur = hips.position;
-                Vector3 b = hipsHas && (cur - hipsWritten).sqrMagnitude < 1e-8f ? hipsBase : cur;
+                var cur = hips.localPosition;
+                Vector3 b = hipsHas && (cur - hipsWritten).sqrMagnitude < 1e-10f ? hipsBase : cur;   // the Animator wrote it this frame, or it still holds our last value
                 hipsBase = b;
-                hips.position = b + Vector3.up * GaitRules.Bob(ph, BobMeters * scale) * walkWeight;
-                hipsWritten = hips.position; hipsHas = true;
+                float drop = Mathf.Clamp(GaitRules.Bob(ph, BobMeters * scale) * walkWeight, -0.2f * scale, 0f);
+                Vector3 down = hips.parent != null ? hips.parent.InverseTransformVector(Vector3.up * drop) : Vector3.up * drop;
+                hips.localPosition = b + down;
+                hipsWritten = hips.localPosition; hipsHas = true;
             }
 
             // ---- the spine: the move's lean plus a slow twist against the stride; the arms: the move, and a counter-swing of the stride

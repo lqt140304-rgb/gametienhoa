@@ -34,7 +34,10 @@ namespace Evolve.Combat
             pin.dogBody = dog.GetComponent<Rigidbody>();
             pin.Game = new PinGame(grab ? PinMode.Mash : PinMode.AlternateAD);
             Vector3 flat = dog.transform.position - victim.transform.position; flat.y = 0f;
-            pin.offset = flat.sqrMagnitude > 1e-4f ? flat.normalized * Mathf.Max(0.8f, flat.magnitude) : -dog.transform.forward;
+            // stand back far enough that the camera behind the player is not inside the monster's body (a big golem 0.8 m away swallowed the view)
+            var body = dog.GetComponentInChildren<Collider>();
+            float reach = body != null ? Mathf.Max(body.bounds.extents.x, body.bounds.extents.z) + 1.2f : 1.2f;
+            pin.offset = flat.sqrMagnitude > 1e-4f ? flat.normalized * Mathf.Max(reach, flat.magnitude) : -dog.transform.forward * reach;
             Active = pin;
             return true;
         }
