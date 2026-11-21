@@ -109,12 +109,15 @@ def pose_from(front, front_shin, hind, hind_shin, neck, jaw, back=0.0, lift=0.0,
     return spec, lift, fwd
 
 
-# poses: (front hip, front shin, hind hip, hind shin, neck (+ down), jaw, back, root lift, root forward, tail)
+# poses: (front hip, front shin, hind hip, hind shin, neck (+ down), jaw, back, root lift, root forward, tail). Heavy, slow monster: it rocks back, sinks deep, lunges
+# with a long slow start, lands hard and settles its weight.
 STAND = pose_from(0, 0, 0, 0, 0, 0)
-CROUCH = pose_from(18, 34, -32, 48, 22, 6, back=-6, lift=-0.14, fwd=0.0, tail=-8)
-LAUNCH = pose_from(-52, 5, 50, -10, -14, 20, back=6, lift=0.10, fwd=0.04, tail=8)
-PEAK = pose_from(-58, 0, 56, -6, -10, 22, back=8, lift=0.16, fwd=0.08, tail=10)
-LAND = pose_from(-28, 26, 22, 22, 6, 6, back=-3, lift=-0.04, fwd=0.1, tail=0)
+RISE = pose_from(-6, -4, 8, -6, -8, 4, back=3, lift=0.03, tail=4)        # anticipation: weight shifts up and back
+CROUCH = pose_from(24, 40, -38, 56, 30, 8, back=-9, lift=-0.20, tail=-12)
+LAUNCH = pose_from(-52, 5, 50, -10, -14, 20, back=6, lift=0.08, fwd=0.04, tail=8)
+PEAK = pose_from(-58, 0, 56, -6, -10, 22, back=8, lift=0.12, fwd=0.08, tail=10)
+LAND = pose_from(-34, 34, 30, 30, 10, 4, back=-6, lift=-0.12, fwd=0.1, tail=-4)      # the impact: legs fold under the weight
+SETTLE = pose_from(8, 14, -10, 18, 12, 2, back=-2, lift=-0.05, tail=0)
 
 
 def lerp_pose(a, b, t):
@@ -154,34 +157,40 @@ def author_clips(arm):
     act.use_fake_user = True
     names.append("Walk")
 
-    # Pounce_Tell: stand -> crouch (22 frames, then holds)
+    # Pounce_Tell: 32 frames (1.33 s): rock back a little, then sink slowly into a deep crouch, and hold
     act = new_action(arm, "Pounce_Tell")
-    for f in range(0, 23):
-        spec, lift, fwd = lerp_pose(STAND, CROUCH, smooth(f / 22))
+    for f in range(0, 33):
+        t = f / 32
+        if t < 0.25:
+            spec, lift, fwd = lerp_pose(STAND, RISE, smooth(t / 0.25))
+        else:
+            spec, lift, fwd = lerp_pose(RISE, CROUCH, smooth((t - 0.25) / 0.75))
         apply_pose(arm, spec, lift, fwd)
         key(arm, f + 1)
     act.use_fake_user = True
     names.append("Pounce_Tell")
 
-    # Pounce_Strike: crouch -> launch -> peak (11 frames, about 0.45 s)
+    # Pounce_Strike: 14 frames (0.58 s): a slow, heavy start out of the crouch, then it flies
     act = new_action(arm, "Pounce_Strike")
-    for f in range(0, 12):
-        t = f / 11
-        spec, lift, fwd = lerp_pose(CROUCH, LAUNCH, smooth(t / 0.35)) if t < 0.35 else lerp_pose(LAUNCH, PEAK, smooth((t - 0.35) / 0.65))
+    for f in range(0, 15):
+        t = f / 14
+        spec, lift, fwd = lerp_pose(CROUCH, LAUNCH, smooth(t / 0.5) ** 1.6) if t < 0.5 else lerp_pose(LAUNCH, PEAK, smooth((t - 0.5) / 0.5))
         apply_pose(arm, spec, lift, fwd)
         key(arm, f + 1)
     act.use_fake_user = True
     names.append("Pounce_Strike")
 
-    # Pounce_Recover: peak -> landing -> stand (36 frames, 1.5 s)
+    # Pounce_Recover: 43 frames (1.8 s): a hard landing, the weight sags and holds, then it straightens up slowly
     act = new_action(arm, "Pounce_Recover")
-    for f in range(0, 37):
-        t = f / 36
-        if t < 0.25:
-            spec, lift, fwd = lerp_pose(PEAK, LAND, smooth(t / 0.25))
+    for f in range(0, 44):
+        t = f / 43
+        if t < 0.15:
+            spec, lift, fwd = lerp_pose(PEAK, LAND, smooth(t / 0.15))
+        elif t < 0.40:
+            spec, lift, fwd = lerp_pose(LAND, SETTLE, smooth((t - 0.15) / 0.25))
         else:
-            spec, lift, fwd = lerp_pose(LAND, STAND, smooth((t - 0.25) / 0.75))
-        apply_pose(arm, spec, lift, fwd * (1 - smooth(max(0.0, (t - 0.25) / 0.75))))
+            spec, lift, fwd = lerp_pose(SETTLE, STAND, smooth((t - 0.40) / 0.60))
+        apply_pose(arm, spec, lift, fwd * (1 - smooth(max(0.0, (t - 0.15) / 0.85))))
         key(arm, f + 1)
     act.use_fake_user = True
     names.append("Pounce_Recover")

@@ -161,7 +161,7 @@ namespace Evolve.Tests.EditMode
             foreach (var n in new[] { "Chó Xương", "ChoXuong (Meshy)(Clone)", "choxuong" }) Assert.AreEqual(6, MovesetSeed.For(n).Count, n);
             Assert.IsTrue(MovesetSeed.Has("Chó Xương"));
             var pounce = One("ChoXuong", "Vồ"); var bite = One("ChoXuong", "Cắn Nghiền"); var leap = One("ChoXuong", "Nhảy Vượt"); var roar = One("ChoXuong", "Gầm"); var howl = One("ChoXuong", "Triệu Hồi");
-            Assert.AreEqual(0.6f, pounce.Windup); Assert.AreEqual(0.45f, pounce.Active); Assert.AreEqual(24f, pounce.Damage); Assert.AreEqual(5f, pounce.Distance); Assert.AreEqual(1.5f, pounce.Recover);
+            Assert.AreEqual(0.9f, pounce.Windup); Assert.AreEqual(0.6f, pounce.Active); Assert.AreEqual(24f, pounce.Damage); Assert.AreEqual(5f, pounce.Distance); Assert.AreEqual(1.8f, pounce.Recover);
             Assert.IsTrue(pounce.Pins); Assert.IsFalse(bite.Pins); Assert.IsFalse(One("ChoXuong", "Cào Xé").Pins);   // only the pounce pins its prey
             Assert.AreEqual(0.35f, bite.Windup); Assert.AreEqual(20f, bite.Damage); Assert.AreEqual(2.5f, bite.MaxRange);
             Assert.AreEqual(MoveShape.Perch, leap.Shape); Assert.AreEqual(6f, leap.Distance); Assert.AreEqual(1.5f, leap.MaxHeight);
