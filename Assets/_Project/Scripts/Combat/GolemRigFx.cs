@@ -10,6 +10,8 @@ namespace Evolve.Combat
     /// in the chest, the core; (4) the crystal armour of its passive (<see cref="PassiveRules"/>) that grows out of the shoulders and back below 66% health. The direction each bone must
     /// turn is measured at start (where the foot or hand goes), so no bone axis is assumed. Every turn is added to the pose the Animator wrote this frame and never stacks up.
     /// </summary>
+    // after CreatureLocomotion (50) and CreatureCombat (60): the Walk/Run clips' root curves leave Model at the Armature's 270°/0.01 until they restore it, which turned a 15 cm hip drop into 14 m
+    [DefaultExecutionOrder(70)]
     public class GolemRigFx : MonoBehaviour
     {
         public static bool Has(string name) => !string.IsNullOrEmpty(name) && name.Contains("(Meshy)") && SpeciesNames.Key(name) == "golemthachanh";
