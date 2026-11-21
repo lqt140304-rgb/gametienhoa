@@ -266,6 +266,7 @@ namespace Evolve.DevTools
             {
                 string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
                 if (SpeciesNames.Key(System.IO.Path.GetFileNameWithoutExtension(path)) != key) continue;
+                if (path.Contains("(Meshy)")) { var meshy = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path); if (meshy != null) return prefabCache[key] = meshy; }   // the Meshy variant wins for testing
                 var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (prefab != null && (prefab.GetComponent<Predator>() != null || prefab.GetComponent<Prey>() != null)) return prefabCache[key] = prefab;
             }
