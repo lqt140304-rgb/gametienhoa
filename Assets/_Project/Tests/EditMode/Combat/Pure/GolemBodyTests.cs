@@ -97,12 +97,21 @@ namespace Evolve.Tests
             Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Walk, 1f).Crouch); Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Done, 1f).Raise);
         }
 
-        [Test] public void EveryGolemMove_LeavesItWindedForTwoToFiveSeconds_TheBiggerTheLonger()
+        [Test] public void OnlyTheLeapFromTheSky_LeavesTheGolemWinded()
         {
             var moves = MovesetSeed.For("Golem Thạch Anh");
-            foreach (var m in moves) Assert.That(m.Rest, Is.InRange(2f, 5f), m.Name);
-            Assert.Greater(moves.Single(m => m.Role == MoveRole.Special).Rest, moves.Single(m => m.Name == "Nện Đấm").Rest);
-            Assert.GreaterOrEqual(moves.Single(m => m.Role == MoveRole.Ultimate).Rest, moves.Single(m => m.Role == MoveRole.Special).Rest - 1f);
+            var leap = moves.Single(m => m.Shape == MoveShape.Meteor);
+            Assert.That(leap.Rest, Is.InRange(4f, 5f));
+            foreach (var m in moves.Where(m => m != leap)) Assert.AreEqual(0f, m.Rest, m.Name);   // every other move flows straight on: no breathing
+        }
+
+        [Test] public void TheGolemLeansOnItsNormalAttacks_ShortCooldowns_AndAPunchRollsIntoASweep()
+        {
+            var moves = MovesetSeed.For("Golem Thạch Anh");
+            var punch = moves.Single(m => m.Name == "Nện Đấm"); var sweep = moves.Single(m => m.Name == "Quét Tay");
+            Assert.LessOrEqual(punch.Cooldown, 4f); Assert.LessOrEqual(sweep.Cooldown, 5f);
+            CollectionAssert.AreEqual(new[] { "Quét Tay" }, punch.Combo);
+            Assert.GreaterOrEqual(moves.Single(m => m.Role == MoveRole.Combo).Combo.Length, 4);   // and the charge strings four of them
         }
 
         [Test] public void Winded_DropsToOneKneeWithAHandOnTheGround_HeavesForBreath_ThenPushesUpWithBothHands()
