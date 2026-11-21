@@ -203,11 +203,19 @@ namespace Evolve.Abilities
         System.Collections.IEnumerator FireAfter(float delay, OrganSO organ, AbilitySO ability, int level)
         {
             pending = true;
+            var spike = ability as SpikeBurstAbility;
+            var volley = spike != null ? spike.Prepare(gameObject, level, delay) : null;
             if (delay > 0f) yield return new WaitForSeconds(delay);
             pending = false;
-            if (stats.State.IsDead) yield break;
-            if (stats.State.Energy < ability.EnergyFor(level)) { Fail($"thiếu năng lượng cho {ability.DisplayName}"); yield break; }
-            if (!ability.Activate(gameObject, level)) { Fail($"{ability.DisplayName} không dùng được lúc này"); yield break; }
+            if (stats.State.IsDead) { volley?.Cancel(); yield break; }
+            if (stats.State.Energy < ability.EnergyFor(level))
+            {
+                volley?.Cancel();
+                Fail($"thiếu năng lượng cho {ability.DisplayName}");
+                yield break;
+            }
+            bool fired = spike != null ? spike.Fire(gameObject, level, volley) : ability.Activate(gameObject, level);
+            if (!fired) { Fail($"{ability.DisplayName} không dùng được lúc này"); yield break; }
             stats.State.TrySpendEnergy(ability.EnergyFor(level));
             readyAt[organ] = Time.time + ability.CooldownFor(level);
             SkillUsed?.Invoke(stats);
