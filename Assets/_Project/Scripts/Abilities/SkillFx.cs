@@ -87,7 +87,7 @@ namespace Evolve.Abilities
             return m;
         }
 
-        static Transform Part(string name, Mesh mesh, Material mat)
+        internal static Transform Part(string name, Mesh mesh, Material mat)
         {
             var go = new GameObject(name) { layer = 2 };   // Ignore Raycast: aiming rays pass through
             go.AddComponent<MeshFilter>().sharedMesh = mesh;

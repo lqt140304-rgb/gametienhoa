@@ -53,10 +53,12 @@ namespace Evolve.Abilities
         System.Collections.IEnumerator FireAfter(float delay)
         {
             pending = true;
+            var spike = ability as SpikeBurstAbility;
+            var volley = spike != null ? spike.Prepare(gameObject, 2, delay) : null;
             if (delay > 0f) yield return new WaitForSeconds(delay);
             pending = false;
-            if (stats.State.IsDead || stats.State.Energy < ability.EnergyCost) yield break;
-            if (ability.Activate(gameObject))
+            if (stats.State.IsDead || stats.State.Energy < ability.EnergyCost) { volley?.Cancel(); yield break; }
+            if (spike != null ? spike.Fire(gameObject, 2, volley) : ability.Activate(gameObject))
             {
                 stats.State.TrySpendEnergy(ability.EnergyCost);
                 readyAt = Time.time + ability.Cooldown;

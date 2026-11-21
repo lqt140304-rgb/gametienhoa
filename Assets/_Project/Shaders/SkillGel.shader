@@ -12,6 +12,7 @@ Shader "Evolve/SkillGel"
         _Intensity ("Intensity", Float) = 1.5
         _Fade ("Fade (1 whole, 0 gone)", Range(0, 1)) = 1
         _Grain ("Dissolve grain size", Float) = 7
+        _SightMask ("Scale with limited sight", Range(0, 1)) = 1
     }
     SubShader
     {
@@ -37,6 +38,7 @@ Shader "Evolve/SkillGel"
                 float _Intensity;
                 float _Fade;
                 float _Grain;
+                float _SightMask;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; half4 color : COLOR; };
@@ -93,7 +95,7 @@ Shader "Evolve/SkillGel"
 
                 float3 rgb = _Color.rgb * i.color.rgb * _Intensity * (glow + edge * 1.5);
                 float a = saturate(glow + edge) * keep * i.color.a * _Color.a * saturate(_Fade * 4.0);
-                a *= EvolveSightBase(i.positionWS);   // blind: only what is near the slime shows
+                a *= lerp(1.0, EvolveSightBase(i.positionWS), _SightMask);   // blind: only what is near the slime shows
                 return half4(rgb, saturate(a));
             }
             ENDHLSL

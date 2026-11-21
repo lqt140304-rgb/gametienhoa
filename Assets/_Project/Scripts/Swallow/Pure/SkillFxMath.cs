@@ -57,6 +57,14 @@ namespace Evolve.Swallow
             return (float)System.Math.Pow(k, sharp);
         }
 
+        public const float SpikeSeparationSeconds = 0.08f;
+
+        public static float SpikeSeparation(float elapsed) =>
+            EaseOutCubic(elapsed / SpikeSeparationSeconds);
+
+        public static bool SameSpikeFlash(float elapsed, float distanceSquared) =>
+            elapsed < 0.08f && distanceSquared < 0.65f * 0.65f;
+
         /// <summary>How far a limb has reached (0..1): shoots out over outSeconds, stays, draws back over the last backSeconds. Fast out, soft landing.</summary>
         public static float Reach(float t, float total, float outSeconds, float backSeconds) =>
             EaseOutCubic(Envelope(t, total, outSeconds, backSeconds));

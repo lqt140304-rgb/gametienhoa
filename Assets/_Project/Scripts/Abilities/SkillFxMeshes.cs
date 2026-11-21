@@ -75,6 +75,9 @@ namespace Evolve.Abilities
             }
             crystal = new Mesh { name = "SkillCrystal", hideFlags = HideFlags.HideAndDontSave };
             crystal.SetVertices(verts);
+            var colors = new Color[verts.Count];
+            for (int i = 0; i < colors.Length; i++) colors[i] = Color.white;
+            crystal.colors = colors;
             crystal.SetTriangles(tris, 0);
             crystal.RecalculateNormals();
             crystal.RecalculateBounds();

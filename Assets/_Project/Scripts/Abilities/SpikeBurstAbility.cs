@@ -62,7 +62,14 @@ namespace Evolve.Abilities
             return col != null ? col.bounds.center : creature.transform.position;
         }
 
-        public override bool Activate(GameObject user, int level)
+        int CountFor(int level) => Mathf.Max(1, SpikeCount) + (level >= 3 ? 2 : 0);
+
+        internal SpikeVolleyFx Prepare(GameObject user, int level, float delay) =>
+            new SpikeVolleyFx(user, CountFor(level), delay);
+
+        public override bool Activate(GameObject user, int level) => Fire(user, level, null);
+
+        internal bool Fire(GameObject user, int level, SpikeVolleyFx volley)
         {
             user.TryGetComponent(out SurvivalStats stats);
             // From the centre of the body, so a level shot hits creatures standing on the ground.
@@ -70,7 +77,9 @@ namespace Evolve.Abilities
             Vector3 aim = AimController.AimDirection(user, origin, out _);
             aim = AssistAim(origin, aim);
 
-            int count = Mathf.Max(1, SpikeCount) + (level >= 3 ? 2 : 0);
+            int count = CountFor(level);
+            volley ??= Prepare(user, level, 0f);
+            volley.Release(aim);
             float damage = SpikeDamage * Power(level);
             for (int i = 0; i < count; i++)
             {
@@ -78,7 +87,7 @@ namespace Evolve.Abilities
                 float angle = Mathf.Lerp(-SpreadAngle * 0.5f, SpreadAngle * 0.5f, t);
                 Vector3 d = Quaternion.AngleAxis(angle, Vector3.up) * aim;
                 // Spawn low, near the ground, where small creatures are.
-                SpikeProjectile.Spawn(origin + d * Mathf.Max(0.6f, SkillFx.Radius(user.transform) * 1.1f) + Vector3.down * SpawnDrop, d, Speed, Range, damage, stats);
+                SpikeProjectile.Spawn(origin + d * Mathf.Max(0.6f, SkillFx.Radius(user.transform) * 1.1f) + Vector3.down * SpawnDrop, d, Speed, Range, damage, stats, volley, i, i == count / 2);
             }
             return true;
         }
