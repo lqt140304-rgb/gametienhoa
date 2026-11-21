@@ -156,9 +156,9 @@ namespace Evolve.Tests.EditMode
             }
         }
 
-        [Test] public void ChoXuong_HasItsFiveMoves_ByAnyName()
+        [Test] public void ChoXuong_HasItsSixMoves_ByAnyName()
         {
-            foreach (var n in new[] { "Chó Xương", "ChoXuong (Meshy)(Clone)", "choxuong" }) Assert.AreEqual(5, MovesetSeed.For(n).Count, n);
+            foreach (var n in new[] { "Chó Xương", "ChoXuong (Meshy)(Clone)", "choxuong" }) Assert.AreEqual(6, MovesetSeed.For(n).Count, n);
             Assert.IsTrue(MovesetSeed.Has("Chó Xương"));
             var pounce = One("ChoXuong", "Vồ"); var bite = One("ChoXuong", "Cắn Nghiền"); var leap = One("ChoXuong", "Nhảy Vượt"); var roar = One("ChoXuong", "Gầm"); var howl = One("ChoXuong", "Hú Gọi Bầy");
             Assert.AreEqual(0.6f, pounce.Windup); Assert.AreEqual(24f, pounce.Damage); Assert.AreEqual(5f, pounce.Distance); Assert.AreEqual(1.5f, pounce.Recover);
@@ -166,6 +166,9 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(MoveShape.Perch, leap.Shape); Assert.AreEqual(6f, leap.Distance); Assert.AreEqual(1.5f, leap.MaxHeight); Assert.AreEqual(12f, leap.Cooldown);
             Assert.AreEqual(MoveShape.Roar, roar.Shape); Assert.AreEqual(0.9f, roar.Windup); Assert.AreEqual(8f, roar.Radius); Assert.AreEqual(4f, roar.FearSeconds); Assert.AreEqual(0.8f, roar.Freeze); Assert.AreEqual(20f, roar.Cooldown); Assert.AreEqual(0.66f, roar.UnlockBelow);
             Assert.AreEqual(MoveShape.Call, howl.Shape); Assert.AreEqual(SpeciesNames.Key("Bọ Ăn Xác"), howl.TargetSpecies); Assert.AreEqual(0.33f, howl.UnlockBelow); Assert.AreEqual(20f, howl.Cooldown);
+            var claw = One("ChoXuong", "Cào Xé");
+            Assert.AreEqual(0.55f, claw.Windup); Assert.AreEqual(16f, claw.Damage); Assert.AreEqual(3.5f, claw.MaxRange); Assert.AreEqual(1f, claw.UnlockBelow); Assert.AreEqual(PoseKind.Crouch, MovesetSeed.PoseOf(claw));
+            Assert.AreEqual(0.4f, MovesetSeed.PoseStrength("Chó Xương")); Assert.AreEqual(1f, MovesetSeed.PoseStrength("Cáo Gió")); Assert.AreEqual(1f, MovesetSeed.PoseStrength(null));
             Assert.AreEqual(1f, pounce.UnlockBelow); Assert.AreEqual(1f, bite.UnlockBelow); Assert.AreEqual(1f, leap.UnlockBelow);
         }
 

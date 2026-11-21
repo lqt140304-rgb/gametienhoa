@@ -20,10 +20,10 @@ namespace Evolve.EditorTools
         {
             foreach (var n in new[] { "CocHoGia", "RanDungNham", "BoCapThachAnh" })
                 MeshyFoxPrefabBuilder.Build(Prefabs + n + ".prefab", Models + "Creature_" + n + "_Meshy.fbx", Prefabs + n + " (Meshy).prefab", n + " (Meshy)");
-            BuildFromScratch("ChoXuong", 0.55f, 1.9f, 1.1f, 2.4f, 190f, 38f, 70f, 120f);
+            BuildFromScratch("ChoXuong", 0.55f, 1.9f, 1.1f, 2.4f, 190f, 38f, 70f, 120f, 0.7f);   // 30% smaller than the model as Meshy made it
         }
 
-        static void BuildFromScratch(string name, float radius, float height, float patrol, float chase, float health, float bite, float nutrition, float mass)
+        static void BuildFromScratch(string name, float radius, float height, float patrol, float chase, float health, float bite, float nutrition, float mass, float scale = 1f)
         {
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(Models + "Creature_" + name + "_Meshy.fbx");
             if (fbx == null) { Debug.LogError("[Meshy] Chưa có mô hình " + name); return; }
@@ -32,7 +32,8 @@ namespace Evolve.EditorTools
             model.name = "Model";
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = Quaternion.identity;
-            model.transform.localScale = Vector3.one;
+            model.transform.localScale = Vector3.one * scale;
+            radius *= scale; height *= scale;   // the collider shrinks with the model
 
             if (model.GetComponentInChildren<Animator>(true) == null) model.AddComponent<Animator>();   // CreatureLocomotion looks for one
             var loco = root.AddComponent<CreatureLocomotion>();   // drives the rig's Root, Head, Tail1-5 and Leg_FL/FR/BL/BR bones (Chó Xương has them)

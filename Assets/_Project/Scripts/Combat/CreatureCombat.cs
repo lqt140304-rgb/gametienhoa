@@ -22,7 +22,7 @@ namespace Evolve.Combat
         public static IReadOnlyList<CreatureCombat> All => all;
 
         public float DamageScale { get; set; } = 1f;
-        float tellScale = 1f;
+        float tellScale = 1f, poseStrength = 1f;
         public float TellScale { get => tellScale; set { tellScale = value; if (scheduler != null) scheduler.TellScale = value; } }
         public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking) || perch != PerchState.None);
         /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
@@ -94,6 +94,7 @@ namespace Evolve.Combat
         {
             moves = MovesetSeed.For(name);
             if (moves.Count == 0) { enabled = false; return; }
+            poseStrength = MovesetSeed.PoseStrength(name);
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
@@ -559,6 +560,7 @@ namespace Evolve.Combat
             }
             else if (m != null) pose = TellPose.Evaluate(MovesetSeed.PoseOf(m), scheduler.Phase, scheduler.Progress01);
             if (MovesetSeed.AuthoredClips.Contains(SpeciesNames.Key(name))) pose = Pose.Identity;   // the real clips carry the body language
+            else if (poseStrength < 1f) pose = Pose.Lerp(Pose.Identity, pose, poseStrength);   // a rigged species turns its own bones, so the whole-body pose is softer
             Apply(pose);
         }
 

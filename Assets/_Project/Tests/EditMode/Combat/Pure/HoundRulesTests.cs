@@ -48,5 +48,13 @@ namespace Evolve.Tests.EditMode
         {
             Assert.IsTrue(HoundRules.IsHeavy(24f, 190f)); Assert.IsFalse(HoundRules.IsHeavy(10f, 190f)); Assert.IsFalse(HoundRules.IsHeavy(5f, 0f));
         }
+
+        [Test] public void Claw_RaisesAForepawThenRakesItDown()
+        {
+            Assert.Greater(HoundRules.Evaluate("Claw", MovePhase.Windup, 1f).PawDeg, 40f);
+            Assert.Less(HoundRules.Evaluate("Claw", MovePhase.Active, 1f).PawDeg, 0f);
+            Assert.AreEqual(0f, HoundRules.Evaluate("Claw", MovePhase.Recover, 1f).PawDeg, 1e-4f);
+            Assert.AreEqual(0f, HoundRules.Evaluate("Bite", MovePhase.Windup, 1f).PawDeg);
+        }
     }
 }

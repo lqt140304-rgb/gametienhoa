@@ -7,6 +7,7 @@ Chúa Hang Nghĩa Địa Cự Thú, mô hình Meshy gắn xương từ metarig c
 | **Chạy đuổi** | không phải chiêu: tốc độ đi 1,1, đuổi 3,6 (số của prefab); thân uốn theo sải chạy (`ChoXuongRigFx`) | luôn |
 | **Vồ** (`Pounce`) | Lunge, báo 0,6 s, lao 5 m trong 0,3 s, hồi 1,5 s, sát thương 24, tầm 2,5–7 m, hồi chiêu 2,5 s | luôn |
 | **Cắn Nghiền** (`Bite`) | Lunge, báo 0,35 s, đớp 0,2 s, hồi 1,5 s, sát thương 20, tầm 0–2,5 m, hồi chiêu 1,5 s | luôn |
+| **Cào Xé** (`Claw`, thêm theo gợi ý chủ dự án) | Lunge ngắn, báo 0,55 s (vươn đầu, giơ chân trước lên), vung 0,25 s, hồi 1,2 s, sát thương 16, tầm 0–3,5 m, hồi chiêu 3 s; chân trước trái rồi phải luân phiên | luôn |
 | **Nhảy Vượt** (`Leap`) | Perch (như Khỉ Hang nhảy bục), xa 6 m, cao 0,3–1,5 m, đứng trên bục 1,5 s, hồi chiêu 12 s | luôn (cần có bục) |
 | **Gầm** (`Roar`, kỹ năng Gầm) | mới `MoveShape.Roar`: báo 0,9 s, bán kính 8 m, hồi chiêu 20 s. Loài nhỏ hơn bỏ chạy 4 s (`FearSeconds`); **slime nhỏ hơn bị đẩy lùi (Force 8) và choáng 0,8 s (`Freeze`)** | máu ≤ 66% |
 | **Hú Gọi Bầy** (`Howl`) | Call, báo 1,2 s, gọi Bọ Ăn Xác trong 25 m, hồi chiêu 20 s | máu ≤ 33% |
@@ -17,6 +18,11 @@ Chúa Hang Nghĩa Địa Cự Thú, mô hình Meshy gắn xương từ metarig c
 - Không có clip: `Combat/ChoXuongRigFx.cs` xoay xương `spine.009-.011` (cổ, nâng hoặc hạ đầu), `jaw` (há, giới hạn 24°; xương nhỏ `JawTip` cho Unity biết chiều há), `spine.007` (lưng uốn khi chạy). `CreatureLocomotion` vẫn lo chân (`Leg_*`), `Root`, `Head`, đuôi `Tail1-5`.
 - Tư thế thân (cúi, vươn) vẫn do `TellPose` của `CreatureCombat` (nén thân khi vồ, vươn khi gầm).
 - Gầm xử lý trong `CreatureCombat.Roar`.
+
+## Chỉnh sau lần thử đầu (2026-11-21)
+- Animation bị giật và quá nhanh: (1) cổ dùng chung một trục cho cả ba xương, nay mỗi xương có trục riêng; (2) báo trước của Chó Xương chậm đi 1,5 lần (`ChoXuongRigFx.TellSlowdown`); (3) run còn 22 Hz biên 2° (trước 60 Hz); (4) tư thế nén thân của `TellPose` còn 40% (`MovesetSeed.PoseStrength`), vì xương đã tự cử động; (5) xương làm mượt chậm hơn (9/giây).
+- Cỡ mô hình nhỏ đi 30% (prefab: mô hình và collider ×0,7).
+- Gọi bầy: đã có `Hú Gọi Bầy` (gọi Bọ Ăn Xác, máu dưới 33%).
 
 ## Chưa làm / rủi ro
 - Chưa kiểm trong Unity: hướng xoay cổ và hàm tự đo lúc chạy; hàm há quá có thể kéo méo mõm (mõm sọ chỉ hé nhẹ): giảm `HoundRules.MaxJawDeg` nếu méo.

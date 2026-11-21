@@ -24,7 +24,7 @@ namespace Evolve.Creatures
             if (role == CreatureRole.Lord && Evolve.Combat.LordRegalia.Has(creature.name)) Evolve.Combat.LordRegalia.Attach(creature);
             if (Evolve.Combat.FoxRigFx.Has(creature.name)) Evolve.Combat.FoxRigFx.Attach(creature);
             if (Evolve.Combat.BirdRigFx.Has(creature.name)) Evolve.Combat.BirdRigFx.Attach(creature);   // the Meshy bird: wings and beak
-            if (Evolve.Combat.ChoXuongRigFx.Has(creature.name)) Evolve.Combat.ChoXuongRigFx.Attach(creature);   // the Meshy hound: neck, jaw, flinch   // the Meshy fox: tail, jaw, blink, trinkets   // a boss is dressed like one
+            if (Evolve.Combat.ChoXuongRigFx.Has(creature.name)) Evolve.Combat.ChoXuongRigFx.Attach(creature);   // the Meshy hound: neck, jaw, paw, flinch
             if (creature.TryGetComponent(out Evolve.Combat.CreatureCombat combat))
             {
                 combat.TellScale = tier == 0 ? 1.3f : 1f;   // the start cavern gives the player longer to read the tell
