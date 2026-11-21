@@ -224,7 +224,7 @@ namespace Evolve.Combat
                 hipsBase = b;
                 float drop = Mathf.Clamp(GaitRules.Bob(ph, BobMeters * scale) * walkWeight, -0.2f * scale, 0f) - crouch * 0.38f * scale + tuck * 0.1f * scale;   // the crouch sinks the body; the tuck lifts the knees under it
                 drop = Mathf.Clamp(drop, -0.5f * scale, 0.15f * scale);
-                Vector3 side = transform.right * GaitRules.Sway(ph, 0.035f * scale) * walkWeight;   // the weight rides over each planted foot
+                Vector3 side = Vector3.zero;   // no sideways hip sway: it read as the golem weaving left and right as it walks
                 Vector3 world = Vector3.up * drop + side;
                 Vector3 down = hips.parent != null ? hips.parent.InverseTransformVector(world) : world;
                 hips.localPosition = b + down;
@@ -232,7 +232,7 @@ namespace Evolve.Combat
             }
 
             // ---- the spine: the move's lean plus a slow twist against the stride; the arms: the move, and a counter-swing of the stride
-            float twist = Mathf.Sin(ph * 2f * Mathf.PI) * (4f + 6f * run) * walkWeight + twistSign * pose.Twist;   // against the stride, plus the move's wind-up and follow-through
+            float twist = Mathf.Sin(ph * 2f * Mathf.PI) * (1.5f + 2f * run) * walkWeight + twistSign * pose.Twist;   // against the stride, plus the move's wind-up and follow-through
             float lean = hunchSign * (pose.Hunch + 14f * run);
             if (spine != null) Put(spine, Quaternion.AngleAxis(lean, spine.Right) * Quaternion.AngleAxis(twist, spine.Up));
             float swing = 0.4f + 0.5f * run;
