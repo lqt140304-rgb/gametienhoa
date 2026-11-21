@@ -237,8 +237,8 @@ namespace Evolve.Combat
                 if (restMeasured)
                 {
                     float needL = restAnkleL - (footL.T.position.y - transform.position.y), needR = restAnkleR - (footR.T.position.y - transform.position.y);
-                    // the body sinks so the lower-reaching foot is on the floor (the other leg hangs a little: it is the swinging one); +4% of a leg: skinning drags the heel a few cm below its bone
-                    drop = Mathf.Max(needL, needR) + 0.04f * legLen;
+                    // the body sinks so the lower-reaching foot is on the floor (the other leg hangs a little: it is the swinging one); up to +4% of a leg while the legs swing: skinning drags the heel a few cm below its bone
+                    drop = Mathf.Max(needL, needR) + 0.04f * legLen * Mathf.Clamp01(Mathf.Max(Mathf.Abs(hipL), Mathf.Abs(hipR)) / 24f);   // standing still: no offset, the soles sit exactly on the floor
                     drop = Mathf.Clamp(drop, -0.6f * legLen, 0.1f * legLen) * (1f - Mathf.Clamp01(tuck * 1.5f));   // in the air (tucked) it is not on the ground: no sinking
                 }
                 Vector3 side = Vector3.zero;   // no sideways hip sway: it read as the golem weaving left and right as it walks
