@@ -42,6 +42,12 @@ namespace Evolve.Combat
         /// <summary>Knee bend in degrees (0 = straight): only while the leg swings forward, the most at mid swing.</summary>
         public static float Knee(float phase, int side, float flex) => flex * Math.Max(0f, (float)Math.Cos(2.0 * Math.PI * (phase + 0.5 * side)));
 
+        /// <summary>Hip roll in degrees from side to side, once per step: 0 at a landing's start, the most at a quarter cycle (the weight rides over the planted foot).</summary>
+        public static float Sway(float phase, float amplitude) => amplitude * (float)Math.Sin(2.0 * Math.PI * phase);
+
+        /// <summary>0 at a walk (≤ 3 m/s), 1 at a run (≥ 9 m/s): how much the gait stretches into a run (longer swing, deeper knees, lean forward).</summary>
+        public static float RunBlend(float speed) => Math.Min(1f, Math.Max(0f, (speed - 3f) / 6f));
+
         /// <summary>The body's drop in metres at each footfall (twice a cycle): 0 at mid swing, the lowest at a landing.</summary>
         public static float Bob(float phase, float depth) => -depth * 0.5f * (1f - (float)Math.Cos(4.0 * Math.PI * phase));
     }

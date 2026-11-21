@@ -23,7 +23,8 @@ namespace Evolve.Combat
 
         Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
-        float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f;
+        float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
+        float flinchT = 9f;   // seconds since the last blow it took
         ArmPose pose;
         Light coreLight;
         float lastHealth = -1f, flickerUntil;
@@ -102,6 +103,15 @@ namespace Evolve.Combat
             kneeSign = -SignFor(kneeL, footTipL, p => Vector3.Dot(p, fwd));           // + = the foot swings back and up (the knee bends)
             raiseSign = SignFor(armL, handL, p => p.y);                                // + = the hand goes up
             hunchSign = SignFor(spine, handL != null ? handL : chest, p => Vector3.Dot(p, fwd));   // + = leans forward
+            if (spine != null && handR != null)   // + twist must turn the right hand forward (a punch or a throw goes through)
+            {
+                Vector3 fw = transform.forward;
+                float before = Vector3.Dot(handR.position, fw);
+                spine.T.localRotation = spine.Rest * Quaternion.AngleAxis(10f, spine.Up);
+                float after = Vector3.Dot(handR.position, fw);
+                spine.T.localRotation = spine.Rest;
+                twistSign = after > before ? 1f : -1f;
+            }
             if (armL != null && handL != null)
             {
                 float x = Mathf.Abs(Vector3.Dot(handL.position - transform.position, transform.right));
@@ -153,7 +163,7 @@ namespace Evolve.Combat
             if (pred != null)
             {
                 float hp = pred.Health;
-                if (lastHealth > 0f && hp < lastHealth - 0.01f) { flickerUntil = t + 0.35f; GolemFx.Hurt(transform.position); BossMusic.Ping("golem_battle"); }
+                if (lastHealth > 0f && hp < lastHealth - 0.01f) { flickerUntil = t + 0.35f; flinchT = 0f; GolemFx.Hurt(transform.position); BossMusic.Ping("golem_battle"); }
                 lastHealth = hp;
             }
             bool armour = PassiveRules.CrystalsOut(name, hp01);
@@ -171,7 +181,12 @@ namespace Evolve.Combat
             }
             if (gripping) BossMusic.Ping("golem_battle");
             if (combat != null && combat.HoldingRock) target = new ArmPose { Back = 110f, Raise = 25f, Hunch = -8f, Glow = 0.5f };   // a rock pulled out of the ground, cocked back to throw
-            pose = ArmPose.Lerp(pose, target, 1f - Mathf.Exp(-7f * dt));   // heavy: the arms take their time
+            flinchT += dt;
+            if (!gripping && (combat == null || combat.CurrentMove == null || combat.Phase == MovePhase.Idle) && flinchT < 0.9f)   // a blow staggers it when it is not busy with a move
+                target = flinchT < 0.2f ? GolemRules.Evaluate("Hurt", MovePhase.Windup, flinchT / 0.2f) : GolemRules.Evaluate("Hurt", MovePhase.Recover, (flinchT - 0.2f) / 0.7f);
+            bool leaping = combat != null && combat.Airborne;
+            float follow = leaping || (combat != null && combat.CurrentMove != null && combat.Phase == MovePhase.Active) ? 14f : 7f;   // the strike snaps, the wind-up is slow
+            pose = ArmPose.Lerp(pose, target, 1f - Mathf.Exp(-follow * dt));   // heavy: the arms take their time
             if (combat != null && combat.CurrentMove != null && combat.CurrentMove.Anim == "CoreBlast" && combat.Phase == MovePhase.Windup)
                 ImpactFx.Thump(transform.position, 0.015f + 0.05f * combat.PhaseProgress, 0.2f, 24f);   // the core charging: the ground rumbles more and more
 
@@ -187,8 +202,15 @@ namespace Evolve.Combat
             if (walkWeight > 0.3f) { if (FootstepRules.Contacts(prev, phase, new[] { 0.25f, 0.75f }) > 0 && steps != null) steps.StepNow(); }
             if (phase > 1000f) phase = phase % 1f;
             float ph = phase % 1f;
-            float hipL = GaitRules.Hip(ph, 0, HipDeg) * walkWeight, hipR = GaitRules.Hip(ph, 1, HipDeg) * walkWeight;
-            float kneeLd = GaitRules.Knee(ph, 0, KneeDeg) * walkWeight, kneeRd = GaitRules.Knee(ph, 1, KneeDeg) * walkWeight;
+            float run = GaitRules.RunBlend(speed) * walkWeight;   // the dash to a spike is a run: wider swing, deeper knees, leaning in
+            float hipA = HipDeg * (1f + 0.8f * run), kneeA = KneeDeg * (1f + run);
+            float hipL = GaitRules.Hip(ph, 0, hipA) * walkWeight, hipR = GaitRules.Hip(ph, 1, hipA) * walkWeight;
+            float kneeLd = GaitRules.Knee(ph, 0, kneeA) * walkWeight, kneeRd = GaitRules.Knee(ph, 1, kneeA) * walkWeight;
+            // body poses of the moves, over the walk: crouch (knees bent, body low), tuck (legs up in the air), stance (one foot forward)
+            float crouch = pose.Crouch, tuck = pose.Tuck, stance = pose.Stance;
+            float crouchHip = crouch * 35f + tuck * 55f, crouchKnee = crouch * 70f + tuck * 85f;
+            hipL += crouchHip + stance * 22f; hipR += crouchHip - stance * 22f;
+            kneeLd += crouchKnee + Mathf.Max(0f, -stance) * 15f; kneeRd += crouchKnee + Mathf.Max(0f, stance) * 15f;
             if (thighL != null) Put(thighL, Quaternion.AngleAxis(hipSign * hipL, thighL.Right));
             if (thighR != null) Put(thighR, Quaternion.AngleAxis(hipSign * hipR, thighR.Right));
             if (kneeL != null) Put(kneeL, Quaternion.AngleAxis(kneeSign * kneeLd, kneeL.Right));
@@ -200,17 +222,22 @@ namespace Evolve.Combat
                 var cur = hips.localPosition;
                 Vector3 b = hipsHas && (cur - hipsWritten).sqrMagnitude < 1e-10f ? hipsBase : cur;   // the Animator wrote it this frame, or it still holds our last value
                 hipsBase = b;
-                float drop = Mathf.Clamp(GaitRules.Bob(ph, BobMeters * scale) * walkWeight, -0.2f * scale, 0f);
-                Vector3 down = hips.parent != null ? hips.parent.InverseTransformVector(Vector3.up * drop) : Vector3.up * drop;
+                float drop = Mathf.Clamp(GaitRules.Bob(ph, BobMeters * scale) * walkWeight, -0.2f * scale, 0f) - crouch * 0.38f * scale + tuck * 0.1f * scale;   // the crouch sinks the body; the tuck lifts the knees under it
+                drop = Mathf.Clamp(drop, -0.5f * scale, 0.15f * scale);
+                Vector3 side = transform.right * GaitRules.Sway(ph, 0.035f * scale) * walkWeight;   // the weight rides over each planted foot
+                Vector3 world = Vector3.up * drop + side;
+                Vector3 down = hips.parent != null ? hips.parent.InverseTransformVector(world) : world;
                 hips.localPosition = b + down;
                 hipsWritten = hips.localPosition; hipsHas = true;
             }
 
             // ---- the spine: the move's lean plus a slow twist against the stride; the arms: the move, and a counter-swing of the stride
-            float twist = Mathf.Sin(ph * 2f * Mathf.PI) * 4f * walkWeight;
-            if (spine != null) Put(spine, Quaternion.AngleAxis(hunchSign * pose.Hunch, spine.Right) * Quaternion.AngleAxis(twist, spine.Up));
-            Arm(armL, foreL, +1f, -hipL * 0.4f);
-            Arm(armR, foreR, -1f, -hipR * 0.4f);
+            float twist = Mathf.Sin(ph * 2f * Mathf.PI) * (4f + 6f * run) * walkWeight + twistSign * pose.Twist;   // against the stride, plus the move's wind-up and follow-through
+            float lean = hunchSign * (pose.Hunch + 14f * run);
+            if (spine != null) Put(spine, Quaternion.AngleAxis(lean, spine.Right) * Quaternion.AngleAxis(twist, spine.Up));
+            float swing = 0.4f + 0.5f * run;
+            Arm(armL, foreL, +1f, -(hipL - crouchHip - stance * 22f) * swing);
+            Arm(armR, foreR, -1f, -(hipR - crouchHip + stance * 22f) * swing);
 
             if (coreLight != null)
             {
