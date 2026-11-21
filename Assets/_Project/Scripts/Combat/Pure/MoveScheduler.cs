@@ -48,6 +48,8 @@ namespace Evolve.Combat
         public float RoarRadius, RoarForce;
         /// <summary>Seconds it stays crouched, winded, after the recover (2-5 for a boss, the bigger the move the longer); added to the end of the recover.</summary>
         public float Rest;
+        /// <summary>Names of moves it strings together right after this one (a combo), each shortly after the last if the player is still in reach; the rest comes only at the end, the longest of the chain.</summary>
+        public string[] Combo;
         public float RecoverFactor = 1.5f;
         /// <summary>Harden: the damage multiplier while the move is in its Active phase (the crystal armour holds); 1 = none.</summary>
         public float DamageTakenFactor = 1f;
@@ -83,11 +85,12 @@ namespace Evolve.Combat
         /// <summary>While true, a move in its Recover does not end (its time stands still): Giáng Thạch's rock volley takes as long as it takes. Release it and the rest begins.</summary>
         public bool HoldRecover { get; set; }
         bool stunned;
+        MoveDef comboOwner; int comboNext; float chainRest, currentRest, recoverLen;
 
         /// <summary>The last part of the recover, after the recover proper: the boss is crouched and out of breath (never after a stun).</summary>
-        public bool Resting => Phase == MovePhase.Recover && !HoldRecover && !stunned && Current != null && Current.Rest > 0f && PhaseTime >= Current.Recover - Eps;
-        public float RestTime => Resting ? PhaseTime - Current.Recover : 0f;
-        public float RestLength => Current != null ? Current.Rest : 0f;
+        public bool Resting => Phase == MovePhase.Recover && !HoldRecover && !stunned && currentRest > 0f && PhaseTime >= recoverLen - Eps;
+        public float RestTime => Resting ? PhaseTime - recoverLen : 0f;
+        public float RestLength => currentRest;
 
         public MoveScheduler(IReadOnlyList<MoveDef> moves, int seed)
         {
@@ -105,17 +108,21 @@ namespace Evolve.Combat
         public bool Force(MoveDef move, float windupSeconds)
         {
             if (Phase != MovePhase.Idle || move == null) return false;
-            Current = move; stunned = false; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = Math.Max(0f, windupSeconds);
+            Current = move; stunned = false; StartCombo(move); Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = Math.Max(0f, windupSeconds);
             return true;
         }
 
-        public void Reset() { HoldRecover = false; stunned = false; Phase = MovePhase.Idle; Current = null; PhaseTime = 0f; phaseLength = 0f; }
+        void StartCombo(MoveDef m) { comboOwner = m.Combo != null && m.Combo.Length > 0 ? m : null; comboNext = 0; chainRest = 0f; currentRest = 0f; }
+
+        MoveDef Find(string name) { for (int i = 0; i < moves.Count; i++) if (moves[i].Name == name) return moves[i]; return null; }
+
+        public void Reset() { comboOwner = null; currentRest = 0f; HoldRecover = false; stunned = false; Phase = MovePhase.Idle; Current = null; PhaseTime = 0f; phaseLength = 0f; }
 
         /// <summary>Knocked out of its move (a wall, a stun): straight to Recover, lasting its normal recovery plus <paramref name="extraRecover"/>.</summary>
         public void Stun(float extraRecover)
         {
             if (Current == null) return;
-            Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = Current.Recover + Math.Max(0f, extraRecover); stunned = true;
+            Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = Current.Recover + Math.Max(0f, extraRecover); stunned = true; comboOwner = null; currentRest = 0f; recoverLen = Current.Recover;
         }
 
         /// <summary>Advances time. Returns the move that has just started its strike (Active), otherwise null.</summary>
@@ -127,7 +134,7 @@ namespace Evolve.Combat
                 if (!hasTarget) return null;
                 var pick = Pick(targetDistance, health01);
                 if (pick == null) return null;
-                Current = pick; stunned = false; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = pick.Windup * Math.Max(0.01f, TellScale);
+                Current = pick; stunned = false; StartCombo(pick); Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = pick.Windup * Math.Max(0.01f, TellScale);
                 return null;
             }
             if (Phase == MovePhase.Windup && (!hasTarget || (Current.AbortBeyond > 0f && targetDistance > Current.AbortBeyond))) { Reset(); return null; }
@@ -142,8 +149,25 @@ namespace Evolve.Combat
                     cooldownLeft[IndexOf(Current)] = Current.Cooldown; last = Current;
                     return Current;
                 case MovePhase.Active:
-                    Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = Current.Recover + Current.Rest; return null;
+                    {
+                        bool more = comboOwner != null && comboNext < comboOwner.Combo.Length;
+                        chainRest = Math.Max(chainRest, Current.Rest);
+                        currentRest = more ? 0f : chainRest;
+                        recoverLen = more ? Math.Min(Current.Recover, 0.5f) : Current.Recover;   // inside a combo the next blow follows almost at once
+                        Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = recoverLen + currentRest; return null;
+                    }
                 default:
+                    if (comboOwner != null && !stunned && currentRest <= 0f && comboNext < comboOwner.Combo.Length)   // a combo step ended: the next one, if the player is still in its reach
+                    {
+                        var next = Find(comboOwner.Combo[comboNext]);
+                        if (next != null && hasTarget && targetDistance >= next.MinRange && targetDistance <= next.MaxRange + 1f)
+                        {
+                            comboNext++; Current = next; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = next.Windup * Math.Max(0.01f, TellScale) * 0.7f;   // a combo blow comes quicker
+                            return null;
+                        }
+                        comboNext = comboOwner.Combo.Length; currentRest = chainRest; phaseLength = recoverLen + currentRest;   // out of reach: the combo is over, it breathes
+                        return null;
+                    }
                     Reset(); return null;
             }
         }

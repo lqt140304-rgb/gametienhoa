@@ -8,11 +8,13 @@ namespace Evolve.Combat
         public float Raise, Back, Spread, Hunch, Glow;
         /// <summary>Whole-body values: Crouch 0..1 (knees bent, body low), Tuck 0..1 (both legs pulled up, in the air), Stance -1..1 (+ = the left foot planted forward, - = the right), Twist degrees of spine turn (- = wound back to the right, + = through).</summary>
         public float Crouch, Tuck, Stance, Twist;
+        /// <summary>0..1: down on one knee (the left foot forward, the right knee on the ground).</summary>
+        public float Kneel;
         public static ArmPose Lerp(ArmPose a, ArmPose b, float t) => new ArmPose
         {
             Raise = a.Raise + (b.Raise - a.Raise) * t, Back = a.Back + (b.Back - a.Back) * t, Spread = a.Spread + (b.Spread - a.Spread) * t,
             Hunch = a.Hunch + (b.Hunch - a.Hunch) * t, Glow = a.Glow + (b.Glow - a.Glow) * t,
-            Crouch = a.Crouch + (b.Crouch - a.Crouch) * t, Tuck = a.Tuck + (b.Tuck - a.Tuck) * t, Stance = a.Stance + (b.Stance - a.Stance) * t, Twist = a.Twist + (b.Twist - a.Twist) * t,
+            Crouch = a.Crouch + (b.Crouch - a.Crouch) * t, Tuck = a.Tuck + (b.Tuck - a.Tuck) * t, Stance = a.Stance + (b.Stance - a.Stance) * t, Twist = a.Twist + (b.Twist - a.Twist) * t, Kneel = a.Kneel + (b.Kneel - a.Kneel) * t,
         };
     }
 
@@ -93,12 +95,21 @@ namespace Evolve.Combat
             }
         }
 
-        /// <summary>After a move: down on its knees, bent over, the chest heaving, for <paramref name="length"/> seconds, then upright again.</summary>
+        /// <summary>
+        /// After a move: it sinks to one knee in a second, a hand planted on the ground and the other resting on its knee, bent over with the chest heaving, and for the last 1.5 s
+        /// pushes itself up with both hands on its knees, like a person getting up; upright again at <paramref name="length"/> seconds.
+        /// </summary>
         public static ArmPose Winded(float seconds, float length)
         {
-            float k = Smooth(seconds / 0.6f) * (1f - Smooth((seconds - (length - 0.6f)) / 0.6f));
+            float into = Smooth(seconds / 1f), outOf = Smooth((seconds - (length - 1.5f)) / 1.5f), push = Smooth(outOf * 2.5f);
             float breath = (float)Math.Sin(seconds * 5.5f);
-            return new ArmPose { Crouch = 0.8f * k, Hunch = (36f + 5f * breath) * k, Raise = -18f * k, Glow = 0.12f * k };
+            float down = into * (1f - outOf);   // how far down it is: all the way during the breathing, less and less as it pushes up
+            return new ArmPose
+            {
+                Kneel = down, Hunch = (52f + 5f * breath) * down,
+                Raise = (30f + 10f * push) * into, Back = 30f * (1f - push) * into,   // the left hand on the knee; the right arm hangs to the floor (Raise - Back = 0), then both push (Back 0)
+                Glow = 0.12f * down,
+            };
         }
     }
 }

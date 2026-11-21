@@ -27,7 +27,7 @@ namespace Evolve.Combat
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
         bool wasResting;
-        float legLen, lastRun, flinchT = 9f, restAnkleL, restAnkleR; Quaternion footRestL, footRestR; bool restMeasured;   // ankle heights above the root and foot orientations in the standing pose   // seconds since the last blow it took
+        float legLen, lastRun, flinchT = 9f, restAnkleL, restAnkleR, restHipsH; Quaternion footRestL, footRestR; bool restMeasured;   // hips height above the root, ankle heights above the root and foot orientations in the standing pose   // seconds since the last blow it took
         ArmPose pose;
         Light coreLight;
         float lastHealth = -1f, flickerUntil;
@@ -164,6 +164,7 @@ namespace Evolve.Combat
             {
                 restAnkleL = footL.T.position.y - transform.position.y; restAnkleR = footR.T.position.y - transform.position.y;
                 footRestL = Quaternion.Inverse(transform.rotation) * footL.T.rotation; footRestR = Quaternion.Inverse(transform.rotation) * footR.T.rotation;
+                if (hips != null) restHipsH = hips.position.y - transform.position.y;
                 restMeasured = true;
             }
             float scale = Mathf.Max(0.3f, transform.lossyScale.y);
@@ -223,13 +224,15 @@ namespace Evolve.Combat
             float crouchHip = crouch * 35f + tuck * 55f, crouchKnee = crouch * 70f + tuck * 85f;
             hipL += crouchHip + stance * 22f; hipR += crouchHip - stance * 22f;
             kneeLd += crouchKnee + Mathf.Max(0f, -stance) * 15f; kneeRd += crouchKnee + Mathf.Max(0f, stance) * 15f;
+            float kneel = pose.Kneel;   // down on both knees (found in Blender on the real model: thighs upright, knees bent ~115 degrees, hips at 0.78 of a leg's length: the knees and shins then lie on the floor within a centimetre)
+            kneeLd += kneel * 115f; kneeRd += kneel * 115f;
             if (thighL != null) Put(thighL, Quaternion.AngleAxis(hipSign * hipL, thighL.Right));
             if (thighR != null) Put(thighR, Quaternion.AngleAxis(hipSign * hipR, thighR.Right));
             if (kneeL != null) Put(kneeL, Quaternion.AngleAxis(kneeSign * kneeLd, kneeL.Right));
             if (kneeR != null) Put(kneeR, Quaternion.AngleAxis(kneeSign * kneeRd, kneeR.Right));
             // the feet keep their standing orientation in the WORLD (flat on the ground) whatever the legs above them do (checked on the real model in Blender: this plus the body drop below keeps the soles within a few cm of the floor)
-            if (footL != null && restMeasured) footL.T.rotation = transform.rotation * footRestL;
-            if (footR != null && restMeasured) footR.T.rotation = transform.rotation * footRestR;
+            if (footL != null && restMeasured) footL.T.rotation = Quaternion.Slerp(transform.rotation * footRestL, footL.T.rotation, Mathf.SmoothStep(0f, 1f, pose.Kneel));   // kneeling, the feet lie along the shins instead
+            if (footR != null && restMeasured) footR.T.rotation = Quaternion.Slerp(transform.rotation * footRestR, footR.T.rotation, Mathf.SmoothStep(0f, 1f, pose.Kneel));
             if (hips != null)   // the body sinks at each footfall; kept in local space and capped, so it can never creep down into the floor
             {
                 var cur = hips.localPosition;
@@ -243,6 +246,7 @@ namespace Evolve.Combat
                     // the body sinks so the lower-reaching foot is on the floor (the other leg hangs a little: it is the swinging one); up to +4% of a leg while the legs swing: skinning drags the heel a few cm below its bone
                     drop = Mathf.Max(needL, needR) + 0.04f * legLen * Mathf.Clamp01(Mathf.Max(Mathf.Abs(hipL), Mathf.Abs(hipR)) / 24f);   // standing still: no offset, the soles sit exactly on the floor
                     drop = Mathf.Clamp(drop, -0.6f * legLen, 0.1f * legLen) * (1f - Mathf.Clamp01(tuck * 1.5f));   // in the air (tucked) it is not on the ground: no sinking
+                    if (kneel > 0f) drop = Mathf.Lerp(drop, 0.78f * legLen - restHipsH, Mathf.SmoothStep(0f, 1f, kneel));   // kneeling: the hips go to a fixed height, the knees on the floor
                 }
                 Vector3 side = Vector3.zero;   // no sideways hip sway: it read as the golem weaving left and right as it walks
                 Vector3 world = Vector3.up * drop + side;
@@ -258,7 +262,7 @@ namespace Evolve.Combat
             if (spine != null) Put(spine, Quaternion.AngleAxis(lean, spine.Right) * Quaternion.AngleAxis(twist, spine.Up));
             float swing = 0.4f + 0.5f * run;
             Arm(armL, foreL, +1f, -(hipL - crouchHip - stance * 22f) * swing);
-            Arm(armR, foreR, -1f, -(hipR - crouchHip + stance * 22f) * swing);
+            Arm(armR, foreR, -1f, -(hipR - crouchHip + stance * 22f) * swing);   // (the kneel leaves the hip angles alone: only the knees bend)
 
             if (coreLight != null)
             {

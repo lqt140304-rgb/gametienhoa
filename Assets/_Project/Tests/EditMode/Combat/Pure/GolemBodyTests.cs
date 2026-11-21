@@ -43,7 +43,7 @@ namespace Evolve.Tests
                     {
                         var p = P(a, ph, t);
                         Assert.That(p.Crouch, Is.InRange(0f, 1f), a); Assert.That(p.Tuck, Is.InRange(0f, 1f), a);
-                        Assert.That(p.Stance, Is.InRange(-1f, 1f), a); Assert.That(p.Twist, Is.InRange(-60f, 60f), a);
+                        Assert.That(p.Stance, Is.InRange(-1f, 1f), a); Assert.That(p.Kneel, Is.InRange(0f, 1f), a); Assert.That(p.Twist, Is.InRange(-60f, 60f), a);
                     }
                 Assert.AreEqual(0f, P(a, MovePhase.Idle, 0.5f).Crouch);
             }
@@ -105,14 +105,19 @@ namespace Evolve.Tests
             Assert.GreaterOrEqual(moves.Single(m => m.Role == MoveRole.Ultimate).Rest, moves.Single(m => m.Role == MoveRole.Special).Rest - 1f);
         }
 
-        [Test] public void Winded_KneelsDownHeavingForBreath_AndGetsUpAtTheEnd()
+        [Test] public void Winded_DropsToOneKneeWithAHandOnTheGround_HeavesForBreath_ThenPushesUpWithBothHands()
         {
-            var a = GolemRules.Winded(0.1f, 4f); var b = GolemRules.Winded(2f, 4f);
-            Assert.Less(a.Crouch, b.Crouch); Assert.Greater(b.Crouch, 0.6f); Assert.Greater(b.Hunch, 25f);   // goes down, bent over
-            Assert.AreEqual(0f, GolemRules.Winded(4f, 4f).Crouch, 1e-3f);                                    // upright again when the rest ends
+            const float L = 4f;
+            var down = GolemRules.Winded(0.2f, L); var mid = GolemRules.Winded(2f, L); var up = GolemRules.Winded(L - 0.7f, L);
+            Assert.Less(down.Kneel, mid.Kneel); Assert.Greater(mid.Kneel, 0.85f); Assert.Greater(mid.Hunch, 40f);          // all the way down, bent over
+            Assert.That(mid.Raise - mid.Back, Is.InRange(-10f, 12f));                                                    // the right arm hangs to the ground: a hand planted
+            Assert.Greater(mid.Raise, 20f);                                                                               // the left hand rests on the knee
+            Assert.Greater(up.Raise - up.Back, 25f); Assert.Greater(up.Raise, 25f);                                      // getting up: both hands pushing on the knees
+            Assert.Less(up.Kneel, mid.Kneel); Assert.Greater(up.Kneel, 0.1f);                                            // still part way up
+            Assert.AreEqual(0f, GolemRules.Winded(L, L).Kneel, 1e-3f); Assert.AreEqual(0f, GolemRules.Winded(L, L).Hunch, 1e-3f);   // upright at the end
             float lo = 99f, hi = -99f;
-            for (float t = 1.0f; t < 3.0f; t += 0.05f) { float h = GolemRules.Winded(t, 4f).Hunch; lo = System.Math.Min(lo, h); hi = System.Math.Max(hi, h); }
-            Assert.Greater(hi - lo, 4f);                                                                     // the chest heaves
+            for (float t = 1.2f; t < 2.6f; t += 0.05f) { float h = GolemRules.Winded(t, L).Hunch; lo = System.Math.Min(lo, h); hi = System.Math.Max(hi, h); }
+            Assert.Greater(hi - lo, 4f);                                                                                  // the chest heaves
         }
     }
 }

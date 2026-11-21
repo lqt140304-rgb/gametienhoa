@@ -223,5 +223,58 @@ namespace Evolve.Tests.EditMode
             s.Stun(2f); s.Update(1f, true, 5f, 1f);
             Assert.IsFalse(s.Resting);
         }
+
+        static MoveScheduler Chain(out MoveDef rush, out MoveDef a, out MoveDef b)
+        {
+            a = new MoveDef { Name = "A", Windup = 0.5f, Active = 0.1f, Recover = 0.6f, Rest = 2f, MinRange = 0f, MaxRange = 3f, Cooldown = 9f };
+            b = new MoveDef { Name = "B", Windup = 0.5f, Active = 0.1f, Recover = 0.6f, Rest = 2.5f, MinRange = 0f, MaxRange = 3f, Cooldown = 9f };
+            rush = new MoveDef { Name = "Rush", Windup = 0.2f, Active = 0.2f, Recover = 1.5f, Rest = 4f, MinRange = 4f, MaxRange = 14f, Combo = new[] { "A", "B" } };
+            return new MoveScheduler(new[] { rush, a, b }, 1);
+        }
+
+        static void Step(MoveScheduler s, float seconds, float dist) { for (float t = 0f; t < seconds; t += 0.05f) s.Update(0.05f, true, dist, 1f); }
+
+        [Test] public void Combo_AfterTheCharge_RunsTheNamedMovesBackToBack_AndOnlyThenRests()
+        {
+            var s = Chain(out var rush, out var a, out var b);
+            Step(s, 0.1f, 8f);                                   // picks the charge (only move in range at 8 m)
+            Assert.AreSame(rush, s.Current);
+            var seen = new System.Collections.Generic.List<string>(); bool restedBetween = false;
+            for (int i = 0; i < 400 && s.Busy; i++)
+            {
+                s.Update(0.05f, true, 2f, 1f);                   // the player is right there after the charge
+                if (seen.Count == 0 || seen[seen.Count - 1] != s.Current?.Name) seen.Add(s.Current?.Name);
+                if (s.Current != null && s.Current.Name != "B" && s.Resting) restedBetween = true;
+            }
+            CollectionAssert.AreEqual(new[] { "Rush", "A", "B" }, seen.Where(n => n != null).ToList());
+            Assert.IsFalse(restedBetween);                       // it did not stop to breathe in the middle of the combo
+        }
+
+        [Test] public void Combo_TheRestAfterTheChain_IsTheLongestRestOfTheChain()
+        {
+            var s = Chain(out _, out _, out _);
+            Step(s, 0.1f, 8f);
+            while (s.Busy && !(s.Current != null && s.Current.Name == "B" && s.Phase == MovePhase.Recover)) s.Update(0.05f, true, 2f, 1f);
+            while (s.Busy && !s.Resting) s.Update(0.05f, true, 2f, 1f);
+            Assert.IsTrue(s.Resting); Assert.AreEqual(4f, s.RestLength, 1e-3f);   // the charge's 4 s, not just the last move's 2.5
+        }
+
+        [Test] public void Combo_StopsAndRestsAtOnce_WhenThePlayerIsOutOfReachOfTheNextMove()
+        {
+            var s = Chain(out _, out _, out _);
+            Step(s, 0.1f, 8f);
+            var names = new System.Collections.Generic.HashSet<string>(); bool rested = false;
+            for (int i = 0; i < 400 && s.Busy; i++) { s.Update(0.05f, true, 9f, 1f); names.Add(s.Current?.Name ?? ""); rested |= s.Resting; }   // the player dodged away
+            CollectionAssert.DoesNotContain(names, "A"); Assert.IsTrue(rested); Assert.IsFalse(s.Busy);
+        }
+
+        [Test] public void Combo_AStunnedChargeEndsTheCombo()
+        {
+            var s = Chain(out _, out _, out _);
+            Step(s, 0.5f, 8f); s.Stun(2f);
+            var names = new System.Collections.Generic.HashSet<string>();
+            for (int i = 0; i < 400 && s.Busy; i++) { s.Update(0.05f, true, 2f, 1f); names.Add(s.Current?.Name ?? ""); }
+            CollectionAssert.DoesNotContain(names, "A");
+        }
     }
 }
