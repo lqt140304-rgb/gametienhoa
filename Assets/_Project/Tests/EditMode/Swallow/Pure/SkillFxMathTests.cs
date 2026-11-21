@@ -6,6 +6,22 @@ namespace Evolve.Tests.EditMode
 {
     public class SkillFxMathTests
     {
+        [Test] public void ChargeImpact_SquashesThenReboundsAndSettles()
+        {
+            Assert.That(SkillFxMath.ChargeImpact(0.04f), Is.GreaterThan(0.8f));
+            Assert.That(SkillFxMath.ChargeImpact(0.11f), Is.LessThan(0f));
+            Assert.That(SkillFxMath.ChargeImpact(0.24f), Is.EqualTo(0f).Within(0.0001f));
+        }
+
+        [Test] public void ChargeContact_RejectsFloorAndGlancingHits()
+        {
+            Assert.IsTrue(SkillFxMath.IsChargeContact(0.7f, 0f));
+            Assert.IsFalse(SkillFxMath.IsChargeContact(0f, 1f));
+            Assert.IsFalse(SkillFxMath.IsChargeContact(0.15f, 0f));
+            Assert.IsFalse(SkillFxMath.IsChargeContact(-1f, 0f));
+            Assert.IsFalse(SkillFxMath.IsChargeContact(0.5f, 0.86f));
+        }
+
         [Test] public void FamilyColors_AllDistinct()
         {
             var seen = new HashSet<string>();

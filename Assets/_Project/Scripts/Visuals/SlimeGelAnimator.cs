@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Evolve.Swallow;
 using UnityEngine;
 
 namespace Evolve.Visuals
@@ -90,6 +91,45 @@ namespace Evolve.Visuals
         public static readonly Vector3 LimbCentre = new Vector3(0f, -0.1f, 0f);
         /// <summary>About how far the body's surface is from LimbCentre; a limb's length is counted from there.</summary>
         public const float SurfaceRadius = 0.5f;
+        float chargeWindAt = -10f, chargeWindSeconds;
+        float chargeLaunchAt = -10f, chargeHitAt = -10f;
+        Vector3 chargeDirection, chargeAxis;
+        float chargeWind, chargeDrive, chargeSquash, chargeDriveOnHit;
+        internal const float ChargeDriveSeconds = 0.34f;
+
+        internal void PrepareCharge(Vector3 direction, float windSeconds)
+        {
+            chargeDirection = direction;
+            chargeWindSeconds = windSeconds;
+            chargeWindAt = Time.time;
+        }
+
+        internal void LaunchCharge(Vector3 direction)
+        {
+            chargeDirection = direction;
+            chargeWindAt = -10f;
+            chargeHitAt = -10f;
+            chargeLaunchAt = Time.time;
+        }
+
+        internal void HitCharge(Vector3 towardSurface)
+        {
+            chargeDirection = towardSurface;
+            chargeDriveOnHit = DriveAt(Time.time - chargeLaunchAt);
+            chargeLaunchAt = -10f;
+            chargeHitAt = Time.time;
+        }
+
+        static float DriveAt(float elapsed)
+        {
+            float drive = Mathf.Clamp01(elapsed / ChargeDriveSeconds);
+            return Mathf.SmoothStep(0f, 1f, drive / 0.12f) * (1f - drive);
+        }
+
+        bool ChargePlaying => Time.time - chargeWindAt < chargeWindSeconds
+            || Time.time - chargeLaunchAt < ChargeDriveSeconds
+            || Time.time - chargeHitAt < SkillFxMath.ChargeImpactSeconds;
+
         float tuckUntil, fTuck;
 
         /// <summary>Start a limb on this slime (null if it has no animated body). Call Remove when done.</summary>
@@ -119,7 +159,7 @@ namespace Evolve.Visuals
 
         /// <summary>A jelly wobble: the body keeps bouncing a little and settles (call after landing, hits, ...).</summary>
         /// <summary>True while an action (skill, attack, absorb) plays; everyday movement animation steps aside then.</summary>
-        public bool ActionPlaying => !Paused && ( (activeTime >= 0f && active != GelMotion.Gulp) || (landT >= 0f && landT < LandRest));
+        public bool ActionPlaying => !Paused && ( (activeTime >= 0f && active != GelMotion.Gulp) || ChargePlaying || (landT >= 0f && landT < LandRest));
 
         /// <summary>After a real landing the body rests this long (landing splat plays alone) before moving animation resumes.</summary>
         const float LandRest = 0.5f;
@@ -347,6 +387,13 @@ namespace Evolve.Visuals
                         break;
                 }
             }
+            chargeAxis = Vector3.ProjectOnPlane(transform.InverseTransformDirection(chargeDirection), Vector3.up).normalized;
+            float wind = chargeWindSeconds > 0f ? (Time.time - chargeWindAt) / chargeWindSeconds : 1f;
+            chargeWind = wind < 1f ? Mathf.SmoothStep(0f, 1f, wind) : 0f;
+            float hitAge = Time.time - chargeHitAt;
+            chargeDrive = DriveAt(Time.time - chargeLaunchAt)
+                + chargeDriveOnHit * (1f - SkillFxMath.EaseOutCubic(hitAge / SkillFxMath.ChargeSquashSeconds));
+            chargeSquash = SkillFxMath.ChargeImpact(hitAge);
             fTuck = Mathf.Lerp(fTuck, Time.time < tuckUntil ? 1f : 0f, soft);
             foreach (var l in limbs)
             {
@@ -443,6 +490,24 @@ namespace Evolve.Visuals
                 o.z += fKick * (0.35f + 0.65f * h) * 0.5f;
                 o.z += fStretch * front * 0.3f;
                 o.y -= Mathf.Abs(fKick) * 0.2f * h;
+            }
+
+            if (chargeWind > 0f || chargeDrive > 0f || chargeSquash != 0f)
+            {
+                float along = Vector3.Dot(b, chargeAxis);
+                float front = Mathf.Clamp01(0.5f + along / 0.9f);
+                Vector3 side = new Vector3(b.x, 0f, b.z) - chargeAxis * along;
+
+                o -= chargeAxis * (chargeWind * (0.10f + 0.12f * front));
+                o.y -= chargeWind * 0.17f * h;
+                o += side * (chargeWind * 0.16f);
+
+                o += chargeAxis * (chargeDrive * (0.42f * front - 0.12f * (1f - front)));
+                o += side * (chargeDrive * (0.16f * front - 0.5f * (1f - front)));
+
+                o -= chargeAxis * (chargeSquash * 0.30f * front * front);
+                o += side * (chargeSquash * 0.64f * front);
+                o.y -= chargeSquash * 0.15f * h * front;
             }
 
             // Skill: tighten and tremble while charging, then a bristling burst outward.

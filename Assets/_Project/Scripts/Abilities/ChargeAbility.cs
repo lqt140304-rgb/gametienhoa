@@ -1,4 +1,5 @@
 using Evolve.Player;
+using Evolve.Visuals;
 using UnityEngine;
 
 namespace Evolve.Abilities
@@ -14,9 +15,30 @@ namespace Evolve.Abilities
 
         public override bool Activate(GameObject user) => Activate(user, 2);
 
+        internal static void Prepare(GameObject user, float delay)
+        {
+            var animator = user.GetComponentInChildren<SlimeGelAnimator>();
+            if (animator != null && user.TryGetComponent(out Rigidbody rb))
+                animator.PrepareCharge(Direction(user, rb), delay);
+        }
+
         public override bool Activate(GameObject user, int level)
         {
             if (!user.TryGetComponent(out Rigidbody rb)) return false;
+            Vector3 direction = Direction(user, rb);
+            rb.AddForce(direction * (Force * Power(level)) + Vector3.up * 1.2f, ForceMode.VelocityChange);
+            var animator = user.GetComponentInChildren<SlimeGelAnimator>();
+            if (animator != null) animator.LaunchCharge(direction);
+            if (direction.sqrMagnitude > 0.01f)
+            {
+                if (!user.TryGetComponent(out ChargeGelContact contact)) contact = user.AddComponent<ChargeGelContact>();
+                contact.Arm(direction, animator);
+            }
+            return true;
+        }
+
+        static Vector3 Direction(GameObject user, Rigidbody rb)
+        {
             // Charge toward the crosshair (aim mode) or the mouse cursor (mouse mode), level.
             Vector3 dir = AimController.AimDirection(user, user.transform.position, out _);
             dir.y = 0f;
@@ -31,8 +53,7 @@ namespace Evolve.Abilities
                 dir = cam != null ? cam.transform.forward : user.transform.forward;
                 dir.y = 0f;
             }
-            rb.AddForce(dir.normalized * (Force * Power(level)) + Vector3.up * 1.2f, ForceMode.VelocityChange);
-            return true;
+            return dir.normalized;
         }
     }
 }
