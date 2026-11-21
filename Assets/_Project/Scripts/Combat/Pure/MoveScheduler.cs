@@ -85,6 +85,11 @@ namespace Evolve.Combat
         /// <summary>While true, a move in its Recover does not end (its time stands still): Giáng Thạch's rock volley takes as long as it takes. Release it and the rest begins.</summary>
         public bool HoldRecover { get; set; }
         bool stunned;
+        float idleLeft;
+        /// <summary>Seconds (up to 1.8 times that, random) it stays idle after a move before it may pick the next one: a boss that circles and sizes up its prey.</summary>
+        public float MinIdle { get; set; }
+        /// <summary>Between two moves, in the idle gap.</summary>
+        public bool Circling => Phase == MovePhase.Idle && idleLeft > 0f;
         MoveDef comboOwner; int comboNext; float chainRest, currentRest, recoverLen;
 
         /// <summary>The last part of the recover, after the recover proper: the boss is crouched and out of breath (never after a stun).</summary>
@@ -129,9 +134,10 @@ namespace Evolve.Combat
         public MoveDef Update(float dt, bool hasTarget, float targetDistance, float health01)
         {
             for (int i = 0; i < cooldownLeft.Length; i++) cooldownLeft[i] = Math.Max(0f, cooldownLeft[i] - dt);
+            idleLeft = Math.Max(0f, idleLeft - dt);
             if (Phase == MovePhase.Idle)
             {
-                if (!hasTarget) return null;
+                if (!hasTarget || idleLeft > 0f) return null;
                 var pick = Pick(targetDistance, health01);
                 if (pick == null) return null;
                 Current = pick; stunned = false; StartCombo(pick); Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = pick.Windup * Math.Max(0.01f, TellScale);
@@ -168,7 +174,7 @@ namespace Evolve.Combat
                         comboNext = comboOwner.Combo.Length; currentRest = chainRest; phaseLength = recoverLen + currentRest;   // out of reach: the combo is over, it breathes
                         return null;
                     }
-                    Reset(); return null;
+                    Reset(); idleLeft = MinIdle * (1f + 0.8f * (float)rnd.NextDouble()); return null;   // a move ended by itself: it circles for a while
             }
         }
 

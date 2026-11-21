@@ -31,6 +31,19 @@ namespace Evolve.Combat
         public SurvivalStats EngagedTarget(float radius) =>
             target != null && Flat(target.transform.position - transform.position).sqrMagnitude <= radius * radius ? target : null;
                 float standOff = -1f; bool standing;
+        int circleSign = 1; float nextFlip;
+        /// <summary>Between two moves a boss that sizes up its prey walks round it (see <see cref="CircleRules"/>): the speed and direction to walk, and where to face (mostly along the walk, partly at the prey); otherwise the plain approach.</summary>
+        public float Steer(float chase, Vector3 to, out Vector3 dir, out Vector3 face)
+        {
+            dir = Flat(to).normalized; face = dir;
+            if (scheduler == null || !scheduler.Circling || target == null) return ApproachSpeed(chase, to);
+            if (Time.time >= nextFlip) { circleSign = Random.value < 0.5f ? 1 : -1; nextFlip = Time.time + Random.Range(CircleRules.FlipMin, CircleRules.FlipMax); }
+            var d = CircleRules.Steer(to.x, to.z, circleSign, CircleRules.Ring);
+            dir = new Vector3(d.x, 0f, d.z);
+            face = Vector3.Slerp(dir, Flat(to).normalized, 0.5f);   // it keeps an eye on the prey while it walks round
+            return CircleRules.Speed;
+        }
+
         /// <summary>How fast the body should walk toward the player: 0 once it is inside striking distance (it stands and faces them), a run when far, otherwise <paramref name="chase"/>. The body used to push into the player at 1.4 m/s forever.</summary>
         public float ApproachSpeed(float chase, Vector3 to)
         {
@@ -64,7 +77,7 @@ namespace Evolve.Combat
             foreach (var mv in moves) if (keep(mv)) kept.Add(mv);
             if (kept.Count == 0) return;
             moves = kept;
-            scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
+            scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale, MinIdle = CircleRules.IdleSeconds(name) };
         }
 
         public MoveDef CurrentMove => scheduler != null ? scheduler.Current : null;
@@ -140,7 +153,7 @@ namespace Evolve.Combat
             golem = SpeciesNames.Key(name) == "golemthachanh";
             if (ChoXuongRigFx.Has(name)) ChoXuongRigFx.Attach(gameObject);   // attach the rig effects here as well as in CreatureTuning: a creature that never passed through a cave still gets them
             if (GolemRigFx.Has(name)) GolemRigFx.Attach(gameObject);
-            scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
+            scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale, MinIdle = CircleRules.IdleSeconds(name) };
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
             foreach (var mv in moves) if (mv.Shape == MoveShape.Perch)

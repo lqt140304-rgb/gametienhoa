@@ -276,5 +276,28 @@ namespace Evolve.Tests.EditMode
             for (int i = 0; i < 400 && s.Busy; i++) { s.Update(0.05f, true, 2f, 1f); names.Add(s.Current?.Name ?? ""); }
             CollectionAssert.DoesNotContain(names, "A");
         }
+
+        [Test] public void MinIdle_MakesItCircleBetweenMoves_BeforeItPicksTheNextOne()
+        {
+            var m = new MoveDef { Name = "x", Windup = 0.1f, Active = 0.1f, Recover = 0.1f, Cooldown = 0f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { m }, 1) { MinIdle = 2f };
+            Assert.IsFalse(s.Circling);
+            while (!s.Busy) s.Update(0.05f, true, 5f, 1f);                   // the first move is picked at once
+            while (s.Busy) s.Update(0.05f, true, 5f, 1f);
+            Assert.IsTrue(s.Circling);                                        // the move is over: it circles the prey and sizes it up
+            float t = 0f;
+            while (!s.Busy && t < 10f) { s.Update(0.05f, true, 5f, 1f); t += 0.05f; }
+            Assert.That(t, Is.InRange(1.9f, 3.8f));                           // 2 s up to 1.8 times that, then the next move
+            Assert.IsFalse(s.Circling);
+        }
+
+        [Test] public void NoMinIdle_ChangesNothing()
+        {
+            var m = new MoveDef { Name = "x", Windup = 0.1f, Active = 0.1f, Recover = 0.1f, Cooldown = 0f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { m }, 1);
+            while (!s.Busy) s.Update(0.05f, true, 5f, 1f);
+            while (s.Busy) s.Update(0.05f, true, 5f, 1f);
+            Assert.IsFalse(s.Circling); s.Update(0.05f, true, 5f, 1f); Assert.IsTrue(s.Busy);
+        }
     }
 }

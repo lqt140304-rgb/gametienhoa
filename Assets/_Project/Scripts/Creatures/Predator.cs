@@ -176,7 +176,7 @@ namespace Evolve.Creatures
             if (target == null && combat != null && !Passive && !Calm) target = combat.EngagedTarget(24f);   // its moves reach 18 m: if they can fire, it must walk toward the player, not wander off
             if (target == null && Intent.Mode != IntentMode.None) { MoveByIntent(pos); BiteRemotePlayers(); return; }   // the brain is in charge
 
-            Vector3 dir = Vector3.zero;
+            Vector3 dir = Vector3.zero, look = Vector3.zero;
             float speed = 0f;
 
             if (target != null && combat == null && Time.time < retreatUntil)
@@ -188,8 +188,8 @@ namespace Evolve.Creatures
                 if (combat != null)   // a moveset creature: run in when far, stand and face the player once in striking distance, never tire or back off
                 {
                     Vector3 to = Flat(target.transform.position - pos, false);
-                    speed = combat.ApproachSpeed(chaseSpeed, to); dir = to.normalized;
-                    if (speed <= 0f && to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
+                    speed = combat.Steer(chaseSpeed, to, out dir, out look);
+                    if (speed <= 0f && to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(look), 0.15f));
                 }
                 else if (!IsTired)
                 {
@@ -245,7 +245,7 @@ namespace Evolve.Creatures
                     wanderDir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
                     nextTurn = Time.time + UnityEngine.Random.Range(1.8f, 3.5f);
                 }
-                rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
+                rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(look.sqrMagnitude > 1e-6f ? look : dir), 0.15f));
             }
 
             BiteRemotePlayers();

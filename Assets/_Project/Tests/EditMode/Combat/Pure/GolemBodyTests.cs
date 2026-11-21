@@ -109,10 +109,11 @@ namespace Evolve.Tests
         {
             const float L = 4f;
             var down = GolemRules.Winded(0.2f, L); var mid = GolemRules.Winded(2f, L); var up = GolemRules.Winded(L - 0.7f, L);
-            Assert.Less(down.Kneel, mid.Kneel); Assert.Greater(mid.Kneel, 0.85f); Assert.Greater(mid.Hunch, 40f);          // all the way down, bent over
+            Assert.Less(down.Kneel, mid.Kneel); Assert.Greater(mid.Kneel, 0.85f); Assert.Greater(mid.Hunch, 60f); Assert.Greater(mid.Plant, 0.8f);   // deep bent, the right hand to be planted          // all the way down, bent over
             Assert.That(mid.Raise - mid.Back, Is.InRange(-10f, 12f));                                                    // the right arm hangs to the ground: a hand planted
             Assert.Greater(mid.Raise, 20f);                                                                               // the left hand rests on the knee
             Assert.Greater(up.Raise - up.Back, 25f); Assert.Greater(up.Raise, 25f);                                      // getting up: both hands pushing on the knees
+            Assert.Less(up.Plant, 0.3f); Assert.AreEqual(0f, GolemRules.Winded(L, L).Plant, 1e-3f);                       // no longer planted once it pushes up
             Assert.Less(up.Kneel, mid.Kneel); Assert.Greater(up.Kneel, 0.1f);                                            // still part way up
             Assert.AreEqual(0f, GolemRules.Winded(L, L).Kneel, 1e-3f); Assert.AreEqual(0f, GolemRules.Winded(L, L).Hunch, 1e-3f);   // upright at the end
             float lo = 99f, hi = -99f;

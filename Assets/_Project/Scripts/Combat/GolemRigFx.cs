@@ -26,7 +26,7 @@ namespace Evolve.Combat
         Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
-        bool wasResting;
+        bool wasResting; float plantRaise;   // how far the right arm is reached down to the floor (degrees added to its raise)
         float legLen, lastRun, flinchT = 9f, restAnkleL, restAnkleR, restHipsH; Quaternion footRestL, footRestR; bool restMeasured;   // hips height above the root, ankle heights above the root and foot orientations in the standing pose   // seconds since the last blow it took
         ArmPose pose;
         Light coreLight;
@@ -261,8 +261,14 @@ namespace Evolve.Combat
             float lean = hunchSign * (pose.Hunch + 14f * run);
             if (spine != null) Put(spine, Quaternion.AngleAxis(lean, spine.Right) * Quaternion.AngleAxis(twist, spine.Up));
             float swing = 0.4f + 0.5f * run;
-            Arm(armL, foreL, +1f, -(hipL - crouchHip - stance * 22f) * swing);
-            Arm(armR, foreR, -1f, -(hipR - crouchHip + stance * 22f) * swing);   // (the kneel leaves the hip angles alone: only the knees bend)
+            Arm(armL, foreL, +1f, -(hipL - crouchHip - stance * 22f) * swing, 0f);
+            Arm(armR, foreR, -1f, -(hipR - crouchHip + stance * 22f) * swing, plantRaise * pose.Plant);
+            if (pose.Plant > 0.02f && handR != null)   // plant the right hand: reach the arm down until the hand is on the floor (found each frame from where the hand actually is)
+            {
+                float err = handR.position.y - (transform.position.y + 0.04f * scale);   // + = the hand is above the floor
+                plantRaise = Mathf.Clamp(plantRaise - err * 400f * dt, -100f, 20f);
+            }
+            else plantRaise = Mathf.MoveTowards(plantRaise, 0f, 200f * dt);   // (the kneel leaves the hip angles alone: only the knees bend)
 
             if (coreLight != null)
             {
@@ -273,10 +279,10 @@ namespace Evolve.Combat
         }
 
         /// <summary>The arm's extra turn: raise (both arms), back (the right arm only: the throw and the punch), spread, and a swing from the stride; the forearm follows a little so the arm bends.</summary>
-        void Arm(Part arm, Part fore, float side, float swing)
+        void Arm(Part arm, Part fore, float side, float swing, float extra)
         {
             if (arm == null) return;
-            float raise = pose.Raise - (side < 0f ? pose.Back : 0f) + swing;   // back (cocking the right, throwing arm) is the opposite of raising
+            float raise = pose.Raise - (side < 0f ? pose.Back : 0f) + swing + extra;   // back (cocking the right, throwing arm) is the opposite of raising
             var q = Quaternion.AngleAxis(raiseSign * raise, arm.Right) * Quaternion.AngleAxis(spreadSign * pose.Spread, arm.Forward);
             Put(arm, q);
             if (fore != null) Put(fore, Quaternion.AngleAxis(-raiseSign * Mathf.Clamp(raise, 0f, 140f) * 0.25f, fore.Right));
