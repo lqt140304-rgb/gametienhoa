@@ -16,7 +16,7 @@ namespace Evolve.Combat
 
         static readonly Color Sky = new Color(0.58f, 0.8f, 1f), Gold = new Color(1f, 0.82f, 0.3f);
 
-        public static bool Has(string speciesIdOrName) => SpeciesNames.Key(speciesIdOrName) == "caogio";
+        public static bool Has(string speciesIdOrName) => SpeciesNames.Key(speciesIdOrName) == "caogio" && !FoxRigFx.Has(speciesIdOrName);   // the Meshy fox has its own trinkets
 
         /// <summary>Puts the costume on a creature once; a second call does nothing.</summary>
         public static LordRegalia Attach(GameObject creature) =>
@@ -106,7 +106,7 @@ namespace Evolve.Combat
             return any;
         }
 
-        static Mesh ToMesh(MeshData d, bool doubleSided)
+        internal static Mesh ToMesh(MeshData d, bool doubleSided)
         {
             var verts = new Vector3[d.VertexCount];
             for (int i = 0; i < verts.Length; i++) verts[i] = new Vector3(d.Vertices[i * 3], d.Vertices[i * 3 + 1], d.Vertices[i * 3 + 2]);
