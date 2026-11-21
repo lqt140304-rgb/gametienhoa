@@ -247,3 +247,15 @@ Quy trình và trạng thái: `docs/MESHY_BOSSES.md`. Nhánh `claude/unity-test-
 **Chim Hang Mẹ (Meshy):** chân bước khi đi; cánh rung nhẹ khi đứng, vỗ khi đi, vỗ mạnh khi ra đòn; mỏ khép lúc nghỉ, há và rung khi đòn hoặc thỉnh thoảng; mỏ không méo mặt. Cánh vỗ ngược hướng thì báo.
 **Golem Thạch Anh (Meshy):** đi và chạy bằng clip của Meshy (chuyển từ đứng sang đi khi di chuyển, sang chạy khi nhanh); không trượt chân quá; chưa có chiêu đánh riêng (chỉ cắn).
 **Cóc, Rắn, Bọ Cạp, Chó Xương (tĩnh):** chỉ xem hình dáng, màu, cỡ; chúng đi cứng đơ vì chưa có xương. Báo cái nào cần chỉnh (màu, cỡ, dáng) trước khi mình rig.
+
+### H10. Chó Xương (Meshy): bộ chiêu (chưa ai thử trong Unity)
+Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. Chạy lại menu `Build Meshy Static Prefabs`, tạo Chó Xương từ menu thần (Chúa Hang), mở tab Combat để xem pha hiện tại.
+- [ ] **Chạy đuổi:** chân bước, lưng uốn theo sải khi đuổi; đứng yên thì cổ nhúc nhích nhẹ (thở).
+- [ ] **Vồ:** hạ thấp đầu và thân rồi lao ~5 m, đầu vươn lên, hàm há; né sang bên thì nó trượt qua và đứng hở ~1,5 s.
+- [ ] **Cắn Nghiền** (gần): hàm há rộng rồi đớp khép lại thật nhanh.
+- [ ] **Nhảy Vượt:** gần một bục thấp (≤ 1,5 m) khi đuổi thì nó nhảy lên; không có bục thì không nhảy.
+- [ ] **Gầm** (khi máu dưới 66%): ngửa đầu há miệng, rung, vòng đỏ 8 m dưới đất; con mồi nhỏ trong 8 m bỏ chạy ~4 s; slime nhỏ hơn bị đẩy lùi và đứng đơ ~0,8 s.
+- [ ] **Hú Gọi Bầy** (máu dưới 33%): ngửa đầu hú dài; Bọ Ăn Xác trong 25 m kéo tới.
+- [ ] **Trúng đòn:** đầu giật nhẹ; đòn mạnh (≥ 12% máu) thì loạng choạng ~0,6 s.
+- [ ] Mõm không méo khi há (nếu méo: chụp ảnh).
+- [ ] Không lỗi đỏ Console; hàm há đúng chiều (xuống), cổ ngửa lên khi gầm (không cúi xuống).

@@ -1,0 +1,52 @@
+using Evolve.Combat;
+using NUnit.Framework;
+
+namespace Evolve.Tests.EditMode
+{
+    public class HoundRulesTests
+    {
+        [Test] public void Idle_IsRest() => Assert.AreEqual(0f, HoundRules.Evaluate("Roar", MovePhase.Idle, 0.5f).NeckPitch);
+
+        [Test] public void Roar_ThrowsTheHeadBackAndOpensTheJaw_AndQuiversInTheStrike()
+        {
+            var peak = HoundRules.Evaluate("Roar", MovePhase.Active, 0.5f);
+            Assert.Greater(peak.NeckPitch, 30f); Assert.Greater(peak.JawDeg, 20f); Assert.Greater(peak.Quiver, 0.4f);
+            var halfway = HoundRules.Evaluate("Roar", MovePhase.Windup, 0.5f);
+            Assert.Greater(halfway.NeckPitch, 0f); Assert.Less(halfway.NeckPitch, peak.NeckPitch);
+            Assert.AreEqual(0f, HoundRules.Evaluate("Roar", MovePhase.Recover, 1f).NeckPitch, 1e-4f);
+        }
+
+        [Test] public void Bite_OpensWideThenSnapsShut()
+        {
+            Assert.AreEqual(HoundRules.MaxJawDeg, HoundRules.Evaluate("Bite", MovePhase.Windup, 1f).JawDeg, 1e-3f);
+            Assert.AreEqual(0f, HoundRules.Evaluate("Bite", MovePhase.Active, 0.5f).JawDeg, 1e-3f);   // already shut by the middle of the strike
+            Assert.Greater(HoundRules.Evaluate("Bite", MovePhase.Active, 0.05f).JawDeg, 15f);
+        }
+
+        [Test] public void Pounce_LowersTheHeadInTheTell_AndLiftsItInTheLeap()
+        {
+            Assert.Less(HoundRules.Evaluate("Pounce", MovePhase.Windup, 1f).NeckPitch, -10f);
+            Assert.Greater(HoundRules.Evaluate("Pounce", MovePhase.Active, 1f).NeckPitch, 5f);
+        }
+
+        [Test] public void JawNeverExceedsTheLimit_ForAnyMove()
+        {
+            foreach (var a in new[] { "Pounce", "Bite", "Roar", "Howl", "Leap", "xyz" })
+                foreach (var ph in new[] { MovePhase.Windup, MovePhase.Active, MovePhase.Recover })
+                    for (float t = 0f; t <= 1f; t += 0.1f) Assert.LessOrEqual(HoundRules.Evaluate(a, ph, t).JawDeg, HoundRules.MaxJawDeg + 1e-3f, a + ph);
+        }
+
+        [Test] public void Flinch_DecaysToZero_AndAHeavyOneLastsLonger()
+        {
+            Assert.AreEqual(1f, HoundRules.Flinch(0f, false), 1e-4f);
+            Assert.AreEqual(0f, HoundRules.Flinch(HoundRules.FlinchSeconds, false)); Assert.AreEqual(0f, HoundRules.Flinch(-1f, false));
+            Assert.AreEqual(0f, HoundRules.Flinch(0.3f, false)); Assert.Greater(HoundRules.Flinch(0.3f, true), 0f);
+            Assert.Less(HoundRules.Flinch(0.1f, false), HoundRules.Flinch(0.05f, false));
+        }
+
+        [Test] public void HeavyHit_IsAtLeastTwelvePercentOfMaxHealth()
+        {
+            Assert.IsTrue(HoundRules.IsHeavy(24f, 190f)); Assert.IsFalse(HoundRules.IsHeavy(10f, 190f)); Assert.IsFalse(HoundRules.IsHeavy(5f, 0f));
+        }
+    }
+}

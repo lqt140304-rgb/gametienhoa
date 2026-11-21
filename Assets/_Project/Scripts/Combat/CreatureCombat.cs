@@ -26,6 +26,18 @@ namespace Evolve.Combat
         public float TellScale { get => tellScale; set { tellScale = value; if (scheduler != null) scheduler.TellScale = value; } }
         public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking) || perch != PerchState.None);
         /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
+        public MovePhase Phase => scheduler != null ? scheduler.Phase : MovePhase.Idle;
+        public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
+        public MoveDef CurrentMove => scheduler != null ? scheduler.Current : null;
+
+        /// <summary>A heavy blow staggers it: the move in progress ends in a recover and it is held still for a moment (open to a counter).</summary>
+        public void Stagger(float seconds)
+        {
+            if (scheduler == null || seconds <= 0f) return;
+            CreatureStatus.Stun(this, seconds);
+            scheduler.Stun(seconds);
+        }
+
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
         public float DamageTakenFactor => scheduler != null ? scheduler.DamageTakenFactor : 1f;
@@ -248,7 +260,7 @@ namespace Evolve.Combat
             loco?.PlayAction(m.Anim);
             loco?.PlayAction("Tell_" + m.Anim);
             if (m.Shape == MoveShape.Spears) MakeSpears(m);
-            if (m.Shape == MoveShape.Spin || m.Shape == MoveShape.Call)
+            if (m.Shape == MoveShape.Spin || m.Shape == MoveShape.Call || m.Shape == MoveShape.Roar)
                 SkillFx.Ring(transform.position, m.Radius, TellColor, m.Windup * tellScale, 0.3f);   // a ring on the ground shows how far the blow reaches
         }
 
@@ -267,6 +279,7 @@ namespace Evolve.Combat
             if (m.Shape == MoveShape.Perch) BeginPerch(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);
+            else if (m.Shape == MoveShape.Roar) Roar(m);
         }
 
         void TickStrike(MoveDef m)
@@ -446,6 +459,26 @@ namespace Evolve.Combat
                 var prb = p.GetComponent<Rigidbody>();
                 Impulse.Kick(prb, away.normalized * 5f + Vector3.up * 2f);
                 if (m.Shape != MoveShape.Spin) break;   // a lunge or a charge hits one player
+            }
+        }
+
+        /// <summary>The roar: smaller creatures in range flee for FearSeconds; a smaller player is pushed back and frozen for Freeze seconds.</summary>
+        void Roar(MoveDef m)
+        {
+            float mass = pred != null ? pred.BodyMass : prey != null ? prey.BodyMass : 50f;
+            foreach (var o in Prey.Active)
+                if (o != null && o != prey && o.BodyMass < mass && Flat(o.transform.position - transform.position).magnitude <= m.Radius)
+                    o.ForceFleeUntil = Mathf.Max(o.ForceFleeUntil, Time.time + m.FearSeconds);
+            foreach (var p in SurvivalStats.All)
+            {
+                if (p == null || p.IsRemote || p.State.IsDead) continue;
+                Vector3 away = Flat(p.transform.position - transform.position);
+                if (away.magnitude > m.Radius) continue;
+                float pm = p.TryGetComponent(out Evolve.Swallow.SlimeBody body) ? body.Mass : 10f;
+                if (pm >= mass) continue;   // too big to be scared
+                if (away.sqrMagnitude < 1e-4f) away = transform.forward;
+                WindPush.Apply(p, away.normalized * m.Force, 0.3f);
+                if (p.TryGetComponent(out Evolve.Player.SlimeController sc)) sc.FreezeFor(m.Freeze);
             }
         }
 

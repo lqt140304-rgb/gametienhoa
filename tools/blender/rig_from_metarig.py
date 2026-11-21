@@ -65,6 +65,15 @@ def main(blend, mesh_name, arm_name, prefix):
         if nm in arm.data.edit_bones:
             arm.data.edit_bones[nm].name = new
     bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.mode_set(mode="EDIT")
+    jw = arm.data.edit_bones["jaw"]
+    tip = arm.data.edit_bones.new("JawTip")   # a tiny leaf: Unity measures which way the jaw opens from it
+    tip.head = jw.tail
+    tip.tail = jw.tail + (jw.tail - jw.head).normalized() * 0.02
+    tip.parent = jw
+    tip.use_connect = False
+    bpy.ops.object.mode_set(mode="OBJECT")
     mesh.parent = arm
     mesh.matrix_parent_inverse = arm.matrix_world.inverted()   # the armature object is offset: keep the mesh where it was
     mod = mesh.modifiers.new("Armature", "ARMATURE")
