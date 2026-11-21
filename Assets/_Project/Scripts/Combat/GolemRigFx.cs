@@ -4,10 +4,11 @@ using UnityEngine;
 namespace Evolve.Combat
 {
     /// <summary>
-    /// Body language and chest core of the Meshy Golem Thạch Anh ("GolemThachAnh (Meshy)"). Its walk and run are Meshy's clips (the Animator); in LateUpdate this adds
-    /// the moves on top by turning the rig's arm and spine bones (Spine01, LeftArm/RightArm...) as <see cref="GolemRules"/> says for the move in progress, and drives a warm light in the
-    /// chest (the core), brightest in the core blast and glowing while the crystal armour holds. The direction each bone must turn is measured at start (the hand's
-    /// height and sideways position), so no bone axis is assumed. A hit makes the core flicker and the golem grunt.
+    /// Everything that moves on Meshy's Golem Thạch Anh ("GolemThachAnh (Meshy)") beyond its standing pose (the Animator only holds a standing frame; Meshy's walk clips never
+    /// moved its legs): (1) its walk, written as code (<see cref="GaitRules"/>): hips swing, knees bend, the body sinks at each footfall (with the footfall sound, dust and a camera thump),
+    /// all tied to the distance walked so the feet never slide; (2) its moves, added on top by turning the arm and spine bones as <see cref="GolemRules"/> says; (3) a warm light
+    /// in the chest, the core; (4) the crystal armour of its passive (<see cref="PassiveRules"/>) that grows out of the shoulders and back below 66% health. The direction each bone must
+    /// turn is measured at start (where the foot or hand goes), so no bone axis is assumed. Every turn is added to the pose the Animator wrote this frame and never stacks up.
     /// </summary>
     public class GolemRigFx : MonoBehaviour
     {
@@ -18,24 +19,21 @@ namespace Evolve.Combat
 
         class Part { public Transform T; public Quaternion Rest, Base, Written; public bool Has; public Vector3 Right, Forward, Up; }
 
-        Part spine, armL, armR, foreL, foreR;
-        Transform handL, handR, chest, shoulderL, shoulderR;
-        float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f;
+        const float Stride = 1.9f, HipDeg = 24f, KneeDeg = 40f, BobMeters = 0.05f;   // metres of one walk cycle at scale 1 (the model is 2.5 m tall), degrees, metres
+
+        Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
+        Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
+        float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f;
         ArmPose pose;
         Light coreLight;
         float lastHealth = -1f, flickerUntil;
         CreatureCombat combat;
         Predator pred;
-        Animator animator;
-        bool hasRates;
-        Vector3 lastPos;
-        float speed;
-        const float WalkStride = 1.9f, RunStride = 3.0f;   // metres one walk / run cycle covers at the model's own scale
+        FootstepFx steps;
+        Vector3 lastPos, hipsBase, hipsWritten; bool hipsHas;
+        float phase, walkWeight;
 
-        /// <summary>
-        /// Turn a bone by <paramref name="extra"/> on top of what the Animator wrote this frame. If the Animator left the bone alone (a state with no clip), it still holds
-        /// last frame's turn, so start again from the pose we remembered: the turns must never stack up frame after frame.
-        /// </summary>
+        /// <summary>Turn a bone by <paramref name="extra"/> on top of what the Animator wrote this frame; if the Animator left the bone alone it still holds last frame's turn, so start from the pose we remembered.</summary>
         static void Put(Part p, Quaternion extra)
         {
             var cur = p.T.localRotation;
@@ -51,51 +49,65 @@ namespace Evolve.Combat
             Right = t.InverseTransformDirection(transform.right), Forward = t.InverseTransformDirection(transform.forward), Up = t.InverseTransformDirection(transform.up),
         };
 
+        /// <summary>+1 if turning the bone by +10 degrees about the creature's right axis moves <paramref name="probe"/> by a positive amount of <paramref name="measure"/>, otherwise -1.</summary>
+        float SignFor(Part bone, Transform probe, System.Func<Vector3, float> measure)
+        {
+            if (bone == null || probe == null) return 1f;
+            float before = measure(probe.position);
+            bone.T.localRotation = bone.Rest * Quaternion.AngleAxis(10f, bone.Right);
+            float after = measure(probe.position);
+            bone.T.localRotation = bone.Rest;
+            return after > before ? 1f : -1f;
+        }
+
         void Start()
         {
             combat = GetComponent<CreatureCombat>();
             pred = GetComponent<Predator>();
-            animator = GetComponentInChildren<Animator>(true);
             lastPos = transform.position;
-            if (animator != null && animator.runtimeAnimatorController != null) foreach (var pa in animator.parameters) if (pa.name == "WalkRate") hasRates = true;
-            Transform sp = null, sp1 = null, aL = null, aR = null, fL = null, fR = null;
+            Transform sp = null, sp1 = null;
+            Transform aL = null, aR = null, fL = null, fR = null, tL = null, tR = null, kL = null, kR = null, ftL = null, ftR = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
                 switch (t.name)
                 {
+                    case "Hips": hips = t; break;
                     case "Spine01": sp1 = t; break;
                     case "Spine": sp = t; break;
+                    case "LeftShoulder": shoulderL = t; break;
+                    case "RightShoulder": shoulderR = t; break;
                     case "LeftArm": aL = t; break;
                     case "RightArm": aR = t; break;
                     case "LeftForeArm": fL = t; break;
                     case "RightForeArm": fR = t; break;
-                    case "LeftShoulder": shoulderL = t; break;
-                    case "RightShoulder": shoulderR = t; break;
                     case "LeftHand": handL = t; break;
                     case "RightHand": handR = t; break;
+                    case "LeftUpLeg": tL = t; break;
+                    case "RightUpLeg": tR = t; break;
+                    case "LeftLeg": kL = t; break;
+                    case "RightLeg": kR = t; break;
+                    case "LeftFoot": ftL = t; break;
+                    case "RightFoot": ftR = t; break;
                 }
             chest = sp1 != null ? sp1 : sp;
-            spine = Make(sp1 != null ? sp1 : sp); armL = Make(aL); armR = Make(aR); foreL = Make(fL); foreR = Make(fR);
+            spine = Make(chest); armL = Make(aL); armR = Make(aR); foreL = Make(fL); foreR = Make(fR);
+            thighL = Make(tL); thighR = Make(tR); kneeL = Make(kL); kneeR = Make(kR); footL = Make(ftL); footR = Make(ftR);
+            footTipL = ftL;
             if (pred != null) lastHealth = pred.Health;
-            FootstepFx.Attach(gameObject, "Golem/golem_step", ProceduralSfx.Kind.HoundThud, new Color(0.58f, 0.52f, 0.45f));
-            BuildCrystals(sp1 != null ? sp1 : sp);
+            steps = FootstepFx.Attach(gameObject, "Golem/golem_step", ProceduralSfx.Kind.HoundThud, new Color(0.58f, 0.52f, 0.45f), true);
+            BuildCrystals(chest);
+
+            // measure which way each joint must turn (where the foot or the hand goes)
+            Vector3 fwd = transform.forward;
+            hipSign = SignFor(thighL, footTipL, p => Vector3.Dot(p, fwd));            // + = the foot swings forward
+            kneeSign = -SignFor(kneeL, footTipL, p => Vector3.Dot(p, fwd));           // + = the foot swings back and up (the knee bends)
+            raiseSign = SignFor(armL, handL, p => p.y);                                // + = the hand goes up
+            hunchSign = SignFor(spine, handL != null ? handL : chest, p => Vector3.Dot(p, fwd));   // + = leans forward
             if (armL != null && handL != null)
             {
-                // raising: turn about the creature's right axis so the hand goes up; spreading: about its forward axis so the hand goes outward
-                float y = handL.position.y;
-                armL.T.localRotation = armL.Rest * Quaternion.AngleAxis(10f, armL.Right);
-                raiseSign = handL.position.y > y ? 1f : -1f;
-                armL.T.localRotation = armL.Rest;
-                float x = Vector3.Dot(handL.position - transform.position, transform.right);
+                float x = Mathf.Abs(Vector3.Dot(handL.position - transform.position, transform.right));
                 armL.T.localRotation = armL.Rest * Quaternion.AngleAxis(10f, armL.Forward);
-                spreadSign = Mathf.Abs(Vector3.Dot(handL.position - transform.position, transform.right)) > Mathf.Abs(x) ? 1f : -1f;
+                spreadSign = Mathf.Abs(Vector3.Dot(handL.position - transform.position, transform.right)) > x ? 1f : -1f;
                 armL.T.localRotation = armL.Rest;
-            }
-            if (spine != null && chest != null)
-            {
-                float z = Vector3.Dot(handL != null ? handL.position : chest.position + transform.up, transform.forward);
-                spine.T.localRotation = spine.Rest * Quaternion.AngleAxis(10f, spine.Right);
-                hunchSign = Vector3.Dot(handL != null ? handL.position : chest.position + transform.up, transform.forward) > z ? 1f : -1f;   // + leans forward
-                spine.T.localRotation = spine.Rest;
             }
             if (chest != null)
             {
@@ -107,19 +119,7 @@ namespace Evolve.Combat
             }
         }
 
-        /// <summary>The walk and run clips play as fast as the golem really moves (a cave lord is scaled up and sped up, so a fixed clip speed would make the feet slide).</summary>
-        void Update()
-        {
-            if (!hasRates) return;
-            float dt = Mathf.Max(Time.deltaTime, 1e-4f);
-            float sp = (transform.position - lastPos).magnitude / dt; lastPos = transform.position;
-            speed = Mathf.Lerp(speed, sp, 1f - Mathf.Exp(-8f * dt));
-            float scale = Mathf.Max(0.1f, animator.transform.lossyScale.y);
-            animator.SetFloat("WalkRate", Mathf.Clamp(speed / (WalkStride * scale), 0.3f, 3f));
-            animator.SetFloat("RunRate", Mathf.Clamp(speed / (RunStride * scale), 0.3f, 3f));
-        }
-
-        // the crystal armour: spiked crystal crowns on the shoulders and the back that grow out while the armour holds and shrink away after
+        // ---- crystal armour: spiked crystal crowns on the shoulders and the back that grow out below 66% health and shrink away if it heals
         readonly System.Collections.Generic.List<Transform> crystals = new System.Collections.Generic.List<Transform>();
         float crystalT, crystalSize = 1f;
 
@@ -138,54 +138,88 @@ namespace Evolve.Combat
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = mat; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 go.transform.localScale = Vector3.zero;
-                crystalSizeBase = 1f / Mathf.Max(0.0001f, bone.lossyScale.y);
+                crystalSize = 1f / Mathf.Max(0.0001f, bone.lossyScale.y);
                 crystals.Add(go.transform);
             }
-            crystalSize = crystalSizeBase;
         }
-        float crystalSizeBase = 1f;
 
         void LateUpdate()
         {
             float dt = Mathf.Max(Time.deltaTime, 1e-4f), t = Time.time;
+            float scale = Mathf.Max(0.3f, transform.lossyScale.y);
+
+            // ---- health: flicker and grunt when hit, the passive's crystals
+            float hp01 = pred != null ? pred.HealthFraction : 1f;
             if (pred != null)
             {
                 float hp = pred.Health;
                 if (lastHealth > 0f && hp < lastHealth - 0.01f) { flickerUntil = t + 0.35f; GolemFx.Hurt(transform.position); BossMusic.Ping("golem_battle"); }
                 lastHealth = hp;
             }
+            bool armour = PassiveRules.CrystalsOut(name, hp01);
+            crystalT = Mathf.MoveTowards(crystalT, armour ? 1f : 0f, dt * (armour ? 1.2f : 0.8f));
+            for (int i = 0; i < crystals.Count; i++) if (crystals[i] != null) crystals[i].localScale = Vector3.one * crystalSize * Mathf.SmoothStep(0f, 1f, crystalT);
+
+            // ---- the move in progress
             ArmPose target = default;
-            if (combat != null && combat.CurrentMove != null && combat.Phase != MovePhase.Idle)
+            bool gripping = TryGetComponent(out HoundPin hold) && hold.Chomping;
+            if (gripping) target = GolemRules.Evaluate("Grab", MovePhase.Active, 1f);   // fists closed round the player while it squeezes
+            else if (combat != null && combat.CurrentMove != null && combat.Phase != MovePhase.Idle)
             {
                 target = GolemRules.Evaluate(combat.CurrentMove.Anim, combat.Phase, combat.PhaseProgress);
                 BossMusic.Ping("golem_battle");   // any move in progress is a blow in the fight
             }
-            float k = 1f - Mathf.Exp(-7f * dt);   // heavy: the arms take their time
-            pose = ArmPose.Lerp(pose, target, k);
-            // the core charging: the ground rumbles more and more
+            if (gripping) BossMusic.Ping("golem_battle");
+            pose = ArmPose.Lerp(pose, target, 1f - Mathf.Exp(-7f * dt));   // heavy: the arms take their time
             if (combat != null && combat.CurrentMove != null && combat.CurrentMove.Anim == "CoreBlast" && combat.Phase == MovePhase.Windup)
-                ImpactFx.Thump(transform.position, 0.015f + 0.05f * combat.PhaseProgress, 0.2f, 24f);
-            bool armour = combat != null && combat.CurrentMove != null && combat.CurrentMove.Anim == "Harden" && combat.Phase != MovePhase.Recover && combat.Phase != MovePhase.Idle;
-            crystalT = Mathf.MoveTowards(crystalT, armour ? 1f : 0f, dt * (armour ? 1.6f : 1.2f));
-            for (int i = 0; i < crystals.Count; i++) if (crystals[i] != null) crystals[i].localScale = Vector3.one * crystalSize * Mathf.SmoothStep(0f, 1f, crystalT);
+                ImpactFx.Thump(transform.position, 0.015f + 0.05f * combat.PhaseProgress, 0.2f, 24f);   // the core charging: the ground rumbles more and more
 
-            if (spine != null) Put(spine, Quaternion.AngleAxis(hunchSign * pose.Hunch, spine.Right));
-            Arm(armL, foreL, +1f);
-            Arm(armR, foreR, -1f);
+            // ---- the walk: one phase that follows the distance walked
+            float moved = (transform.position - lastPos).magnitude; lastPos = transform.position;
+            bool busy = combat != null && combat.Phase != MovePhase.Idle;
+            float speed = moved / dt;
+            walkWeight = Mathf.MoveTowards(walkWeight, speed > 0.15f && !gripping ? 1f : 0f, dt * 4f);
+            float prev = phase;
+            phase += GaitRules.PhaseAdvance(moved, Stride * scale);
+            if (walkWeight > 0.3f) { if (FootstepRules.Contacts(prev, phase, new[] { 0.25f, 0.75f }) > 0 && steps != null) steps.StepNow(); }
+            if (phase > 1000f) phase = phase % 1f;
+            float ph = phase % 1f;
+            float hipL = GaitRules.Hip(ph, 0, HipDeg) * walkWeight, hipR = GaitRules.Hip(ph, 1, HipDeg) * walkWeight;
+            float kneeLd = GaitRules.Knee(ph, 0, KneeDeg) * walkWeight, kneeRd = GaitRules.Knee(ph, 1, KneeDeg) * walkWeight;
+            if (thighL != null) Put(thighL, Quaternion.AngleAxis(hipSign * hipL, thighL.Right));
+            if (thighR != null) Put(thighR, Quaternion.AngleAxis(hipSign * hipR, thighR.Right));
+            if (kneeL != null) Put(kneeL, Quaternion.AngleAxis(kneeSign * kneeLd, kneeL.Right));
+            if (kneeR != null) Put(kneeR, Quaternion.AngleAxis(kneeSign * kneeRd, kneeR.Right));
+            if (footL != null) Put(footL, Quaternion.AngleAxis(-hipSign * hipL * 0.5f + kneeSign * kneeLd * 0.35f, footL.Right));   // the sole stays roughly level
+            if (footR != null) Put(footR, Quaternion.AngleAxis(-hipSign * hipR * 0.5f + kneeSign * kneeRd * 0.35f, footR.Right));
+            if (hips != null)   // the body sinks at each footfall
+            {
+                var cur = hips.position;
+                Vector3 b = hipsHas && (cur - hipsWritten).sqrMagnitude < 1e-8f ? hipsBase : cur;
+                hipsBase = b;
+                hips.position = b + Vector3.up * GaitRules.Bob(ph, BobMeters * scale) * walkWeight;
+                hipsWritten = hips.position; hipsHas = true;
+            }
+
+            // ---- the spine: the move's lean plus a slow twist against the stride; the arms: the move, and a counter-swing of the stride
+            float twist = Mathf.Sin(ph * 2f * Mathf.PI) * 4f * walkWeight;
+            if (spine != null) Put(spine, Quaternion.AngleAxis(hunchSign * pose.Hunch, spine.Right) * Quaternion.AngleAxis(twist, spine.Up));
+            Arm(armL, foreL, +1f, -hipL * 0.4f);
+            Arm(armR, foreR, -1f, -hipR * 0.4f);
 
             if (coreLight != null)
             {
                 float flicker = t < flickerUntil ? 0.6f + 0.4f * Mathf.Sin(t * 60f) : 0f;
                 float idle = 0.25f + 0.1f * Mathf.Sin(t * 2f);   // a slow pulse even at rest
-                coreLight.intensity = Mathf.Max(idle, pose.Glow) * 4f + flicker * 2f;
+                coreLight.intensity = Mathf.Max(idle, Mathf.Max(pose.Glow, crystalT * 0.6f)) * 4f + flicker * 2f;
             }
         }
 
-        /// <summary>The arm's extra turn: raise (both arms), back (the right arm only: the throw), spread; the forearm follows a little so the arm bends.</summary>
-        void Arm(Part arm, Part fore, float side)
+        /// <summary>The arm's extra turn: raise (both arms), back (the right arm only: the throw and the punch), spread, and a swing from the stride; the forearm follows a little so the arm bends.</summary>
+        void Arm(Part arm, Part fore, float side, float swing)
         {
             if (arm == null) return;
-            float raise = pose.Raise - (side < 0f ? pose.Back : 0f);   // back (cocking the right, throwing arm) is the opposite of raising
+            float raise = pose.Raise - (side < 0f ? pose.Back : 0f) + swing;   // back (cocking the right, throwing arm) is the opposite of raising
             var q = Quaternion.AngleAxis(raiseSign * raise, arm.Right) * Quaternion.AngleAxis(spreadSign * pose.Spread, arm.Forward);
             Put(arm, q);
             if (fore != null) Put(fore, Quaternion.AngleAxis(-raiseSign * Mathf.Clamp(raise, 0f, 140f) * 0.25f, fore.Right));

@@ -1,5 +1,7 @@
 # Bộ chiêu của Golem Thạch Anh (đã chốt với chủ dự án 2026-11-21)
 
+> **Cập nhật:** bộ chiêu dưới đây đã được **thay bằng bộ kỹ năng chuẩn** của mọi trùm: xem `docs/superpowers/specs/2026-11-21-boss-standard-kit.md` (Ném Đá giữ lại; thêm Nện Đấm, Chộp Nghiền có mini game, nội tại Thân Tinh Thể; Lõi Nổ là tuyệt chiêu ở máu ≤ 25%; Giáp Tinh Thể thành nội tại). Phần **bước chân bằng mã** ở cuối tài liệu này vẫn đúng.
+
 Chúa Hang Vực Nứt Tím, mô hình Meshy rig tự động (Humanoid) với clip đi và chạy của Meshy. Số là số tạm, chỉnh khi chơi. Làm theo quy trình của Chó Xương.
 
 | Chiêu | Dữ liệu (`MovesetSeed`, khóa `golemthachanh`) | Mở khi |
@@ -22,6 +24,9 @@ Golem bị gập người, tay duỗi ra trước không về lại được, b�
 
 ## Sức nặng (2026-11-21, sau lần thử thứ hai)
 Chủ dự án muốn trùm nặng và mạnh: mọi chiêu **báo chậm hơn, hồi lâu hơn, hất văng và choáng người chơi** (`MoveDef.Force`, `Freeze` cho đòn Spin, trước chỉ có cho gió và băng), **rung màn hình** (`ShakeRules`, `ImpactFx`, `ThirdPersonCamera.Thump`, giảm theo khoảng cách), tiếng bước chân nặng (`FootstepFx`, `golem_step.mp3`), tinh thể mọc ra khi giáp. **Cỡ Golem bị giới hạn nhân tối đa 1,2 lần ở hang** (trước đó cỡ trùm 2,4–3,2 lần khiến thân 6–8 m, hay kẹt vào vật cản).
+
+## Bước chân bằng mã (2026-11-21, lần thử thứ ba)
+Clip đi của Meshy **không làm chân Golem cử động trong game** (chỉ lết) dù đã sửa tốc độ và Idle. Giờ Animator chỉ **giữ một tư thế đứng** (clip đi dừng ở khung hai chân khép) và `GolemRigFx` viết bước đi bằng mã (`GaitRules`): hông đung đưa ±24°, gối gập tới 40% khi chân vung tới, thân hạ thấp 5 cm mỗi lần chân chạm đất, tay đung đưa ngược chân, thân xoắn nhẹ, tất cả theo **quãng đường đã đi** (một vòng = 1,9 m ở cỡ gốc) nên chân không trượt. Mỗi lần chân chạm đất (pha 0,25 và 0,75): tiếng đạp, bụi, rung màn hình. Hướng xoay từng khớp tự đo lúc chạy (xem bàn chân và bàn tay dịch về đâu). Cỡ Golem trong hang giới hạn nhân 1,44 lần (1,2 lần trước đó, thêm 20%).
 
 ## Chưa làm / rủi ro
 - Chưa kiểm trong Unity: hướng xoay tay, hướng lệch thân tự đo; lõi sáng bằng đèn điểm nên ở nơi sáng có thể khó thấy.

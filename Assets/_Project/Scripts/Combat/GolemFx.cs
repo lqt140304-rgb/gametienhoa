@@ -28,6 +28,14 @@ namespace Evolve.Combat
                         SkillFx.Burst(p + Vector3.up * 0.2f, Crystal, 18, 5f, 0.12f, 0.8f, 0.6f);   // crystal chips jump off the floor
                     }
                     break;
+                case "Punch":
+                    if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.8f, ProceduralSfx.Kind.HoundGrowlShort);
+                    else if (phase == MovePhase.Active) { Sfx("golem_slam", p, 0.8f, ProceduralSfx.Kind.HoundThud); ImpactFx.Thump(p, 0.2f, 0.5f, 20f); SkillFx.Dust(p + golem.transform.forward * 1.5f * scale, 1.2f * scale, Dust, 24); }
+                    break;
+                case "Grab":
+                    if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.9f, ProceduralSfx.Kind.HoundGrowlShort);
+                    else if (phase == MovePhase.Active) { Sfx("golem_throw", p, 0.8f, ProceduralSfx.Kind.HoundLunge); ImpactFx.Thump(p, 0.15f, 0.4f, 18f); }
+                    break;
                 case "Throw":
                     if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.8f, ProceduralSfx.Kind.HoundGrowlShort);
                     else if (phase == MovePhase.Active) { Sfx("golem_throw", p, 1f, ProceduralSfx.Kind.HoundLunge); ImpactFx.Thump(p, 0.1f, 0.4f, 18f); }

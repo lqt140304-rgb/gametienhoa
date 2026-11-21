@@ -61,7 +61,7 @@ namespace Evolve.Combat
 
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
-        public float DamageTakenFactor => scheduler != null ? scheduler.DamageTakenFactor : 1f;
+        public float DamageTakenFactor => scheduler != null ? scheduler.DamageTakenFactor * (pred != null ? PassiveRules.DamageFactor(name, pred.HealthFraction) : 1f) : 1f;
 
         IReadOnlyList<MoveDef> moves;
         MoveScheduler scheduler;
@@ -120,6 +120,8 @@ namespace Evolve.Combat
             poseStrength = MovesetSeed.PoseStrength(name);
             hound = SpeciesNames.Key(name) == "choxuong";
             golem = SpeciesNames.Key(name) == "golemthachanh";
+            if (ChoXuongRigFx.Has(name)) ChoXuongRigFx.Attach(gameObject);   // attach the rig effects here as well as in CreatureTuning: a creature that never passed through a cave still gets them
+            if (GolemRigFx.Has(name)) GolemRigFx.Attach(gameObject);
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
@@ -132,6 +134,22 @@ namespace Evolve.Combat
             if (model == null) foreach (var r in GetComponentsInChildren<Renderer>()) { model = r.transform; break; }
             if (model != null) baseScale = model.localScale;
             if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
+        }
+
+        // ---------- passive (PassiveRules): damage taken is in DamageTakenFactor; speed and mending are here ----------
+        float quietSince, lastPassiveHealth = -1f;
+        bool speedApplied;
+
+        void TickPassive()
+        {
+            if (pred == null || !PassiveRules.Has(name)) return;
+            float hp01 = pred.HealthFraction;
+            if (lastPassiveHealth < 0f || pred.Health < lastPassiveHealth - 0.01f) quietSince = Time.time;   // it was hit: the quiet clock starts again
+            lastPassiveHealth = pred.Health;
+            float regen = PassiveRules.RegenPerSecond(name, Time.time - quietSince);
+            if (regen > 0f && pred.Health < pred.MaxHealth) { pred.Heal(regen * pred.MaxHealth * Time.fixedDeltaTime); lastPassiveHealth = pred.Health; }
+            float speed = PassiveRules.SpeedFactor(name, hp01);
+            if (speed > 1f && !speedApplied) { speedApplied = true; pred.ScaleDanger(1f, 1f, speed); }   // blood lust: once, for good
         }
 
         void OnEnable()
@@ -189,6 +207,7 @@ namespace Evolve.Combat
         void FixedUpdate()
         {
             TickPerch();
+            TickPassive();
             if (HostPaused())
             {
                 scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
@@ -326,7 +345,7 @@ namespace Evolve.Combat
             if (!hitDone && target != null && Flat(target.transform.position - transform.position).magnitude <= Radius + HitReach)
             {
                 Vector3 to = Flat(target.transform.position - transform.position);
-                if (m.Pins && Vector3.Dot(transform.forward, to.normalized) > 0.5f && HoundPin.Begin(this, target))
+                if (m.Pins && Vector3.Dot(transform.forward, to.normalized) > 0.5f && HoundPin.Begin(this, target, m.Grab))
                     target.State.Damage(m.Damage * DamageScale);   // head first: it clamps on (HoundPin), no knock-back
                 else Hurt(m, Radius + HitReach);
                 hitDone = true;

@@ -6,6 +6,9 @@ namespace Evolve.Combat
     public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden }
     public enum MovePhase { Idle, Windup, Active, Recover }
 
+    /// <summary>What a move is for in a boss's standard kit: two Normal attacks, one Ranged, one Special (it holds the player in a mini game), one Ultimate near the end of its health.</summary>
+    public enum MoveRole { Normal, Ranged, Special, Ultimate }
+
     /// <summary>One attack of a monster (data): its timing, reach, damage and when it unlocks.</summary>
     public sealed class MoveDef
     {
@@ -30,6 +33,9 @@ namespace Evolve.Combat
         public bool Armored;
         /// <summary>A lunge that lands head first clamps on and starts the pin mini game (see PinGame) instead of knocking the player away.</summary>
         public bool Pins;
+        /// <summary>A pin that is a grab (button mashing, a heavier squeeze) instead of a bite (alternate A and D).</summary>
+        public bool Grab;
+        public MoveRole Role;
         /// <summary>Harden: the damage multiplier while the move is in its Active phase (the crystal armour holds); 1 = none.</summary>
         public float DamageTakenFactor = 1f;
         /// <summary>Throw: the size of the missile in metres (0 = the default).</summary>

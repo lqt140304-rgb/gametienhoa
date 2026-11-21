@@ -285,3 +285,11 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-golem-moveset-design.md`. Chạ
 - [ ] **Nhạc riêng:** nhạc trống nặng, chậm, hợp "núi đá", vang lên khi bắt đầu giao chiến, nhỏ dần sau 10 giây yên, bật lại khi có đòn; không lẫn nhạc của Chó Xương.
 - [ ] **Âm thanh:** gằn khi báo trước, tiếng đập đất lớn, tiếng ném, tiếng đá vỡ, tiếng giáp tinh thể, tiếng nạp và nổ lõi, tiếng đau khi trúng đòn. Báo tiếng nào chưa hợp.
 - [ ] Tay xoay đúng hướng (giơ lên chứ không xoắn ra sau); không lỗi đỏ Console.
+
+### H12. Bộ kỹ năng chuẩn: Golem và Chó Xương (chưa ai thử trong Unity)
+Thiết kế: `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`. Dừng Play, chạy lại `Build Golem Thạch Anh (Meshy) Prefab` và `Build Meshy Static Prefabs`, tạo trùm mới.
+- [ ] **Golem, chân bước:** đi thì hai chân **luân phiên bước thật** (đùi vung, gối gập, thân hạ thấp mỗi bước, tay đung đưa ngược chân); dừng thì đứng thẳng; không lết, không trượt chân; mỗi bước có tiếng đạp, bụi, màn hình rung nhẹ. **Cỡ lớn hơn lần trước khoảng 20%.**
+- [ ] **Golem, 5 chiêu:** Nện Đấm (gần, đấm một tay), Đập Đất (vùng 5,5 m), Ném Đá (xa 5–18 m), **Chộp Nghiền** (cách 3–7 m: chộp và bóp, hiện thanh và dòng "BỊ BÓP! ẤN SPACE LIÊN TỤC", thoát được thì Golem loạng choạng, không thoát sau ~8 s thì bị đập xuống ~22 sát thương và văng), **Lõi Nổ** chỉ khi máu ≤ 25%.
+- [ ] **Golem, nội tại:** trúng đòn mất ít máu hơn bình thường (−20%); máu ≤ 66% thì **tinh thể mọc ra trên vai và lưng** và còn nhận ít hơn nữa; để yên ≥ 8 giây thì máu hồi dần.
+- [ ] **Chó Xương, 5 chiêu:** Cắn Nghiền và Cào Xé (thường), Phun Xương (xa), **Vồ** (đặc biệt: trúng thì cắn chặt, ấn xen kẽ A/D), **Triệu Hồi** chỉ khi máu ≤ 25%. Không còn Gầm và Nhảy Vượt.
+- [ ] **Chó Xương, nội tại Khát Máu:** máu ≤ 50% thì chạy nhanh hơn rõ.

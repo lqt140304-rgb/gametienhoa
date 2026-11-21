@@ -25,7 +25,7 @@ namespace Evolve.EditorTools
         [MenuItem("Evolve/Build Golem Thạch Anh (Meshy) Prefab")]
         static void Build()
         {
-            foreach (var p in new[] { Model, WalkFbx, RunFbx })
+            foreach (var p in new[] { Model, WalkFbx })
                 if (AssetDatabase.LoadAssetAtPath<Object>(p) == null) { Debug.LogError("[Meshy] Chưa có " + p); return; }
 
             var main = (ModelImporter)AssetImporter.GetAtPath(Model);
@@ -37,10 +37,9 @@ namespace Evolve.EditorTools
             if (avatar == null || !avatar.isValid || !avatar.isHuman) { Debug.LogError("[Meshy] Avatar Humanoid của golem không hợp lệ: mở Creature_GolemThachAnh_Meshy.fbx, tab Rig, bấm Configure để ghép xương."); return; }
 
             var walk = SetupClip(WalkFbx, "Walk");
-            var run = SetupClip(RunFbx, "Run");
-            if (walk == null || run == null) { Debug.LogError("[Meshy] Không đọc được clip đi hoặc chạy."); return; }
+            if (walk == null) { Debug.LogError("[Meshy] Không đọc được clip đi (dùng làm tư thế đứng)."); return; }
 
-            var controller = BuildController(walk, run);
+            var controller = BuildController(walk);
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(Model);
             var root = new GameObject("GolemThachAnh (Meshy)");
             var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx, root.transform);
@@ -103,26 +102,20 @@ namespace Evolve.EditorTools
             return AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().FirstOrDefault(x => x.name == name);
         }
 
-        static AnimatorController BuildController(AnimationClip walk, AnimationClip run)
+        static AnimatorController BuildController(AnimationClip walk)
         {
             if (AssetDatabase.LoadAssetAtPath<Object>(ControllerPath) != null) AssetDatabase.DeleteAsset(ControllerPath);
             var ctrl = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
-            ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
-            ctrl.AddParameter("WalkRate", AnimatorControllerParameterType.Float);   // fed by GolemRigFx: clip speed follows the real speed
-            ctrl.AddParameter("RunRate", AnimatorControllerParameterType.Float);
+            ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);   // fed by CreatureAnimDriver; nothing reads them any more
             ctrl.AddParameter("Alarming", AnimatorControllerParameterType.Bool);
             ctrl.AddParameter("Hit", AnimatorControllerParameterType.Trigger);
             ctrl.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
             var sm = ctrl.layers[0].stateMachine;
-            var idle = sm.AddState("Idle");   // a standing pose: the walk clip stopped (speed 0) at the frame where the feet are together (frame 2 of 26); with no motion at all the skeleton froze mid-stride
+            // One state: a standing pose = the walk clip stopped (speed 0) at the frame where the feet are together (frame 2 of 26). Meshy's walk and run clips never moved this
+            // golem's legs in the game, so walking is written as code (GolemRigFx, GaitRules); the Animator only holds the standing pose every frame, which the code's turns are added to.
+            var idle = sm.AddState("Idle");
             idle.motion = walk; idle.speed = 0f; idle.cycleOffset = 0.04f;
-            var w = sm.AddState("Walk"); w.motion = walk; w.speed = 1f; w.speedParameterActive = true; w.speedParameter = "WalkRate";
-            var r = sm.AddState("Run"); r.motion = run; r.speed = 1f; r.speedParameterActive = true; r.speedParameter = "RunRate";
             sm.defaultState = idle;
-            Link(idle, w, AnimatorConditionMode.Greater, 0.08f);
-            Link(w, idle, AnimatorConditionMode.Less, 0.08f);
-            Link(w, r, AnimatorConditionMode.Greater, 2.4f);
-            Link(r, w, AnimatorConditionMode.Less, 2.4f);
             EditorUtility.SetDirty(ctrl);
             return ctrl;
         }

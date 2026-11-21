@@ -44,22 +44,22 @@ namespace Evolve.Combat
             // Golem Thạch Anh (cave lord): slams the ground, throws boulders, hardens its crystal armour, and at low health blows its core
             sets["golemthachanh"] = new[]
             {
-                // everything is slow to start, hits like a falling wall and takes long to recover from: weight
-                new MoveDef { Name = "Đập Đất", Shape = MoveShape.Spin, Windup = 1.5f, Active = 0.25f, Recover = 2.4f, Cooldown = 9f, MinRange = 0f, MaxRange = 5.5f, Radius = 5.5f, Damage = 32f, Force = 9f, Freeze = 0.6f, Armored = true, Anim = "Slam" },
-                new MoveDef { Name = "Ném Đá", Shape = MoveShape.Throw, Windup = 1.3f, Active = 0.1f, Recover = 2f, Cooldown = 8f, MinRange = 5f, MaxRange = 18f, FlightSeconds = 1.1f, Damage = 20f, MissileSize = 1f, Anim = "Throw" },
-                new MoveDef { Name = "Giáp Tinh Thể", Shape = MoveShape.Harden, Windup = 1f, Active = 4f, Recover = 1.4f, Cooldown = 18f, MinRange = 0f, MaxRange = 30f, DamageTakenFactor = 0.3f, UnlockBelow = 0.66f, Anim = "Harden" },
-                new MoveDef { Name = "Lõi Nổ", Shape = MoveShape.Spin, Windup = 2.4f, Active = 0.3f, Recover = 2.6f, Cooldown = 25f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Damage = 40f, Force = 12f, Freeze = 0.8f, Armored = true, UnlockBelow = 0.33f, Anim = "CoreBlast" },
+                // the standard boss kit (everything slow to start, hits like a falling wall and takes long to recover from): 2 normal, 1 ranged, 1 special with a mini game (the grab), 1 ultimate; the passive is Thân Tinh Thể (PassiveRules)
+                new MoveDef { Name = "Nện Đấm", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.9f, Active = 0.25f, Recover = 1.8f, Cooldown = 4f, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 28f, Force = 6f, Anim = "Punch" },
+                new MoveDef { Name = "Đập Đất", Role = MoveRole.Normal, Shape = MoveShape.Spin, Windup = 1.5f, Active = 0.25f, Recover = 2.4f, Cooldown = 9f, MinRange = 0f, MaxRange = 5.5f, Radius = 5.5f, Damage = 32f, Force = 9f, Freeze = 0.6f, Armored = true, Anim = "Slam" },
+                new MoveDef { Name = "Ném Đá", Role = MoveRole.Ranged, Shape = MoveShape.Throw, Windup = 1.3f, Active = 0.1f, Recover = 2f, Cooldown = 8f, MinRange = 5f, MaxRange = 18f, FlightSeconds = 1.1f, Damage = 20f, MissileSize = 1f, Anim = "Throw" },
+                new MoveDef { Name = "Chộp Nghiền", Role = MoveRole.Special, Shape = MoveShape.Lunge, Windup = 1.1f, Active = 0.5f, Recover = 2f, Cooldown = 10f, MinRange = 3f, MaxRange = 7f, AbortBeyond = 9f, Distance = 6f, Damage = 18f, Pins = true, Grab = true, Anim = "Grab" },
+                new MoveDef { Name = "Lõi Nổ", Role = MoveRole.Ultimate, Shape = MoveShape.Spin, Windup = 2.4f, Active = 0.3f, Recover = 2.6f, Cooldown = 40f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Damage = 40f, Force = 12f, Freeze = 0.8f, Armored = true, UnlockBelow = 0.25f, Anim = "CoreBlast" },
             };
             // Chó Xương (cave lord, a skeletal hound): pounces and pins, bites hard, claws, leaps over low obstacles, roars smaller things away, summons small copies of itself from the ground
             sets["choxuong"] = new[]
             {
-                new MoveDef { Name = "Vồ", Shape = MoveShape.Lunge, Windup = 0.9f, Active = 0.6f, Recover = 1.8f, Cooldown = 4.5f, MinRange = 3f, MaxRange = 5.5f, AbortBeyond = 7.5f, Distance = 5.5f, Damage = 24f, Pins = true, Anim = "Pounce" },
-                new MoveDef { Name = "Cắn Nghiền", Shape = MoveShape.Lunge, Windup = 0.35f, Active = 0.2f, Recover = 1.5f, Cooldown = 3f, MinRange = 0f, MaxRange = 2.5f, Distance = 1.5f, Damage = 20f, Anim = "Bite" },
-                new MoveDef { Name = "Phun Xương", Shape = MoveShape.Throw, Windup = 0.9f, Active = 0.1f, Recover = 1.4f, Cooldown = 7f, MinRange = 6f, MaxRange = 16f, FlightSeconds = 0.8f, Damage = 14f, Anim = "Spit" },
-                new MoveDef { Name = "Cào Xé", Shape = MoveShape.Lunge, Windup = 0.55f, Active = 0.25f, Recover = 1.2f, Cooldown = 5f, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 16f, Anim = "Claw" },
-                new MoveDef { Name = "Nhảy Vượt", Shape = MoveShape.Perch, Windup = 0.5f, Active = 0.8f, Recover = 0.3f, Cooldown = 15f, MinRange = 0f, MaxRange = 6f, Distance = 6f, MinHeight = 0.3f, MaxHeight = 1.5f, PerchSeconds = 1.5f, Anim = "Leap" },
-                new MoveDef { Name = "Gầm", Shape = MoveShape.Roar, Windup = 0.9f, Active = 0.3f, Recover = 1.2f, Cooldown = 28f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Force = 8f, Freeze = 0.8f, FearSeconds = 4f, UnlockBelow = 0.66f, Anim = "Roar" },
-                new MoveDef { Name = "Triệu Hồi", Shape = MoveShape.Summon, Windup = 1.4f, Active = 0.2f, Recover = 1.5f, Cooldown = 30f, MinRange = 0f, MaxRange = 20f, Radius = 4f, SummonCount = 3, SummonSeconds = 25f, UnlockBelow = 0.66f, Anim = "Howl" },
+                // the standard boss kit: 2 normal attacks, 1 ranged, 1 special with a mini game (the clamping pounce), 1 ultimate near the end; the passive is Khát Máu (PassiveRules)
+                new MoveDef { Name = "Vồ", Role = MoveRole.Special, Shape = MoveShape.Lunge, Windup = 0.9f, Active = 0.6f, Recover = 1.8f, Cooldown = 4.5f, MinRange = 3f, MaxRange = 5.5f, AbortBeyond = 7.5f, Distance = 5.5f, Damage = 24f, Pins = true, Anim = "Pounce" },
+                new MoveDef { Name = "Cắn Nghiền", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.35f, Active = 0.2f, Recover = 1.5f, Cooldown = 3f, MinRange = 0f, MaxRange = 2.5f, Distance = 1.5f, Damage = 20f, Anim = "Bite" },
+                new MoveDef { Name = "Cào Xé", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.55f, Active = 0.25f, Recover = 1.2f, Cooldown = 5f, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 16f, Anim = "Claw" },
+                new MoveDef { Name = "Phun Xương", Role = MoveRole.Ranged, Shape = MoveShape.Throw, Windup = 0.9f, Active = 0.1f, Recover = 1.4f, Cooldown = 7f, MinRange = 6f, MaxRange = 16f, FlightSeconds = 0.8f, Damage = 14f, Anim = "Spit" },
+                new MoveDef { Name = "Triệu Hồi", Role = MoveRole.Ultimate, Shape = MoveShape.Summon, Windup = 1.4f, Active = 0.2f, Recover = 1.5f, Cooldown = 40f, MinRange = 0f, MaxRange = 20f, Radius = 4f, SummonCount = 3, SummonSeconds = 25f, UnlockBelow = 0.25f, Anim = "Howl" },
             };
             // Cáo Gió (cave lord): a bite, then three wind spears circling above its tails and thrown one after another, then it calls the weasels
             sets["caogio"] = new[]

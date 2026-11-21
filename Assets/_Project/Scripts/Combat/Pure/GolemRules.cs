@@ -28,6 +28,8 @@ namespace Evolve.Combat
             {
                 case "Slam": windup = new ArmPose { Raise = 150f, Hunch = -12f, Glow = 0.2f }; strike = new ArmPose { Raise = -20f, Hunch = 26f, Glow = 0.5f }; return;
                 case "Throw": windup = new ArmPose { Back = 115f, Hunch = -14f }; strike = new ArmPose { Back = -55f, Hunch = 18f }; return;
+                case "Punch": windup = new ArmPose { Back = 125f, Hunch = -14f, Glow = 0.15f }; strike = new ArmPose { Back = -45f, Hunch = 24f, Glow = 0.4f }; return;
+                case "Grab": windup = new ArmPose { Raise = 75f, Spread = 15f, Hunch = 10f }; strike = new ArmPose { Raise = 60f, Hunch = 26f, Glow = 0.4f }; return;
                 case "Harden": windup = new ArmPose { Raise = 40f, Hunch = 18f, Glow = 0.6f }; strike = windup; return;
                 case "CoreBlast": windup = new ArmPose { Raise = 70f, Spread = 60f, Hunch = -8f, Glow = 1f }; strike = new ArmPose { Raise = 90f, Spread = 80f, Hunch = -12f, Glow = 1f }; return;
                 default: windup = default; strike = default; return;
@@ -44,7 +46,7 @@ namespace Evolve.Combat
                     var w = ArmPose.Lerp(rest, windup, Smooth(progress01));
                     if (anim == "CoreBlast") w.Glow = progress01 * progress01;   // the core brightens slowly, then fast
                     return w;
-                case MovePhase.Active: return ArmPose.Lerp(windup, strike, anim == "Slam" || anim == "Throw" ? Smooth(progress01 / 0.5f) : Smooth(progress01));
+                case MovePhase.Active: return ArmPose.Lerp(windup, strike, anim == "Slam" || anim == "Throw" || anim == "Punch" ? Smooth(progress01 / 0.5f) : Smooth(progress01));
                 case MovePhase.Recover: return ArmPose.Lerp(strike, rest, Smooth(progress01));
                 default: return rest;
             }

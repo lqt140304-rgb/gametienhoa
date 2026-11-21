@@ -89,6 +89,7 @@ namespace Evolve.Creatures
         public float MaxHealth => maxHealth;
         public float BodyMass => bodyMass;
         /// <summary>Set mass and health from code (the god menu's test creatures have no prefab to tune).</summary>
+        public void Heal(float amount) { if (!dead && amount > 0f) Health = Mathf.Min(maxHealth, Health + amount); }
         public void SetStats(float mass, float health) { bodyMass = mass; maxHealth = health; Health = health; }
 
         float netFraction = 1f, predictedFraction = 1f, predictedUntil;
