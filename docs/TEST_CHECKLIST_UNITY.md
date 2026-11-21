@@ -227,3 +227,23 @@ Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm
 - [ ] Con mồi thật dùng được phòng vệ (Ốc Hồ rụt vỏ, Thỏ Lá ngoằn ngoèo…). Hoạt hình của họ (chớp mắt, hàm, lưỡi) có chạy cùng không.
 - [ ] Kích cỡ: slime mới sinh bị kẻ săn đuổi, slime lớn thì kẻ săn né (khối prefab của họ khác khối thử của mình).
 - [ ] Ba kỳ ngộ có sẵn của họ (Tia Nắng Đầu Tiên, Cầu Vồng Trong Thân, Hợp Âm Tinh Thể) **giờ nhận phần thưởng thật**: no, mở màu Cầu Vồng (F3), gene Hiếm trở lên.
+
+
+### H9. Trùm làm bằng Meshy (chưa ai thử trong Unity)
+Quy trình và trạng thái: `docs/MESHY_BOSSES.md`. Nhánh `claude/unity-test-maze`.
+
+**Chuẩn bị (một lần):** pull, đợi Unity biên dịch, Console không đỏ. Đã chạy bước tạo sinh vật hang của bên làm hang (phải có sẵn `Assets/_Project/Prefabs/Wildlife/CaoGio.prefab`, `ChimHangMe.prefab`, `CocHoGia.prefab`, `RanDungNham.prefab`, `BoCapThachAnh.prefab`). Rồi chạy theo thứ tự:
+1. `Evolve → Fix Meshy Materials` (nếu mô hình còn trắng/trơn).
+2. `Evolve → Build Cáo Gió (Meshy) Prefab`, `Build Chim Hang Mẹ (Meshy) Prefab`, `Build Golem Thạch Anh (Meshy) Prefab`, `Build Meshy Static Prefabs (Cóc, Rắn, Bọ Cạp, Chó Xương)`. Console in `[Meshy] Đã tạo ...` cho từng cái; lỗi đỏ thì chụp gửi.
+3. Menu thần F1, tab Sinh vật, mục Chúa Hang: tạo từng trùm. Menu ưu tiên prefab có "(Meshy)" (Console in dòng `[Menu] dùng prefab ...`). Đổi "Độ khó" để thử cỡ.
+
+**Cho mọi trùm:**
+- [ ] Có màu đúng (không trắng, không hồng/tím lòe loẹt), đứng trên mặt đất (không lún, không lơ lửng), mặt hướng về phía đi.
+- [ ] Cỡ hợp lý so với slime và hang (không quá bé/to); collider không quá lệch so với thân (đứng cạnh slime: nó có đâm xuyên không).
+- [ ] Không lỗi đỏ Console khi tạo, khi đi, khi chết, khi bị Vồ.
+- [ ] FPS không tụt rõ khi có 1–2 trùm trong tầm nhìn (ảnh màu 2048, mô hình 20 nghìn mặt).
+
+**Cáo Gió (Meshy):** đuôi vẫy mạnh hơn khi đi/ra đòn; thỉnh thoảng chớp mắt; vòng chân/vòng đuôi/ngọc/vòng gió bám đúng chỗ (nếu lệch: chụp ảnh); không còn khăn/áo choàng cũ. Giáo Gió vẫn bắn (mục H8).
+**Chim Hang Mẹ (Meshy):** chân bước khi đi; cánh rung nhẹ khi đứng, vỗ khi đi, vỗ mạnh khi ra đòn; mỏ khép lúc nghỉ, há và rung khi đòn hoặc thỉnh thoảng; mỏ không méo mặt. Cánh vỗ ngược hướng thì báo.
+**Golem Thạch Anh (Meshy):** đi và chạy bằng clip của Meshy (chuyển từ đứng sang đi khi di chuyển, sang chạy khi nhanh); không trượt chân quá; chưa có chiêu đánh riêng (chỉ cắn).
+**Cóc, Rắn, Bọ Cạp, Chó Xương (tĩnh):** chỉ xem hình dáng, màu, cỡ; chúng đi cứng đơ vì chưa có xương. Báo cái nào cần chỉnh (màu, cỡ, dáng) trước khi mình rig.

@@ -23,7 +23,7 @@ namespace Evolve.EditorTools
             "Assets/_Project/Models/Wildlife/Meshy/Creature_ChimHangMe_Meshy.fbx",
             "Assets/_Project/Prefabs/Wildlife/ChimHangMe (Meshy).prefab", "ChimHangMe (Meshy)");
 
-        static void Build(string sourcePath, string modelPath, string target, string rootName)
+        internal static void Build(string sourcePath, string modelPath, string target, string rootName)
         {
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
