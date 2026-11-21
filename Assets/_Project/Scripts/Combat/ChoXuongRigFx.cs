@@ -58,7 +58,16 @@ namespace Evolve.Combat
             loco = GetComponent<CreatureLocomotion>();
             animator = GetComponentInChildren<Animator>(true);
             if (animator != null && animator.runtimeAnimatorController != null)
-                foreach (var pa in animator.parameters) if (pa.name == "Strike_Pounce") clips = true;
+            {
+                bool hasStrike = false, hasBusy = false;
+                foreach (var pa in animator.parameters) { if (pa.name == "Strike_Pounce") hasStrike = true; if (pa.name == "Busy") hasBusy = true; }
+                clips = hasStrike && hasBusy;
+                if (hasStrike && !hasBusy)   // an old controller (built before the Busy fix) would freeze the dog in a pounce pose: fall back to code-driven bones
+                {
+                    Debug.LogWarning("[Chó Xương] Bộ điều khiển Animator là bản cũ (thiếu tham số Busy). Chạy lại menu Evolve → Build Meshy Static Prefabs rồi tạo chó mới. Tạm thời dùng xoay xương bằng mã.", this);
+                    animator.enabled = false;
+                }
+            }
             foreach (var t in GetComponentsInChildren<Transform>(true))
                 switch (t.name)
                 {
