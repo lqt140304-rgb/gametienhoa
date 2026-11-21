@@ -24,7 +24,7 @@ namespace Evolve.Combat
         Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
-        float legLen, lastRun, flinchT = 9f;   // seconds since the last blow it took
+        float legLen, lastRun, flinchT = 9f, restAnkleL, restAnkleR; Quaternion footRestL, footRestR; bool restMeasured;   // ankle heights above the root and foot orientations in the standing pose   // seconds since the last blow it took
         ArmPose pose;
         Light coreLight;
         float lastHealth = -1f, flickerUntil;
@@ -157,6 +157,12 @@ namespace Evolve.Combat
         void LateUpdate()
         {
             float dt = Mathf.Max(Time.deltaTime, 1e-4f), t = Time.time;
+            if (!restMeasured && footL != null && footR != null)   // the standing pose the Animator just wrote, before any turn of ours
+            {
+                restAnkleL = footL.T.position.y - transform.position.y; restAnkleR = footR.T.position.y - transform.position.y;
+                footRestL = Quaternion.Inverse(transform.rotation) * footL.T.rotation; footRestR = Quaternion.Inverse(transform.rotation) * footR.T.rotation;
+                restMeasured = true;
+            }
             float scale = Mathf.Max(0.3f, transform.lossyScale.y);
 
             // ---- health: flicker and grunt when hit, the passive's crystals
@@ -216,19 +222,23 @@ namespace Evolve.Combat
             if (thighR != null) Put(thighR, Quaternion.AngleAxis(hipSign * hipR, thighR.Right));
             if (kneeL != null) Put(kneeL, Quaternion.AngleAxis(kneeSign * kneeLd, kneeL.Right));
             if (kneeR != null) Put(kneeR, Quaternion.AngleAxis(kneeSign * kneeRd, kneeR.Right));
-            if (footL != null) Put(footL, Quaternion.AngleAxis(-hipSign * hipL * 0.5f + kneeSign * kneeLd * 0.35f, footL.Right));   // the sole stays roughly level
-            if (footR != null) Put(footR, Quaternion.AngleAxis(-hipSign * hipR * 0.5f + kneeSign * kneeRd * 0.35f, footR.Right));
+            // the feet keep their standing orientation in the WORLD (flat on the ground) whatever the legs above them do (checked on the real model in Blender: this plus the body drop below keeps the soles within a few cm of the floor)
+            if (footL != null && restMeasured) footL.T.rotation = transform.rotation * footRestL;
+            if (footR != null && restMeasured) footR.T.rotation = transform.rotation * footRestR;
             if (hips != null)   // the body sinks at each footfall; kept in local space and capped, so it can never creep down into the floor
             {
                 var cur = hips.localPosition;
                 Vector3 b = hipsHas && (cur - hipsWritten).sqrMagnitude < 1e-10f ? hipsBase : cur;   // the Animator wrote it this frame, or it still holds our last value
                 hipsBase = b;
-                // A swung leg reaches less far down, so the body must sink by exactly what the deepest foot lost or the feet hang in the air:
-                // depth of a leg = half its length times cos(thigh angle) plus cos(shin angle); the shin is the thigh angle minus the knee bend.
-                float DepthOf(float hipDeg, float kneeDeg) => 0.5f * (Mathf.Cos(hipDeg * Mathf.Deg2Rad) + Mathf.Cos((hipDeg - kneeDeg) * Mathf.Deg2Rad));
-                float deepest = Mathf.Max(DepthOf(hipL, kneeLd), DepthOf(hipR, kneeRd));
-                float drop = -Mathf.Clamp01(1f - deepest) * legLen * (1f - Mathf.Clamp01(tuck * 1.5f));   // in the air (tucked) it is not on the ground: no sinking
-                drop = Mathf.Clamp(drop, -0.6f * legLen, 0f);
+                hips.localPosition = b; hipsHas = false;   // measure the feet with the hips at the animator's height
+                float drop = 0f;
+                if (restMeasured)
+                {
+                    float needL = restAnkleL - (footL.T.position.y - transform.position.y), needR = restAnkleR - (footR.T.position.y - transform.position.y);
+                    // the body sinks so the lower-reaching foot is on the floor (the other leg hangs a little: it is the swinging one); +4% of a leg: skinning drags the heel a few cm below its bone
+                    drop = Mathf.Max(needL, needR) + 0.04f * legLen;
+                    drop = Mathf.Clamp(drop, -0.6f * legLen, 0.1f * legLen) * (1f - Mathf.Clamp01(tuck * 1.5f));   // in the air (tucked) it is not on the ground: no sinking
+                }
                 Vector3 side = Vector3.zero;   // no sideways hip sway: it read as the golem weaving left and right as it walks
                 Vector3 world = Vector3.up * drop + side;
                 Vector3 down = hips.parent != null ? hips.parent.InverseTransformVector(world) : world;
