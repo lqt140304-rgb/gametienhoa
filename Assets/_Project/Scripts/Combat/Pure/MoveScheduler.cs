@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Evolve.Combat
 {
-    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon }
+    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden }
     public enum MovePhase { Idle, Windup, Active, Recover }
 
     /// <summary>One attack of a monster (data): its timing, reach, damage and when it unlocks.</summary>
@@ -30,6 +30,10 @@ namespace Evolve.Combat
         public bool Armored;
         /// <summary>A lunge that lands head first clamps on and starts the pin mini game (see PinGame) instead of knocking the player away.</summary>
         public bool Pins;
+        /// <summary>Harden: the damage multiplier while the move is in its Active phase (the crystal armour holds); 1 = none.</summary>
+        public float DamageTakenFactor = 1f;
+        /// <summary>Throw: the size of the missile in metres (0 = the default).</summary>
+        public float MissileSize;
         /// <summary>If the target is farther than this while the move winds up, the windup is dropped (the cooldown is not spent): a move that must land does not leap at nothing. 0 = never.</summary>
         public float AbortBeyond;
     }
@@ -67,8 +71,8 @@ namespace Evolve.Combat
 
         public float Progress01 => phaseLength <= Eps ? 1f : Math.Min(1f, PhaseTime / phaseLength);
         public bool Busy => Phase != MovePhase.Idle;
-        public bool IsArmored => Current != null && Current.Armored && (Phase == MovePhase.Windup || Phase == MovePhase.Active);
-        public float DamageTakenFactor => Phase == MovePhase.Recover ? RecoverDamageFactor : 1f;
+        public bool IsArmored => Current != null && (Current.Armored || Current.Shape == MoveShape.Harden) && (Phase == MovePhase.Windup || Phase == MovePhase.Active);
+        public float DamageTakenFactor => Phase == MovePhase.Recover ? RecoverDamageFactor : Phase == MovePhase.Active && Current != null ? Current.DamageTakenFactor : 1f;
 
         /// <summary>Starts <paramref name="move"/> now with a windup of exactly <paramref name="windupSeconds"/> (an ambusher bursting out). Only when idle.</summary>
         public bool Force(MoveDef move, float windupSeconds)

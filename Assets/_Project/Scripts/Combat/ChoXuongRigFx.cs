@@ -174,7 +174,7 @@ namespace Evolve.Combat
                 lastHealth = hp;
             }
             // the fight music: any move in progress, a hit taken or the jaws clamped counts as a blow
-            if ((combat != null && combat.Phase != MovePhase.Idle) || flinchT < 0.05f || (TryGetComponent(out HoundPin musicPin) && musicPin.Chomping)) BossMusic.Ping();
+            if ((combat != null && combat.Phase != MovePhase.Idle) || flinchT < 0.05f || (TryGetComponent(out HoundPin musicPin) && musicPin.Chomping)) BossMusic.Ping("hound_battle");
             flinchT += dt;
             float flinch = HoundRules.Flinch(flinchT, flinchHeavy);
 

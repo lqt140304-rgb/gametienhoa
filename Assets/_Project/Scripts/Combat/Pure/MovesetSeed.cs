@@ -41,6 +41,14 @@ namespace Evolve.Combat
                 new MoveDef { Name = "Nhảy Bục", Shape = MoveShape.Perch, Windup = 0.5f, Active = 0.8f, Recover = 0f, Cooldown = 15f, MinRange = 0f, MaxRange = 6f, Distance = 7f, MinHeight = 1.5f, MaxHeight = 3f, PerchSeconds = 8f, Anim = "Perch" },
                 new MoveDef { Name = "Hú Báo Động", Shape = MoveShape.Call, Windup = 0.8f, Active = 0.1f, Recover = 1.0f, Cooldown = 20f, MinRange = 0f, MaxRange = 30f, Radius = 30f, TargetSpecies = SpeciesNames.Key("Khỉ Hang"), UnlockBelow = 0.66f, Anim = "Roar" },
             };
+            // Golem Thạch Anh (cave lord): slams the ground, throws boulders, hardens its crystal armour, and at low health blows its core
+            sets["golemthachanh"] = new[]
+            {
+                new MoveDef { Name = "Đập Đất", Shape = MoveShape.Spin, Windup = 1.1f, Active = 0.2f, Recover = 2f, Cooldown = 8f, MinRange = 0f, MaxRange = 5f, Radius = 5f, Damage = 26f, Armored = true, Anim = "Slam" },
+                new MoveDef { Name = "Ném Đá", Shape = MoveShape.Throw, Windup = 1f, Active = 0.1f, Recover = 1.6f, Cooldown = 6f, MinRange = 5f, MaxRange = 18f, FlightSeconds = 0.9f, Damage = 16f, MissileSize = 0.7f, Anim = "Throw" },
+                new MoveDef { Name = "Giáp Tinh Thể", Shape = MoveShape.Harden, Windup = 0.8f, Active = 4f, Recover = 1f, Cooldown = 18f, MinRange = 0f, MaxRange = 30f, DamageTakenFactor = 0.35f, UnlockBelow = 0.66f, Anim = "Harden" },
+                new MoveDef { Name = "Lõi Nổ", Shape = MoveShape.Spin, Windup = 1.8f, Active = 0.3f, Recover = 2.2f, Cooldown = 25f, MinRange = 0f, MaxRange = 7f, Radius = 7f, Damage = 35f, Armored = true, UnlockBelow = 0.33f, Anim = "CoreBlast" },
+            };
             // Chó Xương (cave lord, a skeletal hound): pounces and pins, bites hard, claws, leaps over low obstacles, roars smaller things away, summons small copies of itself from the ground
             sets["choxuong"] = new[]
             {
@@ -89,7 +97,11 @@ namespace Evolve.Combat
         public static bool Has(string speciesIdOrName) => For(speciesIdOrName).Count > 0;
 
         /// <summary>How much of the model-wide pose (squash, pitch, shake) a species gets: a rigged hound turns its own bones, so the whole-body pose is softened.</summary>
-        public static float PoseStrength(string speciesIdOrName) => SpeciesNames.Key(speciesIdOrName ?? "") == "choxuong" ? 0.4f : 1f;
+        public static float PoseStrength(string speciesIdOrName)
+        {
+            string key = SpeciesNames.Key(speciesIdOrName ?? "");
+            return key == "choxuong" ? 0.4f : key == "golemthachanh" ? 0.35f : 1f;
+        }
 
         /// <summary>The body language of a move: by shape, except the shell moves (animation "Retract") tuck in.</summary>
         public static PoseKind PoseOf(MoveDef m)
@@ -108,6 +120,7 @@ namespace Evolve.Combat
                 case MoveShape.Gust: return PoseKind.Roar;
                 case MoveShape.Roar: return PoseKind.Roar;
                 case MoveShape.Summon: return PoseKind.Roar;
+                case MoveShape.Harden: return PoseKind.Withdraw;
                 default: return PoseKind.Roar;
             }
         }

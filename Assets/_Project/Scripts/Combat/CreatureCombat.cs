@@ -80,7 +80,7 @@ namespace Evolve.Combat
         MovePhase prevPhase;
         Vector3 strikeDir;
         float strikeDist;
-        bool hound;
+        bool hound, golem;
         bool hitDone, hopFlag, skillFlag, hitFlag;
         float drainAccum;
         LeechState prevLeech;
@@ -119,6 +119,7 @@ namespace Evolve.Combat
             if (moves.Count == 0) { enabled = false; return; }
             poseStrength = MovesetSeed.PoseStrength(name);
             hound = SpeciesNames.Key(name) == "choxuong";
+            golem = SpeciesNames.Key(name) == "golemthachanh";
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
@@ -265,6 +266,7 @@ namespace Evolve.Combat
         {
             if (m == null) return;
             if (hound) HoundFx.OnPhase(this, phase, m);
+            if (golem) GolemFx.OnPhase(this, phase, m);
             if (phase == MovePhase.Windup) BeginWindup(m);
             else if (phase == MovePhase.Active) loco?.PlayAction("Strike_" + m.Anim);
             else if (phase == MovePhase.Recover)
@@ -304,7 +306,7 @@ namespace Evolve.Combat
                 SkillFx.Ring(iceSpot, m.Radius, IceColor, m.Active, 0.3f);   // the ring under the player's feet: step out before the block falls
             }
             if (m.Shape == MoveShape.Throw && target != null)
-                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, 0.6f, m.Anim == "Spit");
+                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
             if (m.Shape == MoveShape.Perch) BeginPerch(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);

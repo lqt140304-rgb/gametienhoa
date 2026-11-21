@@ -271,3 +271,15 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. C
 - [ ] Không lỗi đỏ Console; hàm há đúng chiều (xuống), cổ ngửa lên khi gầm (không cúi xuống).
 
 **Cảnh Ra Đời đang tắt mặc định để đỡ tốn thời gian thử** (`BirthScene.SkipScene`): vào game là có sẵn một Lõi và Khuyết Điểm ngẫu nhiên, không có cảnh chọn. Bật lại ở menu thần F1, tab Khác, ô "Bỏ qua cảnh Ra Đời" (bỏ tick), có hiệu lực từ lần vào game sau.
+
+### H11. Golem Thạch Anh (Meshy): bộ chiêu (chưa ai thử trong Unity)
+Thiết kế: `docs/superpowers/specs/2026-11-21-golem-moveset-design.md`. Chạy lại `Build Golem Thạch Anh (Meshy) Prefab` (khi đã dừng Play), tạo Golem từ menu thần (Chúa Hang), mở tab Combat để xem pha hiện tại.
+- [ ] **Đi và chạy** vẫn dùng clip Meshy; không thu nhỏ, không đứng đơ.
+- [ ] **Đập Đất** (trong 5 m): giơ hai tay qua đầu và ngả ra sau, rồi bổ cả hai xuống; vòng nâu báo tầm 5 m; bụi và sóng đất; né ra ngoài 5 m thì trượt. Có giáp lúc đập nên Vồ bị bật ra; lúc hồi 2 s đánh nó đau gấp rưỡi.
+- [ ] **Ném Đá** (cách 5–18 m): tay phải kéo ra sau rồi quăng; tảng đá to bay vòng cung; trúng ~16 máu; vỡ tung có bụi và tiếng đập đá.
+- [ ] **Giáp Tinh Thể** (máu dưới 66%): co hai tay che ngực, lõi sáng, tia tinh thể; trong 4 s đánh nó thấy mất ít máu hẳn (35%); sau đó hở.
+- [ ] **Lõi Nổ** (máu dưới 33%, trong 7 m): dang rộng hai tay, lõi ngực sáng dần rồi chớp, rồi nổ vòng 7 m với tiếng nổ lớn.
+- [ ] **Lõi sáng:** đèn ấm trong ngực đập nhẹ lúc nghỉ, chớp khi trúng đòn; hướng đặt đèn đúng ngực (báo nếu lệch).
+- [ ] **Nhạc riêng:** nhạc trống nặng, chậm, hợp "núi đá", vang lên khi bắt đầu giao chiến, nhỏ dần sau 10 giây yên, bật lại khi có đòn; không lẫn nhạc của Chó Xương.
+- [ ] **Âm thanh:** gằn khi báo trước, tiếng đập đất lớn, tiếng ném, tiếng đá vỡ, tiếng giáp tinh thể, tiếng nạp và nổ lõi, tiếng đau khi trúng đòn. Báo tiếng nào chưa hợp.
+- [ ] Tay xoay đúng hướng (giơ lên chứ không xoắn ra sau); không lỗi đỏ Console.

@@ -12,7 +12,7 @@ namespace Evolve.Combat
         static readonly Dictionary<Kind, AudioClip> clips = new Dictionary<Kind, AudioClip>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void Reset() { clips.Clear(); }
+        static void Reset() { clips.Clear(); files.Clear(); }
 
         static AudioClip Build(Kind kind, float[] samples)
         {
@@ -65,6 +65,16 @@ namespace Evolve.Combat
             if (file != null) c = Resources.Load<AudioClip>("Sfx/Hound/" + file);   // the real recording, if it is there
             if (c == null) c = Build(kind, Make(kind));
             return clips[kind] = c;
+        }
+
+        static readonly Dictionary<string, AudioClip> files = new Dictionary<string, AudioClip>();
+
+        /// <summary>Play Resources/Sfx/<paramref name="path"/> (for example "Golem/golem_slam"); if the file is missing the <paramref name="fallback"/> sound is used instead.</summary>
+        public static void PlayFile(string path, Vector3 position, float volume, Kind fallback)
+        {
+            if (!files.TryGetValue(path, out var c) || c == null) files[path] = c = Resources.Load<AudioClip>("Sfx/" + path);
+            if (c == null) { Play(fallback, position, volume); return; }
+            AudioSource.PlayClipAtPoint(c, position, volume);
         }
 
         public static void Play(Kind kind, Vector3 position, float volume = 1f) => AudioSource.PlayClipAtPoint(Clip(kind), position, volume);
