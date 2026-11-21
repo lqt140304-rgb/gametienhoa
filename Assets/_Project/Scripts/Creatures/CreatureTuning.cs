@@ -22,7 +22,8 @@ namespace Evolve.Creatures
             if (creature.TryGetComponent(out CreatureMotor motor)) motor.Resize(k);
             if (creature.TryGetComponent(out CreatureLocomotion loco)) loco.ScaleBy(k);
             if (role == CreatureRole.Lord && Evolve.Combat.LordRegalia.Has(creature.name)) Evolve.Combat.LordRegalia.Attach(creature);
-            if (Evolve.Combat.FoxRigFx.Has(creature.name)) Evolve.Combat.FoxRigFx.Attach(creature);   // the Meshy fox: tail, jaw, blink, trinkets   // a boss is dressed like one
+            if (Evolve.Combat.FoxRigFx.Has(creature.name)) Evolve.Combat.FoxRigFx.Attach(creature);
+            if (Evolve.Combat.BirdRigFx.Has(creature.name)) Evolve.Combat.BirdRigFx.Attach(creature);   // the Meshy bird: wings and beak   // the Meshy fox: tail, jaw, blink, trinkets   // a boss is dressed like one
             if (creature.TryGetComponent(out Evolve.Combat.CreatureCombat combat))
             {
                 combat.TellScale = tier == 0 ? 1.3f : 1f;   // the start cavern gives the player longer to read the tell

@@ -10,7 +10,7 @@ namespace Evolve.Combat
     /// </summary>
     public class FoxRigFx : MonoBehaviour
     {
-        public static bool Has(string name) => !string.IsNullOrEmpty(name) && name.Contains("(Meshy)");
+        public static bool Has(string name) => !string.IsNullOrEmpty(name) && name.Contains("(Meshy)") && Creatures.SpeciesNames.Key(name) == "caogio";
 
         public static FoxRigFx Attach(GameObject creature) =>
             creature == null || creature.GetComponent<FoxRigFx>() != null ? null : creature.AddComponent<FoxRigFx>();
