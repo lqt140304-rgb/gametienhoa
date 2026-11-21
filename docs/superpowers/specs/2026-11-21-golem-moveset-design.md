@@ -1,6 +1,6 @@
 # Bộ chiêu của Golem Thạch Anh (đã chốt với chủ dự án 2026-11-21)
 
-> **Cập nhật:** bộ chiêu dưới đây đã được **thay bằng bộ kỹ năng chuẩn** của mọi trùm: xem `docs/superpowers/specs/2026-11-21-boss-standard-kit.md` (Ném Đá giữ lại; thêm Nện Đấm, Chộp Nghiền có mini game, nội tại Thân Tinh Thể; Lõi Nổ là tuyệt chiêu ở máu ≤ 25%; Giáp Tinh Thể thành nội tại). Phần **bước chân bằng mã** ở cuối tài liệu này vẫn đúng.
+> **Cập nhật:** bộ chiêu dưới đây đã được **thay bằng bộ kỹ năng chuẩn** của mọi trùm: xem `docs/superpowers/specs/2026-11-21-boss-standard-kit.md` (Ném Đá giữ lại; thêm Nện Đấm, Giáng Thạch (nhảy trời, lao xuống vòng báo, nhổ gai đá phi liên tục), nội tại Thân Tinh Thể; Lõi Nổ là tuyệt chiêu ở máu ≤ 25%; Giáp Tinh Thể thành nội tại). Phần **bước chân bằng mã** ở cuối tài liệu này vẫn đúng.
 
 Chúa Hang Vực Nứt Tím, mô hình Meshy rig tự động (Humanoid) với clip đi và chạy của Meshy. Số là số tạm, chỉnh khi chơi. Làm theo quy trình của Chó Xương.
 

@@ -170,17 +170,20 @@ namespace Evolve.Combat
                 BossMusic.Ping("golem_battle");   // any move in progress is a blow in the fight
             }
             if (gripping) BossMusic.Ping("golem_battle");
+            if (combat != null && combat.HoldingRock) target = new ArmPose { Back = 110f, Raise = 25f, Hunch = -8f, Glow = 0.5f };   // a rock pulled out of the ground, cocked back to throw
             pose = ArmPose.Lerp(pose, target, 1f - Mathf.Exp(-7f * dt));   // heavy: the arms take their time
             if (combat != null && combat.CurrentMove != null && combat.CurrentMove.Anim == "CoreBlast" && combat.Phase == MovePhase.Windup)
                 ImpactFx.Thump(transform.position, 0.015f + 0.05f * combat.PhaseProgress, 0.2f, 24f);   // the core charging: the ground rumbles more and more
 
             // ---- the walk: one phase that follows the distance walked
-            float moved = (transform.position - lastPos).magnitude; lastPos = transform.position;
+            Vector3 step = transform.position - lastPos; lastPos = transform.position; step.y = 0f;   // sideways distance only: a leap's height is not walking
+            float moved = step.magnitude;
+            bool airborne = combat != null && combat.Airborne;
             bool busy = combat != null && combat.Phase != MovePhase.Idle;
             float speed = moved / dt;
-            walkWeight = Mathf.MoveTowards(walkWeight, speed > 0.15f && !gripping ? 1f : 0f, dt * 4f);
+            walkWeight = Mathf.MoveTowards(walkWeight, speed > 0.15f && speed < 16f && !gripping && !airborne ? 1f : 0f, dt * 4f);   // not in the air, and not the fall to the marked spot (16+ m/s)
             float prev = phase;
-            phase += GaitRules.PhaseAdvance(moved, Stride * scale);
+            if (!airborne && speed < 16f) phase += GaitRules.PhaseAdvance(moved, Stride * scale);
             if (walkWeight > 0.3f) { if (FootstepRules.Contacts(prev, phase, new[] { 0.25f, 0.75f }) > 0 && steps != null) steps.StepNow(); }
             if (phase > 1000f) phase = phase % 1f;
             float ph = phase % 1f;

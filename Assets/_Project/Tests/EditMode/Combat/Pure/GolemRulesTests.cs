@@ -13,12 +13,13 @@ namespace Evolve.Tests.EditMode
         {
             foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(5, MovesetSeed.For(n).Count, n);
             Assert.IsTrue(MovesetSeed.Has("Golem Thạch Anh"));
-            var punch = Move("Nện Đấm"); var slam = Move("Đập Đất"); var rocks = Move("Ném Đá"); var grab = Move("Chộp Nghiền"); var blast = Move("Lõi Nổ");
+            var punch = Move("Nện Đấm"); var slam = Move("Đập Đất"); var rocks = Move("Ném Đá"); var meteor = Move("Giáng Thạch"); var blast = Move("Lõi Nổ");
             // heavy: slow tells, long recoveries, hard knock-back and a short stun
             Assert.AreEqual(MoveShape.Lunge, punch.Shape); Assert.AreEqual(0.9f, punch.Windup); Assert.AreEqual(3.5f, punch.MaxRange); Assert.AreEqual(28f, punch.Damage); Assert.AreEqual(6f, punch.Force);
             Assert.AreEqual(MoveShape.Spin, slam.Shape); Assert.AreEqual(1.5f, slam.Windup); Assert.AreEqual(2.4f, slam.Recover); Assert.AreEqual(5.5f, slam.Radius); Assert.AreEqual(32f, slam.Damage); Assert.AreEqual(9f, slam.Force); Assert.AreEqual(0.6f, slam.Freeze); Assert.AreEqual(9f, slam.Cooldown);
             Assert.AreEqual(MoveShape.Throw, rocks.Shape); Assert.AreEqual(1.3f, rocks.Windup); Assert.AreEqual(5f, rocks.MinRange); Assert.AreEqual(18f, rocks.MaxRange); Assert.AreEqual(20f, rocks.Damage); Assert.AreEqual(1.1f, rocks.FlightSeconds); Assert.AreEqual(1f, rocks.MissileSize); Assert.AreEqual(8f, rocks.Cooldown);
-            Assert.IsTrue(grab.Pins); Assert.IsTrue(grab.Grab); Assert.AreEqual(3f, grab.MinRange); Assert.AreEqual(7f, grab.MaxRange); Assert.AreEqual(9f, grab.AbortBeyond); Assert.AreEqual(1.1f, grab.Windup); Assert.AreEqual(10f, grab.Cooldown);
+            Assert.AreEqual(MoveShape.Meteor, meteor.Shape); Assert.AreEqual(MoveRole.Special, meteor.Role); Assert.IsTrue(meteor.Dodge); Assert.AreEqual(4f, meteor.MinRange); Assert.AreEqual(16f, meteor.MaxRange); Assert.AreEqual(1.6f, meteor.Windup); Assert.AreEqual(0.35f, meteor.Active); Assert.AreEqual(6.5f, meteor.Recover);
+            Assert.AreEqual(4.2f, meteor.Radius); Assert.AreEqual(30f, meteor.Damage); Assert.AreEqual(4, meteor.SpikeCount); Assert.AreEqual(6.5f, meteor.SpikeRadius); Assert.AreEqual(18f, meteor.MissileDamage); Assert.AreEqual(0.8f, meteor.MissileSize); Assert.AreEqual(1.0f, meteor.RecoverFactor); Assert.AreEqual(22f, meteor.Cooldown);
             Assert.AreEqual(MoveShape.Spin, blast.Shape); Assert.AreEqual(2.4f, blast.Windup); Assert.AreEqual(2.6f, blast.Recover); Assert.AreEqual(8f, blast.Radius); Assert.AreEqual(40f, blast.Damage); Assert.AreEqual(12f, blast.Force); Assert.AreEqual(0.8f, blast.Freeze); Assert.AreEqual(0.25f, blast.UnlockBelow); Assert.AreEqual(40f, blast.Cooldown);
         }
 
@@ -77,7 +78,7 @@ namespace Evolve.Tests.EditMode
 
         [Test] public void NoPoseValue_EverLeavesItsLimits()
         {
-            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab" })
+            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor" })
                 foreach (var ph in new[] { MovePhase.Windup, MovePhase.Active, MovePhase.Recover })
                     for (float t = 0f; t <= 1f; t += 0.1f)
                     {
@@ -90,6 +91,24 @@ namespace Evolve.Tests.EditMode
         {
             Assert.Greater(GolemRules.Evaluate("Punch", MovePhase.Windup, 1f).Back, 100f); Assert.Less(GolemRules.Evaluate("Punch", MovePhase.Active, 1f).Back, 0f); Assert.Greater(GolemRules.Evaluate("Punch", MovePhase.Active, 1f).Hunch, 15f);
             Assert.Greater(GolemRules.Evaluate("Grab", MovePhase.Windup, 1f).Raise, 60f); Assert.Greater(GolemRules.Evaluate("Grab", MovePhase.Active, 1f).Hunch, 15f);
+        }
+
+        [Test] public void Meteor_ThrowsTheArmsUpToLeap_ThenDrivesTheFistsDownOnTheLanding()
+        {
+            Assert.Greater(GolemRules.Evaluate("Meteor", MovePhase.Windup, 1f).Raise, 120f);
+            Assert.Less(GolemRules.Evaluate("Meteor", MovePhase.Active, 1f).Raise, 0f); Assert.Greater(GolemRules.Evaluate("Meteor", MovePhase.Active, 1f).Hunch, 20f);
+        }
+
+        [Test] public void NormalRecoverFactor_IsOneAndAHalf_UnlessAMoveSaysOtherwise()
+        {
+            var plain = new MoveDef { Name = "x", Windup = 0.1f, Active = 0.1f, Recover = 5f, MaxRange = 99f };
+            var open = new MoveDef { Name = "y", Windup = 0.1f, Active = 0.1f, Recover = 5f, MaxRange = 99f, RecoverFactor = 1f };
+            foreach (var (m, expect) in new[] { (plain, 1.5f), (open, 1f) })
+            {
+                var s = new MoveScheduler(new[] { m }, 1);
+                for (int i = 0; i < 400 && s.Phase != MovePhase.Recover; i++) s.Update(0.02f, true, 3f, 1f);
+                Assert.AreEqual(MovePhase.Recover, s.Phase); Assert.AreEqual(expect, s.DamageTakenFactor, 1e-4f);
+            }
         }
     }
 }

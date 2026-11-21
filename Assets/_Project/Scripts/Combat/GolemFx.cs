@@ -28,6 +28,9 @@ namespace Evolve.Combat
                         SkillFx.Burst(p + Vector3.up * 0.2f, Crystal, 18, 5f, 0.12f, 0.8f, 0.6f);   // crystal chips jump off the floor
                     }
                     break;
+                case "Meteor":
+                    if (phase == MovePhase.Windup) { Sfx("golem_leap", p, 1f, ProceduralSfx.Kind.HoundLunge); ImpactFx.Thump(p, 0.12f, 0.4f, 20f); SkillFx.Dust(p, 2f * scale, Dust, 30); }
+                    break;
                 case "Punch":
                     if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.8f, ProceduralSfx.Kind.HoundGrowlShort);
                     else if (phase == MovePhase.Active) { Sfx("golem_slam", p, 0.8f, ProceduralSfx.Kind.HoundThud); ImpactFx.Thump(p, 0.2f, 0.5f, 20f); SkillFx.Dust(p + golem.transform.forward * 1.5f * scale, 1.2f * scale, Dust, 24); }
@@ -56,6 +59,38 @@ namespace Evolve.Combat
                     }
                     break;
             }
+        }
+
+        /// <summary>It crashes down on the marked circle.</summary>
+        public static void Land(Vector3 spot, float radius)
+        {
+            Sfx("golem_slam", spot, 1f, ProceduralSfx.Kind.HoundThud);
+            ImpactFx.Thump(spot, 0.5f, 1.0f, 32f);
+            SkillFx.Dust(spot, radius * 0.8f, Dust, 70);
+            SkillFx.Ring(spot, radius * 0.5f, Dust, 0.35f, 0.1f); SkillFx.Ring(spot, radius, Dust, 0.6f, 0.1f);
+            SkillFx.Burst(spot + Vector3.up * 0.2f, Crystal, 20, 6f, 0.12f, 0.9f, 0.6f);
+        }
+
+        /// <summary>The stone spikes burst out of the ground round the landing.</summary>
+        public static void SpikesRise(Vector3 spot, float radius)
+        {
+            Sfx("golem_spikes", spot, 1f, ProceduralSfx.Kind.HoundSnap);
+            ImpactFx.Thump(spot, 0.25f, 0.6f, 26f);
+            SkillFx.Dust(spot, radius, Dust, 50, radius * 0.7f);
+        }
+
+        /// <summary>It wrenches a spike out of the ground.</summary>
+        public static void Pull(Vector3 at)
+        {
+            ProceduralSfx.PlayFile("Golem/golem_grunt", at, 0.7f, ProceduralSfx.Kind.HoundGrowlShort);
+            SkillFx.Burst(at, Dust, 12, 3f, 0.1f, 0.6f);
+        }
+
+        /// <summary>It hurls the rock it holds.</summary>
+        public static void Hurl(Vector3 at)
+        {
+            Sfx("golem_throw", at, 1f, ProceduralSfx.Kind.HoundLunge);
+            ImpactFx.Thump(at, 0.1f, 0.3f, 18f);
         }
 
         static float lastHurt = -10f;

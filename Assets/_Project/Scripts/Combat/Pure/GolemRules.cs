@@ -30,6 +30,7 @@ namespace Evolve.Combat
                 case "Throw": windup = new ArmPose { Back = 115f, Hunch = -14f }; strike = new ArmPose { Back = -55f, Hunch = 18f }; return;
                 case "Punch": windup = new ArmPose { Back = 125f, Hunch = -14f, Glow = 0.15f }; strike = new ArmPose { Back = -45f, Hunch = 24f, Glow = 0.4f }; return;
                 case "Grab": windup = new ArmPose { Raise = 75f, Spread = 15f, Hunch = 10f }; strike = new ArmPose { Raise = 60f, Hunch = 26f, Glow = 0.4f }; return;
+                case "Meteor": windup = new ArmPose { Raise = 150f, Hunch = -10f, Glow = 0.3f }; strike = new ArmPose { Raise = -10f, Hunch = 32f, Glow = 0.6f }; return;   // arms thrown up to leap, both fists driven down on the landing
                 case "Harden": windup = new ArmPose { Raise = 40f, Hunch = 18f, Glow = 0.6f }; strike = windup; return;
                 case "CoreBlast": windup = new ArmPose { Raise = 70f, Spread = 60f, Hunch = -8f, Glow = 1f }; strike = new ArmPose { Raise = 90f, Spread = 80f, Hunch = -12f, Glow = 1f }; return;
                 default: windup = default; strike = default; return;

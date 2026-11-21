@@ -19,7 +19,8 @@ namespace Evolve.Tests.EditMode
                 Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Special), boss + " special");
                 Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Ultimate), boss + " ultimate");
                 Assert.AreEqual(5, moves.Count, boss + " total");
-                Assert.IsTrue(moves.Single(m => m.Role == MoveRole.Special).Pins, boss + ": the special skill holds the player in a mini game");
+                var special = moves.Single(m => m.Role == MoveRole.Special);
+                Assert.IsTrue(special.Pins || special.Dodge, boss + ": the special skill is a challenge: it holds the player in a mini game (Pins) or sets a dodge puzzle (Dodge)");
                 Assert.LessOrEqual(moves.Single(m => m.Role == MoveRole.Ultimate).UnlockBelow, 0.25f + 1e-4f, boss + ": the ultimate comes near the end of its health");
                 Assert.IsTrue(moves.Where(m => m.Role != MoveRole.Ultimate).All(m => m.UnlockBelow >= 1f - 1e-4f), boss + ": the other four are always available");
                 Assert.IsTrue(moves.Single(m => m.Role == MoveRole.Ranged).MinRange >= 5f, boss + ": the ranged skill is for distance");
@@ -57,14 +58,14 @@ namespace Evolve.Tests.EditMode
             Assert.IsFalse(PassiveRules.Has("Ốc Hồ")); Assert.AreEqual(1f, PassiveRules.DamageFactor("Ốc Hồ", 0.1f)); Assert.AreEqual(1f, PassiveRules.SpeedFactor(null, 0.1f)); Assert.AreEqual(0f, PassiveRules.RegenPerSecond("xyz", 99f));
         }
 
-        [Test] public void GolemGrab_NeedsMashing_NotAlternating()
+        [Test] public void GrabPin_NeedsMashing_NotAlternating()
         {
             var g = new PinGame(PinMode.Mash);
             for (int i = 0; i < 40 && !g.Escaped; i++) { g.Press(PinKey.A); g.Tick(0.15f); }   // the same key again and again, about 6.5 presses a second
             Assert.IsTrue(g.Escaped);
         }
 
-        [Test] public void GolemGrab_TheBarDrainsFasterThanABite_AndTheSqueezeHurtsMore()
+        [Test] public void GrabPin_TheBarDrainsFasterThanABite_AndTheSqueezeHurtsMore()
         {
             var bite = new PinGame(); var grab = new PinGame(PinMode.Mash);
             Assert.Greater(grab.DamageRate, bite.DamageRate);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Evolve.Combat
 {
-    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden }
+    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden, Meteor }
     public enum MovePhase { Idle, Windup, Active, Recover }
 
     /// <summary>What a move is for in a boss's standard kit: two Normal attacks, one Ranged, one Special (it holds the player in a mini game), one Ultimate near the end of its health.</summary>
@@ -36,6 +36,13 @@ namespace Evolve.Combat
         /// <summary>A pin that is a grab (button mashing, a heavier squeeze) instead of a bite (alternate A and D).</summary>
         public bool Grab;
         public MoveRole Role;
+        /// <summary>The special skill is a dodge puzzle (a marked landing circle, then a rock volley) instead of a hold.</summary>
+        public bool Dodge;
+        /// <summary>Meteor: how many stone spikes rise round the landing spot, how far from it, and how hard the rocks pulled out of them hit (their size is MissileSize).</summary>
+        public int SpikeCount;
+        public float SpikeRadius, MissileDamage;
+        /// <summary>Damage multiplier while it recovers (open to a counter): 1.5 normally; a move whose recovery is itself an attack (the golem's rock volley) says 1.</summary>
+        public float RecoverFactor = 1.5f;
         /// <summary>Harden: the damage multiplier while the move is in its Active phase (the crystal armour holds); 1 = none.</summary>
         public float DamageTakenFactor = 1f;
         /// <summary>Throw: the size of the missile in metres (0 = the default).</summary>
@@ -78,7 +85,7 @@ namespace Evolve.Combat
         public float Progress01 => phaseLength <= Eps ? 1f : Math.Min(1f, PhaseTime / phaseLength);
         public bool Busy => Phase != MovePhase.Idle;
         public bool IsArmored => Current != null && (Current.Armored || Current.Shape == MoveShape.Harden) && (Phase == MovePhase.Windup || Phase == MovePhase.Active);
-        public float DamageTakenFactor => Phase == MovePhase.Recover ? RecoverDamageFactor : Phase == MovePhase.Active && Current != null ? Current.DamageTakenFactor : 1f;
+        public float DamageTakenFactor => Phase == MovePhase.Recover ? (Current != null ? Current.RecoverFactor : RecoverDamageFactor) : Phase == MovePhase.Active && Current != null ? Current.DamageTakenFactor : 1f;
 
         /// <summary>Starts <paramref name="move"/> now with a windup of exactly <paramref name="windupSeconds"/> (an ambusher bursting out). Only when idle.</summary>
         public bool Force(MoveDef move, float windupSeconds)

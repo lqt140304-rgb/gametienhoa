@@ -136,6 +136,125 @@ namespace Evolve.Combat
             if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
         }
 
+        // ---------- Giáng Thạch (the golem's special): the leap, the landing, the spikes and the rock volley ----------
+        bool meteorActive;
+        Vector3 meteorFrom, meteorLand;
+        float leapOffset;
+        VolleyFsm volley;
+        readonly List<RockSpike> spikeObjs = new List<RockSpike>();
+        RockSpike heldRock;
+        Transform rightHand;
+        const float DashSpeed = 11f;
+
+        /// <summary>True while it is up in the air (the leap and the fall): nothing that depends on walking (footsteps) should run.</summary>
+        public bool Airborne => meteorActive && scheduler != null && (scheduler.Phase == MovePhase.Active || (scheduler.Phase == MovePhase.Windup && scheduler.Progress01 > 0.2f));
+        /// <summary>It has pulled a spike out of the ground and is aiming it.</summary>
+        public bool HoldingRock => volley != null && volley.Stage == VolleyStage.Hold;
+
+        float GroundY(float x, float z, float fallback) => Evolve.World.GroundHeight.At(x, z, fallback);
+
+        void StartLeap(MoveDef m)
+        {
+            meteorActive = true;
+            meteorFrom = rb.position;
+            leapOffset = Evolve.World.GroundHeight.OffsetOf(rb.position);
+            Vector3 t = target != null ? target.transform.position : transform.position + transform.forward * m.MinRange;
+            meteorLand = new Vector3(t.x, 0f, t.z);
+            SkillFx.Ring(new Vector3(t.x, GroundY(t.x, t.z, t.y) + 0.05f, t.z), m.Radius, TellColor, m.Windup * tellScale, 0.3f);   // the ring on the ground: where it will land (it does not follow the player)
+            ClearMeteorObjects();
+        }
+
+        void TickLeapUp(MoveDef m)
+        {
+            float h = LeapRules.Height(MovePhase.Windup, scheduler.Progress01);
+            rb.MovePosition(new Vector3(meteorFrom.x, meteorFrom.y + h, meteorFrom.z));
+        }
+
+        void TickLeapFall(MoveDef m)
+        {
+            float p = scheduler.Progress01;
+            Vector3 flat = Vector3.Lerp(meteorFrom, meteorLand, LeapRules.Travel(MovePhase.Active, p));
+            float gy = GroundY(flat.x, flat.z, meteorFrom.y) + leapOffset;
+            rb.MovePosition(new Vector3(flat.x, gy + LeapRules.Height(MovePhase.Active, p), flat.z));
+            if (!hitDone && p >= 0.95f) Land(m);
+        }
+
+        /// <summary>It hits the ground on the marked circle: damage and knock-back, a shock, and the stone spikes rise round it.</summary>
+        void Land(MoveDef m)
+        {
+            hitDone = true;
+            Vector3 spot = new Vector3(meteorLand.x, GroundY(meteorLand.x, meteorLand.z, meteorFrom.y) + leapOffset, meteorLand.z);
+            rb.position = spot; transform.position = spot;
+            Hurt(m, m.Radius);
+            GolemFx.Land(spot, m.Radius);
+            float startAngle = 0f;
+            if (target != null) { Vector3 to = Flat(target.transform.position - spot); startAngle = Mathf.Atan2(to.z, to.x) * Mathf.Rad2Deg; }   // the first spike rises on the player's side
+            float scale = Mathf.Max(0.5f, transform.lossyScale.y);
+            foreach (var (x, z) in SpikeRules.Ring(spot.x, spot.z, m.SpikeCount, m.SpikeRadius, startAngle))
+                spikeObjs.Add(RockSpike.Spawn(new Vector3(x, GroundY(x, z, spot.y), z), 1.1f * scale, 3.2f * scale));
+            GolemFx.SpikesRise(spot, m.SpikeRadius);
+            volley = new VolleyFsm(spikeObjs.Count);
+        }
+
+        void TickVolley(MoveDef m)
+        {
+            if (volley == null) { SnapToGround(); return; }   // knocked out of the leap before it landed
+            if (volley.Stage == VolleyStage.Done) return;
+            var spike = volley.Index < spikeObjs.Count ? spikeObjs[volley.Index] : null;
+            if (spike == null) { volley.Update(VolleyFsm.DashTimeout, true); return; }   // the spike is gone: skip it
+            Vector3 to = Flat(spike.transform.position - transform.position);
+            bool arrived = to.magnitude <= Radius + 0.9f;
+            if (volley.Stage == VolleyStage.Dash && !arrived)
+            {
+                if (to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.3f));
+                if (motor != null) motor.Move(to.normalized, DashSpeed);
+            }
+            else if (volley.Stage == VolleyStage.Hold) FaceTarget();
+            var e = volley.Update(Time.fixedDeltaTime, arrived);
+            if (e == VolleyEvent.Picked)
+            {
+                if (rightHand == null) foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "RightHand") { rightHand = t; break; }
+                heldRock = spike;
+                spike.Grab(rightHand != null ? rightHand : transform);
+                GolemFx.Pull(spike.transform.position);
+            }
+            else if (e == VolleyEvent.Threw) ThrowHeld(m);
+        }
+
+        void ThrowHeld(MoveDef m)
+        {
+            if (heldRock == null) return;
+            Vector3 from = heldRock.transform.position;
+            Vector3 to = target != null ? target.transform.position + Vector3.up * 0.2f : from + transform.forward * 8f;
+            MonsterProjectile.Launch(from, to, m.FlightSeconds, m.MissileDamage * DamageScale, 1f, false, m.MissileSize);
+            Destroy(heldRock.gameObject); heldRock = null;
+            GolemFx.Hurl(from);
+        }
+
+        void SnapToGround()
+        {
+            Vector3 p = rb.position;
+            float gy = GroundY(p.x, p.z, p.y) + leapOffset;
+            if (p.y > gy + 0.05f) { rb.position = new Vector3(p.x, gy, p.z); transform.position = rb.position; }
+        }
+
+        void ClearMeteorObjects()
+        {
+            foreach (var s in spikeObjs) if (s != null) s.Sink();
+            spikeObjs.Clear();
+            if (heldRock != null) { heldRock.transform.SetParent(null, true); heldRock.Sink(); heldRock = null; }
+            volley = null;
+        }
+
+        /// <summary>The move ended or was cut short: the unused spikes sink, and the golem is back on the floor.</summary>
+        void EndMeteor()
+        {
+            if (!meteorActive) return;
+            meteorActive = false;
+            ClearMeteorObjects();
+            if (rb != null) SnapToGround();
+        }
+
         // ---------- passive (PassiveRules): damage taken is in DamageTakenFactor; speed and mending are here ----------
         float quietSince, lastPassiveHealth = -1f;
         bool speedApplied;
@@ -165,7 +284,7 @@ namespace Evolve.Combat
             SkillBar.SkillUsed -= OnSkillUsed;
             if (prey != null) prey.Damaged -= OnDamaged;
             scheduler?.Reset();
-            ClearSpears();
+            ClearSpears(); EndMeteor();
             SetHidden(false);
             RestoreModel();
         }
@@ -211,7 +330,7 @@ namespace Evolve.Combat
             if (HostPaused())
             {
                 scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
-                ClearSpears();
+                ClearSpears(); EndMeteor();
                 if (ambush != null && ambush.State == AmbushState.Lurking) { ambush.Update(0f, 0f); ambush.StrikeDone(); }   // stunned or killed while hiding: it shows itself
                 SetHidden(false);
                 return;
@@ -233,6 +352,12 @@ namespace Evolve.Combat
             if (started != null) BeginStrike(started);
             prevPhase = scheduler.Phase;
 
+            if (meteorActive && scheduler.Current != null && scheduler.Current.Shape == MoveShape.Meteor)
+            {
+                if (scheduler.Phase == MovePhase.Windup) TickLeapUp(scheduler.Current);
+                else if (scheduler.Phase == MovePhase.Active) TickLeapFall(scheduler.Current);
+                else if (scheduler.Phase == MovePhase.Recover) TickVolley(scheduler.Current);
+            }
             if (target != null && scheduler.Phase == MovePhase.Windup) FaceTarget();
             if (scheduler.Phase == MovePhase.Active) TickStrike(scheduler.Current);
             else if (scheduler.Phase == MovePhase.Recover && retreatLeft > 0f) TickRetreat(scheduler.Current);
@@ -283,6 +408,7 @@ namespace Evolve.Combat
         /// <summary>Animation triggers by phase, named after the move's Anim ("Tell_Attack", "Strike_Attack", "Recover_Attack"); a missing trigger is skipped.</summary>
         void OnPhase(MovePhase phase, MoveDef m)
         {
+            if (phase == MovePhase.Idle) EndMeteor();   // the move is over (m is null here)
             if (m == null) return;
             if (hound) HoundFx.OnPhase(this, phase, m);
             if (golem) GolemFx.OnPhase(this, phase, m);
@@ -308,6 +434,7 @@ namespace Evolve.Combat
             loco?.PlayAction(m.Anim);
             loco?.PlayAction("Tell_" + m.Anim);
             if (m.Shape == MoveShape.Spears) MakeSpears(m);
+            if (m.Shape == MoveShape.Meteor) StartLeap(m);
             if (m.Shape == MoveShape.Spin || m.Shape == MoveShape.Call || m.Shape == MoveShape.Roar || m.Shape == MoveShape.Summon)
                 SkillFx.Ring(transform.position, m.Radius, TellColor, m.Windup * tellScale, 0.3f);   // a ring on the ground shows how far the blow reaches
         }

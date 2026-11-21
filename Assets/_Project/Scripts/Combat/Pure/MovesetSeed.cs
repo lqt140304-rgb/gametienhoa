@@ -44,11 +44,11 @@ namespace Evolve.Combat
             // Golem Thạch Anh (cave lord): slams the ground, throws boulders, hardens its crystal armour, and at low health blows its core
             sets["golemthachanh"] = new[]
             {
-                // the standard boss kit (everything slow to start, hits like a falling wall and takes long to recover from): 2 normal, 1 ranged, 1 special with a mini game (the grab), 1 ultimate; the passive is Thân Tinh Thể (PassiveRules)
+                // the standard boss kit (everything slow to start, hits like a falling wall and takes long to recover from): 2 normal, 1 ranged, 1 special (Giáng Thạch: it leaps into the sky, lands on a marked circle, stone spikes rise round it and it pulls them out and hurls them one after another, dashing to the next), 1 ultimate; the passive is Thân Tinh Thể (PassiveRules)
                 new MoveDef { Name = "Nện Đấm", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.9f, Active = 0.25f, Recover = 1.8f, Cooldown = 4f, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 28f, Force = 6f, Anim = "Punch" },
                 new MoveDef { Name = "Đập Đất", Role = MoveRole.Normal, Shape = MoveShape.Spin, Windup = 1.5f, Active = 0.25f, Recover = 2.4f, Cooldown = 9f, MinRange = 0f, MaxRange = 5.5f, Radius = 5.5f, Damage = 32f, Force = 9f, Freeze = 0.6f, Armored = true, Anim = "Slam" },
                 new MoveDef { Name = "Ném Đá", Role = MoveRole.Ranged, Shape = MoveShape.Throw, Windup = 1.3f, Active = 0.1f, Recover = 2f, Cooldown = 8f, MinRange = 5f, MaxRange = 18f, FlightSeconds = 1.1f, Damage = 20f, MissileSize = 1f, Anim = "Throw" },
-                new MoveDef { Name = "Chộp Nghiền", Role = MoveRole.Special, Shape = MoveShape.Lunge, Windup = 1.1f, Active = 0.5f, Recover = 2f, Cooldown = 10f, MinRange = 3f, MaxRange = 7f, AbortBeyond = 9f, Distance = 6f, Damage = 18f, Pins = true, Grab = true, Anim = "Grab" },
+                new MoveDef { Name = "Giáng Thạch", Role = MoveRole.Special, Dodge = true, Shape = MoveShape.Meteor, Windup = 1.6f, Active = 0.35f, Recover = 6.5f, Cooldown = 22f, MinRange = 4f, MaxRange = 16f, Radius = 4.2f, Damage = 30f, Force = 8f, Freeze = 0.4f, SpikeCount = 4, SpikeRadius = 6.5f, MissileDamage = 18f, MissileSize = 0.8f, FlightSeconds = 0.8f, RecoverFactor = 1f, Anim = "Meteor" },
                 new MoveDef { Name = "Lõi Nổ", Role = MoveRole.Ultimate, Shape = MoveShape.Spin, Windup = 2.4f, Active = 0.3f, Recover = 2.6f, Cooldown = 40f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Damage = 40f, Force = 12f, Freeze = 0.8f, Armored = true, UnlockBelow = 0.25f, Anim = "CoreBlast" },
             };
             // Chó Xương (cave lord, a skeletal hound): pounces and pins, bites hard, claws, leaps over low obstacles, roars smaller things away, summons small copies of itself from the ground
@@ -122,6 +122,7 @@ namespace Evolve.Combat
                 case MoveShape.Roar: return PoseKind.Roar;
                 case MoveShape.Summon: return PoseKind.Roar;
                 case MoveShape.Harden: return PoseKind.Withdraw;
+                case MoveShape.Meteor: return PoseKind.Crouch;
                 default: return PoseKind.Roar;
             }
         }
