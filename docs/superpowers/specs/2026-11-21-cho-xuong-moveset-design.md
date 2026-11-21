@@ -27,6 +27,9 @@ Chúa Hang Nghĩa Địa Cự Thú, mô hình Meshy gắn xương từ metarig c
 - Trọng số chân: xương chân chỉ kéo đỉnh trong 18 cm và dưới khớp hông (`rig_from_metarig.py`), nên xoay chân trước không còn kéo xương sườn và lưng (đo: 0 đỉnh trên z=0,95 dịch chuyển, trước là 1.350).
 - Không có Mixamo: Mixamo cần tài khoản Adobe và chỉ có clip cho **người hai chân**, không dùng được cho rig bốn chân này.
 
+## Clip vẽ tay (2026-11-21)
+`tools/blender/author_cho_clips.py` dựng clip bằng mã trên rig (xoay theo trục thế giới, đổi sang khung từng xương, nên không phụ thuộc xương xoay thế nào): **Idle** (thở, 48 khung), **Walk** (24 khung lặp, chân chéo luân phiên, gối gập, lưng và đuôi uốn), **Pounce_Tell** (nén thân 22 khung rồi giữ), **Pounce_Strike** (lao, 11 khung, bốn chân duỗi), **Pounce_Recover** (tiếp đất rồi đứng, 36 khung). Xuất FBX bằng `rig_from_metarig.py ... --clips` (thêm `--blend-only` để lưu `.blend` xem thử). Menu `Build Meshy Static Prefabs` đặt tên clip, lặp Idle và Walk, dựng Animator Controller: `Speed` đổi Idle ↔ Walk, `WalkRate` (do `ChoXuongRigFx` đặt) chỉnh tốc độ Walk theo tốc độ thật, trigger `Tell_Pounce`, `Strike_Pounce`, `Recover_Pounce` của `CreatureCombat` chạy ba clip vồ. Có clip thì `ChoXuongRigFx` không đè chân, cổ, hàm của clip mà **cộng thêm** lên trên (hàm, cổ cho Cắn, Gầm, Cào, giật khi trúng, nằm ngất, ép chân khi cắn chặt).
+
 ## Chưa làm / rủi ro
 - Chưa kiểm trong Unity: hướng xoay cổ và hàm tự đo lúc chạy; hàm há quá có thể kéo méo mõm (mõm sọ chỉ hé nhẹ): giảm `HoundRules.MaxJawDeg` nếu méo.
 - Chân chỉ xoay ở hông; cẳng chân không gập.

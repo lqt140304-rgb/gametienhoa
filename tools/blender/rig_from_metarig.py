@@ -1,6 +1,6 @@
 """Skin a mesh to a Rigify cat/dog METARIG used as a plain skeleton (no Generate), name its bones for CreatureLocomotion and export an FBX.
 
-    python -I tools/blender/rig_from_metarig.py file.blend Mesh_0 metarig.001 out/Creature_Name
+    python -I tools/blender/rig_from_metarig.py file.blend Mesh_0 metarig.001 out/Creature_Name [--clips]
 
 Bone heat ("With Automatic Weights") fails on the dense Meshy meshes, so weights come from the distance to each bone (like rig_quadruped.py).
 Renames: spine.004 -> Root, face -> Head, spine.003/.002/.001/spine/spine.012 -> Tail1..5, front_thigh.L/R -> Leg_FL/FR, thigh.L/R -> Leg_BL/BR
@@ -31,7 +31,7 @@ def keep(n):
     return n.startswith(("spine", "shoulder", "front_", "pelvis", "thigh", "shin", "foot", "toe")) or n in ("face", "jaw")
 
 
-def main(blend, mesh_name, arm_name, prefix):
+def main(blend, mesh_name, arm_name, prefix, clips=False, blend_only=False):
     bpy.ops.wm.open_mainfile(filepath=blend)
     mesh = bpy.data.objects[mesh_name]
     arm = bpy.data.objects[arm_name]
@@ -94,16 +94,26 @@ def main(blend, mesh_name, arm_name, prefix):
     low = min(p.z for p in pts)
     arm.location.z -= low   # feet on Z=0; the mesh follows its parent
     mesh.data.polygons.foreach_set("use_smooth", [True] * len(mesh.data.polygons))
+    action_names = []
+    if clips:
+        import author_cho_clips
+        action_names = author_cho_clips.author_clips(arm)
     os.makedirs(os.path.dirname(os.path.abspath(prefix)), exist_ok=True)
+    if blend_only:   # keep the skinned, animated rig as a .blend (to preview the clips) instead of exporting
+        bpy.ops.wm.save_as_mainfile(filepath=prefix + ".blend")
+        print("OK blend", prefix + ".blend", "actions:", action_names)
+        return
     for o in bpy.data.objects:
         o.select_set(o in (arm, mesh))
     bpy.context.view_layer.objects.active = arm
     bpy.ops.export_scene.fbx(
         filepath=prefix + ".fbx", use_selection=True, apply_unit_scale=True, apply_scale_options="FBX_SCALE_ALL",
         axis_forward="-Z", axis_up="Y", bake_space_transform=True, mesh_smooth_type="FACE", add_leaf_bones=False,
-        path_mode="STRIP", bake_anim=False, use_armature_deform_only=True)
+        path_mode="STRIP", bake_anim=bool(action_names), bake_anim_use_all_actions=True, bake_anim_use_nla_strips=False, bake_anim_simplify_factor=0.0,
+        use_armature_deform_only=True)
     print("OK", prefix + ".fbx", "bones:", ", ".join(b.name for b in arm.data.bones))
 
 
 if __name__ == "__main__":
-    main(*sys.argv[-4:])
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    main(*args[-4:], clips="--clips" in sys.argv, blend_only="--blend-only" in sys.argv)

@@ -30,6 +30,8 @@ namespace Evolve.Combat
         float kneeSign = 1f, faintRoll;
         Transform armature;
         CreatureLocomotion loco;
+        Animator animator;
+        bool clips;   // the Animator drives the skeleton with the authored clips (Idle, Walk, Pounce_*): the extras are added on top of them
         Quaternion armatureRest;
         Vector3 armatureAxis;
         Transform jawTip, head;
@@ -41,6 +43,9 @@ namespace Evolve.Combat
         Predator pred;
         Vector3 lastPos;
 
+        /// <summary>Turn a bone by an extra rotation: from its rest pose, or on top of whatever the clips have just written.</summary>
+        void Put(Part p, Quaternion extra) { p.T.localRotation = clips ? p.T.localRotation * extra : p.Rest * extra; }
+
         Part Make(Transform t) => t == null ? null : new Part { T = t, Rest = t.localRotation, Pitch = t.InverseTransformDirection(transform.right), Yaw = t.InverseTransformDirection(transform.up) };
 
         void Start()
@@ -51,6 +56,9 @@ namespace Evolve.Combat
             Transform n9 = null, n10 = null, n11 = null, back7 = null, jawT = null, shinL = null, shinR = null, footL = null, footR = null;
             var legT = new Transform[4]; var shinT = new Transform[4]; var footT = new Transform[4];
             loco = GetComponent<CreatureLocomotion>();
+            animator = GetComponentInChildren<Animator>(true);
+            if (animator != null && animator.runtimeAnimatorController != null)
+                foreach (var pa in animator.parameters) if (pa.name == "Strike_Pounce") clips = true;
             foreach (var t in GetComponentsInChildren<Transform>(true))
                 switch (t.name)
                 {
@@ -75,7 +83,7 @@ namespace Evolve.Combat
                     case "Leg_BL": legT[2] = t; break;
                     case "Leg_BR": legT[3] = t; break;
                 }
-            lastPos = transform.position;
+            lastPos = transform.position; walkLast = transform.position;
             if (pred != null) lastHealth = pred.Health;
             neck = new[] { Make(n9), Make(n10), Make(n11) };
             for (int i = 0; i < 4; i++) { legs[i] = Make(legT[i]); shins[i] = Make(shinT[i]); feet[i] = Make(footT[i]); }
@@ -118,6 +126,19 @@ namespace Evolve.Combat
             }
         }
 
+        float walkSpeed;
+
+        void Update()
+        {
+            if (!clips || animator == null) return;
+            float dt = Mathf.Max(Time.deltaTime, 1e-4f);
+            float sp = (transform.position - walkLast).magnitude / dt; walkLast = transform.position;
+            walkSpeed = Mathf.Lerp(walkSpeed, sp, 1f - Mathf.Exp(-8f * dt));
+            float stride = 1.4f * Mathf.Max(0.1f, animator.transform.lossyScale.y);   // metres one Walk cycle covers: a 1.26 m dog, scaled
+            animator.SetFloat("WalkRate", Mathf.Clamp(walkSpeed / stride, 0.2f, 3f));
+        }
+        Vector3 walkLast;
+
         void LateUpdate()
         {
             float dt = Mathf.Max(Time.deltaTime, 1e-4f), t = Time.time;
@@ -145,7 +166,7 @@ namespace Evolve.Combat
             if (combat != null && combat.CurrentMove != null && combat.Phase != MovePhase.Idle)
             {
                 string anim = combat.CurrentMove.Anim;
-                target = HoundRules.Evaluate(anim, combat.Phase, combat.PhaseProgress);
+                target = clips && anim == "Pounce" ? default : HoundRules.Evaluate(anim, combat.Phase, combat.PhaseProgress);   // the pounce clips carry their own neck and jaw
                 claw = anim == "Claw";
                 curAnim = anim; curPhase = combat.Phase;
                 leaping = combat.Phase == MovePhase.Active && (anim == "Pounce" || anim == "Leap");
@@ -169,20 +190,20 @@ namespace Evolve.Combat
             if (neck != null)
                 for (int i = 0; i < 3; i++)
                     if (neck[i] != null)
-                        neck[i].T.localRotation = neck[i].Rest * Quaternion.AngleAxis(neckSign * neckTotal / 3f, neck[i].Pitch) * Quaternion.AngleAxis(flinch * (i == 0 ? 8f : 3f), neck[i].Yaw);
+                        Put(neck[i], Quaternion.AngleAxis(neckSign * neckTotal / 3f, neck[i].Pitch) * Quaternion.AngleAxis(flinch * (i == 0 ? 8f : 3f), neck[i].Yaw));
             if (jaw != null)
-                jaw.T.localRotation = jaw.Rest * Quaternion.AngleAxis(jawSign * Mathf.Clamp(jawDeg + (jawDeg > 5f ? shake * 0.5f : 0f), 0f, HoundRules.MaxJawDeg), jaw.Pitch);
+                Put(jaw, Quaternion.AngleAxis(jawSign * Mathf.Clamp(jawDeg + (jawDeg > 5f ? shake * 0.5f : 0f), 0f, HoundRules.MaxJawDeg), jaw.Pitch));
 
             int side = clawCount % 2 == 1 ? 0 : 1;
             for (int i = 0; i < 2; i++)
                 if (paw[i] != null)
-                    paw[i].T.localRotation = paw[i].Rest * Quaternion.AngleAxis(i == side ? pawSign * pawDeg : 0f, paw[i].Pitch);
+                    Put(paw[i], Quaternion.AngleAxis(i == side ? pawSign * pawDeg : 0f, paw[i].Pitch));
 
             // legs: in the leap the front legs reach out and the hind legs trail straight back, pinning the front paws reach over the catch, knocked out they lie stiff;
             // otherwise the knees bend with the swing of the hips (CreatureLocomotion has just written the hips for this frame)
-            bool posed = leaping || pinning || fainted;
+            bool posed = pinning || fainted || (leaping && !clips);   // with the clips the leap and the knees are theirs
             tuck = Mathf.MoveTowards(tuck, posed ? 1f : 0f, dt * 8f);
-            if (loco != null) loco.enabled = tuck < 0.5f;   // no running legs while the body is posed
+            if (loco != null) loco.enabled = !clips && tuck < 0.5f;   // the clips drive the legs; without them no running legs while the body is posed
             float forwardSign = -tuckSign;
             for (int i = 0; i < 4; i++)
             {
@@ -197,9 +218,9 @@ namespace Evolve.Combat
                 float signedFwd = ang * Mathf.Sign(Vector3.Dot(ax, legs[i].Pitch)) * forwardSign;
                 float vel = (signedFwd - hipAngle[i]) / dt; hipAngle[i] = signedFwd;
                 hipSpeed[i] = Mathf.Lerp(hipSpeed[i], vel, 1f - Mathf.Exp(-12f * dt));
-                float flex = (1f - tuck) * Mathf.Clamp01(hipSpeed[i] / 150f) * 38f;   // swinging forward = the foot is lifted: bend the knee
-                if (shins[i] != null) shins[i].T.localRotation = shins[i].Rest * Quaternion.AngleAxis(kneeSign * flex, shins[i].Pitch);
-                if (feet[i] != null) feet[i].T.localRotation = feet[i].Rest * Quaternion.AngleAxis(-kneeSign * flex * 0.5f, feet[i].Pitch);
+                float flex = clips ? 0f : (1f - tuck) * Mathf.Clamp01(hipSpeed[i] / 150f) * 38f;   // swinging forward = the foot is lifted: bend the knee
+                if (!clips && shins[i] != null) shins[i].T.localRotation = shins[i].Rest * Quaternion.AngleAxis(kneeSign * flex, shins[i].Pitch);
+                if (!clips && feet[i] != null) feet[i].T.localRotation = feet[i].Rest * Quaternion.AngleAxis(-kneeSign * flex * 0.5f, feet[i].Pitch);
             }
 
             // knocked out: rolled onto its side (the armature node carries the bones and the mesh)
@@ -215,7 +236,7 @@ namespace Evolve.Combat
             {
                 runPhase += speed * dt * 2.0f;
                 float roll = Mathf.Sin(runPhase) * 2.5f * moving + flinch * 4f;
-                back.T.localRotation = back.Rest * Quaternion.AngleAxis(neckSign * roll, back.Pitch);
+                Put(back, Quaternion.AngleAxis(neckSign * roll, back.Pitch));
             }
         }
     }

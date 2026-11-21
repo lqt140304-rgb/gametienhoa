@@ -250,8 +250,8 @@ Quy trình và trạng thái: `docs/MESHY_BOSSES.md`. Nhánh `claude/unity-test-
 
 ### H10. Chó Xương (Meshy): bộ chiêu (chưa ai thử trong Unity)
 Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. Chạy lại menu `Build Meshy Static Prefabs`, tạo Chó Xương từ menu thần (Chúa Hang), mở tab Combat để xem pha hiện tại.
-- [ ] **Chạy đuổi:** chân bước, lưng uốn theo sải khi đuổi; đứng yên thì cổ nhúc nhích nhẹ (thở).
-- [ ] **Vồ:** hạ thấp đầu và thân rồi lao ~5 m, **bốn chân duỗi thẳng lúc lao (chân trước vươn ra, chân sau thẳng ra sau, không chạy chân)**, đầu vươn lên, hàm há; vồ hụt thì chó **lăn ra nằm nghiêng ngất ~2 s** rồi bật dậy (đánh nó lúc này thấy đau gấp rưỡi).
+- [ ] **Chạy đuổi và đi:** clip Walk: chân chéo luân phiên, gối gập, đuôi vẫy; tốc độ bước theo tốc độ thật (không trượt chân quá); đứng yên thì thở nhẹ (clip Idle). Menu phải in `[Meshy] Đã tạo ...`, không báo thiếu clip.
+- [ ] **Vồ (clip Pounce):** nén thân rồi lao ~5 m, **bốn chân duỗi thẳng lúc lao (chân trước vươn ra, chân sau thẳng ra sau, không chạy chân)**, đầu vươn lên, hàm há; vồ hụt thì chó **lăn ra nằm nghiêng ngất ~2 s** rồi bật dậy (đánh nó lúc này thấy đau gấp rưỡi).
 - [ ] **Vồ trúng (đầu hướng về slime):** chó cắn chặt vào slime, hai chân trước ép lên; slime đứng yên và mất máu liên tục (~6/giây); hiện thanh vàng và chữ "ẤN A RỒI D LIÊN TỤC"; ấn xen kẽ A và D thì thanh đầy, slime thoát, chó bị hất lùi và loạng choạng ~1,2 s (đánh nó lúc này thấy đau gấp rưỡi); ấn một phím liên tục không có tác dụng; không ấn thì sau 8 s chó tự nhả.
 - [ ] **Cắn Nghiền** (gần): hàm há rộng rồi đớp khép lại thật nhanh.
 - [ ] **Cào Xé** (gần, ≤ 3,5 m): ngẩng đầu và giơ một chân trước lên rồi quét xuống; lần sau đổi chân kia.
