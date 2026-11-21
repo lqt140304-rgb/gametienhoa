@@ -3,7 +3,7 @@
     python -I tools/blender/rig_quadruped.py in.glb out.fbx
 
 Bone names: Root, Head, Tail1, Tail2, Leg_FL, Leg_FR, Leg_BL, Leg_BR. The model must face -Y in Blender
-(the Meshy fox does); it is lifted so its feet sit on Z=0. Also writes <out>_albedo/_normal/_mask.png. Bone positions come from the mesh itself, weights from the
+(the Meshy fox does); it is lifted so its feet sit on Z=0. Also writes <out>_albedo/_mask.png. Bone positions come from the mesh itself, weights from the
 distance to each bone (no bone-heat: dense fur meshes make it fail).
 """
 import os
@@ -21,8 +21,8 @@ def seg_dist(p, a, b):
     return (p - (a + ab * t)).length
 
 
-def export_textures(obj, prefix, size=1024):
-    """Write <prefix>_albedo/_normal/_mask.png (mask = Unity URP: R metallic, A smoothness) and strip the material to plain white,
+def export_textures(obj, prefix, size=2048):
+    """Write <prefix>_albedo/_mask.png (mask = Unity URP: R metallic, A smoothness) and strip the material to plain white,
     so Unity gets clean external textures (Meshy's glTF also carries an emission image that turns the model white)."""
     import numpy as np
     mat = obj.active_material
@@ -31,7 +31,6 @@ def export_textures(obj, prefix, size=1024):
     bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
     base = links[("Principled BSDF", "Base Color")].image
     mr = links[("Separate Color", "Color")].image
-    nrm = links[("Normal Map", "Color")].image
 
     def px(im):
         im = im.copy()
@@ -48,7 +47,7 @@ def export_textures(obj, prefix, size=1024):
     b = px(base)
     b[..., 3] = 1.0
     save(b, prefix + "_albedo.png")
-    save(px(nrm), prefix + "_normal.png")
+    # no normal map: on Meshy's fragmented UV atlas it shows as bright/dark cracks along the seams
     m = px(mr)
     mask = np.zeros_like(m)
     mask[..., 0] = m[..., 2]          # metallic = blue
@@ -122,6 +121,7 @@ def main(src, dst):
         total = sum(ws)
         for (d, nm), w in zip(ds, ws):
             mesh_obj.vertex_groups[nm].add([i], w / total, "REPLACE")
+    mesh_obj.data.polygons.foreach_set("use_smooth", [True] * len(mesh_obj.data.polygons))   # smooth shading: no faceted creases
     mesh_obj.parent = arm
     mod = mesh_obj.modifiers.new("Armature", "ARMATURE")
     mod.object = arm

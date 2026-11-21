@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Evolve.EditorTools
 {
     /// <summary>
-    /// Models in Models/Wildlife/Meshy come with three loose textures (name_albedo/_normal/_mask.png) instead of embedded ones:
+    /// Models in Models/Wildlife/Meshy come with two loose textures (name_albedo/_mask.png) instead of embedded ones:
     /// this builds a URP/Lit material from them and remaps the model's material to it. Runs when such a model is imported,
     /// or from the menu Evolve → Fix Meshy Materials.
     /// </summary>
@@ -37,9 +37,8 @@ namespace Evolve.EditorTools
             if (!force && importer.GetExternalObjectMap().Count > 0) return;   // already done
 
             string stem = fbxPath.Substring(0, fbxPath.Length - 4);
-            string albedoPath = stem + "_albedo.png", normalPath = stem + "_normal.png", maskPath = stem + "_mask.png";
+            string albedoPath = stem + "_albedo.png", maskPath = stem + "_mask.png";
             if (!File.Exists(albedoPath)) { Debug.LogWarning("[Meshy] no albedo texture next to " + fbxPath); return; }
-            SetupTexture(normalPath, TextureImporterType.NormalMap, false);
             SetupTexture(maskPath, TextureImporterType.Default, false);
             SetupTexture(albedoPath, TextureImporterType.Default, true);
 
@@ -52,8 +51,7 @@ namespace Evolve.EditorTools
             }
             mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(albedoPath));
             mat.SetColor("_BaseColor", Color.white);
-            var normal = AssetDatabase.LoadAssetAtPath<Texture2D>(normalPath);
-            if (normal != null) { mat.SetTexture("_BumpMap", normal); mat.EnableKeyword("_NORMALMAP"); }
+            mat.SetTexture("_BumpMap", null); mat.DisableKeyword("_NORMALMAP");   // no normal map: it showed seam cracks
             var mask = AssetDatabase.LoadAssetAtPath<Texture2D>(maskPath);
             if (mask != null)
             {
@@ -74,9 +72,10 @@ namespace Evolve.EditorTools
         static void SetupTexture(string path, TextureImporterType type, bool srgb)
         {
             var ti = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (ti == null || (ti.textureType == type && ti.sRGBTexture == srgb)) return;
+            if (ti == null || (ti.textureType == type && ti.sRGBTexture == srgb && !ti.mipmapEnabled)) return;
             ti.textureType = type;
             ti.sRGBTexture = srgb;
+            ti.mipmapEnabled = false;   // mips blur colours across the atlas's many small islands, which shows as seams
             ti.SaveAndReimport();
         }
     }
