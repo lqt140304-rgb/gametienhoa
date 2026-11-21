@@ -173,6 +173,7 @@ namespace Evolve.Creatures
             if (combat != null && combat.Busy) return;   // winding up, striking or recovering: the move set drives
             Vector3 pos = rb.position;
             UpdateTarget(pos);
+            if (target == null && combat != null && !Passive && !Calm) target = combat.EngagedTarget(24f);   // its moves reach 18 m: if they can fire, it must walk toward the player, not wander off
             if (target == null && Intent.Mode != IntentMode.None) { MoveByIntent(pos); BiteRemotePlayers(); return; }   // the brain is in charge
 
             Vector3 dir = Vector3.zero;

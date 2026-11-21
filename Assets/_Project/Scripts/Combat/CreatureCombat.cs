@@ -27,7 +27,10 @@ namespace Evolve.Combat
         public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking) || perch != PerchState.None);
         /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
         public MovePhase Phase => scheduler != null ? scheduler.Phase : MovePhase.Idle;
-        public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
+        /// <summary>The player this creature's moves are aimed at, if within <paramref name="radius"/> metres: the body must walk toward it even when the Predator's own sight has lost it (otherwise it wanders off while its moves still fire).</summary>
+        public SurvivalStats EngagedTarget(float radius) =>
+            target != null && Flat(target.transform.position - transform.position).sqrMagnitude <= radius * radius ? target : null;
+                public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
         float faintUntil, faintStart;
         /// <summary>A pounce that found nothing: the hound lies knocked out on its side for a moment.</summary>
         public bool IsFainted => Time.time < faintUntil;
