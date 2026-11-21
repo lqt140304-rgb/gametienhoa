@@ -179,13 +179,19 @@ namespace Evolve.Creatures
             Vector3 dir = Vector3.zero;
             float speed = 0f;
 
-            if (target != null && Time.time < retreatUntil)
+            if (target != null && combat == null && Time.time < retreatUntil)
             {
                 dir = Flat(pos - target.transform.position); speed = patrolSpeed;
             }
             else if (target != null)
             {
-                if (!IsTired)
+                if (combat != null)   // a moveset creature: run in when far, stand and face the player once in striking distance, never tire or back off
+                {
+                    Vector3 to = Flat(target.transform.position - pos, false);
+                    speed = combat.ApproachSpeed(chaseSpeed, to); dir = to.normalized;
+                    if (speed <= 0f && to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
+                }
+                else if (!IsTired)
                 {
                     dir = Flat(target.transform.position - pos); speed = chaseSpeed;
                     chaseTime += Time.fixedDeltaTime;
@@ -313,7 +319,7 @@ namespace Evolve.Creatures
 
                 nextBite = Time.time + biteCooldown;
                 target = p;
-                retreatUntil = Time.time + retreatTime;
+                if (combat == null) retreatUntil = Time.time + retreatTime;
                 NetWorld.BiteRemote?.Invoke(p, biteDamage, Flat(p.transform.position - transform.position) * knockback);
 
                 var host = p.GetComponent<OrganHost>();
@@ -395,7 +401,7 @@ namespace Evolve.Creatures
             var playerRb = stats.GetComponent<Rigidbody>();
             if (playerRb != null)
                 if (!playerRb.isKinematic) playerRb.AddForce(Flat(stats.transform.position - transform.position) * knockback + Vector3.up * 2f, ForceMode.VelocityChange);
-            retreatUntil = Time.time + retreatTime;
+            if (combat == null) retreatUntil = Time.time + retreatTime;
 
             if (host != null && host.ContactDamage > 0f) TakeDamage(host.ContactDamage, stats);
         }
@@ -420,7 +426,7 @@ namespace Evolve.Creatures
             if (by != null && Gentle) { provokedUntil = Time.time + CaveTier.ProvokeSeconds; target = by; }   // a gentle lord fights back at whoever hurt it
             if (combat != null) amount *= combat.DamageTakenFactor;   // open to a counter while recovering
             Health -= amount;
-            retreatUntil = Time.time + retreatTime;
+            if (combat == null) retreatUntil = Time.time + retreatTime;
             ShowHit(amount);
             if (Health > 0f) return;
 

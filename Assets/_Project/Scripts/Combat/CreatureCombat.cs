@@ -30,6 +30,20 @@ namespace Evolve.Combat
         /// <summary>The player this creature's moves are aimed at, if within <paramref name="radius"/> metres: the body must walk toward it even when the Predator's own sight has lost it (otherwise it wanders off while its moves still fire).</summary>
         public SurvivalStats EngagedTarget(float radius) =>
             target != null && Flat(target.transform.position - transform.position).sqrMagnitude <= radius * radius ? target : null;
+                float standOff = -1f;
+        /// <summary>How fast the body should walk toward the player: 0 once it is inside striking distance (it stands and faces them), a run when far, otherwise <paramref name="chase"/>. The body used to push into the player at 1.4 m/s forever.</summary>
+        public float ApproachSpeed(float chase, Vector3 to)
+        {
+            if (standOff < 0f)
+            {
+                standOff = 3f;
+                foreach (var m in MovesetSeed.For(name)) if (m.Role == MoveRole.Normal && m.MinRange <= 0f) standOff = Mathf.Min(standOff == 3f ? 99f : standOff, m.MaxRange * 0.8f);
+                if (standOff > 50f) standOff = 3f;
+            }
+            float d = Flat(to).magnitude;
+            if (d <= standOff) return 0f;
+            return d > 9f ? Mathf.Max(chase, 4.5f) : d > 5f ? Mathf.Max(chase, 3f) : chase;
+        }
                 public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
         float faintUntil, faintStart;
         /// <summary>A pounce that found nothing: the hound lies knocked out on its side for a moment.</summary>
