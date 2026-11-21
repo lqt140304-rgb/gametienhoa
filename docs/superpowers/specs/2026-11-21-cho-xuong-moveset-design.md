@@ -34,6 +34,9 @@ Chúa Hang Nghĩa Địa Cự Thú, mô hình Meshy gắn xương từ metarig c
 ## Âm thanh và hiệu ứng (2026-11-21)
 Âm thanh **thật tạo bằng ElevenLabs** (`tools/voice/generate_hound_sfx.sh` → `Resources/Sfx/Hound/*.mp3`, lọc giữ tiếng trầm, nén và chuẩn hóa to và dứt khoát; thiếu file thì `ProceduralSfx` dùng bản tổng hợp bằng mã `HoundSynth`). 10 tiếng (thêm phun xương, xương vỡ, đau khi trúng đòn). Các tiếng: gầm ngắn (báo trước Vồ, Cắn, Gầm, Phun), gầm dài (Gầm), hú vút lên (Triệu Hồi), tiếng đập nặng (tiếp đất, đất nứt khi triệu hồi), tiếng hàm đớp (Cắn, mảnh xương vỡ), tiếng lao nặng (Vồ), tiếng vung (Cào). Hiệu ứng (`HoundFx`, dùng `SkillFx`): bụi lúc lao và lúc tiếp đất cộng vòng bụi, vòng sóng nhạt lan ra khi Gầm, bụi bùng lên khi Triệu Hồi, mảnh xương vỡ khi Phun Xương trúng. Test thuần: `HoundSynthTests`.
 
+## Nhạc nền khi đánh trùm (2026-11-21)
+`Resources/Music/hound_battle.mp3` (nhạc chiến đấu u tối, trống trận, bass dồn, dây gắt, tạo bằng ElevenLabs Music, 56 giây, lặp mượt: đoạn cuối hòa vào đoạn đầu). `BossMusic` phát nhạc khi bắt đầu giao chiến (mọi chiêu của chó đang ra, chó trúng đòn, hay đang cắn chặt đều tính là "có đòn"), **nhạc giữ nguyên khi còn trao đòn, sau 10 giây không có đòn thì nhỏ dần trong 5 giây rồi tắt**, có đòn mới thì bật lại từ đầu bản nhạc; trùm chết thì tắt trong 1,5 giây. Luật bật tắt là mã thuần có test (`BossMusicRules`, `BossMusicRulesTests`). Âm lượng tối đa 0,5 (nhỏ hơn hiệu ứng).
+
 ## Chưa làm / rủi ro
 - Chưa kiểm trong Unity: hướng xoay cổ và hàm tự đo lúc chạy; hàm há quá có thể kéo méo mõm (mõm sọ chỉ hé nhẹ): giảm `HoundRules.MaxJawDeg` nếu méo.
 - Chân chỉ xoay ở hông; cẳng chân không gập.

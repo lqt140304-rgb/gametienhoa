@@ -137,6 +137,11 @@ namespace Evolve.Combat
 
         float walkSpeed;
 
+        void OnDestroy()
+        {
+            if (pred != null && pred.Health <= 0f && GetComponent<HoundMinion>() == null) BossMusic.Silence(1.5f);   // the lord died: the music fades out (a minion's death does not)
+        }
+
         void Update()
         {
             if (!clips || animator == null) return;
@@ -168,6 +173,8 @@ namespace Evolve.Combat
                 }
                 lastHealth = hp;
             }
+            // the fight music: any move in progress, a hit taken or the jaws clamped counts as a blow
+            if ((combat != null && combat.Phase != MovePhase.Idle) || flinchT < 0.05f || (TryGetComponent(out HoundPin musicPin) && musicPin.Chomping)) BossMusic.Ping();
             flinchT += dt;
             float flinch = HoundRules.Flinch(flinchT, flinchHeavy);
 
