@@ -5,6 +5,8 @@ Game sinh tồn tiến hóa 3D Low Poly, co-op 4–8 người. Người chơi b�
 - Thiết kế chi tiết: [`docs/GDD.md`](docs/GDD.md)
 - Dựng scene prototype: [`docs/PROTOTYPE_01_SETUP.md`](docs/PROTOTYPE_01_SETUP.md)
 - Lộ trình: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- **Cơ chế và kỹ năng của slime (bản mới nhất):** [`docs/SLIME_MECHANICS.md`](docs/SLIME_MECHANICS.md)
+- Trạng thái từng mục và danh sách thử tay: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md), [`docs/TEST_CHECKLIST_UNITY.md`](docs/TEST_CHECKLIST_UNITY.md)
 - **Trạng thái:** đang thiết kế, chưa có project Unity.
 
 ## Công nghệ
