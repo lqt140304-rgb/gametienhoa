@@ -4,10 +4,11 @@ Chúa Hang Vực Nứt Tím, mô hình Meshy rig tự động (Humanoid) với c
 
 | Chiêu | Dữ liệu (`MovesetSeed`, khóa `golemthachanh`) | Mở khi |
 |---|---|---|
-| **Đập Đất** (`Slam`) | Spin: báo 1,1 s (giơ hai tay qua đầu, ngả ra sau), đập 0,2 s (hai nắm đấm bổ xuống, thân chúi), hồi 2 s, bán kính 5 m, sát thương 26, có giáp lúc báo và lúc đập, hồi chiêu 8 s | luôn |
-| **Ném Đá** (`Throw`) | Throw: tay phải kéo ra sau 1 s rồi quăng; tảng đá to 0,7 m bay vòng cung 0,9 s; sát thương 16; tầm 5–18 m; hồi chiêu 6 s; vỡ tung khi rơi | luôn |
-| **Giáp Tinh Thể** (`Harden`) | mới `MoveShape.Harden`: báo 0,8 s, **giữ giáp 4 s nhận 35% sát thương** (`MoveDef.DamageTakenFactor`), rồi hồi 1 s (lúc này nhận ×1,5 như mọi pha hở); hồi chiêu 18 s; hai tay co lại che ngực, lõi sáng | máu ≤ 66% |
-| **Lõi Nổ** (`CoreBlast`) | Spin: báo 1,8 s (dang hai tay rộng, lõi ngực sáng dần rồi chớp), nổ 0,3 s, hồi 2,2 s, bán kính 7 m, sát thương 35, có giáp; hồi chiêu 25 s | máu ≤ 33% |
+| **Đập Đất** (`Slam`) | Spin: báo **1,5 s** (giơ hai tay qua đầu, ngả ra sau, chậm), đập 0,25 s, hồi **2,4 s**, bán kính 5,5 m, sát thương 32, **hất văng 9 và choáng slime 0,6 s**, rung màn hình mạnh, ba vòng sóng lan ra; có giáp lúc báo và đập; hồi chiêu 9 s | luôn |
+| **Ném Đá** (`Throw`) | Throw: tay phải kéo ra sau **1,3 s**, tảng đá **to 1 m** bay vòng cung **1,1 s**; trúng 20 máu; **rơi xuống đất vẫn gây 60% sát thương trong 2,5 m** (hố đá vỡ) và rung màn hình; tầm 5–18 m; hồi 8 s | luôn |
+| **Giáp Tinh Thể** (`Harden`) | báo 1 s, **giữ giáp 4 s nhận 30% sát thương**, hồi 1,4 s (nhận ×1,5); **tinh thể mọc ra trên hai vai và lưng** rồi thu vào; lõi sáng; hồi 18 s | máu ≤ 66% |
+| **Lõi Nổ** (`CoreBlast`) | Spin: báo **2,4 s** (dang hai tay, lõi sáng dần, **đất rung mạnh dần**), nổ 0,3 s, hồi 2,6 s, bán kính 8 m, sát thương 40, **hất văng 12 và choáng 0,8 s**, rung màn hình rất mạnh; hồi 25 s | máu ≤ 33% |
+| **Bước chân nặng** | mỗi lần chân chạm đất (khung 0,04 và 0,54 của clip đi): tiếng đạp nặng, bụi, màn hình rung nhẹ (`FootstepFx`) | luôn |
 
 ## Cách làm
 - Dữ liệu chiêu và tư thế là **mã thuần có test**: `MovesetSeed`, `GolemRules` (góc tay, thân, độ sáng lõi theo pha), `MoveScheduler` (giáp giảm sát thương), test `GolemRulesTests`.
@@ -18,6 +19,9 @@ Chúa Hang Vực Nứt Tím, mô hình Meshy rig tự động (Humanoid) với c
 
 ## Sửa sau lần thử đầu (2026-11-21)
 Golem bị gập người, tay duỗi ra trước không về lại được, bước chân lết. Ba nguyên nhân: (1) `GolemRigFx` **cộng dồn góc xoay mỗi khung hình** vì trạng thái Idle không có clip nên Animator không ghi đè xương: nay mỗi xương nhớ tư thế gốc và không bao giờ chồng góc (`Put`); (2) Idle không có clip nên bộ xương đóng băng giữa nhịp bước khi dừng: Idle nay là clip đi dừng ở khung hai chân khép (tốc độ 0, lệch chu kỳ 0,04); (3) tốc độ clip cố định trong khi trùm bị nhân cỡ và tốc độ theo tầng hang nên chân trượt: `WalkRate`, `RunRate` chạy theo tốc độ thật (một vòng đi dài 1,9 m, vòng chạy 3 m ở cỡ gốc, vòng chạy là số ước lượng).
+
+## Sức nặng (2026-11-21, sau lần thử thứ hai)
+Chủ dự án muốn trùm nặng và mạnh: mọi chiêu **báo chậm hơn, hồi lâu hơn, hất văng và choáng người chơi** (`MoveDef.Force`, `Freeze` cho đòn Spin, trước chỉ có cho gió và băng), **rung màn hình** (`ShakeRules`, `ImpactFx`, `ThirdPersonCamera.Thump`, giảm theo khoảng cách), tiếng bước chân nặng (`FootstepFx`, `golem_step.mp3`), tinh thể mọc ra khi giáp. **Cỡ Golem bị giới hạn nhân tối đa 1,2 lần ở hang** (trước đó cỡ trùm 2,4–3,2 lần khiến thân 6–8 m, hay kẹt vào vật cản).
 
 ## Chưa làm / rủi ro
 - Chưa kiểm trong Unity: hướng xoay tay, hướng lệch thân tự đo; lõi sáng bằng đèn điểm nên ở nơi sáng có thể khó thấy.

@@ -496,7 +496,9 @@ namespace Evolve.Combat
                 if (away.magnitude > reach) continue;
                 p.State.Damage(m.Damage * DamageScale);
                 var prb = p.GetComponent<Rigidbody>();
-                Impulse.Kick(prb, away.normalized * 5f + Vector3.up * 2f);
+                float push = m.Force > 0f ? m.Force : 5f;   // a heavy move (the golem's) throws the player much harder
+                Impulse.Kick(prb, away.normalized * push + Vector3.up * (m.Force > 0f ? push * 0.45f : 2f));
+                if (m.Freeze > 0f) { if (p.TryGetComponent(out Evolve.Player.SlimeController stunned)) stunned.FreezeFor(m.Freeze); }   // winded for a moment
                 if (m.Shape != MoveShape.Spin) break;   // a lunge or a charge hits one player
             }
         }

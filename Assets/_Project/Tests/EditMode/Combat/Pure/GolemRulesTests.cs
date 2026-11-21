@@ -14,10 +14,11 @@ namespace Evolve.Tests.EditMode
             foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(4, MovesetSeed.For(n).Count, n);
             Assert.IsTrue(MovesetSeed.Has("Golem Thạch Anh"));
             var slam = Move("Đập Đất"); var rocks = Move("Ném Đá"); var armor = Move("Giáp Tinh Thể"); var blast = Move("Lõi Nổ");
-            Assert.AreEqual(MoveShape.Spin, slam.Shape); Assert.AreEqual(1.1f, slam.Windup); Assert.AreEqual(5f, slam.Radius); Assert.AreEqual(26f, slam.Damage); Assert.AreEqual(1f, slam.UnlockBelow); Assert.AreEqual(8f, slam.Cooldown);
-            Assert.AreEqual(MoveShape.Throw, rocks.Shape); Assert.AreEqual(5f, rocks.MinRange); Assert.AreEqual(18f, rocks.MaxRange); Assert.AreEqual(16f, rocks.Damage); Assert.AreEqual(0.9f, rocks.FlightSeconds);
-            Assert.AreEqual(MoveShape.Harden, armor.Shape); Assert.AreEqual(4f, armor.Active); Assert.AreEqual(0.35f, armor.DamageTakenFactor); Assert.AreEqual(0.66f, armor.UnlockBelow); Assert.AreEqual(18f, armor.Cooldown);
-            Assert.AreEqual(MoveShape.Spin, blast.Shape); Assert.AreEqual(7f, blast.Radius); Assert.AreEqual(35f, blast.Damage); Assert.AreEqual(1.8f, blast.Windup); Assert.AreEqual(0.33f, blast.UnlockBelow);
+            // heavy: slow tells, long recoveries, hard knock-back and a short stun
+            Assert.AreEqual(MoveShape.Spin, slam.Shape); Assert.AreEqual(1.5f, slam.Windup); Assert.AreEqual(2.4f, slam.Recover); Assert.AreEqual(5.5f, slam.Radius); Assert.AreEqual(32f, slam.Damage); Assert.AreEqual(9f, slam.Force); Assert.AreEqual(0.6f, slam.Freeze); Assert.AreEqual(9f, slam.Cooldown); Assert.AreEqual(1f, slam.UnlockBelow);
+            Assert.AreEqual(MoveShape.Throw, rocks.Shape); Assert.AreEqual(1.3f, rocks.Windup); Assert.AreEqual(5f, rocks.MinRange); Assert.AreEqual(18f, rocks.MaxRange); Assert.AreEqual(20f, rocks.Damage); Assert.AreEqual(1.1f, rocks.FlightSeconds); Assert.AreEqual(1f, rocks.MissileSize); Assert.AreEqual(8f, rocks.Cooldown);
+            Assert.AreEqual(MoveShape.Harden, armor.Shape); Assert.AreEqual(1f, armor.Windup); Assert.AreEqual(4f, armor.Active); Assert.AreEqual(0.3f, armor.DamageTakenFactor); Assert.AreEqual(0.66f, armor.UnlockBelow); Assert.AreEqual(18f, armor.Cooldown);
+            Assert.AreEqual(MoveShape.Spin, blast.Shape); Assert.AreEqual(2.4f, blast.Windup); Assert.AreEqual(2.6f, blast.Recover); Assert.AreEqual(8f, blast.Radius); Assert.AreEqual(40f, blast.Damage); Assert.AreEqual(12f, blast.Force); Assert.AreEqual(0.8f, blast.Freeze); Assert.AreEqual(0.33f, blast.UnlockBelow);
         }
 
         [Test] public void Golem_PoseIsSoftened_BecauseTheArmsMoveByThemselves()
@@ -35,7 +36,7 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(1f, s.DamageTakenFactor);               // the armour is not on yet
             for (int i = 0; i < 200 && s.Phase != MovePhase.Active; i++) s.Update(0.02f, true, 3f, 0.5f);
             Assert.AreEqual(MovePhase.Active, s.Phase);
-            Assert.AreEqual(0.35f, s.DamageTakenFactor, 1e-4f);
+            Assert.AreEqual(0.3f, s.DamageTakenFactor, 1e-4f);
             Assert.IsTrue(s.IsArmored);
             for (int i = 0; i < 400 && s.Phase != MovePhase.Recover; i++) s.Update(0.02f, true, 3f, 0.5f);
             Assert.AreEqual(MoveScheduler.RecoverDamageFactor, s.DamageTakenFactor, 1e-4f);   // it is open to a counter once the armour drops

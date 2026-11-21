@@ -35,6 +35,18 @@ namespace Evolve.Combat
             p.v = ThrowRules.Launch(from.x, from.y, from.z, to.x, to.y, to.z, flightSeconds);
         }
 
+        /// <summary>A heavy boulder that lands (rather than hits) still hurts everyone near the crater: 60% of its damage within 2.5 m.</summary>
+        void Splash(Vector3 at)
+        {
+            foreach (var p in SurvivalStats.All)
+            {
+                if (p == null || p.IsRemote || p.State.IsDead) continue;
+                if ((p.transform.position - at).sqrMagnitude > 2.5f * 2.5f) continue;
+                p.State.Damage(damage * 0.6f);
+                Impulse.Kick(p.GetComponent<Rigidbody>(), (p.transform.position - at).normalized * 5f + Vector3.up * 2f);
+            }
+        }
+
         void FixedUpdate()
         {
             t += Time.fixedDeltaTime;
@@ -53,7 +65,7 @@ namespace Evolve.Combat
                 Destroy(gameObject);
                 return;
             }
-            if (t >= flight + 0.1f) { if (bone) HoundFx.ShardImpact(transform.position); else if (big) GolemFx.BoulderImpact(transform.position); Destroy(gameObject); }   // it landed
+            if (t >= flight + 0.1f) { if (bone) HoundFx.ShardImpact(transform.position); else if (big) { GolemFx.BoulderImpact(transform.position); Splash(transform.position); } Destroy(gameObject); }   // it landed
         }
     }
 }

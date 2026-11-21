@@ -17,6 +17,7 @@ golem_boulder|0.8|a huge boulder crashing and shattering on stone ground, heavy 
 golem_harden|1.2|crystal armour rapidly growing over a stone body, a rising chorus of glassy crystal cracking and chiming plus grinding stone, solid and decisive
 golem_core_charge|1.8|a glowing energy core charging inside a stone giant, a deep rising hum building with crackling crystal and trembling rock, tense, ends at a peak
 golem_core_blast|1.2|a huge energy explosion from a stone golem core, a massive deep boom with a bright crystal shatter and rocks blasting outward, decisive and powerful
+golem_step|0.6|one single very heavy footstep of a colossal stone giant on a stone floor, a deep dull thud with a grinding rock crunch, tight and short, no reverb tail
 golem_hurt|0.6|a short pained rumble of a stone golem being hit, cracking rock and a low grunt, abrupt and heavy
 T
 while IFS='|' read -r -u 3 id secs prompt; do

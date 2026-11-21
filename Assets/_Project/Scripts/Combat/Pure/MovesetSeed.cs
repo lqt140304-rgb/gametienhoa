@@ -44,10 +44,11 @@ namespace Evolve.Combat
             // Golem Thạch Anh (cave lord): slams the ground, throws boulders, hardens its crystal armour, and at low health blows its core
             sets["golemthachanh"] = new[]
             {
-                new MoveDef { Name = "Đập Đất", Shape = MoveShape.Spin, Windup = 1.1f, Active = 0.2f, Recover = 2f, Cooldown = 8f, MinRange = 0f, MaxRange = 5f, Radius = 5f, Damage = 26f, Armored = true, Anim = "Slam" },
-                new MoveDef { Name = "Ném Đá", Shape = MoveShape.Throw, Windup = 1f, Active = 0.1f, Recover = 1.6f, Cooldown = 6f, MinRange = 5f, MaxRange = 18f, FlightSeconds = 0.9f, Damage = 16f, MissileSize = 0.7f, Anim = "Throw" },
-                new MoveDef { Name = "Giáp Tinh Thể", Shape = MoveShape.Harden, Windup = 0.8f, Active = 4f, Recover = 1f, Cooldown = 18f, MinRange = 0f, MaxRange = 30f, DamageTakenFactor = 0.35f, UnlockBelow = 0.66f, Anim = "Harden" },
-                new MoveDef { Name = "Lõi Nổ", Shape = MoveShape.Spin, Windup = 1.8f, Active = 0.3f, Recover = 2.2f, Cooldown = 25f, MinRange = 0f, MaxRange = 7f, Radius = 7f, Damage = 35f, Armored = true, UnlockBelow = 0.33f, Anim = "CoreBlast" },
+                // everything is slow to start, hits like a falling wall and takes long to recover from: weight
+                new MoveDef { Name = "Đập Đất", Shape = MoveShape.Spin, Windup = 1.5f, Active = 0.25f, Recover = 2.4f, Cooldown = 9f, MinRange = 0f, MaxRange = 5.5f, Radius = 5.5f, Damage = 32f, Force = 9f, Freeze = 0.6f, Armored = true, Anim = "Slam" },
+                new MoveDef { Name = "Ném Đá", Shape = MoveShape.Throw, Windup = 1.3f, Active = 0.1f, Recover = 2f, Cooldown = 8f, MinRange = 5f, MaxRange = 18f, FlightSeconds = 1.1f, Damage = 20f, MissileSize = 1f, Anim = "Throw" },
+                new MoveDef { Name = "Giáp Tinh Thể", Shape = MoveShape.Harden, Windup = 1f, Active = 4f, Recover = 1.4f, Cooldown = 18f, MinRange = 0f, MaxRange = 30f, DamageTakenFactor = 0.3f, UnlockBelow = 0.66f, Anim = "Harden" },
+                new MoveDef { Name = "Lõi Nổ", Shape = MoveShape.Spin, Windup = 2.4f, Active = 0.3f, Recover = 2.6f, Cooldown = 25f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Damage = 40f, Force = 12f, Freeze = 0.8f, Armored = true, UnlockBelow = 0.33f, Anim = "CoreBlast" },
             };
             // Chó Xương (cave lord, a skeletal hound): pounces and pins, bites hard, claws, leaps over low obstacles, roars smaller things away, summons small copies of itself from the ground
             sets["choxuong"] = new[]

@@ -18,7 +18,7 @@ namespace Evolve.Creatures
             int tier = CaveTier.Of(caveId);
             var role = CaveTier.RoleOf(creature.name);
             float k = CaveTier.SizeFactor(role, tier);
-            if (Evolve.Combat.ChoXuongRigFx.Has(creature.name)) k = Mathf.Min(k, 1.2f);   // the Meshy hound is already tuned small in its prefab: a lord's 2.4-3.2x cave size would make it huge
+            if (Evolve.Combat.ChoXuongRigFx.Has(creature.name) || Evolve.Combat.GolemRigFx.Has(creature.name)) k = Mathf.Min(k, 1.2f);   // the Meshy hound is already small in its prefab and a golem scaled to 6-8 m got stuck on everything: a lord's 2.4-3.2x cave size would be too much
             creature.transform.localScale *= k;
             if (creature.TryGetComponent(out CreatureMotor motor)) motor.Resize(k);
             if (creature.TryGetComponent(out CreatureLocomotion loco)) loco.ScaleBy(k);

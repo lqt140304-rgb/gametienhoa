@@ -19,7 +19,7 @@ namespace Evolve.Combat
         class Part { public Transform T; public Quaternion Rest, Base, Written; public bool Has; public Vector3 Right, Forward, Up; }
 
         Part spine, armL, armR, foreL, foreR;
-        Transform handL, handR, chest;
+        Transform handL, handR, chest, shoulderL, shoulderR;
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f;
         ArmPose pose;
         Light coreLight;
@@ -68,12 +68,16 @@ namespace Evolve.Combat
                     case "RightArm": aR = t; break;
                     case "LeftForeArm": fL = t; break;
                     case "RightForeArm": fR = t; break;
+                    case "LeftShoulder": shoulderL = t; break;
+                    case "RightShoulder": shoulderR = t; break;
                     case "LeftHand": handL = t; break;
                     case "RightHand": handR = t; break;
                 }
             chest = sp1 != null ? sp1 : sp;
             spine = Make(sp1 != null ? sp1 : sp); armL = Make(aL); armR = Make(aR); foreL = Make(fL); foreR = Make(fR);
             if (pred != null) lastHealth = pred.Health;
+            FootstepFx.Attach(gameObject, "Golem/golem_step", ProceduralSfx.Kind.HoundThud, new Color(0.58f, 0.52f, 0.45f));
+            BuildCrystals(sp1 != null ? sp1 : sp);
             if (armL != null && handL != null)
             {
                 // raising: turn about the creature's right axis so the hand goes up; spreading: about its forward axis so the hand goes outward
@@ -115,6 +119,32 @@ namespace Evolve.Combat
             animator.SetFloat("RunRate", Mathf.Clamp(speed / (RunStride * scale), 0.3f, 3f));
         }
 
+        // the crystal armour: spiked crystal crowns on the shoulders and the back that grow out while the armour holds and shrink away after
+        readonly System.Collections.Generic.List<Transform> crystals = new System.Collections.Generic.List<Transform>();
+        float crystalT, crystalSize = 1f;
+
+        void BuildCrystals(Transform chestBone)
+        {
+            var mat = Evolve.Abilities.SkillFx.Gel(new Color(0.82f, 0.74f, 0.55f), 1f, 0.9f, 2.2f);
+            float s = Mathf.Max(0.3f, transform.lossyScale.y);
+            var mesh = LordRegalia.ToMesh(RegaliaMeshes.Crown(0.32f * s, 0.8f * s, 6), false);
+            foreach (var (bone, up) in new[] { (shoulderL, 0.15f), (shoulderR, 0.15f), (chestBone, 0.35f) })
+            {
+                if (bone == null) continue;
+                var go = new GameObject("Tinh Thể");
+                go.transform.SetParent(bone, false);
+                go.transform.position = bone.position + Vector3.up * up * s;
+                go.transform.rotation = Quaternion.identity;
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = mat; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                go.transform.localScale = Vector3.zero;
+                crystalSizeBase = 1f / Mathf.Max(0.0001f, bone.lossyScale.y);
+                crystals.Add(go.transform);
+            }
+            crystalSize = crystalSizeBase;
+        }
+        float crystalSizeBase = 1f;
+
         void LateUpdate()
         {
             float dt = Mathf.Max(Time.deltaTime, 1e-4f), t = Time.time;
@@ -130,8 +160,14 @@ namespace Evolve.Combat
                 target = GolemRules.Evaluate(combat.CurrentMove.Anim, combat.Phase, combat.PhaseProgress);
                 BossMusic.Ping("golem_battle");   // any move in progress is a blow in the fight
             }
-            float k = 1f - Mathf.Exp(-10f * dt);
+            float k = 1f - Mathf.Exp(-7f * dt);   // heavy: the arms take their time
             pose = ArmPose.Lerp(pose, target, k);
+            // the core charging: the ground rumbles more and more
+            if (combat != null && combat.CurrentMove != null && combat.CurrentMove.Anim == "CoreBlast" && combat.Phase == MovePhase.Windup)
+                ImpactFx.Thump(transform.position, 0.015f + 0.05f * combat.PhaseProgress, 0.2f, 24f);
+            bool armour = combat != null && combat.CurrentMove != null && combat.CurrentMove.Anim == "Harden" && combat.Phase != MovePhase.Recover && combat.Phase != MovePhase.Idle;
+            crystalT = Mathf.MoveTowards(crystalT, armour ? 1f : 0f, dt * (armour ? 1.6f : 1.2f));
+            for (int i = 0; i < crystals.Count; i++) if (crystals[i] != null) crystals[i].localScale = Vector3.one * crystalSize * Mathf.SmoothStep(0f, 1f, crystalT);
 
             if (spine != null) Put(spine, Quaternion.AngleAxis(hunchSign * pose.Hunch, spine.Right));
             Arm(armL, foreL, +1f);

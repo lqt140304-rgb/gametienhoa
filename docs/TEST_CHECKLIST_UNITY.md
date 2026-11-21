@@ -275,9 +275,11 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. C
 ### H11. Golem Thạch Anh (Meshy): bộ chiêu (chưa ai thử trong Unity)
 Thiết kế: `docs/superpowers/specs/2026-11-21-golem-moveset-design.md`. Chạy lại `Build Golem Thạch Anh (Meshy) Prefab` (khi đã dừng Play), tạo Golem từ menu thần (Chúa Hang), mở tab Combat để xem pha hiện tại.
 - [ ] **Đi và chạy** vẫn dùng clip Meshy; không thu nhỏ, không đứng đơ.
-- [ ] **Đập Đất** (trong 5 m): giơ hai tay qua đầu và ngả ra sau, rồi bổ cả hai xuống; vòng nâu báo tầm 5 m; bụi và sóng đất; né ra ngoài 5 m thì trượt. Có giáp lúc đập nên Vồ bị bật ra; lúc hồi 2 s đánh nó đau gấp rưỡi.
+- [ ] **Bước chân nặng:** mỗi bước chân chạm đất có tiếng đạp trầm, bụi dưới chân, màn hình rung nhẹ; khi đứng yên không có tiếng. Chân không còn lết, không kẹt vào vật cản (cỡ giờ giới hạn ~1,2 lần).
+- [ ] **Sức nặng:** mọi chiêu báo chậm rõ, ra đòn thì màn hình rung mạnh (Đập Đất, Lõi Nổ rung nhất), slime bị **hất văng** và **đứng đơ một chút** (~0,6–0,8 s), tảng đá rơi xuống đất cũng gây sát thương trong ~2,5 m.
+- [ ] **Đập Đất** (trong 5,5 m): giơ hai tay qua đầu và ngả ra sau (chậm, ~1,5 s), rồi bổ cả hai xuống; vòng nâu báo tầm 5,5 m, ba vòng sóng; bụi và sóng đất; né ra ngoài 5 m thì trượt. Có giáp lúc đập nên Vồ bị bật ra; lúc hồi 2 s đánh nó đau gấp rưỡi.
 - [ ] **Ném Đá** (cách 5–18 m): tay phải kéo ra sau rồi quăng; tảng đá to bay vòng cung; trúng ~16 máu; vỡ tung có bụi và tiếng đập đá.
-- [ ] **Giáp Tinh Thể** (máu dưới 66%): co hai tay che ngực, lõi sáng, tia tinh thể; trong 4 s đánh nó thấy mất ít máu hẳn (35%); sau đó hở.
+- [ ] **Giáp Tinh Thể** (máu dưới 66%): co hai tay che ngực, lõi sáng, **tinh thể vàng mọc ra trên hai vai và lưng**, tia tinh thể; trong 4 s đánh nó thấy mất ít máu hẳn (30%); sau đó hở.
 - [ ] **Lõi Nổ** (máu dưới 33%, trong 7 m): dang rộng hai tay, lõi ngực sáng dần rồi chớp, rồi nổ vòng 7 m với tiếng nổ lớn.
 - [ ] **Lõi sáng:** đèn ấm trong ngực đập nhẹ lúc nghỉ, chớp khi trúng đòn; hướng đặt đèn đúng ngực (báo nếu lệch).
 - [ ] **Nhạc riêng:** nhạc trống nặng, chậm, hợp "núi đá", vang lên khi bắt đầu giao chiến, nhỏ dần sau 10 giây yên, bật lại khi có đòn; không lẫn nhạc của Chó Xương.

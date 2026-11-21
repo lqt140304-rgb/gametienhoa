@@ -22,25 +22,27 @@ namespace Evolve.Combat
                     else if (phase == MovePhase.Active)
                     {
                         Sfx("golem_slam", p, 1f, ProceduralSfx.Kind.HoundThud);
-                        SkillFx.Dust(p, m.Radius * 0.7f, Dust, 50);
-                        SkillFx.Ring(p, m.Radius, Dust, 0.6f, 0.15f);
+                        ImpactFx.Thump(p, 0.4f, 0.9f, 28f);
+                        SkillFx.Dust(p, m.Radius * 0.7f, Dust, 60);
+                        SkillFx.Ring(p, m.Radius * 0.45f, Dust, 0.35f, 0.1f); SkillFx.Ring(p, m.Radius * 0.75f, Dust, 0.5f, 0.1f); SkillFx.Ring(p, m.Radius, Dust, 0.7f, 0.1f);   // the shock runs outward in three rings
                         SkillFx.Burst(p + Vector3.up * 0.2f, Crystal, 18, 5f, 0.12f, 0.8f, 0.6f);   // crystal chips jump off the floor
                     }
                     break;
                 case "Throw":
                     if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.8f, ProceduralSfx.Kind.HoundGrowlShort);
-                    else if (phase == MovePhase.Active) Sfx("golem_throw", p, 1f, ProceduralSfx.Kind.HoundLunge);
+                    else if (phase == MovePhase.Active) { Sfx("golem_throw", p, 1f, ProceduralSfx.Kind.HoundLunge); ImpactFx.Thump(p, 0.1f, 0.4f, 18f); }
                     break;
                 case "Harden":
                     if (phase == MovePhase.Windup) Sfx("golem_harden", p, 0.9f, ProceduralSfx.Kind.HoundSnap);
-                    else if (phase == MovePhase.Active) { SkillFx.Burst(p + Vector3.up * 1.2f * scale, Crystal, 24, 3f, 0.1f, 0.9f); SkillFx.Ring(p, 2.5f * scale, Crystal, 0.5f, 0.3f); }
+                    else if (phase == MovePhase.Active) { SkillFx.Burst(p + Vector3.up * 1.2f * scale, Crystal, 30, 3.5f, 0.1f, 0.9f); SkillFx.Ring(p, 2.5f * scale, Crystal, 0.5f, 0.3f); ImpactFx.Thump(p, 0.12f, 0.5f, 20f); }
                     break;
                 case "CoreBlast":
                     if (phase == MovePhase.Windup) Sfx("golem_core_charge", p, 1f, ProceduralSfx.Kind.HoundHowl);
                     else if (phase == MovePhase.Active)
                     {
                         Sfx("golem_core_blast", p, 1f, ProceduralSfx.Kind.HoundThud);
-                        SkillFx.Ring(p, m.Radius, Core, 0.7f, 0.1f);
+                        ImpactFx.Thump(p, 0.6f, 1.4f, 34f);
+                        SkillFx.Ring(p, m.Radius * 0.5f, Core, 0.4f, 0.1f); SkillFx.Ring(p, m.Radius, Core, 0.8f, 0.1f);
                         SkillFx.Dust(p, m.Radius * 0.6f, Dust, 60);
                         SkillFx.Burst(p + Vector3.up * 1.3f * scale, Core, 40, 7f, 0.14f, 0.9f, 0.5f);
                     }
@@ -60,6 +62,7 @@ namespace Evolve.Combat
         public static void BoulderImpact(Vector3 p)
         {
             Sfx("golem_boulder", p, 1f, ProceduralSfx.Kind.HoundThud);
+            ImpactFx.Thump(p, 0.25f, 0.6f, 22f);
             SkillFx.Burst(p, Dust, 20, 5f, 0.12f, 0.8f);
             SkillFx.Dust(p, 1.5f, Dust, 20);
         }
