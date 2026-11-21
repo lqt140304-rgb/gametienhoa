@@ -5,6 +5,20 @@ namespace Evolve.Swallow
     /// <summary>Pure numbers behind the skill visuals (colours per family, timing curves), so they can be tested without Unity.</summary>
     public static class SkillFxMath
     {
+        public const float ChargeSquashSeconds = 0.04f;
+        public const float ChargeImpactSeconds = 0.24f;
+
+        public static bool IsChargeContact(float facing, float normalUp) => facing > 0.45f && normalUp <= 0.45f;
+
+        /// <summary>Positive for the initial squash, negative for the smaller elastic rebound.</summary>
+        public static float ChargeImpact(float elapsed)
+        {
+            if (elapsed < 0f || elapsed >= ChargeImpactSeconds) return 0f;
+            if (elapsed < ChargeSquashSeconds) return EaseOutCubic(elapsed / ChargeSquashSeconds);
+            if (elapsed < 0.11f) return 1f - 1.24f * EaseOutCubic((elapsed - ChargeSquashSeconds) / 0.07f);
+            return -0.24f * (1f - EaseOutCubic((elapsed - 0.11f) / 0.13f));
+        }
+
         /// <summary>Colour of a family's effects (soft, a little pastel: they glow, they do not blind).</summary>
         public static Color FamilyColor(SkillFamily f) => f switch
         {
