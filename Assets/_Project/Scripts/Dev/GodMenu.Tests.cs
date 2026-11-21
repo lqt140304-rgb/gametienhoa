@@ -261,15 +261,17 @@ namespace Evolve.DevTools
         {
 #if UNITY_EDITOR
             string key = SpeciesNames.Key(displayName);
-            if (prefabCache.TryGetValue(key, out var cached) && cached != null) return cached;
+            GameObject found = null;
             foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/_Project/Prefabs/Wildlife" }))
             {
                 string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
                 if (SpeciesNames.Key(System.IO.Path.GetFileNameWithoutExtension(path)) != key) continue;
-                if (path.Contains("(Meshy)")) { var meshy = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path); if (meshy != null) return prefabCache[key] = meshy; }   // the Meshy variant wins for testing
                 var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                if (prefab != null && (prefab.GetComponent<Predator>() != null || prefab.GetComponent<Prey>() != null)) return prefabCache[key] = prefab;
+                if (prefab == null || (prefab.GetComponent<Predator>() == null && prefab.GetComponent<Prey>() == null)) continue;
+                if (path.Contains("(Meshy)")) { Debug.Log("[Menu] dùng prefab " + path); return prefab; }   // the Meshy variant wins for testing
+                if (found == null) found = prefab;
             }
+            if (found != null) return found;
 #endif
             return null;
         }
