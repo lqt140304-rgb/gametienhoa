@@ -9,17 +9,19 @@ namespace Evolve.Tests.EditMode
     {
         static MoveDef Move(string name) => MovesetSeed.For("Golem Thạch Anh").Single(m => m.Name == name);
 
-        [Test] public void Golem_HasItsFiveMoves_ByAnyName()
+        [Test] public void Golem_HasItsSixMoves_ByAnyName()
         {
-            foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(5, MovesetSeed.For(n).Count, n);
+            foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(6, MovesetSeed.For(n).Count, n);
             Assert.IsTrue(MovesetSeed.Has("Golem Thạch Anh"));
-            var punch = Move("Nện Đấm"); var slam = Move("Đập Đất"); var rocks = Move("Ném Đá"); var meteor = Move("Giáng Thạch"); var blast = Move("Lõi Nổ");
+            var punch = Move("Nện Đấm"); var sweep = Move("Quét Tay"); var rocks = Move("Ném Đá"); var rush = Move("Húc Đầu"); var meteor = Move("Giáng Thạch"); var blast = Move("Lõi Nổ");
+            Assert.IsFalse(MovesetSeed.For("Golem Thạch Anh").Any(m => m.Name == "Đập Đất"));   // replaced by the close normal attack
             // heavy: slow tells, long recoveries, hard knock-back and a short stun
             Assert.AreEqual(MoveShape.Lunge, punch.Shape); Assert.AreEqual(0.9f, punch.Windup); Assert.AreEqual(3.5f, punch.MaxRange); Assert.AreEqual(28f, punch.Damage); Assert.AreEqual(6f, punch.Force);
-            Assert.AreEqual(MoveShape.Spin, slam.Shape); Assert.AreEqual(1.5f, slam.Windup); Assert.AreEqual(2.4f, slam.Recover); Assert.AreEqual(5.5f, slam.Radius); Assert.AreEqual(32f, slam.Damage); Assert.AreEqual(9f, slam.Force); Assert.AreEqual(0.6f, slam.Freeze); Assert.AreEqual(9f, slam.Cooldown);
-            Assert.AreEqual(MoveShape.Throw, rocks.Shape); Assert.AreEqual(1.3f, rocks.Windup); Assert.AreEqual(5f, rocks.MinRange); Assert.AreEqual(18f, rocks.MaxRange); Assert.AreEqual(20f, rocks.Damage); Assert.AreEqual(1.1f, rocks.FlightSeconds); Assert.AreEqual(1f, rocks.MissileSize); Assert.AreEqual(8f, rocks.Cooldown);
-            Assert.AreEqual(MoveShape.Meteor, meteor.Shape); Assert.AreEqual(MoveRole.Special, meteor.Role); Assert.IsTrue(meteor.Dodge); Assert.AreEqual(4f, meteor.MinRange); Assert.AreEqual(16f, meteor.MaxRange); Assert.AreEqual(1.6f, meteor.Windup); Assert.AreEqual(0.35f, meteor.Active); Assert.AreEqual(6.5f, meteor.Recover);
-            Assert.AreEqual(4.2f, meteor.Radius); Assert.AreEqual(30f, meteor.Damage); Assert.AreEqual(4, meteor.SpikeCount); Assert.AreEqual(6.5f, meteor.SpikeRadius); Assert.AreEqual(18f, meteor.MissileDamage); Assert.AreEqual(0.8f, meteor.MissileSize); Assert.AreEqual(1.0f, meteor.RecoverFactor); Assert.AreEqual(22f, meteor.Cooldown);
+            Assert.AreEqual(MoveRole.Normal, sweep.Role); Assert.AreEqual(MoveShape.Spin, sweep.Shape); Assert.AreEqual(0f, sweep.MinRange); Assert.LessOrEqual(sweep.MaxRange, 4f); Assert.AreEqual("Sweep", sweep.Anim);   // close range
+            Assert.AreEqual(MoveRole.Ranged, rocks.Role); Assert.AreEqual(MoveShape.Throw, rocks.Shape); Assert.AreEqual("Lob", rocks.Anim); Assert.GreaterOrEqual(rocks.Windup, 2f); Assert.AreEqual(5f, rocks.MinRange); Assert.AreEqual(18f, rocks.MaxRange); Assert.AreEqual(1.1f, rocks.FlightSeconds); Assert.Greater(rocks.MissileSize, 1f); Assert.AreEqual(8f, rocks.Cooldown);
+            Assert.AreEqual(MoveRole.Combo, rush.Role); Assert.AreEqual(MoveShape.Charge, rush.Shape); Assert.IsTrue(rush.Ramp); Assert.IsTrue(rush.Armored); Assert.AreEqual("Rush", rush.Anim); Assert.AreEqual(12f, rush.Distance); Assert.GreaterOrEqual(rush.MinRange, 4f);
+            Assert.AreEqual(MoveShape.Meteor, meteor.Shape); Assert.AreEqual(MoveRole.Special, meteor.Role); Assert.IsTrue(meteor.Dodge); Assert.AreEqual(4f, meteor.MinRange); Assert.AreEqual(16f, meteor.MaxRange); Assert.AreEqual(2.4f, meteor.Windup); Assert.AreEqual(0.35f, meteor.Active);
+            Assert.AreEqual(4.2f, meteor.Radius); Assert.AreEqual(30f, meteor.Damage); Assert.AreEqual(4, meteor.SpikeCount); Assert.AreEqual(6.5f, meteor.SpikeRadius); Assert.AreEqual(18f, meteor.MissileDamage); Assert.AreEqual(0.8f, meteor.MissileSize); Assert.AreEqual(1.0f, meteor.RecoverFactor);
             Assert.AreEqual(MoveShape.Spin, blast.Shape); Assert.AreEqual(2.4f, blast.Windup); Assert.AreEqual(2.6f, blast.Recover); Assert.AreEqual(8f, blast.Radius); Assert.AreEqual(40f, blast.Damage); Assert.AreEqual(12f, blast.Force); Assert.AreEqual(0.8f, blast.Freeze); Assert.AreEqual(0.25f, blast.UnlockBelow); Assert.AreEqual(40f, blast.Cooldown);
         }
 

@@ -9,7 +9,7 @@ namespace Evolve.Tests
 
         [Test] public void Meteor_CrouchesDeepToSpring_ThenTucksTheLegsInTheAir_ThenAbsorbsTheLanding()
         {
-            Assert.Greater(P("Meteor", MovePhase.Windup, 0.25f).Crouch, 0.8f);                 // the spring: knees bent just before it leaves the ground
+            Assert.Greater(P("Meteor", MovePhase.Windup, 0.45f).Crouch, 0.8f);                 // the spring: knees bent just before it leaves the ground
             Assert.Less(P("Meteor", MovePhase.Windup, 1f).Crouch, 0.2f);                        // in the air: legs are no longer crouched
             Assert.Greater(P("Meteor", MovePhase.Windup, 0.8f).Tuck, 0.6f);                    // legs pulled up while it hangs in the sky
             Assert.Greater(P("Meteor", MovePhase.Active, 1f).Crouch, 0.6f);                    // lands in a deep crouch
@@ -35,7 +35,7 @@ namespace Evolve.Tests
 
         [Test] public void EveryBodyValue_StaysInItsLimits_AndRestIsZero()
         {
-            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt" })
+            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt", "Sweep", "Lob", "Rush", "Dizzy" })
             {
                 foreach (var ph in new[] { MovePhase.Windup, MovePhase.Active, MovePhase.Recover })
                     for (float t = 0f; t <= 1f; t += 0.1f)
@@ -58,6 +58,43 @@ namespace Evolve.Tests
         {
             Assert.AreEqual(0f, GaitRules.Sway(0f, 4f), 1e-3f); Assert.AreEqual(4f, GaitRules.Sway(0.25f, 4f), 1e-3f); Assert.AreEqual(-4f, GaitRules.Sway(0.75f, 4f), 1e-3f);
             Assert.AreEqual(0f, GaitRules.RunBlend(1.5f)); Assert.AreEqual(1f, GaitRules.RunBlend(12f)); Assert.That(GaitRules.RunBlend(6f), Is.InRange(0.2f, 0.8f));
+        }
+
+        [Test] public void Meteor_PointsAtThePlayerFirst_ThenGathersAndCrouches_BeforeItJumps()
+        {
+            Assert.Less(P("Meteor", MovePhase.Windup, 0.2f).Back, -60f);                             // the right arm stretched out toward the player
+            Assert.Greater(P("Meteor", MovePhase.Windup, 0.45f).Crouch, 0.8f);                       // then the deep crouch to spring
+            Assert.AreEqual(0f, LeapRules.Height(MovePhase.Windup, 0.4f));                           // and it has not left the ground yet
+            Assert.Greater(LeapRules.Height(MovePhase.Windup, 0.7f), 0f);
+        }
+
+        [Test] public void Lob_BendsDownToTheRock_LiftsItOverTheHeadWithBothArms_ThenFoldsForwardToThrow()
+        {
+            Assert.Greater(P("Lob", MovePhase.Windup, 0.45f).Hunch, 40f); Assert.Greater(P("Lob", MovePhase.Windup, 0.45f).Crouch, 0.5f);   // down at the rock
+            Assert.Greater(P("Lob", MovePhase.Windup, 0.9f).Raise, 130f); Assert.Less(P("Lob", MovePhase.Windup, 0.9f).Hunch, 0f);        // overhead, leaning back
+            Assert.Greater(P("Lob", MovePhase.Active, 1f).Hunch, 35f); Assert.Less(P("Lob", MovePhase.Active, 1f).Raise, 60f);             // folded forward, arms thrown down
+            Assert.AreEqual(0f, P("Lob", MovePhase.Windup, 0.9f).Back);                                                                    // both arms together: no one-armed cock
+        }
+
+        [Test] public void Rush_CoversTheHeadWithBothArms_AndStaysLow()
+        {
+            var r = P("Rush", MovePhase.Active, 0.5f);
+            Assert.Greater(r.Raise, 130f); Assert.Greater(r.Hunch, 30f); Assert.Greater(r.Crouch, 0.2f); Assert.AreEqual(0f, r.Back);
+        }
+
+        [Test] public void Sweep_DrawsTheArmWide_ThenSweepsItAcrossWithATwist()
+        {
+            Assert.Greater(P("Sweep", MovePhase.Windup, 1f).Spread, 50f); Assert.Greater(P("Sweep", MovePhase.Windup, 1f).Twist, 20f);
+            Assert.Less(P("Sweep", MovePhase.Active, 1f).Twist, -20f);
+        }
+
+        [Test] public void VolleyPoses_RiseFromACrouch_HugTheColumn_ThenAimLikeAJavelin()
+        {
+            Assert.Greater(GolemRules.Volley(VolleyStage.Rise, 0f).Crouch, 0.8f); Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Rise, VolleyFsm.RiseSeconds).Crouch, 1e-3f);
+            Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 1f).Raise, 40f); Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 1f).Hunch, 25f);
+            var j = GolemRules.Volley(VolleyStage.Hold, 1f);
+            Assert.Greater(j.Back, 100f); Assert.Greater(j.Raise, 40f);                                // right arm back, the left pointing forward
+            Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Walk, 1f).Crouch); Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Done, 1f).Raise);
         }
     }
 }

@@ -162,12 +162,18 @@ namespace Evolve.Combat
         readonly List<RockSpike> spikeObjs = new List<RockSpike>();
         RockSpike heldRock;
         Transform rightHand;
-        const float DashSpeed = 11f;
+        const float WalkSpeed = 3.2f;
 
         /// <summary>True while it is up in the air (the leap and the fall): nothing that depends on walking (footsteps) should run.</summary>
-        public bool Airborne => meteorActive && scheduler != null && (scheduler.Phase == MovePhase.Active || (scheduler.Phase == MovePhase.Windup && scheduler.Progress01 > 0.2f));
+        public bool Airborne => meteorActive && scheduler != null && (scheduler.Phase == MovePhase.Active || (scheduler.Phase == MovePhase.Windup && scheduler.Progress01 > 0.5f));
         /// <summary>It has pulled a spike out of the ground and is aiming it.</summary>
         public bool HoldingRock => volley != null && volley.Stage == VolleyStage.Hold;
+        /// <summary>The rock volley's stage and the seconds spent in it, or null when it is not under way (the rig poses the body by it).</summary>
+        public VolleyStage? VolleyNow => volley != null && meteorActive ? volley.Stage : (VolleyStage?)null;
+        public float VolleyTime => volley != null ? volley.StageTime : 0f;
+        float dizzyUntil;
+        /// <summary>Dazed after charging head first into a wall.</summary>
+        public bool Dizzy => Time.time < dizzyUntil;
 
         float GroundY(float x, float z, float fallback) => Evolve.World.GroundHeight.At(x, z, fallback);
 
@@ -180,10 +186,14 @@ namespace Evolve.Combat
             meteorLand = new Vector3(t.x, 0f, t.z);
             SkillFx.Ring(new Vector3(t.x, GroundY(t.x, t.z, t.y) + 0.05f, t.z), m.Radius, TellColor, m.Windup * tellScale, 0.3f);   // the ring on the ground: where it will land (it does not follow the player)
             ClearMeteorObjects();
+            leapSfx = false;
+            GolemFx.Point(transform.position);
         }
+        bool leapSfx;
 
         void TickLeapUp(MoveDef m)
         {
+            if (!leapSfx && scheduler.Progress01 >= 0.45f) { leapSfx = true; GolemFx.Leap(transform.position); }   // the spring: the sound comes when it leaves the ground, not at the pointing
             float h = LeapRules.Height(MovePhase.Windup, scheduler.Progress01);
             rb.MovePosition(new Vector3(meteorFrom.x, meteorFrom.y + h, meteorFrom.z));
         }
@@ -218,23 +228,25 @@ namespace Evolve.Combat
         {
             if (volley == null) { SnapToGround(); return; }   // knocked out of the leap before it landed
             if (volley.Stage == VolleyStage.Done) return;
+            if (volley.Stage == VolleyStage.Rise) { volley.Update(Time.fixedDeltaTime, false); return; }   // getting up from the landing crouch: nothing else yet
             var spike = volley.Index < spikeObjs.Count ? spikeObjs[volley.Index] : null;
-            if (spike == null) { volley.Update(VolleyFsm.DashTimeout, true); return; }   // the spike is gone: skip it
+            if (spike == null) { volley.Update(VolleyFsm.WalkTimeout, true); return; }   // the spike is gone: skip it
             Vector3 to = Flat(spike.transform.position - transform.position);
             bool arrived = to.magnitude <= Radius + 0.9f;
-            if (volley.Stage == VolleyStage.Dash && !arrived)
+            if (volley.Stage == VolleyStage.Walk && !arrived)
             {
-                if (to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.3f));
-                if (motor != null) motor.Move(to.normalized, DashSpeed, false);   // straight at the spike: wall detours flip the heading every tick and the golem wobbled
+                if (to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.2f));
+                if (motor != null) motor.Move(to.normalized, WalkSpeed, false);   // it walks to the next spike (no detours: they flip the heading every tick)
             }
+            else if (volley.Stage == VolleyStage.Pull && to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.2f));
             else if (volley.Stage == VolleyStage.Hold) FaceTarget();
             var e = volley.Update(Time.fixedDeltaTime, arrived);
-            if (e == VolleyEvent.Picked)
+            if (e == VolleyEvent.PullStart) { spike.BeginLift(VolleyFsm.PullSeconds); GolemFx.Pull(spike.transform.position); }   // both arms take the column and draw it out slowly
+            else if (e == VolleyEvent.Picked)
             {
                 if (rightHand == null) foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "RightHand") { rightHand = t; break; }
                 heldRock = spike;
                 spike.Grab(rightHand != null ? rightHand : transform);
-                GolemFx.Pull(spike.transform.position);
             }
             else if (e == VolleyEvent.Threw) ThrowHeld(m);
         }
@@ -471,7 +483,7 @@ namespace Evolve.Combat
                 SkillFx.Ring(iceSpot, m.Radius, IceColor, m.Active, 0.3f);   // the ring under the player's feet: step out before the block falls
             }
             if (m.Shape == MoveShape.Throw && target != null)
-                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
+                MonsterProjectile.Launch(TryGetComponent(out GolemRigFx rig) && rig.RockPosition(out var rockAt) ? rockAt : transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
             if (m.Shape == MoveShape.Perch) BeginPerch(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);
@@ -484,9 +496,16 @@ namespace Evolve.Combat
             if (m.Shape == MoveShape.Gust) { Gust(m); return; }
             if (m.Shape == MoveShape.Spears) { TickSpears(m); return; }
             if (m.Shape != MoveShape.Lunge && m.Shape != MoveShape.Charge) return;
-            if (m.Active > 0f && motor != null && !motor.Move(strikeDir, strikeDist / m.Active))
+            float chargeSpeed = m.Active > 0f ? strikeDist / m.Active * (m.Ramp ? ChargeRules.Factor(scheduler.Progress01) : 1f) : 0f;   // a ramped charge starts slowly and builds up
+            if (m.Active > 0f && motor != null && !motor.Move(strikeDir, chargeSpeed, !m.Ramp))   // a ramped charge never detours: it runs straight into the wall
             {
-                if (m.Shape == MoveShape.Charge) { CreatureStatus.Stun(this, 2f); scheduler.Stun(2f); loco?.PlayAction("Stun"); return; }   // hit a wall: dazed
+                if (m.Shape == MoveShape.Charge)
+                {
+                    float daze = m.Ramp ? 3f : 2f;
+                    CreatureStatus.Stun(this, daze); scheduler.Stun(daze); loco?.PlayAction("Stun"); dizzyUntil = Time.time + daze;   // hit a wall: dazed
+                    if (m.Ramp) GolemFx.WallBump(transform.position + strikeDir * Radius);
+                    return;
+                }
             }
             if (!hitDone && target != null && Flat(target.transform.position - transform.position).magnitude <= Radius + HitReach)
             {

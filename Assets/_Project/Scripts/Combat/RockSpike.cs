@@ -11,7 +11,8 @@ namespace Evolve.Combat
     {
         static Mesh mesh;
         static Material mat;
-        float width, height, grow, sinkT = -1f;
+        float width, height, grow, sinkT = -1f, liftT = -1f, liftSeconds = 1f;
+        Vector3 liftFrom;
         bool held;
 
         static Mesh Pyramid()
@@ -50,11 +51,20 @@ namespace Evolve.Combat
             transform.localScale = new Vector3(0.5f * width, 0.55f * height, 0.5f * width) * k;
         }
 
+        /// <summary>The golem takes hold and draws the column slowly out of the ground (it rises by most of its length over <paramref name="seconds"/>).</summary>
+        public void BeginLift(float seconds) { liftT = 0f; liftSeconds = Mathf.Max(0.1f, seconds); liftFrom = transform.position; }
+
         public void Sink() { if (sinkT < 0f) sinkT = 0f; }
 
         void Update()
         {
             if (held) return;
+            if (liftT >= 0f)
+            {
+                liftT = Mathf.Min(1f, liftT + Time.deltaTime / liftSeconds);
+                transform.position = liftFrom + Vector3.up * (0.85f * height * Mathf.SmoothStep(0f, 1f, liftT));
+                return;
+            }
             if (sinkT >= 0f)
             {
                 sinkT += Time.deltaTime / 0.5f;

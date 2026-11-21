@@ -18,7 +18,8 @@ namespace Evolve.Tests.EditMode
                 Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Ranged), boss + " ranged");
                 Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Special), boss + " special");
                 Assert.AreEqual(1, moves.Count(m => m.Role == MoveRole.Ultimate), boss + " ultimate");
-                Assert.AreEqual(5, moves.Count, boss + " total");
+                Assert.LessOrEqual(moves.Count(m => m.Role == MoveRole.Combo), 1, boss + ": at most one extra combo skill (a charge or other connector)");
+                Assert.AreEqual(5 + moves.Count(m => m.Role == MoveRole.Combo), moves.Count, boss + " total");
                 var special = moves.Single(m => m.Role == MoveRole.Special);
                 Assert.IsTrue(special.Pins || special.Dodge, boss + ": the special skill is a challenge: it holds the player in a mini game (Pins) or sets a dodge puzzle (Dodge)");
                 Assert.LessOrEqual(moves.Single(m => m.Role == MoveRole.Ultimate).UnlockBelow, 0.25f + 1e-4f, boss + ": the ultimate comes near the end of its health");

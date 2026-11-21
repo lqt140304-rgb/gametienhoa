@@ -7,7 +7,7 @@ namespace Evolve.Combat
     public enum MovePhase { Idle, Windup, Active, Recover }
 
     /// <summary>What a move is for in a boss's standard kit: two Normal attacks, one Ranged, one Special (it holds the player in a mini game), one Ultimate near the end of its health.</summary>
-    public enum MoveRole { Normal, Ranged, Special, Ultimate }
+    public enum MoveRole { Normal, Ranged, Special, Ultimate, Combo }
 
     /// <summary>One attack of a monster (data): its timing, reach, damage and when it unlocks.</summary>
     public sealed class MoveDef
@@ -42,6 +42,8 @@ namespace Evolve.Combat
         public int SpikeCount;
         public float SpikeRadius, MissileDamage;
         /// <summary>Damage multiplier while it recovers (open to a counter): 1.5 normally; a move whose recovery is itself an attack (the golem's rock volley) says 1.</summary>
+        /// <summary>A charge that starts slowly and speeds up (see <see cref="ChargeRules"/>) instead of running at one speed.</summary>
+        public bool Ramp;
         public float RecoverFactor = 1.5f;
         /// <summary>Harden: the damage multiplier while the move is in its Active phase (the crystal armour holds); 1 = none.</summary>
         public float DamageTakenFactor = 1f;
