@@ -2,7 +2,7 @@
 
     python -I tools/blender/rig_quadruped.py in.glb out.fbx
 
-Bone names: Root, Head, Tail1, Tail2, Leg_FL, Leg_FR, Leg_BL, Leg_BR, plus Jaw/JawTip and Eye_L/Eye_R (eyes found from the orange albedo pixels). The model must face -Y in Blender
+Bone names: Root, Head, Tail1, Tail2, Leg_FL, Leg_FR, Leg_BL, Leg_BR, plus Eye_L/Eye_R (eyes found from the orange albedo pixels). The model must face -Y in Blender
 (the Meshy fox does); it is lifted so its feet sit on Z=0. Also writes <out>_albedo/_mask.png. Bone positions come from the mesh itself, weights from the
 distance to each bone (no bone-heat: dense fur meshes make it fail).
 """
@@ -120,14 +120,10 @@ def main(src, dst):
         f = foot_at(front, right)
         bones[nm] = (V((f.x, f.y, hip_z)), f, "Root")
 
-    # face: a lower-jaw hinge with a tip bone (Unity measures the opening direction from it) and one tiny bone per eye (eyelids hang on them)
-    hinge = V((0, -0.70, 0.88 - 0.0))
-    tip = V((0, ymin * 0.985, 0.84))
-    bones["Jaw"] = (hinge, tip, "Head")
-    bones["JawTip"] = (tip, tip + V((0, -0.02, 0)), "Jaw")
+    # face: one tiny bone per eye (eyelids hang on them); no jaw bone, opening the mouth skewed the snout
     for e, nm in zip(eyes, ("Eye_L", "Eye_R")):
         bones[nm] = (e, e + V((0, -0.03, 0)), "Head")
-    face = ("Jaw", "JawTip", "Eye_L", "Eye_R")
+    face = ("Eye_L", "Eye_R")
 
     arm_data = bpy.data.armatures.new("Armature")
     arm = bpy.data.objects.new("Armature", arm_data)
@@ -151,14 +147,8 @@ def main(src, dst):
         ds = sorted(((seg_dist(p, a, b), nm) for nm, (a, b, _) in bones.items() if nm not in face))[:3]
         ws = [1.0 / (max(d, 0.01) ** 4) for d, _ in ds]
         total = sum(ws)
-        # lower jaw: the thin strip under the mouth line in front of the hinge follows the Jaw bone (soft edges)
-        jaw = 0.0
-        if p.y < hinge.y - 0.05:
-            jaw = max(0.0, min(1.0, (0.90 - p.z) / 0.03, (p.z - 0.79) / 0.03)) * max(0.0, min(1.0, (hinge.y - 0.05 - p.y) / 0.05))
         for (d, nm), w in zip(ds, ws):
-            mesh_obj.vertex_groups[nm].add([i], (w / total) * (1.0 - jaw), "REPLACE")
-        if jaw > 0.0:
-            mesh_obj.vertex_groups["Jaw"].add([i], jaw, "REPLACE")
+            mesh_obj.vertex_groups[nm].add([i], w / total, "REPLACE")
     mesh_obj.data.polygons.foreach_set("use_smooth", [True] * len(mesh_obj.data.polygons))   # smooth shading: no faceted creases
     mesh_obj.parent = arm
     mod = mesh_obj.modifiers.new("Armature", "ARMATURE")
