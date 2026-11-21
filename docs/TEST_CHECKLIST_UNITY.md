@@ -262,3 +262,5 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. C
 - [ ] **Trúng đòn:** đầu giật nhẹ; đòn mạnh (≥ 12% máu) thì loạng choạng ~0,6 s.
 - [ ] Mõm không méo khi há (nếu méo: chụp ảnh).
 - [ ] Không lỗi đỏ Console; hàm há đúng chiều (xuống), cổ ngửa lên khi gầm (không cúi xuống).
+
+**Cảnh Ra Đời đang tắt mặc định để đỡ tốn thời gian thử** (`BirthScene.SkipScene`): vào game là có sẵn một Lõi và Khuyết Điểm ngẫu nhiên, không có cảnh chọn. Bật lại ở menu thần F1, tab Khác, ô "Bỏ qua cảnh Ra Đời" (bỏ tick), có hiệu lực từ lần vào game sau.

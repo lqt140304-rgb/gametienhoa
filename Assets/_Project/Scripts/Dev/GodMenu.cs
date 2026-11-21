@@ -258,6 +258,9 @@ namespace Evolve.DevTools
 
         void DrawMisc(SurvivalStats stats, Evolve.Swallow.Swallower swallower)
         {
+            Header("Cảnh Ra Đời");
+            bool skipBirth = Check(Evolve.Traits.BirthScene.SkipScene, "Bỏ qua cảnh Ra Đời khi vào game (Lõi và Khuyết Điểm vẫn được chọn ngẫu nhiên; có hiệu lực từ lần vào sau)");
+            if (skipBirth != Evolve.Traits.BirthScene.SkipScene) Evolve.Traits.BirthScene.SkipScene = skipBirth;
             Header("Bệnh và Túi");
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Nhiễm bệnh thử", GUILayout.Height(28))) { stats.State.Infect(DiseaseKind.RottenGel); stats.State.Infect(DiseaseKind.SporeBlur); }
