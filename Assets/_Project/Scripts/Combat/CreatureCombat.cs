@@ -207,7 +207,7 @@ namespace Evolve.Combat
             if (volley.Stage == VolleyStage.Dash && !arrived)
             {
                 if (to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.3f));
-                if (motor != null) motor.Move(to.normalized, DashSpeed);
+                if (motor != null) motor.Move(to.normalized, DashSpeed, false);   // straight at the spike: wall detours flip the heading every tick and the golem wobbled
             }
             else if (volley.Stage == VolleyStage.Hold) FaceTarget();
             var e = volley.Update(Time.fixedDeltaTime, arrived);
@@ -401,6 +401,7 @@ namespace Evolve.Combat
 
         void FaceTarget()
         {
+            if (target == null) return;   // the player died or left: keep the heading
             Vector3 d = Flat(target.transform.position - transform.position);
             if (d.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(d), 0.25f));
         }
