@@ -45,6 +45,26 @@ namespace Evolve.Combat
     public enum VolleyStage { Rise, Roar, Walk, Pull, Hold, Release, Done }
     public enum VolleyEvent { None, Roared, PullStart, Picked, Threw }
 
+    /// <summary>
+    /// Pulling a stone column out of the ground is a struggle, not one stroke: four heaves, each a spell of straining (the column barely moves, the body shakes) followed by a pull that gains some ground;
+    /// the last heave frees it. <see cref="Lift"/> is how far it is out (0..1), <see cref="Strain"/> how hard it shakes, <see cref="Heave"/> how hard the body leans back into the pull.
+    /// </summary>
+    public static class PullRules
+    {
+        static readonly float[] Gained = { 0f, 0.08f, 0.2f, 0.4f, 1f };   // how far out after each heave: stubborn at first, the last one frees it
+
+        static float Smooth(float t) { t = Math.Min(1f, Math.Max(0f, t)); return t * t * (3f - 2f * t); }
+        static void Split(float t01, out int i, out float f)
+        {
+            float u = Math.Min(1f, Math.Max(0f, t01)) * 4f;
+            i = Math.Min(3, (int)u); f = u - i;
+        }
+
+        public static float Lift(float t01) { Split(t01, out int i, out float f); return Gained[i] + (Gained[i + 1] - Gained[i]) * Smooth((f - 0.4f) / 0.6f); }
+        public static float Strain(float t01) { Split(t01, out _, out float f); return 1f - Smooth((f - 0.3f) / 0.15f); }
+        public static float Heave(float t01) { Split(t01, out _, out float f); return (float)Math.Sin(Math.PI * Math.Min(1f, Math.Max(0f, (f - 0.4f) / 0.6f))); }
+    }
+
     /// <summary>The speed of a charge that starts slowly and builds up: a factor on the average speed, 0.3 at the start and 1.7 at the end, so the distance covered is exactly the move's distance.</summary>
     public static class ChargeRules
     {
@@ -58,7 +78,7 @@ namespace Evolve.Combat
     /// </summary>
     public sealed class VolleyFsm
     {
-        public const float RiseSeconds = 1.2f, RoarSeconds = 2f, WalkTimeout = 3f, PullSeconds = 1.1f, HoldSeconds = 0.6f, ReleaseSeconds = 0.8f;
+        public const float RiseSeconds = 1.2f, RoarSeconds = 2f, WalkTimeout = 3f, PullSeconds = 2.8f, HoldSeconds = 0.6f, ReleaseSeconds = 0.8f;
 
         readonly int spikes;
         public VolleyFsm(int spikeCount) { spikes = Math.Max(0, spikeCount); Stage = spikes == 0 ? VolleyStage.Done : VolleyStage.Rise; }

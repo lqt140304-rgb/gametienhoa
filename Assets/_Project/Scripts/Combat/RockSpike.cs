@@ -11,7 +11,7 @@ namespace Evolve.Combat
     {
         static Mesh mesh;
         static Material mat;
-        float width, height, grow, sinkT = -1f, liftT = -1f, liftSeconds = 1f;
+        float width, height, grow, sinkT = -1f, liftT = -1f, liftSeconds = 1f; int heaveSeen = -1;
         Vector3 liftFrom;
         bool held;
 
@@ -51,7 +51,7 @@ namespace Evolve.Combat
             transform.localScale = new Vector3(0.5f * width, 0.55f * height, 0.5f * width) * k;
         }
 
-        /// <summary>The golem takes hold and draws the column slowly out of the ground (it rises by most of its length over <paramref name="seconds"/>).</summary>
+        /// <summary>The golem takes hold and draws the column out of the ground in four struggling heaves (<see cref="PullRules"/>) over <paramref name="seconds"/>.</summary>
         public void BeginLift(float seconds) { liftT = 0f; liftSeconds = Mathf.Max(0.1f, seconds); liftFrom = transform.position; }
 
         public void Sink() { if (sinkT < 0f) sinkT = 0f; }
@@ -62,7 +62,10 @@ namespace Evolve.Combat
             if (liftT >= 0f)
             {
                 liftT = Mathf.Min(1f, liftT + Time.deltaTime / liftSeconds);
-                transform.position = liftFrom + Vector3.up * (0.85f * height * Mathf.SmoothStep(0f, 1f, liftT));
+                float shake = Mathf.Sin(Time.time * 45f) * 0.05f * width * PullRules.Strain(liftT);   // it shudders in the ground while the golem strains
+                transform.position = liftFrom + Vector3.up * (0.85f * height * PullRules.Lift(liftT)) + transform.right * shake;
+                int heave = Mathf.Min(3, (int)(liftT * 4f)); float f = liftT * 4f - heave;
+                if (f > 0.4f && heave > heaveSeen) { heaveSeen = heave; SkillFx.Dust(liftFrom, width * 1.3f, new Color(0.58f, 0.52f, 0.45f), 14); ProceduralSfx.PlayFile("Golem/golem_grunt", liftFrom, 0.6f, ProceduralSfx.Kind.HoundGrowlShort); }   // each heave: a grunt and a puff of dust
                 return;
             }
             if (sinkT >= 0f)

@@ -95,6 +95,18 @@ namespace Evolve.Tests.EditMode
             Assert.GreaterOrEqual(golem.RoarRadius, 10f); Assert.GreaterOrEqual(golem.RoarForce, 10f);
         }
 
+        [Test] public void Pull_StrugglesInFourHeaves_ItDoesNotComeOutInOneStroke()
+        {
+            Assert.AreEqual(0f, PullRules.Lift(0f), 1e-4f); Assert.AreEqual(1f, PullRules.Lift(1f), 1e-4f);
+            float last = 0f;
+            for (float t = 0f; t <= 1.0001f; t += 0.01f) { float l = PullRules.Lift(t); Assert.GreaterOrEqual(l, last - 1e-5f); last = l; }   // it never slips back
+            Assert.Less(PullRules.Lift(0.5f), 0.45f);                       // half the time in, it is still less than half out
+            Assert.Less(PullRules.Lift(0.74f), 0.55f);                      // only the last heave frees it
+            Assert.AreEqual(PullRules.Lift(0.05f), PullRules.Lift(0.1f), 0.03f);   // at the start of a heave it only strains: the column barely moves
+            Assert.Greater(PullRules.Strain(0.05f), 0.9f); Assert.Less(PullRules.Strain(0.2f), 0.1f);   // straining first, then the heave
+            Assert.Greater(PullRules.Heave(0.2f), 0.8f); Assert.AreEqual(0f, PullRules.Heave(0.05f), 1e-4f);
+        }
+
         [Test] public void Charge_StartsSlowAndBuildsUp_AndCoversExactlyTheMovesDistance()
         {
             Assert.Less(ChargeRules.Factor(0f), 0.4f); Assert.Greater(ChargeRules.Factor(1f), 1.5f);

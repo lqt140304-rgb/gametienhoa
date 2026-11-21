@@ -81,7 +81,11 @@ namespace Evolve.Combat
             switch (stage)
             {
                 case VolleyStage.Rise: { float k = 1f - Smooth(seconds / VolleyFsm.RiseSeconds); return new ArmPose { Crouch = 0.9f * k, Hunch = 24f * k, Raise = -5f * k }; }
-                case VolleyStage.Pull: { float k = Smooth(seconds / 0.4f); return new ArmPose { Raise = 55f * k, Hunch = 32f * k, Crouch = 0.35f * k, Glow = 0.25f * k }; }   // arms round the column, leaning back as it comes out
+                case VolleyStage.Pull:   // a struggle: bent over the column while it holds, then leaning back into each heave, shaking all the while
+                {
+                    float k = Smooth(seconds / 0.4f), t01 = seconds / VolleyFsm.PullSeconds, heave = PullRules.Heave(t01), strain = PullRules.Strain(t01);
+                    return new ArmPose { Raise = 55f * k, Hunch = (32f - 50f * heave) * k, Crouch = 0.35f * k, Glow = (0.25f + 0.4f * heave) * k, Twist = 8f * strain * (float)Math.Sin(seconds * 35f) * k };
+                }
                 case VolleyStage.Roar: { float k = Smooth(seconds / 0.5f) * (1f - Smooth((seconds - (VolleyFsm.RoarSeconds - 0.4f)) / 0.4f)); return new ArmPose { Raise = 45f * k, Spread = 55f * k, Hunch = -24f * k, Glow = k, Stance = 0.2f * k }; }   // head thrown back, arms wide, the core blazing
                 case VolleyStage.Hold: { float k = Smooth(seconds / 0.5f); return new ArmPose { Raise = 110f * k, Back = -40f * k, Hunch = -12f * k, Stance = 0.3f * k, Twist = -15f * k, Glow = 0.3f * k }; }   // the column carried over the head: the right arm high (110 + 40), the left up beside it
                 case VolleyStage.Release: { float k = Smooth(seconds / 0.15f) * (1f - Smooth((seconds - 0.5f) / 0.3f)); return new ArmPose { Raise = 70f * k, Back = -60f * k, Hunch = 30f * k, Twist = 30f * k, Stance = 0.8f * k, Crouch = 0.15f * k }; }   // the follow-through: leaning through the throw, the left arm out, the right folded by the head

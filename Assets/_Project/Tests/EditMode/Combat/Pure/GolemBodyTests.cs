@@ -85,7 +85,9 @@ namespace Evolve.Tests
             Assert.Greater(GolemRules.Volley(VolleyStage.Rise, 0f).Crouch, 0.8f); Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Rise, VolleyFsm.RiseSeconds).Crouch, 1e-3f);
             var roar = GolemRules.Volley(VolleyStage.Roar, 1f);
             Assert.Less(roar.Hunch, -15f); Assert.Greater(roar.Spread, 40f); Assert.Greater(roar.Glow, 0.7f);                         // head thrown back, arms wide, the core blazing
-            Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 1f).Raise, 40f); Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 1f).Hunch, 25f);
+            Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 0.28f * VolleyFsm.PullSeconds).Hunch, 25f);                          // straining: bent over the column
+            Assert.Less(GolemRules.Volley(VolleyStage.Pull, 0.2f * VolleyFsm.PullSeconds).Hunch, GolemRules.Volley(VolleyStage.Pull, 0.28f * VolleyFsm.PullSeconds).Hunch - 20f);   // heaving: leaning back
+            Assert.Greater(GolemRules.Volley(VolleyStage.Pull, 1f).Raise, 40f);
             var carry = GolemRules.Volley(VolleyStage.Hold, 1f);
             Assert.Greater(carry.Raise - carry.Back, 130f); Assert.Greater(carry.Raise, 90f); Assert.Less(carry.Hunch, 0f);              // the right arm high over the head with the column, the left up beside it
             var after = GolemRules.Volley(VolleyStage.Release, 0.3f);
