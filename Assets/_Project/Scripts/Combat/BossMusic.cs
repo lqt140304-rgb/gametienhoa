@@ -47,11 +47,12 @@ namespace Evolve.Combat
             if (loaded != wanted && !rules.Playing)   // another boss's fight starts: load its track (never swap one that is playing)
             {
                 loaded = wanted; clip = Resources.Load<AudioClip>("Music/" + wanted); source.clip = clip;
-                if (clip == null) Debug.LogWarning("[Nhạc trùm] Chưa có Resources/Music/" + wanted + ".mp3");
+                if (clip == null) Debug.LogWarning("[Nhạc trùm] Chưa có Resources/Music/" + wanted + ".mp3 (hoặc file là con trỏ Git LFS chưa tải: chạy git lfs pull)");
+                else if (clip.length < 1f) Debug.LogWarning("[Nhạc trùm] " + wanted + " nạp được nhưng dài " + clip.length + " s: file hỏng?");
             }
             if (clip == null) return;
             source.volume = rules.Volume * MaxVolume;
-            if (rules.Playing && !source.isPlaying) { source.time = 0f; source.Play(); }   // a new fight starts the track from the top
+            if (rules.Playing && !source.isPlaying) { source.time = 0f; source.Play(); Debug.Log("[Nhạc trùm] phát " + wanted + " (âm lượng " + source.volume.ToString("0.00") + ")"); }   // a new fight starts the track from the top
             else if (!rules.Playing && source.isPlaying) source.Stop();
         }
     }

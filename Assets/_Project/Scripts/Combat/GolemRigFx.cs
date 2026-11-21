@@ -26,6 +26,7 @@ namespace Evolve.Combat
         Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
+        bool wasResting;
         float legLen, lastRun, flinchT = 9f, restAnkleL, restAnkleR; Quaternion footRestL, footRestR; bool restMeasured;   // ankle heights above the root and foot orientations in the standing pose   // seconds since the last blow it took
         ArmPose pose;
         Light coreLight;
@@ -190,6 +191,7 @@ namespace Evolve.Combat
             }
             if (gripping) BossMusic.Ping("golem_battle");
             if (combat != null && combat.VolleyNow is VolleyStage vs && combat.Phase == MovePhase.Recover) target = GolemRules.Volley(vs, combat.VolleyTime);   // the rock volley: getting up, hugging the column, aiming like a javelin
+            if (combat != null && combat.Resting) { target = GolemRules.Winded(combat.RestTime, combat.RestLength); if (!wasResting) GolemFx.Pant(transform.position); wasResting = true; } else wasResting = false;   // kneeling, out of breath, after a move
             if (combat != null && combat.Dizzy) target = GolemRules.Evaluate("Dizzy", MovePhase.Active, 1f);                                              // dazed after hitting a wall head first
             flinchT += dt;
             if (!gripping && (combat == null || combat.CurrentMove == null || combat.Phase == MovePhase.Idle) && flinchT < 0.9f)   // a blow staggers it when it is not busy with a move

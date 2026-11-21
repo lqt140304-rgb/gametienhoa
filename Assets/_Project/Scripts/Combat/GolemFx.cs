@@ -31,15 +31,15 @@ namespace Evolve.Combat
                 case "Meteor": break;   // its sounds come from Point (the aim) and Leap (the spring), at the right moments
                 case "Sweep":
                     if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.7f, ProceduralSfx.Kind.HoundGrowlShort);
-                    else if (phase == MovePhase.Active) { Sfx("golem_throw", p, 0.9f, ProceduralSfx.Kind.HoundSwipe); ImpactFx.Thump(p, 0.18f, 0.4f, 18f); SkillFx.Dust(p, m.Radius * 0.6f, Dust, 28); SkillFx.Ring(p, m.Radius, Dust, 0.4f, 0.2f); }
+                    else if (phase == MovePhase.Active) { Sfx("golem_sweep", p, 1f, ProceduralSfx.Kind.HoundSwipe); ImpactFx.Thump(p, 0.18f, 0.4f, 18f); SkillFx.Dust(p, m.Radius * 0.6f, Dust, 28); SkillFx.Ring(p, m.Radius, Dust, 0.4f, 0.2f); }
                     break;
                 case "Rush":
-                    if (phase == MovePhase.Windup) { Sfx("golem_core_charge", p, 0.8f, ProceduralSfx.Kind.HoundHowl); ImpactFx.Thump(p, 0.05f, 0.5f, 20f); }
-                    else if (phase == MovePhase.Active) { Sfx("golem_leap", p, 0.9f, ProceduralSfx.Kind.HoundLunge); SkillFx.Dust(p, 2.5f * scale, Dust, 40); }
+                    if (phase == MovePhase.Windup) { Sfx("golem_rush_charge", p, 1f, ProceduralSfx.Kind.HoundHowl); ImpactFx.Thump(p, 0.05f, 0.5f, 20f); }
+                    else if (phase == MovePhase.Active) { Sfx("golem_rush_run", p, 1f, ProceduralSfx.Kind.HoundLunge); SkillFx.Dust(p, 2.5f * scale, Dust, 40); }
                     break;
                 case "Punch":
-                    if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.8f, ProceduralSfx.Kind.HoundGrowlShort);
-                    else if (phase == MovePhase.Active) { Sfx("golem_slam", p, 0.8f, ProceduralSfx.Kind.HoundThud); ImpactFx.Thump(p, 0.2f, 0.5f, 20f); SkillFx.Dust(p + golem.transform.forward * 1.5f * scale, 1.2f * scale, Dust, 24); }
+                    if (phase == MovePhase.Windup) Sfx("golem_punch_wind", p, 0.9f, ProceduralSfx.Kind.HoundGrowlShort);
+                    else if (phase == MovePhase.Active) { Sfx("golem_punch_hit", p, 1f, ProceduralSfx.Kind.HoundThud); ImpactFx.Thump(p, 0.2f, 0.5f, 20f); SkillFx.Dust(p + golem.transform.forward * 1.5f * scale, 1.2f * scale, Dust, 24); }
                     break;
                 case "Grab":
                     if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.9f, ProceduralSfx.Kind.HoundGrowlShort);
@@ -76,8 +76,11 @@ namespace Evolve.Combat
             SkillFx.Dust(at, radius * 0.7f, Dust, 80, radius * 0.2f);
         }
 
+        /// <summary>It sinks to its knees and gasps for breath after a move.</summary>
+        public static void Pant(Vector3 at) => Sfx("golem_pant", at, 0.9f, ProceduralSfx.Kind.HoundGrowlShort);
+
         /// <summary>It stretches an arm toward the player: the aim before it leaps.</summary>
-        public static void Point(Vector3 at) => Sfx("golem_grunt", at, 1f, ProceduralSfx.Kind.HoundGrowlShort);
+        public static void Point(Vector3 at) => Sfx("golem_point", at, 1f, ProceduralSfx.Kind.HoundGrowlShort);
 
         /// <summary>It springs off the ground.</summary>
         public static void Leap(Vector3 at) { Sfx("golem_leap", at, 1f, ProceduralSfx.Kind.HoundLunge); ImpactFx.Thump(at, 0.2f, 0.5f, 22f); SkillFx.Dust(at, 3f, Dust, 40); }
@@ -85,7 +88,7 @@ namespace Evolve.Combat
         /// <summary>It charges head first into a wall: a crack, the ground shakes, rock chips fly.</summary>
         public static void WallBump(Vector3 at)
         {
-            Sfx("golem_slam", at, 1f, ProceduralSfx.Kind.HoundThud);
+            Sfx("golem_rush_crash", at, 1f, ProceduralSfx.Kind.HoundThud);
             ImpactFx.Thump(at, 0.55f, 1.1f, 34f);
             SkillFx.Dust(at, 3f, Dust, 60);
             SkillFx.Burst(at + Vector3.up * 1.2f, Crystal, 26, 6f, 0.12f, 0.9f, 0.6f);
@@ -94,7 +97,7 @@ namespace Evolve.Combat
         /// <summary>It crashes down on the marked circle.</summary>
         public static void Land(Vector3 spot, float radius)
         {
-            Sfx("golem_slam", spot, 1f, ProceduralSfx.Kind.HoundThud);
+            Sfx("golem_land", spot, 1f, ProceduralSfx.Kind.HoundThud);
             ImpactFx.Thump(spot, 0.5f, 1.0f, 32f);
             SkillFx.Dust(spot, radius * 0.8f, Dust, 70);
             SkillFx.Ring(spot, radius * 0.5f, Dust, 0.35f, 0.1f); SkillFx.Ring(spot, radius, Dust, 0.6f, 0.1f);
@@ -112,14 +115,14 @@ namespace Evolve.Combat
         /// <summary>It wrenches a spike out of the ground.</summary>
         public static void Pull(Vector3 at)
         {
-            ProceduralSfx.PlayFile("Golem/golem_grunt", at, 0.7f, ProceduralSfx.Kind.HoundGrowlShort);
+            Sfx("golem_strain", at, 0.9f, ProceduralSfx.Kind.HoundGrowlShort);
             SkillFx.Burst(at, Dust, 12, 3f, 0.1f, 0.6f);
         }
 
         /// <summary>It hurls the rock it holds.</summary>
         public static void Hurl(Vector3 at)
         {
-            Sfx("golem_throw", at, 1f, ProceduralSfx.Kind.HoundLunge);
+            Sfx("golem_hurl", at, 1f, ProceduralSfx.Kind.HoundLunge);
             ImpactFx.Thump(at, 0.1f, 0.3f, 18f);
         }
 

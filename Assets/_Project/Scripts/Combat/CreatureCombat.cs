@@ -171,6 +171,10 @@ namespace Evolve.Combat
         /// <summary>The rock volley's stage and the seconds spent in it, or null when it is not under way (the rig poses the body by it).</summary>
         public VolleyStage? VolleyNow => volley != null && meteorActive ? volley.Stage : (VolleyStage?)null;
         public float VolleyTime => volley != null ? volley.StageTime : 0f;
+        /// <summary>Catching its breath at the end of a move (see <see cref="MoveDef.Rest"/>).</summary>
+        public bool Resting => scheduler != null && scheduler.Resting;
+        public float RestTime => scheduler != null ? scheduler.RestTime : 0f;
+        public float RestLength => scheduler != null ? scheduler.RestLength : 0f;
         float dizzyUntil;
         /// <summary>Dazed after charging head first into a wall.</summary>
         public bool Dizzy => Time.time < dizzyUntil;
@@ -395,6 +399,7 @@ namespace Evolve.Combat
                 else if (ambush.State == AmbushState.Revealed && !scheduler.Busy) ambush.StrikeDone();
             }
             noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
+            scheduler.HoldRecover = meteorActive && volley != null && volley.Stage != VolleyStage.Done;   // the rock volley is not cut short by the recover time: the last rock is always pulled and thrown
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null) BeginStrike(started);

@@ -65,7 +65,7 @@ namespace Evolve.Combat
                 float shake = Mathf.Sin(Time.time * 45f) * 0.05f * width * PullRules.Strain(liftT);   // it shudders in the ground while the golem strains
                 transform.position = liftFrom + Vector3.up * (0.85f * height * PullRules.Lift(liftT)) + transform.right * shake;
                 int heave = Mathf.Min(3, (int)(liftT * 4f)); float f = liftT * 4f - heave;
-                if (f > 0.4f && heave > heaveSeen) { heaveSeen = heave; SkillFx.Dust(liftFrom, width * 1.3f, new Color(0.58f, 0.52f, 0.45f), 14); ProceduralSfx.PlayFile("Golem/golem_grunt", liftFrom, 0.6f, ProceduralSfx.Kind.HoundGrowlShort); }   // each heave: a grunt and a puff of dust
+                if (f > 0.4f && heave > heaveSeen) { heaveSeen = heave; SkillFx.Dust(liftFrom, width * 1.3f, new Color(0.58f, 0.52f, 0.45f), 14); ProceduralSfx.PlayFile("Golem/golem_strain", liftFrom, 0.8f, ProceduralSfx.Kind.HoundGrowlShort); }   // each heave: a grunt and a puff of dust
                 return;
             }
             if (sinkT >= 0f)

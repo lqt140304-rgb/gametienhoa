@@ -46,6 +46,8 @@ namespace Evolve.Combat
         public bool Ramp;
         /// <summary>A roar after a landing: the radius and the knock-back strength (metres per second) of its shock wave; 0 for none.</summary>
         public float RoarRadius, RoarForce;
+        /// <summary>Seconds it stays crouched, winded, after the recover (2-5 for a boss, the bigger the move the longer); added to the end of the recover.</summary>
+        public float Rest;
         public float RecoverFactor = 1.5f;
         /// <summary>Harden: the damage multiplier while the move is in its Active phase (the crystal armour holds); 1 = none.</summary>
         public float DamageTakenFactor = 1f;
@@ -78,6 +80,14 @@ namespace Evolve.Combat
         public float TellScale { get; set; } = 1f;
         /// <summary>Optional filter: a move for which this returns false is never picked (e.g. a perch jump when there is no ledge).</summary>
         public Func<MoveDef, bool> Allow;
+        /// <summary>While true, a move in its Recover does not end (its time stands still): Giáng Thạch's rock volley takes as long as it takes. Release it and the rest begins.</summary>
+        public bool HoldRecover { get; set; }
+        bool stunned;
+
+        /// <summary>The last part of the recover, after the recover proper: the boss is crouched and out of breath (never after a stun).</summary>
+        public bool Resting => Phase == MovePhase.Recover && !HoldRecover && !stunned && Current != null && Current.Rest > 0f && PhaseTime >= Current.Recover - Eps;
+        public float RestTime => Resting ? PhaseTime - Current.Recover : 0f;
+        public float RestLength => Current != null ? Current.Rest : 0f;
 
         public MoveScheduler(IReadOnlyList<MoveDef> moves, int seed)
         {
@@ -95,17 +105,17 @@ namespace Evolve.Combat
         public bool Force(MoveDef move, float windupSeconds)
         {
             if (Phase != MovePhase.Idle || move == null) return false;
-            Current = move; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = Math.Max(0f, windupSeconds);
+            Current = move; stunned = false; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = Math.Max(0f, windupSeconds);
             return true;
         }
 
-        public void Reset() { Phase = MovePhase.Idle; Current = null; PhaseTime = 0f; phaseLength = 0f; }
+        public void Reset() { HoldRecover = false; stunned = false; Phase = MovePhase.Idle; Current = null; PhaseTime = 0f; phaseLength = 0f; }
 
         /// <summary>Knocked out of its move (a wall, a stun): straight to Recover, lasting its normal recovery plus <paramref name="extraRecover"/>.</summary>
         public void Stun(float extraRecover)
         {
             if (Current == null) return;
-            Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = Current.Recover + Math.Max(0f, extraRecover);
+            Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = Current.Recover + Math.Max(0f, extraRecover); stunned = true;
         }
 
         /// <summary>Advances time. Returns the move that has just started its strike (Active), otherwise null.</summary>
@@ -117,11 +127,12 @@ namespace Evolve.Combat
                 if (!hasTarget) return null;
                 var pick = Pick(targetDistance, health01);
                 if (pick == null) return null;
-                Current = pick; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = pick.Windup * Math.Max(0.01f, TellScale);
+                Current = pick; stunned = false; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = pick.Windup * Math.Max(0.01f, TellScale);
                 return null;
             }
             if (Phase == MovePhase.Windup && (!hasTarget || (Current.AbortBeyond > 0f && targetDistance > Current.AbortBeyond))) { Reset(); return null; }
 
+            if (Phase == MovePhase.Recover && HoldRecover) return null;   // the time of a held recover stands still
             PhaseTime += dt;
             if (PhaseTime + Eps < phaseLength) return null;
             switch (Phase)
@@ -131,7 +142,7 @@ namespace Evolve.Combat
                     cooldownLeft[IndexOf(Current)] = Current.Cooldown; last = Current;
                     return Current;
                 case MovePhase.Active:
-                    Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = Current.Recover; return null;
+                    Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = Current.Recover + Current.Rest; return null;
                 default:
                     Reset(); return null;
             }

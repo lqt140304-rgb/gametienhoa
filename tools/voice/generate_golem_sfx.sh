@@ -21,6 +21,17 @@ golem_step|0.6|one single very heavy footstep of a colossal stone giant on a sto
 golem_leap|1.0|a colossal stone golem crouching then leaping high into the air, a deep straining grunt, rock cracking under its feet and a heavy rushing whoosh upward, powerful
 golem_spikes|0.9|sharp stone spikes bursting up out of the ground all around, a loud cracking and grinding eruption of rock, debris scattering, decisive and heavy
 golem_roar|2.5|a colossal stone golem bellowing one enormous earth-shaking roar, a deep thundering rumbling bellow with grinding rock in the chest, rising then booming outward like a shock wave, huge and terrifying, ends with a rocky rumble
+golem_punch_wind|0.9|a colossal stone golem drawing back a huge fist, a deep gravelly effort grunt and grinding rock in the shoulder, tense, short
+golem_punch_hit|0.8|a giant stone fist smashing a target, one heavy dull impact with cracking rock and a body thud, punchy and decisive, tight tail
+golem_sweep|1.0|a massive stone arm sweeping across in a wide arc, a heavy deep whoosh with grinding stone and a low grunt, powerful, tight tail
+golem_rush_charge|1.2|a stone golem lowering its head and building up to charge, a low rumbling growl rising with heavy stomps and grinding rock, menacing
+golem_rush_run|1.8|a colossal stone golem charging forward faster and faster, rapid heavy stomps accelerating, deep rumbling growl and grinding rock, relentless
+golem_rush_crash|1.4|a giant stone golem crashing head first into a stone wall, an enormous crack and boom with falling rubble, then a dazed low groan, heavy
+golem_point|1.0|a stone golem pointing at its enemy and growling, a low menacing rumble with rock grinding in the chest, threatening, short
+golem_land|1.2|a colossal stone golem landing from a great height, one enormous deep earth-shaking impact with the ground cracking and debris, heavy and decisive
+golem_strain|0.8|a huge stone golem straining with effort to pull something heavy out of the ground, a deep guttural grunt of strain with grinding rock
+golem_hurl|0.8|a stone golem hurling a long stone spear like a javelin, a deep effort grunt and a fast heavy whoosh, punchy
+golem_pant|3.0|a colossal exhausted stone golem catching its breath, slow deep labored heavy breathing and low wheezing exhales with faint rock grinding, tired
 golem_hurt|0.6|a short pained rumble of a stone golem being hit, cracking rock and a low grunt, abrupt and heavy
 T
 while IFS='|' read -r -u 3 id secs prompt; do

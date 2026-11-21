@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Linq;
 using Evolve.Combat;
 
 namespace Evolve.Tests
@@ -94,6 +95,24 @@ namespace Evolve.Tests
             Assert.Greater(after.Hunch, 25f); Assert.Greater(after.Twist, 20f); Assert.Greater(after.Stance, 0.6f);                      // leaning through the throw, the front foot out
             Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Release, VolleyFsm.ReleaseSeconds).Hunch, 1e-3f);                         // and back to rest before the next spike
             Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Walk, 1f).Crouch); Assert.AreEqual(0f, GolemRules.Volley(VolleyStage.Done, 1f).Raise);
+        }
+
+        [Test] public void EveryGolemMove_LeavesItWindedForTwoToFiveSeconds_TheBiggerTheLonger()
+        {
+            var moves = MovesetSeed.For("Golem Thạch Anh");
+            foreach (var m in moves) Assert.That(m.Rest, Is.InRange(2f, 5f), m.Name);
+            Assert.Greater(moves.Single(m => m.Role == MoveRole.Special).Rest, moves.Single(m => m.Name == "Nện Đấm").Rest);
+            Assert.GreaterOrEqual(moves.Single(m => m.Role == MoveRole.Ultimate).Rest, moves.Single(m => m.Role == MoveRole.Special).Rest - 1f);
+        }
+
+        [Test] public void Winded_KneelsDownHeavingForBreath_AndGetsUpAtTheEnd()
+        {
+            var a = GolemRules.Winded(0.1f, 4f); var b = GolemRules.Winded(2f, 4f);
+            Assert.Less(a.Crouch, b.Crouch); Assert.Greater(b.Crouch, 0.6f); Assert.Greater(b.Hunch, 25f);   // goes down, bent over
+            Assert.AreEqual(0f, GolemRules.Winded(4f, 4f).Crouch, 1e-3f);                                    // upright again when the rest ends
+            float lo = 99f, hi = -99f;
+            for (float t = 1.0f; t < 3.0f; t += 0.05f) { float h = GolemRules.Winded(t, 4f).Hunch; lo = System.Math.Min(lo, h); hi = System.Math.Max(hi, h); }
+            Assert.Greater(hi - lo, 4f);                                                                     // the chest heaves
         }
     }
 }

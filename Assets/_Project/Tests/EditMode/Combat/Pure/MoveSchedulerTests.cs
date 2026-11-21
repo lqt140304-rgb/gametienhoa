@@ -187,5 +187,41 @@ namespace Evolve.Tests.EditMode
             for (int i = 0; i < 40 && started == null; i++) started = s.Update(0.02f, true, 7f, 1f);   // drifted back a little, still inside the abort limit
             Assert.AreSame(m, started);
         }
+
+        [Test] public void ARestAfterAMove_IsAddedToTheRecover_AndOnlyTheLastPartIsResting()
+        {
+            var m = new MoveDef { Name = "x", Windup = 0.1f, Active = 0.1f, Recover = 1f, Rest = 3f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { m }, 1);
+            s.Update(0.01f, true, 5f, 1f);                       // picks it
+            s.Update(0.2f, true, 5f, 1f); s.Update(0.2f, true, 5f, 1f);   // windup, active
+            Assert.AreEqual(MovePhase.Recover, s.Phase); Assert.IsFalse(s.Resting);
+            s.Update(1.1f, true, 5f, 1f); Assert.AreEqual(MovePhase.Recover, s.Phase); Assert.IsTrue(s.Resting);   // the recover proper is over: it is catching its breath
+            Assert.AreEqual(3f, s.RestLength); Assert.That(s.RestTime, Is.InRange(0f, 0.3f));
+            s.Update(2.7f, true, 5f, 1f); Assert.AreEqual(MovePhase.Recover, s.Phase);
+            s.Update(0.4f, true, 5f, 1f); Assert.AreEqual(MovePhase.Idle, s.Phase);
+        }
+
+        [Test] public void HeldRecover_DoesNotEnd_UntilTheHoldIsReleased_ThenTheRestStarts()
+        {
+            var m = new MoveDef { Name = "x", Windup = 0.1f, Active = 0.1f, Recover = 0.2f, Rest = 2f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { m }, 1);
+            s.Update(0.01f, true, 5f, 1f); s.Update(0.2f, true, 5f, 1f); s.Update(0.2f, true, 5f, 1f);
+            Assert.AreEqual(MovePhase.Recover, s.Phase);
+            s.HoldRecover = true;
+            for (int i = 0; i < 1000; i++) s.Update(0.1f, true, 5f, 1f);     // 100 s: the golem is busy with its rock volley
+            Assert.AreEqual(MovePhase.Recover, s.Phase); Assert.IsFalse(s.Resting);
+            s.HoldRecover = false;
+            s.Update(0.25f, true, 5f, 1f); Assert.IsTrue(s.Resting); Assert.AreEqual(MovePhase.Recover, s.Phase);
+            s.Update(2.1f, true, 5f, 1f); Assert.AreEqual(MovePhase.Idle, s.Phase);
+        }
+
+        [Test] public void AStun_IsNotARest()
+        {
+            var m = new MoveDef { Name = "x", Windup = 0.1f, Active = 0.1f, Recover = 0.5f, Rest = 3f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { m }, 1);
+            s.Update(0.01f, true, 5f, 1f); s.Update(0.2f, true, 5f, 1f);
+            s.Stun(2f); s.Update(1f, true, 5f, 1f);
+            Assert.IsFalse(s.Resting);
+        }
     }
 }

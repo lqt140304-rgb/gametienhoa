@@ -92,5 +92,13 @@ namespace Evolve.Combat
                 default: return default;
             }
         }
+
+        /// <summary>After a move: down on its knees, bent over, the chest heaving, for <paramref name="length"/> seconds, then upright again.</summary>
+        public static ArmPose Winded(float seconds, float length)
+        {
+            float k = Smooth(seconds / 0.6f) * (1f - Smooth((seconds - (length - 0.6f)) / 0.6f));
+            float breath = (float)Math.Sin(seconds * 5.5f);
+            return new ArmPose { Crouch = 0.8f * k, Hunch = (36f + 5f * breath) * k, Raise = -18f * k, Glow = 0.12f * k };
+        }
     }
 }

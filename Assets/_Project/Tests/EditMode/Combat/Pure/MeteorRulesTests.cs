@@ -82,11 +82,11 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(VolleyEvent.PullStart, e); Assert.AreEqual(VolleyFsm.WalkTimeout, t, 0.15f);
         }
 
-        [Test] public void Volley_TheWholeKitFitsInsideTheRecoverTime()
+        [Test] public void Meteor_HoldsItsRecoverForTheWholeVolley_AndThenRests()
         {
             var golem = MovesetSeed.For("Golem Thạch Anh").Single(m => m.Shape == MoveShape.Meteor);
-            float all = VolleyFsm.RiseSeconds + VolleyFsm.RoarSeconds + golem.SpikeCount * (1.2f + VolleyFsm.PullSeconds + VolleyFsm.HoldSeconds + VolleyFsm.ReleaseSeconds);
-            Assert.LessOrEqual(all, golem.Recover);   // with walks of about a second and a bit, every rock is thrown before the recover ends
+            Assert.LessOrEqual(golem.Recover, 0.5f);                 // the real length comes from the volley (the scheduler is told to hold), not from a fixed time that the last rock could outlast
+            Assert.GreaterOrEqual(golem.Rest, 4f);                   // and the big move leaves it winded for a good while
         }
 
         [Test] public void Meteor_HasARoarThatThrowsThePlayerBack()
