@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e772ad6dc7b0e448ab02fdca6258d4, type: 3}
+  m_Name: Flaw_flaw.luong_cuong
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.FlawSO
+  Id: flaw.luong_cuong
+  DisplayName: "Lu\u1ED1ng Cu\u1ED1ng"
+  Description: "M\xE1u d\u01B0\u1EDBi 25% th\xEC xoay h\u01B0\u1EDBng ch\u1EADm h\u01A1n r\xF5 r\u1EC7t."
+  CompensatedBy: 00000000i
+  Implemented: 1

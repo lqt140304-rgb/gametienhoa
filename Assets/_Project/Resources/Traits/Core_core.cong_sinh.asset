@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b771a6b9325e6cd4d92b0f7e8fc437e9, type: 3}
+  m_Name: Core_core.cong_sinh
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.CoreSO
+  Id: core.cong_sinh
+  DisplayName: "Nh\xE2n C\u1ED9ng Sinh"
+  Summary: "G\u1EA7n \u0111\u1ED3ng \u0111\u1ED9i th\xEC c\xF9ng h\u1ED3i m\xE1u nhanh h\u01A1n."
+  Detail: "C\xF3 \u0111\u1ED3ng \u0111\u1ED9i trong 8 m th\xEC c\u1EA3 hai h\u1ED3i m\xE1u nhanh h\u01A1n (t\u1EA1m +40%), t\u1ED1i \u0111a 3 \u0111\u1ED3ng \u0111\u1ED9i; \u0111\u1ED3ng \u0111\u1ED9i kh\xF4ng c\xF3 L\xF5i h\u01B0\u1EDFng m\u1ED9t n\u1EEDa. M\u1ED9t m\xECnh v\u1EABn h\u1ED3i nh\u1EB9 (+10%)."
+  OrbColor: {r: 0.42749998, g: 0.95, b: 0.4275, a: 1}
+  Options:
+  - FlawIds:
+    - flaw.vet_mui
+  - FlawIds:
+    - flaw.mo_trong_toi
+  - FlawIds:
+    - flaw.mau_kho
+  Heavy: 0
+  Rarity: 0
+  Implemented: 0

@@ -1,0 +1,262 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1361125299663167158
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1226977538528921835}
+  - component: {fileID: 291436484875599913}
+  - component: {fileID: 8249197318501512949}
+  - component: {fileID: 1452631377091582510}
+  - component: {fileID: 3439196275553875286}
+  - component: {fileID: 3387497346781483271}
+  - component: {fileID: 6696082887917656998}
+  m_Layer: 0
+  m_Name: ChimHangMe (Meshy)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1226977538528921835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361125299663167158}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4633756543976409954}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &291436484875599913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361125299663167158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ded9530ead535e49958fa5802ee7f3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Evolve::Evolve.Creatures.CreatureLocomotion
+  footprintRadius: 1.2074999
+  maxTiltAngle: 38
+  tiltSmooth: 10
+  heightFollowSmooth: 14
+  strideLength: 1.4
+  stepSwingAngle: 28
+  stepLiftAngle: 18
+  bodyBobAmount: 0.035
+  bodyRollAmount: 4.5
+  referenceWalkSpeed: 1.25
+--- !u!54 &8249197318501512949
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361125299663167158}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!136 &1452631377091582510
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361125299663167158}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1.05
+  m_Height: 2.4
+  m_Direction: 2
+  m_Center: {x: 0, y: 0.94499993, z: 0}
+--- !u!114 &3439196275553875286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361125299663167158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f64df35d67dad7408c2cbfa42947a89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Evolve::Evolve.Creatures.Predator
+  patrolSpeed: 1.25
+  chaseSpeed: 3
+  chaseStamina: 6
+  restTime: 2.5
+  detectRadius: 7
+  stillDetectFactor: 0.4
+  loseRadius: 12
+  biteDamage: 22
+  biteCooldown: 1.2
+  knockback: 4
+  retreatTime: 1
+  maxHealth: 110
+  ramDamage: 10
+  ramSpeed: 4
+  nutrition: 60
+  drops: {fileID: 0}
+  bodyMass: 36
+  isLeader: 1
+--- !u!114 &3387497346781483271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361125299663167158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb42195ed7e0f544182be0724fa0bd16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Evolve::Evolve.Maze.CreatureAnimDriver
+  animator: {fileID: 6565049650973323179}
+  actionTriggerName: Attack
+  walkThreshold: 0.08
+--- !u!114 &6696082887917656998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361125299663167158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b62cc2a17330004eb8d9cae7c31a420, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Evolve::Evolve.Creatures.CreatureBrain
+  speciesId: 
+--- !u!1001 &5171487502416374921
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1226977538528921835}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      propertyPath: m_Name
+      value: Model
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6565049650973323179}
+  m_SourcePrefab: {fileID: 100100000, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+--- !u!4 &4633756543976409954 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+  m_PrefabInstance: {fileID: 5171487502416374921}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5405931068361232856 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: e2821000de522fd43906a8bb530e5087, type: 3}
+  m_PrefabInstance: {fileID: 5171487502416374921}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &6565049650973323179
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5405931068361232856}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e92a6353286826c42bd4a7a945734c9d, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
