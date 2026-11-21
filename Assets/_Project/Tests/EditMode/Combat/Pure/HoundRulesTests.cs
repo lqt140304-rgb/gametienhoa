@@ -56,5 +56,28 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(0f, HoundRules.Evaluate("Claw", MovePhase.Recover, 1f).PawDeg, 1e-4f);
             Assert.AreEqual(0f, HoundRules.Evaluate("Bite", MovePhase.Windup, 1f).PawDeg);
         }
+
+        [Test] public void Pounce_StretchesTheLegsOut_FrontForwardAndHindBack_OnlyWhileLeaping()
+        {
+            Assert.Greater(HoundRules.LegSwingDeg("Pounce", MovePhase.Active, false, true), 40f);
+            Assert.Less(HoundRules.LegSwingDeg("Pounce", MovePhase.Active, false, false), -40f);
+            Assert.AreEqual(0f, HoundRules.LegSwingDeg("Pounce", MovePhase.Windup, false, true));
+            Assert.AreEqual(0f, HoundRules.LegSwingDeg("Bite", MovePhase.Active, false, true));
+        }
+
+        [Test] public void WhenPinning_TheFrontPawsReachOutOverTheCatch()
+        {
+            Assert.Greater(HoundRules.LegSwingDeg(null, MovePhase.Idle, true, true), 30f);
+            Assert.AreEqual(0f, HoundRules.LegSwingDeg(null, MovePhase.Idle, true, false));
+        }
+
+        [Test] public void Faint_RollsOntoItsSide_HoldsAndGetsBackUp()
+        {
+            Assert.AreEqual(0f, HoundRules.FaintAngle(0f, 2f), 1e-3f);
+            Assert.Greater(HoundRules.FaintAngle(0.3f, 2f), 70f);
+            Assert.AreEqual(HoundRules.FaintRollDeg, HoundRules.FaintAngle(1f, 2f), 1e-3f);
+            Assert.Less(HoundRules.FaintAngle(1.9f, 2f), HoundRules.FaintRollDeg);
+            Assert.AreEqual(0f, HoundRules.FaintAngle(2f, 2f), 1e-3f); Assert.AreEqual(0f, HoundRules.FaintAngle(-1f, 2f));
+        }
     }
 }

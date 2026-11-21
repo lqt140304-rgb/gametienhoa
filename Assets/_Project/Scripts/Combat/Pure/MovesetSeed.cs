@@ -41,15 +41,15 @@ namespace Evolve.Combat
                 new MoveDef { Name = "Nhảy Bục", Shape = MoveShape.Perch, Windup = 0.5f, Active = 0.8f, Recover = 0f, Cooldown = 15f, MinRange = 0f, MaxRange = 6f, Distance = 7f, MinHeight = 1.5f, MaxHeight = 3f, PerchSeconds = 8f, Anim = "Perch" },
                 new MoveDef { Name = "Hú Báo Động", Shape = MoveShape.Call, Windup = 0.8f, Active = 0.1f, Recover = 1.0f, Cooldown = 20f, MinRange = 0f, MaxRange = 30f, Radius = 30f, TargetSpecies = SpeciesNames.Key("Khỉ Hang"), UnlockBelow = 0.66f, Anim = "Roar" },
             };
-            // Chó Xương (cave lord, a skeletal hound): pounces from range, bites hard, leaps over low obstacles, roars smaller things away, calls scavengers
+            // Chó Xương (cave lord, a skeletal hound): pounces and pins, bites hard, claws, leaps over low obstacles, roars smaller things away, summons small copies of itself from the ground
             sets["choxuong"] = new[]
             {
-                new MoveDef { Name = "Vồ", Shape = MoveShape.Lunge, Windup = 0.6f, Active = 0.45f, Recover = 1.5f, Cooldown = 2.5f, MinRange = 2.5f, MaxRange = 7f, Distance = 5f, Damage = 24f, Pins = true, Anim = "Pounce" },
-                new MoveDef { Name = "Cắn Nghiền", Shape = MoveShape.Lunge, Windup = 0.35f, Active = 0.2f, Recover = 1.5f, Cooldown = 1.5f, MinRange = 0f, MaxRange = 2.5f, Distance = 1.5f, Damage = 20f, Anim = "Bite" },
-                new MoveDef { Name = "Cào Xé", Shape = MoveShape.Lunge, Windup = 0.55f, Active = 0.25f, Recover = 1.2f, Cooldown = 3f, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 16f, Anim = "Claw" },
-                new MoveDef { Name = "Nhảy Vượt", Shape = MoveShape.Perch, Windup = 0.5f, Active = 0.8f, Recover = 0.3f, Cooldown = 12f, MinRange = 0f, MaxRange = 6f, Distance = 6f, MinHeight = 0.3f, MaxHeight = 1.5f, PerchSeconds = 1.5f, Anim = "Leap" },
-                new MoveDef { Name = "Gầm", Shape = MoveShape.Roar, Windup = 0.9f, Active = 0.3f, Recover = 1.2f, Cooldown = 20f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Force = 8f, Freeze = 0.8f, FearSeconds = 4f, UnlockBelow = 0.66f, Anim = "Roar" },
-                new MoveDef { Name = "Hú Gọi Bầy", Shape = MoveShape.Call, Windup = 1.2f, Active = 0.1f, Recover = 1.5f, Cooldown = 20f, MinRange = 0f, MaxRange = 25f, Radius = 25f, TargetSpecies = SpeciesNames.Key("Bọ Ăn Xác"), UnlockBelow = 0.66f, Anim = "Howl" },
+                new MoveDef { Name = "Vồ", Shape = MoveShape.Lunge, Windup = 0.6f, Active = 0.45f, Recover = 1.5f, Cooldown = 4.5f, MinRange = 2.5f, MaxRange = 7f, Distance = 5f, Damage = 24f, Pins = true, Anim = "Pounce" },
+                new MoveDef { Name = "Cắn Nghiền", Shape = MoveShape.Lunge, Windup = 0.35f, Active = 0.2f, Recover = 1.5f, Cooldown = 3f, MinRange = 0f, MaxRange = 2.5f, Distance = 1.5f, Damage = 20f, Anim = "Bite" },
+                new MoveDef { Name = "Cào Xé", Shape = MoveShape.Lunge, Windup = 0.55f, Active = 0.25f, Recover = 1.2f, Cooldown = 5f, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 16f, Anim = "Claw" },
+                new MoveDef { Name = "Nhảy Vượt", Shape = MoveShape.Perch, Windup = 0.5f, Active = 0.8f, Recover = 0.3f, Cooldown = 15f, MinRange = 0f, MaxRange = 6f, Distance = 6f, MinHeight = 0.3f, MaxHeight = 1.5f, PerchSeconds = 1.5f, Anim = "Leap" },
+                new MoveDef { Name = "Gầm", Shape = MoveShape.Roar, Windup = 0.9f, Active = 0.3f, Recover = 1.2f, Cooldown = 28f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Force = 8f, Freeze = 0.8f, FearSeconds = 4f, UnlockBelow = 0.66f, Anim = "Roar" },
+                new MoveDef { Name = "Triệu Hồi", Shape = MoveShape.Summon, Windup = 1.4f, Active = 0.2f, Recover = 1.5f, Cooldown = 30f, MinRange = 0f, MaxRange = 20f, Radius = 4f, SummonCount = 3, SummonSeconds = 25f, UnlockBelow = 0.66f, Anim = "Howl" },
             };
             // Cáo Gió (cave lord): a bite, then three wind spears circling above its tails and thrown one after another, then it calls the weasels
             sets["caogio"] = new[]
@@ -106,6 +106,7 @@ namespace Evolve.Combat
                 case MoveShape.Perch: return PoseKind.Crouch;
                 case MoveShape.Gust: return PoseKind.Roar;
                 case MoveShape.Roar: return PoseKind.Roar;
+                case MoveShape.Summon: return PoseKind.Roar;
                 default: return PoseKind.Roar;
             }
         }

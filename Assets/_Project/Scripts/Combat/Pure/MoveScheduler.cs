@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Evolve.Combat
 {
-    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar }
+    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon }
     public enum MovePhase { Idle, Windup, Active, Recover }
 
     /// <summary>One attack of a monster (data): its timing, reach, damage and when it unlocks.</summary>
@@ -19,6 +19,9 @@ namespace Evolve.Combat
         /// <summary>Spears: how many circle above the tails, how fast each flies once thrown (m/s), and the pause between throws (Force is the knockback speed).</summary>
         /// <summary>Roar: seconds smaller creatures in Radius flee in fear (a smaller player is pushed back and frozen for Freeze seconds, Force is the push speed).</summary>
         public float FearSeconds;
+        /// <summary>Summon: how many small copies of the monster climb out of the ground (around it within Radius) and how many seconds they stay.</summary>
+        public int SummonCount;
+        public float SummonSeconds;
         public int SpearCount;
         public float SpearSpeed, LaunchInterval;
         /// <summary>The move is usable while the monster's health fraction is at or below this (1 = always); lords unlock new moves as they lose health.</summary>

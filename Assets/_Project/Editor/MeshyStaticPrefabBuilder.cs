@@ -20,7 +20,7 @@ namespace Evolve.EditorTools
         {
             foreach (var n in new[] { "CocHoGia", "RanDungNham", "BoCapThachAnh" })
                 MeshyFoxPrefabBuilder.Build(Prefabs + n + ".prefab", Models + "Creature_" + n + "_Meshy.fbx", Prefabs + n + " (Meshy).prefab", n + " (Meshy)");
-            BuildFromScratch("ChoXuong", 0.55f, 1.9f, 1.1f, 2.4f, 190f, 38f, 70f, 120f, 0.63f);   // 37% smaller than the model as Meshy made it (30%, then 10% more)
+            BuildFromScratch("ChoXuong", 0.55f, 1.9f, 1.1f, 2.4f, 190f, 38f, 70f, 120f, 0.5f);   // half the size Meshy made it: 30%, 10% and 20% smaller in three steps
         }
 
         static void BuildFromScratch(string name, float radius, float height, float patrol, float chase, float health, float bite, float nutrition, float mass, float scale = 1f)

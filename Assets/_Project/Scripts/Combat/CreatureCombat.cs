@@ -28,6 +28,27 @@ namespace Evolve.Combat
         /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
         public MovePhase Phase => scheduler != null ? scheduler.Phase : MovePhase.Idle;
         public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
+        float faintUntil, faintStart;
+        /// <summary>A pounce that found nothing: the hound lies knocked out on its side for a moment.</summary>
+        public bool IsFainted => Time.time < faintUntil;
+        public float FaintTime => Time.time - faintStart;
+
+        public void Faint(float seconds)
+        {
+            faintStart = Time.time; faintUntil = Time.time + seconds;
+            Stagger(seconds);   // held still and open to a counter (x1.5 damage) the whole time
+        }
+
+        /// <summary>Keep only the moves that pass the filter (a summoned copy gets the bites and claws, not the summoning).</summary>
+        public void LimitMoves(System.Func<MoveDef, bool> keep)
+        {
+            var kept = new List<MoveDef>();
+            foreach (var mv in moves) if (keep(mv)) kept.Add(mv);
+            if (kept.Count == 0) return;
+            moves = kept;
+            scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale };
+        }
+
         public MoveDef CurrentMove => scheduler != null ? scheduler.Current : null;
 
         /// <summary>A heavy blow staggers it: the move in progress ends in a recover and it is held still for a moment (open to a counter).</summary>
@@ -245,6 +266,7 @@ namespace Evolve.Combat
             else if (phase == MovePhase.Recover)
             {
                 loco?.PlayAction("Recover_" + m.Anim);
+                if (m.Pins && !hitDone) Faint(HoundRules.FaintSeconds);   // the pounce found nothing: it tumbles and lies knocked out
                 ClearSpears();   // any spear not yet thrown fades away
                 if (m.RetreatDistance > 0f)   // hit and run: it bolts away from the player
                 {
@@ -261,7 +283,7 @@ namespace Evolve.Combat
             loco?.PlayAction(m.Anim);
             loco?.PlayAction("Tell_" + m.Anim);
             if (m.Shape == MoveShape.Spears) MakeSpears(m);
-            if (m.Shape == MoveShape.Spin || m.Shape == MoveShape.Call || m.Shape == MoveShape.Roar)
+            if (m.Shape == MoveShape.Spin || m.Shape == MoveShape.Call || m.Shape == MoveShape.Roar || m.Shape == MoveShape.Summon)
                 SkillFx.Ring(transform.position, m.Radius, TellColor, m.Windup * tellScale, 0.3f);   // a ring on the ground shows how far the blow reaches
         }
 
@@ -281,6 +303,7 @@ namespace Evolve.Combat
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);
             else if (m.Shape == MoveShape.Roar) Roar(m);
+            else if (m.Shape == MoveShape.Summon) HoundMinion.Summon(this, m, target);
         }
 
         void TickStrike(MoveDef m)

@@ -61,6 +61,24 @@ namespace Evolve.Combat
             return x * x;
         }
 
+        /// <summary>How far a leg swings forward from its rest (negative = back) in degrees: in the leap the front legs reach out and the hind legs trail straight back; while pinning the front paws reach over the catch.</summary>
+        public static float LegSwingDeg(string anim, MovePhase phase, bool pinning, bool front)
+        {
+            if (pinning) return front ? 40f : 0f;
+            if (anim == "Pounce" && phase == MovePhase.Active) return front ? 55f : -55f;
+            return 0f;
+        }
+
+        /// <summary>A missed pounce knocks it out: it rolls onto its side in 0.3 s, lies there, and gets up over the last 0.5 s.</summary>
+        public const float FaintRollDeg = 85f, FaintSeconds = 2.2f;
+        public static float FaintAngle(float t, float total)
+        {
+            if (t <= 0f || t >= total) return 0f;
+            if (t < 0.3f) return FaintRollDeg * Smooth(t / 0.3f);
+            if (t > total - 0.5f) return FaintRollDeg * Smooth((total - t) / 0.5f);
+            return FaintRollDeg;
+        }
+
         /// <summary>A hit of at least this fraction of its health staggers it.</summary>
         public const float HeavyFraction = 0.12f;
         public static bool IsHeavy(float damage, float maxHealth) => maxHealth > 0f && damage >= maxHealth * HeavyFraction;

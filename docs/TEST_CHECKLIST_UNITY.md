@@ -251,16 +251,17 @@ Quy trình và trạng thái: `docs/MESHY_BOSSES.md`. Nhánh `claude/unity-test-
 ### H10. Chó Xương (Meshy): bộ chiêu (chưa ai thử trong Unity)
 Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. Chạy lại menu `Build Meshy Static Prefabs`, tạo Chó Xương từ menu thần (Chúa Hang), mở tab Combat để xem pha hiện tại.
 - [ ] **Chạy đuổi:** chân bước, lưng uốn theo sải khi đuổi; đứng yên thì cổ nhúc nhích nhẹ (thở).
-- [ ] **Vồ:** hạ thấp đầu và thân rồi lao ~5 m, **chân thu ra sau lúc lao** (không bước chạy), đầu vươn lên, hàm há; né sang bên thì nó trượt qua và đứng hở ~1,5 s.
-- [ ] **Vồ trúng (đầu hướng về slime):** chó cắn chặt vào slime; slime đứng yên và mất máu liên tục (~6/giây); hiện thanh vàng và chữ "ẤN A RỒI D LIÊN TỤC"; ấn xen kẽ A và D thì thanh đầy, slime thoát, chó bị hất lùi và loạng choạng ~1,2 s (đánh nó lúc này thấy đau gấp rưỡi); ấn một phím liên tục không có tác dụng; không ấn thì sau 8 s chó tự nhả.
+- [ ] **Vồ:** hạ thấp đầu và thân rồi lao ~5 m, **bốn chân duỗi thẳng lúc lao (chân trước vươn ra, chân sau thẳng ra sau, không chạy chân)**, đầu vươn lên, hàm há; vồ hụt thì chó **lăn ra nằm nghiêng ngất ~2 s** rồi bật dậy (đánh nó lúc này thấy đau gấp rưỡi).
+- [ ] **Vồ trúng (đầu hướng về slime):** chó cắn chặt vào slime, hai chân trước ép lên; slime đứng yên và mất máu liên tục (~6/giây); hiện thanh vàng và chữ "ẤN A RỒI D LIÊN TỤC"; ấn xen kẽ A và D thì thanh đầy, slime thoát, chó bị hất lùi và loạng choạng ~1,2 s (đánh nó lúc này thấy đau gấp rưỡi); ấn một phím liên tục không có tác dụng; không ấn thì sau 8 s chó tự nhả.
 - [ ] **Cắn Nghiền** (gần): hàm há rộng rồi đớp khép lại thật nhanh.
 - [ ] **Cào Xé** (gần, ≤ 3,5 m): ngẩng đầu và giơ một chân trước lên rồi quét xuống; lần sau đổi chân kia.
 - [ ] Động tác rõ, **không giật**: báo trước đủ chậm để nhìn ra (nhanh hơn thì báo, ghi chiêu nào).
-- [ ] Cỡ Chó Xương nhỏ hơn bản đầu khoảng 37%.
+- [ ] Cỡ Chó Xương bằng khoảng một nửa bản đầu; hồi chiêu dài hơn trước (không ra đòn dồn dập).
+- [ ] Chân bước đầu gối gập nhẹ khi vung chân (thấy chân cử động tự nhiên hơn bản trước).
 - [ ] Xoay chân trước (khi chạy): xương sườn và lưng **không** bị kéo theo chân.
 - [ ] **Nhảy Vượt:** gần một bục thấp (≤ 1,5 m) khi đuổi thì nó nhảy lên; không có bục thì không nhảy.
 - [ ] **Gầm** (khi máu dưới 66%): ngửa đầu há miệng, rung, vòng đỏ 8 m dưới đất; con mồi nhỏ trong 8 m bỏ chạy ~4 s; slime nhỏ hơn bị đẩy lùi và đứng đơ ~0,8 s.
-- [ ] **Hú Gọi Bầy** (máu dưới 66%, cần có Bọ Ăn Xác trong 25 m, tạo vài con từ menu thần):  ngửa đầu hú dài; Bọ Ăn Xác trong 25 m kéo tới.
+- [ ] **Triệu Hồi** (máu dưới 66%): ngửa đầu hú ~1,4 s, vòng nâu dưới đất; **3 con Chó Xương nhỏ (nửa cỡ) chui từ đất lên quanh nó** trong ~1,3 s, rồi lao vào cắn và cào (yếu hơn); sau ~25 s chìm xuống; trùm chết thì chúng chìm theo; không quá 6 con.
 - [ ] **Trúng đòn:** đầu giật nhẹ; đòn mạnh (≥ 12% máu) thì loạng choạng ~0,6 s.
 - [ ] Mõm không méo khi há (nếu méo: chụp ảnh).
 - [ ] Không lỗi đỏ Console; hàm há đúng chiều (xuống), cổ ngửa lên khi gầm (không cúi xuống).
