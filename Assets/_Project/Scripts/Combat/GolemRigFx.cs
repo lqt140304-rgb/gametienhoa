@@ -16,7 +16,7 @@ namespace Evolve.Combat
         public static GolemRigFx Attach(GameObject creature) =>
             creature == null || creature.GetComponent<GolemRigFx>() != null ? null : creature.AddComponent<GolemRigFx>();
 
-        class Part { public Transform T; public Quaternion Rest; public Vector3 Right, Forward, Up; }
+        class Part { public Transform T; public Quaternion Rest, Base, Written; public bool Has; public Vector3 Right, Forward, Up; }
 
         Part spine, armL, armR, foreL, foreR;
         Transform handL, handR, chest;
@@ -26,6 +26,24 @@ namespace Evolve.Combat
         float lastHealth = -1f, flickerUntil;
         CreatureCombat combat;
         Predator pred;
+        Animator animator;
+        bool hasRates;
+        Vector3 lastPos;
+        float speed;
+        const float WalkStride = 1.9f, RunStride = 3.0f;   // metres one walk / run cycle covers at the model's own scale
+
+        /// <summary>
+        /// Turn a bone by <paramref name="extra"/> on top of what the Animator wrote this frame. If the Animator left the bone alone (a state with no clip), it still holds
+        /// last frame's turn, so start again from the pose we remembered: the turns must never stack up frame after frame.
+        /// </summary>
+        static void Put(Part p, Quaternion extra)
+        {
+            var cur = p.T.localRotation;
+            Quaternion b = p.Has && Quaternion.Angle(cur, p.Written) < 0.01f ? p.Base : cur;
+            p.Base = b;
+            p.T.localRotation = b * extra;
+            p.Written = p.T.localRotation; p.Has = true;
+        }
 
         Part Make(Transform t) => t == null ? null : new Part
         {
@@ -37,6 +55,9 @@ namespace Evolve.Combat
         {
             combat = GetComponent<CreatureCombat>();
             pred = GetComponent<Predator>();
+            animator = GetComponentInChildren<Animator>(true);
+            lastPos = transform.position;
+            if (animator != null && animator.runtimeAnimatorController != null) foreach (var pa in animator.parameters) if (pa.name == "WalkRate") hasRates = true;
             Transform sp = null, sp1 = null, aL = null, aR = null, fL = null, fR = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
                 switch (t.name)
@@ -82,6 +103,18 @@ namespace Evolve.Combat
             }
         }
 
+        /// <summary>The walk and run clips play as fast as the golem really moves (a cave lord is scaled up and sped up, so a fixed clip speed would make the feet slide).</summary>
+        void Update()
+        {
+            if (!hasRates) return;
+            float dt = Mathf.Max(Time.deltaTime, 1e-4f);
+            float sp = (transform.position - lastPos).magnitude / dt; lastPos = transform.position;
+            speed = Mathf.Lerp(speed, sp, 1f - Mathf.Exp(-8f * dt));
+            float scale = Mathf.Max(0.1f, animator.transform.lossyScale.y);
+            animator.SetFloat("WalkRate", Mathf.Clamp(speed / (WalkStride * scale), 0.3f, 3f));
+            animator.SetFloat("RunRate", Mathf.Clamp(speed / (RunStride * scale), 0.3f, 3f));
+        }
+
         void LateUpdate()
         {
             float dt = Mathf.Max(Time.deltaTime, 1e-4f), t = Time.time;
@@ -100,7 +133,7 @@ namespace Evolve.Combat
             float k = 1f - Mathf.Exp(-10f * dt);
             pose = ArmPose.Lerp(pose, target, k);
 
-            if (spine != null) spine.T.localRotation = spine.T.localRotation * Quaternion.AngleAxis(hunchSign * pose.Hunch, spine.Right);
+            if (spine != null) Put(spine, Quaternion.AngleAxis(hunchSign * pose.Hunch, spine.Right));
             Arm(armL, foreL, +1f);
             Arm(armR, foreR, -1f);
 
@@ -118,8 +151,8 @@ namespace Evolve.Combat
             if (arm == null) return;
             float raise = pose.Raise - (side < 0f ? pose.Back : 0f);   // back (cocking the right, throwing arm) is the opposite of raising
             var q = Quaternion.AngleAxis(raiseSign * raise, arm.Right) * Quaternion.AngleAxis(spreadSign * pose.Spread, arm.Forward);
-            arm.T.localRotation = arm.T.localRotation * q;
-            if (fore != null) fore.T.localRotation = fore.T.localRotation * Quaternion.AngleAxis(-raiseSign * Mathf.Clamp(raise, 0f, 140f) * 0.25f, fore.Right);
+            Put(arm, q);
+            if (fore != null) Put(fore, Quaternion.AngleAxis(-raiseSign * Mathf.Clamp(raise, 0f, 140f) * 0.25f, fore.Right));
         }
     }
 }

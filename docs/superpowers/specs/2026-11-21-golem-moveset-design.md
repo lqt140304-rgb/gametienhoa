@@ -16,6 +16,9 @@ Chúa Hang Vực Nứt Tím, mô hình Meshy rig tự động (Humanoid) với c
 - Âm thanh thật (ElevenLabs, `tools/voice/generate_golem_sfx.sh` → `Resources/Sfx/Golem/`): gằn, đập đất, ném, đá vỡ, giáp tinh thể, nạp lõi, nổ lõi, đau. Thiếu file thì dùng tiếng tổng hợp bằng mã. Hiệu ứng (`GolemFx`): bụi và vòng sóng khi đập đất, mảnh tinh thể bắn lên, bụi và vòng khi tảng đá vỡ, tia tinh thể khi giáp, vòng sáng và bụi khi lõi nổ.
 - **Nhạc riêng** `Resources/Music/golem_battle.mp3` (trống nặng như bước chân khổng lồ, bass trầm, đồng trầm, 90 nhịp, `tools/voice/generate_boss_music.sh`). `BossMusic.Ping("golem_battle")`: bật khi có đòn, nhỏ dần sau 10 giây yên (cùng luật với Chó Xương). Mỗi trùm một bản.
 
+## Sửa sau lần thử đầu (2026-11-21)
+Golem bị gập người, tay duỗi ra trước không về lại được, bước chân lết. Ba nguyên nhân: (1) `GolemRigFx` **cộng dồn góc xoay mỗi khung hình** vì trạng thái Idle không có clip nên Animator không ghi đè xương: nay mỗi xương nhớ tư thế gốc và không bao giờ chồng góc (`Put`); (2) Idle không có clip nên bộ xương đóng băng giữa nhịp bước khi dừng: Idle nay là clip đi dừng ở khung hai chân khép (tốc độ 0, lệch chu kỳ 0,04); (3) tốc độ clip cố định trong khi trùm bị nhân cỡ và tốc độ theo tầng hang nên chân trượt: `WalkRate`, `RunRate` chạy theo tốc độ thật (một vòng đi dài 1,9 m, vòng chạy 3 m ở cỡ gốc, vòng chạy là số ước lượng).
+
 ## Chưa làm / rủi ro
 - Chưa kiểm trong Unity: hướng xoay tay, hướng lệch thân tự đo; lõi sáng bằng đèn điểm nên ở nơi sáng có thể khó thấy.
 - Chưa có clip vẽ riêng cho chiêu (tay chỉ xoay bằng mã trên clip đi), nên tay không cử động theo kiểu nhân vật thật.

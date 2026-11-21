@@ -108,13 +108,16 @@ namespace Evolve.EditorTools
             if (AssetDatabase.LoadAssetAtPath<Object>(ControllerPath) != null) AssetDatabase.DeleteAsset(ControllerPath);
             var ctrl = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
             ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
+            ctrl.AddParameter("WalkRate", AnimatorControllerParameterType.Float);   // fed by GolemRigFx: clip speed follows the real speed
+            ctrl.AddParameter("RunRate", AnimatorControllerParameterType.Float);
             ctrl.AddParameter("Alarming", AnimatorControllerParameterType.Bool);
             ctrl.AddParameter("Hit", AnimatorControllerParameterType.Trigger);
             ctrl.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
             var sm = ctrl.layers[0].stateMachine;
-            var idle = sm.AddState("Idle");   // no clip: the model stays in its A-pose rest
-            var w = sm.AddState("Walk"); w.motion = walk; w.speed = 1f;
-            var r = sm.AddState("Run"); r.motion = run;
+            var idle = sm.AddState("Idle");   // a standing pose: the walk clip stopped (speed 0) at the frame where the feet are together (frame 2 of 26); with no motion at all the skeleton froze mid-stride
+            idle.motion = walk; idle.speed = 0f; idle.cycleOffset = 0.04f;
+            var w = sm.AddState("Walk"); w.motion = walk; w.speed = 1f; w.speedParameterActive = true; w.speedParameter = "WalkRate";
+            var r = sm.AddState("Run"); r.motion = run; r.speed = 1f; r.speedParameterActive = true; r.speedParameter = "RunRate";
             sm.defaultState = idle;
             Link(idle, w, AnimatorConditionMode.Greater, 0.08f);
             Link(w, idle, AnimatorConditionMode.Less, 0.08f);
