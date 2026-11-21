@@ -31,6 +31,8 @@ namespace Evolve.Combat
         SlimeController controller;
         Swallower swallower;
         Vector3 lastMonsterPos;
+        LatchGelFx gel;
+        float gripDamage, startingHealth;
         float pendingDamage, nextTick;
         bool squeeze, release, finished;
 
@@ -55,6 +57,8 @@ namespace Evolve.Combat
             if (rb != null) rb.useGravity = false;
             lastMonsterPos = m.transform.position;
             Active = this;
+            startingHealth = Mathf.Max(0.01f, m is Prey prey ? prey.Health : m is Predator predator ? predator.Health : 1f);
+            gel = LatchGelFx.Begin(gameObject, m.transform);
         }
 
         void SetLatched(bool on)
@@ -106,6 +110,8 @@ namespace Evolve.Combat
             squeeze = false;
             if (step.EnergySpent > 0f) slime.State.TrySpendEnergy(step.EnergySpent);
             pendingDamage += step.Damage;
+            gripDamage += step.Damage;
+            if (gel != null) gel.SetGripProgress(gripDamage / startingHealth);
             if (pendingDamage > 0f && Time.time >= nextTick)
             {
                 target.TakeDamage(pendingDamage, slime);
@@ -122,6 +128,9 @@ namespace Evolve.Combat
             if (monster != null) SetLatched(false);
             if (monsterCol != null && slimeCol != null) Physics.IgnoreCollision(slimeCol, monsterCol, false);
             if (rb != null) rb.useGravity = true;
+
+            if (state == LatchState.Escaped && gel != null)
+                gel.Release(monsterSurvives && !release);
 
             if (state == LatchState.Escaped && monster != null)
             {
@@ -143,9 +152,15 @@ namespace Evolve.Combat
                     float d = (c.transform.position - lastMonsterPos).sqrMagnitude;
                     if (d < bestD) { bestD = d; best = c; }
                 }
-                swallower.SwallowCarcassNow(best);   // the freshest body there is: Giải Mã reads its best genes
-                if (best != null) SwallowCinematic.Play(slime);
+                // The freshest body there is: Giải Mã reads its best genes.
+                if (swallower.SwallowCarcassNow(best))
+                {
+                    if (gel != null) gel.Absorb();
+                    SwallowCinematic.Play(slime, gel);
+                }
+                else if (gel != null) gel.Release(false);
             }
+            else if (gel != null && state == LatchState.MonsterDead) gel.Release(false);
             Active = null;
             Ended?.Invoke(state);
             Destroy(this);
@@ -153,7 +168,13 @@ namespace Evolve.Combat
 
         void OnDestroy()
         {
-            if (!finished) { finished = true; if (monster != null) SetLatched(false); if (rb != null) rb.useGravity = true; }
+            if (!finished)
+            {
+                if (gel != null) gel.Stop();
+                if (monster != null) SetLatched(false);
+                if (monsterCol != null && slimeCol != null) Physics.IgnoreCollision(slimeCol, monsterCol, false);
+                if (rb != null) rb.useGravity = true;
+            }
             if (Active == this) Active = null;
         }
     }
