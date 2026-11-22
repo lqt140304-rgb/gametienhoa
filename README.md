@@ -8,11 +8,20 @@ Game sinh tồn tiến hóa 3D Low Poly, co-op 4–8 người. Người chơi b�
 - **Cơ chế và kỹ năng của slime (bản mới nhất):** [`docs/SLIME_MECHANICS.md`](docs/SLIME_MECHANICS.md)
 - Trùm Chúa Hang làm bằng Meshy, quy trình và trạng thái: [`docs/MESHY_BOSSES.md`](docs/MESHY_BOSSES.md)
 - Trạng thái từng mục và danh sách thử tay: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md), [`docs/TEST_CHECKLIST_UNITY.md`](docs/TEST_CHECKLIST_UNITY.md)
-- **Trạng thái:** đang thiết kế, chưa có project Unity.
+- **Trạng thái:** đã có project Unity, đang triển khai và kiểm thử gameplay, sinh vật, VFX và co-op.
+
+## Hang 01 · AI, kỹ năng và VFX
+
+Đã triển khai Bọ Cánh Cứng Nhỏ (Bật Cánh Thoát Thân, Da Dày), Ốc Hồ (Thu Mình, Bám Đá Ướt) và Thằn Lằn Bờ Hồ (Lưỡi Dài, Ngụy Trang Bờ Rêu). Lưỡi phóng từ miệng rồi rút lại; ốc xoắn đầu, đuôi và co phần thân mềm vào dưới vỏ.
+
+- Bản review và các điểm tích hợp cho nhánh khác nằm trong [PR #125](https://github.com/lqt140304-rgb/gametienhoa/pull/125).
+- Danh sách file, thông số kỹ năng và cách chạy Unity nằm trong [bàn giao Hang 01](docs/HANG-01-CREATURE-SKILLS.md).
+- Đã đạt 93/93 test EditMode và xem hiệu ứng trên prefab thật trong fixture Play Mode URP ở hai mức sáng. Cần kiểm tra tiếp toàn cảnh Hang Khởi Sinh và co-op hai máy; client hiện chưa hiển thị VFX riêng của ba loài.
+- Sau khi cập nhật code, chạy **Evolve → Build Wave 1 Creatures & Prefabs** để nhận controller Thu Mình mới của Ốc Hồ.
 
 ## Công nghệ
 
-Unity 6 + URP (ghi đúng phiên bản Editor vào đây khi tạo project), C#, Blender, Shader Graph, Netcode for GameObjects.
+Unity 6000.6.9f1 + URP, C#, Blender, Shader Graph, Netcode for GameObjects.
 
 ## Thiết lập repo
 
