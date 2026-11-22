@@ -1,6 +1,6 @@
 # Bảng việc chung (đọc trước khi sửa, cập nhật khi xong)
 
-> **Mọi phiên làm việc (Claude hay người) đọc file này trước khi bắt đầu và cập nhật một dòng khi xong hoặc đổi việc.** Mục đích: nhiều phiên cùng làm trên `claude/unity-test-maze` mà không giẫm chân nhau. Cập nhật lần cuối: 2026-11-22.
+> **Mọi phiên làm việc (Claude hay người) đọc file này trước khi bắt đầu và cập nhật một dòng khi xong hoặc đổi việc.** Mục đích: nhiều phiên cùng làm trên `claude/unity-test-maze` mà không giẫm chân nhau. Cập nhật lần cuối: 2026-11-22 (dòng Bọ Cạp).
 
 ## Quy tắc chung (bản đầy đủ nằm ở `CLAUDE.md` ở gốc repo: mọi phiên Claude Code tự đọc nó khi bắt đầu)
 1. Nhánh làm việc: **`claude/unity-test-maze`** (gộp từ `claude/movement`). Luôn `git pull --no-rebase origin claude/unity-test-maze` **trước khi sửa và trước khi push**; nhóm cave "Antigravity" cũng push vào đó. Không tạo PR trừ khi chủ dự án bảo; chỉ push hai nhánh trên.
@@ -15,7 +15,7 @@
 | **Phiên Golem** (phiên "làm game", đám mây) | Golem: bộ chiêu, phase, đọc người chơi, dạng rìu, khối `BossRoom`; âm thanh và nhạc Golem, kế hoạch chiều sâu trùm | `Golem*`, `GolemAxe`, `AxeFlight`, `Pure/{GolemRules,MeteorRules,AxeRules,FetchFsm,AuraRules,ShockwaveRules,RoomRules,PhaseRules,ReadRules,CircleRules,VfxRules}`, `World/BossRoom.cs`, `tools/voice/generate_golem_sfx.sh` | dạng rìu và `BossRoom` đã viết, **chưa kiểm chứng trong Unity** | chờ kết quả test phòng Golem; sau đó nhạc phase, bộ phận yếu, poise |
 | **Phiên Chim Hang Mẹ** | kền kền Dreadwing: model, rig, chiêu bay, âm thanh gắn chiêu | `Bird*`, `Pure/BirdRules.cs`, `Models/Wildlife/Meshy/*Dreadwing*`, `tools/voice/generate_bird_sfx.sh` | đã theo bộ chuẩn (Vả Cánh, Rít Gầm, Lướt Gió); phần Unity chưa kiểm chứng | động tác riêng cho Vả Cánh và Rít Gầm |
 | **Phiên dựng map** | 3 phòng trùm (Golem, Chim, Bọ Cạp): hình học, cửa thép, builders | `Editor/BossRoom*Builder.cs`, `Scenes/BossRoom_*.unity`, `Prefabs/BossRooms/`, `Models/Underroot/BossRoom_*` | **PR #127 đang mở** (rất lớn: 1653 file); phòng Golem chờ đặt Golem để thử | thử phòng Golem trong Unity (menu **Evolve → Boss Rooms → Place Golem In The Open Boss Room**), rồi chim và bọ cạp |
-| **Phiên Bọ Cạp** | chưa bắt đầu (bộ chiêu chưa được duyệt) | `Scorpion*` (chưa có) | chưa bắt đầu | đề xuất bộ chiêu cho chủ dự án duyệt trước |
+| **Phiên Bọ Cạp** | Bọ Cạp Thạch Anh: bộ chiêu chuẩn (đã duyệt), rig và 28 clip Blender (đi 4 hướng, ba pha mỗi chiêu, 30 khóa), nhịp trận (đi vòng, hở sườn), combo, trồi kép ≤ 66%, cột tinh thể, 26 tiếng, đặt vào phòng Bọ Cạp | `ScorpionMoves`, `CrystalColumn`, `World/ScorpionRoom.cs`, `Pure/ScorpionRules.cs`, `Editor/MeshyScorpionPrefabBuilder.cs`, `Editor/ScorpionBossRoomPlacer.cs`, `tools/blender/rig_scorpion.py`, `tools/voice/generate_scorpion_sfx.sh`, `Models/Wildlife/Meshy/*BoCapThachAnh*` | **PR #126 đang mở** (nhánh `claude/friendly-cori-3fjujb`); đã được thử một phần trong Unity (đi, gai lưng, tự nhận sát thương), phần còn lại **chưa kiểm chứng** (checklist H13) | nhạc `scorpion_battle` (khóa ElevenLabs thiếu quyền `music_generation`); chủ dự án test H13b–e; phase 66% và 33% với đọc người chơi |
 | **Nhóm cave "Antigravity"** | hang, mê cung, thế giới | `World/`, `Maze/`, `Editor/Cavern*`, `Slime_Cavern.unity` | ngoài phạm vi các phiên trùm | (họ tự quản) |
 | **Phiên "Golem Thạch Anh testing"** (máy chủ dự án) | test trong Unity, Unity MCP | tùy việc | đang chờ chủ dự án trả lời | (xem phiên đó) |
 
@@ -25,7 +25,7 @@
 | Golem Thạch Anh | xong (tay không 5 chiêu, dạng rìu 4 chiêu) | có | có (chờ đặt trùm) | lore: `docs/lore/golem-thach-anh.md` |
 | Chim Hang Mẹ | xong | có | có (chưa đặt trùm) | |
 | Chó Xương | xong | có | chưa | |
-| Bọ Cạp Thạch Anh | **chưa duyệt** | chưa | có (tạm) | |
+| Bọ Cạp Thạch Anh | xong (6 chiêu, chưa kiểm chứng đủ trong Unity) | chưa (`PhaseRules` và `MoveVfx` chỉ cho Golem, Chim, Chó Xương; Bọ Cạp có hiệu ứng ba pha riêng trong `ScorpionMoves`) | có (đặt bằng menu **Place Scorpion In The Open Boss Room**) | thiếu nhạc `scorpion_battle` |
 | Cóc, Rắn Dung Nham, Cáo Gió | đề xuất trong `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`, chưa duyệt | chưa | chưa | Rắn: duỗi thẳng chưa xong; Cáo: model mới chưa vào repo |
 
 ## Việc tồn đọng chưa ai nhận
