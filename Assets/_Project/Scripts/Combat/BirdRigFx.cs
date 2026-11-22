@@ -29,8 +29,9 @@ namespace Evolve.Combat
         Wing[] wings;
         Transform beak, beakTip, root, model;
         Part rootPart, headPart, tailPart, legL, legR, shinL, shinR;
-        bool ownGait;
-        float stride;
+        bool ownGait, kneeRig, clipWalk;   // kneeRig: hip + knee per leg (Dreadwing); clipWalk: its Walk clip drives the legs, so we do not
+        float stride, yawSign = 1f, headYaw;   // yawSign: + turns the head to the creature's right
+        Vector3 headUp;
         Vector3 rootRest, rootUp;
         Quaternion beakRest;
         Vector3 beakAxis;
@@ -75,12 +76,30 @@ namespace Evolve.Combat
                 else if (n == "Shin_L") sL = t;
                 else if (n == "Shin_R") sR = t;
             }
-            ownGait = lL != null && lR != null && lL.name == "Thigh_L";
+            kneeRig = lL != null && lR != null && lL.name == "Thigh_L";
+            var animator = GetComponentInChildren<Animator>(true);
+            var ctrl = animator != null ? animator.runtimeAnimatorController : null;
+            clipWalk = kneeRig && ctrl != null && ctrl.name.Contains("Dreadwing");   // the Blender walk clip (Creature_ChimHangMe_Dreadwing.controller) moves the legs and the pelvis
+            ownGait = kneeRig && !clipWalk;
             lastPos = transform.position;
             wings = new Wing[2];
             for (int i = 0; i < 2; i++) wings[i] = MakeWing(w[i, 0], w[i, 1], w[i, 2]);
             if (root != null) { rootRest = root.localPosition; rootUp = root.parent != null ? root.parent.InverseTransformDirection(transform.up) : transform.up; }
             rootPart = Make(root, transform); headPart = Make(head, transform); tailPart = Make(tail, transform); legL = Make(lL, transform); legR = Make(lR, transform); shinL = Make(sL, transform); shinR = Make(sR, transform);
+            if (head != null)   // the head turn: + about the creature's up axis turns the beak toward its right or its left; measured on the far end of the head
+            {
+                headUp = head.InverseTransformDirection(transform.up).normalized;
+                Transform tip = beakTip;
+                if (tip == null) { float far = 0f; foreach (var c in head.GetComponentsInChildren<Transform>()) { float d = (c.position - head.position).sqrMagnitude; if (d > far) { far = d; tip = c; } } }
+                if (tip != null && tip != head)
+                {
+                    var rest = head.localRotation;
+                    float before = Vector3.Dot(tip.position, transform.right);
+                    head.localRotation = rest * Quaternion.AngleAxis(10f, headUp);
+                    yawSign = Vector3.Dot(tip.position, transform.right) > before ? 1f : -1f;
+                    head.localRotation = rest;
+                }
+            }
             if (beak != null && beakTip != null)
             {
                 beakRest = beak.localRotation;
@@ -101,7 +120,7 @@ namespace Evolve.Combat
                 root.localRotation = rest;
             }
             nextScreech = Time.time + Random.Range(4f, 8f);
-            Debug.Log($"[BirdRigFx] {name}: cánh L(lift {(wings[0] != null ? wings[0].LiftSign : 0)}, sweep {(wings[0] != null ? wings[0].SwingSign : 0)}) R(lift {(wings[1] != null ? wings[1].LiftSign : 0)}, sweep {(wings[1] != null ? wings[1].SwingSign : 0)}), cúi {pitchSign}, chân {(legL != null && legR != null ? (ownGait ? "có (tự đi, gối " + (shinL != null && shinR != null ? "có" : "THIẾU") + ")" : "có") : "THIẾU")}, đầu {(headPart != null ? "có" : "thiếu")}, đuôi {(tailPart != null ? "có" : "thiếu")}");
+            Debug.Log($"[BirdRigFx] {name}: cánh L(lift {(wings[0] != null ? wings[0].LiftSign : 0)}, sweep {(wings[0] != null ? wings[0].SwingSign : 0)}) R(lift {(wings[1] != null ? wings[1].LiftSign : 0)}, sweep {(wings[1] != null ? wings[1].SwingSign : 0)}), cúi {pitchSign}, chân {(legL != null && legR != null ? (kneeRig ? (clipWalk ? "có (clip đi bộ Blender" : "có (tự đi") + ", gối " + (shinL != null && shinR != null ? "có" : "THIẾU") + ")" : "có") : "THIẾU")}, đầu {(headPart != null ? "có" : "thiếu")}, đuôi {(tailPart != null ? "có" : "thiếu")}");
         }
 
         Wing MakeWing(Transform a, Transform b, Transform c)
@@ -135,8 +154,9 @@ namespace Evolve.Combat
             BirdPose target;
             if (scripted) target = bird.Pose;                                                        // a move, or flying
             else if (busy) target = new BirdPose { Spread = 1f, Beat = 1f, Beak = 1f };             // some move this rig has no pose for
-            else target = new BirdPose { Spread = 0.55f * moving };                                  // folded at rest, half open walking
+            else target = new BirdPose();                                                            // on the ground, standing or walking: the wings stay folded like an ordinary bird's
             pose = BirdPose.Lerp(pose, target, 1f - Mathf.Exp(-(scripted ? 12f : 4f) * dt));
+            float wingMoving = scripted ? moving : 0f;                                                // no flutter of the folded wings while it walks
 
             if (busy || scripted) BossMusic.Ping("bird_battle");   // a move in progress is a blow in the fight: the boss music
             if (pred != null)
@@ -144,7 +164,7 @@ namespace Evolve.Combat
                 if (lastHealth > 0f && pred.Health < lastHealth - 0.01f) { ProceduralSfx.PlayFile("Bird/bird_hurt", transform.position, 1f, ProceduralSfx.Kind.HoundHurt); BossMusic.Ping("bird_battle"); }
                 lastHealth = pred.Health;
             }
-            phase += 6.2832f * WingRules.Frequency(pose.Beat, moving) * dt;
+            phase += 6.2832f * WingRules.Frequency(pose.Beat, wingMoving) * dt;
             float cycle = Mathf.Floor(phase / 6.2832f);
             if (cycle != lastCycle) { lastCycle = cycle; if (pose.Beat > 0.4f) ProceduralSfx.PlayFile("Bird/bird_flap", transform.position, 0.7f, ProceduralSfx.Kind.HoundSwipe); }   // a wingbeat in a fight is heard
             if (phase > 1000f) phase %= 6.2832f;
@@ -157,23 +177,38 @@ namespace Evolve.Combat
                     {
                         var seg = wing.S[i];
                         if (seg == null) continue;
-                        WingRules.Segment(i, phase, pose, moving, out float lift, out float sweep);
+                        WingRules.Segment(i, phase, pose, wingMoving, out float lift, out float sweep);
                         seg.T.localRotation = seg.Rest * Quaternion.AngleAxis(wing.SwingSign * sweep, seg.Swing) * Quaternion.AngleAxis(wing.LiftSign * lift, seg.Lift);
                     }
                 }
 
             // the body dips and lifts with the beats
-            if (root != null && pose.Beat > 0.01f)
-                root.localPosition = rootRest + rootUp * (0.05f * pose.Beat * Mathf.Max(0f, Mathf.Sin(phase)) * (1f / Mathf.Max(0.0001f, root.parent != null ? root.parent.lossyScale.y : 1f)));
-            else if (root != null) root.localPosition = rootRest;
+            Vector3 bob = pose.Beat > 0.01f ? rootUp * (0.05f * pose.Beat * Mathf.Max(0f, Mathf.Sin(phase)) * (1f / Mathf.Max(0.0001f, root != null && root.parent != null ? root.parent.lossyScale.y : 1f))) : Vector3.zero;
+            if (root != null)
+            {
+                if (clipWalk) root.localPosition += bob;   // the Animator rewrites the pelvis' position every frame (the walk clip keeps the lowest foot on the floor), so the bob is added to it
+                else root.localPosition = rootRest + bob;
+            }
 
             // the body bends and the legs tuck: nose down in a dive, up in a flare; the head stays more level, the tail balances
             float pitch = pose.Pitch * pitchSign;
             if (rootPart != null) Put(rootPart, Quaternion.AngleAxis(pitch, rootPart.Axis));
-            if (headPart != null) Put(headPart, Quaternion.AngleAxis(-0.5f * pitch, headPart.Axis));
+            if (headPart != null)
+            {
+                // the head always turns toward the player (the body faces its walking direction, or only partly the player while it circles): up to 80 degrees; in a move the body already faces them
+                var prey = combat != null ? combat.EngagedTarget(60f) : null;
+                float yawWant = 0f;
+                if (prey != null)
+                {
+                    Vector3 to = prey.transform.position - transform.position; to.y = 0f;
+                    if (to.sqrMagnitude > 0.25f) yawWant = Mathf.Clamp(Vector3.SignedAngle(transform.forward, to, Vector3.up), -80f, 80f) * (scripted ? 0.35f : 1f);   // + = the player is on its right
+                }
+                headYaw = Mathf.LerpAngle(headYaw, yawWant, 1f - Mathf.Exp(-8f * dt));
+                Put(headPart, Quaternion.AngleAxis(-0.5f * pitch, headPart.Axis) * Quaternion.AngleAxis(yawSign * headYaw, headUp));
+            }
             if (tailPart != null) Put(tailPart, Quaternion.AngleAxis(-0.4f * pitch, tailPart.Axis));
             // legs: + (in the nose-down sense) swings the feet back: tucked; - swings them forward: reaching
-            float tuck = ownGait ? (pose.Legs >= 0f ? pose.Legs * HipTuckDeg : pose.Legs * HipReachDeg) : (pose.Legs >= 0f ? pose.Legs * TuckDeg : pose.Legs * ReachDeg);
+            float tuck = kneeRig ? (pose.Legs >= 0f ? pose.Legs * HipTuckDeg : pose.Legs * HipReachDeg) : (pose.Legs >= 0f ? pose.Legs * TuckDeg : pose.Legs * ReachDeg);
             float kneeTuck = pose.Legs >= 0f ? pose.Legs * KneeTuckDeg : 0f;
             float swingL = 0f, swingR = 0f, kneeL = 0f, kneeR = 0f;
             if (ownGait)   // walking: the legs swing in turn, the knee lifts the foot while the leg goes forward; less and less as it takes off
