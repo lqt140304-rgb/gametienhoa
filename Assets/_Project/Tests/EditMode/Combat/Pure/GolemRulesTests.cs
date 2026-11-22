@@ -9,9 +9,9 @@ namespace Evolve.Tests.EditMode
     {
         static MoveDef Move(string name) => MovesetSeed.For("Golem Thạch Anh").Single(m => m.Name == name);
 
-        [Test] public void Golem_HasItsFiveMoves_ByAnyName()
+        [Test] public void Golem_HasItsNineMoves_ByAnyName()
         {
-            foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(5, MovesetSeed.For(n).Count, n);
+            foreach (var n in new[] { "Golem Thạch Anh", "GolemThachAnh (Meshy)(Clone)", "golem_thach_anh" }) Assert.AreEqual(9, MovesetSeed.For(n).Count, n);   // five bare-fisted, four with the axe (Lõi Nổ is shared, so 5 + 4)
             Assert.IsTrue(MovesetSeed.Has("Golem Thạch Anh"));
             var punch = Move("Nện Đấm"); var sweep = Move("Quét Tay"); var rush = Move("Húc Đầu"); var meteor = Move("Giáng Thạch"); var blast = Move("Lõi Nổ");
             Assert.IsFalse(MovesetSeed.For("Golem Thạch Anh").Any(m => m.Name == "Đập Đất"));   // replaced by the close normal attack

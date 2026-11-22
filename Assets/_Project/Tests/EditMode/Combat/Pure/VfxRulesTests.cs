@@ -23,7 +23,7 @@ namespace Evolve.Tests.EditMode
 
         [Test] public void BiggerMoves_GetBiggerStages()
         {
-            var moves = MovesetSeed.For("Golem Thạch Anh");
+            var moves = MovesetSeed.ForForm("Golem Thạch Anh", MoveForm.Fist);
             var normal = VfxRules.PlanFor("Golem Thạch Anh", moves.First(m => m.Role == MoveRole.Normal));
             var special = VfxRules.PlanFor("Golem Thạch Anh", moves.Single(m => m.Role == MoveRole.Special));
             var ult = VfxRules.PlanFor("Golem Thạch Anh", moves.Single(m => m.Role == MoveRole.Ultimate));
