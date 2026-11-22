@@ -35,3 +35,12 @@ Assets/_Project/
 
 - Làm trên branch `feature/<tên>`, merge vào `main` qua pull request.
 - Class C# đặt tên PascalCase, mỗi file một class; ScriptableObject có hậu tố `SO`, ví dụ `AbilitySO`.
+
+## Làm việc với nhiều agent (Claude Code, Codex, Antigravity)
+Nhiều agent và người cùng làm trên repo này. Để không giẫm chân nhau:
+- **Quy tắc chung:** [`AGENTS.md`](AGENTS.md) (Codex đọc trực tiếp; `CLAUDE.md` và `GEMINI.md` trỏ về nó).
+- **Bảng việc chung:** [`docs/PROJECT_BOARD.md`](docs/PROJECT_BOARD.md): ai làm gì, file nào của ai, trạng thái từng trùm, việc tồn đọng. Mỗi agent **đọc trước khi làm và sửa một dòng của mình khi xong**.
+- **Bước đầu tiên của mỗi phiên:** `bash tools/session_brief.sh` (in bảng việc và commit mới của phiên khác; Claude Code tự chạy, các agent khác chạy bằng tay).
+- **Trước khi push:** `git pull --no-rebase origin claude/unity-test-maze`, rồi `tools/cstest/run.sh` (cần .NET 8; phải `Passed!`). GitHub tự chạy lại ở [`.github/workflows/tests.yml`](.github/workflows/tests.yml) sau mỗi push và mỗi PR.
+- **Phần Unity** (cảnh, prefab, menu Editor, hiển thị) không chạy được ngoài Unity: ghi rõ "chưa kiểm chứng" và chờ chủ dự án thử.
+- Không commit khóa API; hỏi chủ dự án trước mỗi lần tạo bằng Meshy.
