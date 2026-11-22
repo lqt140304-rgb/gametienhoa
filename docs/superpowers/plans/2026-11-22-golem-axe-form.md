@@ -120,11 +120,24 @@
 - [ ] **Step 4: Rig và FX**: `GolemRigFx` dùng các anim mới; `GolemFx` thêm tiếng và hiệu ứng cho chém, ném, bổ đất, kéo (bụi, gằn mỗi nhịp, rìu rung); đăng ký ba giai đoạn hiệu ứng (`VfxRules` tự lo vì chiêu có `Role`).
 - [ ] **Step 5: Kiểm tra cú pháp** (lệnh trong Ràng buộc chung) và `tools/cstest/run.sh` (`Passed!`); commit `"Golem: axe form wired into the combat (unverified in Unity)"`. Ghi rõ trong báo cáo: phần này chưa chạy trong Unity.
 
+### Task 8a: Luật phòng: kích hoạt theo số người và cửa thép (thuần)
+**Files:** Tạo `Combat/Pure/RoomRules.cs`, `Tests/EditMode/Combat/Pure/RoomRulesTests.cs`
+
+**Interfaces:**
+- Produces: `static class RoomRules { bool ShouldActivate(int insideAlive, int connectedAlive) }` (đúng khi `connectedAlive ≥ 1` và `insideAlive == connectedAlive`); `enum DoorState { Open, Closing, Closed, Opening }`; `sealed class DoorFsm` với `DoorState State`, `float Openness` (0 = đóng kín, 1 = mở hẳn), `const float CloseSeconds = 1.5f`, `void Close()`, `void Open()`, `void Tick(float dt)`.
+
+- [ ] **Step 1: Viết test hỏng**: `Activates_OnlyWhenEveryLivingPlayerIsInside` (2 trong 2 đúng, 1 trong 2 sai, 0 trong 0 sai, người chết không tính: 1 trong 1 sống đúng); `Door_ClosesInOneAndAHalfSeconds` (sau `Close()` và `Tick` tổng 1,5 s thì `Closed`, `Openness == 0`, giữa chừng `Closing`); `Door_OpensBack` và `Close()` khi đã đóng không đổi gì.
+- [ ] **Step 2: Chạy** `tools/cstest/run.sh`; mong đợi: lỗi biên dịch.
+- [ ] **Step 3: Cài đặt** `RoomRules`, `DoorFsm`.
+- [ ] **Step 4: Chạy lại**; mong đợi `Passed!`.
+- [ ] **Step 5: Commit** `"RoomRules: activation by player count and the steel door"`.
+
 ### Task 8: `BossRoom`, âm thanh và tài liệu
 **Files:** Tạo `World/BossRoom.cs`, `docs/BOSS_ROOM_CONTRACT.md`, `tools/voice/generate_golem_sfx.sh` (thêm dòng), sửa `docs/TEST_CHECKLIST_UNITY.md`
 
 **Interfaces:**
-- Produces: `BossRoom` (MonoBehaviour) tìm theo tên các con `Boss_Wait`, `Axe_Anchor`, `Activate_Zone` (collider trigger), `Prop_Pillar_*`, `Prop_Crystal_*`; ẩn Golem tại `Boss_Wait` trước khi kích hoạt; `event Action Activated`; `Transform AxeAnchor { get; }`.
+- Consumes: `RoomRules`, `DoorFsm` (Task 8a).
+- Produces: `BossRoom` (MonoBehaviour) tìm theo tên các con `Boss_Wait`, `Axe_Anchor`, `Activate_Zone` (collider trigger phủ phần trong phòng), `Door_Mouth`, `Door_Steel`, `Door_Open_Pos`, `Door_Closed_Pos`, `Prop_Pillar_*`, `Prop_Crystal_*`; ẩn Golem tại `Boss_Wait` trước khi kích hoạt; đếm người chơi sống và đang kết nối trong `Activate_Zone` bằng `RoomRules.ShouldActivate`; điều khiển `DoorFsm` (đóng khi đủ người, mở khi trùm chết hoặc khi mọi người chơi chết); `event Action Activated`; `Transform AxeAnchor { get; }`.
 
 - [ ] **Step 1: Cài đặt `BossRoom`** như trên (thiếu điểm bắt buộc thì cảnh báo một lần trong Console, không ném lỗi; không có `Activate_Zone` thì kích hoạt ngay).
 - [ ] **Step 2: Âm thanh**: thêm vào `generate_golem_sfx.sh` các tiếng `golem_axe_swing`, `golem_axe_hit`, `golem_axe_throw`, `golem_axe_stick`, `golem_axe_slam`, `golem_awaken` rồi chạy `ONLY=... tools/voice/generate_golem_sfx.sh`; nối vào `GolemFx`/`BossRoom`.
