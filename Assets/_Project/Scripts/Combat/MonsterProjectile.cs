@@ -11,7 +11,8 @@ namespace Evolve.Combat
         bool bone, big;
         (float vx, float vy, float vz) v;
         Vector3 from;
-        float t, flight, damage, radius;
+        float t, flight, damage, radius, bodyRadius;
+        Vector3 prev;
 
         /// <summary>A rock (Khỉ Hang), or with <paramref name="bone"/> a spinning ivory bone shard with a pale trail (Chó Xương's spit).</summary>
         public static void Launch(Vector3 from, Vector3 to, float flightSeconds, float damage, float radius = 0.6f, bool bone = false, float size = 0f)
@@ -31,6 +32,7 @@ namespace Evolve.Combat
             }
             var p = go.AddComponent<MonsterProjectile>();
             p.bone = bone; p.big = size > 0f;
+            p.prev = from; p.bodyRadius = bone ? 0.1f : (size > 0f ? size * 0.4f : 0.12f);
             p.from = from; p.flight = flightSeconds; p.damage = damage; p.radius = radius;
             p.v = ThrowRules.Launch(from.x, from.y, from.z, to.x, to.y, to.z, flightSeconds);
         }
@@ -51,7 +53,16 @@ namespace Evolve.Combat
         {
             t += Time.fixedDeltaTime;
             var pos = ThrowRules.PositionAt(from.x, from.y, from.z, v, t);
-            transform.position = new Vector3(pos.x, pos.y, pos.z);
+            Vector3 now = new Vector3(pos.x, pos.y, pos.z), step = now - prev;
+            if (step.sqrMagnitude > 1e-6f && Physics.SphereCast(prev, bodyRadius, step.normalized, out var wall, step.magnitude, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) && wall.collider.attachedRigidbody == null)
+            {
+                transform.position = wall.point + wall.normal * 0.2f;   // it struck a wall, the floor or a pillar (not a creature or the player: those have bodies): it lands there and bursts
+                if (bone) HoundFx.ShardImpact(transform.position); else if (big) { GolemFx.BoulderImpact(transform.position); Splash(transform.position); }
+                Destroy(gameObject);
+                return;
+            }
+            prev = now;
+            transform.position = now;
             if (bone) transform.Rotate(540f * Time.fixedDeltaTime, 220f * Time.fixedDeltaTime, 0f, Space.Self);   // it tumbles through the air
             foreach (var p in SurvivalStats.All)
             {

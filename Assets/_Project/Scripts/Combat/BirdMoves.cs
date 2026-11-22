@@ -102,6 +102,9 @@ namespace Evolve.Combat
 
         void ReleaseVictim() { victim = null; victimBody = null; victimCtl = null; }
 
+        /// <summary>A sound of Resources/Sfx/Bird (recordings made by tools/voice/generate_bird_sfx.sh); the procedural <paramref name="fallback"/> plays if the file is missing.</summary>
+        static void Sfx(string name, Vector3 at, float volume, ProceduralSfx.Kind fallback) => ProceduralSfx.PlayFile("Bird/" + name, at, volume, fallback);
+
         /// <summary>
         /// While the bird rushes (a strike, a dive, the whole grab) its big kinematic collider must not collide with the players: it is moved by hand, so touching a player counts as a ram at speed
         /// (<c>Predator.Contact</c>: the bird killed itself on its own dive), and the player tossed upward hit the bird's belly and hung there instead of flying. Off again when the strike is over.
@@ -167,6 +170,7 @@ namespace Evolve.Combat
             bool wasFlying = prevMove != null && prevPhase != MovePhase.Idle && IsFlyingShape(prevMove.Shape);
             bool nowFlying = m != null && phase != MovePhase.Idle && IsFlyingShape(m.Shape);
             if (wasFlying && (!nowFlying || !ReferenceEquals(m, prevMove))) { ReleaseVictim(); fsm = null; }   // the move is over
+            if (m != null && m.Shape == MoveShape.Lunge && phase == MovePhase.Active) Sfx("bird_peck", transform.position, 1f, ProceduralSfx.Kind.HoundSnap);
             if (!nowFlying) return;
             if (phase == MovePhase.Windup) BeginMove(m, target);
             else if (phase == MovePhase.Active) BeginStrike(m, target);
@@ -194,6 +198,7 @@ namespace Evolve.Combat
                 hoverFlat = d > SwoopRules.HoverStandOff ? flat + to.normalized * (d - SwoopRules.HoverStandOff) : flat;   // it closes to a few metres of the player while it climbs
             }
             else if (m.Shape == MoveShape.Talon) { fsm = new TalonFsm(); lastStage = TalonStage.Dash; }
+            if (m.Shape == MoveShape.Swoop) Sfx("bird_wind", transform.position, 0.8f, ProceduralSfx.Kind.SpearOrbit);   // the wind of its climb
         }
 
         void BeginStrike(MoveDef m, SurvivalStats target)
@@ -202,7 +207,7 @@ namespace Evolve.Combat
             {
                 diveFrom = flat; diveH = Height;
                 if (!marked) spot = SpotOf(target, 0.35f);
-                ProceduralSfx.Play(ProceduralSfx.Kind.SpearLaunch, transform.position, 1f);
+                Sfx("bird_dive", transform.position, 1f, ProceduralSfx.Kind.SpearLaunch);
             }
             else if (m.Shape == MoveShape.Talon)
             {
@@ -211,7 +216,7 @@ namespace Evolve.Combat
                 Vector3 to = aim - flat;
                 Vector3 dir = to.sqrMagnitude > 1e-4f ? to.normalized : Flat(transform.forward).normalized;
                 dashTo = flat + dir * (to.magnitude + 1.5f);   // it flies on past the player: the catch happens on the way, never short of it
-                ProceduralSfx.Play(ProceduralSfx.Kind.SpearLaunch, transform.position, 1f);
+                Sfx("bird_swoop", transform.position, 1f, ProceduralSfx.Kind.SpearLaunch);
             }
             else if (m.Shape == MoveShape.WindSlash) slashes = 0;
         }
@@ -274,6 +279,8 @@ namespace Evolve.Combat
         void LaunchBlades(MoveDef m, SurvivalStats target)
         {
             Vector3 aim = target != null ? target.transform.position + Vector3.up * 0.3f : transform.position + transform.forward * 10f;
+            Sfx("bird_wing_slap", transform.position, 1f, ProceduralSfx.Kind.HoundSwipe);                  // the chop of the wings
+            Sfx("bird_feather_volley", transform.position, 0.8f, ProceduralSfx.Kind.SpearLaunch);          // and the blades leaving them
             for (int side = -1; side <= 1; side += 2)
             {
                 Transform tip = side < 0 ? tipL : tipR;
@@ -284,7 +291,6 @@ namespace Evolve.Combat
                 var blade = MakeBlade();
                 blade.position = from;
                 MonsterSpear.Launch(blade, from + d.normalized * 10f, m.SpearSpeed, m.Damage * combat.DamageScale, m.Force);
-                ProceduralSfx.Play(ProceduralSfx.Kind.SpearLaunch, from, 0.9f);
             }
         }
 
@@ -333,7 +339,7 @@ namespace Evolve.Combat
             target.State.Damage(m.Damage * combat.DamageScale);
             Vector3 at = target.transform.position;
             SkillFx.Burst(at + Vector3.up * 0.3f, BloodColor, 12, 3f, 0.1f, 0.4f);
-            ProceduralSfx.Play(ProceduralSfx.Kind.HoundSnap, at, 1f);
+            Sfx("bird_grab", at, 1f, ProceduralSfx.Kind.HoundSnap);
             ImpactFx.Thump(at, 0.05f, 0.3f, 20f);
         }
 
@@ -389,7 +395,7 @@ namespace Evolve.Combat
             }
             if (victimCtl != null) victimCtl.FreezeFor(1f);   // no steering for a moment: it is flying
             Vector3 at = transform.position;
-            ProceduralSfx.Play(ProceduralSfx.Kind.SpearLaunch, at, 1f);
+            Sfx("bird_stun_screech", at, 1f, ProceduralSfx.Kind.HoundHowl);   // the screech as it flings the player
             ImpactFx.Thump(at, 0.06f, 0.3f, 20f);
         }
 
@@ -416,7 +422,7 @@ namespace Evolve.Combat
             victim.State.Damage(m.MissileDamage * combat.DamageScale);
             if (victimBody != null && victimBody.linearVelocity.y < 1.5f) Impulse.Kick(victimBody, Vector3.up * 3.5f);   // every rake flings them up again
             SkillFx.Burst(vp + Vector3.up * 0.3f, BloodColor, 10, 3f, 0.1f, 0.4f);
-            ProceduralSfx.Play(ProceduralSfx.Kind.HoundSwipe, vp, 1f);
+            Sfx("bird_wing_slap", vp, 0.6f, ProceduralSfx.Kind.HoundSwipe);
         }
 
         // ---------- the body ----------

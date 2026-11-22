@@ -305,3 +305,5 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`. Dừng P
 - [ ] **Golem, nội tại:** trúng đòn mất ít máu hơn bình thường (−20%); máu ≤ 66% thì **tinh thể mọc ra trên vai và lưng** và còn nhận ít hơn nữa; để yên ≥ 8 giây thì máu hồi dần.
 - [ ] **Chó Xương, 5 chiêu:** Cắn Nghiền và Cào Xé (thường), Phun Xương (xa), **Vồ** (đặc biệt: trúng thì cắn chặt, ấn xen kẽ A/D), **Triệu Hồi** chỉ khi máu ≤ 25%. Không còn Gầm và Nhảy Vượt.
 - [ ] **Chó Xương, nội tại Khát Máu:** máu ≤ 50% thì chạy nhanh hơn rõ.
+
+- [ ] **Chim Hang Mẹ, âm thanh và nhạc (chưa có bộ chiêu, mới gắn phần có sẵn):** khi nó chiến đấu nhạc `bird_battle` phát (Console: "[Nhạc trùm] phát bird_battle"); mỗi nhịp vỗ cánh trong trận có tiếng vỗ cánh; tiếng rít khi nó tự há mỏ; tiếng kêu đau khi trúng đòn. Các tiếng của từng chiêu (mổ, vả cánh, bắn lông, quắp, bổ nhào, rít gầm) đã tạo sẵn trong Resources/Sfx/Bird/ chờ có bộ chiêu để gắn.
