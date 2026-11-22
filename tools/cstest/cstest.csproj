@@ -40,6 +40,8 @@
     <Compile Include="../../Assets/_Project/Scripts/Combat/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Combat/Pure/*.cs" />
     <Compile Include="../../Assets/_Project/Tests/EditMode/Creatures/*.cs" />
+    <!-- Physics, Terrain and runtime creature tests run in the Unity Test Runner. -->
+    <Compile Remove="../../Assets/_Project/Tests/EditMode/Creatures/HangOneSkillsTests.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/SpeciesPopulation.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/RegionPopulation.cs" />
     <Compile Include="../../Assets/_Project/Scripts/Ecology/PopulationCap.cs" />
