@@ -28,18 +28,18 @@ namespace Evolve.World
         public event Action Activated;
         public Transform AxeAnchor { get; private set; }
 
-        T Find<T>(string childName) where T : Component
+        T Find<T>(string childName, bool required = true) where T : Component
         {
             foreach (var t in GetComponentsInChildren<Transform>(true))
                 if (t.name == childName) { var c = typeof(T) == typeof(Transform) ? t as T : t.GetComponent<T>(); if (c != null) return c; }
-            Debug.LogWarning("[Phòng trùm] " + name + " thiếu " + childName + " (xem docs/BOSS_ROOM_CONTRACT.md).");
+            if (required) Debug.LogWarning("[Phòng trùm] " + name + " thiếu " + childName + " (xem docs/BOSS_ROOM_CONTRACT.md).");   // Axe_Anchor is only for the golem's room
             return default;
         }
 
         void Start()
         {
             wait = Find<Transform>("Boss_Wait"); doorSteel = Find<Transform>("Door_Steel"); doorOpen = Find<Transform>("Door_Open_Pos"); doorClosed = Find<Transform>("Door_Closed_Pos");
-            zone = Find<Collider>("Activate_Zone"); bounds = Find<Collider>("Room_Bounds"); AxeAnchor = Find<Transform>("Axe_Anchor");
+            zone = Find<Collider>("Activate_Zone"); bounds = Find<Collider>("Room_Bounds"); AxeAnchor = Find<Transform>("Axe_Anchor", false);
             if (boss == null && wait != null)   // the boss standing nearest to the waiting place
             {
                 float best = 8f;
