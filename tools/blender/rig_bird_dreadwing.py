@@ -6,7 +6,7 @@ Only the bones the code looks for are renamed (the rest keep their Bone_nnn name
   Root (pelvis), Head (neck), Tail1, Pinion_L1/L2/L3 + Pinion_R1/R2/R3 (collar, shoulder, elbow; L is +X), WingTip_L/R (the hand end, where the wind blades start), Thigh_L/R + Shin_L/R (hip and knee).
 The legs are NOT called Leg_*: CreatureLocomotion would swing them about a local axis that does not match this rig; BirdRigFx walks and tucks them with measured axes instead.
 The model stands upright facing -Y with its feet on Z=0 (the glb already does). There is no jaw bone, so the beak does not open.
-Also writes <fbx>_albedo.png / _mask.png (see rig_quadruped.export_textures).
+Also writes <fbx>_albedo.png / _mask.png (see rig_quadruped.export_textures) and <fbx>_Walk.fbx with the Idle and Walk clips (bird_walk_clip.py).
 """
 import os
 import sys
@@ -60,6 +60,9 @@ def main(src, dst):
         axis_forward="-Z", axis_up="Y", bake_space_transform=True, mesh_smooth_type="FACE", add_leaf_bones=False,
         path_mode="STRIP", bake_anim=False)
     print("OK", dst, "bones:", len(bones), "renamed:", ", ".join(RENAME.values()))
+    import bird_walk_clip   # the walk and idle clips: <name>_Walk.fbx next to the model (armature + two baked actions)
+    sheet = os.environ.get("BIRD_WALK_SHEET")   # optional: a PNG contact sheet of the walk, to check it by eye
+    bird_walk_clip.export_clips(arm, mesh, os.path.splitext(dst)[0] + "_Walk.fbx", sheet)
 
 
 if __name__ == "__main__":
