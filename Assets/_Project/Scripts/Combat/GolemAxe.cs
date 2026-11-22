@@ -151,7 +151,7 @@ namespace Evolve.Combat
             {
                 if (p == null || p.IsRemote || p.State.IsDead) continue;
                 Vector3 away = p.transform.position - transform.position; away.y = 0f;
-                if (!aura.TryPush(p.GetInstanceID(), away.magnitude, Time.time)) continue;
+                if (!aura.TryPush(p.GetEntityId().GetHashCode(), away.magnitude, Time.time)) continue;
                 swatT = 0f;
                 if (away.sqrMagnitude < 1e-4f) away = transform.forward;
                 p.State.Damage(PushAura.Damage * combat.DamageScale);
