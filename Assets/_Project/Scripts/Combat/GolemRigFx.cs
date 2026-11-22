@@ -24,6 +24,7 @@ namespace Evolve.Combat
         const float Stride = 1.9f, HipDeg = 24f, KneeDeg = 40f, BobMeters = 0.05f;   // metres of one walk cycle at scale 1 (the model is 2.5 m tall), degrees, metres
 
         Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
+        Transform headT;
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
         bool wasResting; float plantRaise;   // how far the right arm is reached down to the floor (degrees added to its raise)
@@ -76,6 +77,7 @@ namespace Evolve.Combat
                 {
                     case "Hips": hips = t; break;
                     case "Spine01": sp1 = t; break;
+                    case "Head": headT = t; break;
                     case "Spine": sp = t; break;
                     case "LeftShoulder": shoulderL = t; break;
                     case "RightShoulder": shoulderR = t; break;
@@ -106,7 +108,8 @@ namespace Evolve.Combat
             hipSign = SignFor(thighL, footTipL, p => Vector3.Dot(p, fwd));            // + = the foot swings forward
             kneeSign = -SignFor(kneeL, footTipL, p => Vector3.Dot(p, fwd));           // + = the foot swings back and up (the knee bends)
             raiseSign = SignFor(armL, handL, p => p.y);                                // + = the hand goes up
-            hunchSign = SignFor(spine, handL != null ? handL : chest, p => Vector3.Dot(p, fwd));   // + = leans forward
+            // + = leans forward: measured at the HEAD, which is above the spine's pivot (the hands hang below it and swing the other way: probing the hand made every lean go backwards, found on the real model in Blender)
+            hunchSign = SignFor(spine, headT != null ? headT : chest, p => Vector3.Dot(p, fwd));
             if (spine != null && handR != null)   // + twist must turn the right hand forward (a punch or a throw goes through)
             {
                 Vector3 fw = transform.forward;
