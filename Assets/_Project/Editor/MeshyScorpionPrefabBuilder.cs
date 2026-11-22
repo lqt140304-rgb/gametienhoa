@@ -65,17 +65,20 @@ namespace Evolve.EditorTools
             var defaults = mi.defaultClipAnimations;
             if (defaults.Length == 0) { Debug.LogError("[Bọ Cạp] FBX không có clip nào: chạy lại tools/blender/rig_scorpion.py."); return null; }
             var list = new System.Collections.Generic.List<ModelImporterClipAnimation>();
+            var seen = new System.Collections.Generic.HashSet<string>();
+            Debug.Log("[Bọ Cạp] Take trong FBX (" + defaults.Length + "): " + string.Join(", ", defaults.Select(x => x.name)));
             foreach (var d in defaults)
             {
                 var c = d;
                 c.name = d.name.Substring(d.name.LastIndexOf('|') + 1);   // "Armature|Armature|Walk_F" -> "Walk_F"
+                if (!seen.Add(c.name)) continue;   // the same take twice: keep the first
                 bool loop = Looping.Contains(c.name);
                 c.loopTime = loop; c.loopPose = loop;
                 list.Add(c);
             }
             mi.clipAnimations = list.ToArray();
             mi.SaveAndReimport();
-            var found = AssetDatabase.LoadAllAssetsAtPath(Model).OfType<AnimationClip>().Where(a => !a.name.StartsWith("__preview__")).ToDictionary(a => a.name, a => a);
+            var found = AssetDatabase.LoadAllAssetsAtPath(Model).OfType<AnimationClip>().Where(a => !a.name.StartsWith("__preview__")).GroupBy(a => a.name).ToDictionary(g => g.Key, g => g.First());
             foreach (var need in new[] { "Idle", "Walk_F", "Walk_B", "Walk_L", "Walk_R", "Hit", "Death" }.Concat(MoveAnims.SelectMany(a => new[] { "Tell_" + a, "Strike_" + a, "Recover_" + a })))
                 if (!found.ContainsKey(need)) { Debug.LogError("[Bọ Cạp] Thiếu clip " + need + " (có: " + string.Join(", ", found.Keys) + ")"); return null; }
             return found;
