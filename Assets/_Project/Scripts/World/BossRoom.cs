@@ -45,7 +45,11 @@ namespace Evolve.World
                 float best = 8f;
                 foreach (var c in FindObjectsByType<CreatureCombat>(FindObjectsSortMode.None)) { float d = Vector3.Distance(c.transform.position, wait.position); if (d < best) { best = d; boss = c.gameObject; } }
             }
-            if (boss != null) { pred = boss.GetComponent<Predator>(); if (wait != null) boss.transform.position = wait.position; boss.SetActive(false); }
+            if (boss != null)
+            {
+                CreatureTuning.Apply(boss, "BossRoom");   // a boss placed by hand gets the size a cave lord has (a golem placed in a room was unscaled); a spawned one is already tuned and is skipped
+                pred = boss.GetComponent<Predator>(); if (wait != null) boss.transform.position = wait.position; boss.SetActive(false);
+            }
             else Debug.LogWarning("[Phòng trùm] " + name + ": không tìm thấy trùm gần Boss_Wait.");
             ApplyDoor();
         }
