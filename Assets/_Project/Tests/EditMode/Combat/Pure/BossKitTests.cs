@@ -7,7 +7,7 @@ namespace Evolve.Tests.EditMode
     public class BossKitTests
     {
         // every boss that has been rebuilt to the standard kit; add a species here when its kit is done
-        static readonly string[] Kitted = { "Chó Xương", "Golem Thạch Anh", "Chim Hang Mẹ" };
+        static readonly string[] Kitted = { "Chó Xương", "Golem Thạch Anh", "Chim Hang Mẹ", "Bọ Cạp Thạch Anh" };
 
         [Test] public void EveryKittedBoss_HasTheStandardKit_TwoNormalOneRangedOneSpecialWithAMiniGameOneUltimateAndAPassive()
         {

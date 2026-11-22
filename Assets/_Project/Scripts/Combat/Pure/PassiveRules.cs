@@ -6,14 +6,15 @@ namespace Evolve.Combat
     /// <summary>
     /// A boss's passive (its "nội tại": always on, no button): a damage multiplier, a speed multiplier and a slow regeneration, each depending on its health.
     /// Golem Thạch Anh: Thân Tinh Thể (takes 20% less damage, 35% less once the crystals have grown out below 66% health, mends 1% of its health a second after 8 quiet seconds).
-    /// Chó Xương: Khát Máu (runs 25% faster below half health). Chim Hang Mẹ: Lướt Gió (a fifth faster, never knocked back). Other creatures have none.
+    /// Chó Xương: Khát Máu (runs 25% faster below half health). Chim Hang Mẹ: Lướt Gió (a fifth faster, never knocked back).
+    /// Bọ Cạp Thạch Anh: Vỏ Pha Lê (takes a quarter less from the front, within 60 degrees of where it faces; never stunned). Other creatures have none.
     /// </summary>
     public static class PassiveRules
     {
         public const float GolemCrystalsBelow = 0.66f, GolemQuietSeconds = 8f, HoundBloodBelow = 0.5f;
 
         static string Key(string species) => SpeciesNames.Key(species ?? "");
-        public static bool Has(string species) { string k = Key(species); return k == "golemthachanh" || k == "choxuong" || k == "chimhangme"; }
+        public static bool Has(string species) { string k = Key(species); return k == "golemthachanh" || k == "choxuong" || k == "chimhangme" || k == "bocapthachanh"; }
 
         public static float DamageFactor(string species, float health01) =>
             Key(species) == "golemthachanh" ? (health01 <= GolemCrystalsBelow + 1e-4f ? 0.65f : 0.8f) : 1f;
@@ -22,6 +23,14 @@ namespace Evolve.Combat
 
         public static float SpeedFactor(string species, float health01) =>
             Key(species) == "choxuong" && health01 <= HoundBloodBelow + 1e-4f ? 1.25f : Key(species) == "chimhangme" ? 1.2f : 1f;   // Lướt Gió: the bird is always a fifth faster
+
+        /// <summary>Vỏ Pha Lê: the damage multiplier for a blow from <paramref name="angleDegrees"/> off the scorpion's facing (0.75 within 60 degrees, else 1).</summary>
+        public const float ShellFrontHalfAngle = 60f, ShellFrontFactor = 0.75f;
+        public static float ShellFactor(string species, float angleDegrees) =>
+            Key(species) == "bocapthachanh" && Math.Abs(angleDegrees) <= ShellFrontHalfAngle + 1e-3f ? ShellFrontFactor : 1f;
+
+        /// <summary>Vỏ Pha Lê: the scorpion is never stunned.</summary>
+        public static bool StunImmune(string species) => Key(species) == "bocapthachanh";
 
         /// <summary>Lướt Gió: the vulture is never thrown back by a skill (it rides the wind).</summary>
         public static bool NoKnockback(string species) => Key(species) == "chimhangme";
