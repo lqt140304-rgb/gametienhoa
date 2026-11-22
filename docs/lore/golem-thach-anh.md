@@ -1,6 +1,8 @@
 # Golem Thạch Anh: nguồn gốc và câu chuyện (đề xuất, chờ duyệt canon)
 
-> **[ĐỀ XUẤT CHƯA CHỐT LORE]** Tài liệu thế giới (`docs/world/UNDERROOT_WORLD_DESIGN.md`, mục 6.1) dặn **không mặc định có nền văn minh cổ, nhân loại hay NPC kể lore**. Cánh cửa thép cũ và cây rìu của Golem lại là vật do ai đó làm ra, nên bản dưới đây chọn **cách kể không nói ai làm** (xem "Quyết định canon" cuối tài liệu). Chưa được coi là canon cho đến khi chủ dự án duyệt.
+> **[ĐÃ CHỐT cách A, 2026-11-22: không nói ai làm cửa và rìu]** (ban đầu là đề xuất)
+>
+> **Ghi chú gốc:** Tài liệu thế giới (`docs/world/UNDERROOT_WORLD_DESIGN.md`, mục 6.1) dặn **không mặc định có nền văn minh cổ, nhân loại hay NPC kể lore**. Cánh cửa thép cũ và cây rìu của Golem lại là vật do ai đó làm ra, nên bản dưới đây chọn **cách kể không nói ai làm** (xem "Quyết định canon" cuối tài liệu). Chưa được coi là canon cho đến khi chủ dự án duyệt.
 
 ## Một câu
 Golem Thạch Anh là **thân thể sống của mạch tinh thể** trong một hầm kín, thức dậy để giữ **trái tim đá** của mạch đó, và nó đã giữ ở đó lâu hơn bất kỳ ai nhớ.
