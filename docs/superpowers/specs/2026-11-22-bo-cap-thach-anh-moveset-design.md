@@ -72,3 +72,6 @@ Lấy ý từ Golem nhưng đổi theo đặc điểm bọ cạp (đuôi, càng,
 - Blender: thêm 3 clip `Flick`, `Exposed`, `Stuck` (tổng 28 clip). Animator: ba trạng thái mới vào bằng trigger cùng tên; `Flick` vào lại được chính nó.
 - Âm thanh: thêm `flick_stab`, `flick_throw`, `crystal_plant`, `crystal_shatter`, `claws_stuck`, `burrow_redive`, `exposed_hiss` (tổng 26 tiếng).
 - **Chưa kiểm trong Unity.** Rủi ro: cột `CrystalColumn` có collider hộp, có thể kẹt người chơi; trồi kép dưới đất vẫn nhận sát thương (x1,5 vì đang trong recover) nếu bị đánh trúng; nếu `Flick` không thấy cột thì chỉnh khoảng 2,6 m phía trước trong `TickBurst`.
+
+## Sửa: gai trên lưng bị kéo theo chân khi đi (2026-11-22)
+Nguyên nhân: tôi đặt **khuỷu chân quá cao** (z ≈ 0,9) nên xương đùi xuyên qua vùng gai lưng, và trọng số lấy "3 xương gần nhất" nên gai trên lưng bị gán vào xương chân (đo: 2.556 trên 7.647 đỉnh lưng có trên 30% trọng số ngoài thân). Sửa trong `rig_scorpion.py`: khuỷu về z ≈ 0,58 (đo lại trên mesh), và mỗi xương chỉ ảnh hưởng đỉnh trong tầm gần nó (`REACH`: chân 0,17 m, đuôi 0,32 m, càng 0,55 m), phần còn lại thuộc `Root`. Kết quả đo: dịch chuyển của gai lưng khi đi giảm từ 0,27 m xuống ≤ 0,026 m (chỉ là cả thân nhấp nhô), chân vẫn bước.

@@ -30,12 +30,14 @@ DEFAULT_FBX = "Assets/_Project/Models/Wildlife/Meshy/Creature_BoCapThachAnh_Mesh
 # GEOMETRY: measured on the Meshy mesh (world axes, Z up, the model faces -Y). Feet are where the leg tips touch the ground; the tail is the arc seen from the side.
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------
 FOOT_Z = 0.07
-LEGS = [  # index (front to back), foot (|x|, y), knee height, hip (|x|, z)
-    (1, 0.85, 0.12, 0.80, 0.26, 0.55),
-    (2, 0.92, 0.37, 0.85, 0.30, 0.55),
-    (3, 0.78, 0.67, 0.66, 0.30, 0.50),
+LEGS = [  # index (front to back), foot (|x|, y), knee height, hip (|x|, z). The knee is where the leg tube bends from going out to going down (measured on the mesh: z about 0.58);
+    # an earlier guess of 0.9 put the thigh bones through the spikes on the back, which then walked with the legs
+    (1, 0.85, 0.12, 0.60, 0.26, 0.55),
+    (2, 0.92, 0.37, 0.60, 0.30, 0.55),
+    (3, 0.78, 0.67, 0.56, 0.30, 0.50),
     (4, 0.58, 0.93, 0.52, 0.26, 0.48),
 ]
+REACH = {"Pede": 0.17, "Sting": 0.32, "Claw": 0.55}   # a bone moves only the vertices this close to it (metres): the spikes on the back belong to the body (Root) alone
 TAIL = [(0.0, 0.62, 0.50), (0.0, 0.88, 0.66), (0.0, 0.84, 0.92), (0.0, 0.66, 1.16), (0.0, 0.44, 1.26), (0.0, 0.26, 1.14), (0.0, 0.10, 0.98)]   # base .. StingTip end
 CLAW = dict(shoulder=(0.26, -0.38, 0.55), elbow=(0.50, -0.58, 0.60), wrist=(0.46, -0.82, 0.45), tip=(0.24, -0.98, 0.33))
 ROOT = ((0.0, 0.55, 0.52), (0.0, -0.30, 0.52))
@@ -56,7 +58,7 @@ def bone_specs():
     for side, sx in (("L", 1), ("R", -1)):
         for n, fx, fy, kz, hx, hz in LEGS:
             hip, foot = V((sx * hx, fy, hz)), V((sx * fx, fy, FOOT_Z))
-            knee = V((sx * (hx + fx) * 0.5 * 1.08, fy, kz + 0.1))
+            knee = V((sx * fx * 0.9, fy, kz))
             tang = (knee - hip).cross(V((0, 0, 1)))
             b["Pede%s%d_A" % (side, n)] = (hip, knee, "Root", 0.05, V((0, 0, 1)) if tang.length < 1e-4 else tang.cross(knee - hip))
             b["Pede%s%d_B" % (side, n)] = (knee, foot, "Pede%s%d_A" % (side, n), 0.04, tang.cross(foot - knee))
@@ -517,7 +519,9 @@ def skin(mesh, arm, specs):
         a, b = np.array(h[:]), np.array(t[:])
         ab = b - a
         tt = np.clip(((verts - a) @ ab) / max(ab @ ab, 1e-9), 0, 1)
-        D[:, j] = np.linalg.norm(verts - (a + tt[:, None] * ab), axis=1) - rad
+        d = np.linalg.norm(verts - (a + tt[:, None] * ab), axis=1)
+        reach = next((v for k, v in REACH.items() if n.startswith(k)), None)
+        D[:, j] = np.where(d > reach, 1e6, d - rad) if reach is not None else d - rad
     D = np.maximum(D, 0.01)
     idx = np.argsort(D, axis=1)[:, :3]
     groups = {n: mesh.vertex_groups.new(name=n) for n in names}
