@@ -36,7 +36,7 @@ namespace Evolve.Tests
 
         [Test] public void EveryBodyValue_StaysInItsLimits_AndRestIsZero()
         {
-            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt", "Sweep", "Rush", "Dizzy" })
+            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt", "Sweep", "Rush", "Dizzy", "PhaseRoar" })
             {
                 foreach (var ph in new[] { MovePhase.Windup, MovePhase.Active, MovePhase.Recover })
                     for (float t = 0f; t <= 1f; t += 0.1f)

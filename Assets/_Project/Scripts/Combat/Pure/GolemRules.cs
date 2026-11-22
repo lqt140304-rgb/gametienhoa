@@ -41,6 +41,7 @@ namespace Evolve.Combat
                 case "Hurt": windup = new ArmPose { Hunch = -22f, Raise = 25f, Glow = 0.5f, Crouch = 0.1f }; strike = windup; return;   // thrown back by a blow
                 case "Sweep": windup = new ArmPose { Spread = 70f, Raise = 20f, Hunch = 6f, Twist = 40f, Stance = 0.3f, Crouch = 0.2f }; strike = new ArmPose { Spread = 20f, Raise = 35f, Hunch = 14f, Twist = -45f, Stance = 0.5f, Crouch = 0.3f, Glow = 0.3f }; return;   // an arm drawn wide, then swept across in front of it
                 case "Rush": windup = new ArmPose { Raise = 150f, Hunch = 30f, Crouch = 0.45f }; strike = new ArmPose { Raise = 150f, Hunch = 42f, Crouch = 0.3f, Glow = 0.5f }; return;   // both arms wrapped over the head, the body low, head first
+                case "PhaseRoar": windup = new ArmPose { Raise = 45f, Spread = 55f, Hunch = -24f, Glow = 1f, Stance = 0.2f }; strike = windup; return;   // head thrown back, arms wide, the core blazing: the roar at a phase change
                 case "Dizzy": windup = new ArmPose { Hunch = 28f, Raise = -8f, Crouch = 0.15f }; strike = windup; return;
                 case "Harden": windup = new ArmPose { Raise = 40f, Hunch = 18f, Glow = 0.6f, Crouch = 0.55f }; strike = windup; return;
                 case "CoreBlast": windup = new ArmPose { Raise = 70f, Spread = 60f, Hunch = -8f, Glow = 1f, Crouch = 0.35f }; strike = new ArmPose { Raise = 90f, Spread = 80f, Hunch = -12f, Glow = 1f }; return;

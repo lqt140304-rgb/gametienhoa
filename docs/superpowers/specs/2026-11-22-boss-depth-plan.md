@@ -18,6 +18,12 @@
 - **Co-op:** chọn mục tiêu theo vai (gần nhất, yếu nhất, người đang hồi máu), bị kéo aggro, chiêu hất người khác mục tiêu.
 - **Phần thưởng theo cách thắng:** vật phẩm khác nhau nếu phá bộ phận trước, thắng không bị trúng đòn nào, v.v.
 
+## Đã làm (2026-11-22): phase (trụ 1) và đọc người chơi (trụ 4)
+- `PhaseRules`/`PhaseTracker`: mốc máu 66% và 33%; **Golem, Chim Hang Mẹ, Chó Xương** có phase. Mỗi phase: hồi chiêu ngắn hơn (x0,85 rồi x0,7), bớt đi vòng (x0,85 rồi x0,6), sát thương (x1,1 rồi x1,2), tốc độ (Golem pha 3 x1,25; Chim x1,1 rồi x1,25; Chó x1,05 rồi x1,15), combo dài hơn (Golem +1 rồi +2 đòn; Chim +1 đòn bổ nhào ở pha 3), Golem thêm cột Giáng Thạch (+1 rồi +2).
+- Mỗi lần đổi phase trùm dừng lại và **gầm** (`Gầm Chuyển Pha`: tiếng riêng từng loài, bốn vòng sóng, hất nhẹ người chơi trong 8 m, **không thể bị đánh** trong lúc gầm).
+- `PlayerReader`: trùm theo dõi vài giây gần nhất: người chơi **dí sát** (Hugger) thì nghiêng về đòn thường, **đứng xa** (Camper) thì chiêu xa và đặc biệt, **chạy vòng** (Runner) thì chiêu lao; ba lần né cùng một bên thì **đoán trước** (Húc Đầu lao lệch về phía đó); đá ném **ngắm trước** hướng người chơi đang chạy.
+- Chưa làm: nhạc có lớp tăng dần theo phase (trụ 6), bộ phận yếu (trụ 3), poise (trụ 2), môi trường (trụ 5).
+
 ## Thứ tự đề xuất
 1. **Phase 1 (nền):** trụ 1 + 6 (phase và nhạc/tiếng) làm cho Golem, rồi nhân cho Chim và Chó Xương. Công cụ chung: `PhaseRules` thuần có test.
 2. **Phase 2:** trụ 4 (đọc người chơi) và 2 (poise): đổi `MoveScheduler.Pick` và thêm điểm choáng.
