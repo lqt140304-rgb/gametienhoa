@@ -159,6 +159,7 @@ namespace Evolve.Combat
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale, MinIdle = CircleRules.IdleSeconds(name) };
             if (bird != null) scheduler.Allow = m => bird.CanUse(m, target);   // a grab needs a player it can carry
             SetupPhases();
+            if (PhaseRules.Has(name) && !TryGetComponent<MoveVfx>(out _)) gameObject.AddComponent<MoveVfx>();   // the charge and aftermath of every move
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
             foreach (var mv in moves) if (mv.Shape == MoveShape.Perch)
