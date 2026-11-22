@@ -25,6 +25,8 @@ namespace Evolve.Combat
         Rigidbody rb;
         Animator anim;
         Renderer[] renderers;
+        Collider[] mine;
+        bool ignoring;
         Transform tailTip;
         float desiredSpeed = 1f;   // the animator speed this frame; applied in LateUpdate because CreatureLocomotion (Predator adds one to every creature) resets it to 1 in its Update
         Light glow;
@@ -59,6 +61,7 @@ namespace Evolve.Combat
             rb = GetComponent<Rigidbody>();
             anim = GetComponentInChildren<Animator>(true);
             renderers = GetComponentsInChildren<Renderer>(true);
+            mine = GetComponentsInChildren<Collider>(true);
             foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "StingTip") tailTip = t;
             lastPos = transform.position;
             if (tailTip != null)
@@ -177,6 +180,7 @@ namespace Evolve.Combat
         /// <summary>Called every physics step by CreatureCombat with the move in progress.</summary>
         public void Tick(MoveDef m, MovePhase phase, float phaseTime, SurvivalStats target)
         {
+            IgnorePlayers(Rushing(m, phase, phaseTime));
             if (m == null) return;
             if (m.Shape == MoveShape.Burrow && phase == MovePhase.Active) TickBurrow(m, phaseTime, target);
             else if (m.Shape == MoveShape.Shatter && phase == MovePhase.Active) TickBurst(m, phaseTime, target);
@@ -186,9 +190,36 @@ namespace Evolve.Combat
         /// <summary>The move was cut short (stunned, killed): whatever it was doing underground or in the burst ends.</summary>
         public void Abort()
         {
+            IgnorePlayers(false);
             if (underground) Surface();
             if (mound != null) { Destroy(mound.gameObject); mound = null; }
             glowTarget = 0f;
+        }
+
+        /// <summary>
+        /// While a move is being cast (a charge, a stab, the burst out of the ground) the scorpion's collider is moved by hand and must not collide with the players: touching one at speed counts
+        /// as a ram in <c>Predator.Contact</c> and the scorpion hurt itself on its own charge (the same bug the vulture had). Hits are still dealt by the moves themselves, by distance.
+        /// </summary>
+        void IgnorePlayers(bool on)
+        {
+            if (ignoring == on || mine == null) return;
+            ignoring = on;
+            foreach (var p in SurvivalStats.All)
+            {
+                if (p == null) continue;
+                foreach (var pc in p.GetComponentsInChildren<Collider>(true))
+                    foreach (var bc in mine)
+                        if (bc != null && pc != null) Physics.IgnoreCollision(bc, pc, on);
+            }
+        }
+
+        /// <summary>The cast, underground, and the first moments of the after-cast of a move that rushes or bursts, while the bodies may overlap.</summary>
+        bool Rushing(MoveDef m, MovePhase phase, float phaseTime)
+        {
+            if (underground) return true;
+            if (m == null || phase == MovePhase.Idle || phase == MovePhase.Windup) return false;
+            if (phase == MovePhase.Active) return true;
+            return phaseTime < 0.6f;   // the player may still be inside it, or thrown up against it: let them part before it is solid again
         }
 
         // ---------- Đào Chui Trồi Lên ----------
@@ -341,6 +372,6 @@ namespace Evolve.Combat
             if (freeze > 0f && p.TryGetComponent(out Evolve.Player.SlimeController sc)) sc.FreezeFor(freeze);
         }
 
-        void OnDisable() { if (mound != null) Destroy(mound.gameObject); if (underground) SetHidden(false); }
+        void OnDisable() { IgnorePlayers(false); if (mound != null) Destroy(mound.gameObject); if (underground) SetHidden(false); }
     }
 }
