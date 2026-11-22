@@ -40,7 +40,7 @@ namespace Evolve.Combat
             if (Time.time >= nextFlip) { circleSign = Random.value < 0.5f ? 1 : -1; nextFlip = Time.time + Random.Range(CircleRules.FlipMin, CircleRules.FlipMax); }
             var d = CircleRules.Steer(to.x, to.z, circleSign, CircleRules.Ring);
             dir = new Vector3(d.x, 0f, d.z);
-            face = Vector3.Slerp(dir, Flat(to).normalized, 0.5f);   // it keeps an eye on the prey while it walks round
+            face = Flat(to).normalized;   // it always looks at the prey while it walks round
             return CircleRules.Speed;
         }
 
@@ -257,10 +257,10 @@ namespace Evolve.Combat
             bool arrived = to.magnitude <= Radius + 0.9f;
             if (volley.Stage == VolleyStage.Walk && !arrived)
             {
-                if (to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.2f));
+                if (target != null) FaceTarget();   // it keeps its eyes on the player while it walks to the spike
                 if (motor != null) motor.Move(to.normalized, WalkSpeed, false);   // it walks to the next spike (no detours: they flip the heading every tick)
             }
-            else if (volley.Stage == VolleyStage.Pull && to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.2f));
+            else if (volley.Stage == VolleyStage.Pull && target != null) FaceTarget();
             else if (volley.Stage == VolleyStage.Hold) FaceTarget();
             var e = volley.Update(Time.fixedDeltaTime, arrived);
             if (e == VolleyEvent.PullStart) { spike.BeginLift(VolleyFsm.PullSeconds); GolemFx.Pull(spike.transform.position); }   // both arms take the column and draw it out slowly
@@ -486,6 +486,7 @@ namespace Evolve.Combat
             if (m == null) return;
             if (hound) HoundFx.OnPhase(this, phase, m);
             if (golem) GolemFx.OnPhase(this, phase, m);
+            if (bird != null) BirdFx.OnPhase(this, phase, m);
             if (phase == MovePhase.Windup) BeginWindup(m);
             else if (phase == MovePhase.Active) loco?.PlayAction("Strike_" + m.Anim);
             else if (phase == MovePhase.Recover)

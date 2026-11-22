@@ -307,3 +307,5 @@ Thiết kế: `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`. Dừng P
 - [ ] **Chó Xương, nội tại Khát Máu:** máu ≤ 50% thì chạy nhanh hơn rõ.
 
 - [ ] **Chim Hang Mẹ, âm thanh và nhạc (chưa có bộ chiêu, mới gắn phần có sẵn):** khi nó chiến đấu nhạc `bird_battle` phát (Console: "[Nhạc trùm] phát bird_battle"); mỗi nhịp vỗ cánh trong trận có tiếng vỗ cánh; tiếng rít khi nó tự há mỏ; tiếng kêu đau khi trúng đòn. Các tiếng của từng chiêu (mổ, vả cánh, bắn lông, quắp, bổ nhào, rít gầm) đã tạo sẵn trong Resources/Sfx/Bird/ chờ có bộ chiêu để gắn.
+
+- [ ] **Chim Hang Mẹ theo bộ chiêu chuẩn:** Mổ (gần) và **Vả Cánh** (quét cánh ≤ 3,6 m, vòng gió xanh, đẩy người chơi) là hai đòn thường; Chém Gió là đòn xa (từ 5 m); **Bổ Nhào** là chiêu đặc biệt (vòng đỏ báo, né được, không mini game); Quắp là chiêu combo; khi máu ≤ 25% nó **Rít Gầm** (rít, ba vòng sóng xanh, choáng và hất văng trong 9 m) rồi bổ nhào 3 lần liên tiếp. Nội tại Lướt Gió: nhanh hơn 20% và các kỹ năng hất văng của bạn không làm nó lùi.
