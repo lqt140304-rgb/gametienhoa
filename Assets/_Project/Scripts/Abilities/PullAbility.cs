@@ -43,6 +43,7 @@ namespace Evolve.Abilities
             for (int i = 0; i < hits.Count && i < max; i++)
             {
                 var prey = hits[i].p;
+                if (CreatureStatus.ResistsDisplacement(prey)) continue;
                 Vector3 to = c - prey.transform.position; to.y = 0f;
                 float travel = Mathf.Max(0f, to.magnitude - StopShort - i * 0.6f);   // a second one stops a little further out
                 CreatureStatus.Knock(prey, to.normalized * travel / PullSeconds, PullSeconds);

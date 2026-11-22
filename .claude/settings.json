@@ -16,5 +16,18 @@
         "repo": "DietrichGebert/ponytail"
       }
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash tools/session_brief.sh",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
   }
 }
