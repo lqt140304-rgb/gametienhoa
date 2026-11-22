@@ -1,0 +1,128 @@
+{
+  "name": "Evolve: GitHub -> Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolve-github-REPLACE-WITH-A-LONG-RANDOM-STRING",
+        "options": {}
+      },
+      "id": "n1",
+      "name": "GitHub webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "evolve-github"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ev = $input.first().json.headers['x-github-event'];\nconst b = $input.first().json.body || {};\nlet text = null;\nconst line = (s) => (s || '').split('\\n')[0];\nif (ev === 'push') {\n  const br = (b.ref || '').replace('refs/heads/', '');\n  if (br.startsWith('claude/') || br === 'main') {\n    const files = new Set();\n    (b.commits || []).forEach(c => [...(c.added || []), ...(c.modified || []), ...(c.removed || [])].forEach(f => files.add(f)));\n    text = `📦 Push lên ${br} (${(b.commits || []).length} commit, ${files.size} file đổi)\\n${line((b.head_commit || {}).message)}\\n${b.compare || ''}`;\n  }\n} else if (ev === 'pull_request') {\n  const pr = b.pull_request || {};\n  if (b.action === 'opened') text = `🔀 PR mới #${pr.number}: ${pr.title}\\n${pr.html_url}`;\n  else if (b.action === 'closed') text = `${pr.merged ? '✅ PR đã gộp' : '🚫 PR đã đóng'} #${pr.number}: ${pr.title}\\n${pr.html_url}`;\n} else if (ev === 'workflow_run') {\n  const r = b.workflow_run || {};\n  if (b.action === 'completed' && r.conclusion === 'failure') text = `🔴 Test ĐỎ trên ${r.head_branch}\\n${line((r.head_commit || {}).message)}\\n${r.html_url}`;\n}\nreturn [{ json: { text, skip: !text } }];"
+      },
+      "id": "n2",
+      "name": "Compose message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n3",
+      "name": "Worth sending?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "REPLACE-WITH-YOUR-CHAT-ID",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "n4",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        -20
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "GitHub webhook": {
+      "main": [
+        [
+          {
+            "node": "Compose message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose message": {
+      "main": [
+        [
+          {
+            "node": "Worth sending?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Worth sending?": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
