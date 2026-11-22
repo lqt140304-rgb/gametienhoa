@@ -47,7 +47,23 @@ namespace Evolve.Combat
         bool[] ringHit = new bool[ShatterRules.RingCount];
         float[] ringShown = new float[ShatterRules.RingCount];
         float aimBearing;
-        int rain;
+        bool[] flickStarted = new bool[ShatterRules.FlickCount], flickThrown = new bool[ShatterRules.FlickCount];
+        CrystalColumn[] flickColumn = new CrystalColumn[ShatterRules.FlickCount];
+
+        // the second dive of Đào Chui (health at two thirds or less): it goes down again right after coming up, and comes up where the player ran to
+        bool secondActive, secondMarked, secondHit;
+        float secondT;
+        Vector3 secondFrom, secondSpot, lastMound;
+
+        // the volley's crystal columns (planted where each spike lands), the claws stuck in a wall, and the lie-open after a big move
+        struct Pending { public float at; public Vector3 pos; }
+        readonly System.Collections.Generic.List<Pending> pendingColumns = new System.Collections.Generic.List<Pending>();
+        int spearsPlanted;
+        float stuckUntil;
+        bool wasResting;
+
+        /// <summary>The second dive is on: CreatureCombat must not end the move's recover yet.</summary>
+        public bool Holding => secondActive;
 
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
         static float Bearing(Vector3 from, Vector3 to) { Vector3 d = Flat(to - from); return d.sqrMagnitude < 1e-6f ? 0f : Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg; }
@@ -94,6 +110,18 @@ namespace Evolve.Combat
                     lastHealth = pred.Health;
                 }
             }
+            if (combat != null && !dead)
+            {
+                bool rest = combat.Resting;   // after a big move it lies open (no panting): the player's time to hit back
+                if (rest && !wasResting) { Trigger("Exposed"); desiredSpeed = 1f; Say("exposed_hiss", transform.position, 0.7f); SkillFx.Dust(transform.position, 1.4f, Dust, 12); }
+                wasResting = rest;
+                if (stuckUntil > 0f && Time.time >= stuckUntil)   // the claws come free: on with the after-cast of the charge
+                {
+                    stuckUntil = 0f;
+                    var cur = combat.CurrentMove;
+                    if (cur != null && combat.Phase == MovePhase.Recover) { desiredSpeed = ScorpionRules.PhaseAnimSpeed(ClipSeconds(MovePhase.Recover, cur.Anim), cur.Recover); Trigger("Recover_" + cur.Anim); }
+                }
+            }
             if (combat != null && combat.Phase != MovePhase.Idle) BossMusic.Ping("scorpion_battle");   // a move in progress is a blow in the fight
             if (glow != null) glow.intensity = Mathf.MoveTowards(glow.intensity, glowTarget, 14f * dt);
         }
@@ -127,12 +155,17 @@ namespace Evolve.Combat
                 if (anim != null && !InLocomotion()) Trigger("Reset");   // a move cut short goes back to walking
                 return;
             }
-            if (anim != null)
+            bool stuck = phase == MovePhase.Recover && Time.time < stuckUntil;   // the charge jammed its claws in a wall: the stuck clip plays until they come free
+            bool second = phase == MovePhase.Recover && m.Anim == "Burrow" && !stuck && pred != null && BurrowRules.WantsDouble(pred.HealthFraction);   // up once, straight down again
+            if (anim != null && !stuck)
             {
                 foreach (var stale in new[] { "Reset", "Hit" }) anim.ResetTrigger(stale);   // a trigger nobody could take must not fire later, in the middle of the next move
                 float seconds = phase == MovePhase.Windup ? m.Windup * combat.TellScale : phase == MovePhase.Active ? m.Active : m.Recover;
                 desiredSpeed = ScorpionRules.PhaseAnimSpeed(ClipSeconds(phase, m.Anim), seconds);
             }
+            if (stuck) { desiredSpeed = 1f; return; }
+            if (phase == MovePhase.Windup && m.Shape == MoveShape.Spears) spearsPlanted = 0;
+            if (second) { BeginSecond(m); return; }
             Trigger((phase == MovePhase.Windup ? "Tell_" : phase == MovePhase.Active ? "Strike_" : "Recover_") + m.Anim);
             Vector3 p = transform.position;
             Vector3 tip = tailTip != null ? tailTip.position : p + Vector3.up * 1.2f;
@@ -181,7 +214,10 @@ namespace Evolve.Combat
         public void Tick(MoveDef m, MovePhase phase, float phaseTime, SurvivalStats target)
         {
             IgnorePlayers(Rushing(m, phase, phaseTime));
+            FlushColumns();
             if (m == null) return;
+            if (secondActive) { TickSecond(m, target); return; }
+            if (m.Shape == MoveShape.Spears && phase == MovePhase.Active) PlantColumns(m, phaseTime, target);
             if (m.Shape == MoveShape.Burrow && phase == MovePhase.Active) TickBurrow(m, phaseTime, target);
             else if (m.Shape == MoveShape.Shatter && phase == MovePhase.Active) TickBurst(m, phaseTime, target);
             else if (underground && phase != MovePhase.Active) Surface();   // cut short (stunned): it comes up where it is
@@ -191,6 +227,8 @@ namespace Evolve.Combat
         public void Abort()
         {
             IgnorePlayers(false);
+            secondActive = false; stuckUntil = 0f; pendingColumns.Clear();
+            for (int i = 0; i < flickColumn.Length; i++) if (flickColumn[i] != null) { flickColumn[i].Shatter(); flickColumn[i] = null; }
             if (underground) Surface();
             if (mound != null) { Destroy(mound.gameObject); mound = null; }
             glowTarget = 0f;
@@ -216,7 +254,7 @@ namespace Evolve.Combat
         /// <summary>The cast, underground, and the first moments of the after-cast of a move that rushes or bursts, while the bodies may overlap.</summary>
         bool Rushing(MoveDef m, MovePhase phase, float phaseTime)
         {
-            if (underground) return true;
+            if (underground || secondActive) return true;
             if (m == null || phase == MovePhase.Idle || phase == MovePhase.Windup) return false;
             if (phase == MovePhase.Active) return true;
             return phaseTime < 0.6f;   // the player may still be inside it, or thrown up against it: let them part before it is solid again
@@ -225,16 +263,10 @@ namespace Evolve.Combat
         // ---------- Đào Chui Trồi Lên ----------
         void BeginUnderground(MoveDef m)
         {
-            underground = true; marked = false; burrowHit = false; burrowFrom = rb != null ? rb.position : transform.position; burrowSpot = burrowFrom;
+            underground = true; marked = false; burrowHit = false; burrowFrom = rb != null ? rb.position : transform.position; burrowSpot = burrowFrom; lastMound = burrowFrom;
             SetHidden(true);
             Say("burrow_travel", transform.position, 1f);
-            if (mound == null)
-            {
-                var g = new GameObject("Gò Đất"); mound = g.transform;
-                var c = GameObject.CreatePrimitive(PrimitiveType.Sphere); Destroy(c.GetComponent<Collider>());
-                c.transform.SetParent(mound, false); c.transform.localScale = new Vector3(1.6f, 0.7f, 1.6f); c.transform.localPosition = new Vector3(0f, 0.1f, 0f);
-                c.GetComponent<MeshRenderer>().sharedMaterial = SkillFx.Gel(Dust, 1f, 0.2f, 0.2f);
-            }
+            if (mound == null) BeginMoundVisual();
             mound.position = burrowFrom;
         }
 
@@ -252,6 +284,7 @@ namespace Evolve.Combat
             Vector3 from = Flat(burrowFrom), to = burrowSpot - from;
             Vector3 pos = from + (to.sqrMagnitude < 1e-6f ? Vector3.zero : to.normalized * BurrowRules.MoundDistance(t, to.magnitude));
             pos.y = burrowFrom.y;
+            if (!ScorpionArena.CanBurrowAt(pos.x, pos.z)) pos = lastMound; else lastMound = pos;   // a boss room can say where the ground is too hard to dig
             if (underground && rb != null) rb.MovePosition(pos);
             if (mound != null) mound.position = pos;
             if (underground && Time.time >= nextMoundPuff) { nextMoundPuff = Time.time + 0.18f; SkillFx.Dust(pos, 1.1f, Dust, 8); }
@@ -264,11 +297,85 @@ namespace Evolve.Combat
             Vector3 at = new Vector3(burrowSpot.x, burrowFrom.y, burrowSpot.z);
             if (rb != null) rb.MovePosition(at);
             Surface();
-            bool any = HurtArea(at, BurrowRules.Dig > 0f ? m.Radius : m.Radius, m.Damage, m.Force, m.Freeze, true);
-            Say("burrow_burst", at, 1f);
-            SkillFx.Ring(at, m.Radius, Dust, 0.5f, 0.2f); SkillFx.Dust(at, m.Radius, Dust, 60, 0.5f); SkillFx.Burst(at + Vector3.up * 0.3f, Crystal, 24, 6f, 0.14f, 0.9f, 0.7f);
-            ImpactFx.Thump(at, 0.4f, 0.9f, 28f);
+            bool any = BurstOut(at, m.Radius, m.Damage, m.Force, m.Freeze, 1f);
             if (!any && BurrowRules.ExposedFactor(true) > 1f) combat.Stagger(1.0f);   // a miss: it lies open for a moment (counter window)
+        }
+
+        /// <summary>The scorpion bursts out of the ground at <paramref name="at"/>: damage and a toss for anyone in the circle, earth and shards flying. True if it caught someone.</summary>
+        bool BurstOut(Vector3 at, float radius, float damage, float force, float freeze, float scale)
+        {
+            bool any = HurtArea(at, radius, damage, force, freeze, true);
+            Say("burrow_burst", at, 1f);
+            SkillFx.Ring(at, radius, Dust, 0.5f, 0.2f); SkillFx.Dust(at, radius, Dust, Mathf.RoundToInt(60 * scale), 0.5f); SkillFx.Burst(at + Vector3.up * 0.3f, Crystal, Mathf.RoundToInt(24 * scale), 6f, 0.14f, 0.9f, 0.7f);
+            ImpactFx.Thump(at, 0.4f * scale, 0.9f, 28f);
+            return any;
+        }
+
+        // ---------- the second dive: only at two thirds of its health or less ----------
+        void BeginSecond(MoveDef m)
+        {
+            secondActive = true; secondT = 0f; secondMarked = false; secondHit = false;
+            secondFrom = rb != null ? rb.position : transform.position; secondSpot = secondFrom; lastMound = secondFrom;
+            desiredSpeed = ScorpionRules.PhaseAnimSpeed(ClipSeconds(MovePhase.Windup, "Burrow"), BurrowRules.SecondDive);
+            Trigger("Tell_Burrow");   // it sinks into the ground again
+            Say("burrow_redive", transform.position, 1f); SkillFx.Dust(transform.position, 1.8f, Dust, 30);
+        }
+
+        void TickSecond(MoveDef m, SurvivalStats target)
+        {
+            secondT += Time.fixedDeltaTime;
+            var stage = BurrowRules.SecondStageAt(secondT);
+            if (stage != BurrowStage.Dig && !underground)   // down: gone from sight, the mound runs
+            {
+                underground = true; SetHidden(true);
+                if (mound == null) { BeginMoundVisual(); }
+                desiredSpeed = ScorpionRules.PhaseAnimSpeed(ClipSeconds(MovePhase.Active, "Burrow"), BurrowRules.SecondTravel + BurrowRules.SecondMarked + BurrowRules.SecondEmerge);
+                Trigger("Strike_Burrow");
+                Say("burrow_travel", transform.position, 0.9f);
+            }
+            Vector3 aim = target != null ? Flat(target.transform.position) : Flat(secondFrom);
+            if (BurrowRules.CircleFollowsSecond(secondT)) secondSpot = aim;
+            else if (!secondMarked)
+            {
+                secondMarked = true; secondSpot = aim;
+                SkillFx.Ring(new Vector3(secondSpot.x, target != null ? target.transform.position.y : transform.position.y, secondSpot.z), BurrowRules.SecondRadius, Tell, BurrowRules.SecondTotal - secondT, 0.3f);
+                Say("burrow_mark", secondSpot, 0.9f);
+            }
+            if (stage != BurrowStage.Dig)
+            {
+                Vector3 from = Flat(secondFrom), to = secondSpot - from;
+                float run = BurrowRules.MoundDistance(secondT - BurrowRules.SecondDive + BurrowRules.Dig, to.magnitude);   // the same mound speed as the first dive
+                Vector3 pos = from + (to.sqrMagnitude < 1e-6f ? Vector3.zero : to.normalized * run); pos.y = secondFrom.y;
+                if (!ScorpionArena.CanBurrowAt(pos.x, pos.z)) pos = lastMound; else lastMound = pos;
+                if (rb != null && underground) rb.MovePosition(pos);
+                if (mound != null) mound.position = pos;
+                if (Time.time >= nextMoundPuff) { nextMoundPuff = Time.time + 0.18f; SkillFx.Dust(pos, 1.1f, Dust, 8); }
+            }
+            if (!secondHit && secondT >= BurrowRules.SecondEmergeTime)
+            {
+                secondHit = true;
+                Vector3 at = new Vector3(secondSpot.x, secondFrom.y, secondSpot.z);
+                if (rb != null) rb.MovePosition(at);
+                Surface();
+                bool any = BurstOut(at, BurrowRules.SecondRadius, m.Damage * 0.6f, m.Force, m.Freeze, 0.7f);
+                if (!any) combat.Stagger(0.8f);
+            }
+            if (stage == BurrowStage.Done)   // up for good: the after-cast clip, then the lie-open
+            {
+                secondActive = false;
+                desiredSpeed = ScorpionRules.PhaseAnimSpeed(ClipSeconds(MovePhase.Recover, "Burrow"), m.Recover);
+                Trigger("Recover_Burrow");
+                Say("burrow_shake", transform.position, 0.8f);
+            }
+        }
+
+        void BeginMoundVisual()
+        {
+            var g = new GameObject("Gò Đất"); mound = g.transform;
+            var c = GameObject.CreatePrimitive(PrimitiveType.Sphere); Destroy(c.GetComponent<Collider>());
+            c.transform.SetParent(mound, false); c.transform.localScale = new Vector3(1.6f, 0.7f, 1.6f); c.transform.localPosition = new Vector3(0f, 0.1f, 0f);
+            c.GetComponent<MeshRenderer>().sharedMaterial = SkillFx.Gel(Dust, 1f, 0.2f, 0.2f);
+            mound.position = transform.position;
         }
 
         void Surface()
@@ -287,7 +394,8 @@ namespace Evolve.Combat
         // ---------- Bùng Pha Lê ----------
         void BeginBurst(MoveDef m)
         {
-            burstT = lastBurstT = 0f; rain = 0; aimBearing = 0f;
+            burstT = lastBurstT = 0f; aimBearing = 0f;
+            for (int i = 0; i < ShatterRules.FlickCount; i++) { flickStarted[i] = flickThrown[i] = false; flickColumn[i] = null; }
             for (int i = 0; i < ringHit.Length; i++) { ringHit[i] = false; ringShown[i] = 0f; }
             var target = combat.EngagedTarget(40f);
             aimBearing = target != null ? Bearing(transform.position, target.transform.position) : transform.eulerAngles.y;
@@ -319,16 +427,39 @@ namespace Evolve.Combat
                     }
                 }
             }
-            // the spikes thrown up and dropped round the player once the rings have gone out
-            float rainAt = ShatterRules.RingStart(ShatterRules.RingCount - 1) + 0.7f;
-            while (rain < m.SpikeCount && t >= rainAt + rain * 0.18f)
+            // after the rings the tail stabs three crystals that rise in front of it and flicks each at the player (the Flick clip: dip, stab, whip)
+            FaceTarget(target, 220f);
+            for (int i = 0; i < ShatterRules.FlickCount; i++)
             {
-                rain++;
-                Vector3 around = (target != null ? target.transform.position : c) + new Vector3(Random.Range(-2.5f, 2.5f), 0f, Random.Range(-2.5f, 2.5f));
-                MonsterProjectile.Launch(tailTip != null ? tailTip.position : c + Vector3.up * 2f, around, 0.9f, m.MissileDamage * combat.DamageScale, 0.8f, false, 0.4f);
-                Say("volley_fire", c, 0.6f);
+                if (!flickStarted[i] && t >= ShatterRules.FlickTime(i))
+                {
+                    flickStarted[i] = true;
+                    float a = (transform.eulerAngles.y + ShatterRules.FlickAngle(i)) * Mathf.Deg2Rad;
+                    Vector3 at = c + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * 2.6f;
+                    flickColumn[i] = CrystalColumn.Spawn(at, 0.6f, 1.5f, 3f);
+                    desiredSpeed = 1f; if (anim != null) anim.ResetTrigger("Flick"); Trigger("Flick");
+                    Say("flick_stab", at, 1f); glowTarget = 8f;
+                }
+                if (flickStarted[i] && !flickThrown[i] && t >= ShatterRules.FlickTime(i) + ShatterRules.FlickThrow)
+                {
+                    flickThrown[i] = true;
+                    var col = flickColumn[i]; flickColumn[i] = null;
+                    Vector3 from = col != null ? col.Top : (tailTip != null ? tailTip.position : c + Vector3.up * 2f);
+                    if (col != null) col.Shatter();
+                    Vector3 to = (target != null ? target.transform.position : c + transform.forward * 8f) + Vector3.up * 0.3f;
+                    MonsterProjectile.Launch(from, to, 0.7f, m.MissileDamage * combat.DamageScale, 0.8f, false, 0.45f);
+                    Say("flick_throw", from, 1f); SkillFx.Burst(from, Crystal, 14, 5f, 0.1f, 0.5f, 0.2f);
+                }
             }
             lastBurstT = t;
+        }
+
+        void FaceTarget(SurvivalStats target, float degreesPerSecond)
+        {
+            if (target == null || rb == null) return;
+            Vector3 d = Flat(target.transform.position - transform.position);
+            if (d.sqrMagnitude < 1e-4f) return;
+            rb.MoveRotation(Quaternion.RotateTowards(rb.rotation, Quaternion.LookRotation(d), degreesPerSecond * Time.fixedDeltaTime));
         }
 
         void SpikesAt(Vector3 centre, float radius, int ring)
@@ -348,6 +479,49 @@ namespace Evolve.Combat
                 Destroy(s, 0.7f);
             }
             SkillFx.Dust(centre + Vector3.forward * radius, 0.8f, Dust, 4);
+        }
+
+        // ---------- the environment: columns, and claws stuck in a wall ----------
+        /// <summary>Each spike of the volley, when it is thrown, will plant a crystal column where it lands: a little way behind where the player stands, fanned out (<see cref="ScorpionRules.FanAngle"/>). They block later spikes and the claw charge.</summary>
+        void PlantColumns(MoveDef m, float phaseTime, SurvivalStats target)
+        {
+            while (spearsPlanted < m.SpearCount && phaseTime + 1e-4f >= SpearRules.LaunchTime(spearsPlanted, m.LaunchInterval))
+            {
+                Vector3 origin = tailTip != null ? tailTip.position : transform.position;
+                Vector3 aim = target != null ? target.transform.position : origin + transform.forward * 10f;
+                Vector3 dir = Flat(aim - origin); float dist = dir.magnitude + 2.5f;
+                dir = dir.sqrMagnitude < 1e-4f ? transform.forward : dir.normalized;
+                dir = Quaternion.Euler(0f, ScorpionRules.FanAngle(spearsPlanted, m.SpearCount, 24f), 0f) * dir;
+                Vector3 land = new Vector3(origin.x, 0f, origin.z) + dir * dist;
+                pendingColumns.Add(new Pending { at = Time.time + ScorpionRules.ColumnDelay(dist, m.SpearSpeed), pos = land });
+                spearsPlanted++;
+            }
+        }
+
+        void FlushColumns()
+        {
+            for (int i = pendingColumns.Count - 1; i >= 0; i--)
+            {
+                if (Time.time < pendingColumns[i].at) continue;
+                Vector3 pos = pendingColumns[i].pos; pendingColumns.RemoveAt(i);
+                if (Physics.Raycast(pos + Vector3.up * 6f, Vector3.down, out var hit, 14f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) pos = hit.point; else continue;
+                bool onPlayer = false;
+                foreach (var p in SurvivalStats.All) if (p != null && Flat(p.transform.position - pos).sqrMagnitude < 1.3f * 1.3f) onPlayer = true;
+                if (onPlayer) continue;   // never plant it inside the player
+                CrystalColumn.Spawn(pos, 0.7f, 1.6f, ScorpionRules.ColumnLife);
+                Say("crystal_plant", pos, 0.8f);
+            }
+        }
+
+        /// <summary>The charge ran into a wall or a column: the claws jam for <paramref name="seconds"/> (it is never stunned, but it lies open), a column breaks, rock and shards fall.</summary>
+        public void WallStuck(float seconds, Vector3 point)
+        {
+            if (dead) return;
+            stuckUntil = Time.time + seconds;
+            desiredSpeed = 1f; Trigger("Stuck");
+            bool column = CrystalColumn.ShatterNear(point, 2.5f);
+            Say(column ? "crystal_shatter" : "claws_stuck", point, 1f);
+            SkillFx.Dust(point, 1.6f, Dust, 30); SkillFx.Burst(point + Vector3.up * 0.5f, Crystal, 14, 4f); ImpactFx.Thump(point, 0.25f, 0.6f, 24f);
         }
 
         // ---------- hurting the player ----------

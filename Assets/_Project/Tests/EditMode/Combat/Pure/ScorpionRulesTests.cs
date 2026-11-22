@@ -68,7 +68,16 @@ namespace Evolve.Tests.EditMode
         {
             var m = Move("Lao Kẹp");
             Assert.AreEqual(MoveShape.Charge, m.Shape); Assert.GreaterOrEqual(m.MinRange, 4f); Assert.AreEqual(12f, m.MaxRange); Assert.AreEqual(20f, m.Damage); Assert.AreEqual(14f, m.Cooldown);
-            CollectionAssert.AreEqual(new[] { "Châm Choáng" }, m.Combo);
+            CollectionAssert.AreEqual(new[] { "Châm Choáng", "Giáng Đuôi" }, m.Combo);   // charge, stab, then the tail smash: three blows, then it lies open
+        }
+
+        [Test] public void Scorpion_Rhythm_ItCirclesBetweenMoves_AndLiesOpenAfterTheBigOnes_NoPanting()
+        {
+            Assert.AreEqual(2f, CircleRules.IdleSeconds(Boss));
+            Assert.AreEqual(0.6f, Move("Châm Choáng").Rest); Assert.AreEqual(1.2f, Move("Giáng Đuôi").Rest); Assert.AreEqual(1.5f, Move("Lao Kẹp").Rest); Assert.AreEqual(1.5f, Move("Đào Chui Trồi Lên").Rest);
+            Assert.AreEqual(0f, Move("Phóng Gai Tinh Thể").Rest);   // the ranged skill leaves no opening: it is the one you answer by dodging
+            Assert.IsTrue(MovesetSeed.For(Boss).Where(m => m.Role != MoveRole.Ultimate).All(m => m.RecoverFactor >= 1.5f - 1e-4f), "open to a counter (x1.5) whenever it recovers");
+            CollectionAssert.AreEqual(new[] { "Giáng Đuôi" }, Move("Giáng Đuôi").Combo);   // Đập Đôi: a second smash if the player is still in reach
         }
 
         [Test] public void Scorpion_Burst_IsTheUltimate_ThreeRingsOfSpikes()
@@ -77,7 +86,47 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(MoveShape.Shatter, m.Shape); Assert.AreEqual(0.25f, m.UnlockBelow); Assert.GreaterOrEqual(m.Windup, 1.8f); Assert.AreEqual(10f, m.Radius); Assert.IsTrue(m.Armored);
             Assert.AreEqual(ShatterRules.RingCount * ShatterRules.RingDamage, m.Damage, 1e-4f);
             Assert.GreaterOrEqual(m.Damage, 36f);
+            Assert.AreEqual(ShatterRules.FlickCount, m.SpikeCount); Assert.AreEqual(9f, m.MissileDamage); Assert.AreEqual(ShatterRules.FlickEnd, m.Active, 1e-4f);   // after the rings, three crystals flicked at the player by the tail
         }
+
+        [Test] public void Shatter_AfterTheRings_TheTailFlicksThreeCrystals_OneAfterAnother()
+        {
+            Assert.AreEqual(3, ShatterRules.FlickCount);
+            Assert.AreEqual(ShatterRules.RingStart(ShatterRules.RingCount - 1) + ShatterRules.MaxRadius / ShatterRules.RingSpeed, ShatterRules.FlickStart, 1e-4f);   // the last ring has run out
+            Assert.AreEqual(ShatterRules.FlickStart, ShatterRules.FlickTime(0), 1e-4f); Assert.AreEqual(ShatterRules.FlickStart + 2 * ShatterRules.FlickInterval, ShatterRules.FlickTime(2), 1e-4f);
+            Assert.AreEqual(ShatterRules.FlickTime(ShatterRules.FlickCount - 1) + ShatterRules.FlickInterval, ShatterRules.FlickEnd, 1e-4f);
+            Assert.Less(ShatterRules.FlickThrow, ShatterRules.FlickInterval);   // the crystal leaves the tail before the next one rises
+            Assert.AreEqual(-25f, ShatterRules.FlickAngle(0), 1e-4f); Assert.AreEqual(0f, ShatterRules.FlickAngle(1), 1e-4f); Assert.AreEqual(25f, ShatterRules.FlickAngle(2), 1e-4f);
+        }
+
+        [Test] public void Burrow_Double_OnlyAtTwoThirdsHealthOrLess_AndHasItsOwnQuickerClock()
+        {
+            Assert.IsTrue(BurrowRules.WantsDouble(0.66f)); Assert.IsTrue(BurrowRules.WantsDouble(0.1f)); Assert.IsFalse(BurrowRules.WantsDouble(0.67f)); Assert.IsFalse(BurrowRules.WantsDouble(1f));
+            Assert.AreEqual(BurrowRules.SecondDive + BurrowRules.SecondTravel + BurrowRules.SecondMarked + BurrowRules.SecondEmerge, BurrowRules.SecondTotal, 1e-4f);
+            Assert.Less(BurrowRules.SecondTotal, BurrowRules.Total); Assert.Less(BurrowRules.SecondRadius, 4f); Assert.GreaterOrEqual(BurrowRules.SecondMarked, 0.7f);   // smaller circle, but still time to run
+            Assert.AreEqual(BurrowStage.Dig, BurrowRules.SecondStageAt(0.1f));
+            Assert.AreEqual(BurrowStage.Travel, BurrowRules.SecondStageAt(BurrowRules.SecondDive + 0.1f));
+            Assert.AreEqual(BurrowStage.Marked, BurrowRules.SecondStageAt(BurrowRules.SecondMarkTime + 0.1f));
+            Assert.AreEqual(BurrowStage.Emerge, BurrowRules.SecondStageAt(BurrowRules.SecondEmergeTime + 0.05f));
+            Assert.AreEqual(BurrowStage.Done, BurrowRules.SecondStageAt(BurrowRules.SecondTotal + 0.01f));
+            Assert.IsTrue(BurrowRules.CircleFollowsSecond(BurrowRules.SecondMarkTime - 0.01f)); Assert.IsFalse(BurrowRules.CircleFollowsSecond(BurrowRules.SecondMarkTime + 0.01f));
+        }
+
+        [Test] public void Environment_ColumnsFromTheVolley_AppearWhereTheSpikeLands_AndLastFiveSeconds()
+        {
+            Assert.AreEqual(5f, ScorpionRules.ColumnLife); Assert.AreEqual(1.2f, ScorpionRules.StuckSeconds);
+            Assert.AreEqual(0.5f, ScorpionRules.ColumnDelay(10f, 20f), 1e-4f); Assert.AreEqual(0f, ScorpionRules.ColumnDelay(10f, 0f)); Assert.AreEqual(0f, ScorpionRules.ColumnDelay(-1f, 20f));
+        }
+
+        [Test] public void Arena_ByDefaultItIsDiggableEverywhere_AndARoomCanSayOtherwise()
+        {
+            Assert.IsTrue(ScorpionArena.CanBurrowAt(3f, 4f));
+            ScorpionArena.CanBurrowAt = (x, z) => x < 0f;
+            try { Assert.IsFalse(ScorpionArena.CanBurrowAt(3f, 4f)); Assert.IsTrue(ScorpionArena.CanBurrowAt(-3f, 4f)); }
+            finally { ScorpionArena.Reset(); }
+            Assert.IsTrue(ScorpionArena.CanBurrowAt(3f, 4f));
+        }
+
 
         [Test] public void Scorpion_UsesItsOwnClips_SoNoStandInBodyPose()
         {

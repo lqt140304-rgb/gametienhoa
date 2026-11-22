@@ -23,7 +23,7 @@ namespace Evolve.EditorTools
         const string Source = "Assets/_Project/Prefabs/Wildlife/BoCapThachAnh.prefab";
         const string Target = "Assets/_Project/Prefabs/Wildlife/BoCapThachAnh (Meshy).prefab";
         static readonly string[] MoveAnims = { "Sting", "TailSlam", "Volley", "Burrow", "Pinch", "Burst" };
-        static readonly string[] Looping = { "Idle", "Walk_F", "Walk_B", "Walk_L", "Walk_R" };
+        static readonly string[] Looping = { "Idle", "Walk_F", "Walk_B", "Walk_L", "Walk_R", "Exposed", "Stuck" };
 
         [MenuItem("Evolve/Build Bọ Cạp Thạch Anh (Meshy) Prefab")]
         static void Build()
@@ -79,7 +79,7 @@ namespace Evolve.EditorTools
             mi.clipAnimations = list.ToArray();
             mi.SaveAndReimport();
             var found = AssetDatabase.LoadAllAssetsAtPath(Model).OfType<AnimationClip>().Where(a => !a.name.StartsWith("__preview__")).GroupBy(a => a.name).ToDictionary(g => g.Key, g => g.First());
-            foreach (var need in new[] { "Idle", "Walk_F", "Walk_B", "Walk_L", "Walk_R", "Hit", "Death" }.Concat(MoveAnims.SelectMany(a => new[] { "Tell_" + a, "Strike_" + a, "Recover_" + a })))
+            foreach (var need in new[] { "Idle", "Walk_F", "Walk_B", "Walk_L", "Walk_R", "Hit", "Death", "Flick", "Exposed", "Stuck" }.Concat(MoveAnims.SelectMany(a => new[] { "Tell_" + a, "Strike_" + a, "Recover_" + a })))
                 if (!found.ContainsKey(need)) { Debug.LogError("[Bọ Cạp] Thiếu clip " + need + " (có: " + string.Join(", ", found.Keys) + ")"); return null; }
             return found;
         }
@@ -90,7 +90,7 @@ namespace Evolve.EditorTools
             var ctrl = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
             foreach (var f in new[] { "Speed", "MoveX", "MoveY" }) ctrl.AddParameter(f, AnimatorControllerParameterType.Float);   // Speed is fed by CreatureAnimDriver, MoveX/MoveY by ScorpionMoves
             ctrl.AddParameter("Alarming", AnimatorControllerParameterType.Bool);
-            foreach (var t in new[] { "Hit", "Die", "Reset", "Attack" }) ctrl.AddParameter(t, AnimatorControllerParameterType.Trigger);
+            foreach (var t in new[] { "Hit", "Die", "Reset", "Attack", "Flick", "Exposed", "Stuck" }) ctrl.AddParameter(t, AnimatorControllerParameterType.Trigger);
             foreach (var a in MoveAnims) foreach (var ph in new[] { "Tell_", "Strike_", "Recover_" }) ctrl.AddParameter(ph + a, AnimatorControllerParameterType.Trigger);
             var sm = ctrl.layers[0].stateMachine;
 
@@ -120,6 +120,13 @@ namespace Evolve.EditorTools
                     }
                 }
 
+            foreach (var extra in new[] { "Flick", "Exposed", "Stuck" })   // the tail's crystal flick, the lie-open after a big move, claws jammed in a wall: each by its trigger, left by "Reset" (or the next phase's trigger)
+            {
+                var st = sm.AddState(extra); st.motion = clips[extra];
+                var go = sm.AddAnyStateTransition(st);
+                go.AddCondition(AnimatorConditionMode.If, 0f, extra);
+                go.hasExitTime = false; go.duration = 0.08f; go.canTransitionToSelf = extra == "Flick";   // three flicks in a row
+            }
             var hit = sm.AddState("Hit"); hit.motion = clips["Hit"];
             var toHit = loco.AddTransition(hit); toHit.AddCondition(AnimatorConditionMode.If, 0f, "Hit"); toHit.hasExitTime = false; toHit.duration = 0.05f;   // only from Walk: a flinch never cuts a move short
             var fromHit = hit.AddTransition(loco); fromHit.hasExitTime = true; fromHit.exitTime = 0.95f; fromHit.duration = 0.12f;

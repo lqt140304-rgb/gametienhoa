@@ -56,3 +56,19 @@ Phòng nên cung cấp cho boss ba thứ: danh sách cột (vị trí, máu), m�
 ## Sửa sau lần thử đầu trong Unity (2026-11-22)
 - **Chân và càng đứng yên, boss "lết"**: `Predator.cs` tự thêm `CreatureLocomotion` cho mọi quái chưa có, và component đó chạy dáng đi giả cho mọi xương tên bắt đầu bằng `Leg`/`Tail`/`Wing`/`Limb` và đặt lại `animator.speed` mỗi khung, nên đè lên clip. Đã đổi tên xương (`Leg*`→`Pede*`, `Tail*`→`Sting*`, `TailTip`→`StingTip`), đổi trạng thái đi của Animator thành `Walk`, và `ScorpionMoves` chốt `animator.speed` ở `LateUpdate` (sau khi loco chạy).
 - **Clip trùng tên** (`Recover_TailSlam` hai lần): chạy lại script trên FBX đã có xương thì clip cũ đi theo file và bị xuất lần nữa (50 clip). Script giờ nhập với `use_anim=False` và xóa hết action cũ trước khi dựng.
+
+## Nhịp trận, chuỗi đòn, combo, môi trường (2026-11-22, chủ dự án duyệt: "làm hết, trồi kép khi máu ≤ 66%, đừng copy Golem, sáng tạo theo đặc điểm quái")
+Lấy ý từ Golem nhưng đổi theo đặc điểm bọ cạp (đuôi, càng, chui đất, giáp pha lê), không sao chép:
+
+| | Golem | Bọ Cạp (làm khác) |
+|---|---|---|
+| Nghỉ sau chiêu | khụy gối, thở hổn hển | **hở sườn, không thở**: xìu càng, đuôi rủ, thân thấp lắc nhẹ (clip `Exposed`, nhận x1,5). Châm Choáng 0,6 s, Giáng Đuôi 1,2 s, chuỗi Lao Kẹp 1,5 s, Đào Chui 1,5 s, Bùng Pha Lê 3 s. Phóng Gai không hở |
+| Giữa hai chiêu | đi vòng 6,5 m | **đi ngang quanh người chơi** 2 s bằng clip đi 4 hướng (`CircleRules.IdleSeconds` = 2) |
+| Chuỗi | Húc Đầu → 4 đòn thường | **Lao Kẹp → Châm Choáng → Giáng Đuôi** (ba đòn, còn trong tầm mới nối) rồi hở; **Giáng Đuôi** tự nối **Đập Đôi** |
+| Chuỗi nhiều bước | nhổ cột ném | **Đào Chui, trồi kép** (máu ≤ 66%): trồi lần một, chìm lại 0,8 s, gò đất chạy 0,6 s, **vòng đỏ nhỏ hơn (3 m) khóa 0,7 s**, trồi lần hai (60% sát thương). **Bùng Pha Lê**: sau 3 vòng gai, **đuôi đâm ba cột tinh thể mọc trước mặt và hất từng cái vào người chơi** (clip `Flick`, 0,7 s/lần, 9 sát thương/cái) |
+| Môi trường | cột đá tự nhổ, đâm tường choáng | **Phóng Gai cắm cột tinh thể** tại chỗ gai rơi (xòe quạt 24°, sau lưng người chơi, 5 s): chặn gai sau và chặn đường Lao Kẹp, người chơi núp được. **Lao Kẹp đâm cột/tường**: cột vỡ, càng **kẹt 1,2 s** (clip `Stuck`; bọ cạp miễn choáng nên chỉ hở sườn). `ScorpionArena.CanBurrowAt` cho phòng boss nói chỗ nào đào được |
+
+- Code: luật thuần ở `ScorpionRules.cs` (`BurrowRules.Second*`, `ShatterRules.Flick*`, `ScorpionArena`, `ColumnDelay`), test `ScorpionRulesTests` (531 test xanh); `MovesetSeed` (Rest, Combo, Burst Active = `FlickEnd`); `CrystalColumn.cs` (cột, dựa `RockSpike`); `ScorpionMoves` (trồi kép giữ recover qua `Holding`, cột, quăng tinh thể, kẹt càng, hở sườn); `CreatureCombat` (+`Resting`, giữ recover, gọi `WallStuck` khi Lao Kẹp đụng tường).
+- Blender: thêm 3 clip `Flick`, `Exposed`, `Stuck` (tổng 28 clip). Animator: ba trạng thái mới vào bằng trigger cùng tên; `Flick` vào lại được chính nó.
+- Âm thanh: thêm `flick_stab`, `flick_throw`, `crystal_plant`, `crystal_shatter`, `claws_stuck`, `burrow_redive`, `exposed_hiss` (tổng 26 tiếng).
+- **Chưa kiểm trong Unity.** Rủi ro: cột `CrystalColumn` có collider hộp, có thể kẹt người chơi; trồi kép dưới đất vẫn nhận sát thương (x1,5 vì đang trong recover) nếu bị đánh trúng; nếu `Flick` không thấy cột thì chỉnh khoảng 2,6 m phía trước trong `TickBurst`.

@@ -37,6 +37,15 @@ namespace Evolve.Combat
         public static float FanAngle(int index, int count, float spreadDegrees) =>
             count <= 1 ? 0f : (index - (count - 1) * 0.5f) * (spreadDegrees / (count - 1));
 
+        /// <summary>Phóng Gai Tinh Thể: a spike that lands plants a crystal column that stands this many seconds (it blocks later spikes and the claw charge).</summary>
+        public const float ColumnLife = 5f;
+
+        /// <summary>Lao Kẹp into a wall or a column: the claws jam for this long (it is never stunned, but it lies open).</summary>
+        public const float StuckSeconds = 1.2f;
+
+        /// <summary>Seconds a spike takes to fly <paramref name="distance"/> metres at <paramref name="speed"/> (when its column appears).</summary>
+        public static float ColumnDelay(float distance, float speed) => distance <= 0f || speed <= 0f ? 0f : distance / speed;
+
         static float Clamp(float v, float lo, float hi) => v < lo ? lo : v > hi ? hi : v;
     }
 
@@ -67,6 +76,27 @@ namespace Evolve.Combat
 
         /// <summary>The damage multiplier while it lies open after a burst that found nobody (a counter window).</summary>
         public static float ExposedFactor(bool missed) => missed ? 1.5f : 1f;
+
+        // ---- the second dive (health at two thirds or less): straight after coming up it goes down again and comes up where the player ran to ----
+        public const float DoubleBelow = 0.66f, SecondDive = 0.8f, SecondTravel = 0.6f, SecondMarked = 0.7f, SecondEmerge = 0.35f, SecondRadius = 3f;
+
+        public static bool WantsDouble(float health01) => health01 <= DoubleBelow + 1e-4f;
+        public static float SecondMarkTime => SecondDive + SecondTravel;
+        public static float SecondEmergeTime => SecondDive + SecondTravel + SecondMarked;
+        public static float SecondTotal => SecondDive + SecondTravel + SecondMarked + SecondEmerge;
+
+        public static BurrowStage SecondStageAt(float t) =>
+            t < SecondDive ? BurrowStage.Dig : t < SecondMarkTime ? BurrowStage.Travel : t < SecondEmergeTime ? BurrowStage.Marked : t < SecondTotal ? BurrowStage.Emerge : BurrowStage.Done;
+
+        public static bool CircleFollowsSecond(float t) => t < SecondMarkTime;
+    }
+
+    /// <summary>Where a boss room lets the scorpion dig (a room sets <see cref="CanBurrowAt"/>: soft ground yes, bare rock no). Anywhere by default.</summary>
+    public static class ScorpionArena
+    {
+        public static Func<float, float, bool> CanBurrowAt = Anywhere;
+        static bool Anywhere(float x, float z) => true;
+        public static void Reset() => CanBurrowAt = Anywhere;
     }
 
     /// <summary>
@@ -79,6 +109,15 @@ namespace Evolve.Combat
         public const float RingInterval = 0.6f, RingSpeed = 9f, MaxRadius = 10f, GapHalfWidth = 35f, RingDamage = 13f;
 
         public static float RingStart(int ring) => ring * RingInterval;
+
+        // ---- after the rings: the tail stabs three crystals that rise in front of it and flicks them at the player, one after another ----
+        public const int FlickCount = 3;
+        public const float FlickInterval = 0.7f, FlickThrow = 0.45f, FlickSpread = 50f;
+        public static float FlickStart => RingStart(RingCount - 1) + MaxRadius / RingSpeed;   // the last ring has run out
+        public static float FlickTime(int i) => FlickStart + i * FlickInterval;
+        public static float FlickEnd => FlickStart + FlickCount * FlickInterval;
+        /// <summary>The sideways angle (degrees from the aim) at which crystal <paramref name="i"/> rises.</summary>
+        public static float FlickAngle(int i) => ScorpionRules.FanAngle(i, FlickCount, FlickSpread);
 
         /// <summary>How far out ring <paramref name="ring"/> has run <paramref name="t"/> seconds after the burst began (0 before it is born, then up to <see cref="MaxRadius"/>).</summary>
         public static float RingRadius(int ring, float t) => t <= RingStart(ring) ? 0f : Math.Min(MaxRadius, RingSpeed * (t - RingStart(ring)));

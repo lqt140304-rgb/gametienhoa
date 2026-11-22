@@ -92,6 +92,8 @@ namespace Evolve.Combat
 
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
+        /// <summary>The boss lies open after a move or a chain (the rest at the end of the recover): the player's time to hit back.</summary>
+        public bool Resting => scheduler != null && scheduler.Resting;
         /// <summary>Vỏ Pha Lê: the damage multiplier for a blow from <paramref name="by"/> (0.75 from the front, 1 from the sides and the back); 1 for every other creature.</summary>
         public float ShellFactor(Component by)
         {
@@ -428,7 +430,7 @@ namespace Evolve.Combat
                 else if (ambush.State == AmbushState.Revealed && !scheduler.Busy) ambush.StrikeDone();
             }
             noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
-            scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
+            scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding) || (scorpion != null && scorpion.Holding);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null) BeginStrike(started);
@@ -557,8 +559,9 @@ namespace Evolve.Combat
             {
                 if (m.Shape == MoveShape.Charge)
                 {
-                    float daze = m.Ramp ? 3f : 2f;
+                    float daze = m.Ramp ? 3f : scorpion != null ? ScorpionRules.StuckSeconds : 2f;
                     CreatureStatus.Stun(this, daze); scheduler.Stun(daze); loco?.PlayAction("Stun"); dizzyUntil = Time.time + daze;   // hit a wall: dazed
+                    if (scorpion != null) scorpion.WallStuck(daze, transform.position + strikeDir * Radius);   // the scorpion is never stunned: its claws jam, a column breaks
                     if (m.Ramp) GolemFx.WallBump(transform.position + strikeDir * Radius);
                     return;
                 }

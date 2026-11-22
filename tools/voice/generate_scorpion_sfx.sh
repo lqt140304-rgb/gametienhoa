@@ -29,6 +29,13 @@ burst_ring|1.2|rings of sharp crystal spikes erupting out of the floor one after
 burst_gasp|2.0|a giant exhausted scorpion with a cracked shell, slow raspy hissing breaths, dry chitin ticking and faint crystal fragments falling, tired
 scorpion_hurt|0.6|a short sharp hiss and screech of a giant scorpion being hit, a dry chitin crack, abrupt
 scorpion_death|2.0|a giant crystal scorpion dying, a long weakening rattling hiss, chitin collapsing and crystal fragments falling and chiming, ending in silence
+flick_stab|0.7|a scorpion stinger stabbing down into a big crystal, a sharp piercing crack with a glassy ring and a low thud, tight and decisive
+flick_throw|0.7|a giant scorpion tail whipping up and flinging a heavy crystal shard, a fast whip crack and a glassy whoosh that fades away, punchy
+crystal_plant|0.8|a purple crystal column erupting and growing out of stone ground, a sharp rising crystalline crackle with grinding rock, short and bright
+crystal_shatter|0.9|a large crystal column shattering into pieces, a loud glassy crash with chiming shards scattering and falling, decisive
+claws_stuck|0.9|two giant scorpion pincers jamming into a stone wall, a hard crunching impact with grinding scraping chitin and falling rubble, a strained hiss
+burrow_redive|0.9|a giant scorpion plunging back into the ground again, a quick violent scrabble of claws in gravel and a heavy thump of earth closing over it, urgent
+exposed_hiss|1.0|a giant exhausted scorpion lying open with drooping claws, a slow dry rattling hiss and soft chitin clicking, vulnerable, quiet
 T
 while IFS='|' read -r -u 3 id secs prompt; do
   [ -n "$id" ] || continue

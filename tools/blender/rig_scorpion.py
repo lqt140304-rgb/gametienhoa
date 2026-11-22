@@ -10,7 +10,7 @@ glow gathers), Pede{L,R}{1..4}_A/_B (eight legs, front to back, upper and lower)
 Every clip is computed frame by frame (no sparse keys): the legs are solved with a small numeric IK to hit absolute foot targets, so a foot that is planted stays
 planted while the body crouches, rears or lunges. Weights: the nearest three bones, falling off with distance (a bone's radius counts as inside it).
 
-Clips (30 fps): Idle, Walk_F/B/L/R (the four directions, loops, each 20 frames), Hit, Death, and for each move three clips named after the move's Anim:
+Clips (30 fps): Idle, Walk_F/B/L/R (the four directions, loops, each 20 frames), Hit, Death, Flick (the tail throws a crystal), Exposed and Stuck (loops: lying open, claws jammed in a wall), and for each move three clips named after the move's Anim:
 Tell_<Anim> (windup), Strike_<Anim> (cast) and Recover_<Anim> (after-cast), Anim in Sting, TailSlam, Volley, Burrow, Pinch, Burst.
 """
 import math
@@ -418,6 +418,27 @@ def make_clips():
     gasp = [(0, slam), (12, P(body=dict(dz=-0.22, pitch=-8, dy=-0.06), tail=dict(wind=-30, sway=5), claws=dict(lift=-14, spread=18, open=34))),
             (24, P(body=dict(dz=-0.12, pitch=-3), tail=dict(wind=-6, sway=-4), claws=dict(lift=2, spread=10, open=18)))]
     c["Recover_Burst"] = (36, False, lambda f: _with_breath(sample_keys(gasp, min(f, 24)), f))
+
+    # Flick (Bùng Pha Lê, after the rings): the stinger swings forward and down to spear a crystal, a beat, then whips up and back and throws it (21 frames = 0.7 s)
+    ready = P(body=dict(dz=0.05, pitch=6), tail=dict(wind=40, curl=-8), claws=dict(lift=30, spread=26, open=22))
+    stab = P(body=dict(dz=-0.10, dy=-0.14, pitch=-8), tail=dict(wind=-60, curl=6), claws=dict(lift=14, spread=18, open=10))
+    whip = P(body=dict(dz=0.04, dy=0.10, pitch=10), tail=dict(wind=62, curl=-12), claws=dict(lift=36, spread=30, open=26))
+    c["Flick"] = (21, False, lambda f: sample_keys([(0, ready), (5, stab), (9, stab), (12, whip), (16, whip), (21, ready)], f))
+
+    # Exposed (the lie-open after a big move): low, claws drooping and slack, the tail trailing; slow sway, no panting (48 frames, loops)
+    def exposed(f):
+        t = f / 48 * 2 * math.pi
+        return P(body=dict(dz=-0.12, pitch=-4, roll=1.5 * math.sin(t), dy=-0.04), tail=dict(wind=-22 + 3 * math.sin(t), sway=8 * math.sin(t)),
+                 claws=dict(lift=-18 + 2 * math.sin(t), spread=14, open=24 + 5 * math.sin(t + 1)))
+    c["Exposed"] = (48, True, exposed)
+
+    # Stuck (Lao Kẹp into a wall or a column): both claws jammed ahead, the body strains and jerks, the tail quivers up (36 frames, loops)
+    def stuck(f):
+        t = f / 36 * 2 * math.pi
+        jerk = max(0.0, math.sin(t * 3)) ** 3
+        return P(body=dict(dy=-0.16 + 0.03 * jerk, dz=-0.06, pitch=-9 + 2 * jerk, roll=shake(f, 2.2, 1.1), yaw=shake(f, 1.5, 0.8)), tail=dict(wind=34 + 6 * jerk, sway=shake(f, 6, 1.3)),
+                 claws=dict(lift=6, spread=4 + 3 * jerk, open=-8))
+    c["Stuck"] = (36, True, stuck)
     return c
 
 
