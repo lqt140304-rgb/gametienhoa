@@ -8,7 +8,7 @@ namespace Evolve.Combat
     public class MonsterProjectile : MonoBehaviour
     {
         static Material rockMat, boneMat;
-        bool bone, big;
+        bool bone, big, spearBody;
         (float vx, float vy, float vz) v;
         Vector3 from;
         float t, flight, damage, radius, bodyRadius;
@@ -37,6 +37,20 @@ namespace Evolve.Combat
             p.v = ThrowRules.Launch(from.x, from.y, from.z, to.x, to.y, to.z, flightSeconds);
         }
 
+        /// <summary>
+        /// Throws an existing object (the stone spike the golem pulled out of the ground) as the missile itself: no stand-in sphere. It keeps its size, flies on the same arc,
+        /// points its tip along the flight and turns slowly about that axis like a javelin, and bursts where it lands or hits.
+        /// </summary>
+        public static void LaunchBody(GameObject body, Vector3 to, float flightSeconds, float damage, float radius = 1f)
+        {
+            body.transform.SetParent(null, true);   // keeps its world size and place
+            Vector3 from = body.transform.position;
+            var p = body.AddComponent<MonsterProjectile>();
+            p.spearBody = true; p.big = true; p.prev = from; p.bodyRadius = Mathf.Max(0.2f, body.transform.lossyScale.x * 0.5f);
+            p.from = from; p.flight = flightSeconds; p.damage = damage; p.radius = radius;
+            p.v = ThrowRules.Launch(from.x, from.y, from.z, to.x, to.y, to.z, flightSeconds);
+        }
+
         /// <summary>A heavy boulder that lands (rather than hits) still hurts everyone near the crater: 60% of its damage within 2.5 m.</summary>
         void Splash(Vector3 at)
         {
@@ -61,6 +75,8 @@ namespace Evolve.Combat
                 Destroy(gameObject);
                 return;
             }
+            if (spearBody && step.sqrMagnitude > 1e-8f)   // tip first along the flight, turning about its own axis
+                transform.rotation = Quaternion.AngleAxis(300f * t, step.normalized) * Quaternion.FromToRotation(Vector3.up, step.normalized);
             prev = now;
             transform.position = now;
             if (bone) transform.Rotate(540f * Time.fixedDeltaTime, 220f * Time.fixedDeltaTime, 0f, Space.Self);   // it tumbles through the air

@@ -48,6 +48,8 @@ namespace Evolve.Combat
         public float RoarRadius, RoarForce;
         /// <summary>Seconds it stays crouched, winded, after the recover (2-5 for a boss, the bigger the move the longer); added to the end of the recover.</summary>
         public float Rest;
+        /// <summary>It cannot be hurt at all while this move runs (a phase-change roar).</summary>
+        public bool Invulnerable;
         /// <summary>Names of moves it strings together right after this one (a combo), each shortly after the last if the player is still in reach; the rest comes only at the end, the longest of the chain.</summary>
         public string[] Combo;
         public float RecoverFactor = 1.5f;
@@ -84,6 +86,12 @@ namespace Evolve.Combat
         public Func<MoveDef, bool> Allow;
         /// <summary>While true, a move in its Recover does not end (its time stands still): Giáng Thạch's rock volley takes as long as it takes. Release it and the rest begins.</summary>
         public bool HoldRecover { get; set; }
+        /// <summary>Multiplies the cooldown of every move that starts (a later phase: below 1).</summary>
+        public float CooldownScale { get; set; } = 1f;
+        /// <summary>Extra blows at the end of a combo chain (the last blow repeats).</summary>
+        public int ComboBonus { get; set; }
+        /// <summary>Multiplies a move's pick weight (reading the player). A move is never blocked outright by a zero.</summary>
+        public Func<MoveDef, float> WeightScale { get; set; }
         bool stunned;
         float idleLeft;
         /// <summary>Seconds (up to 1.8 times that, random) it stays idle after a move before it may pick the next one: a boss that circles and sizes up its prey.</summary>
@@ -107,7 +115,7 @@ namespace Evolve.Combat
         public float Progress01 => phaseLength <= Eps ? 1f : Math.Min(1f, PhaseTime / phaseLength);
         public bool Busy => Phase != MovePhase.Idle;
         public bool IsArmored => Current != null && (Current.Armored || Current.Shape == MoveShape.Harden) && (Phase == MovePhase.Windup || Phase == MovePhase.Active);
-        public float DamageTakenFactor => Phase == MovePhase.Recover ? (Current != null ? Current.RecoverFactor : RecoverDamageFactor) : Phase == MovePhase.Active && Current != null ? Current.DamageTakenFactor : 1f;
+        public float DamageTakenFactor => Current != null && Current.Invulnerable && Phase != MovePhase.Idle ? 0f : Phase == MovePhase.Recover ? (Current != null ? Current.RecoverFactor : RecoverDamageFactor) : Phase == MovePhase.Active && Current != null ? Current.DamageTakenFactor : 1f;
 
         /// <summary>Starts <paramref name="move"/> now with a windup of exactly <paramref name="windupSeconds"/> (an ambusher bursting out). Only when idle.</summary>
         public bool Force(MoveDef move, float windupSeconds)
@@ -118,6 +126,9 @@ namespace Evolve.Combat
         }
 
         void StartCombo(MoveDef m) { comboOwner = m.Combo != null && m.Combo.Length > 0 ? m : null; comboNext = 0; chainRest = 0f; currentRest = 0f; }
+
+        int ComboCount => comboOwner == null ? 0 : comboOwner.Combo.Length + ComboBonus;
+        string ComboName(int i) => comboOwner.Combo[Math.Min(i, comboOwner.Combo.Length - 1)];
 
         MoveDef Find(string name) { for (int i = 0; i < moves.Count; i++) if (moves[i].Name == name) return moves[i]; return null; }
 
@@ -152,33 +163,34 @@ namespace Evolve.Combat
             {
                 case MovePhase.Windup:
                     Phase = MovePhase.Active; PhaseTime = 0f; phaseLength = Current.Active;
-                    cooldownLeft[IndexOf(Current)] = Current.Cooldown; last = Current;
+                    { int ci = IndexOf(Current); if (ci >= 0) cooldownLeft[ci] = Current.Cooldown * Math.Max(0f, CooldownScale); }   // a forced move that is not in the set (a phase roar) has no cooldown to set
+                    last = Current;
                     return Current;
                 case MovePhase.Active:
                     {
-                        bool more = comboOwner != null && comboNext < comboOwner.Combo.Length;
+                        bool more = comboOwner != null && comboNext < ComboCount;
                         chainRest = Math.Max(chainRest, Current.Rest);
                         currentRest = more ? 0f : chainRest;
                         recoverLen = more ? Math.Min(Current.Recover, 0.5f) : Current.Recover;   // inside a combo the next blow follows almost at once
                         Phase = MovePhase.Recover; PhaseTime = 0f; phaseLength = recoverLen + currentRest; return null;
                     }
                 default:
-                    if (comboOwner != null && !stunned && currentRest <= 0f && comboNext < comboOwner.Combo.Length)   // a combo step ended: the next one, if the player is still in its reach
+                    if (comboOwner != null && !stunned && currentRest <= 0f && comboNext < ComboCount)   // a combo step ended: the next one, if the player is still in its reach
                     {
-                        var next = Find(comboOwner.Combo[comboNext]);
+                        var next = Find(ComboName(comboNext));
                         if (next != null && hasTarget && targetDistance >= next.MinRange && targetDistance <= next.MaxRange + 1f)
                         {
                             comboNext++; Current = next; Phase = MovePhase.Windup; PhaseTime = 0f; phaseLength = next.Windup * Math.Max(0.01f, TellScale) * 0.7f;   // a combo blow comes quicker
                             return null;
                         }
-                        comboNext = comboOwner.Combo.Length; currentRest = chainRest; phaseLength = recoverLen + currentRest;   // out of reach: the combo is over, it breathes
+                        comboNext = ComboCount; currentRest = chainRest; phaseLength = recoverLen + currentRest;   // out of reach: the combo is over, it breathes
                         return null;
                     }
                     Reset(); idleLeft = MinIdle * (1f + 0.8f * (float)rnd.NextDouble()); return null;   // a move ended by itself: it circles for a while
             }
         }
 
-        int IndexOf(MoveDef m) { for (int i = 0; i < moves.Count; i++) if (ReferenceEquals(moves[i], m)) return i; return 0; }
+        int IndexOf(MoveDef m) { for (int i = 0; i < moves.Count; i++) if (ReferenceEquals(moves[i], m)) return i; return -1; }
 
         MoveDef Pick(float distance, float health01)
         {
@@ -191,9 +203,10 @@ namespace Evolve.Combat
             }
             if (ok.Count == 0) return null;
             if (ok.Count > 1 && last != null) ok.RemoveAll(i => ReferenceEquals(moves[i], last));
-            float total = 0f; foreach (int i in ok) total += Math.Max(0.0001f, moves[i].Weight);
+            float W(int i) => Math.Max(0.0001f, moves[i].Weight * (WeightScale != null ? Math.Max(0.0001f, WeightScale(moves[i])) : 1f));
+            float total = 0f; foreach (int i in ok) total += W(i);
             float r = (float)rnd.NextDouble() * total;
-            foreach (int i in ok) { r -= Math.Max(0.0001f, moves[i].Weight); if (r <= 0f) return moves[i]; }
+            foreach (int i in ok) { r -= W(i); if (r <= 0f) return moves[i]; }
             return moves[ok[ok.Count - 1]];
         }
     }

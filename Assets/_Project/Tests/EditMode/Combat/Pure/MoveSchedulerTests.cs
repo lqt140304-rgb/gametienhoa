@@ -299,5 +299,74 @@ namespace Evolve.Tests.EditMode
             while (s.Busy) s.Update(0.05f, true, 5f, 1f);
             Assert.IsFalse(s.Circling); s.Update(0.05f, true, 5f, 1f); Assert.IsTrue(s.Busy);
         }
+
+        [Test] public void CooldownScale_ShortensTheCooldownsOfMovesThatStartAfterIt()
+        {
+            var m = new MoveDef { Name = "x", Windup = 0.1f, Active = 0.1f, Recover = 0.1f, Cooldown = 10f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { m }, 1) { CooldownScale = 0.5f };
+            while (!s.Busy) s.Update(0.05f, true, 5f, 1f);
+            while (s.Busy) s.Update(0.05f, true, 5f, 1f);
+            float t = 0f; while (!s.Busy && t < 20f) { s.Update(0.05f, true, 5f, 1f); t += 0.05f; }
+            Assert.That(t, Is.InRange(4f, 5.6f));      // 10 s halved, less the time it spent on the move
+        }
+
+        [Test] public void WeightScale_SteersWhichMoveIsPicked()
+        {
+            var a = new MoveDef { Name = "A", Windup = 0.1f, Active = 0.1f, Recover = 0.1f, Cooldown = 0f, MaxRange = 99f };
+            var b = new MoveDef { Name = "B", Windup = 0.1f, Active = 0.1f, Recover = 0.1f, Cooldown = 0f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { a, b }, 7) { WeightScale = m => m.Name == "A" ? 0.001f : 1000f };
+            int bs = 0, n = 0;
+            for (int i = 0; i < 4000 && n < 40; i++)
+            {
+                var before = s.Current; s.Update(0.05f, true, 5f, 1f);
+                if (s.Phase == MovePhase.Windup && !ReferenceEquals(before, s.Current) && s.PhaseTime < 0.01f) { n++; if (s.Current.Name == "B") bs++; }
+            }
+            Assert.Greater(bs, n * 0.4);   // "never the same twice" alternates them, but B is never rarer than A here
+            var only = new MoveScheduler(new[] { a }, 7) { WeightScale = m => 0f };
+            while (!only.Busy) only.Update(0.05f, true, 5f, 1f);   // a zero weight never blocks the only move
+        }
+
+        [Test] public void ComboBonus_AddsBlowsToTheEndOfTheChain_RepeatingTheLastName()
+        {
+            var a = new MoveDef { Name = "A", Windup = 0.2f, Active = 0.1f, Recover = 0.2f, Cooldown = 99f, MinRange = 0f, MaxRange = 3f };
+            var rush = new MoveDef { Name = "Rush", Windup = 0.2f, Active = 0.2f, Recover = 0.5f, Cooldown = 99f, MinRange = 4f, MaxRange = 14f, Combo = new[] { "A" } };
+            int Blows(int bonus)
+            {
+                var s = new MoveScheduler(new[] { rush, a }, 1) { ComboBonus = bonus };
+                Step(s, 0.1f, 8f); int count = 0; var prev = s.Phase;
+                for (int i = 0; i < 2000 && s.Busy; i++)
+                {
+                    s.Update(0.05f, true, 2f, 1f);
+                    if (s.Phase == MovePhase.Windup && prev != MovePhase.Windup && s.Current.Name == "A") count++;   // a blow of the chain starts
+                    prev = s.Phase;
+                }
+                return count;
+            }
+            Assert.AreEqual(1, Blows(0)); Assert.AreEqual(3, Blows(2));
+        }
+
+        [Test] public void AnInvulnerableMove_TakesNoDamageInAnyPhase()
+        {
+            var m = new MoveDef { Name = "x", Windup = 0.5f, Active = 0.2f, Recover = 0.5f, MaxRange = 99f, Invulnerable = true };
+            var s = new MoveScheduler(new[] { m }, 1);
+            s.Update(0.01f, true, 5f, 1f);
+            Assert.AreEqual(0f, s.DamageTakenFactor);                          // windup
+            s.Update(0.6f, true, 5f, 1f); Assert.AreEqual(0f, s.DamageTakenFactor);   // active
+            s.Update(0.3f, true, 5f, 1f); Assert.AreEqual(0f, s.DamageTakenFactor);   // recover
+            s.Reset(); Assert.AreEqual(1f, s.DamageTakenFactor);
+        }
+
+        [Test] public void AForcedMoveOutsideTheSet_DoesNotResetTheCooldownOfTheFirstMove()
+        {
+            var a = new MoveDef { Name = "A", Windup = 0.1f, Active = 0.1f, Recover = 0.1f, Cooldown = 30f, MaxRange = 99f };
+            var s = new MoveScheduler(new[] { a }, 1);
+            while (!s.Busy) s.Update(0.05f, true, 5f, 1f);
+            while (s.Busy) s.Update(0.05f, true, 5f, 1f);                 // A is now on a 30 s cooldown
+            var roar = new MoveDef { Name = "Roar", Windup = 0.1f, Active = 0.1f, Recover = 0.1f, Cooldown = 0f, MaxRange = 99f };
+            Assert.IsTrue(s.Force(roar, 0.1f));
+            while (s.Busy) s.Update(0.05f, true, 5f, 1f);
+            for (int i = 0; i < 100; i++) s.Update(0.05f, true, 5f, 1f);  // 5 s later A must still be cooling down
+            Assert.IsFalse(s.Busy);
+        }
     }
 }

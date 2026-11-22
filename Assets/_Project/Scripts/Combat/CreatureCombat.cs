@@ -40,7 +40,7 @@ namespace Evolve.Combat
             if (Time.time >= nextFlip) { circleSign = Random.value < 0.5f ? 1 : -1; nextFlip = Time.time + Random.Range(CircleRules.FlipMin, CircleRules.FlipMax); }
             var d = CircleRules.Steer(to.x, to.z, circleSign, CircleRules.Ring);
             dir = new Vector3(d.x, 0f, d.z);
-            face = Vector3.Slerp(dir, Flat(to).normalized, 0.5f);   // it keeps an eye on the prey while it walks round
+            face = Flat(to).normalized;   // it always looks at the prey while it walks round
             return CircleRules.Speed;
         }
 
@@ -167,6 +167,8 @@ namespace Evolve.Combat
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale, MinIdle = CircleRules.IdleSeconds(name) };
             if (ScorpionMoves.Has(name) && !TryGetComponent(out scorpion)) scorpion = gameObject.AddComponent<ScorpionMoves>();
             if (bird != null) scheduler.Allow = m => bird.CanUse(m, target);   // a grab needs a player it can carry
+            SetupPhases();
+            if (PhaseRules.Has(name) && !TryGetComponent<MoveVfx>(out _)) gameObject.AddComponent<MoveVfx>();   // the charge and aftermath of every move
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
             foreach (var mv in moves) if (mv.Shape == MoveShape.Perch)
@@ -178,6 +180,69 @@ namespace Evolve.Combat
             if (model == null) foreach (var r in GetComponentsInChildren<Renderer>()) { model = r.transform; break; }
             if (model != null) baseScale = model.localScale;
             if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
+        }
+
+        // ---------- phases and reading the player (PhaseRules, ReadRules) ----------
+        readonly PhaseTracker phases = new PhaseTracker();
+        readonly PlayerReader reader = new PlayerReader();
+        PhaseMods phaseMods = PhaseMods.None;
+        MoveDef transitionMove;
+        float baseIdle, appliedDamage = 1f, appliedSpeed = 1f;
+        Vector3 windupAt, windupTargetAt; bool windupTracked;
+        Rigidbody targetBody;
+
+        /// <summary>The boss's phase: 1 from the start, 2 below 66% health, 3 below 33%.</summary>
+        public int BossPhase => phases.Phase;
+        /// <summary>What the boss has made of the player's habits.</summary>
+        public PlayerStyle ReadStyle => reader.Style;
+
+        void SetupPhases()
+        {
+            transitionMove = PhaseRules.TransitionMove(name);
+            baseIdle = CircleRules.IdleSeconds(name);
+            scheduler.WeightScale = m => reader.Weight(m);
+        }
+
+        void TickPhases()
+        {
+            if (transitionMove != null && pred != null && phases.Update(pred.HealthFraction)) ApplyPhase();
+            if (transitionMove != null && phases.Pending && target != null && scheduler.Phase == MovePhase.Idle && perch == PerchState.None && leech == null && scheduler.Force(transitionMove, transitionMove.Windup * tellScale))
+                phases.Ack();   // it stops what it was doing and roars: the change of phase is felt
+            if (target != null)
+            {
+                if (targetBody == null || targetBody.gameObject != target.gameObject) target.TryGetComponent(out targetBody);
+                reader.Observe(Time.fixedDeltaTime, Flat(target.transform.position - transform.position).magnitude, targetBody != null ? Flat(targetBody.linearVelocity).magnitude : 0f);
+            }
+        }
+
+        void ApplyPhase()
+        {
+            phaseMods = PhaseRules.For(name, phases.Phase);
+            scheduler.CooldownScale = phaseMods.Cooldown; scheduler.ComboBonus = phaseMods.ComboBonus; scheduler.MinIdle = baseIdle * phaseMods.Idle;
+            DamageScale *= phaseMods.Damage / appliedDamage; appliedDamage = phaseMods.Damage;
+            if (pred != null && Mathf.Abs(phaseMods.Speed - appliedSpeed) > 1e-4f) { pred.ScaleDanger(1f, 1f, phaseMods.Speed / appliedSpeed); appliedSpeed = phaseMods.Speed; }
+            Debug.Log("[Pha trùm] " + name + " vào pha " + phases.Phase);
+        }
+
+        /// <summary>Where to aim at the player: ahead of where they are going (more for a runner) and a little toward the side they have been sidestepping to.</summary>
+        Vector3 AimAt(float seconds, float sideMeters)
+        {
+            Vector3 at = target.transform.position;
+            if (targetBody != null) { var l = reader.Lead(targetBody.linearVelocity.x, targetBody.linearVelocity.z, seconds); at += new Vector3(l.x, 0f, l.z); }
+            Vector3 to = Flat(target.transform.position - transform.position);
+            if (to.sqrMagnitude > 1e-4f && sideMeters > 0f) at += Vector3.Cross(Vector3.up, to.normalized) * (reader.PredictedLateral() * -sideMeters);   // + lateral is the player's right, as seen from the boss
+            return at;
+        }
+
+        /// <summary>How far the player moved sideways during the tell, as seen from the boss: that is a sidestep, and the boss remembers which way.</summary>
+        void NoteSidestep()
+        {
+            if (!windupTracked || target == null) return;
+            windupTracked = false;
+            Vector3 to0 = Flat(windupTargetAt - windupAt);
+            if (to0.sqrMagnitude < 1e-4f) return;
+            Vector3 right = Vector3.Cross(Vector3.up, to0.normalized) * -1f;
+            reader.NoteDodge(Vector3.Dot(target.transform.position - windupTargetAt, right));
         }
 
         // ---------- Giáng Thạch (the golem's special): the leap, the landing, the spikes and the rock volley ----------
@@ -248,7 +313,7 @@ namespace Evolve.Combat
             float startAngle = 0f;
             if (target != null) { Vector3 to = Flat(target.transform.position - spot); startAngle = Mathf.Atan2(to.z, to.x) * Mathf.Rad2Deg; }   // the first spike rises on the player's side
             float scale = Mathf.Max(0.5f, transform.lossyScale.y);
-            foreach (var (x, z) in SpikeRules.Ring(spot.x, spot.z, m.SpikeCount, m.SpikeRadius, startAngle))
+            foreach (var (x, z) in SpikeRules.Ring(spot.x, spot.z, m.SpikeCount + phaseMods.ExtraSpikes, m.SpikeRadius, startAngle))
                 spikeObjs.Add(RockSpike.Spawn(new Vector3(x, GroundY(x, z, spot.y), z), 1.1f * scale, 3.2f * scale));
             GolemFx.SpikesRise(spot, m.SpikeRadius);
             volley = new VolleyFsm(spikeObjs.Count);
@@ -266,10 +331,10 @@ namespace Evolve.Combat
             bool arrived = to.magnitude <= Radius + 0.9f;
             if (volley.Stage == VolleyStage.Walk && !arrived)
             {
-                if (to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.2f));
+                if (target != null) FaceTarget();   // it keeps its eyes on the player while it walks to the spike
                 if (motor != null) motor.Move(to.normalized, WalkSpeed, false);   // it walks to the next spike (no detours: they flip the heading every tick)
             }
-            else if (volley.Stage == VolleyStage.Pull && to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(to.normalized), 0.2f));
+            else if (volley.Stage == VolleyStage.Pull && target != null) FaceTarget();
             else if (volley.Stage == VolleyStage.Hold) FaceTarget();
             var e = volley.Update(Time.fixedDeltaTime, arrived);
             if (e == VolleyEvent.PullStart) { spike.BeginLift(VolleyFsm.PullSeconds); GolemFx.Pull(spike.transform.position); }   // both arms take the column and draw it out slowly
@@ -303,9 +368,10 @@ namespace Evolve.Combat
         {
             if (heldRock == null) return;
             Vector3 from = heldRock.transform.position;
-            Vector3 to = target != null ? target.transform.position + Vector3.up * 0.2f : from + transform.forward * 8f;
-            MonsterProjectile.Launch(from, to, m.FlightSeconds, m.MissileDamage * DamageScale, 1f, false, m.MissileSize);
-            Destroy(heldRock.gameObject); heldRock = null;
+            Vector3 to = target != null ? AimAt(m.FlightSeconds, 0f) + Vector3.up * 0.2f : from + transform.forward * 8f;
+            var rock = heldRock; heldRock = null;
+            rock.Release();
+            MonsterProjectile.LaunchBody(rock.gameObject, to, m.FlightSeconds, m.MissileDamage * DamageScale, 1f);   // the real stone column flies, not a stand-in
             GolemFx.Hurl(from);
         }
 
@@ -428,6 +494,7 @@ namespace Evolve.Combat
                 else if (ambush.State == AmbushState.Revealed && !scheduler.Busy) ambush.StrikeDone();
             }
             noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
+            TickPhases();
             scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding) || (scorpion != null && scorpion.Holding);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
@@ -499,6 +566,7 @@ namespace Evolve.Combat
             if (hound) HoundFx.OnPhase(this, phase, m);
             if (golem) GolemFx.OnPhase(this, phase, m);
             if (bird != null) BirdFx.OnPhase(this, phase, m);
+            if (m.Anim == "PhaseRoar") PhaseFx.OnPhase(this, phase, m);
             if (phase == MovePhase.Windup) BeginWindup(m);
             else if (phase == MovePhase.Active) loco?.PlayAction("Strike_" + m.Anim);
             else if (phase == MovePhase.Recover)
@@ -518,6 +586,7 @@ namespace Evolve.Combat
 
         void BeginWindup(MoveDef m)
         {
+            if (target != null && !m.Invulnerable) { windupAt = transform.position; windupTargetAt = target.transform.position; windupTracked = true; }
             loco?.PlayAction(m.Anim);
             loco?.PlayAction("Tell_" + m.Anim);
             if (m.Shape == MoveShape.Spears) MakeSpears(m);
@@ -529,7 +598,8 @@ namespace Evolve.Combat
         void BeginStrike(MoveDef m)
         {
             hitDone = false;
-            strikeDir = target != null ? Flat(target.transform.position - transform.position).normalized : transform.forward;
+            NoteSidestep();
+            strikeDir = target != null ? Flat((m.Shape == MoveShape.Charge && m.Ramp ? AimAt(m.Active * 0.5f, 2f) : target.transform.position) - transform.position).normalized : transform.forward;   // the charge runs at where the player is going, not where they were
             if (strikeDir.sqrMagnitude < 1e-4f) strikeDir = transform.forward;
             // a pounce that must land covers the distance to the target (plus a little), not always its full length
             strikeDist = m.Pins && target != null ? HoundRules.LungeDistance(Flat(target.transform.position - transform.position).magnitude, m.Distance) : m.Distance;
@@ -539,7 +609,7 @@ namespace Evolve.Combat
                 SkillFx.Ring(iceSpot, m.Radius, IceColor, m.Active, 0.3f);   // the ring under the player's feet: step out before the block falls
             }
             if (m.Shape == MoveShape.Throw && target != null)
-                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, target.transform.position + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
+                MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, AimAt(m.FlightSeconds, 0f) + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
             if (m.Shape == MoveShape.Perch) BeginPerch(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);

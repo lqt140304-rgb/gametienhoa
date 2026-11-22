@@ -21,10 +21,12 @@ namespace Evolve.Combat
 
         class Part { public Transform T; public Quaternion Rest, Base, Written; public bool Has; public Vector3 Right, Forward, Up; }
 
-        const float Stride = 1.9f, HipDeg = 24f, KneeDeg = 40f, BobMeters = 0.05f;   // metres of one walk cycle at scale 1 (the model is 2.5 m tall), degrees, metres
+        const float Stride = 1.9f, HipDeg = 34f, KneeDeg = 55f, BobMeters = 0.05f;   // metres of one walk cycle at scale 1 (the model is 2.5 m tall), degrees, metres
 
         Part spine, armL, armR, foreL, foreR, thighL, thighR, kneeL, kneeR, footL, footR;
+        Transform headT;
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
+        float dirF = 1f, dirR, sideSign = 1f;   // the direction of travel in the body's own frame (smoothed): + forward, + to its right
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
         bool wasResting; float plantRaise;   // how far the right arm is reached down to the floor (degrees added to its raise)
         float legLen, lastRun, flinchT = 9f, restAnkleL, restAnkleR, restHipsH; Quaternion footRestL, footRestR; bool restMeasured;   // hips height above the root, ankle heights above the root and foot orientations in the standing pose   // seconds since the last blow it took
@@ -76,6 +78,7 @@ namespace Evolve.Combat
                 {
                     case "Hips": hips = t; break;
                     case "Spine01": sp1 = t; break;
+                    case "Head": headT = t; break;
                     case "Spine": sp = t; break;
                     case "LeftShoulder": shoulderL = t; break;
                     case "RightShoulder": shoulderR = t; break;
@@ -104,9 +107,18 @@ namespace Evolve.Combat
             // measure which way each joint must turn (where the foot or the hand goes)
             Vector3 fwd = transform.forward;
             hipSign = SignFor(thighL, footTipL, p => Vector3.Dot(p, fwd));            // + = the foot swings forward
-            kneeSign = -SignFor(kneeL, footTipL, p => Vector3.Dot(p, fwd));           // + = the foot swings back and up (the knee bends)
+            kneeSign = -SignFor(kneeL, footTipL, p => Vector3.Dot(p, fwd));
+            if (thighL != null && footTipL != null)   // + turn about the thigh's forward axis: does the foot go to the creature's right (a sidestep)?
+            {
+                float x0 = Vector3.Dot(footTipL.position, transform.right);
+                thighL.T.localRotation = thighL.Rest * Quaternion.AngleAxis(10f, thighL.Forward);
+                float x1 = Vector3.Dot(footTipL.position, transform.right);
+                thighL.T.localRotation = thighL.Rest;
+                sideSign = x1 > x0 ? 1f : -1f;
+            }           // + = the foot swings back and up (the knee bends)
             raiseSign = SignFor(armL, handL, p => p.y);                                // + = the hand goes up
-            hunchSign = SignFor(spine, handL != null ? handL : chest, p => Vector3.Dot(p, fwd));   // + = leans forward
+            // + = leans forward: measured at the HEAD, which is above the spine's pivot (the hands hang below it and swing the other way: probing the hand made every lean go backwards, found on the real model in Blender)
+            hunchSign = SignFor(spine, headT != null ? headT : chest, p => Vector3.Dot(p, fwd));
             if (spine != null && handR != null)   // + twist must turn the right hand forward (a punch or a throw goes through)
             {
                 Vector3 fw = transform.forward;
@@ -206,6 +218,11 @@ namespace Evolve.Combat
             // ---- the walk: one phase that follows the distance walked
             Vector3 step = transform.position - lastPos; lastPos = transform.position; step.y = 0f;   // sideways distance only: a leap's height is not walking
             float moved = step.magnitude;
+            if (moved > 1e-4f)   // which way it is going relative to where it faces: forward, backward, or a sidestep to either side
+            {
+                Vector3 d = step / moved;
+                dirF = Mathf.MoveTowards(dirF, Vector3.Dot(d, transform.forward), 8f * dt); dirR = Mathf.MoveTowards(dirR, Vector3.Dot(d, transform.right), 8f * dt);
+            }
             bool airborne = combat != null && combat.Airborne;
             bool busy = combat != null && combat.Phase != MovePhase.Idle;
             float speed = moved / dt;
@@ -217,7 +234,8 @@ namespace Evolve.Combat
             float ph = phase % 1f;
             float run = GaitRules.RunBlend(speed) * walkWeight; lastRun = run;   // the dash to a spike is a run: wider swing, deeper knees, leaning in
             float hipA = HipDeg * (1f + 0.8f * run), kneeA = KneeDeg * (1f + run);
-            float hipL = GaitRules.Hip(ph, 0, hipA) * walkWeight, hipR = GaitRules.Hip(ph, 1, hipA) * walkWeight;
+            float hipL = GaitRules.Hip(ph, 0, hipA) * walkWeight * dirF, hipR = GaitRules.Hip(ph, 1, hipA) * walkWeight * dirF;   // walking backward reverses the swing
+            float sideA = Mathf.Min(hipA, 30f), latL = GaitRules.Hip(ph, 0, sideA) * walkWeight * dirR, latR = GaitRules.Hip(ph, 1, sideA) * walkWeight * dirR;   // a sidestep swings the legs out and in instead
             float kneeLd = GaitRules.Knee(ph, 0, kneeA) * walkWeight, kneeRd = GaitRules.Knee(ph, 1, kneeA) * walkWeight;
             // body poses of the moves, over the walk: crouch (knees bent, body low), tuck (legs up in the air), stance (one foot forward)
             float crouch = pose.Crouch, tuck = pose.Tuck, stance = pose.Stance;
@@ -226,8 +244,8 @@ namespace Evolve.Combat
             kneeLd += crouchKnee + Mathf.Max(0f, -stance) * 15f; kneeRd += crouchKnee + Mathf.Max(0f, stance) * 15f;
             float kneel = pose.Kneel;   // down on both knees (found in Blender on the real model: thighs upright, knees bent ~115 degrees, hips at 0.78 of a leg's length: the knees and shins then lie on the floor within a centimetre)
             kneeLd += kneel * 115f; kneeRd += kneel * 115f;
-            if (thighL != null) Put(thighL, Quaternion.AngleAxis(hipSign * hipL, thighL.Right));
-            if (thighR != null) Put(thighR, Quaternion.AngleAxis(hipSign * hipR, thighR.Right));
+            if (thighL != null) Put(thighL, Quaternion.AngleAxis(hipSign * hipL, thighL.Right) * Quaternion.AngleAxis(sideSign * latL, thighL.Forward));
+            if (thighR != null) Put(thighR, Quaternion.AngleAxis(hipSign * hipR, thighR.Right) * Quaternion.AngleAxis(sideSign * latR, thighR.Forward));
             if (kneeL != null) Put(kneeL, Quaternion.AngleAxis(kneeSign * kneeLd, kneeL.Right));
             if (kneeR != null) Put(kneeR, Quaternion.AngleAxis(kneeSign * kneeRd, kneeR.Right));
             // the feet keep their standing orientation in the WORLD (flat on the ground) whatever the legs above them do (checked on the real model in Blender: this plus the body drop below keeps the soles within a few cm of the floor)
