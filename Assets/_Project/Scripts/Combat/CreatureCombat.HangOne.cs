@@ -54,7 +54,7 @@ namespace Evolve.Combat
             {
                 if (skin == null) continue;
                 skin.GetPropertyBlock(camouflageBlock);
-                camouflageBlock.SetColor(tintId, value ? new Color(0.55f, 0.79f, 0.46f) : Color.white);
+                camouflageBlock.SetColor(tintId, value ? new Color(0.48f, 0.56f, 0.44f) : Color.white);
                 skin.SetPropertyBlock(camouflageBlock);
             }
         }

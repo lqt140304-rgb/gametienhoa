@@ -19,14 +19,21 @@ Mốc hồi chiêu tính từ lúc kích hoạt. Dữ liệu nền lấy từ tr
 | Prey.cs, Predator.cs, CreatureBrain.cs | Gắn hành vi cho đúng loài khi sinh ra, giữ vị trí rình trên rêu và đọc ngụy trang khi phát hiện. |
 | CreatureStatus.cs, PullAbility.cs | Dùng chung điều kiện kháng kéo và đẩy, áp dụng cho cả kỹ năng sẵn có của slime. |
 | CreatureCombat.cs, CreatureCombat.HangOne.cs | Lưỡi Dài, đổi sắc ngụy trang, hiệu ứng chạm và giữ đòn cơ bản. |
+| CaveCreaturesWave1Builder.cs | Giữ clip Retract của Ốc Hồ trong suốt trạng thái đóng vỏ. Dựng lại prefab để cập nhật controller Unity. |
 | HangOneSkillsTests.cs | Biên tầm và hồi chiêu, thời điểm đóng/mở vỏ, khối lượng, Terrain alphamap và vật cản. |
 
 ## Chạy thử trong Unity 6000.6.9f1
 
-1. Chạy `git lfs pull` nếu checkout vừa được tạo. Nếu chưa có cảnh, chạy **Evolve → Build Slime Cavern (new map)**. Mở **Assets/_Project/Scenes/Slime_Cavern.unity** rồi chạy **Evolve → Build Maze World (Step 3)** nếu cảnh chưa có các đàn tại Hang Khởi Sinh. Để thử từng loài riêng bằng God Menu, có thể chỉ dựng prefab qua **Evolve → Build Wave 1 Creatures & Prefabs**.
+1. Chạy `git lfs pull` nếu checkout vừa được tạo. Nếu chưa có cảnh, chạy **Evolve → Build Slime Cavern (new map)**. Mở **Assets/_Project/Scenes/Slime_Cavern.unity** rồi chạy **Evolve → Build Maze World (Step 3)** nếu cảnh chưa có các đàn tại Hang Khởi Sinh. Chạy **Evolve → Build Wave 1 Creatures & Prefabs** để nhận controller Ốc Hồ mới. Có thể dùng các prefab này để thử từng loài qua God Menu.
 2. Vào Play Mode, tìm ba sinh vật cạnh bờ hồ hoặc dùng God Menu để sinh mẫu. Khi thử thằn lằn với slime, đứng ngoài vùng an toàn quanh điểm xuất hiện. Có thể cho thằn lằn đói và đặt bọ làm con mồi.
 3. Bọ. Tiếp cận từ ngoài 2 m và quan sát vỏ cánh, bụi nhẹ ở phần rêu và vệt bay. Đặt BoxCollider sau lưng bọ và kiểm tra nó đổi hướng hoặc ở lại khi tất cả lối đều bị chặn.
 4. Ốc. Thử cùng một đòn trước, trong và sau khi đóng vỏ. Thử kéo trên lớp Mud chiếm đa số rồi lặp lại trên nền khô. Kiểm tra ốc có thể bị kéo trở lại sau khi mở vỏ trên nền khô.
 5. Thằn lằn. Thử con mồi nhỏ, con mồi lớn và một vách chen giữa lúc báo đòn. Đặt thằn lằn ở nền Moss, để đứng 3 giây rồi cho di chuyển hoặc tấn công. Kiểm tra màu lưng và việc mất ngụy trang.
 6. Lặp lại quan sát ở vùng sáng dưới tia nắng và vùng tối xa tia. Kiểm tra độ rõ của hướng lưỡi, cánh mở và chớp ở chân ốc. Dùng Frame Debugger hoặc Profiler nếu cần đo overdraw và cấp phát trên bản build đích.
 7. Mở **Window → General → Test Runner → EditMode** và chạy **HangOneSkillsTests**, **PreyDefenseTests**, **MovesetSeedTests** và nhóm test nuốt/gene.
+
+## Kết quả kiểm thử
+
+- Unity 6000.6.9f1 trên nhánh review chạy **93/93 EditMode**. Trong đó có 9 ca HangOneSkillsTests và các ca hồi quy cho phòng thủ, bộ đòn, AI, sinh thái, nuốt, giải mã và dữ liệu trait qua mạng.
+- Play Mode dùng prefab thật từ ba FBX trong một fixture URP với Terrain có lớp Mud/Moss, chụp cùng trạng thái ở hai mức đèn hướng 0,14 và 1,3. Đã quan sát cánh và vệt lướt, ốc giữ tư thế đóng vỏ giữa ba giây, lưỡi chĩa về con mồi và chuyển sắc khi ngụy trang.
+- Cần xác nhận tiếp trong toàn cảnh Hang Khởi Sinh và với hai máy co-op. Fixture URP dùng để so sánh hiệu ứng dưới ánh sáng kiểm soát.

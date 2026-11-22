@@ -30,6 +30,11 @@ namespace Evolve.Creatures
         CreatureLocomotion locomotion;
         TrailRenderer trail;
         Material trailMaterial;
+        Animator shellAnimator;
+        bool hasShellParameter, shellClosed, wingsPosed;
+        Transform wingLeft, wingRight;
+        Quaternion wingLeftRest, wingRightRest;
+        static readonly int ShellClosedId = Animator.StringToHash("ShellClosed");
         float launchAt, flightStarted, guardStarted;
         Vector3 glideFrom, glideTo;
         const float FlightSeconds = 0.4f, GlideLift = 0.32f;
@@ -48,8 +53,20 @@ namespace Evolve.Creatures
             {
                 body = GetComponent<Rigidbody>();
                 shape = GetComponent<Collider>();
+                foreach (var bone in GetComponentsInChildren<Transform>(true))
+                {
+                    if (bone.name == "Elytra_L") { wingLeft = bone; wingLeftRest = bone.localRotation; }
+                    else if (bone.name == "Elytra_R") { wingRight = bone; wingRightRest = bone.localRotation; }
+                }
             }
             locomotion = GetComponent<CreatureLocomotion>();
+            if (def.GuardRecovery > 0f)
+            {
+                shellAnimator = GetComponentInChildren<Animator>();
+                if (shellAnimator != null)
+                    foreach (var parameter in shellAnimator.parameters)
+                        if (parameter.nameHash == ShellClosedId) { hasShellParameter = true; break; }
+            }
             prey.CatchVeto = _ => Time.time < blocksCatchUntil;
             prey.Touched += OnTouched;
             prey.Damaged += OnDamaged;
@@ -71,6 +88,7 @@ namespace Evolve.Creatures
             if (prey.IsReplica) return;
             if (Time.time >= speedUntil) { prey.Boost = 1f; prey.Zigzag = false; prey.Silent = false; }
             prey.DamageTakenMultiplier = PreyDefenseRules.GuardFactor(def, Time.time, guardUntil);
+            UpdateShell(Time.time < guardUntil);
             if (Prey.Frozen && (launchAt > 0f || flightStarted > 0f)) StopGlide();
             if (Prey.Frozen || TickGlide()) return;
             Evaluate();
@@ -256,7 +274,8 @@ namespace Evolve.Creatures
                 guardUntil = guardStarted + def.GuardSeconds;
                 if (def.GuardRecovery > 0f)
                 {
-                    (locomotion ??= GetComponent<CreatureLocomotion>())?.PlayAction("Retract");
+                    UpdateShell(true);
+                    if (!hasShellParameter) (locomotion ??= GetComponent<CreatureLocomotion>())?.PlayAction("Retract");
                     if (HangOneGround.Wet(pos))
                         SkillFx.Burst(pos + Vector3.up * 0.06f, new Color(0.57f, 0.66f, 0.53f), 3, 0.35f, 0.055f, 0.15f, 0.25f, 0.06f);
                 }
@@ -347,8 +366,16 @@ namespace Evolve.Creatures
             }
         }
 
+        void UpdateShell(bool closed)
+        {
+            if (!hasShellParameter || shellClosed == closed) return;
+            shellClosed = closed;
+            shellAnimator.SetBool(ShellClosedId, closed);
+        }
+
         void LateUpdate()
         {
+            if (def?.GlideWindup > 0f && !prey.IsReplica) PoseWings();
             if (def == null || def.GuardRecovery <= 0f || prey.IsReplica) return;
             if (shellModel == null)
             {
@@ -358,6 +385,28 @@ namespace Evolve.Creatures
             }
             float closed = Mathf.Clamp01((Time.time - guardStarted) * 6f) * Mathf.Clamp01((guardUntil - Time.time) * 6f);
             shellModel.localScale = Vector3.Scale(shellScale, new Vector3(1f, 1f - 0.24f * closed, 1f - 0.16f * closed));
+        }
+
+        void PoseWings()
+        {
+            if (wingLeft == null || wingRight == null) return;
+            bool gliding = flightStarted > 0f;
+            if (launchAt <= 0f && !gliding)
+            {
+                if (!wingsPosed) return;
+                wingLeft.localRotation = wingLeftRest;
+                wingRight.localRotation = wingRightRest;
+                wingsPosed = false;
+                return;
+            }
+
+            float progress = gliding ? 1f : Mathf.Clamp01(1f - (launchAt - Time.time) / def.GlideWindup);
+            float open = (36f + 6f * Mathf.Sin(Time.time * 72f)) * Mathf.SmoothStep(0f, 1f, progress);
+            wingLeft.localRotation = wingLeftRest;
+            wingRight.localRotation = wingRightRest;
+            wingLeft.Rotate(transform.forward, -open, Space.World);
+            wingRight.Rotate(transform.forward, open, Space.World);
+            wingsPosed = true;
         }
 
         Transform shellModel;
