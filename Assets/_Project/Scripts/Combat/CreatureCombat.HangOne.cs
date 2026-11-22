@@ -216,6 +216,7 @@ namespace Evolve.Combat
         void OnDestroy()
         {
             if (tongueMaterial != null) Destroy(tongueMaterial);
+            if (oreTellMaterial != null) Destroy(oreTellMaterial);
         }
     }
 }

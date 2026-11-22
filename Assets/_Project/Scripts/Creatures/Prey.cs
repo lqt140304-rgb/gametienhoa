@@ -123,7 +123,7 @@ namespace Evolve.Creatures
             TryGetComponent(out emitter);
             if (!TryGetComponent(out locomotion)) locomotion = gameObject.AddComponent<CreatureLocomotion>();
             string species = SpeciesNames.Key(name);
-            if ((species == "bocanhcungnho" || species == "ocho") && !TryGetComponent<PreyDefense>(out _))
+            if ((species == "bocanhcungnho" || species == "ocho" || species == "domdomsacmau" || species == "thola") && !TryGetComponent<PreyDefense>(out _))
                 gameObject.AddComponent<PreyDefense>();
             Health = maxHealth;
         }
@@ -270,7 +270,7 @@ namespace Evolve.Creatures
                 }
                 return;
             }
-            if (caught || amount <= 0f) return;
+            if (caught || amount <= 0f || (TryGetComponent(out HangTwoPrey garden) && garden.IsDodging)) return;
 
             amount *= DamageTakenMultiplier * (combat != null ? combat.DamageTakenFactor : 1f);
             Health -= amount;

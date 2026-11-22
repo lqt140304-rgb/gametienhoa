@@ -95,6 +95,7 @@ namespace Evolve.Creatures
         {
             if (!Enabled || rb == null || lastMove == Time.fixedTime) return;
             if ((prey != null && Prey.Frozen) || (pred != null && Predator.Frozen) || (prey != null && prey.IsReplica) || (pred != null && pred.IsReplica)) return;   // the host moves replicas
+            if (prey != null && prey.TryGetComponent(out HangTwoPrey garden) && garden.IsDodging) return;
             if (prey != null && prey.TryGetComponent(out PreyDefense defense) && defense.StopsSeparation) return;
             Vector3 pos = rb.position, next = Separate(pos);
             if ((next - pos).sqrMagnitude > 1e-8f) rb.MovePosition(next);

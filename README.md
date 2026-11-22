@@ -4,6 +4,21 @@ Game sinh tồn tiến hóa 3D Low Poly, co-op 4–8 người (Netcode for GameO
 
 ---
 
+## Hang 01 · AI, kỹ năng và VFX
+
+Đã triển khai Bọ Cánh Cứng Nhỏ (Bật Cánh Thoát Thân, Da Dày), Ốc Hồ (Thu Mình, Bám Đá Ướt) và Thằn Lằn Bờ Hồ (Lưỡi Dài, Ngụy Trang Bờ Rêu). Lưỡi phóng từ miệng rồi rút lại; ốc xoắn đầu, đuôi và co phần thân mềm vào dưới vỏ.
+
+- Bản review và các điểm tích hợp cho nhánh khác nằm trong [PR #125](https://github.com/lqt140304-rgb/gametienhoa/pull/125).
+- Danh sách file, thông số kỹ năng và cách chạy Unity nằm trong [bàn giao Hang 01](docs/HANG-01-CREATURE-SKILLS.md).
+- Đã đạt 93/93 test EditMode và xem hiệu ứng trên prefab thật trong fixture Play Mode URP ở hai mức sáng. Cần kiểm tra tiếp toàn cảnh Hang Khởi Sinh và co-op hai máy; client hiện chưa hiển thị VFX riêng của ba loài.
+- Sau khi cập nhật code, chạy **Evolve → Build Wave 1 Creatures & Prefabs** để nhận controller Thu Mình mới của Ốc Hồ.
+
+## Hang 02 · Vườn Quặng Cầu Vồng
+
+Đom Đóm Sắc Màu có Phát Sáng 10 giây, Thỏ Lá lách ngang 2 m trong 0,35 giây và Bọ Giáp Quặng có Vỏ Cứng giảm 15% sát thương. VFX theo thời điểm kỹ năng, gồm nhịp sáng của đom đóm, vệt né của thỏ và dấu báo hướng Húc của bọ giáp.
+
+Thông số, file thay đổi và hướng dẫn chạy Unity nằm trong [bàn giao Hang 02](docs/HANG-02-CREATURE-SKILLS.md).
+
 ## Mục lục tài liệu
 
 - **Thiết kế tổng thể (GDD):** [`docs/GDD.md`](docs/GDD.md)
