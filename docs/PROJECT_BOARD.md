@@ -2,7 +2,7 @@
 
 > **Mọi phiên làm việc (Claude hay người) đọc file này trước khi bắt đầu và cập nhật một dòng khi xong hoặc đổi việc.** Mục đích: nhiều phiên cùng làm trên `claude/unity-test-maze` mà không giẫm chân nhau. Cập nhật lần cuối: 2026-11-22.
 
-## Quy tắc chung
+## Quy tắc chung (bản đầy đủ nằm ở `CLAUDE.md` ở gốc repo: mọi phiên Claude Code tự đọc nó khi bắt đầu)
 1. Nhánh làm việc: **`claude/unity-test-maze`** (gộp từ `claude/movement`). Luôn `git pull --no-rebase origin claude/unity-test-maze` **trước khi sửa và trước khi push**; nhóm cave "Antigravity" cũng push vào đó. Không tạo PR trừ khi chủ dự án bảo; chỉ push hai nhánh trên.
 2. **Trước khi push chạy `tools/cstest/run.sh`** (cần .NET 8, phải `Passed!`); GitHub cũng tự chạy lại sau mỗi push (`.github/workflows/tests.yml`). Phần Unity không chạy được ngoài Unity: ghi "chưa kiểm chứng" và chờ chủ dự án test.
 3. **Mỗi phiên sở hữu file của mình** (bảng dưới). File dùng chung chỉ **thêm một khối nhỏ của mình**, commit nhỏ, push sớm.
