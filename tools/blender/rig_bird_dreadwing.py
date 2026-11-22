@@ -3,7 +3,7 @@
     "D:/blender/blender.exe" -b -P tools/blender/rig_bird_dreadwing.py -- model.glb Assets/_Project/Models/Wildlife/Meshy/Creature_ChimHangMe_Dreadwing.fbx
 
 Only the bones the code looks for are renamed (the rest keep their Bone_nnn names and follow their parents):
-  Root (pelvis), Head (neck), Tail1, Pinion_L1/L2/L3 + Pinion_R1/R2/R3 (collar, shoulder, elbow; L is +X), WingTip_L/R (the hand end, where the wind blades start), Thigh_L/R + Shin_L/R (hip and knee).
+  Root (pelvis), Head (neck), Tail1, Pinion_L1/L2/L3 + Pinion_R1/R2/R3 (collar, shoulder, elbow; L is +X), WingTip_L/R (the hand end, where the wind blades start), Thigh_L/R + Shin_L/R + Tarsus_L/R (hip, knee, ankle).
 The legs are NOT called Leg_*: CreatureLocomotion would swing them about a local axis that does not match this rig; BirdRigFx walks and tucks them with measured axes instead.
 The model stands upright facing -Y with its feet on Z=0 (the glb already does). There is no jaw bone, so the beak does not open.
 Also writes <fbx>_albedo.png / _mask.png (see rig_quadruped.export_textures) and <fbx>_Walk.fbx with the Idle and Walk clips (bird_walk_clip.py).
@@ -22,8 +22,8 @@ RENAME = {
     "Bone_007": "Tail1",
     "Bone_035": "Pinion_L1", "Bone_034": "Pinion_L2", "Bone_033": "Pinion_L3", "Bone_031": "WingTip_L",
     "Bone_030": "Pinion_R1", "Bone_029": "Pinion_R2", "Bone_028": "Pinion_R3", "Bone_026": "WingTip_R",
-    "Bone_015": "Thigh_L", "Bone_014": "Shin_L",
-    "Bone_020": "Thigh_R", "Bone_019": "Shin_R",
+    "Bone_015": "Thigh_L", "Bone_014": "Shin_L", "Bone_013": "Tarsus_L",
+    "Bone_020": "Thigh_R", "Bone_019": "Shin_R", "Bone_018": "Tarsus_R",
 }
 
 

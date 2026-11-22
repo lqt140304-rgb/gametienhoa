@@ -10,11 +10,13 @@ namespace Evolve.Combat
     public struct BirdPose
     {
         public float Spread, Beat, Raise, Legs, Pitch, Beak;
+        /// <summary>0..1: the legs stretched out straight behind the body, level with it when the body lies flat (a jet's exhaust): hip back, knee and ankle straightened. Pitch 85 lays the body flat.</summary>
+        public float Stretch;
 
         public static BirdPose Lerp(BirdPose a, BirdPose b, float t) => new BirdPose
         {
             Spread = a.Spread + (b.Spread - a.Spread) * t, Beat = a.Beat + (b.Beat - a.Beat) * t, Raise = a.Raise + (b.Raise - a.Raise) * t,
-            Legs = a.Legs + (b.Legs - a.Legs) * t, Pitch = a.Pitch + (b.Pitch - a.Pitch) * t, Beak = a.Beak + (b.Beak - a.Beak) * t,
+            Legs = a.Legs + (b.Legs - a.Legs) * t, Pitch = a.Pitch + (b.Pitch - a.Pitch) * t, Beak = a.Beak + (b.Beak - a.Beak) * t, Stretch = a.Stretch + (b.Stretch - a.Stretch) * t,
         };
     }
 
@@ -29,13 +31,14 @@ namespace Evolve.Combat
         static readonly float[] Hold = { 55f, 12f, 8f };               // lift at Raise = 1
         static readonly float[] UpBend = { 0f, 24f, 32f };             // the elbow and wrist droop this much at the middle of the up stroke
         static readonly float[] UpSweep = { 0f, 38f, 52f };            // ... and draw in this much
-        static readonly float[] FoldedSweep = { 35f, 70f, 55f };       // sweep with the wing fully folded (Spread 0): what folds the Dreadwing's wing flat against its body without the hands crossing (checked in Blender)
+        static readonly float[] FoldedSweep = { 10f, 25f, 20f };       // sweep back with the wing folded (Spread 0) ...
+        static readonly float[] FoldedLift = { -55f, 0f, 0f };         // ... and the collar drops the whole wing along the flank, like an ordinary resting bird (checked in Blender from the front, side and three-quarter view; the old all-back fold stood the wing up behind the back)
         public const float Lag = 0.55f, FoldLag = 0.25f;
 
-        /// <summary>Beats per second: a slow idle flutter, quicker walking, a heavy 2.7 Hz beat at full power.</summary>
-        public static float Frequency(float beat, float moving) => 0.5f + 0.9f * moving + 2.2f * beat;
+        /// <summary>Beats per second: a steady 0.8 Hz when it is not beating (no visible motion then: the amplitude is 0) and 1.6 Hz at full power. The speed it walks at does not change it: an irregular wingbeat looked like random flapping.</summary>
+        public static float Frequency(float beat, float moving) => 0.8f + 0.8f * beat;
         /// <summary>The shoulder's swing in degrees.</summary>
-        public static float Amplitude(float beat, float moving) => 6f + 8f * moving + 22f * beat;
+        public static float Amplitude(float beat, float moving) => 26f * beat;
         /// <summary>The down stroke goes 1.4 times as far as the up stroke (more and the wings cross in front of the body: checked on the Dreadwing in Blender).</summary>
         public const float DownFactor = 1.4f;
         public static float Stroke(float sine) => sine > 0f ? sine : sine * DownFactor;
@@ -52,7 +55,7 @@ namespace Evolve.Combat
             i = Math.Min(2, Math.Max(0, i));
             float s = Stroke((float)Math.Sin(phase - Lag * i));
             float fold = pose.Beat * UpFold(phase - FoldLag * i);
-            lift = pose.Raise * Hold[i] + s * Amplitude(pose.Beat, moving) * Share[i] - UpBend[i] * fold;
+            lift = pose.Raise * Hold[i] + (1f - pose.Spread) * FoldedLift[i] + s * Amplitude(pose.Beat, moving) * Share[i] - UpBend[i] * fold;
             sweep = (1f - pose.Spread) * FoldedSweep[i] + (i == 0 ? 6f * pose.Spread : 0f) + UpSweep[i] * fold;
         }
     }
@@ -79,12 +82,14 @@ namespace Evolve.Combat
 
     /// <summary>
     /// Quắp: the bird dashes in low with its talons out (<see cref="TalonStage.Dash"/>). If it catches the player it climbs with them in its feet (<see cref="CarrySeconds"/>),
-    /// throws them up into the sky (<see cref="TalonEvent.Tossed"/>), then flies passes through them and rakes with its talons, <see cref="RakeCount"/> times, one pass every
-    /// <see cref="RakePass"/> seconds (<see cref="TalonEvent.Raked"/> in the middle of each pass), and finally comes down (<see cref="LeaveSeconds"/>). A dash that catches nothing ends at once (<see cref="Miss"/>).
+    /// throws them up into the sky (<see cref="TalonEvent.Tossed"/>), then flies fast runs through them like a jet (wings wide, legs straight back) and rakes with its talons, <see cref="RakeCount"/> times, one pass every
+    /// <see cref="RakePass"/> seconds (<see cref="TalonEvent.Raked"/> in the middle of each run through the player), and finally comes down (<see cref="LeaveSeconds"/>). A dash that catches nothing ends at once (<see cref="Miss"/>).
     /// </summary>
     public sealed class TalonFsm
     {
-        public const float CarrySeconds = 1.5f, TossSeconds = 0.6f, RakePass = 0.65f, LeaveSeconds = 1.2f;   // unhurried: the player must be able to see each part of it
+        public const float CarrySeconds = 1.5f, TossSeconds = 0.6f, RakePass = 1f, LeaveSeconds = 1.2f;   // unhurried: the player must be able to see each part of it
+        /// <summary>A pass is a fast straight run through the player (the first <see cref="LineShare"/> of it, 30 m/s) and a wide curve round to the start of the next run (the rest).</summary>
+        public const float LineShare = 0.4f, RunHalfLength = 6f;
         public const int RakeCount = 4;
 
         public TalonStage Stage { get; private set; } = TalonStage.Dash;
@@ -120,7 +125,7 @@ namespace Evolve.Combat
                 case TalonStage.Rake:
                     {
                         float inPass = StageTime - RakeIndex * RakePass;
-                        if (!scored && inPass >= RakePass * 0.5f) { scored = true; return TalonEvent.Raked; }
+                        if (!scored && inPass >= RakePass * LineShare * 0.5f) { scored = true; return TalonEvent.Raked; }   // in the middle of the run, right on the player
                         if (inPass >= RakePass)
                         {
                             RakeIndex++; scored = false;
@@ -135,11 +140,23 @@ namespace Evolve.Combat
         }
 
         /// <summary>
-        /// Where the bird is along its line through the player, in spans, <paramref name="rakeSeconds"/> into the raking: it swings back and forth like a pendulum, one pass per <see cref="RakePass"/>.
-        /// +1 at the start, 0 in the middle of a pass (straight through the player, fastest: that is where the talons score), -1 at the end of it, then back again; it is slow at both ends, where it turns,
-        /// and its position never jumps from one pass to the next.
+        /// Cubic Hermite curve between <paramref name="p0"/> (leaving with tangent <paramref name="t0"/>) and <paramref name="p1"/> (arriving with <paramref name="t1"/>), s in 0..1: one coordinate of the wide curve a flying bird
+        /// makes between the end of one run and the start of the next, so it turns round smoothly instead of jumping.
         /// </summary>
-        public static float SwingOffset(float rakeSeconds) => (float)Math.Cos(Math.PI * rakeSeconds / RakePass);
+        public static float Hermite(float p0, float t0, float p1, float t1, float s)
+        {
+            s = Math.Min(1f, Math.Max(0f, s));
+            float s2 = s * s, s3 = s2 * s;
+            return (2f * s3 - 3f * s2 + 1f) * p0 + (s3 - 2f * s2 + s) * t0 + (-2f * s3 + 3f * s2) * p1 + (s3 - s2) * t1;
+        }
+
+        /// <summary>The pass under way (0-based) and how far through it (0..1) the bird is, <paramref name="rakeSeconds"/> into the raking.</summary>
+        public static (int index, float u) PassAt(float rakeSeconds)
+        {
+            float t = Math.Max(0f, rakeSeconds) / RakePass;
+            int i = (int)t;
+            return (i, t - i);
+        }
     }
 
     /// <summary>What the body does in each move and stage (the stand-in for animation clips: the rig bones are turned by code).</summary>
@@ -149,9 +166,12 @@ namespace Evolve.Combat
         static float Clamp01(float t) => Math.Min(1f, Math.Max(0f, t));
         public static readonly BirdPose Rest = new BirdPose();
         /// <summary>The flare of a landing: wings wide, a few slow beats, talons out in front, nose up.</summary>
-        static BirdPose Flare => new BirdPose { Spread = 1f, Beat = 0.5f, Raise = 0.5f, Legs = -0.5f, Pitch = -26f, Beak = 0.4f };
+        static BirdPose Flare => new BirdPose { Spread = 1f, Beat = 1f, Raise = 0.5f, Legs = -0.5f, Pitch = -26f, Beak = 0.4f };
         /// <summary>Flying along: wings open and beating, legs tucked, a little nose down.</summary>
-        public static BirdPose Cruise(float effort01) => new BirdPose { Spread = 1f, Beat = 0.45f + 0.35f * Clamp01(effort01), Raise = 0f, Legs = 0.85f, Pitch = 7f, Beak = 0f };
+        public static BirdPose Cruise(float effort01) => new BirdPose { Spread = 1f, Beat = 1f, Raise = 0.1f, Legs = 0f, Stretch = 1f, Pitch = 75f, Beak = 0f };
+
+        /// <summary>Like a jet: body flat (pitch 85), wings wide open and still, hind legs straight back level with the body, the head up to look ahead.</summary>
+        public static BirdPose JetPose => new BirdPose { Spread = 1f, Beat = 0f, Raise = 0.15f, Legs = 0f, Stretch = 1f, Pitch = 85f, Beak = 0.3f };
 
         /// <summary>The slash's two chops: +1 (wings up) at the start and between them, -1 (wings down and forward) in the middle of each chop.</summary>
         public static float SlashRaise(float activeProgress01) => 0.1f + 0.9f * (float)Math.Cos(4.0 * Math.PI * Clamp01(activeProgress01));
@@ -188,7 +208,7 @@ namespace Evolve.Combat
             switch (phase)
             {
                 case MovePhase.Windup:   // wings drawn up and back, the head lifts
-                    return new BirdPose { Spread = 1f, Beat = 0.35f, Raise = Smooth(p), Legs = 0.3f, Pitch = -14f * Smooth(p), Beak = Smooth(p) };
+                    return new BirdPose { Spread = 1f, Beat = 0f, Raise = Smooth(p), Legs = 0.3f, Pitch = -14f * Smooth(p), Beak = Smooth(p) };
                 case MovePhase.Active:
                     {
                         float r = SlashRaise(p);
@@ -205,7 +225,7 @@ namespace Evolve.Combat
             switch (phase)
             {
                 case MovePhase.Windup:   // hovering low, wings high, talons opening, aiming
-                    return new BirdPose { Spread = 1f, Beat = Lerp(0.4f, 0.9f, Smooth(p)), Raise = 0.8f, Legs = -0.4f * Smooth(p), Pitch = -20f * Smooth(p), Beak = 0.5f };
+                    return new BirdPose { Spread = 1f, Beat = 1f, Raise = 0.8f, Legs = -0.4f * Smooth(p), Pitch = -20f * Smooth(p), Beak = 0.5f };
                 case MovePhase.Active:   // the dash: wings swept back, talons out in front, head down
                     return new BirdPose { Spread = 0.3f, Beat = 0f, Raise = -0.2f, Legs = -1f, Pitch = 32f, Beak = 1f };
                 case MovePhase.Recover:  // missed: a flare as it lands
@@ -219,7 +239,7 @@ namespace Evolve.Combat
             switch (phase)
             {
                 case MovePhase.Windup:   // rears back, wings flared
-                    return new BirdPose { Spread = 0.7f, Beat = 0.2f, Raise = 0.5f * Smooth(p), Legs = 0f, Pitch = -16f * Smooth(p), Beak = Smooth(p) };
+                    return new BirdPose { Spread = 0.7f, Beat = 0f, Raise = 0.5f * Smooth(p), Legs = 0f, Pitch = -16f * Smooth(p), Beak = Smooth(p) };
                 case MovePhase.Active:
                     return new BirdPose { Spread = 0.7f, Beat = 0f, Raise = 0.3f, Legs = 0f, Pitch = 38f, Beak = 1f };
                 case MovePhase.Recover:
@@ -238,17 +258,14 @@ namespace Evolve.Combat
                 case TalonStage.Toss:    // wings up, then slammed down as it lets go
                     {
                         float k = Clamp01(t / TalonFsm.TossSeconds);
-                        return new BirdPose { Spread = 1f, Beat = 0.5f, Raise = Lerp(1f, -0.8f, Smooth(k * 2f)), Legs = Lerp(-0.5f, 0.3f, k), Pitch = Lerp(-22f, -5f, k), Beak = 1f };
+                        return new BirdPose { Spread = 1f, Beat = 0f, Raise = Lerp(1f, -0.8f, Smooth(k * 2f)), Legs = Lerp(-0.5f, 0f, k), Stretch = Smooth(k), Pitch = Lerp(-22f, 70f, Smooth(k)), Beak = 1f };
                     }
-                case TalonStage.Rake:    // a pass through the player: talons thrust out in the middle of it
-                    {
-                        float u = (t / TalonFsm.RakePass) % 1f;
-                        return new BirdPose { Spread = 0.85f, Beat = 0.9f, Raise = 0f, Legs = -0.3f - 0.7f * (float)Math.Sin(Math.PI * u), Pitch = 26f, Beak = 1f };
-                    }
+                case TalonStage.Rake:    // a jet: the body lies flat, the wings are spread wide and still, the legs stretched straight back, flying through the player at speed (no flapping)
+                    return JetPose;
                 case TalonStage.Leave:   // lets itself down with the wings spread, flaring at the end
                     {
                         float k = Clamp01(t / TalonFsm.LeaveSeconds);
-                        return new BirdPose { Spread = 1f, Beat = Lerp(0.9f, 0.5f, k), Raise = 0.3f, Legs = Lerp(0.4f, -0.6f, Smooth(k)), Pitch = Lerp(-6f, -26f, k), Beak = 0f };
+                        return new BirdPose { Spread = 1f, Beat = 1f, Raise = 0.3f, Legs = Lerp(0.2f, -0.6f, Smooth(k)), Stretch = 1f - Smooth(k * 2f), Pitch = Lerp(60f, -26f, Smooth(k)), Beak = 0f };
                     }
                 default: return Rest;
             }

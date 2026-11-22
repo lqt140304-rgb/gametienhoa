@@ -13,7 +13,7 @@ namespace Evolve.Combat
     [DisallowMultipleComponent, DefaultExecutionOrder(65)]
     public class BirdMoves : MonoBehaviour
     {
-        const float Gravity = 24f, GrabReach = 1.1f, CarryTopMeters = 6.5f, TossSpeed = 12f, RakeSpan = 3.4f, RakeReach = 3.4f;
+        const float Gravity = 24f, GrabReach = 1.1f, CarryTopMeters = 6.5f, TossSpeed = 12f, RakeReach = 3.4f;
         static readonly Color WindColor = new Color(0.58f, 0.8f, 1f), TellColor = new Color(1f, 0.35f, 0.3f), BloodColor = new Color(0.9f, 0.25f, 0.2f), DustColor = new Color(0.62f, 0.56f, 0.48f);
         static Material bladeMat;
 
@@ -51,7 +51,8 @@ namespace Evolve.Combat
         SurvivalStats victim;
         Rigidbody victimBody;
         Evolve.Player.SlimeController victimCtl;
-        float carryH0, leaveH0, rakeAngle;
+        float carryH0, leaveH0, rakeAngle, tossH0;
+        Vector3 tossFrom;
 
         float Radius => col != null ? Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) : 0.5f;
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
@@ -355,6 +356,7 @@ namespace Evolve.Combat
                     Hold();
                     break;
                 case TalonStage.Toss:
+                    FlyToStart();
                     break;
                 case TalonStage.Rake:
                     FlyPass(dt);
@@ -369,7 +371,7 @@ namespace Evolve.Combat
 
         void OnStage(TalonStage s)
         {
-            if (s == TalonStage.Rake) rakeAngle = Random.Range(0f, 360f);
+            if (s == TalonStage.Toss) { rakeAngle = Random.Range(0f, 360f); tossFrom = flat; tossH0 = Height; }
             else if (s == TalonStage.Leave) leaveH0 = Height;
         }
 
@@ -399,19 +401,50 @@ namespace Evolve.Combat
             ImpactFx.Thump(at, 0.06f, 0.3f, 20f);
         }
 
-        /// <summary>The raking: it swings back and forth through the player on a line that turns slowly (<see cref="TalonFsm.SwingOffset"/>), so it flies straight through them in the middle of every pass.</summary>
+        /// <summary>The direction of run <paramref name="i"/> through the player: each run comes from another side (100 degrees on from the last).</summary>
+        Vector3 RunAxis(int i) => Quaternion.AngleAxis(rakeAngle + i * 100f, Vector3.up) * Vector3.forward;
+
+        /// <summary>The height the bird's pivot must have to run through the player: just above them, so the talons come down on them.</summary>
+        float RunHeight(Vector3 playerPos, Vector3 at) => Mathf.Max(0f, playerPos.y + 1f + Radius * 0.4f - (Evolve.World.GroundHeight.At(at.x, at.z, baseGround) + groundOffset));
+
+        /// <summary>After it lets go: the bird flies round to where the first run starts, 6 m from the player, wings spreading and the body laying flat.</summary>
+        void FlyToStart()
+        {
+            if (victim == null) return;
+            Vector3 pp = victim.transform.position;
+            Vector3 start = Flat(pp) + RunAxis(0) * TalonFsm.RunHalfLength;
+            float k = Smooth(fsm.StageTime / TalonFsm.TossSeconds);
+            Vector3 next = Vector3.Lerp(tossFrom, start, k);
+            LookAlong(next - flat);
+            flat = Advance(flat, next);
+            Height = Mathf.Lerp(tossH0, RunHeight(pp, start), k);
+        }
+
+        /// <summary>
+        /// The raking, like a jet: in each pass it runs in a straight line through the player (the first <see cref="TalonFsm.LineShare"/> of the pass: 12 m in 0.4 s, 30 m/s, the talons score in the middle),
+        /// then curves round on a wide arc, climbing a little, to the start of the next run from another side. It faces the way it flies; the pose (BirdPoseRules.JetPose) keeps the body flat, the wings wide and still.
+        /// </summary>
         void FlyPass(float dt)
         {
             if (victim == null) return;
-            Vector3 vp = victim.transform.position;
-            float secs = fsm.StageTime;
-            Vector3 axis = Quaternion.AngleAxis(rakeAngle + secs * 25f, Vector3.up) * Vector3.forward;
-            Vector3 want = Flat(vp) + axis * (TalonFsm.SwingOffset(secs) * RakeSpan);
-            flat = Advance(flat, Vector3.Lerp(flat, want, 1f - Mathf.Exp(-22f * dt)));
-            float wantY = vp.y + 0.9f + Radius * 0.5f;   // a little above them, so the talons come down on them
-            float gy = Evolve.World.GroundHeight.At(flat.x, flat.z, baseGround) + groundOffset;
-            Height = Mathf.Max(0f, Mathf.Lerp(Height, wantY - gy, 1f - Mathf.Exp(-14f * dt)));
-            LookAlong(axis * (fsm.RakeIndex % 2 == 0 ? -1f : 1f));   // along the way it is flying: toward the far side on the even passes, back on the odd ones
+            Vector3 pp = victim.transform.position, pf = Flat(pp);
+            var (idx, u) = TalonFsm.PassAt(fsm.StageTime);
+            idx = Mathf.Min(idx, TalonFsm.RakeCount - 1);
+            float R = TalonFsm.RunHalfLength;
+            Vector3 a = RunAxis(idx), an = RunAxis(idx + 1);
+            Vector3 want; float rise = 0f;
+            if (u < TalonFsm.LineShare) want = pf + a * (R * (1f - 2f * u / TalonFsm.LineShare));   // from +R to -R through the player
+            else
+            {
+                float s = (u - TalonFsm.LineShare) / (1f - TalonFsm.LineShare);
+                Vector3 e = pf - a * R, b = pf + an * R;
+                float k = (b - e).magnitude * 1.6f;                                                  // the curve leaves along the run and arrives along the next one
+                want = new Vector3(TalonFsm.Hermite(e.x, -a.x * k, b.x, -an.x * k, s), 0f, TalonFsm.Hermite(e.z, -a.z * k, b.z, -an.z * k, s));
+                rise = 3f * Mathf.Sin(Mathf.PI * s);
+            }
+            LookAlong(want - flat);
+            flat = Advance(flat, want);
+            Height = Mathf.Max(0f, Mathf.Lerp(Height, RunHeight(pp, flat) + rise, 1f - Mathf.Exp(-14f * dt)));
         }
 
         void Rake(MoveDef m)

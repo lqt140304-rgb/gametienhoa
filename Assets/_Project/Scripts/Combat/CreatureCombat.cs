@@ -41,7 +41,7 @@ namespace Evolve.Combat
             var d = CircleRules.Steer(to.x, to.z, circleSign, CircleRules.Ring);
             dir = new Vector3(d.x, 0f, d.z);
             face = Flat(to).normalized;   // it always looks at the prey while it walks round
-            return CircleRules.Speed;
+            return CircleRules.SpeedOf(name);
         }
 
         /// <summary>How fast the body should walk toward the player: 0 once it is inside striking distance (it stands and faces them), a run when far, otherwise <paramref name="chase"/>. The body used to push into the player at 1.4 m/s forever.</summary>
@@ -56,7 +56,7 @@ namespace Evolve.Combat
             float d = Flat(to).magnitude;
             if (standing) { if (d > standOff * 1.3f) standing = false; else return 0f; }   // hysteresis: once it has stopped it does not creep forward and stop again every time the player shuffles
             else if (d <= standOff) { standing = true; return 0f; }
-            return d > 9f ? Mathf.Max(chase, 3.8f) : d > 5f ? Mathf.Max(chase, 2.6f) : chase;
+            return (d > 9f ? Mathf.Max(chase, 3.8f) : d > 5f ? Mathf.Max(chase, 2.6f) : chase) * CircleRules.ApproachScale(name, d);
         }
                 public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
         float faintUntil, faintStart;

@@ -53,3 +53,10 @@ Quắp chỉ dùng được khi người chơi là local, còn sống, không b�
 - **Cánh khi đi bộ**: luôn gập nghỉ (trước đây xoè nửa theo tốc độ và rung); chỉ xoè khi ra chiêu hoặc "bay" từ xa.
 - **Đầu luôn quay về người chơi**: `BirdRigFx` xoay xương `Head` về hướng người chơi (tối đa 80°, mượt 8/s; hướng quay đo lúc khởi động); trong lúc ra chiêu giảm còn 35% vì thân đã quay sẵn. Đo trong Unity: thân lệch 63° so với người chơi (đang đi vòng) mà đầu lệch 0°.
 - Chưa tinh chỉnh: tốc độ clip theo tốc độ đi (`CreatureLocomotion` nhân tốc độ Animator theo `referenceWalkSpeed`) nên bước chân có thể hơi trượt; không có clip chạy.
+
+## Jet fly-by, resting wings, 8-direction walk (2026-11-22)
+
+- Folded wings hang along the flank (collar -55, elbow 25): the old all-back fold stood the wings up behind the back.
+- Wingbeat is one regular beat (0.8 + 0.8*beat Hz, 1.6 Hz at full power); the walking speed no longer changes it.
+- Talon rake: a jet pose (legs straight back, wings wide and still, body flat) on a straight run through the player (12 m in 0.4 s), then a Hermite arc to the next run. After landing it rests and circles (CircleRules).
+- Walk clips in 8 directions (`Walk_F` ... `Walk_FL`, tools/blender/bird_walk_clip.py) in a 2D blend tree on MoveX/MoveY; walking is slower (`CircleRules.SpeedOf`, `ApproachScale`).
