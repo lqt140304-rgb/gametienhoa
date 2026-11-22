@@ -33,7 +33,9 @@ Assets/_Project/
 
 ## Quy ước
 
-- Làm trên branch `feature/<tên>`, merge vào `main` qua pull request.
+- **Nhánh làm việc:** các agent và người cùng làm trên `claude/unity-test-maze` (gộp từ `claude/movement`); Codex dùng nhánh `codex/*` riêng. Không đẩy thẳng lên `main`.
+- **Vào `main`:** chủ dự án mở pull request từ `claude/unity-test-maze` và gộp khi test (GitHub Actions) xanh.
+- Trước khi sửa và trước khi push: `git pull --no-rebase origin claude/unity-test-maze`, rồi chạy `tools/cstest/run.sh`.
 - Class C# đặt tên PascalCase, mỗi file một class; ScriptableObject có hậu tố `SO`, ví dụ `AbilitySO`.
 
 ## Làm việc với nhiều agent (Claude Code, Codex, Antigravity)
