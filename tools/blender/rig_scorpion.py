@@ -5,8 +5,8 @@
 Defaults: reads and rewrites Assets/_Project/Models/Wildlife/Meshy/Creature_BoCapThachAnh_Meshy.fbx in place (an old armature in the file is dropped
 first, so it can be run again). The mesh must be the Meshy one: faces -Y in Blender, feet on Z=0, 1.9 m wide, tail arching over the back.
 
-Bones (all measured from the mesh, see GEOMETRY): Root (the body, every pose is added to it), Tail1..Tail5 + TailTip (the crystal stinger, TailTip is where the
-glow gathers), Leg{L,R}{1..4}_A/_B (eight legs, front to back, upper and lower), Claw{L,R}_A/_B/_Finger (shoulder, forearm, the moving pincer).
+Bones (all measured from the mesh, see GEOMETRY): Root (the body, every pose is added to it), Sting1..Sting5 + StingTip (the crystal stinger, StingTip is where the
+glow gathers), Pede{L,R}{1..4}_A/_B (eight legs, front to back, upper and lower), Claw{L,R}_A/_B/_Finger (shoulder, forearm, the moving pincer).
 Every clip is computed frame by frame (no sparse keys): the legs are solved with a small numeric IK to hit absolute foot targets, so a foot that is planted stays
 planted while the body crouches, rears or lunges. Weights: the nearest three bones, falling off with distance (a bone's radius counts as inside it).
 
@@ -36,7 +36,7 @@ LEGS = [  # index (front to back), foot (|x|, y), knee height, hip (|x|, z)
     (3, 0.78, 0.67, 0.66, 0.30, 0.50),
     (4, 0.58, 0.93, 0.52, 0.26, 0.48),
 ]
-TAIL = [(0.0, 0.62, 0.50), (0.0, 0.88, 0.66), (0.0, 0.84, 0.92), (0.0, 0.66, 1.16), (0.0, 0.44, 1.26), (0.0, 0.26, 1.14), (0.0, 0.10, 0.98)]   # base .. TailTip end
+TAIL = [(0.0, 0.62, 0.50), (0.0, 0.88, 0.66), (0.0, 0.84, 0.92), (0.0, 0.66, 1.16), (0.0, 0.44, 1.26), (0.0, 0.26, 1.14), (0.0, 0.10, 0.98)]   # base .. StingTip end
 CLAW = dict(shoulder=(0.26, -0.38, 0.55), elbow=(0.50, -0.58, 0.60), wrist=(0.46, -0.82, 0.45), tip=(0.24, -0.98, 0.33))
 ROOT = ((0.0, 0.55, 0.52), (0.0, -0.30, 0.52))
 
@@ -51,15 +51,15 @@ def bone_specs():
     b["Root"] = (V(ROOT[0]), V(ROOT[1]), None, 0.5, V((0, 0, -1)))
     for i in range(6):
         h, t = V(TAIL[i]), V(TAIL[i + 1])
-        name = "TailTip" if i == 5 else "Tail%d" % (i + 1)
-        b[name] = (h, t, "Root" if i == 0 else ("Tail%d" % i), 0.07, V((1, 0, 0)).cross(t - h))
+        name = "StingTip" if i == 5 else "Sting%d" % (i + 1)
+        b[name] = (h, t, "Root" if i == 0 else ("Sting%d" % i), 0.07, V((1, 0, 0)).cross(t - h))
     for side, sx in (("L", 1), ("R", -1)):
         for n, fx, fy, kz, hx, hz in LEGS:
             hip, foot = V((sx * hx, fy, hz)), V((sx * fx, fy, FOOT_Z))
             knee = V((sx * (hx + fx) * 0.5 * 1.08, fy, kz + 0.1))
             tang = (knee - hip).cross(V((0, 0, 1)))
-            b["Leg%s%d_A" % (side, n)] = (hip, knee, "Root", 0.05, V((0, 0, 1)) if tang.length < 1e-4 else tang.cross(knee - hip))
-            b["Leg%s%d_B" % (side, n)] = (knee, foot, "Leg%s%d_A" % (side, n), 0.04, tang.cross(foot - knee))
+            b["Pede%s%d_A" % (side, n)] = (hip, knee, "Root", 0.05, V((0, 0, 1)) if tang.length < 1e-4 else tang.cross(knee - hip))
+            b["Pede%s%d_B" % (side, n)] = (knee, foot, "Pede%s%d_A" % (side, n), 0.04, tang.cross(foot - knee))
         c = {k: V((sx * v[0], v[1], v[2])) for k, v in CLAW.items()}
         b["Claw%s_A" % side] = (c["shoulder"], c["elbow"], "Root", 0.09, V((0, 0, 1)))
         b["Claw%s_B" % side] = (c["elbow"], c["wrist"], "Claw%s_A" % side, 0.10, V((0, 0, 1)))
@@ -181,7 +181,7 @@ class Rig:
         pose0 = sk.fk({})
         for side in "LR":
             for n, *_ in LEGS:
-                leg = "Leg%s%d" % (side, n)
+                leg = "Pede%s%d" % (side, n)
                 self.rest_feet[leg] = np.array(pose0[leg + "_B"] @ V((0, sk.length[leg + "_B"], 0)))
         self.max_err = 0.0
 
@@ -190,10 +190,10 @@ class Rig:
         sk = self.sk
         s = {}
         pose0 = sk.fk({})
-        tip0 = np.array(pose0["TailTip"] @ V((0, sk.length["TailTip"], 0)))
+        tip0 = np.array(pose0["StingTip"] @ V((0, sk.length["StingTip"], 0)))
         for sg in (1, -1):   # a tail rotating about armature X: wind>0 must carry the tip backwards (+Y)
-            bas = {"Tail1": sk.basis_rot("Tail1", (20 * sg, 0, 0))}
-            tip = np.array(sk.fk(bas)["TailTip"] @ V((0, sk.length["TailTip"], 0)))
+            bas = {"Sting1": sk.basis_rot("Sting1", (20 * sg, 0, 0))}
+            tip = np.array(sk.fk(bas)["StingTip"] @ V((0, sk.length["StingTip"], 0)))
             if tip[1] > tip0[1] + 0.02:
                 s["tail"] = sg
         for sg in (1, -1):   # body pitch: nose up (front claw tip rises)
@@ -204,8 +204,8 @@ class Rig:
                 s["pitch"] = sg
         for sg in (1, -1):   # body roll: right side (x<0) goes down for + roll
             bas = {"Root": sk.basis_rot("Root", (0, 10 * sg, 0))}
-            p = sk.fk(bas)["LegR2_B"] @ V((0, sk.length["LegR2_B"], 0))
-            p0 = pose0["LegR2_B"] @ V((0, sk.length["LegR2_B"], 0))
+            p = sk.fk(bas)["PedeR2_B"] @ V((0, sk.length["PedeR2_B"], 0))
+            p0 = pose0["PedeR2_B"] @ V((0, sk.length["PedeR2_B"], 0))
             if p[2] < p0[2] - 0.02:
                 s["roll"] = sg
         for side, out in (("L", 1), ("R", -1)):
@@ -241,7 +241,7 @@ class Rig:
         root_basis = M.Translation(off) @ rot
         bas["Root"] = root_basis
         tl = pose["tail"]
-        names = ["Tail1", "Tail2", "Tail3", "Tail4", "Tail5", "TailTip"]
+        names = ["Sting1", "Sting2", "Sting3", "Sting4", "Sting5", "StingTip"]
         w = np.array([0.34, 0.26, 0.22, 0.18, 0.12, 0.06])   # how the wind is shared along the tail (the base moves most)
         for i, n in enumerate(names):
             bas[n] = sk.basis_rot(n, (sg["tail"] * (tl["wind"] * w[i] + tl["curl"] * (1 if i else 0)), 0, tl["sway"] * w[i]))
@@ -258,7 +258,7 @@ class Rig:
             carried[leg] = np.array(root_move @ V(f))
         for side in "LR":
             for n, *_ in LEGS:
-                leg = "Leg%s%d" % (side, n)
+                leg = "Pede%s%d" % (side, n)
                 off = pose["feet"].get(leg, (0, 0, 0))
                 target = self.rest_feet[leg] + np.array(off) + (1.0 - pose["plant"]) * (carried[leg] - self.rest_feet[leg])
                 th, lb, err = foot_target_ik(sk, root_basis, leg, target, (prev_theta or self.theta).get(leg, (0, 0, 0)))
@@ -287,7 +287,7 @@ def walk_pose(frame, d, rate=1.0):
             else:
                 u = (q - 0.5) * 2
                 f, lift = -0.5 + ease(u), math.sin(math.pi * u) * 0.14
-            feet["Leg%s%d" % (side, n)] = (d[0] * STRIDE * f, d[1] * STRIDE * f, lift)
+            feet["Pede%s%d" % (side, n)] = (d[0] * STRIDE * f, d[1] * STRIDE * f, lift)
     bob = 0.012 * math.cos(4 * math.pi * p)
     sway = 2.5 * math.sin(2 * math.pi * p)
     fwd = -d[1]
@@ -324,7 +324,7 @@ def make_clips():
         feet = {}
         for side, sx in (("L", 1), ("R", -1)):
             for n, fx, fy, *_ in LEGS:
-                feet["Leg%s%d" % (side, n)] = (-sx * 0.10 * t, 0.0, 0.0)
+                feet["Pede%s%d" % (side, n)] = (-sx * 0.10 * t, 0.0, 0.0)
         return P(body=dict(dz=-0.13 * t, roll=14 * t, pitch=-6 * t), tail=dict(wind=-30 * t, sway=14 * t), claws=dict(lift=-18 * t, spread=14 * t, open=30 * t), feet=feet)
     c["Death"] = (40, False, death)
 
@@ -369,8 +369,8 @@ def make_clips():
         feet = {}
         for side in "LR":
             ph = math.sin(f * 0.9 + (0 if side == "L" else 2.2))
-            feet["Leg%s1" % side] = (0, -0.10 + 0.14 * ph, 0.10 * max(0, ph))
-            feet["Leg%s2" % side] = (0, 0.05 * ph, 0.04 * max(0, ph))
+            feet["Pede%s1" % side] = (0, -0.10 + 0.14 * ph, 0.10 * max(0, ph))
+            feet["Pede%s2" % side] = (0, 0.05 * ph, 0.04 * max(0, ph))
         return P(body=dict(dz=-0.80 * t * t, pitch=-22 * t, roll=shake(f, 3.0 * t)), tail=dict(wind=30 * t, sway=shake(f, 5, 0.7)), claws=dict(lift=-8 * t, spread=-14 * t, open=-10 * t), feet=feet, plant=1 - t)
     c["Tell_Burrow"] = (24, False, scrape)
 
@@ -402,7 +402,7 @@ def make_clips():
         feet = {}
         for side in "LR":
             for n, *_ in LEGS:
-                feet["Leg%s%d" % (side, n)] = (0, -0.20 * (1 - t) * (1 if n <= 2 else -0.4), 0)
+                feet["Pede%s%d" % (side, n)] = (0, -0.20 * (1 - t) * (1 if n <= 2 else -0.4), 0)
         return P(body=dict(dz=-0.10 * (1 - t), pitch=-8 * (1 - t) + 3 * math.sin(f * 0.5) * (1 - t), dy=-0.04 * (1 - t)), tail=dict(wind=24 * (1 - t) + 6 * t), claws=dict(lift=4 + 2 * t, spread=4, open=-12 * (1 - t) + 3 * t), feet=feet)
     c["Recover_Pinch"] = (24, False, slide)
 
@@ -448,7 +448,9 @@ def _merge(base, over):
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def load_mesh(path):
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.fbx(filepath=path)
+    bpy.ops.import_scene.fbx(filepath=path, use_anim=False)   # a file rigged before carries its clips: they must not be exported again (Unity saw every clip twice)
+    for act in list(bpy.data.actions):
+        bpy.data.actions.remove(act)
     for o in list(bpy.data.objects):
         if o.type == "ARMATURE":
             bpy.data.objects.remove(o)
@@ -538,7 +540,7 @@ def animate(arm, sk, rig, clips, report):
                 pb.keyframe_insert("location", frame=f + 1, group=n)
                 pb.keyframe_insert("rotation_euler", frame=f + 1, group=n)
             pose_m = sk.fk(bas)
-            feet_z.append(min(float((pose_m["Leg%s%d_B" % (s, k[0])] @ V((0, sk.length["Leg%s%d_B" % (s, k[0])], 0)))[2]) for s in "LR" for k in LEGS))
+            feet_z.append(min(float((pose_m["Pede%s%d_B" % (s, k[0])] @ V((0, sk.length["Pede%s%d_B" % (s, k[0])], 0)))[2]) for s in "LR" for k in LEGS))
         act.frame_range = (1, n_total)
         act.use_frame_range = True
         report[name] = dict(frames=n_total, min_foot_z=min(feet_z), foot_err=rig.max_err)

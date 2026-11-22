@@ -26,6 +26,7 @@ namespace Evolve.Combat
         Animator anim;
         Renderer[] renderers;
         Transform tailTip;
+        float desiredSpeed = 1f;   // the animator speed this frame; applied in LateUpdate because CreatureLocomotion (Predator adds one to every creature) resets it to 1 in its Update
         Light glow;
         float glowTarget, lastHealth = -1f;
         bool dead;
@@ -58,7 +59,7 @@ namespace Evolve.Combat
             rb = GetComponent<Rigidbody>();
             anim = GetComponentInChildren<Animator>(true);
             renderers = GetComponentsInChildren<Renderer>(true);
-            foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "TailTip") tailTip = t;
+            foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "StingTip") tailTip = t;
             lastPos = transform.position;
             if (tailTip != null)
             {
@@ -82,11 +83,11 @@ namespace Evolve.Combat
                 float k = 1f - Mathf.Exp(-10f * dt);
                 moveX = Mathf.Lerp(moveX, x, k); moveY = Mathf.Lerp(moveY, y, k);
                 anim.SetFloat("MoveX", moveX); anim.SetFloat("MoveY", moveY);
-                if (combat == null || combat.Phase == MovePhase.Idle) anim.speed = speed > 0.1f ? ScorpionRules.WalkAnimSpeed(speed) : 1f;
+                if (combat == null || combat.Phase == MovePhase.Idle) desiredSpeed = speed > 0.1f ? ScorpionRules.WalkAnimSpeed(speed) : 1f;
                 if (pred != null)
                 {
                     if (lastHealth > 0f && pred.Health < lastHealth - 0.01f && pred.Health > 0f) { Trigger("Hit"); ProceduralSfx.PlayFile(Sfx + "scorpion_hurt", transform.position, 1f, ProceduralSfx.Kind.HoundHurt); BossMusic.Ping("scorpion_battle"); }
-                    if (pred.Health <= 0f && !dead) { dead = true; Trigger("Die"); anim.speed = 1f; Abort(); BossMusic.Silence(1.5f); ProceduralSfx.PlayFile(Sfx + "scorpion_death", transform.position, 1f, ProceduralSfx.Kind.HoundThud); }
+                    if (pred.Health <= 0f && !dead) { dead = true; Trigger("Die"); desiredSpeed = 1f; Abort(); BossMusic.Silence(1.5f); ProceduralSfx.PlayFile(Sfx + "scorpion_death", transform.position, 1f, ProceduralSfx.Kind.HoundThud); }
                     lastHealth = pred.Health;
                 }
             }
@@ -94,7 +95,9 @@ namespace Evolve.Combat
             if (glow != null) glow.intensity = Mathf.MoveTowards(glow.intensity, glowTarget, 14f * dt);
         }
 
-        bool InLocomotion() => anim == null || anim.runtimeAnimatorController == null || (anim.GetCurrentAnimatorStateInfo(0).IsName("Locomotion") && !anim.IsInTransition(0));
+        void LateUpdate() { if (anim != null) anim.speed = dead ? 1f : desiredSpeed; }
+
+        bool InLocomotion() => anim == null || anim.runtimeAnimatorController == null || (anim.GetCurrentAnimatorStateInfo(0).IsName("Walk") && !anim.IsInTransition(0));
 
         void Trigger(string name)
         {
@@ -117,14 +120,15 @@ namespace Evolve.Combat
             if (m == null || phase == MovePhase.Idle)
             {
                 glowTarget = 0f;
-                if (anim != null) { anim.speed = 1f; if (!InLocomotion()) Trigger("Reset"); }   // a move cut short goes back to walking
+                desiredSpeed = 1f;
+                if (anim != null && !InLocomotion()) Trigger("Reset");   // a move cut short goes back to walking
                 return;
             }
             if (anim != null)
             {
                 foreach (var stale in new[] { "Reset", "Hit" }) anim.ResetTrigger(stale);   // a trigger nobody could take must not fire later, in the middle of the next move
                 float seconds = phase == MovePhase.Windup ? m.Windup * combat.TellScale : phase == MovePhase.Active ? m.Active : m.Recover;
-                anim.speed = ScorpionRules.PhaseAnimSpeed(ClipSeconds(phase, m.Anim), seconds);
+                desiredSpeed = ScorpionRules.PhaseAnimSpeed(ClipSeconds(phase, m.Anim), seconds);
             }
             Trigger((phase == MovePhase.Windup ? "Tell_" : phase == MovePhase.Active ? "Strike_" : "Recover_") + m.Anim);
             Vector3 p = transform.position;

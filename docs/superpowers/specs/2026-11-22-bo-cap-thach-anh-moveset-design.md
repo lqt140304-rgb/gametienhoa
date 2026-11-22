@@ -25,7 +25,7 @@ Bộ chiêu qua `BossKitTests` (2 thường, 1 xa từ 5 m, 1 đặc biệt `Dod
 
 ## Xương và clip (`tools/blender/rig_scorpion.py`)
 Chạy: `python -I tools/blender/rig_scorpion.py [in.fbx] [out.fbx] [--previews thư_mục]` (cần `bpy` 5.3, xem README). Mặc định đọc và **ghi đè** `Creature_BoCapThachAnh_Meshy.fbx` tại chỗ (bỏ xương cũ trước nên chạy lại được; bản tĩnh gốc còn trong git). Mô hình: 31.607 đỉnh, 1,9 × 1,9 × 1,43 m, quay mặt -Y, chân sát Z=0. Hình học (vị trí chân, đuôi, càng) đo trực tiếp từ mesh.
-- 29 xương: `Root`; `Tail1..5`, `TailTip` (ngòi, chỗ ánh sáng tụ); `Leg{L,R}{1..4}_A/_B` (8 chân); `Claw{L,R}_A/_B/_Finger`. Trọng số: 3 xương gần nhất, tính bán kính xương.
+- 29 xương: `Root`; `Sting1..5`, `StingTip` (ngòi, chỗ ánh sáng tụ); `Pede{L,R}{1..4}_A/_B` (8 chân; tên không bắt đầu bằng Leg, Tail để `CreatureLocomotion` không chạy dáng đi giả đè lên clip); `Claw{L,R}_A/_B/_Finger`. Trọng số: 3 xương gần nhất, tính bán kính xương.
 - **Bốn hướng**: `Walk_F`, `Walk_B`, `Walk_L`, `Walk_R` (vòng 20 khung, 30 fps). Hai nhóm chân bước luân phiên (chân 1 và 3 trái cùng chân 2 và 4 phải). Chân **IK số** bám đất tuyệt đối: chân đang chạm đất không trượt khi thân hạ, ngả, lao. Trái/phải tính theo chính con bọ cạp (trái = +X Blender).
 - Tổng 25 clip: `Idle`, 4 `Walk_*`, `Hit`, `Death`, và 3 clip × 6 chiêu. Mọi clip tính từng khung (không key thưa).
 - Kiểm trong Blender (đã chạy): sai số chân ≤ 3,3 cm, không clip nào đẩy chân xuống dưới đất (trừ Đào Chui, lún có chủ ý), FBX nhập lại đủ 25 take, ảnh render từng tư thế bằng `--previews`.
@@ -52,3 +52,7 @@ Phòng nên cung cấp cho boss ba thứ: danh sách cột (vị trí, máu), m�
 - Đào Chui ẩn thân bằng cách tắt Renderer (mô hình cao 1,4 m, lún 0,8 m chưa đủ giấu); gò đất là quả cầu nâu dẹt tạm. Bùng Pha Lê dùng capsule tím làm gai. Cần thay bằng hiệu ứng đẹp hơn khi có thời gian.
 - Phóng Gai dùng cơ chế `Spears` có sẵn (3 gai xoay trên lưng rồi phóng, của Cáo Gió); `FanAngle` (xòe quạt) đã có luật và test nhưng **chưa nối** vào lúc phóng.
 - Số liệu (thời gian, sát thương, tầm) đều tạm.
+
+## Sửa sau lần thử đầu trong Unity (2026-11-22)
+- **Chân và càng đứng yên, boss "lết"**: `Predator.cs` tự thêm `CreatureLocomotion` cho mọi quái chưa có, và component đó chạy dáng đi giả cho mọi xương tên bắt đầu bằng `Leg`/`Tail`/`Wing`/`Limb` và đặt lại `animator.speed` mỗi khung, nên đè lên clip. Đã đổi tên xương (`Leg*`→`Pede*`, `Tail*`→`Sting*`, `TailTip`→`StingTip`), đổi trạng thái đi của Animator thành `Walk`, và `ScorpionMoves` chốt `animator.speed` ở `LateUpdate` (sau khi loco chạy).
+- **Clip trùng tên** (`Recover_TailSlam` hai lần): chạy lại script trên FBX đã có xương thì clip cũ đi theo file và bị xuất lần nữa (50 clip). Script giờ nhập với `use_anim=False` và xóa hết action cũ trước khi dựng.

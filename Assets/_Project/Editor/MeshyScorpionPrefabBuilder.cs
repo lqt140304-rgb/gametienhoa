@@ -11,8 +11,8 @@ namespace Evolve.EditorTools
     /// Menu Evolve → Build Bọ Cạp Thạch Anh (Meshy) Prefab. The scorpion's FBX carries its own bones and 25 clips (tools/blender/rig_scorpion.py): this sets the file up
     /// (Generic rig, one clip per take, the walks and the idle looping), builds an Animator Controller and rebuilds "BoCapThachAnh (Meshy).prefab" from the cave team's
     /// scorpion prefab (same stats and scripts), minus CreatureLocomotion (the clips do the walking; its bone-name gait would fight them).
-    /// Controller: "Locomotion" is a 2D blend tree on MoveX / MoveY (the four walk clips around the idle); for each move Tell_X, Strike_X and Recover_X are reached by the triggers of the same
-    /// name (ScorpionMoves fires them, one for each phase of the move), "Reset" returns to Locomotion, "Hit" flinches, "Die" plays the death.
+    /// Controller: "Walk" is a 2D blend tree on MoveX / MoveY (the four walk clips around the idle); for each move Tell_X, Strike_X and Recover_X are reached by the triggers of the same
+    /// name (ScorpionMoves fires them, one for each phase of the move), "Reset" returns to Walk, "Hit" flinches, "Die" plays the death.
     /// Stop Play mode first. Untested in Unity: check the Console for the lines starting with [Bọ Cạp].
     /// </summary>
     public static class MeshyScorpionPrefabBuilder
@@ -94,7 +94,7 @@ namespace Evolve.EditorTools
             foreach (var a in MoveAnims) foreach (var ph in new[] { "Tell_", "Strike_", "Recover_" }) ctrl.AddParameter(ph + a, AnimatorControllerParameterType.Trigger);
             var sm = ctrl.layers[0].stateMachine;
 
-            var loco = sm.AddState("Locomotion");
+            var loco = sm.AddState("Walk");
             var tree = new BlendTree { name = "Walk4", blendType = BlendTreeType.FreeformDirectional2D, blendParameter = "MoveX", blendParameterY = "MoveY", useAutomaticThresholds = false };
             AssetDatabase.AddObjectToAsset(tree, ctrl);
             tree.AddChild(clips["Idle"], new Vector2(0f, 0f));
@@ -113,7 +113,7 @@ namespace Evolve.EditorTools
                     var enter = sm.AddAnyStateTransition(s);
                     enter.AddCondition(AnimatorConditionMode.If, 0f, ph + a);
                     enter.hasExitTime = false; enter.duration = 0.06f; enter.canTransitionToSelf = false;
-                    if (ph == "Recover_")   // the after-cast ends back in Locomotion; a charge-up and a cast hold their last pose until the next phase's trigger
+                    if (ph == "Recover_")   // the after-cast ends back in Walk; a charge-up and a cast hold their last pose until the next phase's trigger
                     {
                         var back = s.AddTransition(loco);
                         back.hasExitTime = true; back.exitTime = 0.98f; back.duration = 0.2f;
@@ -121,7 +121,7 @@ namespace Evolve.EditorTools
                 }
 
             var hit = sm.AddState("Hit"); hit.motion = clips["Hit"];
-            var toHit = loco.AddTransition(hit); toHit.AddCondition(AnimatorConditionMode.If, 0f, "Hit"); toHit.hasExitTime = false; toHit.duration = 0.05f;   // only from Locomotion: a flinch never cuts a move short
+            var toHit = loco.AddTransition(hit); toHit.AddCondition(AnimatorConditionMode.If, 0f, "Hit"); toHit.hasExitTime = false; toHit.duration = 0.05f;   // only from Walk: a flinch never cuts a move short
             var fromHit = hit.AddTransition(loco); fromHit.hasExitTime = true; fromHit.exitTime = 0.95f; fromHit.duration = 0.12f;
             var die = sm.AddState("Die"); die.motion = clips["Death"];
             var toDie = sm.AddAnyStateTransition(die); toDie.AddCondition(AnimatorConditionMode.If, 0f, "Die"); toDie.hasExitTime = false; toDie.duration = 0.1f; toDie.canTransitionToSelf = false;
