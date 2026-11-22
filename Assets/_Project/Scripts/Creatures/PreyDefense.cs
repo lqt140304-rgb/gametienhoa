@@ -13,7 +13,7 @@ namespace Evolve.Creatures
     /// shortcut: hunters do not chase prey in the scene yet (that is the ecosystem scene work), so hunters only meet these defences when they
     /// reach the prey's area; a decoy only fools hunters once they hunt prey.
     /// </summary>
-    [RequireComponent(typeof(Prey))]
+    [RequireComponent(typeof(Prey)), DefaultExecutionOrder(-10)]
     public class PreyDefense : MonoBehaviour
     {
         [Tooltip("PreyDefenseSeed id (e.g. tho_la). Empty = look up by this prefab's name")]
@@ -25,12 +25,31 @@ namespace Evolve.Creatures
         Prey prey;
         float escapeReadyAt, counterReadyAt, guardUntil, blocksCatchUntil, speedUntil, lastSeen = -100f;
         bool alarmSent, callSent, hit;
+        Rigidbody body;
+        Collider shape;
+        CreatureLocomotion locomotion;
+        TrailRenderer trail;
+        Material trailMaterial;
+        float launchAt, flightStarted, guardStarted;
+        Vector3 glideFrom, glideTo;
+        const float FlightSeconds = 0.4f, GlideLift = 0.32f;
+
+        public bool StopsSeparation => Time.time < guardUntil && def?.GuardRecovery > 0f
+            || launchAt > 0f || flightStarted > 0f;
+        public bool ResistsDisplacement => def?.Id == "oc_ho"
+            && (Time.time < guardUntil || HangOneGround.Wet(transform.position));
 
         void Awake()
         {
             prey = GetComponent<Prey>();
             def = PreyDefenseSeed.Get(defenseId) ?? PreyDefenseSeed.FindBySpecies(name);
             if (def == null) { enabled = false; return; }
+            if (def.GlideWindup > 0f)
+            {
+                body = GetComponent<Rigidbody>();
+                shape = GetComponent<Collider>();
+            }
+            locomotion = GetComponent<CreatureLocomotion>();
             prey.CatchVeto = _ => Time.time < blocksCatchUntil;
             prey.Touched += OnTouched;
             prey.Damaged += OnDamaged;
@@ -38,26 +57,30 @@ namespace Evolve.Creatures
 
         void OnDestroy()
         {
+            if (trailMaterial != null) Destroy(trailMaterial);
             if (prey == null) return;
             prey.Touched -= OnTouched;
             prey.Damaged -= OnDamaged;
         }
 
-        void OnTouched(SurvivalStats by) { hit = true; Evaluate(); }   // decide at once: it may slip out of the grab before the catch
+        void OnTouched(SurvivalStats by) { if (prey.IsReplica || Prey.Frozen) return; hit = true; Evaluate(); }   // decide at once: it may slip out of the grab before the catch
         void OnDamaged(float amount, SurvivalStats by) => hit = true;
 
         void FixedUpdate()
         {
             if (prey.IsReplica) return;
             if (Time.time >= speedUntil) { prey.Boost = 1f; prey.Zigzag = false; prey.Silent = false; }
-            if (Time.time >= guardUntil) prey.DamageTakenMultiplier = 1f;
+            prey.DamageTakenMultiplier = PreyDefenseRules.GuardFactor(def, Time.time, guardUntil);
+            if (Prey.Frozen && (launchAt > 0f || flightStarted > 0f)) StopGlide();
+            if (Prey.Frozen || TickGlide()) return;
             Evaluate();
         }
 
         void Evaluate()
         {
+            if (launchAt > 0f || flightStarted > 0f || (def.GuardRecovery > 0f && Time.time < guardUntil)) return;
             var threat = NearestThreat(out float dist, out float ratio, out SurvivalStats player, out Predator hunter);
-            bool seen = threat != null && dist <= def.AlertRange * SeenFactor;
+            bool seen = threat != null && dist <= def.AlertRange * (def.GlideWindup > 0f ? 1f : SeenFactor);
             if (seen) lastSeen = Time.time;
             else if (Time.time - lastSeen > ForgetSeconds) { alarmSent = false; callSent = false; }
 
@@ -77,7 +100,9 @@ namespace Evolve.Creatures
             if (act.HasFlag(DefenseAction.Alarm)) { alarmSent = true; Alarm(); }
             if (act.HasFlag(DefenseAction.CallHelp)) { callSent = true; CallHelp(player); }
             if (act.HasFlag(DefenseAction.Counter)) Counter(player, hunter, away);
-            if (act.HasFlag(DefenseAction.Escape)) Escape();
+            if (!act.HasFlag(DefenseAction.Escape)) return;
+            if (def.GlideWindup > 0f) StartGlide(threat.position, away);
+            else Escape();
         }
 
         Transform NearestThreat(out float dist, out float ratio, out SurvivalStats player, out Predator hunter)
@@ -99,11 +124,113 @@ namespace Evolve.Creatures
                 {
                     if (h == null) continue;
                     float d = Vector3.Distance(pos, h.transform.position);
-                    if (d >= dist) continue;
+                    float massRatio = h.BodyMass / myMass;
+                    if (d >= dist || d > CreatureCombatDetection(h, massRatio)) continue;
                     dist = d; best = h.transform; hunter = h; player = null;
-                    ratio = h.BodyMass / myMass;
+                    ratio = massRatio;
                 }
             return best;
+        }
+
+        float CreatureCombatDetection(Predator hunter, float massRatio)
+        {
+            if (!hunter.TryGetComponent(out Evolve.Combat.CreatureCombat combat) || !combat.IsCamouflaged)
+                return float.MaxValue;
+            float range = def.GlideWindup > 0f ? def.AlertRange : PreyDefenseRules.FleeRange(def.AlertRange, massRatio);
+            return range * HangOneGround.CamouflageDetectionFactor;
+        }
+
+        void StartGlide(Vector3 threat, Vector3 away)
+        {
+            if (body == null || CreatureStatus.Holds(gameObject)) return;
+            Vector3 start = body.position;
+            float offset = Evolve.World.GroundHeight.OffsetOf(start);
+            float score = float.NegativeInfinity;
+            for (int i = 0; i < 7; i++)
+            {
+                int angle = (i + 1) / 2 * (i % 2 == 1 ? 25 : -25);
+                Vector3 dir = Quaternion.Euler(0f, angle, 0f) * away;
+                for (float distance = 3f; distance >= 2f; distance -= 0.5f)
+                {
+                    Vector3 landing = Evolve.World.GroundHeight.Follow(start + dir * distance, offset);
+                    if (Mathf.Abs(landing.y - start.y) > 0.65f ||
+                        Evolve.World.WaterField.DepthAt(landing.x, landing.z) > 0.05f) continue;
+                    Vector3 mid = GlidePosition(start, landing, 0.5f);
+                    if (!GlideClear(start, mid) || !GlideClear(mid, landing)) continue;
+                    bool cover = !HangOneGround.Clear(threat + Vector3.up * 0.35f, landing + Vector3.up * 0.25f);
+                    float value = (landing - threat).magnitude + (HangOneGround.Moss(landing) ? 1f : 0f) + (cover ? 2f : 0f);
+                    if (value <= score) continue;
+                    score = value;
+                    glideTo = landing;
+                }
+            }
+            if (float.IsNegativeInfinity(score)) { escapeReadyAt = Time.time + 0.3f; return; }
+            glideFrom = start;
+            launchAt = Time.time + def.GlideWindup;
+            escapeReadyAt = Time.time + def.EscapeCooldown;
+            CreatureStatus.Stun(prey, def.GlideWindup + FlightSeconds, false);
+            (locomotion ??= GetComponent<CreatureLocomotion>())?.PlayAction("Fly");
+        }
+
+        static Vector3 GlidePosition(Vector3 start, Vector3 end, float t) =>
+            Vector3.Lerp(start, end, t) + Vector3.up * (4f * GlideLift * t * (1f - t));
+
+        bool GlideClear(Vector3 from, Vector3 to)
+        {
+            Bounds bounds = shape != null ? shape.bounds : new Bounds(body.position, Vector3.one * 0.24f);
+            float radius = Mathf.Max(0.08f, Mathf.Max(bounds.extents.x, bounds.extents.z));
+            Vector3 center = bounds.center - body.position;
+            center.y = Mathf.Max(radius + 0.035f, center.y);
+            return HangOneGround.Clear(from + center, to + center, radius);
+        }
+
+        bool TickGlide()
+        {
+            if (launchAt <= 0f && flightStarted <= 0f) return false;
+            if (Time.time < launchAt) return true;
+            if (flightStarted <= 0f)
+            {
+                if ((body.position - glideFrom).sqrMagnitude > 0.01f) { StopGlide(); return true; }
+                flightStarted = Time.time;
+                launchAt = 0f;
+                Vector3 dir = glideTo - glideFrom; dir.y = 0f;
+                body.MoveRotation(Quaternion.LookRotation(dir));
+                BeginTrail();
+                if (HangOneGround.Moss(glideFrom))
+                    SkillFx.Burst(glideFrom + Vector3.up * 0.1f, new Color(0.39f, 0.49f, 0.26f), 4, 0.5f, 0.06f, 0.2f, 0.26f, 0.12f);
+            }
+            float t = Mathf.Clamp01((Time.time - flightStarted + Time.fixedDeltaTime) / FlightSeconds);
+            Vector3 next = GlidePosition(glideFrom, glideTo, t);
+            if (!GlideClear(body.position, next)) { StopGlide(); return true; }
+            body.MovePosition(next);
+            if (t >= 1f) StopGlide();
+            return true;
+        }
+
+        void StopGlide()
+        {
+            launchAt = flightStarted = 0f;
+            if (trail != null) trail.emitting = false;
+        }
+
+        void BeginTrail()
+        {
+            if (trail == null)
+            {
+                var tail = new GameObject("Beetle glide trail");
+                tail.transform.SetParent(transform, false);
+                tail.transform.localPosition = new Vector3(0f, 0.24f, -0.12f);
+                trail = tail.AddComponent<TrailRenderer>();
+                trailMaterial = SkillFx.Gel(new Color(0.53f, 0.62f, 0.40f), 0.24f, 0f, 0.35f);
+                trail.sharedMaterial = trailMaterial;
+                trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                trail.time = 0.12f;
+                trail.startWidth = 0.06f;
+                trail.endWidth = 0f;
+                trail.minVertexDistance = 0.12f;
+            }
+            trail.Clear();
+            trail.emitting = true;
         }
 
         // ---------- escape ----------
@@ -125,7 +252,14 @@ namespace Evolve.Creatures
             }
             if (def.GuardSeconds > 0f)
             {
-                guardUntil = Time.time + def.GuardSeconds;
+                guardStarted = Time.time;
+                guardUntil = guardStarted + def.GuardSeconds;
+                if (def.GuardRecovery > 0f)
+                {
+                    (locomotion ??= GetComponent<CreatureLocomotion>())?.PlayAction("Retract");
+                    if (HangOneGround.Wet(pos))
+                        SkillFx.Burst(pos + Vector3.up * 0.06f, new Color(0.57f, 0.66f, 0.53f), 3, 0.35f, 0.055f, 0.15f, 0.25f, 0.06f);
+                }
                 prey.DamageTakenMultiplier = def.GuardDamageTaken;
                 if (def.BlocksCatch) blocksCatchUntil = guardUntil;
                 CreatureStatus.Stun(prey, def.GuardSeconds, false);   // stands still
@@ -213,10 +347,26 @@ namespace Evolve.Creatures
             }
         }
 
+        void LateUpdate()
+        {
+            if (def == null || def.GuardRecovery <= 0f || prey.IsReplica) return;
+            if (shellModel == null)
+            {
+                shellModel = transform.Find("Model");
+                if (shellModel == null) return;
+                shellScale = shellModel.localScale;
+            }
+            float closed = Mathf.Clamp01((Time.time - guardStarted) * 6f) * Mathf.Clamp01((guardUntil - Time.time) * 6f);
+            shellModel.localScale = Vector3.Scale(shellScale, new Vector3(1f, 1f - 0.24f * closed, 1f - 0.16f * closed));
+        }
+
+        Transform shellModel;
+        Vector3 shellScale;
+
         /// <summary>Another prey raised the alarm: run (once the escape is ready).</summary>
         public void Alerted()
         {
-            if (def == null || !def.HasEscape || Time.time < escapeReadyAt) return;
+            if (def == null || prey.IsReplica || Prey.Frozen || def.GlideWindup > 0f || !def.HasEscape || Time.time < escapeReadyAt) return;
             escapeReadyAt = Time.time + def.EscapeCooldown;
             Escape(false);
         }

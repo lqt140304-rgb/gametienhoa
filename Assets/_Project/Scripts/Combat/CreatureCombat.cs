@@ -14,7 +14,7 @@ namespace Evolve.Combat
     /// The mosquito (a drain move) is run by <see cref="LeechRules"/> instead: it hunts in a swarm, drains blood and is shaken off.
     /// </summary>
     [DefaultExecutionOrder(60)]
-    public class CreatureCombat : MonoBehaviour
+    public partial class CreatureCombat : MonoBehaviour
     {
         const float HitReach = 0.9f, SwarmRadius = 15f, FlySpeed = 2.2f, ScaredSpeed = 3f, DrainTick = 0.5f;
         static readonly Color TellColor = new Color(1f, 0.35f, 0.3f);
@@ -24,7 +24,7 @@ namespace Evolve.Combat
         public float DamageScale { get; set; } = 1f;
         float tellScale = 1f;
         public float TellScale { get => tellScale; set { tellScale = value; if (scheduler != null) scheduler.TellScale = value; } }
-        public bool Busy => scheduler != null && (scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking) || perch != PerchState.None);
+        public bool Busy => scheduler != null && (tongueStarted > 0f || scheduler.Busy || (leech != null && leech.State != LeechState.Idle) || (ambush != null && ambush.State == AmbushState.Lurking) || perch != PerchState.None);
         /// <summary>For the god menu: the leech state, or the move phase and name.</summary>
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
@@ -93,6 +93,8 @@ namespace Evolve.Combat
             model = transform.Find("Model");
             if (model == null) foreach (var r in GetComponentsInChildren<Renderer>()) { model = r.transform; break; }
             if (model != null) baseScale = model.localScale;
+            shoreLizard = pred != null && SpeciesNames.Key(name) == "thanlanboho";
+            if (shoreLizard) { stationaryAnchor = rb.position; stationarySince = Time.time; }
             if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
         }
 
@@ -108,6 +110,8 @@ namespace Evolve.Combat
             all.Remove(this);
             SkillBar.SkillUsed -= OnSkillUsed;
             if (prey != null) prey.Damaged -= OnDamaged;
+            EndTongue();
+            SetCamouflage(false);
             scheduler?.Reset();
             ClearSpears();
             SetHidden(false);
@@ -153,6 +157,7 @@ namespace Evolve.Combat
             TickPerch();
             if (HostPaused())
             {
+                if (shoreLizard) { EndTongue(); UpdateCamouflage(true); }
                 scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
                 ClearSpears();
                 if (ambush != null && ambush.State == AmbushState.Lurking) { ambush.Update(0f, 0f); ambush.StrikeDone(); }   // stunned or killed while hiding: it shows itself
@@ -160,6 +165,11 @@ namespace Evolve.Combat
                 return;
             }
             target = FindTarget();
+            if (shoreLizard)
+            {
+                if (TickTongue()) { UpdateCamouflage(true); return; }
+                UpdateCamouflage(scheduler.Busy);
+            }
             if (leech != null) { FixedLeech(); return; }
 
             float health = pred != null ? pred.HealthFraction : prey != null ? prey.HealthFraction : 1f;
@@ -173,7 +183,11 @@ namespace Evolve.Combat
             noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
-            if (started != null) BeginStrike(started);
+            if (started != null)
+            {
+                if (shoreLizard) UpdateCamouflage(true);
+                BeginStrike(started);
+            }
             prevPhase = scheduler.Phase;
 
             if (target != null && scheduler.Phase == MovePhase.Windup) FaceTarget();
@@ -518,6 +532,11 @@ namespace Evolve.Combat
         {
             UpdateSpears();
             if (model == null || scheduler == null) return;
+            if (tongueStarted > 0f && Time.time - tongueStarted < TongueTell)
+            {
+                Apply(TellPose.Evaluate(PoseKind.Crouch, MovePhase.Windup, Mathf.Clamp01((Time.time - tongueStarted) / TongueTell)));
+                return;
+            }
             Pose pose = Pose.Identity;
             var m = scheduler.Current;
             if (leech != null)
