@@ -43,7 +43,8 @@ namespace Evolve.World
             if (boss == null && wait != null)   // the boss standing nearest to the waiting place
             {
                 float best = 12f;
-                foreach (var c in FindObjectsByType<CreatureCombat>(FindObjectsInactive.Include, FindObjectsSortMode.None))   // a boss saved inactive in the scene counts too { float d = Vector3.Distance(c.transform.position, wait.position); if (d < best) { best = d; boss = c.gameObject; } }
+                foreach (var c in FindObjectsByType<CreatureCombat>(FindObjectsInactive.Include, FindObjectsSortMode.None))   // a boss saved inactive in the scene counts too
+                { float d = Vector3.Distance(c.transform.position, wait.position); if (d < best) { best = d; boss = c.gameObject; } }
             }
             if (boss != null)
             {
