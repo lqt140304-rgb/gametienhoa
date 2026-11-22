@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2845319a4aca2bd479150e97c2aa860e, type: 3}
+  m_Name: Skill_o_chan
+  m_EditorClassIdentifier: Evolve::Evolve.Abilities.AreaAbility
+  DisplayName: "\u1EE2 Ch\u1EA5n"
+  Description: "\u0110\u1EA9y l\xF9i m\u1ECDi th\u1EE9 trong 4 m.\n\u26053: K\u1EBB b\u1ECB \u0111\u1EA9y c\xF2n cho\xE1ng 0,5 gi\xE2y."
+  Tier: 0
+  EnergyCost: 35
+  Cooldown: 15
+  Family: 1
+  Star3Text: "K\u1EBB b\u1ECB \u0111\u1EA9y c\xF2n cho\xE1ng 0,5 gi\xE2y."
+  Star3EnergyFactor: 1
+  Radius: 4
+  Push: 9
+  Damage: 0
+  StunSeconds: 0
+  MaxTargets: 0
+  Star3Stun: 0.5
+  Star3Targets: 0

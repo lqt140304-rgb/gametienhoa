@@ -24,6 +24,7 @@ namespace Evolve.Creatures
 
         // ---- escape ----
         public float EscapeCooldown = 8f;
+        public float GlideWindup, GuardRecovery, GuardRecoveryDamage = 1f;
         /// <summary>Run: speed multiplier for SpeedSeconds (Zigzag weaves; Silent makes no vibration).</summary>
         public float SpeedBoost = 1f, SpeedSeconds;
         public bool Zigzag, Silent;
@@ -52,7 +53,7 @@ namespace Evolve.Creatures
         /// <summary>Cries for HelperName (a Predator) within this many metres (Chim Non calls Chim Hang Mẹ).</summary>
         public float CallHelpRadius;
 
-        public bool HasEscape => SpeedBoost > 1f || GuardSeconds > 0f || ObscureSeconds > 0f || (SlowSeconds > 0f && SlowRadius > 0f) || TrapSeconds > 0f || Decoy;
+        public bool HasEscape => GlideWindup > 0f || SpeedBoost > 1f || GuardSeconds > 0f || ObscureSeconds > 0f || (SlowSeconds > 0f && SlowRadius > 0f) || TrapSeconds > 0f || Decoy;
         public bool HasCounter => CounterDamage > 0f || CounterPush > 0f || CounterStun > 0f || CounterSlow > 0f || CounterInfect != InfectKind.None;
     }
 
@@ -78,6 +79,10 @@ namespace Evolve.Creatures
         /// <summary>A bigger threat is harder to escape: 15% less chance per extra body of mass, at most 45% less.</summary>
         public static float EscapeChanceVs(float baseChance, float ratio) => Mathf.Clamp01(baseChance * (1f - 0.15f * Mathf.Clamp(ratio - 1f, 0f, 3f)));
 
+        public static float GuardFactor(PreyDefenseDef def, float now, float guardUntil) =>
+            now < guardUntil ? def.GuardDamageTaken :
+            guardUntil > 0f && now < guardUntil + def.GuardRecovery ? def.GuardRecoveryDamage : 1f;
+
         public static DefenseAction Decide(PreyDefenseDef def, DefenseInput i)
         {
             var act = DefenseAction.None;
@@ -89,7 +94,8 @@ namespace Evolve.Creatures
             bool pressed = i.JustHit || i.Cornered || i.Tired;
             if (def.HasCounter && pressed && i.Now >= i.CounterReadyAt && i.Roll < CounterWillingness(i.ThreatRatio)) act |= DefenseAction.Counter;
 
-            bool near = i.ThreatSeen && i.ThreatDistance <= FleeRange(def.AlertRange, i.ThreatRatio);
+            float range = def.GlideWindup > 0f ? def.AlertRange : FleeRange(def.AlertRange, i.ThreatRatio);
+            bool near = i.ThreatSeen && i.ThreatDistance <= range;
             if (def.HasEscape && near && !i.Guarding && i.Now >= i.EscapeReadyAt) act |= DefenseAction.Escape;
             return act;
         }

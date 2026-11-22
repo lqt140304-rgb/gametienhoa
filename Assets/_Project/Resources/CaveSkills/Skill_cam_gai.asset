@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 246d7e7736b4a7c4e818d8319c64a4ac, type: 3}
+  m_Name: Skill_cam_gai
+  m_EditorClassIdentifier: Evolve::Evolve.Abilities.TrapAbility
+  DisplayName: "C\u1EAFm Gai"
+  Description: "\u0110\u1EB7t b\u1EABy gai tr\xEAn \u0111\u1EA5t, g\xE2y s\xE1t th\u01B0\u01A1ng k\u1EBB d\u1EABm v\xE0o, t\u1ED3n t\u1EA1i 20 gi\xE2y.\n\u26053: K\u1EBB d\u1EABm v\xE0o c\xF2n cho\xE1ng 0,5 gi\xE2y."
+  Tier: 0
+  EnergyCost: 30
+  Cooldown: 15
+  Family: 2
+  Star3Text: "K\u1EBB d\u1EABm v\xE0o c\xF2n cho\xE1ng 0,5 gi\xE2y."
+  Star3EnergyFactor: 1
+  Radius: 1.2
+  Damage: 12
+  Seconds: 20
+  Star3Stun: 0.5

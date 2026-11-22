@@ -1,0 +1,26 @@
+name: Pure rule tests
+
+# Runs the engine-independent rules and their tests (tools/cstest, plain .NET 8, no Unity) on every push to a working branch and on every pull request,
+# so a session that breaks another session's tests is told at once. The Unity side (scenes, prefabs, Editor menus) is NOT covered: it still needs a person to play it.
+on:
+  push:
+    branches: ['claude/**', 'main']
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cstest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false   # the tests need no models, sounds or scenes: skip the large files
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Run the pure rule tests
+        run: tools/cstest/run.sh

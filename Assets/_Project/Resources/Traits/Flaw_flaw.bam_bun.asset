@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e772ad6dc7b0e448ab02fdca6258d4, type: 3}
+  m_Name: Flaw_flaw.bam_bun
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.FlawSO
+  Id: flaw.bam_bun
+  DisplayName: "B\xE1m B\xF9n"
+  Description: "Ra kh\u1ECFi n\u01B0\u1EDBc n\xF4ng (ho\u1EB7c b\xF9n) v\u1EABn b\u1ECB ch\u1EADm th\xEAm 2 gi\xE2y."
+  CompensatedBy: 01000000i
+  Implemented: 1

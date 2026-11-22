@@ -122,7 +122,8 @@ namespace Evolve.Creatures
                 if (h == null || h == pred || Kin(h)) continue;   // its own pack is never a rival
                 float d = Flat(pos, h.transform.position);
                 if (IsDiet(h)) { if (d < inp.PreyDist && d <= CreatureBehaviorRules.PreySense) { inp.PreyDist = d; preyT = h.transform; inp.HasPrey = true; } }   // a lord eats hunters
-                else if (d < inp.RivalDist) { inp.RivalDist = d; rivalT = h.transform; inp.RivalRatio = h.BodyMass / myMass; inp.HasRival = true; }
+                else if (d < inp.RivalDist && (!h.TryGetComponent(out Evolve.Combat.CreatureCombat rivalCombat)
+                    || !rivalCombat.IsCamouflaged || d <= CreatureBehaviorRules.PreySense * HangOneGround.CamouflageDetectionFactor)) { inp.RivalDist = d; rivalT = h.transform; inp.RivalRatio = h.BodyMass / myMass; inp.HasRival = true; }
             }
 
             float seekDist = 0f;
@@ -150,7 +151,9 @@ namespace Evolve.Creatures
             var mode = CreatureBehaviorRules.DecideHunter(inp);
             switch (mode)
             {
-                case HunterMode.Wander: pred.Intent = default; break;
+                case HunterMode.Wander:
+                    pred.Intent = id == "tham_lan_bo_ho" && HangOneGround.Moss(pos) ? PredatorIntent.Hold() : default;
+                    break;
                 case HunterMode.ChasePlayer: pred.Intent = default; pred.Provoke(player); break;   // the old chase takes over
                 case HunterMode.ChasePrey: pred.Intent = PredatorIntent.ChaseOf(preyT, true); break;
                 case HunterMode.ToCarcass:

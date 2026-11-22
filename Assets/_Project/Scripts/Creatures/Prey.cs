@@ -122,6 +122,9 @@ namespace Evolve.Creatures
             NetId = NetWorld.NextId();
             TryGetComponent(out emitter);
             if (!TryGetComponent(out locomotion)) locomotion = gameObject.AddComponent<CreatureLocomotion>();
+            string species = SpeciesNames.Key(name);
+            if ((species == "bocanhcungnho" || species == "ocho") && !TryGetComponent<PreyDefense>(out _))
+                gameObject.AddComponent<PreyDefense>();
             Health = maxHealth;
         }
 

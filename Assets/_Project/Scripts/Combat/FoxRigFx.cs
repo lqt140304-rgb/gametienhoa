@@ -8,6 +8,7 @@ namespace Evolve.Combat
     /// (Root, Head, Tail1/2, Leg_*, Eye_L/R): a livelier tail wag that flares up when a move is cast, eyelids that blink, and gold and sky-blue trinkets: a brow gem, a wind halo behind the head,
     /// anklets and a tail ring. Hinge directions are measured at start, so no bone axis is assumed. Runs after the other animation (LateUpdate).
     /// </summary>
+    [DefaultExecutionOrder(70)]   // after CreatureLocomotion (50) and CreatureCombat (60), which restore Model's transform each LateUpdate
     public class FoxRigFx : MonoBehaviour
     {
         public static bool Has(string name) => !string.IsNullOrEmpty(name) && name.Contains("(Meshy)") && Creatures.SpeciesNames.Key(name) == "caogio";

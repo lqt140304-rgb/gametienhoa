@@ -1,0 +1,35 @@
+# Bộ chiêu của Golem Thạch Anh (đã chốt với chủ dự án 2026-11-21)
+
+> **Cập nhật:** bộ chiêu dưới đây đã được **thay bằng bộ kỹ năng chuẩn** của mọi trùm: xem `docs/superpowers/specs/2026-11-21-boss-standard-kit.md` (Ném Đá giữ lại; thêm Nện Đấm, Giáng Thạch (nhảy trời, lao xuống vòng báo, nhổ gai đá phi liên tục), nội tại Thân Tinh Thể; Lõi Nổ là tuyệt chiêu ở máu ≤ 25%; Giáp Tinh Thể thành nội tại). Phần **bước chân bằng mã** ở cuối tài liệu này vẫn đúng.
+
+Chúa Hang Vực Nứt Tím, mô hình Meshy rig tự động (Humanoid) với clip đi và chạy của Meshy. Số là số tạm, chỉnh khi chơi. Làm theo quy trình của Chó Xương.
+
+| Chiêu | Dữ liệu (`MovesetSeed`, khóa `golemthachanh`) | Mở khi |
+|---|---|---|
+| **Đập Đất** (`Slam`) | Spin: báo **1,5 s** (giơ hai tay qua đầu, ngả ra sau, chậm), đập 0,25 s, hồi **2,4 s**, bán kính 5,5 m, sát thương 32, **hất văng 9 và choáng slime 0,6 s**, rung màn hình mạnh, ba vòng sóng lan ra; có giáp lúc báo và đập; hồi chiêu 9 s | luôn |
+| **Ném Đá** (`Throw`) | Throw: tay phải kéo ra sau **1,3 s**, tảng đá **to 1 m** bay vòng cung **1,1 s**; trúng 20 máu; **rơi xuống đất vẫn gây 60% sát thương trong 2,5 m** (hố đá vỡ) và rung màn hình; tầm 5–18 m; hồi 8 s | luôn |
+| **Giáp Tinh Thể** (`Harden`) | báo 1 s, **giữ giáp 4 s nhận 30% sát thương**, hồi 1,4 s (nhận ×1,5); **tinh thể mọc ra trên hai vai và lưng** rồi thu vào; lõi sáng; hồi 18 s | máu ≤ 66% |
+| **Lõi Nổ** (`CoreBlast`) | Spin: báo **2,4 s** (dang hai tay, lõi sáng dần, **đất rung mạnh dần**), nổ 0,3 s, hồi 2,6 s, bán kính 8 m, sát thương 40, **hất văng 12 và choáng 0,8 s**, rung màn hình rất mạnh; hồi 25 s | máu ≤ 33% |
+| **Bước chân nặng** | mỗi lần chân chạm đất (khung 0,04 và 0,54 của clip đi): tiếng đạp nặng, bụi, màn hình rung nhẹ (`FootstepFx`) | luôn |
+
+## Cách làm
+- Dữ liệu chiêu và tư thế là **mã thuần có test**: `MovesetSeed`, `GolemRules` (góc tay, thân, độ sáng lõi theo pha), `MoveScheduler` (giáp giảm sát thương), test `GolemRulesTests`.
+- Đi và chạy là clip Meshy (Animator). `GolemRigFx` **cộng thêm** lên xương tay (`LeftArm`, `RightArm`, cẳng tay) và cột sống (`Spine01`) theo chiêu đang ra; hướng xoay từng xương tự đo lúc chạy. Một đèn điểm ấm trong ngực là **lõi**: đập nhẹ lúc nghỉ, sáng khi nạp Lõi Nổ và khi giáp, chớp khi trúng đòn.
+- Tư thế nén thân chung của `CreatureCombat` giảm còn 35% (`MovesetSeed.PoseStrength`), vì tay đã tự cử động.
+- Âm thanh thật (ElevenLabs, `tools/voice/generate_golem_sfx.sh` → `Resources/Sfx/Golem/`): gằn, đập đất, ném, đá vỡ, giáp tinh thể, nạp lõi, nổ lõi, đau. Thiếu file thì dùng tiếng tổng hợp bằng mã. Hiệu ứng (`GolemFx`): bụi và vòng sóng khi đập đất, mảnh tinh thể bắn lên, bụi và vòng khi tảng đá vỡ, tia tinh thể khi giáp, vòng sáng và bụi khi lõi nổ.
+- **Nhạc riêng** `Resources/Music/golem_battle.mp3` (trống nặng như bước chân khổng lồ, bass trầm, đồng trầm, 90 nhịp, `tools/voice/generate_boss_music.sh`). `BossMusic.Ping("golem_battle")`: bật khi có đòn, nhỏ dần sau 10 giây yên (cùng luật với Chó Xương). Mỗi trùm một bản.
+
+## Sửa sau lần thử đầu (2026-11-21)
+Golem bị gập người, tay duỗi ra trước không về lại được, bước chân lết. Ba nguyên nhân: (1) `GolemRigFx` **cộng dồn góc xoay mỗi khung hình** vì trạng thái Idle không có clip nên Animator không ghi đè xương: nay mỗi xương nhớ tư thế gốc và không bao giờ chồng góc (`Put`); (2) Idle không có clip nên bộ xương đóng băng giữa nhịp bước khi dừng: Idle nay là clip đi dừng ở khung hai chân khép (tốc độ 0, lệch chu kỳ 0,04); (3) tốc độ clip cố định trong khi trùm bị nhân cỡ và tốc độ theo tầng hang nên chân trượt: `WalkRate`, `RunRate` chạy theo tốc độ thật (một vòng đi dài 1,9 m, vòng chạy 3 m ở cỡ gốc, vòng chạy là số ước lượng).
+
+## Sức nặng (2026-11-21, sau lần thử thứ hai)
+Chủ dự án muốn trùm nặng và mạnh: mọi chiêu **báo chậm hơn, hồi lâu hơn, hất văng và choáng người chơi** (`MoveDef.Force`, `Freeze` cho đòn Spin, trước chỉ có cho gió và băng), **rung màn hình** (`ShakeRules`, `ImpactFx`, `ThirdPersonCamera.Thump`, giảm theo khoảng cách), tiếng bước chân nặng (`FootstepFx`, `golem_step.mp3`), tinh thể mọc ra khi giáp. **Cỡ Golem bị giới hạn nhân tối đa 1,2 lần ở hang** (trước đó cỡ trùm 2,4–3,2 lần khiến thân 6–8 m, hay kẹt vào vật cản).
+
+## Bước chân bằng mã (2026-11-21, lần thử thứ ba)
+Clip đi của Meshy **không làm chân Golem cử động trong game** (chỉ lết) dù đã sửa tốc độ và Idle. Giờ Animator chỉ **giữ một tư thế đứng** (clip đi dừng ở khung hai chân khép) và `GolemRigFx` viết bước đi bằng mã (`GaitRules`): hông đung đưa ±24°, gối gập tới 40% khi chân vung tới, thân hạ thấp 5 cm mỗi lần chân chạm đất, tay đung đưa ngược chân, thân xoắn nhẹ, tất cả theo **quãng đường đã đi** (một vòng = 1,9 m ở cỡ gốc) nên chân không trượt. Mỗi lần chân chạm đất (pha 0,25 và 0,75): tiếng đạp, bụi, rung màn hình. Hướng xoay từng khớp tự đo lúc chạy (xem bàn chân và bàn tay dịch về đâu). Cỡ Golem trong hang giới hạn nhân 1,44 lần (1,2 lần trước đó, thêm 20%).
+
+## Chưa làm / rủi ro
+- Chưa kiểm trong Unity: hướng xoay tay, hướng lệch thân tự đo; lõi sáng bằng đèn điểm nên ở nơi sáng có thể khó thấy.
+- Chưa có clip vẽ riêng cho chiêu (tay chỉ xoay bằng mã trên clip đi), nên tay không cử động theo kiểu nhân vật thật.
+- Chưa có tiếng bước chân nặng khi đi.
+- Co-op: client chưa thấy hiệu ứng.

@@ -227,3 +227,123 @@ Co-op với nhiều người; kẻ săn vòng qua vật cản; mesh Blender; âm
 - [ ] Con mồi thật dùng được phòng vệ (Ốc Hồ rụt vỏ, Thỏ Lá ngoằn ngoèo…). Hoạt hình của họ (chớp mắt, hàm, lưỡi) có chạy cùng không.
 - [ ] Kích cỡ: slime mới sinh bị kẻ săn đuổi, slime lớn thì kẻ săn né (khối prefab của họ khác khối thử của mình).
 - [ ] Ba kỳ ngộ có sẵn của họ (Tia Nắng Đầu Tiên, Cầu Vồng Trong Thân, Hợp Âm Tinh Thể) **giờ nhận phần thưởng thật**: no, mở màu Cầu Vồng (F3), gene Hiếm trở lên.
+
+
+### H9. Trùm làm bằng Meshy (chưa ai thử trong Unity)
+Quy trình và trạng thái: `docs/MESHY_BOSSES.md`. Nhánh `claude/unity-test-maze`.
+
+**Chuẩn bị (một lần):** pull, đợi Unity biên dịch, Console không đỏ. Đã chạy bước tạo sinh vật hang của bên làm hang (phải có sẵn `Assets/_Project/Prefabs/Wildlife/CaoGio.prefab`, `ChimHangMe.prefab`, `CocHoGia.prefab`, `RanDungNham.prefab`, `BoCapThachAnh.prefab`). Rồi chạy theo thứ tự:
+1. `Evolve → Fix Meshy Materials` (nếu mô hình còn trắng/trơn).
+2. `Evolve → Build Cáo Gió (Meshy) Prefab`, `Build Chim Hang Mẹ (Meshy) Prefab`, `Build Golem Thạch Anh (Meshy) Prefab`, `Build Meshy Static Prefabs (Cóc, Rắn, Bọ Cạp, Chó Xương)`. Console in `[Meshy] Đã tạo ...` cho từng cái; lỗi đỏ thì chụp gửi.
+3. Menu thần F1, tab Sinh vật, mục Chúa Hang: tạo từng trùm. Menu ưu tiên prefab có "(Meshy)" (Console in dòng `[Menu] dùng prefab ...`). Đổi "Độ khó" để thử cỡ.
+
+**Cho mọi trùm:**
+- [ ] Có màu đúng (không trắng, không hồng/tím lòe loẹt), đứng trên mặt đất (không lún, không lơ lửng), mặt hướng về phía đi.
+- [ ] Cỡ hợp lý so với slime và hang (không quá bé/to); collider không quá lệch so với thân (đứng cạnh slime: nó có đâm xuyên không).
+- [ ] Không lỗi đỏ Console khi tạo, khi đi, khi chết, khi bị Vồ.
+- [ ] FPS không tụt rõ khi có 1–2 trùm trong tầm nhìn (ảnh màu 2048, mô hình 20 nghìn mặt).
+
+**Cáo Gió (Meshy):** đuôi vẫy mạnh hơn khi đi/ra đòn; thỉnh thoảng chớp mắt; vòng chân/vòng đuôi/ngọc/vòng gió bám đúng chỗ (nếu lệch: chụp ảnh); không còn khăn/áo choàng cũ. Giáo Gió vẫn bắn (mục H8).
+**Chim Hang Mẹ (Meshy):** chân bước khi đi; cánh rung nhẹ khi đứng, vỗ khi đi, vỗ mạnh khi ra đòn; mỏ khép lúc nghỉ, há và rung khi đòn hoặc thỉnh thoảng; mỏ không méo mặt. Cánh vỗ ngược hướng thì báo.
+**Golem Thạch Anh (Meshy):** đi và chạy bằng clip của Meshy (chuyển từ đứng sang đi khi di chuyển, sang chạy khi nhanh); không trượt chân quá; chưa có chiêu đánh riêng (chỉ cắn).
+**Cóc, Rắn, Bọ Cạp, Chó Xương (tĩnh):** chỉ xem hình dáng, màu, cỡ; chúng đi cứng đơ vì chưa có xương. Báo cái nào cần chỉnh (màu, cỡ, dáng) trước khi mình rig.
+
+### H10. Chó Xương (Meshy): bộ chiêu (chưa ai thử trong Unity)
+Thiết kế: `docs/superpowers/specs/2026-11-21-cho-xuong-moveset-design.md`. Chạy lại menu `Build Meshy Static Prefabs`, tạo Chó Xương từ menu thần (Chúa Hang), mở tab Combat để xem pha hiện tại.
+- [ ] **Chạy đuổi và đi:** clip Walk: chân chéo luân phiên, gối gập, đuôi vẫy; tốc độ bước theo tốc độ thật (không trượt chân quá); đứng yên thì thở nhẹ (clip Idle). Menu phải in `[Meshy] Đã tạo ...`, không báo thiếu clip.
+- [ ] **Vồ (clip Pounce):** nén thân rồi lao ~5 m, **bốn chân duỗi thẳng lúc lao (chân trước vươn ra, chân sau thẳng ra sau, không chạy chân)**, đầu vươn lên, hàm há; vồ hụt thì chó **lăn ra nằm nghiêng ngất ~2 s** rồi bật dậy (đánh nó lúc này thấy đau gấp rưỡi).
+- [ ] **Vồ trúng (đầu hướng về slime):** chó cắn chặt vào slime, hai chân trước ép lên; slime đứng yên và mất máu liên tục (~6/giây); hiện thanh vàng và chữ "ẤN A RỒI D LIÊN TỤC"; ấn xen kẽ A và D thì thanh đầy, slime thoát, chó bị hất lùi và loạng choạng ~1,2 s (đánh nó lúc này thấy đau gấp rưỡi); ấn một phím liên tục không có tác dụng; không ấn thì sau 8 s chó tự nhả.
+- [ ] **Cắn Nghiền** (gần): hàm há rộng rồi đớp khép lại thật nhanh.
+- [ ] **Chỉ nhảy khi đủ tầm:** đứng cách chó 3–5,5 m thì nó mới nén thân rồi vồ; đứng xa hơn thì nó tiến lại gần (hoặc phun xương) chứ không nhảy; nó đã nén thân mà bạn chạy ra xa quá ~7,5 m thì **nó hủy, đứng dậy chứ không lao vào khoảng không**; vồ rơi đúng chỗ bạn đứng (không vọt quá).
+- [ ] **Phun Xương** (cách 6–16 m): ngửa đầu há miệng rồi hất đầu, mảnh xương trắng xoay bay theo vòng cung kèm vệt trắng, trúng thì mất ~14 máu và vỡ tung; tránh được bằng cách chạy ngang.
+- [ ] **Âm thanh:** gầm khi báo trước Vồ, tiếng lao nặng, tiếng đập khi tiếp đất kèm bụi; Cắn có tiếng hàm đớp; Gầm có tiếng gầm dài và vòng sóng; Triệu Hồi có tiếng hú và đất bùng bụi; Phun Xương có tiếng vút. Âm là **tiếng thật (ElevenLabs)**, dứt khoát và nặng; chó trúng đòn thì có tiếng gừ ngắn. Báo lại tiếng nào chưa hợp (ghi tên chiêu) hoặc quá to nhỏ: mình tạo lại từng tiếng bằng `ONLY=hound_roar tools/voice/generate_hound_sfx.sh`.
+- [ ] **Nhạc nền:** khi chó bắt đầu tung chiêu hoặc bị đánh, nhạc chiến đấu vang lên (từ đầu bản); vẫn trao đòn thì nhạc giữ nguyên; dừng đánh khoảng 10 giây thì nhạc nhỏ dần trong ~5 giây rồi tắt; đánh lại thì nhạc bật lại; giết chó thì nhạc tắt dần ~1,5 giây. Nhạc không át tiếng hiệu ứng; chỗ nối lặp (sau ~56 giây) không bị khựng.
+- [ ] **Cào Xé** (gần, ≤ 3,5 m): ngẩng đầu và giơ một chân trước lên rồi quét xuống; lần sau đổi chân kia.
+- [ ] Động tác rõ, **không giật**: báo trước đủ chậm để nhìn ra (nhanh hơn thì báo, ghi chiêu nào).
+- [ ] Cỡ Chó Xương bằng khoảng một nửa bản đầu; hồi chiêu dài hơn trước (không ra đòn dồn dập).
+- [ ] Chân bước đầu gối gập nhẹ khi vung chân (thấy chân cử động tự nhiên hơn bản trước).
+- [ ] Xoay chân trước (khi chạy): xương sườn và lưng **không** bị kéo theo chân.
+- [ ] **Nhảy Vượt:** gần một bục thấp (≤ 1,5 m) khi đuổi thì nó nhảy lên; không có bục thì không nhảy.
+- [ ] **Gầm** (khi máu dưới 66%): ngửa đầu há miệng, rung, vòng đỏ 8 m dưới đất; con mồi nhỏ trong 8 m bỏ chạy ~4 s; slime nhỏ hơn bị đẩy lùi và đứng đơ ~0,8 s.
+- [ ] **Triệu Hồi** (máu dưới 66%): ngửa đầu hú ~1,4 s, vòng nâu dưới đất; **3 con Chó Xương nhỏ (nửa cỡ) chui từ đất lên quanh nó** trong ~1,3 s, rồi lao vào cắn và cào (yếu hơn); sau ~25 s chìm xuống; trùm chết thì chúng chìm theo; không quá 6 con.
+- [ ] **Trúng đòn:** đầu giật nhẹ; đòn mạnh (≥ 12% máu) thì loạng choạng ~0,6 s.
+- [ ] Mõm không méo khi há (nếu méo: chụp ảnh).
+- [ ] Không lỗi đỏ Console; hàm há đúng chiều (xuống), cổ ngửa lên khi gầm (không cúi xuống).
+
+**Cảnh Ra Đời đang tắt mặc định để đỡ tốn thời gian thử** (`BirthScene.SkipScene`): vào game là có sẵn một Lõi và Khuyết Điểm ngẫu nhiên, không có cảnh chọn. Bật lại ở menu thần F1, tab Khác, ô "Bỏ qua cảnh Ra Đời" (bỏ tick), có hiệu lực từ lần vào game sau.
+
+### H11. Golem Thạch Anh (Meshy): bộ chiêu (chưa ai thử trong Unity)
+Thiết kế: `docs/superpowers/specs/2026-11-21-golem-moveset-design.md`. Chạy lại `Build Golem Thạch Anh (Meshy) Prefab` (khi đã dừng Play), tạo Golem từ menu thần (Chúa Hang), mở tab Combat để xem pha hiện tại.
+- [ ] **Đi và chạy** vẫn dùng clip Meshy; không thu nhỏ, không đứng đơ.
+- [ ] **Bước chân nặng:** mỗi bước chân chạm đất có tiếng đạp trầm, bụi dưới chân, màn hình rung nhẹ; khi đứng yên không có tiếng. Chân không còn lết, không kẹt vào vật cản (cỡ giờ giới hạn ~1,2 lần).
+- [ ] **Sức nặng:** mọi chiêu báo chậm rõ, ra đòn thì màn hình rung mạnh (Đập Đất, Lõi Nổ rung nhất), slime bị **hất văng** và **đứng đơ một chút** (~0,6–0,8 s), tảng đá rơi xuống đất cũng gây sát thương trong ~2,5 m.
+- [ ] **Đập Đất** (trong 5,5 m): giơ hai tay qua đầu và ngả ra sau (chậm, ~1,5 s), rồi bổ cả hai xuống; vòng nâu báo tầm 5,5 m, ba vòng sóng; bụi và sóng đất; né ra ngoài 5 m thì trượt. Có giáp lúc đập nên Vồ bị bật ra; lúc hồi 2 s đánh nó đau gấp rưỡi.
+- [ ] **Ném Đá** (cách 5–18 m): tay phải kéo ra sau rồi quăng; tảng đá to bay vòng cung; trúng ~16 máu; vỡ tung có bụi và tiếng đập đá.
+- [ ] **Giáp Tinh Thể** (máu dưới 66%): co hai tay che ngực, lõi sáng, **tinh thể vàng mọc ra trên hai vai và lưng**, tia tinh thể; trong 4 s đánh nó thấy mất ít máu hẳn (30%); sau đó hở.
+- [ ] **Lõi Nổ** (máu dưới 33%, trong 7 m): dang rộng hai tay, lõi ngực sáng dần rồi chớp, rồi nổ vòng 7 m với tiếng nổ lớn.
+- [ ] **Lõi sáng:** đèn ấm trong ngực đập nhẹ lúc nghỉ, chớp khi trúng đòn; hướng đặt đèn đúng ngực (báo nếu lệch).
+- [ ] **Nhạc riêng:** nhạc trống nặng, chậm, hợp "núi đá", vang lên khi bắt đầu giao chiến, nhỏ dần sau 10 giây yên, bật lại khi có đòn; không lẫn nhạc của Chó Xương.
+- [ ] **Âm thanh:** gằn khi báo trước, tiếng đập đất lớn, tiếng ném, tiếng đá vỡ, tiếng giáp tinh thể, tiếng nạp và nổ lõi, tiếng đau khi trúng đòn. Báo tiếng nào chưa hợp.
+- [ ] Tay xoay đúng hướng (giơ lên chứ không xoắn ra sau); không lỗi đỏ Console.
+
+### H12. Bộ kỹ năng chuẩn: Golem và Chó Xương (chưa ai thử trong Unity)
+Thiết kế: `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`. Dừng Play, chạy lại `Build Golem Thạch Anh (Meshy) Prefab` và `Build Meshy Static Prefabs`, tạo trùm mới.
+- [ ] **Golem, chân bước:** đi thì hai chân **luân phiên bước thật** (đùi vung, gối gập, thân hạ thấp mỗi bước, tay đung đưa ngược chân); dừng thì đứng thẳng; không lết, không trượt chân; mỗi bước có tiếng đạp, bụi, màn hình rung nhẹ. **Cỡ lớn hơn lần trước khoảng 20%.**
+- [ ] **Golem, 5 chiêu (không còn Ném Đá thường):** **Nện Đấm** (gần, xoay thân rồi đấm); **Quét Tay** (đánh thường tầm gần ≤ 3,6 m, dang tay rộng rồi quét ngang); **Húc Đầu** (combo, 4–14 m: hai tay che đầu, người thấp, lao tới CHẬM rồi NHANH DẦN; đâm vào tường thì choáng ~3 s, loạng choạng, rung đất, đá bắn; trúng người chơi thì hất văng); **Giáng Thạch** (4–16 m, các thao tác đều chậm: giơ tay chỉ về phía bạn, lấy đà ngồi thấp, nhảy vọt lên trời, vòng đỏ dưới đất không đuổi theo; đáp xuống khụy gối, đứng dậy từ từ, rồi GẦM một tiếng rất lớn: bốn vòng sóng âm lan ra và hất văng người chơi trong 12 m; sau đó mới đi tới từng cột đá, dang hai tay ôm cột và rút lên bằng 4 lần giật (~2,8 s: gồng và rung người, ngả ra sau mỗi lần kéo, cột chỉ nhích dần, bụi và tiếng gằn mỗi lần; lần cuối mới bật lên), vác cột qua đầu (tay phải giơ cao, tay trái giơ bên cạnh), ném, rồi giữ dáng sau cú ném (người chúi, tay trái dang ra, tay phải gập bên đầu) ~0,8 s, rồi sang cột kế; 4 cột); **Lõi Nổ** chỉ khi máu ≤ 25%.
+- [ ] **Golem, nghỉ thở và âm thanh riêng từng chiêu:** sau mỗi chiêu Golem khụy hẳn hai gối xuống đất trong ~1 s, cúi người, một tay chống xuống đất, tay kia đặt lên gối, ngực phập phồng, thở hổn hển; hết giờ thì dùng cả hai tay chống gối để đứng dậy từ từ (~1,5 s). Húc Đầu: sau cú lao, nếu người chơi còn trong tầm, nó nối liền Nện Đấm rồi Quét Tay (đòn ra nhanh hơn thường) rồi không nghỉ thở, đi vòng đánh giá; Nện Đấm đứng riêng cũng nối sang Quét Tay (CHỈ sau Giáng Thạch, 5 s; các chiêu khác không nghỉ thở, đâm tường thì choáng); lúc đó đánh nó chịu thêm sát thương. Giáng Thạch KHÔNG bị cắt ngang: nhổ và ném đủ 4 cột rồi mới nghỉ, không có Húc Đầu chen vào giữa. Mỗi chiêu có tiếng riêng: Nện Đấm (gồng, cú đấm), Quét Tay, Húc Đầu (nạp, chạy, đâm tường), Giáng Thạch (chỉ tay gằn, nhảy, đáp đất, gầm, cột đất, gằn khi kéo, phi cột), thở hổn hển. Nhạc trận: Console phải có dòng "[Nhạc trùm] phát golem_battle" khi bắt đầu đánh; nếu thay vào đó là cảnh báo "Chưa có" hoặc "con trỏ Git LFS" thì chạy `git lfs pull` rồi Play lại.
+- [ ] **Golem, đi vòng đánh giá con mồi và nhịp chiêu:** giữa hai chiêu (2,5–4,5 s sau khi xong một chiêu, trừ lúc nghỉ thở) Golem đi vòng quanh bạn ở khoảng 6,5 m, mắt vẫn hướng về bạn, thỉnh thoảng đổi chiều, rồi mới ra chiêu kế. Hồi chiêu: Nện Đấm 3 s, Quét Tay 4 s (đánh thường dày hơn), Húc Đầu 24 s, Giáng Thạch và Lõi Nổ 55 s. Húc Đầu nối 4 đòn thường (Nện Đấm, Quét Tay, Nện Đấm, Quét Tay) trước khi nghỉ. Nghỉ thở: tay phải phải chạm sàn khi chống (người cúi sâu, tay tự với xuống tới sàn); nếu tay còn lơ lửng, ghi lại khoảng cách.
+- [ ] **Golem, chuyển động chi tiết:** đi nặng (thân đảo nhẹ theo từng bước); chạy tới gai thì sải chân rộng, gối gập sâu, người chúi về trước; Nện Đấm: xoay thân ra sau rồi vặn xuyên qua kèm bước chân trước; Ném Đá: chân trước chống, xoay người như người ném; Đập Đất: hạ thấp người theo cú đập; Giáng Thạch: ngồi thấp lấy đà, bật lên, co chân trên trời, duỗi chân xuống rồi khuỵu gối đỡ cú đáp; trúng đòn thì giật người ra sau rồi ổn định lại. Ghi lại động tác nào còn cứng hoặc xuyên hình.
+- [ ] **Lõi sáng:** đèn ấm trong ngực đập nhẹ lúc nghỉ, chớp khi trúng đòn; hướng đặt đèn đúng ngực (báo nếu lệch).
+- [ ] **Nhạc riêng:** nhạc trống nặng, chậm, hợp "núi đá", vang lên khi bắt đầu giao chiến, nhỏ dần sau 10 giây yên, bật lại khi có đòn; không lẫn nhạc của Chó Xương.
+- [ ] **Âm thanh:** gằn khi báo trước, tiếng đập đất lớn, tiếng ném, tiếng đá vỡ, tiếng giáp tinh thể, tiếng nạp và nổ lõi, tiếng đau khi trúng đòn. Báo tiếng nào chưa hợp.
+- [ ] Tay xoay đúng hướng (giơ lên chứ không xoắn ra sau); không lỗi đỏ Console.
+
+### H12. Bộ kỹ năng chuẩn: Golem và Chó Xương (chưa ai thử trong Unity)
+Thiết kế: `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`. Dừng Play, chạy lại `Build Golem Thạch Anh (Meshy) Prefab` và `Build Meshy Static Prefabs`, tạo trùm mới.
+- [ ] **Golem, chân bước:** đi thì hai chân **luân phiên bước thật** (đùi vung, gối gập, thân hạ thấp mỗi bước, tay đung đưa ngược chân); dừng thì đứng thẳng; không lết, không trượt chân; mỗi bước có tiếng đạp, bụi, màn hình rung nhẹ. **Cỡ lớn hơn lần trước khoảng 20%.**
+- [ ] **Golem, 5 chiêu:** Nện Đấm (gần, đấm một tay), Đập Đất (vùng 5,5 m), Ném Đá (xa 5–18 m), **Chộp Nghiền** (cách 3–7 m: chộp và bóp, hiện thanh và dòng "BỊ BÓP! ẤN SPACE LIÊN TỤC", thoát được thì Golem loạng choạng, không thoát sau ~8 s thì bị đập xuống ~22 sát thương và văng), **Lõi Nổ** chỉ khi máu ≤ 25%.
+- [ ] **Golem, nội tại:** trúng đòn mất ít máu hơn bình thường (−20%); máu ≤ 66% thì **tinh thể mọc ra trên vai và lưng** và còn nhận ít hơn nữa; để yên ≥ 8 giây thì máu hồi dần.
+- [ ] **Chó Xương, 5 chiêu:** Cắn Nghiền và Cào Xé (thường), Phun Xương (xa), **Vồ** (đặc biệt: trúng thì cắn chặt, ấn xen kẽ A/D), **Triệu Hồi** chỉ khi máu ≤ 25%. Không còn Gầm và Nhảy Vượt.
+- [ ] **Chó Xương, nội tại Khát Máu:** máu ≤ 50% thì chạy nhanh hơn rõ.
+
+- [ ] **Chim Hang Mẹ, âm thanh và nhạc (chưa có bộ chiêu, mới gắn phần có sẵn):** khi nó chiến đấu nhạc `bird_battle` phát (Console: "[Nhạc trùm] phát bird_battle"); mỗi nhịp vỗ cánh trong trận có tiếng vỗ cánh; tiếng rít khi nó tự há mỏ; tiếng kêu đau khi trúng đòn. Các tiếng của từng chiêu (mổ, vả cánh, bắn lông, quắp, bổ nhào, rít gầm) đã tạo sẵn trong Resources/Sfx/Bird/ chờ có bộ chiêu để gắn.
+
+- [ ] **Chim Hang Mẹ theo bộ chiêu chuẩn:** Mổ (gần) và **Vả Cánh** (quét cánh ≤ 3,6 m, vòng gió xanh, đẩy người chơi) là hai đòn thường; Chém Gió là đòn xa (từ 5 m); **Bổ Nhào** là chiêu đặc biệt (vòng đỏ báo, né được, không mini game); Quắp là chiêu combo; khi máu ≤ 25% nó **Rít Gầm** (rít, ba vòng sóng xanh, choáng và hất văng trong 9 m) rồi bổ nhào 3 lần liên tiếp. Nội tại Lướt Gió: nhanh hơn 20% và các kỹ năng hất văng của bạn không làm nó lùi.
+
+- [ ] **Phase và đọc người chơi (Golem, Chim, Chó Xương):** khi máu xuống dưới 66% và 33% trùm dừng lại gầm một tiếng (Console: "[Pha trùm] ... vào pha 2/3"), bốn vòng sóng, đẩy nhẹ bạn, và **không bị trúng đòn nào** trong lúc gầm (đánh không mất máu). Sau đó chiêu ra dày hơn, ít đi vòng hơn, Golem có thêm cột đá. Đọc người chơi: dí sát thì nó đánh thường nhiều hơn; đứng xa thì nó dùng đòn xa và Giáng Thạch; chạy vòng ở tầm trung thì nó dùng Húc Đầu; né Húc Đầu cùng một bên 3 lần thì lần sau nó lao lệch về bên đó; đá ném bay tới chỗ bạn sắp chạy tới.
+
+- [ ] **Golem: bước chân bốn hướng và đá ném thật:** Golem đi lùi thì chân bước ngược chiều, đi ngang (đi vòng quanh bạn) thì chân bước ngang (dang ra rồi khép vào) chứ không bước tới-lui; bước dài hơn và chậm hơn (khoảng 1 bước mỗi giây khi đi thường); khi bắt đầu đi nó tăng tốc dần (~0,5 s) thay vì bật tốc độ ngay. Giáng Thạch: cột đá nó nhổ lên **chính là vật bay đi** (mũi nhọn hướng về phía trước, xoay quanh trục như lao), không còn quả cầu thay thế; vỡ tại chỗ khi chạm tường hoặc đất.
+- [ ] **Ba giai đoạn hiệu ứng cho mọi chiêu của Golem, Chim, Chó Xương:** (1) **gồng** trong lúc báo trước: bụi và tia lửa hội tụ, mạnh dần, chiêu lớn có hạt xoay quanh người và các vòng sóng báo trên đất; (2) **va chạm** (như cũ); (3) **dư chấn** trong lúc hồi: tàn lửa bay lên chậm, bụi lắng, vết đen mờ dần trên đất. Chiêu càng lớn hiệu ứng càng lớn: Ultimate > Đặc biệt > Combo > Đánh xa > Đánh thường. Màu theo loài: Golem vàng cam, Chim xanh ngọc, Chó Xương trắng ngà.
+
+- [ ] **Golem dạng rìu (kế hoạch 2026-11-22, chưa kiểm chứng trong Unity):** (1) dùng **Evolve → Build Golem Axe Prefabs** trước (dừng Play), không thì rìu là hình khối tạm; không có `Axe_Anchor` trong cảnh thì rìu tự cắm cách Golem 8 m. (2) Máu ≤ 50% và Golem đang rảnh: nó đi tới rìu, quay mặt nhìn bạn, **kéo nhọc nhằn 3 nhịp (~3,5 s)**: rìu rung và nhích lên, người nó gồng rồi ngả ra sau mỗi nhịp, bụi và tiếng gằn mỗi nhịp, **không bị cắt ngang**; ai lại gần trong 4 m bị hất văng (6 sát thương, choáng 1 s, mỗi người tối đa 1 lần mỗi 1,5 s) kèm cú vung tay; rút xong rìu hiện trong tay phải. (3) Dạng rìu: Chém Dọc (nối Chém Ngang rồi Chém Dọc), Chém Ngang (quét quanh 4 m), đòn thường dày hơn; **Ném Rìu** (6–20 m): cây rìu thật bay xoay đầu-đuôi tới chỗ bạn sắp chạy tới, cắm xuống đất tại điểm rơi (nếu rơi chỗ không tới được thì rơi dưới chân Golem); Golem tay không đánh bằng nắm đấm, sau tối thiểu 1,5 s nó đi nhặt rìu lại, lại kéo 3 nhịp; **Bổ Đất**: dải sóng dài 14 m rộng 2,4 m chạy thẳng, nhảy lên là né được. (4) Tư thế cầm rìu: góc lưỡi và cán là ước lượng, ghi lại nếu lưỡi không hướng về phía trước hoặc cán lệch.
+- [ ] **Phòng trùm (khối `BossRoom`):** đặt `BossRoom` vào gốc phòng theo `docs/BOSS_ROOM_CONTRACT.md`. Trùm tắt cho đến khi mọi người chơi còn sống bước vào `Activate_Zone`; đếm ngược 2 s, cửa thép đóng trong 1,5 s (có tiếng), 2 s sau trùm thức dậy (có tiếng và rung đất); trùm chết thì cửa mở; mọi người chơi chết thì cửa mở và trùm quay về chờ đầy máu.
+
+### H14. Hình học & đồ 3 phòng trùm: `BossRoom_Golem`, `BossRoom_Bird`, `BossRoom_Scorpion`
+Thiết kế: `docs/superpowers/specs/2026-11-22-boss-rooms-design.md`, hợp đồng: `docs/BOSS_ROOM_CONTRACT.md`, giao việc: `docs/BOSS_ROOMS_BRIEF.md`. Mỗi phòng là một cảnh riêng (`Assets/_Project/Scenes/BossRoom_*.unity`) và một prefab riêng (`Assets/_Project/Prefabs/BossRooms/BossRoom_*.prefab`), gắn sẵn `BossRoom` lên gốc phòng và dùng chung cửa thép `BossRoom_SteelDoor.fbx`.
+- [ ] **Dựng lại hoặc kiểm tra tự động (nếu cần):** dừng Play, mở `Evolve → Boss Rooms → Build, Validate & Capture All 3` (hoặc từng menu `Build ... Boss Room` / `Validate ... Boss Room`). Console báo đạt hợp đồng cho cả 3 phòng (`trần giữa >= 30 m`, `tường kín 100%`, `Axe_Anchor không có collider`, `BossRoom` đã gắn).
+- [ ] **Phòng 1 — `BossRoom_Golem` ("Lò Tinh Thể"):**
+  - Mở `BossRoom_Golem.unity` và bấm Play: slime đứng ở `Player_Entry`, nhìn thấy cả phòng (màu xám thạch anh + ánh vàng cam ấm + đỏ gỉ), 6 cột đá `Prop_Pillar_01..06` quấn xích gỉ (có 1 cột đổ nghiêng, 1 cột gãy đôi), 8 cụm `Prop_Crystal_01..08` (vài cụm bị đập vỡ rải vụn), đường ray & xe goòng gỉ đứt ngang bên trái lối vào, 3 tượng nhỏ thất bại nửa chìm gần tường.
+  - Ở `Axe_Anchor` `(0, 0.06, 0)` có đúng con `GolemAxe_Planted` (từ `Assets/_Project/Resources/Props/GolemAxe_Planted.prefab`) chạm mặt khối đá lõi với mạng nhện nứt sáng quanh rìu, **không có bậc thang gần rìu và đi xuyên qua rìu không bị vướng collider**.
+  - Khoảng giữa phòng đường kính ~30 m thông thoáng, vách kín không khe hở, trần cao `~34,5 m`, `Door_Steel` treo mở tại `Door_Open_Pos` và khi kéo xuống `Door_Closed_Pos` thì bịt kín hoàn toàn lối vào `4,8 × 7,2 m`.
+- [ ] **Phòng 2 — `BossRoom_Bird` ("Tổ Kền Kền"):**
+  - Mở `BossRoom_Bird.unity` và bấm Play: hang cao vút (`trần ~38,5 m`), ánh xanh ngọc lạnh, cổng vào **vòm xương khổng lồ** + sọ thú, ổ lông & xương `Boss_Wait` ở phía Bắc `(0, 0, 21)`, 6 ụ đá/xương cao `Prop_Perch_01..06` (`2,8–5,8 m`) rải ở vòng ngoài, 4 cụm `Prop_Crystal_01..04`.
+  - Giữa phòng thoáng rộng và **không có bất kỳ vật cản nào trong ≥ 9 m trên đầu** để Chim Bổ Nhào và Quắp chạy tự do.
+- [ ] **Phòng 3 — `BossRoom_Scorpion` ("Bãi Cát Tinh Thể", tạm):**
+  - Mở `BossRoom_Scorpion.unity` và bấm Play: bãi cát và đá sa thạch nâu đỏ phân tầng, cổng vào **vòm đá cát bị gió xói mòn**, vùng cát lún xoáy `r ~ 8,5 m` tại `Boss_Wait` `(0, -0.1, 10)`, 6 tảng đá thấp `Prop_Pillar_01..06` (`1,5–1,95 m`) làm chỗ núp Phóng Gai / kẹt càng Lao Kẹp, 8 cụm tinh thể tím mọc lởm chởm `Prop_Crystal_01..08`, trần kín `~31,5 m`.
+- [ ] **Hợp đồng chung trên cả 3 Prefab/Scene:** đủ `Player_Entry`, `Boss_Wait`, `Activate_Zone` (`isTrigger = true`, cách `Door_Mouth` `8,5 m > 6 m`), `Room_Bounds` (`isTrigger = true`), `Door_Mouth` (`+Z` hướng vào trong phòng), `Door_Steel` (có `BoxCollider` chặn, không đánh dấu static), `Door_Open_Pos`, `Door_Closed_Pos`. Console sạch không lỗi đỏ (khi thử phòng trống chưa đặt prefab trùm gần `Boss_Wait` chỉ có 1 warning vàng dự kiến từ `BossRoom`).
+
+### H15. Hình học, đồ & đặt sẵn trùm 4 phòng Đợt 2: `BossRoom_Hound`, `BossRoom_Fox`, `BossRoom_Toad`, `BossRoom_Snake`
+Thiết kế: `docs/superpowers/specs/2026-11-22-boss-rooms-wave2-design.md`, hợp đồng: `docs/BOSS_ROOM_CONTRACT.md`. Khác Đợt 1 ở chỗ: trong **Scene** (`BossRoom_*.unity`), builder đặt sẵn prefab trùm tương ứng tại `Boss_Wait` và nối vào trường `boss` của `BossRoom`; **Prefab** (`Assets/_Project/Prefabs/BossRooms/BossRoom_*.prefab`) vẫn giữ sạch không chứa instance trùm.
+- [ ] **Dựng & kiểm tra tự động trong Unity:** dừng Play, chạy `Evolve → Boss Rooms → Build, Validate & Capture Wave 2` (hoặc từng menu `Build Hound/Fox/Toad/Snake Boss Room`). Console báo đạt hợp đồng cả 4 phòng và đã đặt trùm tại `Boss_Wait`; kiểm tra ảnh chụp thật `docs/art/previews/unity_bossroom_{hound,fox,toad,snake}_{entry,door}.png`.
+- [ ] **Phòng 1 — `BossRoom_Hound` ("Nghĩa Địa Cự Thú"):**
+  - Mở `BossRoom_Hound.unity` và bấm Play: vòm Hàm & Xương Đùi Cự Thú kèm xích đen-xanh đứt, 6 cột xương sườn quấn xích `Prop_Pillar_01..06`, 4 bục hộp sọ & đốt sống `Prop_Perch_01..04` (`0,9–1,4 m`), 6 cụm ma trơi xanh lam/lục `Prop_Crystal_01..06`, 5 ổ triệu hồi & vết cào sát sàn đi trơn không vấp.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `ChoXuong (Meshy)` thức dậy từ ổ khung xương sườn tại `Boss_Wait` `(0, 0, 21)`.
+- [ ] **Phòng 2 — `BossRoom_Fox` ("Khe Gió Hú"):**
+  - Mở `BossRoom_Fox.unity` và bấm Play: trần cao `~36 m`, vòm Đá Xoáy Phong Thạch, 6 cột đá phiến xoắn ốc chịu vết Giáo Gió `Prop_Pillar_01..06`, 4 mỏm đá vòng ngoài `Prop_Perch_01..04`, 6 cụm tinh thể nghiêng `45°`, 6 hốc Chồn Khe sát tường (không chắn lối cửa Nam), vân cát xoáy sát sàn đi trơn.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `CaoGio (Meshy)` thức dậy từ bệ đá phiến lưỡi liềm tại `Boss_Wait` `(0, 0, 22)`.
+- [ ] **Phòng 3 — `BossRoom_Toad` ("Đầm Rễ Cổ"):**
+  - Mở `BossRoom_Toad.unity` và bấm Play: mạng rễ đại thụ đan kín trần `~32 m`, vòm Rễ Cổ Thụ Đan Đá, 6 trụ rễ đan đá rêu `Prop_Pillar_01..06`, 8 cụm nấm phát quang xanh cốm `Prop_Crystal_01..08`, rãnh trượt Lưỡi Bắn, vũng nhầy xanh & vỏ Ốc Hồ đi trơn qua không kẹt.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `CocHoGia (Meshy)` thức dậy từ đệm rễ tại `Boss_Wait` `(0, 0, 20)`.
+- [ ] **Phòng 4 — `BossRoom_Snake` ("Hố Mạch Dung Nham"):**
+  - Mở `BossRoom_Snake.unity` và bấm Play: trần kín `~31,5 m`, vòm Cột Bazan Nứt Dung Nham, 6 cụm cột bazan lục giác `Prop_Pillar_01..06` (mặt trong nung đỏ sém, mặt ngoài nguội đen), 8 ụ ống khói lưu huỳnh `Prop_Crystal_01..08`, rãnh trườn chữ S phát sáng sát sàn & xác vỏ rắn lột dọc vách Đông-Bắc.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `RanDungNham (Meshy)` thức dậy từ ổ bazan viền dung nham tại `Boss_Wait` `(0, 0, 21)`.
