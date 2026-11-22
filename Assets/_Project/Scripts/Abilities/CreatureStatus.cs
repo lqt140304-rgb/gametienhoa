@@ -47,6 +47,7 @@ namespace Evolve.Abilities
         /// <summary>Slide the creature at <paramref name="velocity"/> (flat) for <paramref name="seconds"/>, following the ground.</summary>
         public static void Knock(Component creature, Vector3 velocity, float seconds)
         {
+            if (ResistsDisplacement(creature)) return;
             if (Evolve.Combat.PassiveRules.NoKnockback(creature.name)) return;   // Lướt Gió: it rides the wind
             var s = On(creature);
             velocity.y = 0f;
@@ -55,9 +56,13 @@ namespace Evolve.Abilities
             s.groundOffset = Evolve.World.GroundHeight.OffsetOf(creature.transform.position);
         }
 
+        public static bool ResistsDisplacement(Component creature) =>
+            creature.TryGetComponent(out Evolve.Creatures.PreyDefense defense) && defense.ResistsDisplacement;
+
         void FixedUpdate()
         {
             if (!Knocked) return;
+            if (ResistsDisplacement(this)) { knockUntil = 0f; return; }
             if (rb == null && !TryGetComponent(out rb)) return;
             if (TryGetComponent(out Evolve.Creatures.CreatureMotor m)) { if (!m.Move(knockVelocity, knockVelocity.magnitude, false)) knockUntil = 0f; }   // a wall stops the slide
             else rb.MovePosition(Evolve.World.GroundHeight.Follow(rb.position + knockVelocity * Time.fixedDeltaTime, groundOffset));

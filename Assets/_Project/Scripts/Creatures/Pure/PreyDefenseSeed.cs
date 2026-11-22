@@ -21,8 +21,8 @@ namespace Evolve.Creatures
         public static IReadOnlyList<PreyDefenseDef> All { get; } = new List<PreyDefenseDef>
         {
             // Hang Khởi Sinh
-            D("bo_canh_cung", "Bọ Cánh Cứng Nhỏ", "Hang Khởi Sinh", 1, new PreyDefenseDef { AlertRange = 5f, EscapeCooldown = 6f, SpeedBoost = 1.6f, SpeedSeconds = 2f, CounterDamage = 2f, CounterCooldown = 3f }),
-            D("oc_ho", "Ốc Hồ", "Hang Khởi Sinh", 1, new PreyDefenseDef { AlertRange = 3f, EscapeCooldown = 12f, GuardSeconds = 3f, GuardDamageTaken = 0.5f, BlocksCatch = true, CounterDamage = 2f, CounterCooldown = 4f }),
+            D("bo_canh_cung", "Bọ Cánh Cứng Nhỏ", "Hang Khởi Sinh", 1, new PreyDefenseDef { AlertRange = 2f, EscapeCooldown = 8f, GlideWindup = 0.35f, CounterDamage = 2f, CounterCooldown = 3f }),
+            D("oc_ho", "Ốc Hồ", "Hang Khởi Sinh", 1, new PreyDefenseDef { AlertRange = 3f, EscapeCooldown = 12f, GuardSeconds = 3f, GuardDamageTaken = 0.5f, GuardRecovery = 1f, GuardRecoveryDamage = 1.25f, BlocksCatch = true, CounterDamage = 2f, CounterCooldown = 4f }),
             // Vườn Quặng Cầu Vồng
             D("dom_dom", "Đom Đóm Sắc Màu", "Vườn Quặng Cầu Vồng", 1, new PreyDefenseDef { EscapeCooldown = 10f, SpeedBoost = 1.5f, SpeedSeconds = 2f, ObscureRadius = 4f, ObscureSeconds = 1f }),
             D("tho_la", "Thỏ Lá", "Vườn Quặng Cầu Vồng", 2, new PreyDefenseDef { EscapeCooldown = 6f, SpeedBoost = 1.8f, SpeedSeconds = 2.5f, Zigzag = true, CounterPush = 5f, CounterCooldown = 5f }),

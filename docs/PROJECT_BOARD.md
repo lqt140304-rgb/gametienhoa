@@ -16,6 +16,7 @@
 | **Phiên Chim Hang Mẹ** | kền kền Dreadwing: model, rig, chiêu bay, âm thanh gắn chiêu | `Bird*`, `Pure/BirdRules.cs`, `Models/Wildlife/Meshy/*Dreadwing*`, `tools/voice/generate_bird_sfx.sh` | đã theo bộ chuẩn (Vả Cánh, Rít Gầm, Lướt Gió); phần Unity chưa kiểm chứng | động tác riêng cho Vả Cánh và Rít Gầm |
 | **Phiên dựng map** | 3 phòng trùm (Golem, Chim, Bọ Cạp): hình học, cửa thép, builders | `Editor/BossRoom*Builder.cs`, `Scenes/BossRoom_*.unity`, `Prefabs/BossRooms/`, `Models/Underroot/BossRoom_*` | **PR #127 đang mở** (rất lớn: 1653 file); phòng Golem chờ đặt Golem để thử | thử phòng Golem trong Unity (menu **Evolve → Boss Rooms → Place Golem In The Open Boss Room**), rồi chim và bọ cạp |
 | **Phiên Bọ Cạp** | chưa bắt đầu (bộ chiêu chưa được duyệt) | `Scorpion*` (chưa có) | chưa bắt đầu | đề xuất bộ chiêu cho chủ dự án duyệt trước |
+| **Phiên Codex Hang 01** | AI, kỹ năng và VFX Bọ Cánh Cứng Nhỏ, Ốc Hồ, Thằn Lằn Bờ Hồ | `PreyDefense*`, `HangOneGround.cs`, `CreatureCombat.HangOne.cs`, `HangOneSkillsTests.cs`; khối tích hợp nhỏ trong AI/combat dùng chung | **PR #125**, commit `8264aae4`; 93/93 EditMode đạt, đã xem fixture Unity sáng/tối; đã sửa một lưỡi và xoắn thân ốc | đồng bộ nhánh chung; kiểm tra toàn cảnh Hang 01 và co-op hai máy |
 | **Nhóm cave "Antigravity"** | hang, mê cung, thế giới | `World/`, `Maze/`, `Editor/Cavern*`, `Slime_Cavern.unity` | ngoài phạm vi các phiên trùm | (họ tự quản) |
 | **Phiên "Golem Thạch Anh testing"** (máy chủ dự án) | test trong Unity, Unity MCP | tùy việc | đang chờ chủ dự án trả lời | (xem phiên đó) |
 

@@ -36,7 +36,7 @@ namespace Evolve.Creatures
         /// <summary>Until this time it has learned to watch for that slime from farther away.</summary>
         public float RememberSlimeUntil { get; set; }
         float provokedUntil;
-        bool Calm => CaveTier.IsCalm(Gentle, provokedUntil, Time.time);
+        internal bool Calm => CaveTier.IsCalm(Gentle, provokedUntil, Time.time);
 
         /// <summary>Cave tier tuning: multiplies bite damage, detection range, and speeds (see CreatureTuning).</summary>
         public void ScaleDanger(float damage, float detect, float speed, float size = 1f)
@@ -159,6 +159,7 @@ namespace Evolve.Creatures
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             if (!TryGetComponent(out locomotion)) locomotion = gameObject.AddComponent<CreatureLocomotion>();
             if (Evolve.Combat.MovesetSeed.Has(name) && !TryGetComponent(out combat)) combat = gameObject.AddComponent<Evolve.Combat.CreatureCombat>();   // telegraphed attacks
+            if (SpeciesNames.Key(name) == "thanlanboho" && !TryGetComponent<CreatureBrain>(out _)) gameObject.AddComponent<CreatureBrain>();
             Health = maxHealth;
             lastAteAt = Time.time - UnityEngine.Random.Range(FullSeconds + HungerRiseSeconds * 0.1f, FullSeconds + HungerRiseSeconds * 0.7f);   // they start at different, already noticeable hunger, so they hunt soon
             HomeCenter = transform.position;
@@ -302,6 +303,7 @@ namespace Evolve.Creatures
         void Strike(Transform victim, bool meal)
         {
             if (victim == null || !victim.TryGetComponent(out IDamageable damageable)) return;
+            combat?.BreakCamouflage();
             locomotion?.PlayAction("Attack");
             damageable.TakeDamage(biteDamage, null);
             bool dead = damageable is Prey p ? p.Health <= 0f : damageable is Predator h && h.Health <= 0f;
@@ -322,6 +324,7 @@ namespace Evolve.Creatures
 
                 nextBite = Time.time + biteCooldown;
                 target = p;
+                combat?.BreakCamouflage();
                 if (combat == null) retreatUntil = Time.time + retreatTime;
                 NetWorld.BiteRemote?.Invoke(p, biteDamage, Flat(p.transform.position - transform.position) * knockback);
 
