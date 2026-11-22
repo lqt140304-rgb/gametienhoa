@@ -6,13 +6,27 @@ Game sinh tồn tiến hóa 3D Low Poly, co-op 4–8 người. Người chơi b�
 - Dựng scene prototype: [`docs/PROTOTYPE_01_SETUP.md`](docs/PROTOTYPE_01_SETUP.md)
 - Lộ trình: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - **Cơ chế và kỹ năng của slime (bản mới nhất):** [`docs/SLIME_MECHANICS.md`](docs/SLIME_MECHANICS.md)
-- Trùm Chúa Hang làm bằng Meshy, quy trình và trạng thái: [`docs/MESHY_BOSSES.md`](docs/MESHY_BOSSES.md)
+- Trùm Chúa Hang: quy trình Meshy và trạng thái từng trùm [`docs/MESHY_BOSSES.md`](docs/MESHY_BOSSES.md); bộ kỹ năng chuẩn [`docs/superpowers/specs/2026-11-21-boss-standard-kit.md`](docs/superpowers/specs/2026-11-21-boss-standard-kit.md); phòng trùm [`docs/BOSS_ROOMS_BRIEF.md`](docs/BOSS_ROOMS_BRIEF.md) và [`docs/BOSS_ROOM_CONTRACT.md`](docs/BOSS_ROOM_CONTRACT.md)
 - Trạng thái từng mục và danh sách thử tay: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md), [`docs/TEST_CHECKLIST_UNITY.md`](docs/TEST_CHECKLIST_UNITY.md)
-- **Trạng thái:** đang thiết kế, chưa có project Unity.
+- **Ai đang làm gì:** [`docs/PROJECT_BOARD.md`](docs/PROJECT_BOARD.md)
+
+## Trạng thái
+
+Đã có project Unity (`Assets/_Project`) với các cảnh `Prototype_01`, `Underroot_Lake`, `Slime_Cavern`, `TestArena` và ba phòng trùm `BossRoom_Golem`, `BossRoom_Bird`, `BossRoom_Scorpion`. Logic thuần C# có test tự chạy ngoài Unity (hiện khoảng 590 test, xem `tools/cstest`); **mọi thứ về cảnh, prefab, menu Editor và hiển thị đều cần người thử trong Unity** (danh sách thử ở `docs/TEST_CHECKLIST_UNITY.md`).
+
+**Trùm Chúa Hang** (mỗi trùm theo bộ chuẩn: 2 đánh thường, 1 đánh xa, 1 nội tại, 1 đặc biệt có thử thách, 1 ultimate ≤ 25% máu, tối đa 1 combo):
+
+| Trùm | Bộ chiêu | Ghi chú |
+|---|---|---|
+| Golem Thạch Anh | xong (tay không và dạng rìu) | phase, đọc người chơi, phòng riêng |
+| Chim Hang Mẹ | xong | phase, đọc người chơi, phòng riêng |
+| Chó Xương | xong | phase, đọc người chơi |
+| **Bọ Cạp Thạch Anh** | xong (Phóng Gai, Vỏ Pha Lê, Châm Choáng, Giáng Đuôi, Đào Chui, Lao Kẹp, Bùng Pha Lê) | mô hình Meshy gắn xương bằng Blender, 28 clip (đi 4 hướng, ba pha mỗi chiêu, 30 khóa), nhịp trận, phòng riêng; nhạc trận chưa có |
+| Cóc Hồ Già, Rắn Dung Nham, Cáo Gió | đề xuất, chưa duyệt | |
 
 ## Công nghệ
 
-Unity 6 + URP (ghi đúng phiên bản Editor vào đây khi tạo project), C#, Blender, Shader Graph, Netcode for GameObjects.
+Unity 6.6 (`6000.6.9f1`) + URP, C#, Blender (script `bpy` trong `tools/blender`), Shader Graph, Netcode for GameObjects. Âm thanh và nhạc làm bằng ElevenLabs (`tools/voice`), mô hình trùm bằng Meshy.
 
 ## Thiết lập repo
 
@@ -20,15 +34,24 @@ Unity 6 + URP (ghi đúng phiên bản Editor vào đây khi tạo project), C#,
 2. Trong Unity, vào **Project Settings → Editor**, đặt *Asset Serialization = Force Text* và *Version Control = Visible Meta Files*.
 3. `.gitignore` đã loại trừ `Library/`, `Temp/`, `Logs/`, `UserSettings/`… Không commit các thư mục này.
 
-## Cấu trúc thư mục dự kiến
+## Cấu trúc thư mục
 
 ```
 Assets/_Project/
-  Scripts/            # C#: Core, Survival, Abilities, Organs, Networking
-  Art/                # Models, Materials, Shaders
-  Prefabs/
-  ScriptableObjects/  # Dữ liệu Dị Năng, cơ quan
-  Scenes/             # Prototype_01
+  Scripts/            # C# (một asmdef Evolve): Abilities, Combat, Creatures, Ecology, Maze, Net, Organs,
+                      #   Player, Survival, Swallow, Traits, Visuals, World ...; logic thuần ở thư mục con Pure/
+  Editor/             # menu Evolve → ... (dựng prefab, cảnh, phòng trùm)
+  Models/ Prefabs/    # mô hình (Meshy, Blender), prefab (quái, phòng trùm)
+  Resources/          # Sfx/<trùm>/ và Music/ (ElevenLabs)
+  ScriptableObjects/  # dữ liệu Dị Năng, cơ quan, loài
+  Scenes/             # Prototype_01, Underroot_Lake, Slime_Cavern, TestArena, BossRoom_*
+  Tests/EditMode/     # test của logic thuần
+tools/
+  cstest/             # chạy test logic thuần bằng .NET 8, không cần Unity: tools/cstest/run.sh
+  syntaxcheck/        # kiểm cú pháp C# bằng Roslyn khi không có Unity
+  blender/            # script bpy: dựng đồ, gắn xương và bake clip (ví dụ rig_scorpion.py)
+  voice/              # script ElevenLabs: tiếng chiêu và nhạc trận
+docs/                 # thiết kế, bảng việc, checklist test, specs/
 ```
 
 ## Quy ước
