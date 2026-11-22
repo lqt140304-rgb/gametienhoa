@@ -133,6 +133,7 @@ namespace Evolve.Creatures
         SurvivalStats target;
         Vector3 wanderDir;
         CreatureMotor motor;
+        float moveSpeed;
         float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite, blindUntil, lastAteAt;
 
         // ---- scene behaviour (CreatureBrain sets these; with no brain the old behaviour runs) ----
@@ -237,9 +238,11 @@ namespace Evolve.Creatures
                 }
             }
 
+            if (speed <= 0f) moveSpeed = 0f;
             if (dir.sqrMagnitude > 0.001f && speed > 0f)
             {
-                if (!motor.Move(dir, speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject)))
+                if (combat != null) moveSpeed = Mathf.MoveTowards(moveSpeed, speed, 5f * Time.fixedDeltaTime); else moveSpeed = speed;   // a moveset creature builds up speed instead of starting at full speed at once
+                if (!motor.Move(dir, moveSpeed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject)))
                 {
                     float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
                     wanderDir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));

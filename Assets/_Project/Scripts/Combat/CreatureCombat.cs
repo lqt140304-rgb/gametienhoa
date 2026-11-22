@@ -159,6 +159,7 @@ namespace Evolve.Combat
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale, MinIdle = CircleRules.IdleSeconds(name) };
             if (bird != null) scheduler.Allow = m => bird.CanUse(m, target);   // a grab needs a player it can carry
             SetupPhases();
+            if (PhaseRules.Has(name) && !TryGetComponent<MoveVfx>(out _)) gameObject.AddComponent<MoveVfx>();   // the charge and aftermath of every move
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
             foreach (var mv in moves) if (mv.Shape == MoveShape.Perch)
@@ -359,8 +360,9 @@ namespace Evolve.Combat
             if (heldRock == null) return;
             Vector3 from = heldRock.transform.position;
             Vector3 to = target != null ? AimAt(m.FlightSeconds, 0f) + Vector3.up * 0.2f : from + transform.forward * 8f;
-            MonsterProjectile.Launch(from, to, m.FlightSeconds, m.MissileDamage * DamageScale, 1f, false, m.MissileSize);
-            Destroy(heldRock.gameObject); heldRock = null;
+            var rock = heldRock; heldRock = null;
+            rock.Release();
+            MonsterProjectile.LaunchBody(rock.gameObject, to, m.FlightSeconds, m.MissileDamage * DamageScale, 1f);   // the real stone column flies, not a stand-in
             GolemFx.Hurl(from);
         }
 
