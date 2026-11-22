@@ -8,8 +8,12 @@ namespace Evolve.Combat
     /// </summary>
     public static class ScorpionRules
     {
-        /// <summary>Metres per second the baked walk clips cover at animator speed 1 (a 0.42 m step every half of a 20 frame cycle at 30 fps).</summary>
-        public const float ClipSpeed = 1.26f;
+        /// <summary>Metres per second the baked walk clips cover at animator speed 1 (a 0.5 m step every half of a 30 frame cycle at 30 fps).</summary>
+        public const float ClipSpeed = 1f;
+
+        /// <summary>Every walk and move clip has this many keys (30 at 30 fps span <see cref="ClipSeconds"/>); Idle, Hit, Death, Exposed and Stuck keep their own length.</summary>
+        public const int ClipKeys = 30;
+        public const float ClipSeconds = (ClipKeys - 1) / 30f;
 
         /// <summary>Animator speed while walking at <paramref name="speed"/> m/s, so the feet keep up with the ground (0.6 to 3).</summary>
         public static float WalkAnimSpeed(float speed) => Clamp(speed / ClipSpeed, 0.6f, 3f);
@@ -136,5 +140,29 @@ namespace Evolve.Combat
             !alreadyHit && distance <= MaxRadius && RingRadius(ring, t) >= distance && !InGap(ring, bearing, aimBearing);
 
         static float Wrap360(float a) { a %= 360f; return a < 0f ? a + 360f : a; }
+    }
+
+    /// <summary>A solid rock of a boss room (flat circle) the mound cannot dig through.</summary>
+    public readonly struct ScorpionRock
+    {
+        public readonly float X, Z, Radius;
+        public ScorpionRock(float x, float z, float radius) { X = x; Z = z; Radius = radius; }
+    }
+
+    /// <summary>The rocks of the scorpion's boss room (the Prop_Pillar boulders) stop the underground mound: hide behind one from Đào Chui.</summary>
+    public static class ScorpionRoomRules
+    {
+        public const float RockMargin = 1.2f;
+
+        public static bool CanDig(float x, float z, System.Collections.Generic.IReadOnlyList<ScorpionRock> rocks)
+        {
+            if (rocks == null) return true;
+            for (int i = 0; i < rocks.Count; i++)
+            {
+                float dx = x - rocks[i].X, dz = z - rocks[i].Z, r = rocks[i].Radius + RockMargin;
+                if (dx * dx + dz * dz <= r * r) return false;
+            }
+            return true;
+        }
     }
 }

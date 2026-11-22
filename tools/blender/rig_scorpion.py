@@ -10,8 +10,9 @@ glow gathers), Pede{L,R}{1..4}_A/_B (eight legs, front to back, upper and lower)
 Every clip is computed frame by frame (no sparse keys): the legs are solved with a small numeric IK to hit absolute foot targets, so a foot that is planted stays
 planted while the body crouches, rears or lunges. Weights: the nearest three bones, falling off with distance (a bone's radius counts as inside it).
 
-Clips (30 fps): Idle, Walk_F/B/L/R (the four directions, loops, each 20 frames), Hit, Death, Flick (the tail throws a crystal), Exposed and Stuck (loops: lying open, claws jammed in a wall), and for each move three clips named after the move's Anim:
+Clips (30 fps): Idle, Walk_F/B/L/R (the four directions, loops, each 30 frames), Hit, Death, Flick (the tail throws a crystal), Exposed and Stuck (loops: lying open, claws jammed in a wall), and for each move three clips named after the move's Anim:
 Tell_<Anim> (windup), Strike_<Anim> (cast) and Recover_<Anim> (after-cast), Anim in Sting, TailSlam, Volley, Burrow, Pinch, Burst.
+Every walk and move clip has exactly 30 keys (KEYS); the legs act in the moves too (legwork): braces, thrusts, wide plants, scraping.
 """
 import math
 import os
@@ -42,9 +43,10 @@ TAIL = [(0.0, 0.62, 0.50), (0.0, 0.88, 0.66), (0.0, 0.84, 0.92), (0.0, 0.66, 1.1
 CLAW = dict(shoulder=(0.26, -0.38, 0.55), elbow=(0.50, -0.58, 0.60), wrist=(0.46, -0.82, 0.45), tip=(0.24, -0.98, 0.33))
 ROOT = ((0.0, 0.55, 0.52), (0.0, -0.30, 0.52))
 
-STRIDE = 0.42      # metres a foot travels while planted in one step; the clip's base speed is STRIDE / (half the cycle time)
-CYCLE = 20         # frames of a walk loop
-CLIP_SPEED = STRIDE / (0.5 * CYCLE / FPS)   # = 1.26 m/s: ScorpionRules.ClipSpeed in C# must say the same
+STRIDE = 0.5       # metres a foot travels while planted in one step; the clip's base speed is STRIDE / (half the cycle time)
+CYCLE = 30         # frames of a walk loop (30 keys)
+KEYS = 30          # every walk and move clip has exactly this many keys (ScorpionRules.ClipKeys)
+CLIP_SPEED = STRIDE / (0.5 * CYCLE / FPS)   # = 1.0 m/s: ScorpionRules.ClipSpeed in C# must say the same
 
 
 def bone_specs():
@@ -391,7 +393,7 @@ def make_clips():
     c["Tell_Pinch"] = (24, False, lambda f: sample_keys([(0, P()), (16, wide), (24, P(body=dict(dz=-0.12, dy=0.14, pitch=-4, roll=1.2), tail=dict(wind=50, curl=-6), claws=dict(lift=14, spread=40, open=44)))], f))
 
     def charge(f):
-        base = walk_pose(f * 2, (0, -1), 1.0)
+        base = walk_pose(f * 2.5, (0, -1), 1.0)
         snap = ease(max(0.0, (f - 9) / 3.0))
         base["body"].update(dz=-0.10, pitch=-8, dy=-0.04)
         base["tail"].update(wind=24, sway=3 * math.sin(f))
@@ -441,7 +443,63 @@ def make_clips():
         return P(body=dict(dy=-0.16 + 0.03 * jerk, dz=-0.06, pitch=-9 + 2 * jerk, roll=shake(f, 2.2, 1.1), yaw=shake(f, 1.5, 0.8)), tail=dict(wind=34 + 6 * jerk, sway=shake(f, 6, 1.3)),
                  claws=dict(lift=6, spread=4 + 3 * jerk, open=-8))
     c["Stuck"] = (36, True, stuck)
-    return c
+    return thirty_keys(c)
+
+
+def legwork(name, t):
+    """Feet offsets (leg -> (dx, dy, dz)) a move clip adds on top of its body pose, t in 0..1: the legs brace, thrust, plant wide and scrape, so the whole animal acts, not only the tail and claws."""
+    e = ease(t)
+    out = {}
+    def put(legs, v, k=1.0):
+        for lg in legs:
+            out["Pede" + lg] = tuple(x * k for x in v)
+    front, mid, rear = ("L1", "R1"), ("L2", "R2"), ("L3", "R3", "L4", "R4")
+    if name == "Tell_Sting":                     # the back legs push, the front ones lift ready to stab
+        put(rear, (0, 0.07, 0), e); put(front, (0, 0, 0.05), e)
+    elif name in ("Strike_Sting", "Recover_Sting"):
+        k = ease(min(1.0, t * 2.5)) if name == "Strike_Sting" else 1.0 - e
+        put(front, (0, -0.14, 0.03), k); put(mid, (0, -0.07, 0), k)
+    elif name in ("Tell_TailSlam", "Strike_TailSlam", "Recover_TailSlam"):   # the front legs plant wide to take the weight of the blow
+        k = e if name == "Tell_TailSlam" else (1.0 if name == "Strike_TailSlam" else 1.0 - e)
+        for lg, sx in (("L1", 1), ("R1", -1)): out["Pede" + lg] = (0.10 * sx * k, 0, 0.02 * k)
+        for lg, sx in (("L2", 1), ("R2", -1)): out["Pede" + lg] = (0.06 * sx * k, 0, 0)
+    elif name == "Tell_Pinch":                   # the back legs scrape the ground like a bull
+        for i, lg in enumerate(("L4", "R4", "L3", "R3")):
+            out["Pede" + lg] = (0, 0.07 * math.sin(t * 20 + i * 1.6) * e, 0.03 * max(0.0, math.sin(t * 20 + i * 1.6)) * e)
+    elif name == "Recover_Pinch":
+        put(front, (0, -0.10, 0), 1.0 - e)
+    elif name == "Tell_Volley":                  # legs spread for the recoil
+        for lg, sx in (("L2", 1), ("R2", -1), ("L3", 1), ("R3", -1)): out["Pede" + lg] = (0.07 * sx * e, 0, 0)
+    elif name == "Tell_Burst":                   # legs straighten and splay as it rises
+        for lg, sx in (("L1", 1), ("R1", -1), ("L2", 1), ("R2", -1), ("L3", 1), ("R3", -1), ("L4", 1), ("R4", -1)): out["Pede" + lg] = (0.05 * sx * e, 0, 0)
+    return out
+
+
+def thirty_keys(c):
+    """Every walk and move clip gets exactly KEYS keys: a non-looping clip written on its own frame count is resampled to 29 frames (30 keys); the legs' own work is added on top."""
+    skip = ("Idle", "Hit", "Death", "Exposed", "Stuck")
+    out = {}
+    for name, (frames, loop, fn) in c.items():
+        if name in skip or loop:   # the walks already run on a 30 frame cycle (CYCLE)
+            out[name] = (frames, loop, fn)
+            continue
+        old = float(frames)
+        def make(fn=fn, old=old, name=name):
+            def g(f):
+                t = f / (KEYS - 1)
+                pose = fn(t * old)
+                legs = legwork(name, t)
+                if legs:
+                    pose = dict(pose)
+                    feet = dict(pose.get("feet", {}))
+                    for k, v in legs.items():
+                        a = feet.get(k, (0, 0, 0))
+                        feet[k] = (a[0] + v[0], a[1] + v[1], a[2] + v[2])
+                    pose["feet"] = feet
+                return pose
+            return g
+        out[name] = (KEYS - 1, False, make())
+    return out
 
 
 def _with_breath(p, f):

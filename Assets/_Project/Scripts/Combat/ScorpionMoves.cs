@@ -80,6 +80,7 @@ namespace Evolve.Combat
             mine = GetComponentsInChildren<Collider>(true);
             foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "StingTip") tailTip = t;
             lastPos = transform.position;
+            Evolve.World.ScorpionRoom.Install(transform);   // in a boss room its boulders stop the mound; elsewhere it digs anywhere
             if (tailTip != null)
             {
                 var g = new GameObject("TailGlow");
@@ -136,12 +137,8 @@ namespace Evolve.Combat
             foreach (var p in anim.parameters) if (p.type == AnimatorControllerParameterType.Trigger && p.name == name) { anim.SetTrigger(name); return; }
         }
 
-        static float ClipSeconds(MovePhase phase, string moveAnim)
-        {
-            if (phase == MovePhase.Windup) return moveAnim == "Burst" ? 1.8f : 0.8f;     // Tell clips: 24 frames at 30 fps (54 for the ultimate)
-            if (phase == MovePhase.Active) return moveAnim == "Burrow" ? 1.2f : 0.4f;    // Strike clips: 12 frames (36 for the burrow)
-            return moveAnim == "Burst" ? 1.2f : 0.8f;                                    // Recover clips: 24 frames (36 for the ultimate)
-        }
+        /// <summary>Every move clip (Tell, Strike, Recover, Flick) has 30 keys: 29/30 s at animator speed 1; the game stretches it over the phase's seconds.</summary>
+        static float ClipSeconds(MovePhase phase, string moveAnim) => ScorpionRules.ClipSeconds;
 
         // ---------- the three phases of every move ----------
         /// <summary>A move's phase began (m is null when it is over). Fires the phase's clip, stretched over the phase, with its effects and sound.</summary>
@@ -437,7 +434,7 @@ namespace Evolve.Combat
                     float a = (transform.eulerAngles.y + ShatterRules.FlickAngle(i)) * Mathf.Deg2Rad;
                     Vector3 at = c + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * 2.6f;
                     flickColumn[i] = CrystalColumn.Spawn(at, 0.6f, 1.5f, 3f);
-                    desiredSpeed = 1f; if (anim != null) anim.ResetTrigger("Flick"); Trigger("Flick");
+                    desiredSpeed = ScorpionRules.PhaseAnimSpeed(ScorpionRules.ClipSeconds, ShatterRules.FlickInterval); if (anim != null) anim.ResetTrigger("Flick"); Trigger("Flick");
                     Say("flick_stab", at, 1f); glowTarget = 8f;
                 }
                 if (flickStarted[i] && !flickThrown[i] && t >= ShatterRules.FlickTime(i) + ShatterRules.FlickThrow)
@@ -545,6 +542,8 @@ namespace Evolve.Combat
             Impulse.Kick(p.GetComponent<Rigidbody>(), away * force + Vector3.up * (kickUp ? force * 1.1f : force * 0.5f));
             if (freeze > 0f && p.TryGetComponent(out Evolve.Player.SlimeController sc)) sc.FreezeFor(freeze);
         }
+
+        void OnDestroy() { Evolve.World.ScorpionRoom.Uninstall(); }
 
         void OnDisable() { IgnorePlayers(false); if (mound != null) Destroy(mound.gameObject); if (underground) SetHidden(false); }
     }

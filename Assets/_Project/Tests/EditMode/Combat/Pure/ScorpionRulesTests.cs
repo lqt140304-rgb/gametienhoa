@@ -162,14 +162,21 @@ namespace Evolve.Tests.EditMode
         // ---------- rig and animator ----------
         [Test] public void WalkClipSpeed_MatchesTheBakedStride_AndTheAnimatorSpeedIsClamped()
         {
-            Assert.AreEqual(1.26f, ScorpionRules.ClipSpeed, 1e-3f);   // rig_scorpion.py: STRIDE 0.42 m per half cycle of 20 frames at 30 fps
-            Assert.AreEqual(1f, ScorpionRules.WalkAnimSpeed(1.26f), 1e-3f); Assert.AreEqual(2f, ScorpionRules.WalkAnimSpeed(2.52f), 1e-3f);
+            Assert.AreEqual(1f, ScorpionRules.ClipSpeed, 1e-3f);   // rig_scorpion.py: STRIDE 0.5 m per half cycle of 30 frames at 30 fps
+            Assert.AreEqual(1f, ScorpionRules.WalkAnimSpeed(1f), 1e-3f); Assert.AreEqual(2f, ScorpionRules.WalkAnimSpeed(2f), 1e-3f);
             Assert.AreEqual(0.6f, ScorpionRules.WalkAnimSpeed(0.1f)); Assert.AreEqual(3f, ScorpionRules.WalkAnimSpeed(50f));
+        }
+
+        [Test] public void EveryMoveAndWalkClip_Has30Keys_SoAClipLastsTwentyNineFrames()
+        {
+            Assert.AreEqual(30, ScorpionRules.ClipKeys);
+            Assert.AreEqual(29f / 30f, ScorpionRules.ClipSeconds, 1e-5f);   // 30 keys at 30 fps span 29 frames
+            Assert.AreEqual(1f, ScorpionRules.PhaseAnimSpeed(ScorpionRules.ClipSeconds, ScorpionRules.ClipSeconds), 1e-4f);
         }
 
         [Test] public void PhaseAnimSpeed_StretchesAClipToThePhasesSeconds()
         {
-            Assert.AreEqual(1f, ScorpionRules.PhaseAnimSpeed(0.8f, 0.8f), 1e-4f);   // Tell: 24 frames = 0.8 s
+            Assert.AreEqual(1f, ScorpionRules.PhaseAnimSpeed(0.8f, 0.8f), 1e-4f);
             Assert.AreEqual(0.8f / 1.6f, ScorpionRules.PhaseAnimSpeed(0.8f, 1.6f), 1e-4f);
             Assert.AreEqual(0.4f / 0.2f, ScorpionRules.PhaseAnimSpeed(0.4f, 0.2f), 1e-4f);
             Assert.AreEqual(4f, ScorpionRules.PhaseAnimSpeed(0.8f, 0.01f)); Assert.AreEqual(0.2f, ScorpionRules.PhaseAnimSpeed(0.8f, 99f)); Assert.AreEqual(1f, ScorpionRules.PhaseAnimSpeed(0.8f, 0f));
@@ -236,6 +243,17 @@ namespace Evolve.Tests.EditMode
             Assert.IsFalse(ShatterRules.RingHits(0, 1.0f, 5f, 180f, 0f, true));   // already hit by this ring: once per ring
             Assert.IsFalse(ShatterRules.RingHits(0, 1.0f, 11f, 180f, 0f, false)); // beyond the ring's reach
             Assert.AreEqual(13f, ShatterRules.RingDamage);
+        }
+
+        [Test] public void Room_TheMoundCannotDigThroughARockOfTheRoom_ButAnywhereElse()
+        {
+            var rocks = new[] { new ScorpionRock(10f, 0f, 1.5f), new ScorpionRock(-6f, 4f, 1f) };
+            Assert.IsTrue(ScorpionRoomRules.CanDig(0f, 0f, rocks));
+            Assert.IsFalse(ScorpionRoomRules.CanDig(10f, 0f, rocks));   // on the rock
+            Assert.IsFalse(ScorpionRoomRules.CanDig(10f + 1.5f + ScorpionRoomRules.RockMargin - 0.05f, 0f, rocks));   // against it
+            Assert.IsTrue(ScorpionRoomRules.CanDig(10f + 1.5f + ScorpionRoomRules.RockMargin + 0.05f, 0f, rocks));
+            Assert.IsFalse(ScorpionRoomRules.CanDig(-6f, 4f + 1f + ScorpionRoomRules.RockMargin - 0.05f, rocks));
+            Assert.IsTrue(ScorpionRoomRules.CanDig(3f, 3f, new ScorpionRock[0])); Assert.IsTrue(ScorpionRoomRules.CanDig(3f, 3f, null));
         }
 
         static class Mathf2 { public static float Abs(float v) => v < 0 ? -v : v; }
