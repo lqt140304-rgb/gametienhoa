@@ -52,6 +52,7 @@ namespace Evolve.World
             }
             else Debug.LogWarning("[Phòng trùm] " + name + ": không tìm thấy trùm gần Boss_Wait.");
             ApplyDoor();
+            Debug.Log("[Phòng trùm] " + name + ": trùm=" + (boss != null ? boss.name : "KHÔNG THẤY") + ", Activate_Zone=" + (zone != null ? zone.GetType().Name : "KHÔNG THẤY") + ", Boss_Wait=" + (wait != null) + ", cửa=" + (doorSteel != null && doorOpen != null && doorClosed != null));
         }
 
         void Update()
@@ -62,7 +63,11 @@ namespace Evolve.World
             switch (stage)
             {
                 case Stage.Idle:
-                    if (zone != null && boss != null && Count(out int inside, out int alive) && RoomRules.ShouldActivate(inside, alive)) Go(Stage.Counting);
+                    if (zone != null && boss != null && Count(out int inside, out int alive))
+                    {
+                        if (inside != lastInside || alive != lastAlive) { lastInside = inside; lastAlive = alive; Debug.Log("[Phòng trùm] " + name + ": " + inside + " người chơi trong vùng kích hoạt / " + alive + " còn sống (cần bằng nhau, và ít nhất 1)."); }
+                        if (RoomRules.ShouldActivate(inside, alive)) Go(Stage.Counting);
+                    }
                     break;
                 case Stage.Counting:
                     if (stageTime >= CountdownSeconds) { door.Close(); ProceduralSfx.PlayFile("Golem/golem_door", transform.position, 1f, ProceduralSfx.Kind.HoundThud); Go(Stage.Closing); }
@@ -77,7 +82,9 @@ namespace Evolve.World
             }
         }
 
-        void Go(Stage s) { stage = s; stageTime = 0f; }
+        int lastInside = -1, lastAlive = -1;
+
+        void Go(Stage s) { stage = s; stageTime = 0f; Debug.Log("[Phòng trùm] " + name + " → " + s); }
 
         /// <summary>Players that are alive (everyone connected) and how many of them stand inside the activation zone.</summary>
         bool Count(out int inside, out int alive)
@@ -87,9 +94,16 @@ namespace Evolve.World
             {
                 if (p == null || p.State.IsDead) continue;
                 alive++;
-                if (zone != null && zone.ClosestPoint(p.transform.position) == (Vector3)p.transform.position) inside++;
+                if (zone != null && Inside(p.transform.position)) inside++;
             }
             return true;
+        }
+
+        /// <summary>Is the point in the activation zone? A non-convex mesh collider cannot answer ClosestPoint, so its bounds are used.</summary>
+        bool Inside(Vector3 pos)
+        {
+            if (zone is MeshCollider mc && !mc.convex) return zone.bounds.Contains(pos);
+            return zone.ClosestPoint(pos) == pos;
         }
 
         void Wake()

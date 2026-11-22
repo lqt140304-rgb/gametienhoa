@@ -1,71 +1,126 @@
 # PROJECT EVOLVE
 
-Game sinh tồn tiến hóa 3D Low Poly, co-op 4–8 người. Người chơi bắt đầu là một slime nguyên sinh và tiến hóa mở bằng cách thu thập cơ quan.
+Game sinh tồn tiến hóa 3D Low Poly, co-op 4–8 người (Netcode for GameObjects). Người chơi bắt đầu là một sinh vật slime nguyên sinh trong lòng đất (hệ thống hang động Underroot), sinh tồn, săn mồi, hấp thụ sinh vật và tiến hóa mở bằng cách thu thập, ghép nối các cơ quan dị biến.
 
-- Thiết kế chi tiết: [`docs/GDD.md`](docs/GDD.md)
-- Dựng scene prototype: [`docs/PROTOTYPE_01_SETUP.md`](docs/PROTOTYPE_01_SETUP.md)
-- Lộ trình: [`docs/ROADMAP.md`](docs/ROADMAP.md)
-- **Cơ chế và kỹ năng của slime (bản mới nhất):** [`docs/SLIME_MECHANICS.md`](docs/SLIME_MECHANICS.md)
-- Trùm Chúa Hang: quy trình Meshy và trạng thái từng trùm [`docs/MESHY_BOSSES.md`](docs/MESHY_BOSSES.md); bộ kỹ năng chuẩn [`docs/superpowers/specs/2026-11-21-boss-standard-kit.md`](docs/superpowers/specs/2026-11-21-boss-standard-kit.md); phòng trùm [`docs/BOSS_ROOMS_BRIEF.md`](docs/BOSS_ROOMS_BRIEF.md) và [`docs/BOSS_ROOM_CONTRACT.md`](docs/BOSS_ROOM_CONTRACT.md)
-- Trạng thái từng mục và danh sách thử tay: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md), [`docs/TEST_CHECKLIST_UNITY.md`](docs/TEST_CHECKLIST_UNITY.md)
-- **Ai đang làm gì:** [`docs/PROJECT_BOARD.md`](docs/PROJECT_BOARD.md)
+---
 
-## Trạng thái
+## Mục lục tài liệu
 
-Đã có project Unity (`Assets/_Project`) với các cảnh `Prototype_01`, `Underroot_Lake`, `Slime_Cavern`, `TestArena` và ba phòng trùm `BossRoom_Golem`, `BossRoom_Bird`, `BossRoom_Scorpion`. Logic thuần C# có test tự chạy ngoài Unity (hiện khoảng 590 test, xem `tools/cstest`); **mọi thứ về cảnh, prefab, menu Editor và hiển thị đều cần người thử trong Unity** (danh sách thử ở `docs/TEST_CHECKLIST_UNITY.md`).
+- **Thiết kế tổng thể (GDD):** [`docs/GDD.md`](docs/GDD.md)
+- **Cơ chế & kỹ năng Slime (bản mới nhất):** [`docs/SLIME_MECHANICS.md`](docs/SLIME_MECHANICS.md)
+- **Bảng việc chung & Phân công thời gian thực:** [`docs/PROJECT_BOARD.md`](docs/PROJECT_BOARD.md) *(Đọc trước khi làm, cập nhật khi xong)*
+- **Quy tắc mọi agent (Claude Code, Codex, Antigravity):** [`AGENTS.md`](AGENTS.md)
+- **Danh sách kiểm thử Unity (Manual Checklist):** [`docs/TEST_CHECKLIST_UNITY.md`](docs/TEST_CHECKLIST_UNITY.md)
+- **Trạng thái từng hạng mục:** [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)
+- **Lộ trình phát triển:** [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
-**Trùm Chúa Hang** (mỗi trùm theo bộ chuẩn: 2 đánh thường, 1 đánh xa, 1 nội tại, 1 đặc biệt có thử thách, 1 ultimate ≤ 25% máu, tối đa 1 combo):
+### Hệ thống trùm & Phòng trùm (Boss & Boss Rooms)
+- **Chuẩn hợp đồng phòng trùm (GameObject names, Colliders, Bounds):** [`docs/BOSS_ROOM_CONTRACT.md`](docs/BOSS_ROOM_CONTRACT.md)
+- **Bản giao việc phòng trùm Đợt 1 (Golem, Chim, Bọ Cạp):** [`docs/BOSS_ROOMS_BRIEF.md`](docs/BOSS_ROOMS_BRIEF.md)
+- **Thiết kế chi tiết phòng trùm Đợt 2 (Chó Xương, Cáo Gió, Cóc Hồ Già, Rắn Dung Nham):** [`docs/superpowers/specs/2026-11-22-boss-rooms-wave2-design.md`](docs/superpowers/specs/2026-11-22-boss-rooms-wave2-design.md)
+- **Quy chuẩn bộ chiêu trùm (Boss Standard Kit):** [`docs/superpowers/specs/2026-11-21-boss-standard-kit.md`](docs/superpowers/specs/2026-11-21-boss-standard-kit.md)
+- **Quy trình trùm Meshy 3D:** [`docs/MESHY_BOSSES.md`](docs/MESHY_BOSSES.md)
+- **Chi tiết kể chuyện & Lore:** [`docs/lore/golem-thach-anh.md`](docs/lore/golem-thach-anh.md)
 
-| Trùm | Bộ chiêu | Ghi chú |
-|---|---|---|
-| Golem Thạch Anh | xong (tay không và dạng rìu) | phase, đọc người chơi, phòng riêng |
-| Chim Hang Mẹ | xong | phase, đọc người chơi, phòng riêng |
-| Chó Xương | xong | phase, đọc người chơi |
-| **Bọ Cạp Thạch Anh** | xong (Phóng Gai, Vỏ Pha Lê, Châm Choáng, Giáng Đuôi, Đào Chui, Lao Kẹp, Bùng Pha Lê) | mô hình Meshy gắn xương bằng Blender, 28 clip (đi 4 hướng, ba pha mỗi chiêu, 30 khóa), nhịp trận, phòng riêng; nhạc trận chưa có |
-| Cóc Hồ Già, Rắn Dung Nham, Cáo Gió | đề xuất, chưa duyệt | |
+---
 
-## Công nghệ
+## Trạng thái hiện tại
 
-Unity 6.6 (`6000.6.9f1`) + URP, C#, Blender (script `bpy` trong `tools/blender`), Shader Graph, Netcode for GameObjects. Âm thanh và nhạc làm bằng ElevenLabs (`tools/voice`), mô hình trùm bằng Meshy.
+Dự án Unity đang trong giai đoạn phát triển tích cực trên nhánh **`claude/unity-test-maze`**:
 
-## Thiết lập repo
+1. **Địa hình & Mê cung hang động (Underroot & Hang 01):**
+   - Sinh địa hình hang động theo thuật toán procedural (`CavernBuilder`, `UnderrootLakeBuilder`, `MazeTerrainMath`).
+   - Hệ sinh thái Hang 01 hoàn thiện: Bọ Cánh Cứng Nhỏ, Ốc Hồ, Thằn Lằn Bờ Hồ kèm AI và kỹ năng tự vệ.
+2. **Phòng trùm Đợt 1 (Đã hoàn thiện hình học & kiểm chứng hợp đồng Unity - PR #127):**
+   - **Golem Thạch Anh ("Lò Tinh Thể"):** `BossRoom_Golem.unity` / `.prefab`. Vòm đá gắn tinh thể sáng, ánh vàng cam, cột đá to cản đường đập vỡ được, khối đá lõi cắm rìu thần (`GolemAxe_Planted`), cửa thép trượt có xích.
+   - **Chim Hang Mẹ ("Tổ Kền Kền"):** `BossRoom_Bird.unity` / `.prefab`. Vòm xương hóa thạch, trần vòm cao thoáng (>30m), ụ đá đậu cao 2–6m, ánh sáng xanh băng giá lạnh, 6 clip hoạt ảnh tấn công từ Blender tích hợp.
+   - **Bọ Cạp Thạch Anh ("Bãi Cát Tinh Thể"):** `BossRoom_Scorpion.unity` / `.prefab`. Vòm đá cát xói mòn, hố cát lún nguy hiểm ~8m, tảng đá thấp nấp né gai độc.
+3. **Phòng trùm Đợt 2 (Đã duyệt thiết kế kiến trúc & cơ chế môi trường):**
+   - Thiết kế sẵn sàng cho 4 phòng trùm: Chó Xương (*Hầm Mộ Xương*), Cáo Gió (*Vực Khe Gió*), Cóc Hồ Già (*Hồ Đầm Lầy Độc*), Rắn Dung Nham (*Miệng Vực Dung Nham*).
+4. **Hệ thống chiến đấu & AI Trùm:**
+   - Kiến trúc logic thuần tách biệt (`Pure/`): FSM, luật theo phase, hitbox, đọc người chơi viết theo TDD và kiểm tra tự động.
+   - **Bọ Cạp Thạch Anh:** bộ chiêu chuẩn (Phóng Gai, Vỏ Pha Lê, Châm Choáng, Giáng Đuôi, Đào Chui, Lao Kẹp, Bùng Pha Lê), xương và clip làm bằng Blender (`tools/blender/rig_scorpion.py`), nhịp trận và combo; phần Unity chưa kiểm chứng hết. Chi tiết: [`docs/superpowers/specs/2026-11-22-bo-cap-thach-anh-moveset-design.md`](docs/superpowers/specs/2026-11-22-bo-cap-thach-anh-moveset-design.md).
+   - Khối quản trị trận đánh `BossRoom.cs`: đếm người chơi trong phòng, tự động sập cửa thép, kích hoạt trùm và điều khiển âm nhạc/hiệu ứng.
 
-1. Cài [Git LFS](https://git-lfs.com) rồi chạy `git lfs install`. File `.blend`, `.fbx`, ảnh và âm thanh được lưu qua LFS (xem `.gitattributes`).
-2. Trong Unity, vào **Project Settings → Editor**, đặt *Asset Serialization = Force Text* và *Version Control = Visible Meta Files*.
-3. `.gitignore` đã loại trừ `Library/`, `Temp/`, `Logs/`, `UserSettings/`… Không commit các thư mục này.
+---
 
-## Cấu trúc thư mục
+## Công nghệ & Yêu cầu môi trường
+
+- **Engine:** Unity 6000.6.9f1 + Universal Render Pipeline (URP).
+- **Ngôn ngữ:** C# (.NET 8 / Roslyn), Shader Graph.
+- **Mô hình & Hoạt họa:** Blender 5.x (hỗ trợ chế độ chạy nền `blender -b -P`), Meshy 3D AI generator.
+- **Mạng (Multiplayer):** Netcode for GameObjects.
+- **Quản lý phiên bản:** Git + Git LFS (bắt buộc cho `.blend`, `.fbx`, âm thanh `.mp3`/`.wav`, và texture).
+
+---
+
+## Kiểm tra nhanh không cần mở Unity
+
+Để đảm bảo code không làm gãy dự án trước khi commit/push:
+
+1. **Biên dịch toàn bộ C# bằng trình biên dịch Unity Roslyn (Windows):**
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools/cstest/check_compile.ps1
+   ```
+   *(Yêu cầu đã từng mở Unity một lần để sinh thư viện `Library/ScriptAssemblies`; trả về `exit: 0` khi biên dịch thành công).*
+
+2. **Chạy bộ kiểm thử Pure Logic độc lập (Cross-platform):**
+   ```bash
+   bash tools/cstest/run.sh
+   ```
+   *(Cần .NET 8 SDK; chạy nhanh toàn bộ unit test logic độc lập trong `Assets/_Project/Scripts/**/Pure/` và phải hiển thị `Passed!`).*
+
+3. **Kiểm tra tự động Hợp đồng phòng trùm (Unity Batchmode):**
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools/unity/run_batchmode.ps1 -Method Evolve.Editor.BossRoomContractVerifier.ValidateAllRoomsBatch
+   ```
+
+---
+
+## Cấu trúc thư mục dự án
 
 ```
 Assets/_Project/
-  Scripts/            # C# (một asmdef Evolve): Abilities, Combat, Creatures, Ecology, Maze, Net, Organs,
-                      #   Player, Survival, Swallow, Traits, Visuals, World ...; logic thuần ở thư mục con Pure/
-  Editor/             # menu Evolve → ... (dựng prefab, cảnh, phòng trùm)
-  Models/ Prefabs/    # mô hình (Meshy, Blender), prefab (quái, phòng trùm)
-  Resources/          # Sfx/<trùm>/ và Music/ (ElevenLabs)
-  ScriptableObjects/  # dữ liệu Dị Năng, cơ quan, loài
-  Scenes/             # Prototype_01, Underroot_Lake, Slime_Cavern, TestArena, BossRoom_*
-  Tests/EditMode/     # test của logic thuần
+  Scripts/
+    Abilities/          # Hệ thống dị năng và kỹ năng kích hoạt
+    AI/                 # Hành vi sinh vật và quái hoang dã
+    Combat/             # Hệ thống chiến đấu, VFX, SFX, Boss Movesets
+      Pure/             # Logic thuần toán học/FSM (kiểm thử độc lập không phụ thuộc Unity)
+    Core/               # Vòng đời trò chơi, cấu hình chung
+    Organs/             # Hệ thống cơ quan tiến hóa và biến đổi cơ thể Slime
+    Networking/         # Đồng bộ hóa vị trí, trạng thái qua Netcode
+    Wildlife/           # Sinh thái hang động và sinh vật săn mồi
+    World/              # Khối BossRoom, cửa hang, cơ chế mê cung
+  Scenes/               # Cảnh game: BossRoom_Golem, BossRoom_Bird, BossRoom_Scorpion, Prototype_01...
+  Prefabs/              # Prefab phòng trùm, trùm, Slime, cơ quan, đạo cụ (Props)
+  Models/               # Mô hình 3D (Meshy FBX, Underroot OBJ/FBX)
+  Resources/            # SFX âm thanh, VFX hiệu ứng hạt, Material/Shader
+  Settings/             # Cấu hình URP, ánh sáng, Render Pipeline
+  Tests/                # EditMode & PlayMode test cases
+  Editor/               # Tool sinh map procedural, menu kiểm tra hợp đồng phòng trùm
+
+docs/                   # Toàn bộ tài liệu GDD, spec thiết kế, lore và hướng dẫn
 tools/
-  cstest/             # chạy test logic thuần bằng .NET 8, không cần Unity: tools/cstest/run.sh
-  syntaxcheck/        # kiểm cú pháp C# bằng Roslyn khi không có Unity
-  blender/            # script bpy: dựng đồ, gắn xương và bake clip (ví dụ rig_scorpion.py)
-  voice/              # script ElevenLabs: tiếng chiêu và nhạc trận
-docs/                 # thiết kế, bảng việc, checklist test, specs/
+  blender/              # Script Python dựng mesh phòng trùm và rig hoạt ảnh tự động
+  cstest/               # Công cụ test logic thuần và kiểm tra biên dịch Roslyn
+  session_brief.sh      # Script tóm tắt trạng thái phiên làm việc đa agent
 ```
 
-## Quy ước
+---
 
-- **Nhánh làm việc:** các agent và người cùng làm trên `claude/unity-test-maze` (gộp từ `claude/movement`); Codex dùng nhánh `codex/*` riêng. Không đẩy thẳng lên `main`.
-- **Vào `main`:** chủ dự án mở pull request từ `claude/unity-test-maze` và gộp khi test (GitHub Actions) xanh.
-- Trước khi sửa và trước khi push: `git pull --no-rebase origin claude/unity-test-maze`, rồi chạy `tools/cstest/run.sh`.
-- Class C# đặt tên PascalCase, mỗi file một class; ScriptableObject có hậu tố `SO`, ví dụ `AbilitySO`.
+## Quy ước phát triển & Hợp tác đa Agent
 
-## Làm việc với nhiều agent (Claude Code, Codex, Antigravity)
-Nhiều agent và người cùng làm trên repo này. Để không giẫm chân nhau:
-- **Quy tắc chung:** [`AGENTS.md`](AGENTS.md) (Codex đọc trực tiếp; `CLAUDE.md` và `GEMINI.md` trỏ về nó).
-- **Bảng việc chung:** [`docs/PROJECT_BOARD.md`](docs/PROJECT_BOARD.md): ai làm gì, file nào của ai, trạng thái từng trùm, việc tồn đọng. Mỗi agent **đọc trước khi làm và sửa một dòng của mình khi xong**.
-- **Bước đầu tiên của mỗi phiên:** `bash tools/session_brief.sh` (in bảng việc và commit mới của phiên khác; Claude Code tự chạy, các agent khác chạy bằng tay).
-- **Trước khi push:** `git pull --no-rebase origin claude/unity-test-maze`, rồi `tools/cstest/run.sh` (cần .NET 8; phải `Passed!`). GitHub tự chạy lại ở [`.github/workflows/tests.yml`](.github/workflows/tests.yml) sau mỗi push và mỗi PR.
-- **Phần Unity** (cảnh, prefab, menu Editor, hiển thị) không chạy được ngoài Unity: ghi rõ "chưa kiểm chứng" và chờ chủ dự án thử.
-- Không commit khóa API; hỏi chủ dự án trước mỗi lần tạo bằng Meshy.
+Dự án áp dụng mô hình phát triển phối hợp giữa con người và nhiều AI agent (Claude Code, Codex, Antigravity). Mọi thành viên cần tuân thủ nghiêm ngặt:
+
+1. **Quy tắc gốc duy nhất:** Đọc kỹ [`AGENTS.md`](AGENTS.md) trước khi bắt đầu.
+2. **Nhánh làm việc tập trung:** Tất cả cùng làm việc trên nhánh **`claude/unity-test-maze`** (gộp từ `claude/movement`). Codex sử dụng nhánh riêng `codex/*`. Không đẩy code trực tiếp lên `main`.
+3. **Đồng bộ liên tục:** Luôn chạy:
+   ```bash
+   git pull --no-rebase origin claude/unity-test-maze
+   ```
+   **ngay trước khi sửa** và **ngay trước khi push**.
+4. **Bảng phân công công việc:** Xem [`docs/PROJECT_BOARD.md`](docs/PROJECT_BOARD.md) để biết ai sở hữu file nào và trạng thái hiện tại. Sau khi hoàn thành hoặc đổi việc, cập nhật ngắn gọn dòng của phiên mình trong bảng.
+5. **Đầu phiên làm việc:** Chạy `bash tools/session_brief.sh` để nắm bắt các thay đổi mới nhất từ các phiên khác.
+6. **Bảo toàn phân quyền (Ownership):** Chỉ sửa các file thuộc phạm vi phiên mình đảm nhận. Không tự ý ghi đè hoặc can thiệp vào file của phiên khác.
+7. **Bảo mật & Tài nguyên:** Tuyệt đối không commit API Key (Meshy, ElevenLabs) lên repo. Hỏi ý kiến chủ dự án trước mỗi lần gọi API tạo asset 3D.
+8. **Ngôn ngữ:** Giao tiếp, tài liệu và báo cáo bằng **tiếng Việt**; mã nguồn và chú thích bằng **tiếng Anh**.
