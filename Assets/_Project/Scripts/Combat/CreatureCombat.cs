@@ -85,13 +85,20 @@ namespace Evolve.Combat
         /// <summary>A heavy blow staggers it: the move in progress ends in a recover and it is held still for a moment (open to a counter).</summary>
         public void Stagger(float seconds)
         {
-            if (scheduler == null || seconds <= 0f) return;
+            if (scheduler == null || seconds <= 0f || PassiveRules.StunImmune(name)) return;   // Vỏ Pha Lê: never stunned
             CreatureStatus.Stun(this, seconds);
             scheduler.Stun(seconds);
         }
 
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
+        /// <summary>Vỏ Pha Lê: the damage multiplier for a blow from <paramref name="by"/> (0.75 from the front, 1 from the sides and the back); 1 for every other creature.</summary>
+        public float ShellFactor(Component by)
+        {
+            if (by == null || !PassiveRules.Has(name)) return 1f;
+            Vector3 to = by.transform.position - transform.position;
+            return PassiveRules.ShellFactor(name, ScorpionRules.ShellAngle(transform.eulerAngles.y, Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg));
+        }
         public float DamageTakenFactor => scheduler != null ? scheduler.DamageTakenFactor * (pred != null ? PassiveRules.DamageFactor(name, pred.HealthFraction) : 1f) : 1f;
 
         IReadOnlyList<MoveDef> moves;
@@ -113,6 +120,7 @@ namespace Evolve.Combat
         float strikeDist;
         bool hound, golem;
         BirdMoves bird;   // Chim Hang Mẹ's flying moves (Swoop, WindSlash, Talon): it moves the body while they run
+        ScorpionMoves scorpion;   // Bọ Cạp Thạch Anh: its animator, the three phases' effects, Đào Chui and Bùng Pha Lê
         bool hitDone, hopFlag, skillFlag, hitFlag;
         float drainAccum;
         LeechState prevLeech;
@@ -157,6 +165,7 @@ namespace Evolve.Combat
             if (BirdRigFx.Has(name)) BirdRigFx.Attach(gameObject);
             if (SpeciesNames.Key(name) == "chimhangme" && !TryGetComponent(out bird)) bird = gameObject.AddComponent<BirdMoves>();
             scheduler = new MoveScheduler(moves, Random.Range(int.MinValue, int.MaxValue)) { TellScale = tellScale, MinIdle = CircleRules.IdleSeconds(name) };
+            if (ScorpionMoves.Has(name) && !TryGetComponent(out scorpion)) scorpion = gameObject.AddComponent<ScorpionMoves>();
             if (bird != null) scheduler.Allow = m => bird.CanUse(m, target);   // a grab needs a player it can carry
             SetupPhases();
             if (golem && !TryGetComponent(out axe)) axe = gameObject.AddComponent<GolemAxe>();
@@ -439,7 +448,7 @@ namespace Evolve.Combat
             scheduler?.Reset();
             ClearSpears(); EndMeteor();
             axe?.Abort();
-            bird?.Abort();
+            bird?.Abort(); scorpion?.Abort();
             SetHidden(false);
             RestoreModel();
         }
@@ -489,6 +498,7 @@ namespace Evolve.Combat
                 ClearSpears(); EndMeteor();
                 axe?.Abort();
                 bird?.Abort();   // stunned or killed in the air: it lets go of the player and falls
+                scorpion?.Abort();
                 if (ambush != null && ambush.State == AmbushState.Lurking) { ambush.Update(0f, 0f); ambush.StrikeDone(); }   // stunned or killed while hiding: it shows itself
                 SetHidden(false);
                 return;
@@ -512,7 +522,7 @@ namespace Evolve.Combat
             noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
             TickPhases();
             axe?.Tick();
-            scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding) || (axe != null && axe.Fetching);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
+            scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding) || (axe != null && axe.Fetching) || (scorpion != null && scorpion.Holding);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null)
@@ -529,6 +539,7 @@ namespace Evolve.Combat
                 else if (scheduler.Phase == MovePhase.Recover) TickVolley(scheduler.Current);
             }
             bird?.Tick(scheduler.Current, scheduler.Phase, scheduler.Progress01, scheduler.PhaseTime, target);
+            scorpion?.Tick(scheduler.Current, scheduler.Phase, scheduler.PhaseTime, target);
             if (target != null && scheduler.Phase == MovePhase.Windup) FaceTarget();
             if (scheduler.Phase == MovePhase.Active) TickStrike(scheduler.Current);
             else if (scheduler.Phase == MovePhase.Recover && retreatLeft > 0f) TickRetreat(scheduler.Current);
@@ -581,6 +592,7 @@ namespace Evolve.Combat
         void OnPhase(MovePhase phase, MoveDef m)
         {
             if (phase == MovePhase.Idle) EndMeteor();   // the move is over (m is null here)
+            scorpion?.OnPhase(phase, m);
             if (m == null) return;
             if (hound) HoundFx.OnPhase(this, phase, m);
             if (golem) GolemFx.OnPhase(this, phase, m);
@@ -647,8 +659,9 @@ namespace Evolve.Combat
             {
                 if (m.Shape == MoveShape.Charge)
                 {
-                    float daze = m.Ramp ? 3f : 2f;
+                    float daze = m.Ramp ? 3f : scorpion != null ? ScorpionRules.StuckSeconds : 2f;
                     CreatureStatus.Stun(this, daze); scheduler.Stun(daze); loco?.PlayAction("Stun"); dizzyUntil = Time.time + daze;   // hit a wall: dazed
+                    if (scorpion != null) scorpion.WallStuck(daze, transform.position + strikeDir * Radius);   // the scorpion is never stunned: its claws jam, a column breaks
                     if (m.Ramp) GolemFx.WallBump(transform.position + strikeDir * Radius);
                     return;
                 }

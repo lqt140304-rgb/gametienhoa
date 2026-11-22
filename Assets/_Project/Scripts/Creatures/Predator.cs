@@ -430,7 +430,7 @@ namespace Evolve.Creatures
             }
             if (dead || amount <= 0f) return;
             if (by != null && Gentle) { provokedUntil = Time.time + CaveTier.ProvokeSeconds; target = by; }   // a gentle lord fights back at whoever hurt it
-            if (combat != null) amount *= combat.DamageTakenFactor;   // open to a counter while recovering
+            if (combat != null) amount *= combat.DamageTakenFactor * combat.ShellFactor(by);   // open to a counter while recovering; the scorpion's shell turns a blow from the front
             Health -= amount;
             if (combat == null) retreatUntil = Time.time + retreatTime;
             ShowHit(amount);

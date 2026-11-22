@@ -16,7 +16,7 @@ namespace Evolve.Combat
         /// <summary>A factor on the approach speed within 11 m of the prey (beyond that the bird flies in at its full speed): the bird closes in at 0.6 of the pace the others use.</summary>
         public static float ApproachScale(string name, float distance) => SpeciesNames.Key(name) == "chimhangme" && distance <= 11f ? 0.6f : 1f;
 
-        public static float IdleSeconds(string name) { string k = SpeciesNames.Key(name); return k == "golemthachanh" ? 2.5f : k == "chimhangme" ? 2f : 0f; }
+        public static float IdleSeconds(string name) { string k = SpeciesNames.Key(name); return k == "golemthachanh" ? 2.5f : k == "chimhangme" ? 2f : k == "bocapthachanh" ? 2f : 0f; }
 
         /// <summary>The unit direction to walk, for the prey at (<paramref name="toX"/>, <paramref name="toZ"/>) from here: along the circle round it (to the left for sign 1, to the right for -1), drawn in when too far from the ring and pushed out when too close.</summary>
         public static (float x, float z) Steer(float toX, float toZ, int sign, float ring)

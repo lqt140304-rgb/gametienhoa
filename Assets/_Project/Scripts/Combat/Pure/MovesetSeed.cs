@@ -81,6 +81,17 @@ namespace Evolve.Combat
                 // the ultimate (health 25% or less): a screech that stuns everyone within 9 m and throws them back, then three dives in a row onto the marked circle (the Combo chain, each shortly after the last)
                 new MoveDef { Name = "Rít Gầm", Role = MoveRole.Ultimate, Shape = MoveShape.Spin, Windup = 1.6f, Active = 0.4f, Recover = 0.6f, Cooldown = 45f, MinRange = 0f, MaxRange = 16f, Radius = 9f, Damage = 14f, Force = 12f, Freeze = 1.2f, Armored = true, UnlockBelow = 0.25f, Combo = new[] { "Bổ Nhào", "Bổ Nhào", "Bổ Nhào" }, Anim = "Screech" },
             };
+            // Bọ Cạp Thạch Anh (cave lord, the standard kit, numbers provisional; every move has a charge-up, a cast and an after-cast, each its own clip: Tell_/Strike_/Recover_ + Anim):
+            // a stab that stuns, a tail smash, a fan of three crystal spikes from afar, a dive underground that comes up under the player (a dodge puzzle), a claw charge into the stab and the tail smash (three blows, then it lies open), and at 25% health three rings of spikes then three crystals flicked by the tail
+            sets["bocapthachanh"] = new[]
+            {
+                new MoveDef { Name = "Châm Choáng", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.6f, Active = 0.25f, Recover = 1.4f, Cooldown = 3.5f, MinRange = 0f, MaxRange = 3.2f, Distance = 2.2f, Damage = 18f, Freeze = 1f, Rest = 0.6f, Anim = "Sting" },
+                new MoveDef { Name = "Giáng Đuôi", Role = MoveRole.Normal, Shape = MoveShape.Spin, Windup = 0.9f, Active = 0.2f, Recover = 1.5f, Cooldown = 4f, MinRange = 0f, MaxRange = 3.6f, Radius = 3.6f, Damage = 26f, Force = 6f, Freeze = 0.3f, Rest = 1.2f, Combo = new[] { "Giáng Đuôi" }, Anim = "TailSlam" },
+                new MoveDef { Name = "Phóng Gai Tinh Thể", Role = MoveRole.Ranged, Shape = MoveShape.Spears, Windup = 1.0f, Active = 0.9f, Recover = 1.6f, Cooldown = 7f, MinRange = 5f, MaxRange = 16f, Damage = 9f, Force = 5f, SpearCount = 3, SpearSpeed = 20f, LaunchInterval = 0.3f, Anim = "Volley" },
+                new MoveDef { Name = "Đào Chui Trồi Lên", Role = MoveRole.Special, Dodge = true, Shape = MoveShape.Burrow, Windup = BurrowRules.Dig, Active = BurrowRules.Travel + BurrowRules.Marked + BurrowRules.Emerge, Recover = 1.8f, Rest = 1.5f, Cooldown = 20f, MinRange = 5f, MaxRange = 18f, AbortBeyond = 22f, Radius = 4f, Damage = 30f, Force = 8f, Freeze = 0.4f, Anim = "Burrow" },
+                new MoveDef { Name = "Lao Kẹp", Role = MoveRole.Combo, Shape = MoveShape.Charge, Windup = 0.8f, Active = 1.0f, Recover = 1.2f, Cooldown = 14f, MinRange = 4f, MaxRange = 12f, Distance = 10f, Damage = 20f, Force = 6f, Armored = true, Rest = 1.5f, Combo = new[] { "Châm Choáng", "Giáng Đuôi" }, Anim = "Pinch" },
+                new MoveDef { Name = "Bùng Pha Lê", Role = MoveRole.Ultimate, Shape = MoveShape.Shatter, Windup = 1.8f, Active = ShatterRules.FlickEnd, Recover = 3.0f, Cooldown = 45f, MinRange = 0f, MaxRange = 12f, Radius = ShatterRules.MaxRadius, Damage = ShatterRules.RingCount * ShatterRules.RingDamage, Force = 8f, Armored = true, UnlockBelow = 0.25f, SpikeCount = ShatterRules.FlickCount, MissileDamage = 9f, Anim = "Burst" },
+            };
             // Cáo Gió (cave lord): a bite, then three wind spears circling above its tails and thrown one after another, then it calls the weasels
             sets["caogio"] = new[]
             {
@@ -113,6 +124,7 @@ namespace Evolve.Combat
             "chonkhe",
             "caogio",
             "khihang",
+            "bocapthachanh",   // its own 25 clips baked into the model (rig_scorpion.py)
         };
 
         /// <summary>The moves a boss has in <paramref name="form"/>: those of that form and the ones every form shares.</summary>
@@ -129,7 +141,7 @@ namespace Evolve.Combat
         public static float PoseStrength(string speciesIdOrName)
         {
             string key = SpeciesNames.Key(speciesIdOrName ?? "");
-            return key == "choxuong" ? 0.4f : key == "golemthachanh" ? 0.35f : key == "chimhangme" ? 0f : 1f;   // the bird pitches and spreads its own bones (BirdRigFx)
+            return key == "choxuong" ? 0.4f : key == "golemthachanh" ? 0.35f : key == "chimhangme" || key == "bocapthachanh" ? 0f : 1f;   // the bird pitches and spreads its own bones (BirdRigFx)
         }
 
         /// <summary>The body language of a move: by shape, except the shell moves (animation "Retract") tuck in.</summary>

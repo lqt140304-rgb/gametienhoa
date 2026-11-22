@@ -39,6 +39,7 @@ namespace Evolve.Abilities
         /// <summary>Hold the creature still. <paramref name="stars"/> shows stars over its head (not wanted for a pulled prey, which is only held to be swallowed).</summary>
         public static void Stun(Component creature, float seconds, bool stars = true)
         {
+            if (Evolve.Combat.PassiveRules.StunImmune(creature.name)) return;   // Vỏ Pha Lê: the scorpion is never stunned
             var s = On(creature);
             s.stunUntil = Mathf.Max(s.stunUntil, Time.time + seconds);
             if (stars) SkillFx.Stars(creature, seconds);

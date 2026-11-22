@@ -39,6 +39,7 @@ Dự án Unity đang trong giai đoạn phát triển tích cực trên nhánh *
    - Thiết kế sẵn sàng cho 4 phòng trùm: Chó Xương (*Hầm Mộ Xương*), Cáo Gió (*Vực Khe Gió*), Cóc Hồ Già (*Hồ Đầm Lầy Độc*), Rắn Dung Nham (*Miệng Vực Dung Nham*).
 4. **Hệ thống chiến đấu & AI Trùm:**
    - Kiến trúc logic thuần tách biệt (`Pure/`): FSM, luật theo phase, hitbox, đọc người chơi viết theo TDD và kiểm tra tự động.
+   - **Bọ Cạp Thạch Anh:** bộ chiêu chuẩn (Phóng Gai, Vỏ Pha Lê, Châm Choáng, Giáng Đuôi, Đào Chui, Lao Kẹp, Bùng Pha Lê), xương và clip làm bằng Blender (`tools/blender/rig_scorpion.py`), nhịp trận và combo; phần Unity chưa kiểm chứng hết. Chi tiết: [`docs/superpowers/specs/2026-11-22-bo-cap-thach-anh-moveset-design.md`](docs/superpowers/specs/2026-11-22-bo-cap-thach-anh-moveset-design.md).
    - Khối quản trị trận đánh `BossRoom.cs`: đếm người chơi trong phòng, tự động sập cửa thép, kích hoạt trùm và điều khiển âm nhạc/hiệu ứng.
 
 ---

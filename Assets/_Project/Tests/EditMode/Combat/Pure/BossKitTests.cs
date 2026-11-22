@@ -7,7 +7,7 @@ namespace Evolve.Tests.EditMode
     public class BossKitTests
     {
         // every boss that has been rebuilt to the standard kit; add a species here when its kit is done
-        static readonly string[] Kitted = { "Chó Xương", "Golem Thạch Anh", "Chim Hang Mẹ" };
+        static readonly string[] Kitted = { "Chó Xương", "Golem Thạch Anh", "Chim Hang Mẹ", "Bọ Cạp Thạch Anh" };
 
         /// <summary>A boss with forms (the golem: bare-fisted and with its axe) has one standard kit per form; any other boss has one.</summary>
         static System.Collections.Generic.IEnumerable<System.Collections.Generic.IReadOnlyList<MoveDef>> KitsOf(string boss)
