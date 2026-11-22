@@ -51,18 +51,29 @@ namespace Evolve.Combat
     /// </summary>
     public static class PullRules
     {
-        static readonly float[] Gained = { 0f, 0.08f, 0.2f, 0.4f, 1f };   // how far out after each heave: stubborn at first, the last one frees it
+        /// <summary>The axe: three heaves over three and a half seconds.</summary>
+        public const int AxeHeaves = 3;
+        public const float AxeSeconds = 3.5f;
+
+        // how far out after each heave: stubborn at first, the last one frees it
+        static readonly float[] Gained4 = { 0f, 0.08f, 0.2f, 0.4f, 1f };
+        static readonly float[] Gained3 = { 0f, 0.12f, 0.35f, 1f };
 
         static float Smooth(float t) { t = Math.Min(1f, Math.Max(0f, t)); return t * t * (3f - 2f * t); }
-        static void Split(float t01, out int i, out float f)
+        static void Split(float t01, int heaves, out int i, out float f)
         {
-            float u = Math.Min(1f, Math.Max(0f, t01)) * 4f;
-            i = Math.Min(3, (int)u); f = u - i;
+            float u = Math.Min(1f, Math.Max(0f, t01)) * heaves;
+            i = Math.Min(heaves - 1, (int)u); f = u - i;
         }
 
-        public static float Lift(float t01) { Split(t01, out int i, out float f); return Gained[i] + (Gained[i + 1] - Gained[i]) * Smooth((f - 0.4f) / 0.6f); }
-        public static float Strain(float t01) { Split(t01, out _, out float f); return 1f - Smooth((f - 0.3f) / 0.15f); }
-        public static float Heave(float t01) { Split(t01, out _, out float f); return (float)Math.Sin(Math.PI * Math.Min(1f, Math.Max(0f, (f - 0.4f) / 0.6f))); }
+        public static float Lift(float t01, int heaves = 4)
+        {
+            var g = heaves == 3 ? Gained3 : Gained4;
+            Split(t01, heaves == 3 ? 3 : 4, out int i, out float f);
+            return g[i] + (g[i + 1] - g[i]) * Smooth((f - 0.4f) / 0.6f);
+        }
+        public static float Strain(float t01, int heaves = 4) { Split(t01, heaves == 3 ? 3 : 4, out _, out float f); return 1f - Smooth((f - 0.3f) / 0.15f); }
+        public static float Heave(float t01, int heaves = 4) { Split(t01, heaves == 3 ? 3 : 4, out _, out float f); return (float)Math.Sin(Math.PI * Math.Min(1f, Math.Max(0f, (f - 0.4f) / 0.6f))); }
     }
 
     /// <summary>The speed of a charge that starts slowly and builds up: a factor on the average speed, 0.3 at the start and 1.7 at the end, so the distance covered is exactly the move's distance.</summary>

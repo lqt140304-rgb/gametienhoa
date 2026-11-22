@@ -107,6 +107,18 @@ namespace Evolve.Tests.EditMode
             Assert.Greater(PullRules.Heave(0.2f), 0.8f); Assert.AreEqual(0f, PullRules.Heave(0.05f), 1e-4f);
         }
 
+        [Test] public void Pull_ThreeHeaves_FreesTheAxeOnlyOnTheLastOne()
+        {
+            Assert.AreEqual(3, PullRules.AxeHeaves); Assert.AreEqual(3.5f, PullRules.AxeSeconds);
+            Assert.AreEqual(0f, PullRules.Lift(0f, 3), 1e-4f); Assert.AreEqual(1f, PullRules.Lift(1f, 3), 1e-4f);
+            Assert.Less(PullRules.Lift(0.5f, 3), 0.45f);                 // half the time in, still less than half out
+            Assert.Less(PullRules.Lift(0.66f, 3), 0.6f);                 // two heaves done: still stuck
+            float last = 0f;
+            for (float t = 0f; t <= 1.0001f; t += 0.01f) { float l = PullRules.Lift(t, 3); Assert.GreaterOrEqual(l, last - 1e-5f); last = l; }   // never slips back
+            Assert.Greater(PullRules.Strain(0.05f, 3), 0.9f); Assert.Greater(PullRules.Heave(0.2f, 3), 0.8f); Assert.AreEqual(0f, PullRules.Heave(0.05f, 3), 1e-4f);
+            Assert.AreEqual(PullRules.Lift(0.5f), PullRules.Lift(0.5f, 4), 1e-6f);   // the default is still the four heaves of the rock volley
+        }
+
         [Test] public void Charge_StartsSlowAndBuildsUp_AndCoversExactlyTheMovesDistance()
         {
             Assert.Less(ChargeRules.Factor(0f), 0.4f); Assert.Greater(ChargeRules.Factor(1f), 1.5f);

@@ -42,6 +42,10 @@ namespace Evolve.Combat
                 case "Sweep": windup = new ArmPose { Spread = 70f, Raise = 20f, Hunch = 6f, Twist = 40f, Stance = 0.3f, Crouch = 0.2f }; strike = new ArmPose { Spread = 20f, Raise = 35f, Hunch = 14f, Twist = -45f, Stance = 0.5f, Crouch = 0.3f, Glow = 0.3f }; return;   // an arm drawn wide, then swept across in front of it
                 case "Rush": windup = new ArmPose { Raise = 150f, Hunch = 30f, Crouch = 0.45f }; strike = new ArmPose { Raise = 150f, Hunch = 42f, Crouch = 0.3f, Glow = 0.5f }; return;   // both arms wrapped over the head, the body low, head first
                 case "PhaseRoar": windup = new ArmPose { Raise = 45f, Spread = 55f, Hunch = -24f, Glow = 1f, Stance = 0.2f }; strike = windup; return;   // head thrown back, arms wide, the core blazing: the roar at a phase change
+                case "AxeChop": windup = new ArmPose { Raise = 155f, Hunch = -14f, Glow = 0.2f, Crouch = 0.1f }; strike = new ArmPose { Raise = -15f, Hunch = 36f, Glow = 0.5f, Crouch = 0.3f }; return;   // the axe overhead in both hands, then driven down
+                case "AxeSweep": windup = new ArmPose { Spread = 40f, Raise = 30f, Hunch = 6f, Twist = -40f, Stance = 0.3f, Crouch = 0.2f }; strike = new ArmPose { Spread = 10f, Raise = 40f, Hunch = 14f, Twist = 45f, Stance = 0.5f, Crouch = 0.3f, Glow = 0.3f }; return;   // wound back, then swept across
+                case "AxeThrow": windup = new ArmPose { Back = 125f, Hunch = -14f, Stance = 0.6f, Twist = -35f, Crouch = 0.15f, Glow = 0.2f }; strike = new ArmPose { Back = -55f, Hunch = 22f, Stance = 0.8f, Twist = 30f, Crouch = 0.25f, Glow = 0.4f }; return;
+                case "AxeSlam": windup = new ArmPose { Raise = 165f, Hunch = -18f, Glow = 0.3f, Crouch = 0.1f }; strike = new ArmPose { Raise = -20f, Hunch = 40f, Glow = 0.6f, Crouch = 0.5f }; return;   // higher and deeper than the chop: the wave starts here
                 case "Dizzy": windup = new ArmPose { Hunch = 28f, Raise = -8f, Crouch = 0.15f }; strike = windup; return;
                 case "Harden": windup = new ArmPose { Raise = 40f, Hunch = 18f, Glow = 0.6f, Crouch = 0.55f }; strike = windup; return;
                 case "CoreBlast": windup = new ArmPose { Raise = 70f, Spread = 60f, Hunch = -8f, Glow = 1f, Crouch = 0.35f }; strike = new ArmPose { Raise = 90f, Spread = 80f, Hunch = -12f, Glow = 1f }; return;
@@ -96,6 +100,20 @@ namespace Evolve.Combat
                 case VolleyStage.Release: { float k = Smooth(seconds / 0.15f) * (1f - Smooth((seconds - 0.5f) / 0.3f)); return new ArmPose { Raise = 70f * k, Back = -60f * k, Hunch = 30f * k, Twist = 30f * k, Stance = 0.8f * k, Crouch = 0.15f * k }; }   // the follow-through: leaning through the throw, the left arm out, the right folded by the head
                 default: return default;
             }
+        }
+
+        /// <summary>Pulling the axe out of the heart stone (three heaves, <see cref="PullRules.AxeSeconds"/>): bent over the haft while it holds, leaning back into each heave, shaking all the while.</summary>
+        public static ArmPose AxePull(float seconds)
+        {
+            float k = Smooth(seconds / 0.4f), t01 = seconds / PullRules.AxeSeconds, heave = PullRules.Heave(t01, PullRules.AxeHeaves), strain = PullRules.Strain(t01, PullRules.AxeHeaves);
+            return new ArmPose { Raise = 55f * k, Hunch = (32f - 50f * heave) * k, Crouch = 0.35f * k, Glow = (0.25f + 0.4f * heave) * k, Twist = 8f * strain * (float)Math.Sin(seconds * 35f) * k };
+        }
+
+        /// <summary>The flick of an arm that throws a player away while the golem strains at its axe (0.35 s, laid over the pull): out and forward, then back to nothing.</summary>
+        public static ArmPose Swat(float seconds)
+        {
+            float k = Smooth(seconds / 0.1f) * (1f - Smooth((seconds - 0.15f) / 0.2f));
+            return new ArmPose { Back = -70f * k, Twist = 30f * k, Hunch = 8f * k };
         }
 
         /// <summary>
