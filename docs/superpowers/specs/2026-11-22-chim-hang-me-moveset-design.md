@@ -2,13 +2,19 @@
 
 Code viết và kiểm bằng test thuần + biên dịch; **chưa chạy thử trong Unity** (xem "Cần thử" cuối trang).
 
+## Model Dreadwing Carrion (thay model Meshy đầu tiên, đã lỗi)
+Nguồn: glb rig tự động của Meshy (74 xương `Bone_nnn`, 17.578 đỉnh, cao 1,7 m, sải cánh 2,1 m, đứng thẳng, quay mặt -Y). `tools/blender/rig_bird_dreadwing.py` đổi tên đúng 15 xương rồi xuất `Models/Wildlife/Meshy/Creature_ChimHangMe_Dreadwing.fbx` (+ `_albedo.png`, `_mask.png`; glb không có bản đồ kim loại/nhám nên mask là nhám cố định):
+`Root`=xương chậu, `Head`=cổ, `Tail1`, `Pinion_L1/L2/L3` = xương đòn / vai / khuỷu (L là +X, R là -X), `WingTip_L/R` = đầu bàn tay (chỗ lưỡi gió bắn ra), `Thigh_L/R` + `Shin_L/R` = hông + gối. Chân **không** đặt tên `Leg_*` để `CreatureLocomotion` không đi chân bằng trục sai; `BirdRigFx` tự đi (xoay luân phiên, gối nhấc chân) và tự thu (hông 60° + gối 55°). Không có xương hàm nên mỏ không há được.
+Dựng prefab: menu `Evolve → Build Chim Hang Mẹ (Dreadwing) Prefab` (ghi đè `ChimHangMe (Meshy).prefab`, git giữ bản cũ). Vật liệu tự dựng khi Unity nhập FBX. Cỡ: prefab hang đã có collider 2,1×2,4 m nên vừa; `CreatureTuning` giới hạn hệ số cỡ của chim ở 1,3.
+Đã kiểm trong Blender (nền, không Unity): trọng số hợp lệ, mọi xương đều làm mesh chuyển động, và các tư thế mô phỏng đúng công thức `WingRules`/`BirdRigFx` (nhịp lên gập khuỷu, nhịp xuống, xếp cánh, đi bộ, thu chân, lao). Biên độ vỗ chỉnh theo model này (vai ±22 ngoài 6 nền; xuống xa gấp 1,4; xếp cánh 35/70/55°) vì lớn hơn thì hai cánh bắt chéo trước người.
+
 ## Hình dáng (BirdRigFx)
 Xương: `Root`, `Head`, `Beak`/`BeakTip`, `Pinion_L1-3`, `Pinion_R1-3`, `Leg_L`, `Leg_R`, `Tail1`. Mọi thứ do một `BirdPose` điều khiển (`Combat/Pure/BirdRules.cs`):
 `Spread` (cánh khép → mở), `Beat` (sức vỗ), `Raise` (cánh nâng cao ↔ hạ), `Legs` (-1 duỗi móng ra trước, 0 buông, +1 thu gọn dưới bụng), `Pitch` (độ, + = cúi mũi xuống), `Beak`.
 
-- **Vỗ cánh vừa vỗ vừa thu** (`WingRules`): vai vỗ xuống nhanh (xa gấp 1,7 lần) và lên chậm; trên đường lên **khuỷu và cổ tay gập lại, kéo cánh về phía thân** (khuỷu +38°/cổ tay +52° sweep, rủ xuống 24°/32°) rồi bung ra ở đỉnh; đoạn ngoài trễ pha nên đầu cánh quất. Thân/cánh khép (Spread 0) vẫn xếp như cũ.
+- **Vỗ cánh vừa vỗ vừa thu** (`WingRules`): vai vỗ xuống nhanh (xa gấp 1,4 lần) và lên chậm; trên đường lên **khớp giữa và khớp ngoài gập lại, kéo cánh về phía thân** (+38°/+52° sweep, rủ xuống 24°/32°) rồi bung ra ở đỉnh; đoạn ngoài trễ pha nên đầu cánh quất. Cánh khép (Spread 0) xếp 35/70/55°.
 - **Cúi người**: xoay `Root` quanh trục phải của chim; đầu bù ngược 50% (nhìn thẳng hơn), đuôi bù 40%.
-- **Thu chân**: `Leg_L/R` xoay cùng chiều với "cúi mũi xuống" (chân đá ra sau): tối đa 85°; duỗi ra trước tối đa 55°.
+- **Thu chân**: xoay cùng chiều với "cúi mũi xuống" (chân đá ra sau). Rig cũ (`Leg_L/R`, một xương): tối đa 85°, duỗi ra trước 55°. Dreadwing (hông + gối): hông 60° + gối 55°, duỗi hông 40°.
 - Hướng quay mỗi xương **đo lúc khởi động** (không giả định trục); `Debug.Log` một dòng `[BirdRigFx] ...` in dấu đo được và xương nào thiếu.
 - Chim bay từ xa tới (cách người chơi > 11 m, đang chạy): cả model nâng lên 1,3-2,8 m (chỉ hình; thân vẫn đi trên đất) với cánh vỗ, chân thu; hạ xuống khi còn < 8 m.
 
@@ -25,7 +31,7 @@ Quắp chỉ dùng được khi người chơi là local, còn sống, không b�
 `CreatureCombat` chỉ thêm vài dòng: gắn `BirdMoves`, `scheduler.Allow`, `HoldRecover` khi đang xách/cào (như cơn mưa đá của golem), và gọi `bird.Tick(...)` mỗi bước vật lý. Lượt cào bay theo chuyển động con lắc (`TalonFsm.SwingOffset`) nên không có chỗ nhảy vị trí.
 
 ## Cần thử trong Unity (chưa ai làm)
-1. Tạo chim từ menu thần F1 (hoặc menu `Build Chim Hang Mẹ (Meshy) Prefab` nếu chưa có prefab). Console phải in một dòng `[BirdRigFx] ...`; nếu `chân THIẾU`/`đầu thiếu` thì tên xương trong FBX khác.
+1. Để Unity nhập `Creature_ChimHangMe_Dreadwing.fbx` (vật liệu tự dựng), chạy menu `Evolve → Build Chim Hang Mẹ (Dreadwing) Prefab`, rồi tạo chim từ menu thần F1 trong TestArena. Console phải in một dòng `[BirdRigFx] ...`; nếu `chân THIẾU`/`đầu thiếu` thì tên xương trong FBX khác.
 2. Cánh: đứng yên (khép), đi (xoè nửa, rung nhẹ), đang chiến (vỗ + thu mỗi nhịp). Nếu cánh vỗ ngược chiều (xuống thay vì lên) hoặc thu sai hướng: sai dấu đo ở `MakeWing`.
 3. Cúi/thu chân: Bổ Nhào (cúi ~60°, chân duỗi ra khi sắp chạm đất), bay tới từ xa (chân thu lên bụng). Nếu chân đá ra trước thay vì ra sau: đảo dấu `leg` trong `BirdRigFx.LateUpdate`.
 4. Bổ Nhào: vòng đỏ có hiện, chim không xuyên trần/tường; Quắp: xách lên, tung, 4 lượt cào, hạ cánh; chim không kẹt trên không sau khi bị đánh choáng.

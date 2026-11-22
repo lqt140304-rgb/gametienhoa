@@ -29,15 +29,16 @@ namespace Evolve.Combat
         static readonly float[] Hold = { 55f, 12f, 8f };               // lift at Raise = 1
         static readonly float[] UpBend = { 0f, 24f, 32f };             // the elbow and wrist droop this much at the middle of the up stroke
         static readonly float[] UpSweep = { 0f, 38f, 52f };            // ... and draw in this much
-        static readonly float[] FoldedSweep = { 55f, 80f, 60f };       // sweep with the wing fully folded (Spread 0)
+        static readonly float[] FoldedSweep = { 35f, 70f, 55f };       // sweep with the wing fully folded (Spread 0): what folds the Dreadwing's wing flat against its body without the hands crossing (checked in Blender)
         public const float Lag = 0.55f, FoldLag = 0.25f;
 
         /// <summary>Beats per second: a slow idle flutter, quicker walking, a heavy 2.7 Hz beat at full power.</summary>
         public static float Frequency(float beat, float moving) => 0.5f + 0.9f * moving + 2.2f * beat;
         /// <summary>The shoulder's swing in degrees.</summary>
-        public static float Amplitude(float beat, float moving) => 6f + 8f * moving + 40f * beat;
-        /// <summary>The down stroke goes 1.7 times as far as the up stroke.</summary>
-        public static float Stroke(float sine) => sine > 0f ? sine : sine * 1.7f;
+        public static float Amplitude(float beat, float moving) => 6f + 8f * moving + 22f * beat;
+        /// <summary>The down stroke goes 1.4 times as far as the up stroke (more and the wings cross in front of the body: checked on the Dreadwing in Blender).</summary>
+        public const float DownFactor = 1.4f;
+        public static float Stroke(float sine) => sine > 0f ? sine : sine * DownFactor;
 
         /// <summary>0..1: how far the wing is drawn in at this beat phase (radians). Zero for the whole down stroke, peaks a little after the middle of the up stroke.</summary>
         public static float UpFold(float phase)

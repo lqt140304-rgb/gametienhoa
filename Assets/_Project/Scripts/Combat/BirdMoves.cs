@@ -61,11 +61,16 @@ namespace Evolve.Combat
             rb = GetComponent<Rigidbody>();
             col = GetComponentInChildren<Collider>();
             lastPos = transform.position;
+            Transform pinL = null, pinR = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
-                if (t.name == "Pinion_L3") tipL = t;
-                else if (t.name == "Pinion_R3") tipR = t;
+                if (t.name == "WingTip_L") tipL = t;       // the hand end, if the rig has one (the Dreadwing model)
+                else if (t.name == "WingTip_R") tipR = t;
+                else if (t.name == "Pinion_L3") pinL = t;
+                else if (t.name == "Pinion_R3") pinR = t;
             }
+            if (tipL == null) tipL = pinL;
+            if (tipR == null) tipR = pinR;
         }
 
         /// <summary>Can this move be started now? A grab needs a local player who is alive, not already in some other grip, and a body that physics can carry.</summary>

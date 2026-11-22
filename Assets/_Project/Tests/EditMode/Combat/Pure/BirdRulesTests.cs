@@ -62,14 +62,15 @@ namespace Evolve.Tests.EditMode
             float max = float.MinValue, min = float.MaxValue;
             for (float ph = 0f; ph < 6.283f; ph += 0.02f) { WingRules.Segment(0, ph, open, 0f, out float l, out _); max = Math.Max(max, l); min = Math.Min(min, l); }
             Assert.AreEqual(WingRules.Amplitude(1f, 0f), max, 0.5f);
-            Assert.AreEqual(-1.7f * WingRules.Amplitude(1f, 0f), min, 0.5f);
+            Assert.AreEqual(-WingRules.DownFactor * WingRules.Amplitude(1f, 0f), min, 0.5f);
             Assert.Greater(WingRules.Frequency(1f, 0f), WingRules.Frequency(0f, 0f) + 1.5f);   // a fight is a much quicker beat than the idle flutter
+            Assert.Greater(WingRules.DownFactor, 1f);
         }
 
         [Test] public void Wing_FoldedAtRest_OpenWhenSpread_AndTheTipNeverSwingsAbsurdly()
         {
             WingRules.Segment(1, 0f, new BirdPose(), 0f, out _, out float folded);
-            Assert.AreEqual(80f, folded, 1e-3f);              // the elbow folded right back
+            Assert.AreEqual(70f, folded, 1e-3f);              // the elbow folded right back
             WingRules.Segment(1, 0f, new BirdPose { Spread = 1f }, 0f, out _, out float open);
             Assert.AreEqual(0f, open, 1e-3f);
             var full = new BirdPose { Spread = 1f, Beat = 1f, Raise = 1f };

@@ -24,9 +24,13 @@ namespace Evolve.Combat
         class Part { public Transform T; public Quaternion Base, Written; public bool Has; public Vector3 Axis; }
 
         const float BeakClosedDeg = 26f, TuckDeg = 85f, ReachDeg = 55f;
+        // a rig with a hip and a knee per leg (Thigh_L/R + Shin_L/R, the Dreadwing model): CreatureLocomotion does not step these (it only knows Leg_*), so we walk them ourselves
+        const float HipTuckDeg = 60f, HipReachDeg = 40f, KneeTuckDeg = 55f, WalkSwingDeg = 24f, WalkKneeDeg = 30f, StrideMeters = 1.6f;
         Wing[] wings;
         Transform beak, beakTip, root, model;
-        Part rootPart, headPart, tailPart, legL, legR;
+        Part rootPart, headPart, tailPart, legL, legR, shinL, shinR;
+        bool ownGait;
+        float stride;
         Vector3 rootRest, rootUp;
         Quaternion beakRest;
         Vector3 beakAxis;
@@ -54,7 +58,7 @@ namespace Evolve.Combat
             bird = GetComponent<BirdMoves>();
             model = transform.Find("Model");
             Transform[,] w = new Transform[2, 3];
-            Transform head = null, tail = null, lL = null, lR = null;
+            Transform head = null, tail = null, lL = null, lR = null, sL = null, sR = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
                 string n = t.name;
@@ -64,14 +68,17 @@ namespace Evolve.Combat
                 else if (n == "Root") root = t;
                 else if (n == "Head") head = t;
                 else if (n == "Tail1") tail = t;
-                else if (n == "Leg_L") lL = t;
-                else if (n == "Leg_R") lR = t;
+                else if (n == "Leg_L" || n == "Thigh_L") lL = t;
+                else if (n == "Leg_R" || n == "Thigh_R") lR = t;
+                else if (n == "Shin_L") sL = t;
+                else if (n == "Shin_R") sR = t;
             }
+            ownGait = lL != null && lR != null && lL.name == "Thigh_L";
             lastPos = transform.position;
             wings = new Wing[2];
             for (int i = 0; i < 2; i++) wings[i] = MakeWing(w[i, 0], w[i, 1], w[i, 2]);
             if (root != null) { rootRest = root.localPosition; rootUp = root.parent != null ? root.parent.InverseTransformDirection(transform.up) : transform.up; }
-            rootPart = Make(root, transform); headPart = Make(head, transform); tailPart = Make(tail, transform); legL = Make(lL, transform); legR = Make(lR, transform);
+            rootPart = Make(root, transform); headPart = Make(head, transform); tailPart = Make(tail, transform); legL = Make(lL, transform); legR = Make(lR, transform); shinL = Make(sL, transform); shinR = Make(sR, transform);
             if (beak != null && beakTip != null)
             {
                 beakRest = beak.localRotation;
@@ -92,7 +99,7 @@ namespace Evolve.Combat
                 root.localRotation = rest;
             }
             nextScreech = Time.time + Random.Range(4f, 8f);
-            Debug.Log($"[BirdRigFx] {name}: cánh L(lift {(wings[0] != null ? wings[0].LiftSign : 0)}, sweep {(wings[0] != null ? wings[0].SwingSign : 0)}) R(lift {(wings[1] != null ? wings[1].LiftSign : 0)}, sweep {(wings[1] != null ? wings[1].SwingSign : 0)}), cúi {pitchSign}, chân {(legL != null && legR != null ? "có" : "THIẾU")}, đầu {(headPart != null ? "có" : "thiếu")}, đuôi {(tailPart != null ? "có" : "thiếu")}");
+            Debug.Log($"[BirdRigFx] {name}: cánh L(lift {(wings[0] != null ? wings[0].LiftSign : 0)}, sweep {(wings[0] != null ? wings[0].SwingSign : 0)}) R(lift {(wings[1] != null ? wings[1].LiftSign : 0)}, sweep {(wings[1] != null ? wings[1].SwingSign : 0)}), cúi {pitchSign}, chân {(legL != null && legR != null ? (ownGait ? "có (tự đi, gối " + (shinL != null && shinR != null ? "có" : "THIẾU") + ")" : "có") : "THIẾU")}, đầu {(headPart != null ? "có" : "thiếu")}, đuôi {(tailPart != null ? "có" : "thiếu")}");
         }
 
         Wing MakeWing(Transform a, Transform b, Transform c)
@@ -155,9 +162,23 @@ namespace Evolve.Combat
             if (rootPart != null) Put(rootPart, Quaternion.AngleAxis(pitch, rootPart.Axis));
             if (headPart != null) Put(headPart, Quaternion.AngleAxis(-0.5f * pitch, headPart.Axis));
             if (tailPart != null) Put(tailPart, Quaternion.AngleAxis(-0.4f * pitch, tailPart.Axis));
-            float leg = (pose.Legs >= 0f ? pose.Legs * TuckDeg : pose.Legs * ReachDeg) * pitchSign;   // + (in the nose-down sense) swings the feet back: tucked; - swings them forward: reaching
-            if (legL != null) Put(legL, Quaternion.AngleAxis(leg, legL.Axis));
-            if (legR != null) Put(legR, Quaternion.AngleAxis(leg, legR.Axis));
+            // legs: + (in the nose-down sense) swings the feet back: tucked; - swings them forward: reaching
+            float tuck = ownGait ? (pose.Legs >= 0f ? pose.Legs * HipTuckDeg : pose.Legs * HipReachDeg) : (pose.Legs >= 0f ? pose.Legs * TuckDeg : pose.Legs * ReachDeg);
+            float kneeTuck = pose.Legs >= 0f ? pose.Legs * KneeTuckDeg : 0f;
+            float swingL = 0f, swingR = 0f, kneeL = 0f, kneeR = 0f;
+            if (ownGait)   // walking: the legs swing in turn, the knee lifts the foot while the leg goes forward; less and less as it takes off
+            {
+                stride += 6.2832f * speed * dt / (StrideMeters * Mathf.Max(0.5f, transform.lossyScale.y));
+                if (stride > 1000f) stride %= 6.2832f;
+                float walk = moving * (1f - Mathf.Clamp01(Mathf.Abs(pose.Legs)));
+                float sw = Mathf.Sin(stride), cw = Mathf.Cos(stride);
+                swingL = sw * WalkSwingDeg * walk; swingR = -swingL;
+                kneeL = Mathf.Max(0f, -cw) * WalkKneeDeg * walk; kneeR = Mathf.Max(0f, cw) * WalkKneeDeg * walk;
+            }
+            if (legL != null) Put(legL, Quaternion.AngleAxis((tuck + swingL) * pitchSign, legL.Axis));
+            if (legR != null) Put(legR, Quaternion.AngleAxis((tuck + swingR) * pitchSign, legR.Axis));
+            if (shinL != null) Put(shinL, Quaternion.AngleAxis((kneeTuck + kneeL) * pitchSign, shinL.Axis));
+            if (shinR != null) Put(shinR, Quaternion.AngleAxis((kneeTuck + kneeR) * pitchSign, shinR.Axis));
 
             if (beak != null && beakTip != null)
             {

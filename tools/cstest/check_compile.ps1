@@ -11,6 +11,12 @@ if (-not $UnityData) {
     $p = (Get-Process Unity -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle } | Select-Object -First 1).Path
     if ($p) { $UnityData = Join-Path (Split-Path $p) "Data" }
 }
+if (-not $UnityData) {   # editor not running: look for the project's version in the usual Hub folders
+    $ver = ((Get-Content "$proj\ProjectSettings\ProjectVersion.txt" | Select-Object -First 1) -replace "m_EditorVersion:\s*", "").Trim()
+    foreach ($root in @("$env:ProgramFiles\Unity\Hub\Editor", "D:\unityhub", "C:\unityhub")) {
+        if (Test-Path "$root\$ver\Editor\Data") { $UnityData = "$root\$ver\Editor\Data"; break }
+    }
+}
 if (-not $UnityData -or -not (Test-Path "$UnityData\DotNetSdk")) { throw "Pass -UnityData <...\Editor\Data> (the editor folder that holds DotNetSdk and Managed)." }
 $dotnet = "$UnityData\NetCoreRuntime\dotnet.exe"
 $csc = (Get-ChildItem "$UnityData\DotNetSdk\sdk" -Directory | Select-Object -First 1).FullName + "\Roslyn\bincore\csc.dll"

@@ -23,6 +23,12 @@ namespace Evolve.EditorTools
             "Assets/_Project/Models/Wildlife/Meshy/Creature_ChimHangMe_Meshy.fbx",
             "Assets/_Project/Prefabs/Wildlife/ChimHangMe (Meshy).prefab", "ChimHangMe (Meshy)");
 
+        /// <summary>The Dreadwing Carrion model (rig_bird_dreadwing.py) replaces the first Meshy bird: same prefab name, so the god menu and the cave ecology pick it up; git keeps the old prefab.</summary>
+        [MenuItem("Evolve/Build Chim Hang Mẹ (Dreadwing) Prefab")]
+        static void BuildDreadwing() => Build("Assets/_Project/Prefabs/Wildlife/ChimHangMe.prefab",
+            "Assets/_Project/Models/Wildlife/Meshy/Creature_ChimHangMe_Dreadwing.fbx",
+            "Assets/_Project/Prefabs/Wildlife/ChimHangMe (Meshy).prefab", "ChimHangMe (Meshy)");
+
         internal static void Build(string sourcePath, string modelPath, string target, string rootName)
         {
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);

@@ -19,6 +19,7 @@ namespace Evolve.Creatures
             var role = CaveTier.RoleOf(creature.name);
             float k = CaveTier.SizeFactor(role, tier);
             if (Evolve.Combat.ChoXuongRigFx.Has(creature.name)) k = Mathf.Min(k, 1.2f);
+            else if (Evolve.Combat.BirdRigFx.Has(creature.name)) k = Mathf.Min(k, 1.3f);   // the Dreadwing bird is already 1.7 m tall with a 2.1 m span in its prefab: a lord's 2.4-3.2x cave size would make a 5 m monster
             else if (Evolve.Combat.GolemRigFx.Has(creature.name)) k = Mathf.Min(k, 1.44f);   // 1.2 times 1.2: the golem was asked to be 20% bigger   // the Meshy hound is already small in its prefab and a golem scaled to 6-8 m got stuck on everything: a lord's 2.4-3.2x cave size would be too much
             creature.transform.localScale *= k;
             if (creature.TryGetComponent(out CreatureMotor motor)) motor.Resize(k);
