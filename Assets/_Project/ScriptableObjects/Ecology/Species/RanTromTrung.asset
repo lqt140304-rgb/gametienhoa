@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d69cbbc4662c4d45b6f99998d571996, type: 3}
+  m_Name: RanTromTrung
+  m_EditorClassIdentifier: Evolve::Evolve.Ecology.SpeciesSO
+  Id: RanTromTrung
+  Prefab: {fileID: 8902698915256585905, guid: 67b9d5a1b9d9e8b46a91fe00f36b1b1e, type: 3}
+  Tier: 1
+  StartCount: 3
+  Capacity: 8
+  BirthsPerMinute: 0.25
+  FoodPerHeadPerMinute: 0
+  Prey: {fileID: 11400000, guid: b91d7a409e0883c479076b64d568ed2b, type: 2}
+  KillsPerHeadPerMinute: 0.25
+  EscapeChance: 0

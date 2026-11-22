@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d69cbbc4662c4d45b6f99998d571996, type: 3}
+  m_Name: ThanLanBoHo
+  m_EditorClassIdentifier: Evolve::Evolve.Ecology.SpeciesSO
+  Id: ThanLanBoHo
+  Prefab: {fileID: 2653519216848976620, guid: 1d7bc2a3fa739524ba572468de9b43f2, type: 3}
+  Tier: 1
+  StartCount: 3
+  Capacity: 8
+  BirthsPerMinute: 0.25
+  FoodPerHeadPerMinute: 0
+  Prey: {fileID: 11400000, guid: 25d658fbdb3b2b749bf95b3fcbbcf5db, type: 2}
+  KillsPerHeadPerMinute: 0.25
+  EscapeChance: 0

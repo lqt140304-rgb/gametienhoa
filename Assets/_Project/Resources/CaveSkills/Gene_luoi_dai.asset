@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12c4eb1131efc9547978393261568b34, type: 3}
+  m_Name: Gene_luoi_dai
+  m_EditorClassIdentifier: Evolve::Evolve.Organs.OrganSO
+  DisplayName: "L\u01B0\u1EE1i D\xE0i"
+  Description: "Ph\xF3ng l\u01B0\u1EE1i 6 m, k\xE9o con m\u1ED3i nh\u1ECF v\u1EC1 mi\u1EC7ng \u0111\u1EC3 nu\u1ED1t. (t\u1EEB Th\u1EB1n L\u1EB1n B\u1EDD H\u1ED3, Hang Kh\u1EDFi Sinh)"
+  Slot: 1
+  Tier: 1
+  DropWeight: 1
+  VisualPrefab: {fileID: 0}
+  NutrientNeed: 0
+  GrowthExpRequired: 30
+  GrantedAbility: {fileID: 11400000, guid: d53927493e544484bb00afe365171e80, type: 2}
+  AbilityUnlockLevel: 2
+  Family: 1
+  GrantsSight: 0
+  SpeedMultiplier: 1
+  HeatResistance: 0
+  ContactDamage: 0
+  MaxHealthBonus: 0
+  DamageReduction: 0
+  SonarRangeMultiplier: 1

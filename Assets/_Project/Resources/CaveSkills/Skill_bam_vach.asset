@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b93c18d9dfb5d48b81ce6d958148de, type: 3}
+  m_Name: Skill_bam_vach
+  m_EditorClassIdentifier: Evolve::Evolve.Abilities.BodyStateAbility
+  DisplayName: "B\xE1m V\xE1ch"
+  Description: "Leo v\xE1ch \u0111\u1EE9ng 4 gi\xE2y.\n\u26053: \u0110ang leo th\xEC nh\u1EADn \xEDt h\u01A1n 30% s\xE1t th\u01B0\u01A1ng."
+  Tier: 0
+  EnergyCost: 25
+  Cooldown: 6
+  Family: 1
+  Star3Text: "\u0110ang leo th\xEC nh\u1EADn \xEDt h\u01A1n 30% s\xE1t th\u01B0\u01A1ng."
+  Star3EnergyFactor: 1
+  Seconds: 4
+  DamageTaken: 1
+  BlockHits: 0
+  Root: 0
+  Light: 0
+  Climb: 1
+  Star3Heal: 0
+  Star3ExtraHits: 0
+  Star3DamageTaken: 0.7
+  Star3Dazzle: 0

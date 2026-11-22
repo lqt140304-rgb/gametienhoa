@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/_Project/Scenes/Slime_Cavern.unity
+    guid: 1ddb85fcbc613954e83ff54fda6eb84f
+  - enabled: 1
     path: Assets/_Project/Scenes/Underroot_Lake.unity
     guid: 70ecb71ea1336e841bd63fd865776d3a
   - enabled: 1

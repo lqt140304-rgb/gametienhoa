@@ -38,7 +38,7 @@ namespace Evolve.EditorTools
 
             string stem = fbxPath.Substring(0, fbxPath.Length - 4);
             string albedoPath = stem + "_albedo.png", maskPath = stem + "_mask.png";
-            if (!File.Exists(albedoPath)) { Debug.LogWarning("[Meshy] no albedo texture next to " + fbxPath); return; }
+            if (!File.Exists(albedoPath)) return;   // an animation-only file (_Walk, _Run) has no textures
             SetupTexture(maskPath, TextureImporterType.Default, false);
             SetupTexture(albedoPath, TextureImporterType.Default, true);
 

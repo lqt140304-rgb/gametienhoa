@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e772ad6dc7b0e448ab02fdca6258d4, type: 3}
+  m_Name: Flaw_flaw.run_ray
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.FlawSO
+  Id: flaw.run_ray
+  DisplayName: "Run R\u1EA9y"
+  Description: "B\u1ECB \u0111\xE1nh tr\xFAng th\xEC kh\u1EF1ng 0,7 gi\xE2y, kh\xF4ng n\u1EA3y \u0111\u01B0\u1EE3c."
+  CompensatedBy: 01000000i
+  Implemented: 1

@@ -52,7 +52,8 @@ def export_textures(obj, prefix, size=2048):
     links = {(l.to_node.name, l.to_socket.name): l.from_node for l in mat.node_tree.links}
     bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
     base = links[("Principled BSDF", "Base Color")].image
-    mr = links[("Separate Color", "Color")].image
+    mr_node = links.get(("Separate Color", "Color"))
+    mr = mr_node.image if mr_node is not None else None   # no metallic-roughness texture (the Dreadwing glb): a flat matte mask below
 
     def px(im):
         im = im.copy()
@@ -71,11 +72,16 @@ def export_textures(obj, prefix, size=2048):
     b[..., 3] = 1.0
     save(b, prefix + "_albedo.png")
     # no normal map: on Meshy's fragmented UV atlas it shows as bright/dark cracks along the seams
-    m = px(mr)
-    mask = np.zeros_like(m)
-    mask[..., 0] = m[..., 2]          # metallic = blue
-    mask[..., 3] = 1.0 - m[..., 1]    # smoothness = 1 - roughness (green)
-    mask[..., 1] = mask[..., 2] = 0.0
+    if mr is not None:
+        m = px(mr)
+        mask = np.zeros_like(m)
+        mask[..., 0] = m[..., 2]          # metallic = blue
+        mask[..., 3] = 1.0 - m[..., 1]    # smoothness = 1 - roughness (green)
+        mask[..., 1] = mask[..., 2] = 0.0
+    else:
+        mask = np.zeros_like(b)
+        mask[..., 3] = 0.2                # not metallic, rough like feathers
+
     save(mask, prefix + "_mask.png")
     mat.node_tree.nodes.clear()
     out = mat.node_tree.nodes.new("ShaderNodeOutputMaterial")

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d69cbbc4662c4d45b6f99998d571996, type: 3}
+  m_Name: BoCapThachAnh
+  m_EditorClassIdentifier: Evolve::Evolve.Ecology.SpeciesSO
+  Id: BoCapThachAnh
+  Prefab: {fileID: 4060471125232013372, guid: 347e33e95cb47a54da04a2fe77075a80, type: 3}
+  Tier: 3
+  StartCount: 1
+  Capacity: 2
+  BirthsPerMinute: 0.11
+  FoodPerHeadPerMinute: 0
+  Prey: {fileID: 11400000, guid: c064b842c56718247a54daaa4188ba98, type: 2}
+  KillsPerHeadPerMinute: 0.12
+  EscapeChance: 0

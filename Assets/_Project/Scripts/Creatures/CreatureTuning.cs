@@ -18,12 +18,17 @@ namespace Evolve.Creatures
             int tier = CaveTier.Of(caveId);
             var role = CaveTier.RoleOf(creature.name);
             float k = CaveTier.SizeFactor(role, tier);
+            if (Evolve.Combat.ChoXuongRigFx.Has(creature.name)) k = Mathf.Min(k, 1.2f);
+            else if (Evolve.Combat.BirdRigFx.Has(creature.name)) k = Mathf.Min(k, 1.3f);   // the Dreadwing bird is already 1.7 m tall with a 2.1 m span in its prefab: a lord's 2.4-3.2x cave size would make a 5 m monster
+            else if (Evolve.Combat.GolemRigFx.Has(creature.name)) k = Mathf.Min(k, 1.44f);   // 1.2 times 1.2: the golem was asked to be 20% bigger   // the Meshy hound is already small in its prefab and a golem scaled to 6-8 m got stuck on everything: a lord's 2.4-3.2x cave size would be too much
             creature.transform.localScale *= k;
             if (creature.TryGetComponent(out CreatureMotor motor)) motor.Resize(k);
             if (creature.TryGetComponent(out CreatureLocomotion loco)) loco.ScaleBy(k);
             if (role == CreatureRole.Lord && Evolve.Combat.LordRegalia.Has(creature.name)) Evolve.Combat.LordRegalia.Attach(creature);
             if (Evolve.Combat.FoxRigFx.Has(creature.name)) Evolve.Combat.FoxRigFx.Attach(creature);
-            if (Evolve.Combat.BirdRigFx.Has(creature.name)) Evolve.Combat.BirdRigFx.Attach(creature);   // the Meshy bird: wings and beak   // the Meshy fox: tail, jaw, blink, trinkets   // a boss is dressed like one
+            if (Evolve.Combat.BirdRigFx.Has(creature.name)) Evolve.Combat.BirdRigFx.Attach(creature);   // the Meshy bird: wings and beak
+            if (Evolve.Combat.ChoXuongRigFx.Has(creature.name)) Evolve.Combat.ChoXuongRigFx.Attach(creature);
+            if (Evolve.Combat.GolemRigFx.Has(creature.name)) Evolve.Combat.GolemRigFx.Attach(creature);   // the Meshy golem: arms, spine, glowing core   // the Meshy hound: neck, jaw, paw, flinch
             if (creature.TryGetComponent(out Evolve.Combat.CreatureCombat combat))
             {
                 combat.TellScale = tier == 0 ? 1.3f : 1f;   // the start cavern gives the player longer to read the tell

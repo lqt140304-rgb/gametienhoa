@@ -167,6 +167,8 @@ namespace Evolve.EditorTools
             ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
             ctrl.AddParameter("Alarming", AnimatorControllerParameterType.Bool);
             ctrl.AddParameter("Hit", AnimatorControllerParameterType.Trigger);
+            bool hasShell = spec.PascalName == "OcHo";
+            if (hasShell) ctrl.AddParameter("ShellClosed", AnimatorControllerParameterType.Bool);
             if (!string.IsNullOrEmpty(spec.ActionClipName) && spec.ActionClipName != "Hit")
                 ctrl.AddParameter(spec.ActionClipName, AnimatorControllerParameterType.Trigger);
 
@@ -205,6 +207,7 @@ namespace Evolve.EditorTools
                 hitState.motion = hitClip;
                 var anyToHit = sm.AddAnyStateTransition(hitState);
                 anyToHit.AddCondition(AnimatorConditionMode.If, 0f, "Hit");
+                if (hasShell) anyToHit.AddCondition(AnimatorConditionMode.IfNot, 0f, "ShellClosed");
                 anyToHit.hasExitTime = false;
                 anyToHit.duration = 0.08f;
 
@@ -221,13 +224,14 @@ namespace Evolve.EditorTools
                 var actState = sm.AddState(spec.ActionClipName);
                 actState.motion = actClip;
                 var anyToAct = sm.AddAnyStateTransition(actState);
-                anyToAct.AddCondition(AnimatorConditionMode.If, 0f, spec.ActionClipName);
+                anyToAct.AddCondition(AnimatorConditionMode.If, 0f, hasShell ? "ShellClosed" : spec.ActionClipName);
                 anyToAct.hasExitTime = false;
                 anyToAct.canTransitionToSelf = false;
                 anyToAct.duration = 0.14f;
 
                 var back = actState.AddTransition(idleState);
-                back.hasExitTime = true;
+                back.hasExitTime = !hasShell;
+                if (hasShell) back.AddCondition(AnimatorConditionMode.IfNot, 0f, "ShellClosed");
                 back.exitTime = 0.90f;
                 back.duration = 0.20f;
             }

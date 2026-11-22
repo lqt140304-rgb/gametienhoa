@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d69cbbc4662c4d45b6f99998d571996, type: 3}
+  m_Name: EchDocDom
+  m_EditorClassIdentifier: Evolve::Evolve.Ecology.SpeciesSO
+  Id: EchDocDom
+  Prefab: {fileID: 5640911345759093129, guid: 0c9f0cab4bdb5254a991669d26de17ff, type: 3}
+  Tier: 1
+  StartCount: 3
+  Capacity: 7
+  BirthsPerMinute: 0.25
+  FoodPerHeadPerMinute: 0
+  Prey: {fileID: 11400000, guid: ee931622fd67e114fb42bc79707e8eaf, type: 2}
+  KillsPerHeadPerMinute: 0.25
+  EscapeChance: 0
