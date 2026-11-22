@@ -23,6 +23,19 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(0f, MovesetSeed.PoseStrength("Chim Hang Mẹ"));   // the bird turns its own bones: the stand-in whole-body squash would only fight the dive
         }
 
+        [Test] public void Bird_IsUnhurried_RestsAfterTheBigMoves_CirclesBetweenMoves_AndNoMoveBurstsOver40Damage()
+        {
+            var swoop = Move("Bổ Nhào"); var talon = Move("Quắp"); var slash = Move("Chém Gió"); var peck = Move("Mổ");
+            Assert.GreaterOrEqual(swoop.Rest, 1f); Assert.GreaterOrEqual(talon.Rest, 1f);              // catches its breath after the two big ones
+            Assert.Greater(CircleRules.IdleSeconds("Chim Hang Mẹ"), 1f);                               // and walks round its prey between any two moves instead of chaining them
+            Assert.GreaterOrEqual(talon.Active, 0.7f); Assert.GreaterOrEqual(swoop.Active, 0.7f);       // a strike that can be seen
+            Assert.GreaterOrEqual(talon.Cooldown, 20f); Assert.GreaterOrEqual(swoop.Cooldown, 15f); Assert.GreaterOrEqual(slash.Cooldown, 6f);
+            Assert.GreaterOrEqual(peck.Cooldown, peck.Recover);                                         // never pecks again the moment it has recovered
+            Assert.LessOrEqual(slash.Damage * 4f, 40f);                                                 // four blades
+            Assert.LessOrEqual(talon.Damage + talon.MissileDamage * TalonFsm.RakeCount, 40f);          // the catch plus every rake
+            Assert.GreaterOrEqual(TalonFsm.CarrySeconds, 1.4f); Assert.GreaterOrEqual(TalonFsm.RakePass, 0.6f);
+        }
+
         [Test] public void Bird_TheMovesCoverEveryRange_SoItIsNeverIdleWithAPlayerInReach()
         {
             var moves = MovesetSeed.For("Chim Hang Mẹ");

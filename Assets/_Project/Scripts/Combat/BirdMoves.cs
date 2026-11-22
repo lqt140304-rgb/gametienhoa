@@ -30,6 +30,8 @@ namespace Evolve.Combat
         CreatureCombat combat;
         Rigidbody rb;
         Collider col;
+        Collider[] mine;
+        bool ignoring;
         Transform tipL, tipR;
         float groundOffset, baseGround, fallSpeed, tickedAt = -1f;
         MoveDef prevMove; MovePhase prevPhase;
@@ -60,6 +62,7 @@ namespace Evolve.Combat
             combat = GetComponent<CreatureCombat>();
             rb = GetComponent<Rigidbody>();
             col = GetComponentInChildren<Collider>();
+            mine = GetComponentsInChildren<Collider>(true);
             lastPos = transform.position;
             Transform pinL = null, pinR = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
@@ -89,6 +92,7 @@ namespace Evolve.Combat
         /// <summary>The creature was stunned, killed or switched off: let go of the player and drop to the ground.</summary>
         public void Abort()
         {
+            IgnorePlayers(false);
             ReleaseVictim();
             if (fsm != null) fsm.Abort();
             fsm = null;
@@ -98,6 +102,32 @@ namespace Evolve.Combat
 
         void ReleaseVictim() { victim = null; victimBody = null; victimCtl = null; }
 
+        /// <summary>
+        /// While the bird rushes (a strike, a dive, the whole grab) its big kinematic collider must not collide with the players: it is moved by hand, so touching a player counts as a ram at speed
+        /// (<c>Predator.Contact</c>: the bird killed itself on its own dive), and the player tossed upward hit the bird's belly and hung there instead of flying. Off again when the strike is over.
+        /// </summary>
+        void IgnorePlayers(bool on)
+        {
+            if (ignoring == on || mine == null) return;
+            ignoring = on;
+            foreach (var p in SurvivalStats.All)
+            {
+                if (p == null) continue;
+                foreach (var pc in p.GetComponentsInChildren<Collider>(true))
+                    foreach (var bc in mine)
+                        if (bc != null && pc != null) Physics.IgnoreCollision(bc, pc, on);
+            }
+        }
+
+        /// <summary>The strike (and what follows it) in which the bird must pass through the player: a peck or any flying move while it strikes, the grab all the way, and the first moments after a dive or a missed dash.</summary>
+        static bool Rushing(MoveDef m, MovePhase phase, float phaseTime, bool holding)
+        {
+            if (holding) return true;
+            if (m == null || phase == MovePhase.Idle || phase == MovePhase.Windup) return false;
+            if (phase == MovePhase.Active) return true;
+            return IsFlyingShape(m.Shape) && m.Shape != MoveShape.WindSlash && phaseTime < 0.5f;   // it lands on the spot: let it settle before it is solid again
+        }
+
         // ---------- called by CreatureCombat every physics step ----------
 
         public void Tick(MoveDef m, MovePhase phase, float progress, float phaseTime, SurvivalStats target)
@@ -106,6 +136,7 @@ namespace Evolve.Combat
             tickedAt = Time.fixedTime;
             if (!ReferenceEquals(m, prevMove) || phase != prevPhase) OnChange(m, phase, target);
             prevMove = m; prevPhase = phase;
+            IgnorePlayers(Rushing(m, phase, phaseTime, Holding));
 
             if (m != null && phase != MovePhase.Idle && IsFlyingShape(m.Shape))
             {

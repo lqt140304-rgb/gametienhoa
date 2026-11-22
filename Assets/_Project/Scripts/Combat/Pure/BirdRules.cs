@@ -84,7 +84,7 @@ namespace Evolve.Combat
     /// </summary>
     public sealed class TalonFsm
     {
-        public const float CarrySeconds = 1.1f, TossSeconds = 0.4f, RakePass = 0.5f, LeaveSeconds = 0.9f;
+        public const float CarrySeconds = 1.5f, TossSeconds = 0.6f, RakePass = 0.65f, LeaveSeconds = 1.2f;   // unhurried: the player must be able to see each part of it
         public const int RakeCount = 4;
 
         public TalonStage Stage { get; private set; } = TalonStage.Dash;

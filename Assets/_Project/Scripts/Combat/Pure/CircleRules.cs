@@ -4,14 +4,14 @@ using Evolve.Creatures;
 namespace Evolve.Combat
 {
     /// <summary>
-    /// A boss between two moves does not stand still: it walks round its prey at about <see cref="Ring"/> metres, sizing it up (the golem does this for <see cref="IdleSeconds"/> after every move),
+    /// A boss between two moves does not stand still: it walks round its prey at about <see cref="Ring"/> metres, sizing it up (the golem and the bird do this for <see cref="IdleSeconds"/> after every move),
     /// and now and then reverses direction. <see cref="Steer"/> gives the direction to walk.
     /// </summary>
     public static class CircleRules
     {
         public const float Ring = 6.5f, FlipMin = 2f, FlipMax = 3.5f, Speed = 2.2f;
 
-        public static float IdleSeconds(string name) => SpeciesNames.Key(name) == "golemthachanh" ? 2.5f : 0f;
+        public static float IdleSeconds(string name) { string k = SpeciesNames.Key(name); return k == "golemthachanh" ? 2.5f : k == "chimhangme" ? 2f : 0f; }
 
         /// <summary>The unit direction to walk, for the prey at (<paramref name="toX"/>, <paramref name="toZ"/>) from here: along the circle round it (to the left for sign 1, to the right for -1), drawn in when too far from the ring and pushed out when too close.</summary>
         public static (float x, float z) Steer(float toX, float toZ, int sign, float ring)
