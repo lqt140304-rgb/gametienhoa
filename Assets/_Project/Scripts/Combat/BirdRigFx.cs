@@ -29,11 +29,13 @@ namespace Evolve.Combat
         float beakSign = 1f, open, spread, beat, nextScreech, screechT = -1f, phase;
         CreatureCombat combat;
         Vector3 lastPos;
-        float moving;
+        float moving, lastHealth = -1, lastCycle;
+        Evolve.Creatures.Predator pred;
 
         void Start()
         {
             combat = GetComponent<CreatureCombat>();
+            pred = GetComponent<Evolve.Creatures.Predator>();
             Transform[,] w = new Transform[2, 3];
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
@@ -86,12 +88,20 @@ namespace Evolve.Combat
             moving = Mathf.MoveTowards(moving, Mathf.Clamp01(speed / 1.5f), dt * 4f);
             bool busy = combat != null && combat.Busy;
             beat = Mathf.MoveTowards(beat, busy ? 1f : 0f, dt * 4f);
+            if (busy) BossMusic.Ping("bird_battle");                                                                  // a move in progress is a blow in the fight: the boss music
+            if (pred != null)
+            {
+                if (lastHealth > 0f && pred.Health < lastHealth - 0.01f) { ProceduralSfx.PlayFile("Bird/bird_hurt", transform.position, 1f, ProceduralSfx.Kind.HoundHurt); BossMusic.Ping("bird_battle"); }
+                lastHealth = pred.Health;
+            }
             // folded at rest (0), half open walking, wide open and beating in a fight (1)
             spread = Mathf.MoveTowards(spread, Mathf.Max(beat, 0.55f * moving), dt * 3f);
 
             float freq = 0.5f + 0.9f * moving + 2.6f * beat;
             phase += 6.2832f * freq * dt;
             float s = Mathf.Sin(phase);
+            float cycle = Mathf.Floor(phase / 6.2832f);
+            if (cycle != lastCycle) { lastCycle = cycle; if (beat > 0.4f) ProceduralSfx.PlayFile("Bird/bird_flap", transform.position, 0.7f, ProceduralSfx.Kind.HoundSwipe); }   // a wingbeat in a fight is heard
             float stroke = s > 0f ? s : s * 1.7f;   // the up stroke is slower than the power stroke down
             float amp = 6f + 10f * moving + 48f * beat;
             float fold = 1f - spread;
@@ -118,7 +128,7 @@ namespace Evolve.Combat
 
             if (beak != null && beakTip != null)
             {
-                if (screechT < 0f && !busy && t > nextScreech) { screechT = 0f; nextScreech = t + Random.Range(7f, 12f); }
+                if (screechT < 0f && !busy && t > nextScreech) { screechT = 0f; nextScreech = t + Random.Range(7f, 12f); ProceduralSfx.PlayFile("Bird/bird_screech", transform.position, 0.9f, ProceduralSfx.Kind.HoundHowl); }
                 float screech = 0f;
                 if (screechT >= 0f) { screechT += dt; screech = Mathf.Sin(Mathf.Clamp01(screechT / 1.1f) * Mathf.PI); if (screechT > 1.1f) screechT = -1f; }
                 float target = Mathf.Max(busy ? 1f : 0f, Mathf.Clamp01(screech * 1.6f));

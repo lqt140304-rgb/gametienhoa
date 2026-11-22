@@ -9,6 +9,7 @@ tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$OUT"
 cat > "$tmp/t.txt" <<'T'
 golem_battle|slow crushing epic boss battle music for a fantasy cave game against a colossal crystal stone golem: massive thunderous low drums hitting on every beat like footsteps of a giant, deep pounding bass drone, grinding low brass, slow heavy rhythm around 90 bpm, tense orchestral strings tremolo, rumbling choir, sparse glassy crystal chimes, menacing and monumental, instrumental, no vocals, loopable, no fade in, no fade out
+bird_battle|dark fantasy boss battle music for a cave game against a giant magical vulture, a relentless airy chase: fast urgent war drums, shrieking high violins and soaring strings swirling like wind, fluttering arpeggios, ominous brass stabs, a wordless ghostly choir, rising tension that never lets go, driving and dangerous, loopable
 T
 while IFS='|' read -r -u 3 id prompt; do
   [ -n "$id" ] || continue
