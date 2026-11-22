@@ -53,6 +53,20 @@ namespace Evolve.Tests.EditMode
             Assert.Greater(SkillFxMath.LimbWeight(0.9f, 0.85f, 1.5f), far);   // blunter = wider
         }
 
+        [Test] public void SpikeSeparation_ReachesTheFlightPathWithinOneBeat()
+        {
+            Assert.That(SkillFxMath.SpikeSeparation(0f), Is.Zero);
+            Assert.That(SkillFxMath.SpikeSeparation(0.04f), Is.InRange(0.5f, 0.99f));
+            Assert.That(SkillFxMath.SpikeSeparation(0.08f), Is.EqualTo(1f));
+        }
+
+        [Test] public void SpikeFlash_OnlyCombinesNearbySimultaneousHits()
+        {
+            Assert.IsTrue(SkillFxMath.SameSpikeFlash(0.04f, 0.25f));
+            Assert.IsFalse(SkillFxMath.SameSpikeFlash(0.12f, 0.25f));
+            Assert.IsFalse(SkillFxMath.SameSpikeFlash(0.04f, 1f));
+        }
+
         [Test] public void Reach_OutHoldBack()
         {
             Assert.AreEqual(0f, SkillFxMath.Reach(0f, 1f, 0.1f, 0.2f));
