@@ -359,8 +359,9 @@ namespace Evolve.Combat
             if (heldRock == null) return;
             Vector3 from = heldRock.transform.position;
             Vector3 to = target != null ? AimAt(m.FlightSeconds, 0f) + Vector3.up * 0.2f : from + transform.forward * 8f;
-            MonsterProjectile.Launch(from, to, m.FlightSeconds, m.MissileDamage * DamageScale, 1f, false, m.MissileSize);
-            Destroy(heldRock.gameObject); heldRock = null;
+            var rock = heldRock; heldRock = null;
+            rock.Release();
+            MonsterProjectile.LaunchBody(rock.gameObject, to, m.FlightSeconds, m.MissileDamage * DamageScale, 1f);   // the real stone column flies, not a stand-in
             GolemFx.Hurl(from);
         }
 

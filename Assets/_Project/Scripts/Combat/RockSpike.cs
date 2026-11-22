@@ -54,6 +54,9 @@ namespace Evolve.Combat
         /// <summary>The golem takes hold and draws the column out of the ground in four struggling heaves (<see cref="PullRules"/>) over <paramref name="seconds"/>.</summary>
         public void BeginLift(float seconds) { liftT = 0f; liftSeconds = Mathf.Max(0.1f, seconds); liftFrom = transform.position; }
 
+        /// <summary>The golem lets go: the spike is no longer held and no longer rises or sinks, so it can be thrown as a missile.</summary>
+        public void Release() { held = false; liftT = -1f; sinkT = -1f; enabled = false; }
+
         public void Sink() { if (sinkT < 0f) sinkT = 0f; }
 
         void Update()
