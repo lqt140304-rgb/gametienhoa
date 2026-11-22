@@ -2,7 +2,7 @@
 
 Đây là game slime co-op trong hang (Unity 6 URP). Chủ dự án nói tiếng Việt: **báo cáo và tài liệu bằng tiếng Việt; mã và chú thích mã bằng tiếng Anh.** Nhiều phiên cùng làm trên một nhánh, nên:
 
-1. **Đọc `docs/PROJECT_BOARD.md` trước khi làm gì.** Nó nói ai sở hữu file nào, trùm nào đang ở đâu và việc tồn đọng. Khi xong hoặc đổi việc, **sửa dòng của phiên bạn trong bảng đó** (một dòng, ngắn).
+1. **Đọc `docs/PROJECT_BOARD.md` trước khi làm gì** (khi phiên bắt đầu, `tools/session_brief.sh` tự in bảng đó và những commit mới của phiên khác). Nó nói ai sở hữu file nào, trùm nào đang ở đâu và việc tồn đọng. Khi xong hoặc đổi việc, **sửa dòng của phiên bạn trong bảng đó** (một dòng, ngắn).
 2. **Nhánh:** làm trên `claude/unity-test-maze` (gộp từ `claude/movement`). Chạy `git pull --no-rebase origin claude/unity-test-maze` **trước khi sửa và trước khi push**, vì phiên khác và nhóm cave cũng đẩy vào đó. Không tạo PR trừ khi chủ dự án bảo. Không đẩy lên nhánh khác.
 3. **Chạy `tools/cstest/run.sh` trước khi push** (cần .NET 8, phải ra `Passed!`). GitHub cũng tự chạy lại ở `.github/workflows/tests.yml` sau mỗi push; nếu nó đỏ do commit của bạn thì sửa ngay.
 4. **Logic thuần C#** (`Assets/_Project/Scripts/**/Pure/`) làm theo **TDD**: viết test, thấy đỏ, rồi mới viết mã, thấy xanh.
