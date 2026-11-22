@@ -16,12 +16,26 @@ namespace Evolve.Combat
         float tongueStarted, tongueReadyAt, stationarySince;
         Component tongueVictim;
         Vector3 tongueAim, stationaryAnchor;
+        Transform rigTongue;
+        Vector3 tongueScaleBeforeHide;
+        bool rigTongueHidden;
+        float tongueReach;
+        Vector3 tongueTip;
         LineRenderer tongueLine;
         Material tongueMaterial;
         MaterialPropertyBlock camouflageBlock;
         Renderer[] camouflageSkin;
         Vector3 Mouth => col != null ? col.bounds.center + transform.forward * (Radius * 0.55f) : transform.position + Vector3.up * 0.3f;
         public bool IsCamouflaged => camouflage;
+
+        void InitializeShoreLizard()
+        {
+            stationaryAnchor = rb.position;
+            stationarySince = Time.time;
+            if (model == null) return;
+            foreach (var bone in model.GetComponentsInChildren<Transform>(true))
+                if (bone.name == "Tongue") { rigTongue = bone; break; }
+        }
 
         public static bool CanPull(float hunterMass, float preyMass) => preyMass > 0f && preyMass <= hunterMass * 0.5f;
         public static bool TongueReady(float now, float readyAt, float distance) => now >= readyAt && distance <= TongueRange;
@@ -104,9 +118,9 @@ namespace Evolve.Combat
                     SkillFx.Burst(impact, new Color(0.61f, 0.32f, 0.31f), 4, 0.55f, 0.05f, 0.18f, 0.25f, 0.07f);
                 }
             }
-            float reach = strikeTime < TongueContact ? strikeTime / TongueContact :
+            tongueReach = strikeTime < TongueContact ? strikeTime / TongueContact :
                 1f - Mathf.Clamp01((strikeTime - TongueContact - TonguePull) / TongueRecover);
-            DrawTongue(mouth, Vector3.Lerp(mouth, tip, reach));
+            tongueTip = tip;
             return true;
         }
 
@@ -140,6 +154,30 @@ namespace Evolve.Combat
                 WindPush.Apply(slime, velocity, TonguePull);
         }
 
+        void UpdateTongueVisual()
+        {
+            if (!tongueFired) return;
+            Vector3 from = rigTongue != null ? rigTongue.position : Mouth;
+            Vector3 to = Vector3.Lerp(from, tongueTip, tongueReach);
+            SetRigTongueHidden(true);
+            DrawTongue(from, to);
+        }
+
+        void SetRigTongueHidden(bool hide)
+        {
+            if (rigTongue == null) return;
+            if (hide)
+            {
+                // Animator may have already sampled another tongue pose this frame.
+                if (!rigTongueHidden || rigTongue.localScale != Vector3.zero)
+                    tongueScaleBeforeHide = rigTongue.localScale;
+                rigTongue.localScale = Vector3.zero;
+            }
+            else if (rigTongueHidden && rigTongue.localScale == Vector3.zero)
+                rigTongue.localScale = tongueScaleBeforeHide;
+            rigTongueHidden = hide;
+        }
+
         void DrawTongue(Vector3 from, Vector3 to)
         {
             if (tongueLine == null)
@@ -151,19 +189,27 @@ namespace Evolve.Combat
                 tongueLine.sharedMaterial = tongueMaterial;
                 tongueLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 tongueLine.receiveShadows = false;
-                tongueLine.startWidth = 0.085f;
-                tongueLine.endWidth = 0.035f;
-                tongueLine.positionCount = 2;
+                tongueLine.widthMultiplier = 0.085f;
+                tongueLine.positionCount = 5;
+                tongueLine.numCapVertices = 3;
+                tongueLine.widthCurve = new AnimationCurve(
+                    new Keyframe(0f, 1f), new Keyframe(0.7f, 0.64f), new Keyframe(1f, 0.32f));
             }
             tongueLine.enabled = (to - from).sqrMagnitude > 0.0001f;
-            tongueLine.SetPosition(0, from);
-            tongueLine.SetPosition(1, to);
+            float sag = Mathf.Min(0.055f, (to - from).magnitude * 0.025f);
+            for (int i = 0; i < tongueLine.positionCount; i++)
+            {
+                float t = i / (float)(tongueLine.positionCount - 1);
+                tongueLine.SetPosition(i, Vector3.Lerp(from, to, t) - Vector3.up * (4f * t * (1f - t) * sag));
+            }
         }
 
         void EndTongue()
         {
             tongueVictim = null;
-            tongueStarted = 0f;
+            tongueStarted = tongueReach = 0f;
+            tongueFired = false;
+            SetRigTongueHidden(false);
             if (tongueLine != null) tongueLine.enabled = false;
         }
 

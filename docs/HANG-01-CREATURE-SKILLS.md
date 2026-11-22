@@ -27,8 +27,8 @@ Mốc hồi chiêu tính từ lúc kích hoạt. Dữ liệu nền lấy từ tr
 1. Chạy `git lfs pull` nếu checkout vừa được tạo. Nếu chưa có cảnh, chạy **Evolve → Build Slime Cavern (new map)**. Mở **Assets/_Project/Scenes/Slime_Cavern.unity** rồi chạy **Evolve → Build Maze World (Step 3)** nếu cảnh chưa có các đàn tại Hang Khởi Sinh. Chạy **Evolve → Build Wave 1 Creatures & Prefabs** để nhận controller Ốc Hồ mới. Có thể dùng các prefab này để thử từng loài qua God Menu.
 2. Vào Play Mode, tìm ba sinh vật cạnh bờ hồ hoặc dùng God Menu để sinh mẫu. Khi thử thằn lằn với slime, đứng ngoài vùng an toàn quanh điểm xuất hiện. Có thể cho thằn lằn đói và đặt bọ làm con mồi.
 3. Bọ. Tiếp cận từ ngoài 2 m và quan sát vỏ cánh, bụi nhẹ ở phần rêu và vệt bay. Đặt BoxCollider sau lưng bọ và kiểm tra nó đổi hướng hoặc ở lại khi tất cả lối đều bị chặn.
-4. Ốc. Thử cùng một đòn trước, trong và sau khi đóng vỏ. Thử kéo trên lớp Mud chiếm đa số rồi lặp lại trên nền khô. Kiểm tra ốc có thể bị kéo trở lại sau khi mở vỏ trên nền khô.
-5. Thằn lằn. Thử con mồi nhỏ, con mồi lớn và một vách chen giữa lúc báo đòn. Đặt thằn lằn ở nền Moss, để đứng 3 giây rồi cho di chuyển hoặc tấn công. Kiểm tra màu lưng và việc mất ngụy trang.
+4. Ốc. Quan sát đầu và đuôi xoắn về hai phía, phần chân mềm co dưới vỏ rồi thân duỗi ra. Thử cùng một đòn trước, trong và sau khi đóng vỏ. Thử kéo trên lớp Mud chiếm đa số rồi lặp lại trên nền khô. Kiểm tra ốc có thể bị kéo trở lại sau khi mở vỏ trên nền khô.
+5. Thằn lằn. Thử con mồi nhỏ, con mồi lớn và một vách chen giữa lúc báo đòn. Khi phóng chỉ thấy một lưỡi mọc từ miệng, rồi rút hết vào miệng. Đặt thằn lằn ở nền Moss, để đứng 3 giây rồi cho di chuyển hoặc tấn công. Kiểm tra màu lưng và việc mất ngụy trang.
 6. Lặp lại quan sát ở vùng sáng dưới tia nắng và vùng tối xa tia. Kiểm tra độ rõ của hướng lưỡi, cánh mở và chớp ở chân ốc. Dùng Frame Debugger hoặc Profiler nếu cần đo overdraw và cấp phát trên bản build đích.
 7. Mở **Window → General → Test Runner → EditMode** và chạy **HangOneSkillsTests**, **PreyDefenseTests**, **MovesetSeedTests** và nhóm test nuốt/gene.
 

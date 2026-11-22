@@ -94,7 +94,7 @@ namespace Evolve.Combat
             if (model == null) foreach (var r in GetComponentsInChildren<Renderer>()) { model = r.transform; break; }
             if (model != null) baseScale = model.localScale;
             shoreLizard = pred != null && SpeciesNames.Key(name) == "thanlanboho";
-            if (shoreLizard) { stationaryAnchor = rb.position; stationarySince = Time.time; }
+            if (shoreLizard) InitializeShoreLizard();
             if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
         }
 
@@ -546,6 +546,7 @@ namespace Evolve.Combat
             else if (m != null) pose = TellPose.Evaluate(MovesetSeed.PoseOf(m), scheduler.Phase, scheduler.Progress01);
             if (MovesetSeed.AuthoredClips.Contains(SpeciesNames.Key(name))) pose = Pose.Identity;   // the real clips carry the body language
             Apply(pose);
+            if (shoreLizard) UpdateTongueVisual();
         }
 
         void Apply(Pose p)

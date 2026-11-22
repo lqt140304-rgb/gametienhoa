@@ -62,6 +62,22 @@ namespace Evolve.Creatures
             locomotion = GetComponent<CreatureLocomotion>();
             if (def.GuardRecovery > 0f)
             {
+                shellModel = transform.Find("Model");
+                if (shellModel != null)
+                {
+                    foreach (var bone in shellModel.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (bone.name == "Root") { snailBody = bone; snailBodyScale = bone.localScale; }
+                        else if (bone.name == "Shell")
+                        {
+                            shellBone = bone;
+                            shellRestPosition = bone.localPosition;
+                            shellRestScale = bone.localScale;
+                        }
+                        else if (bone.name == "Head") snailHead = new TuckBone(bone);
+                        else if (bone.name == "Tail") snailTail = new TuckBone(bone);
+                    }
+                }
                 shellAnimator = GetComponentInChildren<Animator>();
                 if (shellAnimator != null)
                     foreach (var parameter in shellAnimator.parameters)
@@ -377,14 +393,29 @@ namespace Evolve.Creatures
         {
             if (def?.GlideWindup > 0f && !prey.IsReplica) PoseWings();
             if (def == null || def.GuardRecovery <= 0f || prey.IsReplica) return;
-            if (shellModel == null)
+            if (shellBone == null || snailHead.Transform == null || snailTail.Transform == null) return;
+            float close = Mathf.SmoothStep(0f, 1f, (Time.time - guardStarted) / 0.32f);
+            float open = Mathf.SmoothStep(0f, 1f, (Time.time - guardUntil) / 0.24f);
+            float tucked = guardUntil > 0f ? close * (1f - open) : 0f;
+            if (tucked <= 0f && !snailPosed) return;
+
+            if (snailBody != null)
             {
-                shellModel = transform.Find("Model");
-                if (shellModel == null) return;
-                shellScale = shellModel.localScale;
+                snailBody.localScale = snailBodyScale;
+                shellBone.localPosition = shellRestPosition;
+                Vector3 shellPosition = shellBone.position;
+
+                // The soft foot folds inward with the head and tail. Keep the hard shell rigid.
+                float bodyScale = Mathf.Lerp(1f, 0.48f, tucked);
+                snailBody.localScale = snailBodyScale * bodyScale;
+                shellBone.localScale = shellRestScale / bodyScale;
+                shellBone.position = shellPosition;
             }
-            float closed = Mathf.Clamp01((Time.time - guardStarted) * 6f) * Mathf.Clamp01((guardUntil - Time.time) * 6f);
-            shellModel.localScale = Vector3.Scale(shellScale, new Vector3(1f, 1f - 0.24f * closed, 1f - 0.16f * closed));
+
+            Vector3 insideShell = shellBone.position - shellModel.up * 0.055f;
+            snailHead.Curl(shellModel, insideShell, tucked, 1f);
+            snailTail.Curl(shellModel, insideShell, tucked, -1f);
+            snailPosed = tucked > 0f;
         }
 
         void PoseWings()
@@ -409,8 +440,41 @@ namespace Evolve.Creatures
             wingsPosed = true;
         }
 
-        Transform shellModel;
-        Vector3 shellScale;
+        Transform shellModel, shellBone, snailBody;
+        Vector3 snailBodyScale, shellRestPosition, shellRestScale;
+        TuckBone snailHead, snailTail;
+        bool snailPosed;
+
+        readonly struct TuckBone
+        {
+            public readonly Transform Transform;
+            readonly Vector3 position, scale;
+            readonly Quaternion rotation;
+
+            public TuckBone(Transform bone)
+            {
+                Transform = bone;
+                position = bone.localPosition;
+                scale = bone.localScale;
+                rotation = bone.localRotation;
+            }
+
+            public void Curl(Transform model, Vector3 shell, float tucked, float side)
+            {
+                Transform.localPosition = position;
+                Transform.localRotation = rotation;
+                Transform.localScale = scale;
+                if (tucked <= 0f) return;
+
+                // Fold the head and tail around opposite sides of the shell opening.
+                float arc = Mathf.Sin(Mathf.PI * tucked);
+                Vector3 turn = (model.right * (0.10f * side) + model.up * 0.055f) * arc;
+                Transform.position = Vector3.Lerp(Transform.position, shell, tucked) + turn;
+                Transform.rotation = Quaternion.AngleAxis(105f * side * tucked, model.up)
+                    * Quaternion.AngleAxis(42f * side * tucked, model.right) * Transform.rotation;
+                Transform.localScale = scale * Mathf.Lerp(1f, 0.13f, tucked);
+            }
+        }
 
         /// <summary>Another prey raised the alarm: run (once the escape is ready).</summary>
         public void Alerted()
