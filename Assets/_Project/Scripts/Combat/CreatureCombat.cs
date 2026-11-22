@@ -172,6 +172,7 @@ namespace Evolve.Combat
             model = transform.Find("Model");
             if (model == null) foreach (var r in GetComponentsInChildren<Renderer>()) { model = r.transform; break; }
             if (model != null) baseScale = model.localScale;
+            oreBeetle = pred != null && SpeciesNames.Key(name) == "bogiapquang";
             shoreLizard = pred != null && SpeciesNames.Key(name) == "thanlanboho";
             if (shoreLizard) InitializeShoreLizard();
             if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
@@ -435,6 +436,7 @@ namespace Evolve.Combat
             SkillBar.SkillUsed -= OnSkillUsed;
             if (prey != null) prey.Damaged -= OnDamaged;
             EndTongue();
+            ClearOreBeetleFx();
             SetCamouflage(false);
             scheduler?.Reset();
             ClearSpears(); EndMeteor();
@@ -643,7 +645,7 @@ namespace Evolve.Combat
             if (m.Shape == MoveShape.Spears) { TickSpears(m); return; }
             if (m.Shape != MoveShape.Lunge && m.Shape != MoveShape.Charge) return;
             float chargeSpeed = m.Active > 0f ? strikeDist / m.Active * (m.Ramp ? ChargeRules.Factor(scheduler.Progress01) : 1f) : 0f;   // a ramped charge starts slowly and builds up
-            if (m.Active > 0f && motor != null && !motor.Move(strikeDir, chargeSpeed, !m.Ramp))   // a ramped charge never detours: it runs straight into the wall
+            if (m.Active > 0f && motor != null && !motor.Move(strikeDir, chargeSpeed, !m.Ramp && !oreBeetle))   // a ramped charge never detours: it runs straight into the wall
             {
                 if (m.Shape == MoveShape.Charge)
                 {
@@ -921,6 +923,7 @@ namespace Evolve.Combat
         void LateUpdate()
         {
             UpdateSpears();
+            UpdateOreBeetleFx();
             if (model == null || scheduler == null) return;
             if (tongueStarted > 0f && Time.time - tongueStarted < TongueTell)
             {

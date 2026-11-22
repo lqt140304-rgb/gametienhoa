@@ -23,6 +23,7 @@ namespace Evolve.Creatures
 
         PreyDefenseDef def;
         Prey prey;
+        HangTwoPrey gardenPrey;
         float escapeReadyAt, counterReadyAt, guardUntil, blocksCatchUntil, speedUntil, lastSeen = -100f;
         bool alarmSent, callSent, hit;
         Rigidbody body;
@@ -41,8 +42,8 @@ namespace Evolve.Creatures
 
         public bool StopsSeparation => Time.time < guardUntil && def?.GuardRecovery > 0f
             || launchAt > 0f || flightStarted > 0f;
-        public bool ResistsDisplacement => def?.Id == "oc_ho"
-            && (Time.time < guardUntil || HangOneGround.Wet(transform.position));
+        public bool ResistsDisplacement => (gardenPrey != null && gardenPrey.IsDodging)
+            || (def?.Id == "oc_ho" && (Time.time < guardUntil || HangOneGround.Wet(transform.position)));
 
         void Awake()
         {
@@ -59,6 +60,8 @@ namespace Evolve.Creatures
                     else if (bone.name == "Elytra_R") { wingRight = bone; wingRightRest = bone.localRotation; }
                 }
             }
+            if (def.Id == "dom_dom" || def.Id == "tho_la")
+                gardenPrey = TryGetComponent(out HangTwoPrey existing) ? existing : gameObject.AddComponent<HangTwoPrey>();
             locomotion = GetComponent<CreatureLocomotion>();
             if (def.GuardRecovery > 0f)
             {
@@ -83,7 +86,7 @@ namespace Evolve.Creatures
                     foreach (var parameter in shellAnimator.parameters)
                         if (parameter.nameHash == ShellClosedId) { hasShellParameter = true; break; }
             }
-            prey.CatchVeto = _ => Time.time < blocksCatchUntil;
+            prey.CatchVeto = _ => Time.time < blocksCatchUntil || (gardenPrey != null && gardenPrey.IsDodging);
             prey.Touched += OnTouched;
             prey.Damaged += OnDamaged;
         }
@@ -273,6 +276,11 @@ namespace Evolve.Creatures
 
         void Escape(bool spendCooldown)
         {
+            if (gardenPrey != null)
+            {
+                escapeReadyAt = Time.time + (gardenPrey.TryEscape() ? def.EscapeCooldown : 0.2f);
+                return;
+            }
             if (spendCooldown) escapeReadyAt = Time.time + def.EscapeCooldown;
             Vector3 pos = transform.position;
             prey.RefreshStamina();   // an escape is never cut short by tiredness

@@ -13,10 +13,10 @@ namespace Evolve.Combat
         public const float GolemCrystalsBelow = 0.66f, GolemQuietSeconds = 8f, HoundBloodBelow = 0.5f;
 
         static string Key(string species) => SpeciesNames.Key(species ?? "");
-        public static bool Has(string species) { string k = Key(species); return k == "golemthachanh" || k == "choxuong" || k == "chimhangme"; }
+        public static bool Has(string species) { string k = Key(species); return k == "golemthachanh" || k == "choxuong" || k == "chimhangme" || k == "bogiapquang"; }
 
         public static float DamageFactor(string species, float health01) =>
-            Key(species) == "golemthachanh" ? (health01 <= GolemCrystalsBelow + 1e-4f ? 0.65f : 0.8f) : 1f;
+            Key(species) == "bogiapquang" ? 0.85f : Key(species) == "golemthachanh" ? (health01 <= GolemCrystalsBelow + 1e-4f ? 0.65f : 0.8f) : 1f;
 
         public static bool CrystalsOut(string species, float health01) => Key(species) == "golemthachanh" && health01 <= GolemCrystalsBelow + 1e-4f;
 
