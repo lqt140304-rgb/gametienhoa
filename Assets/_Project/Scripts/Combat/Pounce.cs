@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Evolve.Abilities;
 using Evolve.Creatures;
 using Evolve.Player;
 using Evolve.Survival;
 using Evolve.Swallow;
+using Evolve.Visuals;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -39,6 +41,7 @@ namespace Evolve.Combat
 
         string BlockedBy()
         {
+            if (SwallowCinematic.IsPlaying) return "đang nuốt chửng";
             if (stats.Frozen) return "slime đang bị đóng băng hoặc chưa bắt đầu";
             if (LatchSession.Active != null) return "đang ghì chặt một quái";
             if (AimController.MouseUiOpen) return "menu thần (F1) đang mở: đóng nó rồi bấm lại";
@@ -98,11 +101,20 @@ namespace Evolve.Combat
             {
                 Impulse.Kick(rb, -to.normalized * 5f + Vector3.up * 3f);
                 if (controller != null) controller.FreezeFor(0.4f);
+                SlimeGelAnimator.Play(gameObject, GelMotion.Attack);
+                var tint = GetComponentInChildren<SlimeGelTint>();
+                Color gelColor = tint != null ? tint.CoreColor : new Color(0.35f, 0.85f, 0.65f);
+                SkillFx.Shed(transform, gelColor, 8, 2.5f, 0.08f, 0.3f);
                 Echo.Say("«Quá to để vồ.»");
                 return;
             }
             Impulse.Kick(rb, to.normalized * Lunge + Vector3.up * 2f);
-            if (outcome == PounceOutcome.SwallowWhole && target is Prey prey) { prey.PounceCatch(stats); return; }
+            if (outcome == PounceOutcome.SwallowWhole && target is Prey prey)
+            {
+                if (prey.PounceCatch(stats))
+                    LatchGelFx.Begin(gameObject, target.transform, false)?.Absorb();
+                return;
+            }
             // a hunter small enough to swallow is still held and digested (hunters leave a carcass to learn from)
             LatchSession.Begin(stats, target, StruggleSeed.For(target.name));
         }
