@@ -41,7 +41,7 @@ namespace Evolve.Combat
             var d = CircleRules.Steer(to.x, to.z, circleSign, CircleRules.Ring);
             dir = new Vector3(d.x, 0f, d.z);
             face = Flat(to).normalized;   // it always looks at the prey while it walks round
-            return CircleRules.Speed;
+            return CircleRules.SpeedOf(name);
         }
 
         /// <summary>How fast the body should walk toward the player: 0 once it is inside striking distance (it stands and faces them), a run when far, otherwise <paramref name="chase"/>. The body used to push into the player at 1.4 m/s forever.</summary>
@@ -56,7 +56,7 @@ namespace Evolve.Combat
             float d = Flat(to).magnitude;
             if (standing) { if (d > standOff * 1.3f) standing = false; else return 0f; }   // hysteresis: once it has stopped it does not creep forward and stop again every time the player shuffles
             else if (d <= standOff) { standing = true; return 0f; }
-            return d > 9f ? Mathf.Max(chase, 3.8f) : d > 5f ? Mathf.Max(chase, 2.6f) : chase;
+            return (d > 9f ? Mathf.Max(chase, 3.8f) : d > 5f ? Mathf.Max(chase, 2.6f) : chase) * CircleRules.ApproachScale(name, d);
         }
                 public float PhaseProgress => scheduler != null ? scheduler.Progress01 : 0f;
         float faintUntil, faintStart;
@@ -168,6 +168,8 @@ namespace Evolve.Combat
             if (ScorpionMoves.Has(name) && !TryGetComponent(out scorpion)) scorpion = gameObject.AddComponent<ScorpionMoves>();
             if (bird != null) scheduler.Allow = m => bird.CanUse(m, target);   // a grab needs a player it can carry
             SetupPhases();
+            if (golem && !TryGetComponent(out axe)) axe = gameObject.AddComponent<GolemAxe>();
+            if (axe != null) { var prevAllow = scheduler.Allow; scheduler.Allow = m => (prevAllow == null || prevAllow(m)) && (m.Form == MoveForm.Both || m.Form == axe.Form); }   // a move of the other form is never picked
             if (PhaseRules.Has(name) && !TryGetComponent<MoveVfx>(out _)) gameObject.AddComponent<MoveVfx>();   // the charge and aftermath of every move
             if (moves[0].Shape == MoveShape.Drain) leech = new LeechRules();
             if (MovesetSeed.IsAmbusher(name)) ambush = new AmbushRules();
@@ -181,6 +183,17 @@ namespace Evolve.Combat
             if (model != null) baseScale = model.localScale;
             if (ambush != null) { renderers = GetComponentsInChildren<Renderer>(); SetHidden(true); }   // starts lurking
         }
+
+        // ---------- what the golem's axe needs from the combat (GolemAxe) ----------
+        internal float HealthFraction => pred != null ? pred.HealthFraction : 1f;
+        internal bool IsIdle => scheduler != null && scheduler.Phase == MovePhase.Idle;
+        internal bool PhaseRoarPending => phases.Pending;
+        internal bool TryForce(MoveDef m, float windup) => scheduler != null && scheduler.Force(m, windup);
+        internal void FaceTargetNow() { if (target != null) FaceTarget(); }
+        internal float BodyRadius => Radius;
+        internal Vector3 StrikeDirection => strikeDir;
+        internal Vector3 AimPoint(float flightSeconds) => target != null ? AimAt(flightSeconds, 0f) : transform.position + transform.forward * 8f;
+        internal void MoveBody(Vector3 dir, float speed) { if (motor != null) motor.Move(dir, speed, false); }
 
         // ---------- phases and reading the player (PhaseRules, ReadRules) ----------
         readonly PhaseTracker phases = new PhaseTracker();
@@ -200,7 +213,7 @@ namespace Evolve.Combat
         {
             transitionMove = PhaseRules.TransitionMove(name);
             baseIdle = CircleRules.IdleSeconds(name);
-            scheduler.WeightScale = m => reader.Weight(m);
+            scheduler.WeightScale = m => reader.Weight(m) * (axe != null && axe.Form == MoveForm.Axe && m.Role == MoveRole.Normal ? 1.5f : 1f);   // the axe form leans on its normal blows
         }
 
         void TickPhases()
@@ -253,6 +266,7 @@ namespace Evolve.Combat
         readonly List<RockSpike> spikeObjs = new List<RockSpike>();
         RockSpike heldRock;
         Transform rightHand;
+        GolemAxe axe;   // the golem's axe form: the fetch, the throw, the shock wave (null for every other boss)
         const float WalkSpeed = 3.2f;
 
         /// <summary>True while it is up in the air (the leap and the fall): nothing that depends on walking (footsteps) should run.</summary>
@@ -429,6 +443,7 @@ namespace Evolve.Combat
             if (prey != null) prey.Damaged -= OnDamaged;
             scheduler?.Reset();
             ClearSpears(); EndMeteor();
+            axe?.Abort();
             bird?.Abort(); scorpion?.Abort();
             SetHidden(false);
             RestoreModel();
@@ -476,6 +491,7 @@ namespace Evolve.Combat
             {
                 scheduler.Reset(); hopFlag = skillFlag = hitFlag = false; iceArmed = false; retreatLeft = 0f;
                 ClearSpears(); EndMeteor();
+                axe?.Abort();
                 bird?.Abort();   // stunned or killed in the air: it lets go of the player and falls
                 scorpion?.Abort();
                 if (ambush != null && ambush.State == AmbushState.Lurking) { ambush.Update(0f, 0f); ambush.StrikeDone(); }   // stunned or killed while hiding: it shows itself
@@ -495,7 +511,8 @@ namespace Evolve.Combat
             }
             noTargetFor = target != null ? 0f : noTargetFor + Time.fixedDeltaTime;
             TickPhases();
-            scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding) || (scorpion != null && scorpion.Holding);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
+            axe?.Tick();
+            scheduler.HoldRecover = (meteorActive && volley != null && volley.Stage != VolleyStage.Done) || (bird != null && bird.Holding) || (axe != null && axe.Fetching) || (scorpion != null && scorpion.Holding);   // the rock volley (or the bird's carry and rake) is not cut short by the recover time: the last rock is always pulled and thrown
             var started = scheduler.Update(Time.fixedDeltaTime, target != null, perch == PerchState.Perched ? dist * 0.875f : dist, health);   // from a ledge it throws up to 16 m, not 14
             if (scheduler.Phase != prevPhase) OnPhase(scheduler.Phase, scheduler.Current);
             if (started != null) BeginStrike(started);
@@ -611,6 +628,7 @@ namespace Evolve.Combat
             if (m.Shape == MoveShape.Throw && target != null)
                 MonsterProjectile.Launch(transform.position + Vector3.up * Radius * 1.5f, AimAt(m.FlightSeconds, 0f) + Vector3.up * 0.2f, m.FlightSeconds, m.Damage * DamageScale, m.MissileSize > 0f ? 1f : 0.6f, m.Anim == "Spit", m.MissileSize);
             if (m.Shape == MoveShape.Perch) BeginPerch(m);
+            axe?.OnStrike(m);
             if (m.Shape == MoveShape.Spin) Hurt(m, Radius + m.Radius);
             else if (m.Shape == MoveShape.Call) CallPack(m);
             else if (m.Shape == MoveShape.Roar) Roar(m);

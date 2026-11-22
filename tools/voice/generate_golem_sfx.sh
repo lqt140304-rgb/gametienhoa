@@ -32,6 +32,8 @@ golem_land|1.2|a colossal stone golem landing from a great height, one enormous 
 golem_strain|0.8|a huge stone golem straining with effort to pull something heavy out of the ground, a deep guttural grunt of strain with grinding rock
 golem_hurl|0.8|a stone golem hurling a long stone spear like a javelin, a deep effort grunt and a fast heavy whoosh, punchy
 golem_pant|3.0|a colossal exhausted stone golem catching its breath, slow deep labored heavy breathing and low wheezing exhales with faint rock grinding, tired
+golem_door|2.2|a huge rusty steel door slamming shut with a deafening metallic boom, heavy iron grinding and chains rattling, echoing in a stone chamber, final and ominous
+golem_awaken|3.0|a colossal stone golem waking up, stone cracking and crumbling, a deep rising rumble and a slow low groan as huge rock limbs begin to move, heavy and ancient
 golem_hurt|0.6|a short pained rumble of a stone golem being hit, cracking rock and a low grunt, abrupt and heavy
 T
 while IFS='|' read -r -u 3 id secs prompt; do

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1056884203253254703
+--- !u!1 &4569312100633736007
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,13 +8,13 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2229737943643498504}
-  - component: {fileID: 4688814392599595366}
-  - component: {fileID: 1312254984508587602}
-  - component: {fileID: 9188307010724164196}
-  - component: {fileID: 5179983507251098894}
-  - component: {fileID: 8689314171979733655}
-  - component: {fileID: 4814376337535580564}
+  - component: {fileID: 1391989279695301243}
+  - component: {fileID: 529007407284752905}
+  - component: {fileID: 4304419936368871966}
+  - component: {fileID: 7764291024928659623}
+  - component: {fileID: 53016169356575583}
+  - component: {fileID: 4367462795896314385}
+  - component: {fileID: 374656528246629602}
   m_Layer: 0
   m_Name: ChimHangMe (Meshy)
   m_TagString: Untagged
@@ -22,29 +22,29 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2229737943643498504
+--- !u!4 &1391989279695301243
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056884203253254703}
+  m_GameObject: {fileID: 4569312100633736007}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2356166712192137339}
+  - {fileID: 2474635627191453537}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4688814392599595366
+--- !u!114 &529007407284752905
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056884203253254703}
+  m_GameObject: {fileID: 4569312100633736007}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ded9530ead535e49958fa5802ee7f3d, type: 3}
@@ -60,13 +60,13 @@ MonoBehaviour:
   bodyBobAmount: 0.035
   bodyRollAmount: 4.5
   referenceWalkSpeed: 1.25
---- !u!54 &1312254984508587602
+--- !u!54 &4304419936368871966
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056884203253254703}
+  m_GameObject: {fileID: 4569312100633736007}
   serializedVersion: 5
   m_Mass: 1
   m_LinearDamping: 0
@@ -87,13 +87,13 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!136 &9188307010724164196
+--- !u!136 &7764291024928659623
 CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056884203253254703}
+  m_GameObject: {fileID: 4569312100633736007}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -110,13 +110,13 @@ CapsuleCollider:
   m_Height: 2.4
   m_Direction: 2
   m_Center: {x: 0, y: 0.94499993, z: 0}
---- !u!114 &5179983507251098894
+--- !u!114 &53016169356575583
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056884203253254703}
+  m_GameObject: {fileID: 4569312100633736007}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f64df35d67dad7408c2cbfa42947a89, type: 3}
@@ -140,41 +140,41 @@ MonoBehaviour:
   drops: {fileID: 0}
   bodyMass: 36
   isLeader: 1
---- !u!114 &8689314171979733655
+--- !u!114 &4367462795896314385
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056884203253254703}
+  m_GameObject: {fileID: 4569312100633736007}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb42195ed7e0f544182be0724fa0bd16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Evolve::Evolve.Maze.CreatureAnimDriver
-  animator: {fileID: 5014293238655931219}
+  animator: {fileID: 8616428362537340438}
   actionTriggerName: Attack
   walkThreshold: 0.08
---- !u!114 &4814376337535580564
+--- !u!114 &374656528246629602
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056884203253254703}
+  m_GameObject: {fileID: 4569312100633736007}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6b62cc2a17330004eb8d9cae7c31a420, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Evolve::Evolve.Creatures.CreatureBrain
   speciesId: 
---- !u!1001 &2826132295230070672
+--- !u!1001 &2728357292871819402
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 2229737943643498504}
+    m_TransformParent: {fileID: 1391989279695301243}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: acfdc7db1b37c614eb1eaf0250b747c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -226,26 +226,26 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: acfdc7db1b37c614eb1eaf0250b747c8, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5014293238655931219}
+      addedObject: {fileID: 8616428362537340438}
   m_SourcePrefab: {fileID: 100100000, guid: acfdc7db1b37c614eb1eaf0250b747c8, type: 3}
---- !u!4 &2356166712192137339 stripped
+--- !u!4 &2474635627191453537 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: acfdc7db1b37c614eb1eaf0250b747c8, type: 3}
-  m_PrefabInstance: {fileID: 2826132295230070672}
+  m_PrefabInstance: {fileID: 2728357292871819402}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &3168591887917359809 stripped
+--- !u!1 &2962378244771651035 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: acfdc7db1b37c614eb1eaf0250b747c8, type: 3}
-  m_PrefabInstance: {fileID: 2826132295230070672}
+  m_PrefabInstance: {fileID: 2728357292871819402}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &5014293238655931219
+--- !u!95 &8616428362537340438
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3168591887917359809}
+  m_GameObject: {fileID: 2962378244771651035}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 940f1203f55eea04ab675f860ecc1e45, type: 2}

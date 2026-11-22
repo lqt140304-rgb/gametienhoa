@@ -76,14 +76,18 @@ namespace Evolve.Tests.EditMode
             for (float ph = 0f; ph < 6.283f; ph += 0.02f) { WingRules.Segment(0, ph, open, 0f, out float l, out _); max = Math.Max(max, l); min = Math.Min(min, l); }
             Assert.AreEqual(WingRules.Amplitude(1f, 0f), max, 0.5f);
             Assert.AreEqual(-WingRules.DownFactor * WingRules.Amplitude(1f, 0f), min, 0.5f);
-            Assert.Greater(WingRules.Frequency(1f, 0f), WingRules.Frequency(0f, 0f) + 1.5f);   // a fight is a much quicker beat than the idle flutter
+            Assert.AreEqual(WingRules.Frequency(1f, 0f), WingRules.Frequency(1f, 1f));             // the speed it walks at never changes the beat: it was irregular
+            Assert.LessOrEqual(WingRules.Frequency(1f, 0f), 1.8f);                                  // and a big bird beats slowly (1.6 Hz at full power)
+            Assert.AreEqual(0f, WingRules.Amplitude(0f, 1f));                                       // not beating: the wings do not move at all
             Assert.Greater(WingRules.DownFactor, 1f);
         }
 
         [Test] public void Wing_FoldedAtRest_OpenWhenSpread_AndTheTipNeverSwingsAbsurdly()
         {
             WingRules.Segment(1, 0f, new BirdPose(), 0f, out _, out float folded);
-            Assert.AreEqual(70f, folded, 1e-3f);              // the elbow folded right back
+            Assert.AreEqual(25f, folded, 1e-3f);              // the elbow a little back ...
+            WingRules.Segment(0, 0f, new BirdPose(), 0f, out float collar, out _);
+            Assert.AreEqual(-55f, collar, 1e-3f);            // ... and the collar drops the whole wing along the flank (it used to stand up behind the back)
             WingRules.Segment(1, 0f, new BirdPose { Spread = 1f }, 0f, out _, out float open);
             Assert.AreEqual(0f, open, 1e-3f);
             var full = new BirdPose { Spread = 1f, Beat = 1f, Raise = 1f };
@@ -165,7 +169,7 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(total, t, 0.1f);
         }
 
-        [Test] public void Talon_EachRakeScoresOnceInTheMiddleOfItsPass()
+        [Test] public void Talon_EachRakeScoresOnceInTheMiddleOfItsRun()
         {
             var f = CaughtFsm();
             while (f.Stage != TalonStage.Rake) f.Update(0.01f);
@@ -175,25 +179,38 @@ namespace Evolve.Tests.EditMode
                 if (f.Update(0.01f) == TalonEvent.Raked) { raked++; if (firstScoreAt < 0f) firstScoreAt = f.StageTime; }
             }
             Assert.AreEqual(TalonFsm.RakeCount, raked);
-            Assert.AreEqual(TalonFsm.RakePass * 0.5f, firstScoreAt, 0.03f);
+            Assert.AreEqual(TalonFsm.RakePass * TalonFsm.LineShare * 0.5f, firstScoreAt, 0.03f);
         }
 
-        [Test] public void Talon_SwingsThroughThePlayerInTheMiddleOfEveryPass_AndNeverJumpsBetweenPasses()
+        [Test] public void Talon_ARunThroughThePlayerIsFast_ThenAWideCurveToTheNextRun()
         {
-            float P = TalonFsm.RakePass;
-            Assert.AreEqual(1f, TalonFsm.SwingOffset(0f), 1e-4f); Assert.AreEqual(0f, TalonFsm.SwingOffset(P * 0.5f), 1e-4f); Assert.AreEqual(-1f, TalonFsm.SwingOffset(P), 1e-4f);
-            Assert.AreEqual(0f, TalonFsm.SwingOffset(P * 1.5f), 1e-4f); Assert.AreEqual(1f, TalonFsm.SwingOffset(P * 2f), 1e-4f);   // back where it started after two passes
-            // the score comes at the middle of a pass: right on the player
+            // a pass is the run (LineShare of it) and the curve; the run covers both halves of its length (2 x RunHalfLength) in LineShare x RakePass seconds
+            float runSeconds = TalonFsm.RakePass * TalonFsm.LineShare;
+            float speed = 2f * TalonFsm.RunHalfLength / runSeconds;
+            Assert.GreaterOrEqual(speed, 25f);                                                    // a jet's fly-by, not a wing-flapping dash
+            Assert.Less(TalonFsm.LineShare, 0.6f);                                                // the rest of the pass is the turn round
+            var (i0, u0) = TalonFsm.PassAt(0.25f); Assert.AreEqual(0, i0); Assert.AreEqual(0.25f / TalonFsm.RakePass, u0, 1e-4f);
+            var (i2, u2) = TalonFsm.PassAt(TalonFsm.RakePass * 2.5f); Assert.AreEqual(2, i2); Assert.AreEqual(0.5f, u2, 1e-4f);
+            var (neg, _) = TalonFsm.PassAt(-1f); Assert.AreEqual(0, neg);
+            // the score comes in the middle of the run: right on the player
             var f = CaughtFsm();
             while (f.Stage != TalonStage.Rake) f.Update(0.005f);
             float scoredAt = -1f;
             while (f.Stage == TalonStage.Rake && scoredAt < 0f) if (f.Update(0.005f) == TalonEvent.Raked) scoredAt = f.StageTime;
-            Assert.AreEqual(0f, TalonFsm.SwingOffset(scoredAt), 0.05f);   // the event comes in the first step past the middle (a step is 5 ms here)
-            // no jump: neighbouring samples are close, even across the pass boundary, and it is slowest at the turn
-            float last = TalonFsm.SwingOffset(0f), maxStep = 0f;
-            for (float t = 0.01f; t <= P * TalonFsm.RakeCount; t += 0.01f) { float o = TalonFsm.SwingOffset(t); maxStep = Math.Max(maxStep, Math.Abs(o - last)); last = o; }
-            Assert.Less(maxStep, 0.07f);
-            Assert.Less(Math.Abs(TalonFsm.SwingOffset(P) - TalonFsm.SwingOffset(P - 0.01f)), Math.Abs(TalonFsm.SwingOffset(P * 0.5f) - TalonFsm.SwingOffset(P * 0.5f - 0.01f)) * 0.1f);
+            Assert.AreEqual(runSeconds * 0.5f, scoredAt, 0.02f);
+        }
+
+        [Test] public void Hermite_LeavesAndArrivesWhereItShould_AndNeverJumps()
+        {
+            Assert.AreEqual(2f, TalonFsm.Hermite(2f, 5f, -3f, 4f, 0f), 1e-5f);
+            Assert.AreEqual(-3f, TalonFsm.Hermite(2f, 5f, -3f, 4f, 1f), 1e-5f);
+            Assert.AreEqual(2f, TalonFsm.Hermite(2f, 5f, -3f, 4f, -1f), 1e-5f);                 // clamped
+            // it leaves in the direction of the first tangent and arrives along the second
+            Assert.Greater(TalonFsm.Hermite(0f, 10f, 0f, 0f, 0.05f), 0f);
+            Assert.Greater(TalonFsm.Hermite(0f, 0f, 10f, 10f, 0.95f), TalonFsm.Hermite(0f, 0f, 10f, 10f, 0.9f));
+            float last = TalonFsm.Hermite(0f, 6f, 8f, 6f, 0f), maxStep = 0f;
+            for (float s = 0.01f; s <= 1f; s += 0.01f) { float v = TalonFsm.Hermite(0f, 6f, 8f, 6f, s); maxStep = Math.Max(maxStep, Math.Abs(v - last)); last = v; }
+            Assert.Less(maxStep, 0.2f);
         }
 
         [Test] public void Talon_GiveUpSkipsToTheDescent_AndAbortStopsEverything()
@@ -213,9 +230,9 @@ namespace Evolve.Tests.EditMode
             Assert.AreEqual(-1f, BirdPoseRules.Evaluate("Talon", MovePhase.Active, 0.5f).Legs);            // the dash: talons right out
             Assert.Greater(BirdPoseRules.Evaluate("Swoop", MovePhase.Windup, 1f).Legs, 0.7f);              // climbing: legs drawn up
             Assert.Less(BirdPoseRules.Evaluate("Swoop", MovePhase.Active, 1f).Legs, -0.6f);                // the stoop ends with the talons forward
-            Assert.Greater(BirdPoseRules.Cruise(1f).Legs, 0.8f);                                           // flying along: tucked
-            Assert.Less(BirdPoseRules.Talon(TalonStage.Rake, TalonFsm.RakePass * 0.5f).Legs, -0.9f);       // the middle of a rake
-            Assert.Greater(BirdPoseRules.Talon(TalonStage.Rake, 0f).Legs, BirdPoseRules.Talon(TalonStage.Rake, TalonFsm.RakePass * 0.5f).Legs);
+            Assert.AreEqual(1f, BirdPoseRules.Cruise(1f).Stretch); Assert.Greater(BirdPoseRules.Cruise(1f).Pitch, 60f);   // flying along: body flat, legs trailing
+            var jet = BirdPoseRules.Talon(TalonStage.Rake, 0.3f);                                          // the raking: a jet
+            Assert.AreEqual(1f, jet.Stretch); Assert.AreEqual(0f, jet.Legs); Assert.AreEqual(0f, jet.Beat); Assert.AreEqual(1f, jet.Spread); Assert.GreaterOrEqual(jet.Pitch, 80f);   // flat, wings wide and still, legs straight back
         }
 
         [Test] public void Poses_TheDiveSweepsTheWingsBackAndPutsTheHeadDown_TheClimbOpensAndBeatsThem()

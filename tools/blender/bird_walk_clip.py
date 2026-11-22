@@ -1,12 +1,14 @@
 """Walk and idle clips for the renamed Dreadwing bird (called by rig_bird_dreadwing.py after the model is exported):
 
-  Creature_ChimHangMe_Dreadwing_Walk.fbx  = the armature and the mesh (same hierarchy as the model, so the clip paths start with "Armature/") with two baked actions, "Idle" and "Walk" (30 fps)
+  Creature_ChimHangMe_Dreadwing_Walk.fbx  = the armature and the mesh (same hierarchy as the model, so the clip paths start with "Armature/") with baked actions (30 fps):
+    "Idle", and "Walk_F", "Walk_FR", "Walk_R", "Walk_BR", "Walk_B", "Walk_BL", "Walk_L", "Walk_FL": the walk cycle in 8 directions (forward, right, back, left and the four diagonals),
+    for a bird that circles its prey sideways while it looks at it; a 2D blend tree on (MoveX, MoveY) mixes them.
 
-Wings are folded against the body in both (the rest pose of an ordinary bird; BirdRigFx opens them for a fight or a flight). Walk is a 32-frame loop (two steps):
-the thighs swing in turn, the knees lift the foot while the leg goes forward, the tarsus keeps the foot level, and the pelvis rides up and down so that the lowest foot is
-always on the floor (planted from the posed mesh, so no foot floats or sinks). Only the bones the code does not overwrite are keyed (the legs, the pelvis' position, the wings):
-CreatureLocomotion turns Root, Head and Tail1 itself and BirdRigFx adds the pitch, the head turn and the tuck on top.
-Bone directions are measured in the file (the signs of "up" and "back" for each wing and "leg back" are probed), nothing is assumed about the bone axes.
+The wings hang down along the flanks, the folded pose of an ordinary resting bird (checked from the front, side and three-quarter view). Each walk is a 32-frame loop (two steps):
+the thighs swing in turn along the direction of travel (and out sideways for a sideways step), the knees lift the foot while the leg goes toward the travel direction, the tarsus keeps
+the foot level, and the pelvis rides up and down so that the lowest foot is always on the floor (planted from the posed mesh: no foot floats or sinks). Only the bones the code does not overwrite
+matter (the legs, the pelvis' position, the wings): CreatureLocomotion turns Root, Head and Tail1 itself and BirdRigFx adds the pitch, the head turn and the tuck on top.
+Bone directions are measured in the file (the signs of "up", "back" and "right" are probed), nothing is assumed about the bone axes.
 """
 import math
 import os
@@ -15,10 +17,12 @@ import bpy
 import numpy as np
 from mathutils import Matrix, Vector
 
-FWD, UP, RIGHT = Vector((0, -1, 0)), Vector((0, 0, 1)), Vector((-1, 0, 0))   # the bird faces -Y in Blender
-FOLD = (35, 70, 55)       # sweep of Pinion_1/2/3 with the wing folded (WingRules.FoldedSweep)
-FRAMES = 32               # one walk cycle = two steps
-HIP, KNEE, TARSUS = 22.0, 32.0, 0.8   # degrees of thigh swing, of knee lift, and how much of (thigh + knee) the tarsus gives back to keep the foot level
+FWD, UP, RIGHT = Vector((0, -1, 0)), Vector((0, 0, 1)), Vector((-1, 0, 0))   # the bird faces -Y in Blender; its right hand is -X
+FOLD_LIFT = (-55, 0, 0)    # Pinion_1/2/3 lift with the wing folded: the collar drops the whole wing along the flank (WingRules.FoldedLift)
+FOLD_SWEEP = (10, 25, 20)  # ... and a little sweep back (WingRules.FoldedSweep)
+FRAMES = 32                # one walk cycle = two steps
+HIP, LAT, KNEE, TARSUS = 22.0, 18.0, 32.0, 0.8   # degrees of thigh swing along the travel direction, of hip swing sideways, of knee lift, and how much of (thigh + knee) the tarsus gives back
+DIRECTIONS = [("F", 0), ("FR", 45), ("R", 90), ("BR", 135), ("B", 180), ("BL", 225), ("L", 270), ("FL", 315)]   # degrees from forward, toward the creature's right
 
 
 class Rig:
@@ -28,12 +32,14 @@ class Rig:
         for pb in arm.pose.bones:
             pb.rotation_mode = "QUATERNION"
         self.side = {
-            "L": dict(p=["Pinion_L1", "Pinion_L2", "Pinion_L3"], thigh="Thigh_L", shin="Shin_L", tars="Bone_013"),
-            "R": dict(p=["Pinion_R1", "Pinion_R2", "Pinion_R3"], thigh="Thigh_R", shin="Shin_R", tars="Bone_018"),
+            "L": dict(p=["Pinion_L1", "Pinion_L2", "Pinion_L3"], thigh="Thigh_L", shin="Shin_L", tars="Tarsus_L", foot="Bone_011"),
+            "R": dict(p=["Pinion_R1", "Pinion_R2", "Pinion_R3"], thigh="Thigh_R", shin="Shin_R", tars="Tarsus_R", foot="Bone_016"),
         }
         for d in self.side.values():
-            d["swing"] = self.probe(d["p"][0], UP, d["p"][1], 1)   # + : the elbow goes toward the tail (+Y)
+            d["swing"] = self.probe(d["p"][0], UP, d["p"][1], 1)     # + : the elbow goes toward the tail (+Y)
+            d["lift"] = self.probe(d["p"][0], FWD, d["p"][1], 2)     # + : the elbow goes up
         self.pitch = self.probe("Root", RIGHT, "Head", 2, inc=False, end="tail")   # + : the head goes down, the feet swing back
+        self.abd = self.probe("Thigh_L", FWD, "Bone_011", 0, inc=False)             # + : the foot goes toward the creature's right
         self.reset()
 
     def update(self):
@@ -70,8 +76,8 @@ class Rig:
 
     def fold_wings(self):
         for d in self.side.values():
-            for bone, sweep in zip(d["p"], FOLD):
-                self.arm.pose.bones[bone].matrix_basis = self.basis(bone, (d["swing"] * sweep, UP))
+            for bone, lift, sweep in zip(d["p"], FOLD_LIFT, FOLD_SWEEP):
+                self.arm.pose.bones[bone].matrix_basis = self.basis(bone, (d["swing"] * sweep, UP), (d["lift"] * lift, FWD))
 
     def lowest(self):
         ev = self.mesh.evaluated_get(bpy.context.evaluated_depsgraph_get())
@@ -81,17 +87,23 @@ class Rig:
         ev.to_mesh_clear()
         return float(a.reshape(-1, 3)[:, 2].min())   # the mesh is in world metres, Z up (armature and mesh have no object transform)
 
-    def walk_pose(self, phase, plant=True):
-        """Pose for one moment of the cycle (phase in radians); returns the root offset that keeps the lowest foot on Z=0."""
+    def walk_pose(self, phase, direction_deg=0.0, plant=True):
+        """Pose for one moment of the cycle (phase in radians) when walking toward direction_deg (0 forward, 90 right, 180 back, 270 left);
+        returns the root offset that keeps the lowest foot on Z=0."""
         self.reset()
         self.fold_wings()
+        a = math.radians(direction_deg)
+        fx, fy = math.cos(a), math.sin(a)          # travel direction: forward and right components
         sw, cw = math.sin(phase), math.cos(phase)
         for s, d in self.side.items():
             sgn = 1 if s == "L" else -1
-            thigh = sgn * HIP * sw                                         # + = foot back
-            knee = KNEE * max(0.0, -sgn * cw)                              # lifts the foot while the leg goes forward
-            tars = -TARSUS * (thigh + knee)
-            self.arm.pose.bones[d["thigh"]].matrix_basis = self.basis(d["thigh"], (self.pitch * thigh, RIGHT))
+            u = -sgn * sw                          # how far the foot is toward the travel direction (stance: it slides back, u falls)
+            du = -sgn * cw                         # ... and its rate: the foot is on its way forward (swing) when this is positive
+            back = -u * fx * HIP                   # thigh swing, + = foot back
+            out = u * fy * LAT                     # hip swing, + = foot toward the right
+            knee = KNEE * max(0.0, du)
+            tars = -TARSUS * (back + knee)
+            self.arm.pose.bones[d["thigh"]].matrix_basis = self.basis(d["thigh"], (self.pitch * back, RIGHT), (self.abd * out, FWD))
             self.arm.pose.bones[d["shin"]].matrix_basis = self.basis(d["shin"], (self.pitch * knee, RIGHT))
             self.arm.pose.bones[d["tars"]].matrix_basis = self.basis(d["tars"], (self.pitch * tars, RIGHT))
         self.update()
@@ -108,12 +120,16 @@ class Rig:
         self.update()
 
 
-KEYED_LEGS = lambda rig: [d[k] for d in rig.side.values() for k in ("thigh", "shin", "tars")]
-KEYED_WINGS = lambda rig: [b for d in rig.side.values() for b in d["p"]]
+def keyed_legs(rig):
+    return [d[k] for d in rig.side.values() for k in ("thigh", "shin", "tars")]
+
+
+def keyed_wings(rig):
+    return [b for d in rig.side.values() for b in d["p"]]
 
 
 def key_frame(rig, frame, legs, root):
-    for name in KEYED_WINGS(rig) + (KEYED_LEGS(rig) if legs else []):
+    for name in keyed_wings(rig) + (keyed_legs(rig) if legs else []):
         rig.arm.pose.bones[name].keyframe_insert("rotation_quaternion", frame=frame)
     if root:
         rig.arm.pose.bones["Root"].keyframe_insert("location", frame=frame)
@@ -132,8 +148,8 @@ def make_action(rig, name, frames, pose_fn, legs, root):
     return act, lifts
 
 
-def render_sheet(rig, path_png, phases, res=420):
-    """A contact sheet of the walk (side view), for checking by eye."""
+def render_sheet(rig, path_png, poses, res=380, cols=4):
+    """A contact sheet (side view), poses = [(phase, direction)], for checking by eye."""
     sc = bpy.context.scene
     sc.render.engine = "BLENDER_WORKBENCH"
     sc.display.shading.color_type = "SINGLE"
@@ -148,18 +164,19 @@ def render_sheet(rig, path_png, phases, res=420):
     sc.camera = cam
     cd.type = "ORTHO"
     cd.ortho_scale = 2.4
-    cam.location = (6, 0, 0.85)
-    cam.rotation_euler = (math.radians(90), 0, math.radians(90))
     imgs = []
-    for i, ph in enumerate(phases):
-        rig.walk_pose(ph)
+    for i, (ph, dr, view) in enumerate(poses):
+        if view == "side":
+            cam.location = (6, 0, 0.85); cam.rotation_euler = (math.radians(90), 0, math.radians(90))
+        else:
+            cam.location = (0, -6, 0.85); cam.rotation_euler = (math.radians(90), 0, 0)
+        rig.walk_pose(ph, dr)
         p = path_png.replace(".png", "_%d.png" % i)
         sc.render.filepath = p
         bpy.ops.render.render(write_still=True)
         im = bpy.data.images.load(p)
         imgs.append(np.array(im.pixels[:]).reshape(res, res, 4))
         bpy.data.images.remove(im)
-    cols = 4
     rows = (len(imgs) + cols - 1) // cols
     big = np.ones((rows * res, cols * res, 4))
     for i, a in enumerate(imgs):
@@ -177,11 +194,14 @@ def render_sheet(rig, path_png, phases, res=420):
 def export_clips(arm, mesh, dst_fbx, sheet=None):
     rig = Rig(arm, mesh)
     n = FRAMES
-    if sheet:
-        render_sheet(rig, sheet, [2 * math.pi * i / 8 for i in range(8)])
-    walk, lifts = make_action(rig, "Walk", n, lambda f: rig.walk_pose(2 * math.pi * f / n), legs=True, root=True)
-    idle, _ = make_action(rig, "Idle", 2, lambda f: rig.idle_pose(), legs=False, root=False)
-    print("WALK frames", n, "root lift min/max (m): %.3f %.3f" % (min(lifts), max(lifts)), "pitch sign", rig.pitch, "wing swing", {k: v["swing"] for k, v in rig.side.items()})
+    if sheet:   # the walk forward (side view) and the sideways step to the right and the left (front view), at four moments each
+        render_sheet(rig, sheet, [(2 * math.pi * i / 4, 0, "side") for i in range(4)] + [(2 * math.pi * i / 4, 90, "front") for i in range(4)] + [(2 * math.pi * i / 4, 315, "front") for i in range(4)])
+    lifts = []
+    for name, deg in DIRECTIONS:
+        _, l = make_action(rig, "Walk_" + name, n, lambda f, deg=deg: rig.walk_pose(2 * math.pi * f / n, deg), legs=True, root=True)
+        lifts += l
+    make_action(rig, "Idle", 2, lambda f: rig.idle_pose(), legs=False, root=False)
+    print("WALK frames", n, "directions", len(DIRECTIONS), "root lift min/max (m): %.3f %.3f" % (min(lifts), max(lifts)), "pitch sign", rig.pitch, "abduction sign", rig.abd, "wing swing/lift", {k: (v["swing"], v["lift"]) for k, v in rig.side.items()})
     scene = bpy.context.scene
     scene.render.fps = 30
     scene.frame_start, scene.frame_end = 1, n + 1
@@ -195,5 +215,5 @@ def export_clips(arm, mesh, dst_fbx, sheet=None):
         filepath=dst_fbx, use_selection=True, apply_unit_scale=True, apply_scale_options="FBX_SCALE_ALL",
         axis_forward="-Z", axis_up="Y", bake_space_transform=True, add_leaf_bones=False, path_mode="STRIP",
         bake_anim=True, bake_anim_use_all_actions=True, bake_anim_use_nla_strips=False,
-        bake_anim_force_startend_keying=True, bake_anim_step=1.0, bake_anim_simplify_factor=0.0)
+        bake_anim_force_startend_keying=True, bake_anim_step=1.0, bake_anim_simplify_factor=1.0)
     print("OK clips", dst_fbx)

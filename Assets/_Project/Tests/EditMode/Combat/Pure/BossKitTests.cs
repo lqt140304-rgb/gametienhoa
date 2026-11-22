@@ -9,11 +9,34 @@ namespace Evolve.Tests.EditMode
         // every boss that has been rebuilt to the standard kit; add a species here when its kit is done
         static readonly string[] Kitted = { "Chó Xương", "Golem Thạch Anh", "Chim Hang Mẹ", "Bọ Cạp Thạch Anh" };
 
+        /// <summary>A boss with forms (the golem: bare-fisted and with its axe) has one standard kit per form; any other boss has one.</summary>
+        static System.Collections.Generic.IEnumerable<System.Collections.Generic.IReadOnlyList<MoveDef>> KitsOf(string boss)
+        {
+            var all = MovesetSeed.For(boss);
+            if (all.Any(m => m.Form == MoveForm.Axe)) { yield return MovesetSeed.ForForm(boss, MoveForm.Fist); yield return MovesetSeed.ForForm(boss, MoveForm.Axe); }
+            else yield return all;
+        }
+
+        [Test] public void GolemKit_EachFormHasItsOwnPieces_FistedAndAxe()
+        {
+            const string g = "Golem Thạch Anh";
+            var fist = MovesetSeed.ForForm(g, MoveForm.Fist); var axe = MovesetSeed.ForForm(g, MoveForm.Axe);
+            CollectionAssert.AreEquivalent(new[] { "Nện Đấm", "Quét Tay", "Húc Đầu", "Giáng Thạch", "Lõi Nổ" }, fist.Select(m => m.Name).ToList());
+            CollectionAssert.AreEquivalent(new[] { "Chém Dọc", "Chém Ngang", "Ném Rìu", "Bổ Đất", "Lõi Nổ" }, axe.Select(m => m.Name).ToList());
+            Assert.AreEqual(MoveForm.Both, MovesetSeed.For(g).Single(m => m.Name == "Lõi Nổ").Form);   // the ultimate is shared
+            foreach (var n in new[] { "Nện Đấm", "Quét Tay", "Húc Đầu", "Giáng Thạch" }) Assert.AreEqual(MoveForm.Fist, MovesetSeed.For(g).Single(m => m.Name == n).Form, n);
+            Assert.AreEqual(9, MovesetSeed.For(g).Count);
+            CollectionAssert.AreEqual(new[] { "Chém Ngang", "Chém Dọc" }, axe.Single(m => m.Name == "Chém Dọc").Combo);
+            Assert.AreEqual("Ném Rìu", axe.Single(m => m.Role == MoveRole.Ranged).Name); Assert.AreEqual(MoveShape.AxeThrow, axe.Single(m => m.Role == MoveRole.Ranged).Shape);
+            Assert.AreEqual(MoveShape.Shockwave, axe.Single(m => m.Role == MoveRole.Special).Shape); Assert.IsTrue(axe.Single(m => m.Role == MoveRole.Special).Dodge);
+            Assert.IsEmpty(MovesetSeed.ForForm("Chó Xương", MoveForm.Axe).Where(m => m.Form == MoveForm.Axe));   // other bosses have no axe moves
+        }
+
         [Test] public void EveryKittedBoss_HasTheStandardKit_TwoNormalOneRangedOneSpecialWithAMiniGameOneUltimateAndAPassive()
         {
             foreach (var boss in Kitted)
+              foreach (var moves in KitsOf(boss))
             {
-                var moves = MovesetSeed.For(boss);
                 Assert.AreEqual(2, moves.Count(m => m.Role == MoveRole.Normal), boss + " normal");
                 int ranged = moves.Count(m => m.Role == MoveRole.Ranged);
                 Assert.IsTrue(ranged == 1 || (ranged == 0 && moves.Single(m => m.Role == MoveRole.Special).SpikeCount > 0), boss + " ranged: one ranged skill, or a special that throws a volley of rocks from afar");

@@ -11,6 +11,11 @@ namespace Evolve.Combat
     {
         public const float Ring = 6.5f, FlipMin = 2f, FlipMax = 3.5f, Speed = 2.2f;
 
+        /// <summary>The walking speed while it circles its prey: the bird takes it slowly, sizing the player up (1.1 m/s); everything else uses <see cref="Speed"/>.</summary>
+        public static float SpeedOf(string name) => SpeciesNames.Key(name) == "chimhangme" ? 1.1f : Speed;
+        /// <summary>A factor on the approach speed within 11 m of the prey (beyond that the bird flies in at its full speed): the bird closes in at 0.6 of the pace the others use.</summary>
+        public static float ApproachScale(string name, float distance) => SpeciesNames.Key(name) == "chimhangme" && distance <= 11f ? 0.6f : 1f;
+
         public static float IdleSeconds(string name) { string k = SpeciesNames.Key(name); return k == "golemthachanh" ? 2.5f : k == "chimhangme" ? 2f : k == "bocapthachanh" ? 2f : 0f; }
 
         /// <summary>The unit direction to walk, for the prey at (<paramref name="toX"/>, <paramref name="toZ"/>) from here: along the circle round it (to the left for sign 1, to the right for -1), drawn in when too far from the ring and pushed out when too close.</summary>

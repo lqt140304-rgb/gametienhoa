@@ -45,11 +45,16 @@ namespace Evolve.Combat
             sets["golemthachanh"] = new[]
             {
                 // the standard boss kit (everything slow to start, hits like a falling wall and takes long to recover from): 2 normal, a combo charge, no plain ranged skill (its special throws the rocks), 1 special (Giáng Thạch: it leaps into the sky, lands on a marked circle, stone spikes rise round it and it pulls them out and hurls them one after another, dashing to the next), 1 ultimate; the passive is Thân Tinh Thể (PassiveRules)
-                new MoveDef { Name = "Nện Đấm", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.9f, Active = 0.25f, Recover = 1.8f, Cooldown = 3f, Combo = new[] { "Quét Tay" }, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 28f, Force = 6f, Anim = "Punch" },
-                new MoveDef { Name = "Quét Tay", Role = MoveRole.Normal, Shape = MoveShape.Spin, Windup = 0.8f, Active = 0.2f, Recover = 1.7f, Cooldown = 4f, MinRange = 0f, MaxRange = 3.6f, Radius = 3.6f, Damage = 24f, Force = 7f, Freeze = 0.3f, Anim = "Sweep" },
-                new MoveDef { Name = "Húc Đầu", Role = MoveRole.Combo, Shape = MoveShape.Charge, Combo = new[] { "Nện Đấm", "Quét Tay", "Nện Đấm", "Quét Tay" }, Ramp = true, Windup = 1f, Active = 1.7f, Recover = 1.8f, Cooldown = 24f, MinRange = 4f, MaxRange = 14f, Distance = 12f, Damage = 26f, Force = 9f, Armored = true, Anim = "Rush" },
-                new MoveDef { Name = "Giáng Thạch", Role = MoveRole.Special, Dodge = true, Shape = MoveShape.Meteor, Windup = 2.4f, Active = 0.35f, Recover = 0.2f, Cooldown = 55f, RoarRadius = 12f, RoarForce = 14f, MinRange = 4f, MaxRange = 16f, Radius = 4.2f, Damage = 30f, Force = 8f, Freeze = 0.4f, SpikeCount = 4, SpikeRadius = 6.5f, MissileDamage = 18f, MissileSize = 0.8f, FlightSeconds = 0.8f, RecoverFactor = 1f, Rest = 5f, Anim = "Meteor" },
+                new MoveDef { Name = "Nện Đấm", Form = MoveForm.Fist, Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.9f, Active = 0.25f, Recover = 1.8f, Cooldown = 3f, Combo = new[] { "Quét Tay" }, MinRange = 0f, MaxRange = 3.5f, Distance = 0.8f, Damage = 28f, Force = 6f, Anim = "Punch" },
+                new MoveDef { Name = "Quét Tay", Form = MoveForm.Fist, Role = MoveRole.Normal, Shape = MoveShape.Spin, Windup = 0.8f, Active = 0.2f, Recover = 1.7f, Cooldown = 4f, MinRange = 0f, MaxRange = 3.6f, Radius = 3.6f, Damage = 24f, Force = 7f, Freeze = 0.3f, Anim = "Sweep" },
+                new MoveDef { Name = "Húc Đầu", Form = MoveForm.Fist, Role = MoveRole.Combo, Shape = MoveShape.Charge, Combo = new[] { "Nện Đấm", "Quét Tay", "Nện Đấm", "Quét Tay" }, Ramp = true, Windup = 1f, Active = 1.7f, Recover = 1.8f, Cooldown = 24f, MinRange = 4f, MaxRange = 14f, Distance = 12f, Damage = 26f, Force = 9f, Armored = true, Anim = "Rush" },
+                new MoveDef { Name = "Giáng Thạch", Form = MoveForm.Fist, Role = MoveRole.Special, Dodge = true, Shape = MoveShape.Meteor, Windup = 2.4f, Active = 0.35f, Recover = 0.2f, Cooldown = 55f, RoarRadius = 12f, RoarForce = 14f, MinRange = 4f, MaxRange = 16f, Radius = 4.2f, Damage = 30f, Force = 8f, Freeze = 0.4f, SpikeCount = 4, SpikeRadius = 6.5f, MissileDamage = 18f, MissileSize = 0.8f, FlightSeconds = 0.8f, RecoverFactor = 1f, Rest = 5f, Anim = "Meteor" },
                 new MoveDef { Name = "Lõi Nổ", Role = MoveRole.Ultimate, Shape = MoveShape.Spin, Windup = 2.4f, Active = 0.3f, Recover = 2.6f, Cooldown = 55f, MinRange = 0f, MaxRange = 8f, Radius = 8f, Damage = 40f, Force = 12f, Freeze = 0.8f, Armored = true, UnlockBelow = 0.25f, Anim = "CoreBlast" },
+                // the axe form (the golem has pulled its axe out of the heart stone): more blows, a throw, a shock wave; the blows run in a chain (Chém Dọc, Chém Ngang, Chém Dọc)
+                new MoveDef { Name = "Chém Dọc", Form = MoveForm.Axe, Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.8f, Active = 0.25f, Recover = 1.2f, Cooldown = 3f, MinRange = 0f, MaxRange = 4f, Distance = 0.8f, Damage = 30f, Force = 6f, Combo = new[] { "Chém Ngang", "Chém Dọc" }, Anim = "AxeChop" },
+                new MoveDef { Name = "Chém Ngang", Form = MoveForm.Axe, Role = MoveRole.Normal, Shape = MoveShape.Spin, Windup = 0.7f, Active = 0.2f, Recover = 1.3f, Cooldown = 4f, MinRange = 0f, MaxRange = 4f, Radius = 4f, Damage = 26f, Force = 8f, Freeze = 0.3f, Anim = "AxeSweep" },
+                new MoveDef { Name = "Ném Rìu", Form = MoveForm.Axe, Role = MoveRole.Ranged, Shape = MoveShape.AxeThrow, Windup = 1.4f, Active = 1f, Recover = 1.2f, Cooldown = 14f, MinRange = 6f, MaxRange = 20f, FlightSeconds = 1f, Damage = 34f, Force = 8f, Armored = true, Anim = "AxeThrow" },
+                new MoveDef { Name = "Bổ Đất", Form = MoveForm.Axe, Role = MoveRole.Special, Dodge = true, Shape = MoveShape.Shockwave, Windup = 1.8f, Active = 0.4f, Recover = 2.2f, Cooldown = 20f, MinRange = 3f, MaxRange = 14f, Damage = 30f, Force = 8f, Anim = "AxeSlam" },
             };
             // Chó Xương (cave lord, a skeletal hound): pounces and pins, bites hard, claws, leaps over low obstacles, roars smaller things away, summons small copies of itself from the ground
             sets["choxuong"] = new[]
@@ -121,6 +126,14 @@ namespace Evolve.Combat
             "khihang",
             "bocapthachanh",   // its own 25 clips baked into the model (rig_scorpion.py)
         };
+
+        /// <summary>The moves a boss has in <paramref name="form"/>: those of that form and the ones every form shares.</summary>
+        public static IReadOnlyList<MoveDef> ForForm(string speciesIdOrName, MoveForm form)
+        {
+            var r = new List<MoveDef>();
+            foreach (var m in For(speciesIdOrName)) if (m.Form == MoveForm.Both || m.Form == form) r.Add(m);
+            return r;
+        }
 
         public static bool Has(string speciesIdOrName) => For(speciesIdOrName).Count > 0;
 

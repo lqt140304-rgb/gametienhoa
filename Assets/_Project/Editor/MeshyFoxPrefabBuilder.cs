@@ -37,9 +37,10 @@ namespace Evolve.EditorTools
         }
 
         /// <summary>
-        /// The Blender clips of the Dreadwing (tools/blender/bird_walk_clip.py: "Idle" and "Walk" in one file, wings folded) become looping Generic clips, and an Animator Controller
-        /// plays Idle or Walk by the "Speed" float that CreatureLocomotion / CreatureAnimDriver feed. The parameters the golem controller also has are here so those scripts find their triggers.
-        /// BirdRigFx recognises the controller by its name (it contains "Dreadwing") and leaves the legs to the clip.
+        /// The Blender clips of the Dreadwing (tools/blender/bird_walk_clip.py: "Idle" and the walk in 8 directions "Walk_F" ... "Walk_FL", wings folded) become looping Generic clips. An Animator Controller plays Idle,
+        /// or the state "Walk": a 2D blend tree on (MoveX, MoveY), the unit direction it moves in relative to where it faces (BirdRigFx feeds it), so it steps sideways and diagonally while it circles the player.
+        /// Idle and Walk switch on the "Speed" float that CreatureLocomotion / CreatureAnimDriver feed (the state names are what CreatureLocomotion treats as non-combat). The parameters the golem controller also has
+        /// are here so those scripts find their triggers. BirdRigFx recognises the controller by its name (it contains "Dreadwing") and leaves the legs to the clip.
         /// </summary>
         static AnimatorController BuildDreadwingController(string clipFbx, string controllerPath)
         {
@@ -51,25 +52,33 @@ namespace Evolve.EditorTools
             var clips = mi.defaultClipAnimations;
             foreach (var c in clips)
             {
-                string n = c.name.Contains("Walk") ? "Walk" : c.name.Contains("Idle") ? "Idle" : c.name;
-                c.name = n; c.loopTime = true; c.loopPose = true;
+                c.name = c.name.Substring(c.name.LastIndexOf('|') + 1);   // "Armature|Walk_FR" -> "Walk_FR"
+                c.loopTime = true; c.loopPose = true;
             }
             mi.clipAnimations = clips;
             mi.SaveAndReimport();
             var all = AssetDatabase.LoadAllAssetsAtPath(clipFbx).OfType<AnimationClip>().Where(x => !x.name.StartsWith("__preview")).ToArray();
-            var walk = all.FirstOrDefault(x => x.name == "Walk");
             var idle = all.FirstOrDefault(x => x.name == "Idle");
-            if (walk == null || idle == null) { Debug.LogError("[Meshy] Thiếu clip Idle/Walk trong " + clipFbx + ": có " + string.Join(", ", all.Select(x => x.name))); return null; }
+            // direction -> (MoveX = to its right, MoveY = forward)
+            var dirs = new[] { ("F", 0f, 1f), ("FR", 0.7071f, 0.7071f), ("R", 1f, 0f), ("BR", 0.7071f, -0.7071f), ("B", 0f, -1f), ("BL", -0.7071f, -0.7071f), ("L", -1f, 0f), ("FL", -0.7071f, 0.7071f) };
+            var walks = dirs.Select(d => (clip: all.FirstOrDefault(x => x.name == "Walk_" + d.Item1), x: d.Item2, y: d.Item3)).ToArray();
+            if (idle == null || walks.Any(w => w.clip == null)) { Debug.LogError("[Meshy] Thiếu clip trong " + clipFbx + ": có " + string.Join(", ", all.Select(x => x.name))); return null; }
 
             if (AssetDatabase.LoadAssetAtPath<Object>(controllerPath) != null) AssetDatabase.DeleteAsset(controllerPath);
             var ctrl = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
             ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
+            ctrl.AddParameter("MoveX", AnimatorControllerParameterType.Float);
+            ctrl.AddParameter("MoveY", AnimatorControllerParameterType.Float);
             ctrl.AddParameter("Alarming", AnimatorControllerParameterType.Bool);
             ctrl.AddParameter("Hit", AnimatorControllerParameterType.Trigger);
             ctrl.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
             var sm = ctrl.layers[0].stateMachine;
             var sIdle = sm.AddState("Idle"); sIdle.motion = idle;
-            var sWalk = sm.AddState("Walk"); sWalk.motion = walk;
+            ctrl.CreateBlendTreeInController("Walk", out BlendTree tree);
+            tree.blendType = BlendTreeType.FreeformCartesian2D;
+            tree.blendParameter = "MoveX"; tree.blendParameterY = "MoveY";
+            foreach (var w in walks) tree.AddChild(w.clip, new Vector2(w.x, w.y));
+            var sWalk = sm.states.First(s => s.state.name == "Walk").state;
             sm.defaultState = sIdle;
             var toWalk = sIdle.AddTransition(sWalk); toWalk.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed"); toWalk.hasExitTime = false; toWalk.duration = 0.15f;
             var toIdle = sWalk.AddTransition(sIdle); toIdle.AddCondition(AnimatorConditionMode.Less, 0.08f, "Speed"); toIdle.hasExitTime = false; toIdle.duration = 0.2f;

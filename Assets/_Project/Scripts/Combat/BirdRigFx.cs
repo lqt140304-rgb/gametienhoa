@@ -24,11 +24,17 @@ namespace Evolve.Combat
         class Part { public Transform T; public Quaternion Base, Written; public bool Has; public Vector3 Axis; }
 
         const float BeakClosedDeg = 26f, TuckDeg = 85f, ReachDeg = 55f;
+        // the jet pose (BirdPose.Stretch): with the body flat the hind legs go straight back, level with it (checked in Blender: hip 40, knee and ankle straightened)
+        const float HipStretchDeg = 40f, KneeStretchDeg = 45f, TarsusStretchDeg = 45f, WalkNaturalSpeed = 1.3f;   // WalkNaturalSpeed: metres a second the walk clips cover at scale 1 (animator speed = real speed / this)
         // a rig with a hip and a knee per leg (Thigh_L/R + Shin_L/R, the Dreadwing model): CreatureLocomotion does not step these (it only knows Leg_*), so we walk them ourselves
         const float HipTuckDeg = 60f, HipReachDeg = 40f, KneeTuckDeg = 55f, WalkSwingDeg = 24f, WalkKneeDeg = 30f, StrideMeters = 1.6f;
         Wing[] wings;
         Transform beak, beakTip, root, model;
-        Part rootPart, headPart, tailPart, legL, legR, shinL, shinR;
+        Part rootPart, headPart, tailPart, legL, legR, shinL, shinR, tarsL, tarsR;
+        Animator animator;
+        Vector3 updPos;
+        bool hasMoveParams;
+        static readonly int MoveXHash = Animator.StringToHash("MoveX"), MoveYHash = Animator.StringToHash("MoveY");
         bool ownGait, kneeRig, clipWalk;   // kneeRig: hip + knee per leg (Dreadwing); clipWalk: its Walk clip drives the legs, so we do not
         float stride, yawSign = 1f, headYaw;   // yawSign: + turns the head to the creature's right
         Vector3 headUp;
@@ -61,7 +67,7 @@ namespace Evolve.Combat
             pred = GetComponent<Evolve.Creatures.Predator>();
             model = transform.Find("Model");
             Transform[,] w = new Transform[2, 3];
-            Transform head = null, tail = null, lL = null, lR = null, sL = null, sR = null;
+            Transform head = null, tail = null, lL = null, lR = null, sL = null, sR = null, tsL = null, tsR = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
                 string n = t.name;
@@ -75,17 +81,21 @@ namespace Evolve.Combat
                 else if (n == "Leg_R" || n == "Thigh_R") lR = t;
                 else if (n == "Shin_L") sL = t;
                 else if (n == "Shin_R") sR = t;
+                else if (n == "Tarsus_L") tsL = t;
+                else if (n == "Tarsus_R") tsR = t;
             }
             kneeRig = lL != null && lR != null && lL.name == "Thigh_L";
-            var animator = GetComponentInChildren<Animator>(true);
+            animator = GetComponentInChildren<Animator>(true);
             var ctrl = animator != null ? animator.runtimeAnimatorController : null;
             clipWalk = kneeRig && ctrl != null && ctrl.name.Contains("Dreadwing");   // the Blender walk clip (Creature_ChimHangMe_Dreadwing.controller) moves the legs and the pelvis
             ownGait = kneeRig && !clipWalk;
+            if (animator != null && clipWalk) foreach (var prm in animator.parameters) if (prm.name == "MoveX") hasMoveParams = true;
+            updPos = transform.position;
             lastPos = transform.position;
             wings = new Wing[2];
             for (int i = 0; i < 2; i++) wings[i] = MakeWing(w[i, 0], w[i, 1], w[i, 2]);
             if (root != null) { rootRest = root.localPosition; rootUp = root.parent != null ? root.parent.InverseTransformDirection(transform.up) : transform.up; }
-            rootPart = Make(root, transform); headPart = Make(head, transform); tailPart = Make(tail, transform); legL = Make(lL, transform); legR = Make(lR, transform); shinL = Make(sL, transform); shinR = Make(sR, transform);
+            rootPart = Make(root, transform); headPart = Make(head, transform); tailPart = Make(tail, transform); legL = Make(lL, transform); legR = Make(lR, transform); shinL = Make(sL, transform); shinR = Make(sR, transform); tarsL = Make(tsL, transform); tarsR = Make(tsR, transform);
             if (head != null)   // the head turn: + about the creature's up axis turns the beak toward its right or its left; measured on the far end of the head
             {
                 headUp = head.InverseTransformDirection(transform.up).normalized;
@@ -141,6 +151,23 @@ namespace Evolve.Combat
             wing.SwingSign = Vector3.Dot(b.position, transform.forward) < f ? 1f : -1f;   // + sweeps the wing back
             a.localRotation = wing.S[0].Rest;
             return wing;
+        }
+
+        /// <summary>
+        /// Feeds the walk blend tree: MoveX / MoveY are the unit direction it is moving in, in its own frame (X right, Y forward), so it steps sideways and diagonally when it circles the player while facing them.
+        /// The Animator's speed follows the real speed so the feet do not slide. Runs after CreatureLocomotion's Update (which sets the Speed parameter and a speed of its own) and before the Animator evaluates.
+        /// </summary>
+        void Update()
+        {
+            if (animator == null || !clipWalk || !hasMoveParams) return;
+            float dt = Mathf.Max(Time.deltaTime, 1e-4f);
+            Vector3 v = (transform.position - updPos) / dt; updPos = transform.position; v.y = 0f;
+            float speed = v.magnitude;
+            Vector3 local = transform.InverseTransformDirection(v);
+            Vector2 dir = speed > 0.15f ? new Vector2(local.x, local.z).normalized : Vector2.zero;
+            animator.SetFloat(MoveXHash, dir.x, 0.12f, dt);
+            animator.SetFloat(MoveYHash, dir.y, 0.12f, dt);
+            animator.speed = speed > 0.15f ? Mathf.Clamp(speed / (WalkNaturalSpeed * Mathf.Max(0.5f, transform.lossyScale.y)), 0.5f, 1.6f) : 1f;
         }
 
         void LateUpdate()
@@ -204,12 +231,15 @@ namespace Evolve.Combat
                     if (to.sqrMagnitude > 0.25f) yawWant = Mathf.Clamp(Vector3.SignedAngle(transform.forward, to, Vector3.up), -80f, 80f) * (scripted ? 0.35f : 1f);   // + = the player is on its right
                 }
                 headYaw = Mathf.LerpAngle(headYaw, yawWant, 1f - Mathf.Exp(-8f * dt));
-                Put(headPart, Quaternion.AngleAxis(-0.5f * pitch, headPart.Axis) * Quaternion.AngleAxis(yawSign * headYaw, headUp));
+                float headK = 0.5f + 0.5f * Mathf.Clamp01((pose.Pitch - 40f) / 45f);   // half the body's pitch is undone at the head, all of it when the body lies flat: the head looks ahead
+                Put(headPart, Quaternion.AngleAxis(-headK * pitch, headPart.Axis) * Quaternion.AngleAxis(yawSign * headYaw, headUp));
             }
-            if (tailPart != null) Put(tailPart, Quaternion.AngleAxis(-0.4f * pitch, tailPart.Axis));
+            if (tailPart != null) Put(tailPart, Quaternion.AngleAxis(-0.3f * pitch, tailPart.Axis));
             // legs: + (in the nose-down sense) swings the feet back: tucked; - swings them forward: reaching
             float tuck = kneeRig ? (pose.Legs >= 0f ? pose.Legs * HipTuckDeg : pose.Legs * HipReachDeg) : (pose.Legs >= 0f ? pose.Legs * TuckDeg : pose.Legs * ReachDeg);
             float kneeTuck = pose.Legs >= 0f ? pose.Legs * KneeTuckDeg : 0f;
+            float stretch = kneeRig ? pose.Stretch : 0f;                                     // the jet pose: the hip goes back, the knee and ankle straighten
+            tuck += stretch * HipStretchDeg; kneeTuck -= stretch * KneeStretchDeg;
             float swingL = 0f, swingR = 0f, kneeL = 0f, kneeR = 0f;
             if (ownGait)   // walking: the legs swing in turn, the knee lifts the foot while the leg goes forward; less and less as it takes off
             {
@@ -224,6 +254,8 @@ namespace Evolve.Combat
             if (legR != null) Put(legR, Quaternion.AngleAxis((tuck + swingR) * pitchSign, legR.Axis));
             if (shinL != null) Put(shinL, Quaternion.AngleAxis((kneeTuck + kneeL) * pitchSign, shinL.Axis));
             if (shinR != null) Put(shinR, Quaternion.AngleAxis((kneeTuck + kneeR) * pitchSign, shinR.Axis));
+            if (tarsL != null) Put(tarsL, Quaternion.AngleAxis(-stretch * TarsusStretchDeg * pitchSign, tarsL.Axis));
+            if (tarsR != null) Put(tarsR, Quaternion.AngleAxis(-stretch * TarsusStretchDeg * pitchSign, tarsR.Axis));
 
             if (beak != null && beakTip != null)
             {

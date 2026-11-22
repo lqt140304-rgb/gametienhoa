@@ -3,10 +3,13 @@ using System.Collections.Generic;
 
 namespace Evolve.Combat
 {
-    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden, Meteor, Swoop, WindSlash, Talon, Burrow, Shatter }
+    public enum MoveShape { Lunge, Charge, Spin, Drain, Call, IceDrop, Gust, Throw, Perch, Spears, Roar, Summon, Harden, Meteor, Swoop, WindSlash, Talon, AxeThrow, Shockwave, Fetch, Burrow, Shatter }
     public enum MovePhase { Idle, Windup, Active, Recover }
 
     /// <summary>What a move is for in a boss's standard kit: two Normal attacks, one Ranged, one Special (it holds the player in a mini game), one Ultimate near the end of its health.</summary>
+    /// <summary>Which form of a boss a move belongs to (the golem has a bare-fisted form and one with its axe); Both is available in every form.</summary>
+    public enum MoveForm { Both, Fist, Axe }
+
     public enum MoveRole { Normal, Ranged, Special, Ultimate, Combo }
 
     /// <summary>One attack of a monster (data): its timing, reach, damage and when it unlocks.</summary>
@@ -48,6 +51,8 @@ namespace Evolve.Combat
         public float RoarRadius, RoarForce;
         /// <summary>Seconds it stays crouched, winded, after the recover (2-5 for a boss, the bigger the move the longer); added to the end of the recover.</summary>
         public float Rest;
+        /// <summary>The form this move belongs to; <see cref="MoveForm.Both"/> for every other boss.</summary>
+        public MoveForm Form;
         /// <summary>It cannot be hurt at all while this move runs (a phase-change roar).</summary>
         public bool Invulnerable;
         /// <summary>Names of moves it strings together right after this one (a combo), each shortly after the last if the player is still in reach; the rest comes only at the end, the longest of the chain.</summary>

@@ -52,6 +52,9 @@ Ngắm vào chỗ người chơi **sắp chạy tới** (đọc người chơi).
 ### Bổ Đất
 Chém xuống đất: một **dải sóng** chạy thẳng về phía trước (vết nứt, bụi, đá bắn), né bằng bước ngang hoặc nhảy. Kiểm tra va chạm là phép thử hình chữ nhật chuyển động (`ShockwaveRules`, thuần, có test).
 
+## Cửa thép và kích hoạt theo số người (đã chốt 2026-11-22)
+Lối vào phòng là **một cửa hẹp duy nhất**; khi **đủ người chơi (mọi người còn sống và đang kết nối) ở trong `Activate_Zone`**, đếm ngược 2 s rồi một **cánh cửa thép cũ** đóng lối vào, thêm 2 s thì trùm thức dậy; trùm bị đánh bại thì cửa mở; nếu mọi người chơi chết thì cửa mở và trùm quay về trạng thái chờ. Logic thuần: `RoomRules.ShouldActivate(int insideAlive, int connectedAlive)` và `DoorFsm` (Open → Closing → Closed → Opening → Open); phần Unity: `BossRoom` điều khiển `Door_Steel` giữa `Door_Open_Pos` và `Door_Closed_Pos`. Chi tiết tên điểm: `docs/BOSS_ROOMS_BRIEF.md` mục 3a.
+
 ## Hợp đồng với map (cho phiên dựng map)
 Trong phòng đặt các GameObject rỗng đúng tên (code tìm theo tên, không cần gắn script): `Boss_Wait` (chỗ Golem nằm chờ), `Axe_Anchor` (chỗ cắm rìu, giữa phòng), `Activate_Zone` (collider trigger: người chơi bước vào thì kích hoạt), `Prop_Pillar_*` và `Prop_Crystal_*` (cột/tinh thể: **chưa có hành vi**, chỉ để sau). Phía code: khối `BossRoom` tìm các điểm đó, ẩn Golem trước khi kích hoạt, phát sự kiện `Activated`. Sẽ có danh sách làm theo trong `docs/`.
 
