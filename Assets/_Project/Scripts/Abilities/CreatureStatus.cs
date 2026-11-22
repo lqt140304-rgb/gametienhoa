@@ -47,6 +47,7 @@ namespace Evolve.Abilities
         /// <summary>Slide the creature at <paramref name="velocity"/> (flat) for <paramref name="seconds"/>, following the ground.</summary>
         public static void Knock(Component creature, Vector3 velocity, float seconds)
         {
+            if (Evolve.Combat.PassiveRules.NoKnockback(creature.name)) return;   // Lướt Gió: it rides the wind
             var s = On(creature);
             velocity.y = 0f;
             s.knockVelocity = velocity;

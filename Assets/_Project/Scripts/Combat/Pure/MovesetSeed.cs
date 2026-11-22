@@ -65,12 +65,16 @@ namespace Evolve.Combat
             sets["chimhangme"] = new[]
             {
                 new MoveDef { Name = "Mổ", Role = MoveRole.Normal, Shape = MoveShape.Lunge, Windup = 0.6f, Active = 0.25f, Recover = 1.4f, Cooldown = 3.5f, MinRange = 0f, MaxRange = 3.2f, Distance = 1.4f, Damage = 14f, RetreatDistance = 6f, Anim = "Peck" },   // hit and run: it flutters back 6 m, which puts the player back in range of the sky moves (they need 3-5 m)
+                // the second close attack: a wing swept across in a wide arc (hits everything round it), a push to the side
+                new MoveDef { Name = "Vả Cánh", Role = MoveRole.Normal, Shape = MoveShape.Spin, Windup = 0.7f, Active = 0.2f, Recover = 1.3f, Cooldown = 4f, MinRange = 0f, MaxRange = 3.6f, Radius = 3.6f, Damage = 16f, Force = 6f, Freeze = 0.3f, Anim = "WingSlap" },
                 // two chops of the wings, each throws one blade of wind from each wing tip (Damage and Force are per blade, SpearSpeed is how fast they fly)
-                new MoveDef { Name = "Chém Gió", Role = MoveRole.Ranged, Shape = MoveShape.WindSlash, Windup = 1.1f, Active = 0.9f, Recover = 1.6f, Cooldown = 7f, MinRange = 3f, MaxRange = 16f, Damage = 10f, Force = 6f, SpearSpeed = 24f, Anim = "Slash" },
+                new MoveDef { Name = "Chém Gió", Role = MoveRole.Ranged, Shape = MoveShape.WindSlash, Windup = 1.1f, Active = 0.9f, Recover = 1.6f, Cooldown = 7f, MinRange = 5f, MaxRange = 16f, Damage = 10f, Force = 6f, SpearSpeed = 24f, Anim = "Slash" },
                 // climbs over the player flapping, then drops on the marked circle (Radius) with its wings folded
-                new MoveDef { Name = "Bổ Nhào", Role = MoveRole.Special, Shape = MoveShape.Swoop, Windup = 2f, Active = 0.8f, Recover = 2.2f, Rest = 1.5f, Cooldown = 18f, MinRange = 5f, MaxRange = 18f, AbortBeyond = 22f, Radius = 3f, Damage = 28f, Force = 8f, Freeze = 0.4f, Anim = "Swoop" },
+                new MoveDef { Name = "Bổ Nhào", Role = MoveRole.Special, Dodge = true, Shape = MoveShape.Swoop, Windup = 2f, Active = 0.8f, Recover = 2.2f, Rest = 1.5f, Cooldown = 18f, MinRange = 5f, MaxRange = 18f, AbortBeyond = 22f, Radius = 3f, Damage = 28f, Force = 8f, Freeze = 0.4f, Anim = "Swoop" },
                 // the dash catches (Damage) and carries, tosses and rakes (MissileDamage per pass); a dash that catches nothing leaves it open to a counter
-                new MoveDef { Name = "Quắp", Role = MoveRole.Special, Shape = MoveShape.Talon, Windup = 1.4f, Active = 0.8f, Recover = 1.8f, Rest = 1.5f, Cooldown = 26f, MinRange = 4f, MaxRange = 11f, AbortBeyond = 15f, Damage = 8f, MissileDamage = 7f, Anim = "Talon" },
+                new MoveDef { Name = "Quắp", Role = MoveRole.Combo, Shape = MoveShape.Talon, Windup = 1.4f, Active = 0.8f, Recover = 1.8f, Rest = 1.5f, Cooldown = 26f, MinRange = 4f, MaxRange = 11f, AbortBeyond = 15f, Damage = 8f, MissileDamage = 7f, Anim = "Talon" },
+                // the ultimate (health 25% or less): a screech that stuns everyone within 9 m and throws them back, then three dives in a row onto the marked circle (the Combo chain, each shortly after the last)
+                new MoveDef { Name = "Rít Gầm", Role = MoveRole.Ultimate, Shape = MoveShape.Spin, Windup = 1.6f, Active = 0.4f, Recover = 0.6f, Cooldown = 45f, MinRange = 0f, MaxRange = 16f, Radius = 9f, Damage = 14f, Force = 12f, Freeze = 1.2f, Armored = true, UnlockBelow = 0.25f, Combo = new[] { "Bổ Nhào", "Bổ Nhào", "Bổ Nhào" }, Anim = "Screech" },
             };
             // Cáo Gió (cave lord): a bite, then three wind spears circling above its tails and thrown one after another, then it calls the weasels
             sets["caogio"] = new[]

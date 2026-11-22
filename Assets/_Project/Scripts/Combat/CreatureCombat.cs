@@ -486,6 +486,7 @@ namespace Evolve.Combat
             if (m == null) return;
             if (hound) HoundFx.OnPhase(this, phase, m);
             if (golem) GolemFx.OnPhase(this, phase, m);
+            if (bird != null) BirdFx.OnPhase(this, phase, m);
             if (phase == MovePhase.Windup) BeginWindup(m);
             else if (phase == MovePhase.Active) loco?.PlayAction("Strike_" + m.Anim);
             else if (phase == MovePhase.Recover)

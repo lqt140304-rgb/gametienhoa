@@ -9,9 +9,9 @@ namespace Evolve.Tests.EditMode
     {
         static MoveDef Move(string name) => MovesetSeed.For("Chim Hang Mẹ").Single(m => m.Name == name);
 
-        [Test] public void Bird_HasItsFourMoves_ByAnyName()
+        [Test] public void Bird_HasItsSixMoves_ByAnyName()
         {
-            foreach (var n in new[] { "Chim Hang Mẹ", "ChimHangMe (Meshy)(Clone)", "chim_hang_me" }) Assert.AreEqual(4, MovesetSeed.For(n).Count, n);
+            foreach (var n in new[] { "Chim Hang Mẹ", "ChimHangMe (Meshy)(Clone)", "chim_hang_me" }) Assert.AreEqual(6, MovesetSeed.For(n).Count, n);
             var peck = Move("Mổ"); var slash = Move("Chém Gió"); var swoop = Move("Bổ Nhào"); var talon = Move("Quắp");
             Assert.AreEqual(MoveShape.Lunge, peck.Shape); Assert.AreEqual(MoveRole.Normal, peck.Role); Assert.AreEqual(0f, peck.MinRange);
             Assert.Greater(peck.RetreatDistance, 0f);   // pecks and flutters back, so it does not hug the player where none of the sky moves (3-5 m and up) can be used

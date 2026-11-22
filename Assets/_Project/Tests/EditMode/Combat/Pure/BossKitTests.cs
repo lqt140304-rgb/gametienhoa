@@ -7,7 +7,7 @@ namespace Evolve.Tests.EditMode
     public class BossKitTests
     {
         // every boss that has been rebuilt to the standard kit; add a species here when its kit is done
-        static readonly string[] Kitted = { "Chó Xương", "Golem Thạch Anh" };
+        static readonly string[] Kitted = { "Chó Xương", "Golem Thạch Anh", "Chim Hang Mẹ" };
 
         [Test] public void EveryKittedBoss_HasTheStandardKit_TwoNormalOneRangedOneSpecialWithAMiniGameOneUltimateAndAPassive()
         {
@@ -100,6 +100,39 @@ namespace Evolve.Tests.EditMode
         {
             Assert.Less(GaitRules.Bob(0.25f, 0.05f), GaitRules.Bob(0.0f, 0.05f)); Assert.AreEqual(GaitRules.Bob(0.25f, 0.05f), GaitRules.Bob(0.75f, 0.05f), 1e-5f);
             Assert.AreEqual(0f, GaitRules.Bob(0.0f, 0.05f), 1e-5f);
+        }
+
+        [Test] public void ChimHangMe_KitDetails_TwoCloseNormals_SkyDiveIsTheDodgePuzzle_TheGrabIsTheCombo_TheScreechStringsThreeDives()
+        {
+            var moves = MovesetSeed.For("Chim Hang Mẹ");
+            var normals = moves.Where(m => m.Role == MoveRole.Normal).ToList();
+            Assert.IsTrue(normals.Any(m => m.Name == "Mổ") && normals.Any(m => m.Name == "Vả Cánh"));
+            Assert.IsTrue(normals.All(m => m.MinRange <= 0f && m.MaxRange <= 4f), "both normals are close range");
+            var special = moves.Single(m => m.Role == MoveRole.Special);
+            Assert.AreEqual("Bổ Nhào", special.Name); Assert.IsTrue(special.Dodge); Assert.IsFalse(special.Pins);   // no mini game: the marked circle is the challenge
+            Assert.AreEqual(MoveRole.Combo, moves.Single(m => m.Name == "Quắp").Role);
+            var ult = moves.Single(m => m.Role == MoveRole.Ultimate);
+            Assert.AreEqual("Rít Gầm", ult.Name); Assert.LessOrEqual(ult.UnlockBelow, 0.25f + 1e-4f); Assert.Greater(ult.Freeze, 0.5f);   // the screech stuns
+            CollectionAssert.AreEqual(new[] { "Bổ Nhào", "Bổ Nhào", "Bổ Nhào" }, ult.Combo);
+        }
+
+        [Test] public void ChimHangMe_Passive_LuotGio_IsFasterByAFifth_AndCannotBeKnockedBack()
+        {
+            foreach (var n in new[] { "Chim Hang Mẹ", "ChimHangMe (Meshy)(Clone)" })
+            {
+                Assert.IsTrue(PassiveRules.Has(n), n);
+                Assert.AreEqual(1.2f, PassiveRules.SpeedFactor(n, 1f), 1e-4f); Assert.AreEqual(1.2f, PassiveRules.SpeedFactor(n, 0.1f), 1e-4f);
+                Assert.IsTrue(PassiveRules.NoKnockback(n), n);
+            }
+            Assert.IsFalse(PassiveRules.NoKnockback("Chó Xương")); Assert.IsFalse(PassiveRules.NoKnockback("Golem Thạch Anh"));
+        }
+
+        [Test] public void TheScreechAndItsDives_FormAChainThatCanStart()
+        {
+            var moves = MovesetSeed.For("Chim Hang Mẹ");
+            var ult = moves.Single(m => m.Role == MoveRole.Ultimate);
+            foreach (var name in ult.Combo) { var next = moves.Single(m => m.Name == name); Assert.GreaterOrEqual(next.MaxRange, 10f); }
+            Assert.GreaterOrEqual(ult.Radius, 8f);   // a big shock wave
         }
     }
 }
