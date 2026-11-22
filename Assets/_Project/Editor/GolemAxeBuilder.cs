@@ -12,7 +12,7 @@ namespace Evolve.EditorTools
     /// </summary>
     public static class GolemAxeBuilder
     {
-        const string ModelDir = "Assets/_Project/Models/Props/GolemAxe", PrefabDir = "Assets/_Project/Prefabs/Props", MatDir = "Assets/_Project/Materials";
+        const string ModelDir = "Assets/_Project/Models/Props/GolemAxe", PrefabDir = "Assets/_Project/Resources/Props", MatDir = "Assets/_Project/Materials";
 
         [MenuItem("Evolve/Build Golem Axe Prefabs")]
         static void Build()

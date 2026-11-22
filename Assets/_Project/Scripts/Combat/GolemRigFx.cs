@@ -28,6 +28,9 @@ namespace Evolve.Combat
         Transform hips, handL, handR, chest, shoulderL, shoulderR, footTipL;
         float dirF = 1f, dirR, sideSign = 1f;   // the direction of travel in the body's own frame (smoothed): + forward, + to its right
         float raiseSign = 1f, spreadSign = 1f, hunchSign = 1f, hipSign = 1f, kneeSign = 1f, twistSign = 1f;
+        GolemAxe axeFx;
+        /// <summary>The pose of the arms and body now (the axe in the hand follows it).</summary>
+        public ArmPose CurrentPose => pose;
         bool wasResting; float plantRaise;   // how far the right arm is reached down to the floor (degrees added to its raise)
         float legLen, lastRun, flinchT = 9f, restAnkleL, restAnkleR, restHipsH; Quaternion footRestL, footRestR; bool restMeasured;   // hips height above the root, ankle heights above the root and foot orientations in the standing pose   // seconds since the last blow it took
         ArmPose pose;
@@ -205,6 +208,12 @@ namespace Evolve.Combat
             if (gripping) BossMusic.Ping("golem_battle");
             if (combat != null && combat.VolleyNow is VolleyStage vs && combat.Phase == MovePhase.Recover) target = GolemRules.Volley(vs, combat.VolleyTime);   // the rock volley: getting up, hugging the column, aiming like a javelin
             if (combat != null && combat.Resting) { target = GolemRules.Winded(combat.RestTime, combat.RestLength); if (!wasResting) GolemFx.Pant(transform.position); wasResting = true; } else wasResting = false;   // kneeling, out of breath, after a move
+            if (axeFx == null) TryGetComponent(out axeFx);
+            if (axeFx != null)
+            {
+                if (axeFx.Fetching && axeFx.FetchStageNow == FetchStage.Pull) target = GolemRules.AxePull(axeFx.FetchPullSeconds);   // bent over the haft, leaning back into each heave
+                if (axeFx.SwatTime < 0.35f) { var sw = GolemRules.Swat(axeFx.SwatTime); target.Back += sw.Back; target.Twist += sw.Twist; target.Hunch += sw.Hunch; }   // a player came too near: one arm flicks them away
+            }
             if (combat != null && combat.Dizzy) target = GolemRules.Evaluate("Dizzy", MovePhase.Active, 1f);                                              // dazed after hitting a wall head first
             flinchT += dt;
             if (!gripping && (combat == null || combat.CurrentMove == null || combat.Phase == MovePhase.Idle) && flinchT < 0.9f)   // a blow staggers it when it is not busy with a move

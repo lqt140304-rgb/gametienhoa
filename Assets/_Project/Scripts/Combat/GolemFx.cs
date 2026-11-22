@@ -33,6 +33,21 @@ namespace Evolve.Combat
                     if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.7f, ProceduralSfx.Kind.HoundGrowlShort);
                     else if (phase == MovePhase.Active) { Sfx("golem_sweep", p, 1f, ProceduralSfx.Kind.HoundSwipe); ImpactFx.Thump(p, 0.18f, 0.4f, 18f); SkillFx.Dust(p, m.Radius * 0.6f, Dust, 28); SkillFx.Ring(p, m.Radius, Dust, 0.4f, 0.2f); }
                     break;
+                case "AxeChop":
+                    if (phase == MovePhase.Windup) Sfx("golem_punch_wind", p, 1f, ProceduralSfx.Kind.HoundGrowlShort);
+                    else if (phase == MovePhase.Active) { Sfx("golem_punch_hit", p, 1f, ProceduralSfx.Kind.HoundThud); ImpactFx.Thump(p, 0.3f, 0.6f, 24f); SkillFx.Dust(p + golem.transform.forward * 2f * scale, 1.4f * scale, Dust, 30); }
+                    break;
+                case "AxeSweep":
+                    if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 0.8f, ProceduralSfx.Kind.HoundGrowlShort);
+                    else if (phase == MovePhase.Active) { Sfx("golem_sweep", p, 1f, ProceduralSfx.Kind.HoundSwipe); ImpactFx.Thump(p, 0.2f, 0.5f, 20f); SkillFx.Ring(p + Vector3.up * 0.3f, m.Radius, Dust, 0.4f, 0.2f); }
+                    break;
+                case "AxeThrow":
+                    if (phase == MovePhase.Windup) Sfx("golem_grunt", p, 1f, ProceduralSfx.Kind.HoundGrowlShort);
+                    break;
+                case "AxeSlam":
+                    if (phase == MovePhase.Windup) Sfx("golem_core_charge", p, 0.8f, ProceduralSfx.Kind.HoundHowl);
+                    else if (phase == MovePhase.Active) { Sfx("golem_slam", p, 1f, ProceduralSfx.Kind.HoundThud); ImpactFx.Thump(p, 0.45f, 1f, 30f); SkillFx.Dust(p, 3f * scale, Dust, 40); }
+                    break;
                 case "Rush":
                     if (phase == MovePhase.Windup) { Sfx("golem_rush_charge", p, 1f, ProceduralSfx.Kind.HoundHowl); ImpactFx.Thump(p, 0.05f, 0.5f, 20f); }
                     else if (phase == MovePhase.Active) { Sfx("golem_rush_run", p, 1f, ProceduralSfx.Kind.HoundLunge); SkillFx.Dust(p, 2.5f * scale, Dust, 40); }
