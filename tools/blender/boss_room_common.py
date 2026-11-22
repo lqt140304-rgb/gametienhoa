@@ -579,3 +579,12 @@ def render_view(cam, scene, cpos, target, lens, filepath):
     cam.rotation_euler = (Vector(target) - Vector(cpos)).to_track_quat("-Z", "Y").to_euler()
     scene.render.filepath = filepath
     bpy.ops.render.render(write_still=True)
+
+
+def finish_painted(bm, name, material, paint_fn, parent=None):
+    """Đóng gói BMesh thành Object, tô vertex color và gán parent (nếu có)."""
+    obj = kit.finish_object(bm, name, material)
+    kit.paint(obj, paint_fn)
+    if parent is not None:
+        obj.parent = parent
+    return obj

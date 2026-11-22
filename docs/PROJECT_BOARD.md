@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | **Phiên Golem** (phiên "làm game", đám mây) | Golem: bộ chiêu, phase, đọc người chơi, dạng rìu, khối `BossRoom`; âm thanh và nhạc Golem, kế hoạch chiều sâu trùm | `Golem*`, `GolemAxe`, `AxeFlight`, `Pure/{GolemRules,MeteorRules,AxeRules,FetchFsm,AuraRules,ShockwaveRules,RoomRules,PhaseRules,ReadRules,CircleRules,VfxRules}`, `World/BossRoom.cs`, `tools/voice/generate_golem_sfx.sh` | dạng rìu và `BossRoom` đã viết, **chưa kiểm chứng trong Unity** | chờ kết quả test phòng Golem; sau đó nhạc phase, bộ phận yếu, poise |
 | **Phiên Chim Hang Mẹ** | kền kền Dreadwing: model, rig, chiêu bay, âm thanh gắn chiêu | `Bird*`, `Pure/BirdRules.cs`, `Models/Wildlife/Meshy/*Dreadwing*`, `tools/voice/generate_bird_sfx.sh` | đã theo bộ chuẩn (Vả Cánh, Rít Gầm, Lướt Gió); phần Unity chưa kiểm chứng | động tác riêng cho Vả Cánh và Rít Gầm |
-| **Phiên dựng map** | Phòng trùm Đợt 1 (Golem, Chim, Bọ Cạp) & Đợt 2 (Chó Xương, Cáo Gió, Cóc Hồ Già, Rắn Dung Nham): hình học, cửa thép, builders | `Editor/BossRoom*`, `Scenes/BossRoom_*.unity`, `Prefabs/BossRooms/`, `Models/Underroot/BossRoom_*`, `tools/blender/*boss_room*`, `docs/superpowers/specs/2026-11-22-boss-rooms*` | Đợt 1 (3 phòng) đã dựng & kiểm hợp đồng trong Unity 6000.6 (PR #127); đã chốt & commit spec Đợt 2 (`2026-11-22-boss-rooms-wave2-design.md`) | đặt Golem vào `BossRoom_Golem.unity` (menu **Place Golem In The Open Boss Room**), dựng 4 phòng Đợt 2 (`BossRoom_Hound/Fox/Toad/Snake`) kèm đặt sẵn trùm (Meshy) tại `Boss_Wait` |
+| **Phiên dựng map** | Phòng trùm Đợt 1 (Golem, Chim, Bọ Cạp) & Đợt 2 (Chó Xương, Cáo Gió, Cóc Hồ Già, Rắn Dung Nham): hình học, cửa thép, builders | `Editor/BossRoom*`, `Scenes/BossRoom_*.unity`, `Prefabs/BossRooms/`, `Models/Underroot/BossRoom_*`, `tools/blender/*boss_room*`, `docs/superpowers/specs/2026-11-22-boss-rooms*` | Đợt 1 (3 phòng) đã xong (PR #127); Đợt 2 (4 phòng: Hound, Fox, Toad, Snake) đã xong Blender FBX + 16 ảnh Cycles + Editor Builders (`check_compile` đạt; **phần Scene/Prefab Unity chưa kiểm chứng** do Editor đang mở) | chủ dự án chạy menu **Evolve → Boss Rooms → Build, Validate & Capture Wave 2** trong Unity (dừng Play trước) rồi thử mục `H15` |
 | **Phiên Bọ Cạp** | chưa bắt đầu (bộ chiêu chưa được duyệt) | `Scorpion*` (chưa có) | chưa bắt đầu | đề xuất bộ chiêu cho chủ dự án duyệt trước |
 | **Phiên Codex Hang 01** | AI, kỹ năng và VFX Bọ Cánh Cứng Nhỏ, Ốc Hồ, Thằn Lằn Bờ Hồ | `PreyDefense*`, `HangOneGround.cs`, `CreatureCombat.HangOne.cs`, `HangOneSkillsTests.cs`; khối tích hợp nhỏ trong AI/combat dùng chung | **PR #125**, commit `8264aae4`; 93/93 EditMode đạt, đã xem fixture Unity sáng/tối; đã sửa một lưỡi và xoắn thân ốc | đồng bộ nhánh chung; kiểm tra toàn cảnh Hang 01 và co-op hai máy |
 | **Nhóm cave "Antigravity"** | hang, mê cung, thế giới | `World/`, `Maze/`, `Editor/Cavern*`, `Slime_Cavern.unity` | ngoài phạm vi các phiên trùm | (họ tự quản) |
@@ -25,9 +25,9 @@
 |---|---|---|---|---|
 | Golem Thạch Anh | xong (tay không 5 chiêu, dạng rìu 4 chiêu) | có | có (chờ đặt trùm) | lore: `docs/lore/golem-thach-anh.md` |
 | Chim Hang Mẹ | xong | có | có (chưa đặt trùm) | |
-| Chó Xương | xong | có | chưa | |
+| Chó Xương | xong | có | có FBX + Builder (chờ chạy Unity menu) | |
 | Bọ Cạp Thạch Anh | **chưa duyệt** | chưa | có (tạm) | |
-| Cóc, Rắn Dung Nham, Cáo Gió | đề xuất trong `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`, chưa duyệt | chưa | chưa | Rắn: duỗi thẳng chưa xong; Cáo: model mới chưa vào repo |
+| Cóc, Rắn Dung Nham, Cáo Gió | đề xuất trong `docs/superpowers/specs/2026-11-21-boss-standard-kit.md`, chưa duyệt | chưa | có FBX + Builder (chờ chạy Unity menu) | Rắn: duỗi thẳng chưa xong; Cáo: model mới chưa vào repo |
 
 ## Việc tồn đọng chưa ai nhận
 - Lỗi "Collection was modified" khi Chó Xương chết (cần stack trace của chủ dự án).

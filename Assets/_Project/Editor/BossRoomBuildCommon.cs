@@ -29,6 +29,7 @@ namespace Evolve.EditorTools
         public bool RequiresAxeAnchor;
         public bool RequiresOpenSkyAboveCenter;
         public string[] NonColliderObjectNames;
+        public string[] BossPrefabPaths;
     }
 
     /// <summary>
@@ -86,6 +87,7 @@ namespace Evolve.EditorTools
             onRoomExtras?.Invoke(roomRoot, rockMat, glowMat);
 
             PrefabUtility.SaveAsPrefabAssetAndConnect(roomRoot, spec.PrefabPath, InteractionMode.AutomatedAction);
+            TryPlaceBossInScene(roomRoot, spec);
             SetupSceneEnvironmentAndPlayer(spec, shared, roomRoot);
 
             EditorSceneManager.SaveScene(scene, spec.ScenePath);
@@ -584,6 +586,53 @@ namespace Evolve.EditorTools
                 UnityEngine.Object.DestroyImmediate(rt);
                 UnityEngine.Object.DestroyImmediate(tex);
             }
+        }
+
+        static void TryPlaceBossInScene(GameObject roomRoot, BossRoomSpec spec)
+        {
+            if (spec.BossPrefabPaths == null || spec.BossPrefabPaths.Length == 0)
+                return;
+
+            GameObject bossPrefab = null;
+            string foundPath = null;
+            foreach (var p in spec.BossPrefabPaths)
+            {
+                if (string.IsNullOrEmpty(p)) continue;
+                var candidate = AssetDatabase.LoadAssetAtPath<GameObject>(p);
+                if (candidate != null)
+                {
+                    bossPrefab = candidate;
+                    foundPath = p;
+                    break;
+                }
+            }
+
+            if (bossPrefab == null)
+            {
+                Debug.LogWarning($"[{spec.RoomName}] Không tìm thấy prefab trùm nào trong danh sách BossPrefabPaths.");
+                return;
+            }
+
+            var wait = roomRoot.transform.Find("Boss_Wait");
+            Vector3 pos = wait != null ? wait.position : roomRoot.transform.TransformPoint(spec.BossWaitLocal);
+            Quaternion rot = wait != null ? wait.rotation : Quaternion.Euler(0f, 180f, 0f);
+
+            var bossInstance = (GameObject)PrefabUtility.InstantiatePrefab(bossPrefab);
+            bossInstance.transform.SetPositionAndRotation(pos, rot);
+
+            var bossRoom = roomRoot.GetComponent<BossRoom>();
+            if (bossRoom != null)
+            {
+                var so = new SerializedObject(bossRoom);
+                var prop = so.FindProperty("boss");
+                if (prop != null)
+                {
+                    prop.objectReferenceValue = bossInstance;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                }
+            }
+
+            Debug.Log($"[{spec.RoomName}] Đã đặt trùm {bossInstance.name} (từ {foundPath}) tại Boss_Wait {pos}.");
         }
     }
 }

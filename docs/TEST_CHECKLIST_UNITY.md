@@ -331,3 +331,19 @@ Thiết kế: `docs/superpowers/specs/2026-11-22-boss-rooms-design.md`, hợp đ
 - [ ] **Phòng 3 — `BossRoom_Scorpion` ("Bãi Cát Tinh Thể", tạm):**
   - Mở `BossRoom_Scorpion.unity` và bấm Play: bãi cát và đá sa thạch nâu đỏ phân tầng, cổng vào **vòm đá cát bị gió xói mòn**, vùng cát lún xoáy `r ~ 8,5 m` tại `Boss_Wait` `(0, -0.1, 10)`, 6 tảng đá thấp `Prop_Pillar_01..06` (`1,5–1,95 m`) làm chỗ núp Phóng Gai / kẹt càng Lao Kẹp, 8 cụm tinh thể tím mọc lởm chởm `Prop_Crystal_01..08`, trần kín `~31,5 m`.
 - [ ] **Hợp đồng chung trên cả 3 Prefab/Scene:** đủ `Player_Entry`, `Boss_Wait`, `Activate_Zone` (`isTrigger = true`, cách `Door_Mouth` `8,5 m > 6 m`), `Room_Bounds` (`isTrigger = true`), `Door_Mouth` (`+Z` hướng vào trong phòng), `Door_Steel` (có `BoxCollider` chặn, không đánh dấu static), `Door_Open_Pos`, `Door_Closed_Pos`. Console sạch không lỗi đỏ (khi thử phòng trống chưa đặt prefab trùm gần `Boss_Wait` chỉ có 1 warning vàng dự kiến từ `BossRoom`).
+
+### H15. Hình học, đồ & đặt sẵn trùm 4 phòng Đợt 2: `BossRoom_Hound`, `BossRoom_Fox`, `BossRoom_Toad`, `BossRoom_Snake`
+Thiết kế: `docs/superpowers/specs/2026-11-22-boss-rooms-wave2-design.md`, hợp đồng: `docs/BOSS_ROOM_CONTRACT.md`. Khác Đợt 1 ở chỗ: trong **Scene** (`BossRoom_*.unity`), builder đặt sẵn prefab trùm tương ứng tại `Boss_Wait` và nối vào trường `boss` của `BossRoom`; **Prefab** (`Assets/_Project/Prefabs/BossRooms/BossRoom_*.prefab`) vẫn giữ sạch không chứa instance trùm.
+- [ ] **Dựng & kiểm tra tự động trong Unity:** dừng Play, chạy `Evolve → Boss Rooms → Build, Validate & Capture Wave 2` (hoặc từng menu `Build Hound/Fox/Toad/Snake Boss Room`). Console báo đạt hợp đồng cả 4 phòng và đã đặt trùm tại `Boss_Wait`; kiểm tra ảnh chụp thật `docs/art/previews/unity_bossroom_{hound,fox,toad,snake}_{entry,door}.png`.
+- [ ] **Phòng 1 — `BossRoom_Hound` ("Nghĩa Địa Cự Thú"):**
+  - Mở `BossRoom_Hound.unity` và bấm Play: vòm Hàm & Xương Đùi Cự Thú kèm xích đen-xanh đứt, 6 cột xương sườn quấn xích `Prop_Pillar_01..06`, 4 bục hộp sọ & đốt sống `Prop_Perch_01..04` (`0,9–1,4 m`), 6 cụm ma trơi xanh lam/lục `Prop_Crystal_01..06`, 5 ổ triệu hồi & vết cào sát sàn đi trơn không vấp.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `ChoXuong (Meshy)` thức dậy từ ổ khung xương sườn tại `Boss_Wait` `(0, 0, 21)`.
+- [ ] **Phòng 2 — `BossRoom_Fox` ("Khe Gió Hú"):**
+  - Mở `BossRoom_Fox.unity` và bấm Play: trần cao `~36 m`, vòm Đá Xoáy Phong Thạch, 6 cột đá phiến xoắn ốc chịu vết Giáo Gió `Prop_Pillar_01..06`, 4 mỏm đá vòng ngoài `Prop_Perch_01..04`, 6 cụm tinh thể nghiêng `45°`, 6 hốc Chồn Khe sát tường (không chắn lối cửa Nam), vân cát xoáy sát sàn đi trơn.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `CaoGio (Meshy)` thức dậy từ bệ đá phiến lưỡi liềm tại `Boss_Wait` `(0, 0, 22)`.
+- [ ] **Phòng 3 — `BossRoom_Toad` ("Đầm Rễ Cổ"):**
+  - Mở `BossRoom_Toad.unity` và bấm Play: mạng rễ đại thụ đan kín trần `~32 m`, vòm Rễ Cổ Thụ Đan Đá, 6 trụ rễ đan đá rêu `Prop_Pillar_01..06`, 8 cụm nấm phát quang xanh cốm `Prop_Crystal_01..08`, rãnh trượt Lưỡi Bắn, vũng nhầy xanh & vỏ Ốc Hồ đi trơn qua không kẹt.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `CocHoGia (Meshy)` thức dậy từ đệm rễ tại `Boss_Wait` `(0, 0, 20)`.
+- [ ] **Phòng 4 — `BossRoom_Snake` ("Hố Mạch Dung Nham"):**
+  - Mở `BossRoom_Snake.unity` và bấm Play: trần kín `~31,5 m`, vòm Cột Bazan Nứt Dung Nham, 6 cụm cột bazan lục giác `Prop_Pillar_01..06` (mặt trong nung đỏ sém, mặt ngoài nguội đen), 8 ụ ống khói lưu huỳnh `Prop_Crystal_01..08`, rãnh trườn chữ S phát sáng sát sàn & xác vỏ rắn lột dọc vách Đông-Bắc.
+  - Bước qua `Activate_Zone`: cửa thép sập xuống, `RanDungNham (Meshy)` thức dậy từ ổ bazan viền dung nham tại `Boss_Wait` `(0, 0, 21)`.
