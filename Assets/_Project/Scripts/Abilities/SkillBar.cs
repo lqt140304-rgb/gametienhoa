@@ -194,7 +194,10 @@ namespace Evolve.Abilities
             // The body winds up first; the skill leaves at the moment the animation releases.
             var motion = ability is BurstDashAbility || ability is ChargeAbility || ability is SprintAbility || ability is LeapAbility
                 ? Evolve.Visuals.GelMotion.Dash : Evolve.Visuals.GelMotion.Release;
-            Evolve.Visuals.SlimeGelAnimator.Play(gameObject, motion);
+            if (ability is ChargeAbility)
+                ChargeAbility.Prepare(gameObject, Evolve.Visuals.SlimeGelAnimator.WindUp(motion));
+            else
+                Evolve.Visuals.SlimeGelAnimator.Play(gameObject, motion);
             StartCoroutine(FireAfter(Evolve.Visuals.SlimeGelAnimator.WindUp(motion), organ, ability, level));
         }
 

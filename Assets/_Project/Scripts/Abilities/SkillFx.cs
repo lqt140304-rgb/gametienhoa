@@ -148,6 +148,17 @@ namespace Evolve.Abilities
                         c, size * Random.Range(0.7f, 1.3f), life * Random.Range(0.7f, 1.2f));
         }
 
+        internal static void ChargeDroplets(Vector3 point, Vector3 normal, Vector3 across, Color color)
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                float sign = i % 2 == 0 ? -1f : 1f;
+                var velocity = across * (sign * Random.Range(1.25f, 2.6f))
+                    + normal * Random.Range(0.25f, 0.65f) + Vector3.up * Random.Range(0.45f, 1.25f);
+                EmitOne(point + normal * 0.025f, velocity, color, Random.Range(0.045f, 0.09f), Random.Range(0.19f, 0.32f));
+            }
+        }
+
         /// <summary>Dust kicked out along the ground from a point (a shockwave).</summary>
         /// <param name="inner">Radius the dust starts from (outside the slime's body, which is see-through).</param>
         public static void Dust(Vector3 center, float radius, Color c, int count = 26, float inner = 0f)
