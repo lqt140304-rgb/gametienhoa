@@ -44,5 +44,21 @@ namespace Evolve.Tests.EditMode
             f.Update(0.1f, true); f.Update(2f, true); Assert.AreEqual(0.5f, f.PullProgress01, 0.02f);
             f.Update(2.1f, true); Assert.AreEqual(1f, f.PullProgress01, 1e-4f);
         }
+
+        [Test] public void AFarAwayThing_GetsALongerWalk_BeforeItGivesUp()
+        {
+            var f = new FetchFsm(3.5f, 12f);                   // 23 m away at 3.2 m/s needs about 7 s: the default 4 s would stop it halfway
+            Assert.AreEqual(FetchEvent.None, f.Update(5f, false)); Assert.AreEqual(FetchStage.Walk, f.Stage);   // still walking at 5 s
+            Assert.AreEqual(FetchEvent.PullStart, f.Update(7.1f, false));                                      // gave up only after its own 12 s
+        }
+
+        [Test] public void WalkTimeoutForADistance_IsWhatTheWalkNeedsPlusSlack_AndNeverBelowTheDefault()
+        {
+            Assert.AreEqual(FetchFsm.WalkTimeout, FetchFsm.WalkTimeoutFor(2f, 3.2f), 1e-4f);                  // near: the default
+            float far = FetchFsm.WalkTimeoutFor(23f, 3.2f);
+            Assert.Greater(far, 23f / 3.2f);                                                                   // longer than the bare walk
+            Assert.LessOrEqual(far, 20f);                                                                      // but never endless
+            Assert.AreEqual(20f, FetchFsm.WalkTimeoutFor(500f, 3.2f), 1e-4f);
+        }
     }
 }

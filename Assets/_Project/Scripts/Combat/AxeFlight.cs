@@ -24,6 +24,10 @@ namespace Evolve.Combat
             Vector3 d = to - f.from; d.y = 0f;
             f.right = d.sqrMagnitude > 1e-4f ? Vector3.Cross(Vector3.up, d.normalized) : Vector3.right;
             f.v = ThrowRules.Launch(f.from.x, f.from.y, f.from.z, to.x, to.y, to.z, f.flight);
+            axe.SetActive(true); foreach (var r in axe.GetComponentsInChildren<Renderer>(true)) r.enabled = true;   // it must be seen while it flies
+            var trail = axe.AddComponent<TrailRenderer>();   // a pale trail behind it, so the throw reads even at speed
+            trail.time = 0.4f; trail.startWidth = 0.5f; trail.endWidth = 0f; trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            trail.sharedMaterial = SkillFx.Gel(new Color(1f, 0.85f, 0.55f), 1f, 0.5f, 1.6f);
         }
 
         void FixedUpdate()

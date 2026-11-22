@@ -10,7 +10,7 @@ namespace Evolve.Combat
     /// the walk to it and the pull in three struggling heaves (whoever comes near is thrown back), the axe in its hand, the throw and where it lands, and the Bổ Đất shock wave.
     /// CreatureCombat calls <see cref="Tick"/> every physics step and <see cref="OnStrike"/> when a move of the axe starts its strike. Nothing here has been run in Unity yet.
     /// </summary>
-    [DisallowMultipleComponent]
+    [DisallowMultipleComponent, DefaultExecutionOrder(80)]   // after GolemRigFx (70): the axe is put in the hand where the arm ended up this frame, not where the animation left it (it used to sit at the hips)
     public class GolemAxe : MonoBehaviour
     {
         const float WalkSpeed = 3.2f, WaveSpeed = 14f, WaveLength = 14f, WaveWidth = 2.4f, WaveDepth = 1.2f, BladeYaw = -90f;   // BladeYaw: the blade of the FBX points along +X; turns it to the front (check in Unity)
@@ -99,7 +99,9 @@ namespace Evolve.Combat
             {
                 if (fsm.ShouldFetch(combat.HealthFraction, combat.IsIdle, combat.PhaseRoarPending) && combat.TryForce(fetchMove, fetchMove.Windup))
                 {
-                    fetch = new FetchFsm(PullRules.AxeSeconds); heaveSeen = -1;
+                    float dist = new Vector3(plantedBase.x - transform.position.x, 0f, plantedBase.z - transform.position.z).magnitude;
+                    fetch = new FetchFsm(PullRules.AxeSeconds, FetchFsm.WalkTimeoutFor(dist, WalkSpeed)); heaveSeen = -1;   // a far axe gets a longer walk: it used to give up after 4 s (13 m) and pull from afar
+                    Debug.Log("[Rìu] Golem đi lấy rìu: cách " + dist.ToString("0.0") + " m");
                     GolemFx.Point(transform.position);   // a growl as it turns toward the axe
                 }
                 return;
@@ -135,7 +137,9 @@ namespace Evolve.Combat
         {
             fsm.Pulled();
             if (planted != null) { Destroy(planted); planted = null; }
-            held = SpawnVisual("GolemAxe", transform.position, transform.rotation);
+            if (rightHand == null) foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "RightHand") { rightHand = t; break; }
+            held = SpawnVisual("GolemAxe", rightHand != null ? rightHand.position : transform.position, transform.rotation);   // born in the hand, not at the feet
+            Debug.Log("[Rìu] Golem rút xong rìu, cầm trong tay (bàn tay tìm thấy: " + (rightHand != null) + ", điểm nắm Grip: " + (held.transform.Find("Grip") != null) + ")");
             grip = held.transform.Find("Grip");
             SkillFx.Burst(plantedBase + Vector3.up * 0.4f, new Color(1f, 0.7f, 0.3f), 30, 5f, 0.12f, 0.9f, 0.6f);
             SkillFx.Ring(plantedBase + Vector3.up * 0.1f, 5f, new Color(1f, 0.8f, 0.5f), 0.7f, 0.1f);
@@ -176,6 +180,8 @@ namespace Evolve.Combat
             Vector3 to = combat.AimPoint(m.FlightSeconds) + Vector3.up * 0.2f;
             fsm.Thrown();
             var axe = held; held = null; grip = null;
+            if (rightHand != null) axe.transform.position = rightHand.position;   // it leaves from the hand
+            Debug.Log("[Rìu] ném rìu từ " + axe.transform.position.ToString("0.0") + " tới " + to.ToString("0.0"));
             AxeFlight.Launch(axe, to, m.FlightSeconds, m.Damage * combat.DamageScale, OnLanded);
             ProceduralSfx.PlayFile("Golem/golem_hurl", transform.position, 1f, ProceduralSfx.Kind.HoundLunge);
         }
@@ -184,6 +190,7 @@ namespace Evolve.Combat
         {
             if (flyer != null) Destroy(flyer);
             var landing = fsm.Landed(reachable);
+            Debug.Log("[Rìu] rìu hạ cánh tại " + point.ToString("0.0") + ", tới được: " + reachable);
             Vector3 at = point;
             if (landing == AxeLanding.AtGolem) at = transform.position + transform.forward * 1.5f;   // out of reach: it falls at the golem's feet and the fight goes on
             plantedBase = new Vector3(at.x, Evolve.World.GroundHeight.At(at.x, at.z, at.y), at.z); plantedRot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
