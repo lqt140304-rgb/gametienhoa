@@ -36,7 +36,7 @@ namespace Evolve.Tests
 
         [Test] public void EveryBodyValue_StaysInItsLimits_AndRestIsZero()
         {
-            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt", "Sweep", "Rush", "Dizzy", "PhaseRoar" })
+            foreach (var a in new[] { "Slam", "Throw", "Harden", "CoreBlast", "Punch", "Grab", "Meteor", "Hurt", "Sweep", "Rush", "Dizzy", "PhaseRoar", "AxeChop", "AxeSweep", "AxeThrow", "AxeSlam" })
             {
                 foreach (var ph in new[] { MovePhase.Windup, MovePhase.Active, MovePhase.Recover })
                     for (float t = 0f; t <= 1f; t += 0.1f)
@@ -128,6 +128,46 @@ namespace Evolve.Tests
             float lo = 99f, hi = -99f;
             for (float t = 1.2f; t < 2.6f; t += 0.05f) { float h = GolemRules.Winded(t, L).Hunch; lo = System.Math.Min(lo, h); hi = System.Math.Max(hi, h); }
             Assert.Greater(hi - lo, 4f);                                                                                  // the chest heaves
+        }
+
+        [Test] public void AxeChop_RaisesBothArms_ThenDrivesThemDown()
+        {
+            Assert.Greater(P("AxeChop", MovePhase.Windup, 1f).Raise, 120f); Assert.Less(P("AxeChop", MovePhase.Windup, 1f).Hunch, 0f);   // the axe overhead, leaning back
+            Assert.Greater(P("AxeChop", MovePhase.Active, 1f).Hunch, 25f); Assert.Less(P("AxeChop", MovePhase.Active, 1f).Raise, 30f);      // down and forward on the blow
+        }
+
+        [Test] public void AxeSweep_WindsTheBodyBack_ThenSweepsThrough()
+        {
+            Assert.Less(P("AxeSweep", MovePhase.Windup, 1f).Twist, -20f); Assert.Greater(P("AxeSweep", MovePhase.Active, 1f).Twist, 20f);
+        }
+
+        [Test] public void AxeThrow_CocksTheRightArmBack_ThenThrowsAndFollowsThrough()
+        {
+            Assert.Greater(P("AxeThrow", MovePhase.Windup, 1f).Back, 90f); Assert.Less(P("AxeThrow", MovePhase.Active, 1f).Back, 0f); Assert.Greater(P("AxeThrow", MovePhase.Active, 1f).Hunch, 15f);
+        }
+
+        [Test] public void AxeSlam_GoesHigherAndDeeperThanTheChop()
+        {
+            Assert.Greater(P("AxeSlam", MovePhase.Windup, 1f).Raise, P("AxeChop", MovePhase.Windup, 1f).Raise);
+            Assert.Greater(P("AxeSlam", MovePhase.Active, 1f).Crouch, 0.4f);
+        }
+
+        [Test] public void AxePull_StrainsBentOverTheAxe_ThenLeansBackIntoEachOfTheThreeHeaves()
+        {
+            float L = PullRules.AxeSeconds;
+            float heave = GolemRules.AxePull(0.2f * L).Hunch, between = GolemRules.AxePull(0.38f * L).Hunch;
+            Assert.Greater(between, 25f);                                         // between heaves (straining): bent over the haft
+            Assert.Less(heave, between - 20f);        // during a heave: leaning back
+            Assert.Greater(GolemRules.AxePull(L).Raise, 40f);                     // both arms on the handle
+            Assert.AreEqual(0f, GolemRules.AxePull(0f).Raise, 1e-3f);             // it starts from rest
+        }
+
+        [Test] public void Swat_FlicksTheArmAndSettles()
+        {
+            var peak = GolemRules.Swat(0.1f);
+            Assert.Greater(peak.Raise - peak.Back, 50f); Assert.Greater(peak.Twist, 15f);   // the right arm swung out and forward
+            var end = GolemRules.Swat(0.4f);
+            Assert.AreEqual(0f, end.Raise, 1e-3f); Assert.AreEqual(0f, end.Back, 1e-3f); Assert.AreEqual(0f, end.Twist, 1e-3f);
         }
     }
 }
