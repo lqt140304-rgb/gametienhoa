@@ -92,8 +92,6 @@ namespace Evolve.Combat
 
         public string Status => scheduler == null ? "-" : leech != null ? leech.State.ToString() : scheduler.Phase + (scheduler.Current != null ? " " + scheduler.Current.Name : "");
         public bool IsArmored => scheduler != null && scheduler.IsArmored;
-        /// <summary>The boss lies open after a move or a chain (the rest at the end of the recover): the player's time to hit back.</summary>
-        public bool Resting => scheduler != null && scheduler.Resting;
         /// <summary>Vỏ Pha Lê: the damage multiplier for a blow from <paramref name="by"/> (0.75 from the front, 1 from the sides and the back); 1 for every other creature.</summary>
         public float ShellFactor(Component by)
         {
