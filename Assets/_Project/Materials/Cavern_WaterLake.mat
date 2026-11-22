@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Cavern_WaterLake
+  m_Shader: {fileID: 4800000, guid: c3d7e1a94b2f4e6a8f10b5a2d9c4e7f1, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2998
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: f621b8d89f5683841b4504dac0fe4094, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BumpScale: 0.3
+    - _CausticStrength: 0.55
+    - _DeepDistance: 4.5
+    - _EdgeSoft: 0.35
+    - _FoamWidth: 0.45
+    - _GlintStrength: 1
+    - _Refract: 0.07
+    - _RippleSize: 9
+    - _Shimmer: 0.6
+    - _Smoothness: 0.6
+    - _SparkleScale: 2.4
+    - _SparkleStrength: 1.4
+    m_Colors:
+    - _Absorb: {r: 0.6, g: 0.15999997, b: 0.09999997, a: 1}
+    - _BeamColor: {r: 1, g: 0.88, b: 0.62, a: 1}
+    - _BeamPool: {r: 0.00000667572, g: 0.06, b: 0.000009536743, a: 11.2}
+    - _DeepColor: {r: 0.015, g: 0.17, b: 0.22, a: 0.88}
+    - _Drift: {r: 0.012, g: 0.007, b: 0, a: 0}
+    - _Emission: {r: 0.02, g: 0.09999997, b: 0.09999997, a: 1}
+    - _FoamColor: {r: 0.95, g: 1, b: 1, a: 0.8}
+    - _ReflectTint: {r: 0.09999997, g: 0.16999996, b: 0.15999997, a: 1}
+    - _ShallowColor: {r: 0.2, g: 0.62, b: 0.62, a: 0.5}
+    - _ShoreGlow: {r: 0.06, g: 0.55, b: 0.6, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

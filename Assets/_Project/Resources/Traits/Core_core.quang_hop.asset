@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b771a6b9325e6cd4d92b0f7e8fc437e9, type: 3}
+  m_Name: Core_core.quang_hop
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.CoreSO
+  Id: core.quang_hop
+  DisplayName: "Nh\xE2n Quang H\u1EE3p"
+  Summary: "\u0110\u1EE9ng trong tia s\xE1ng xuy\xEAn r\u1EC5 th\xEC h\u1ED3i n\u0103ng l\u01B0\u1EE3ng."
+  Detail: "\u0110\u1EE9ng ho\u1EB7c \u0111i trong tia s\xE1ng xuy\xEAn r\u1EC5 th\xEC h\u1ED3i n\u0103ng l\u01B0\u1EE3ng d\u1EA7n (t\u1EA1m 3 \u0111i\u1EC3m m\u1ED7i gi\xE2y). Kh\xF4ng ho\u1EA1t \u0111\u1ED9ng d\u01B0\u1EDBi n\u01B0\u1EDBc s\xE2u; kh\xF4ng c\u1ED9ng v\u1EDBi c\u01A1 quan h\u1ED3i n\u0103ng l\u01B0\u1EE3ng (l\u1EA5y m\u1EE9c cao)."
+  OrbColor: {r: 0.42750004, g: 0.42749998, b: 0.95, a: 1}
+  Options:
+  - FlawIds:
+    - flaw.bam_bun
+  - FlawIds:
+    - flaw.vet_mui
+  - FlawIds:
+    - flaw.co_quan_mau_mon
+  Heavy: 0
+  Rarity: 0
+  Implemented: 1

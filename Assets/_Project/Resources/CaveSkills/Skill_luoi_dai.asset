@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f13911622f567b46be572c7a1b56283, type: 3}
+  m_Name: Skill_luoi_dai
+  m_EditorClassIdentifier: Evolve::Evolve.Abilities.PullAbility
+  DisplayName: "L\u01B0\u1EE1i D\xE0i"
+  Description: "Ph\xF3ng l\u01B0\u1EE1i 6 m, k\xE9o con m\u1ED3i nh\u1ECF v\u1EC1 mi\u1EC7ng \u0111\u1EC3 nu\u1ED1t.\n\u26053: K\xE9o \u0111\u01B0\u1EE3c 2 con."
+  Tier: 0
+  EnergyCost: 30
+  Cooldown: 8
+  Family: 1
+  Star3Text: "K\xE9o \u0111\u01B0\u1EE3c 2 con."
+  Star3EnergyFactor: 1
+  Distance: 6
+  ConeAngle: 30
+  MaxTargets: 1
+  Star3Targets: 2

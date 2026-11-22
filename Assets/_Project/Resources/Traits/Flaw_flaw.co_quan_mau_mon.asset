@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e772ad6dc7b0e448ab02fdca6258d4, type: 3}
+  m_Name: Flaw_flaw.co_quan_mau_mon
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.FlawSO
+  Id: flaw.co_quan_mau_mon
+  DisplayName: "C\u01A1 Quan Mau M\xF2n"
+  Description: "\u0110\u1ED9 nguy\xEAn v\u1EB9n c\u01A1 quan m\u1EA5t nhanh h\u01A1n 20% khi tr\xFAng \u0111\xF2n."
+  CompensatedBy: 0300000002000000i
+  Implemented: 0

@@ -89,6 +89,7 @@ namespace Evolve.Creatures
         public float MaxHealth => maxHealth;
         public float BodyMass => bodyMass;
         /// <summary>Set mass and health from code (the god menu's test creatures have no prefab to tune).</summary>
+        public void Heal(float amount) { if (!dead && amount > 0f) Health = Mathf.Min(maxHealth, Health + amount); }
         public void SetStats(float mass, float health) { bodyMass = mass; maxHealth = health; Health = health; }
 
         float netFraction = 1f, predictedFraction = 1f, predictedUntil;
@@ -132,6 +133,7 @@ namespace Evolve.Creatures
         SurvivalStats target;
         Vector3 wanderDir;
         CreatureMotor motor;
+        float moveSpeed;
         float nextTurn, chaseTime, tiredUntil, retreatUntil, nextBite, blindUntil, lastAteAt;
 
         // ---- scene behaviour (CreatureBrain sets these; with no brain the old behaviour runs) ----
@@ -173,18 +175,25 @@ namespace Evolve.Creatures
             if (combat != null && combat.Busy) return;   // winding up, striking or recovering: the move set drives
             Vector3 pos = rb.position;
             UpdateTarget(pos);
+            if (target == null && combat != null && !Passive && !Calm) target = combat.EngagedTarget(24f);   // its moves reach 18 m: if they can fire, it must walk toward the player, not wander off
             if (target == null && Intent.Mode != IntentMode.None) { MoveByIntent(pos); BiteRemotePlayers(); return; }   // the brain is in charge
 
-            Vector3 dir = Vector3.zero;
+            Vector3 dir = Vector3.zero, look = Vector3.zero;
             float speed = 0f;
 
-            if (target != null && Time.time < retreatUntil)
+            if (target != null && combat == null && Time.time < retreatUntil)
             {
                 dir = Flat(pos - target.transform.position); speed = patrolSpeed;
             }
             else if (target != null)
             {
-                if (!IsTired)
+                if (combat != null)   // a moveset creature: run in when far, stand and face the player once in striking distance, never tire or back off
+                {
+                    Vector3 to = Flat(target.transform.position - pos, false);
+                    speed = combat.Steer(chaseSpeed, to, out dir, out look);
+                    if (speed <= 0f && to.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(look), 0.15f));
+                }
+                else if (!IsTired)
                 {
                     dir = Flat(target.transform.position - pos); speed = chaseSpeed;
                     chaseTime += Time.fixedDeltaTime;
@@ -230,15 +239,17 @@ namespace Evolve.Creatures
                 }
             }
 
+            if (speed <= 0f) moveSpeed = 0f;
             if (dir.sqrMagnitude > 0.001f && speed > 0f)
             {
-                if (!motor.Move(dir, speed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject)))
+                if (combat != null) moveSpeed = Mathf.MoveTowards(moveSpeed, speed, 5f * Time.fixedDeltaTime); else moveSpeed = speed;   // a moveset creature builds up speed instead of starting at full speed at once
+                if (!motor.Move(dir, moveSpeed * Evolve.Abilities.CreatureStatus.SpeedFactor(gameObject)))
                 {
                     float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
                     wanderDir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
                     nextTurn = Time.time + UnityEngine.Random.Range(1.8f, 3.5f);
                 }
-                rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(dir), 0.15f));
+                rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(look.sqrMagnitude > 1e-6f ? look : dir), 0.15f));
             }
 
             BiteRemotePlayers();
@@ -314,7 +325,7 @@ namespace Evolve.Creatures
                 nextBite = Time.time + biteCooldown;
                 target = p;
                 combat?.BreakCamouflage();
-                retreatUntil = Time.time + retreatTime;
+                if (combat == null) retreatUntil = Time.time + retreatTime;
                 NetWorld.BiteRemote?.Invoke(p, biteDamage, Flat(p.transform.position - transform.position) * knockback);
 
                 var host = p.GetComponent<OrganHost>();
@@ -396,7 +407,7 @@ namespace Evolve.Creatures
             var playerRb = stats.GetComponent<Rigidbody>();
             if (playerRb != null)
                 if (!playerRb.isKinematic) playerRb.AddForce(Flat(stats.transform.position - transform.position) * knockback + Vector3.up * 2f, ForceMode.VelocityChange);
-            retreatUntil = Time.time + retreatTime;
+            if (combat == null) retreatUntil = Time.time + retreatTime;
 
             if (host != null && host.ContactDamage > 0f) TakeDamage(host.ContactDamage, stats);
         }
@@ -421,7 +432,7 @@ namespace Evolve.Creatures
             if (by != null && Gentle) { provokedUntil = Time.time + CaveTier.ProvokeSeconds; target = by; }   // a gentle lord fights back at whoever hurt it
             if (combat != null) amount *= combat.DamageTakenFactor;   // open to a counter while recovering
             Health -= amount;
-            retreatUntil = Time.time + retreatTime;
+            if (combat == null) retreatUntil = Time.time + retreatTime;
             ShowHit(amount);
             if (Health > 0f) return;
 

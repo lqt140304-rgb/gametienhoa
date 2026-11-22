@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b771a6b9325e6cd4d92b0f7e8fc437e9, type: 3}
+  m_Name: Core_core.giu_goc
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.CoreSO
+  Id: core.giu_goc
+  DisplayName: "D\u1EA1 D\xE0y B\u1EA5t Di\u1EC7t"
+  Summary: "Ch\u1EBFt l\u1EA7n 1 ho\u1EB7c 2 v\u1EABn gi\u1EEF m\xF3n trong T\xFAi Kh\xF4ng \u0110\xE1y."
+  Detail: "Ch\u1EBFt \u1EDF l\u1EA7n th\u1EE9 1 ho\u1EB7c 2 (c\xF2n m\u1EA1ng) th\xEC c\xE1c m\xF3n trong T\xFAi Kh\xF4ng \u0110\xE1y kh\xF4ng b\u1ECB m\u1EA5t, v\u1EABn n\u1EB1m trong b\u1EE5ng sau h\u1ED3i sinh. Kh\xF4ng \xE1p d\u1EE5ng l\u1EA7n ch\u1EBFt cu\u1ED1i khi h\u1EBFt m\u1EA1ng; c\u01A1 quan b\u1ECB \u0111\u1ED9ng v\xE0 nh\u1EEFng g\xEC \u0111\xE3 h\u1ECDc v\u1EABn \u0111\u01B0\u1EE3c gi\u1EEF nh\u01B0 m\u1ECDi slime."
+  OrbColor: {r: 0.95, g: 0.42749998, b: 0.6887499, a: 1}
+  Options:
+  - FlawIds:
+    - flaw.doi_som
+    - flaw.la_vung
+  - FlawIds:
+    - flaw.mo_trong_toi
+    - flaw.ngai_dong
+  - FlawIds:
+    - flaw.da_day_ken
+    - flaw.luong_cuong
+  Heavy: 1
+  Rarity: 2
+  Implemented: 1

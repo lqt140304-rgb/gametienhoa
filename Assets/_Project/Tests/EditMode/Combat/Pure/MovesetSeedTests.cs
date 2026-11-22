@@ -155,5 +155,25 @@ namespace Evolve.Tests.EditMode
                 Assert.AreEqual(starts, started, "distance " + dist);
             }
         }
+
+        [Test] public void ChoXuong_HasItsFiveMoves_ByAnyName()
+        {
+            foreach (var n in new[] { "Chó Xương", "ChoXuong (Meshy)(Clone)", "choxuong" }) Assert.AreEqual(5, MovesetSeed.For(n).Count, n);
+            Assert.IsTrue(MovesetSeed.Has("Chó Xương"));
+            var pounce = One("ChoXuong", "Vồ"); var bite = One("ChoXuong", "Cắn Nghiền"); var claw = One("ChoXuong", "Cào Xé"); var spit = One("ChoXuong", "Phun Xương"); var howl = One("ChoXuong", "Triệu Hồi");
+            Assert.AreEqual(0.9f, pounce.Windup); Assert.AreEqual(0.6f, pounce.Active); Assert.AreEqual(24f, pounce.Damage); Assert.AreEqual(5.5f, pounce.Distance); Assert.AreEqual(1.8f, pounce.Recover); Assert.AreEqual(4.5f, pounce.Cooldown);
+            Assert.IsTrue(pounce.Pins); Assert.IsFalse(pounce.Grab); Assert.IsFalse(bite.Pins); Assert.IsFalse(claw.Pins);
+            Assert.AreEqual(3f, pounce.MinRange); Assert.AreEqual(5.5f, pounce.MaxRange); Assert.AreEqual(7.5f, pounce.AbortBeyond);
+            Assert.AreEqual(0.35f, bite.Windup); Assert.AreEqual(20f, bite.Damage); Assert.AreEqual(2.5f, bite.MaxRange); Assert.AreEqual(3f, bite.Cooldown);
+            Assert.AreEqual(0.55f, claw.Windup); Assert.AreEqual(16f, claw.Damage); Assert.AreEqual(3.5f, claw.MaxRange); Assert.AreEqual(5f, claw.Cooldown); Assert.AreEqual(PoseKind.Crouch, MovesetSeed.PoseOf(claw));
+            Assert.AreEqual(MoveShape.Throw, spit.Shape); Assert.AreEqual(6f, spit.MinRange); Assert.AreEqual(16f, spit.MaxRange); Assert.AreEqual(0.9f, spit.Windup); Assert.AreEqual(14f, spit.Damage); Assert.AreEqual(7f, spit.Cooldown); Assert.AreEqual(PoseKind.Throw, MovesetSeed.PoseOf(spit));
+            Assert.AreEqual(MoveShape.Summon, howl.Shape); Assert.AreEqual(3, howl.SummonCount); Assert.AreEqual(25f, howl.SummonSeconds); Assert.AreEqual(4f, howl.Radius); Assert.AreEqual(0.25f, howl.UnlockBelow); Assert.AreEqual(40f, howl.Cooldown); Assert.AreEqual(PoseKind.Roar, MovesetSeed.PoseOf(howl));
+            Assert.AreEqual(0.4f, MovesetSeed.PoseStrength("Chó Xương")); Assert.AreEqual(1f, MovesetSeed.PoseStrength("Cáo Gió")); Assert.AreEqual(1f, MovesetSeed.PoseStrength(null));
+        }
+
+        [Test] public void ChoXuong_PoseLookup_ShowsTheRoarForTheHowl_AndTheCrouchForThePounce()
+        {
+            Assert.AreEqual(PoseKind.Crouch, MovesetSeed.PoseOf(One("ChoXuong", "Vồ")));
+        }
     }
 }

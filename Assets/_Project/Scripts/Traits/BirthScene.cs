@@ -19,6 +19,13 @@ namespace Evolve.Traits
 
         const int CardCount = 7;   // face-down core cards in the heap (one of them is the fate card)
 
+        /// <summary>Testing shortcut (on by default for now): skip the birth scene; fate still rolls, so the player still gets a core and flaws. Remembered in PlayerPrefs; the god menu (F1, tab Khác) switches it.</summary>
+        public static bool SkipScene
+        {
+            get => PlayerPrefs.GetInt("SkipBirthScene", 1) == 1;
+            set => PlayerPrefs.SetInt("SkipBirthScene", value ? 1 : 0);
+        }
+
         State state;
         bool ranThisRun;
         PlayerTraits player;
@@ -123,6 +130,7 @@ namespace Evolve.Traits
             }
             result = r.Value;
             ReadResultNames();
+            if (SkipScene) { GiveResult(); ranThisRun = true; return; }   // testing: no scene, keep the rolled core and flaws
             stage = BirthStage.Create();
             if (stage == null) { GiveResult(); ranThisRun = true; return; }   // no stage: skip the scene, keep the result
             try

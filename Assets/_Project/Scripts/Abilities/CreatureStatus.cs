@@ -48,6 +48,7 @@ namespace Evolve.Abilities
         public static void Knock(Component creature, Vector3 velocity, float seconds)
         {
             if (ResistsDisplacement(creature)) return;
+            if (Evolve.Combat.PassiveRules.NoKnockback(creature.name)) return;   // Lướt Gió: it rides the wind
             var s = On(creature);
             velocity.y = 0f;
             s.knockVelocity = velocity;

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e772ad6dc7b0e448ab02fdca6258d4, type: 3}
+  m_Name: Flaw_flaw.doi_som
+  m_EditorClassIdentifier: Evolve::Evolve.Traits.FlawSO
+  Id: flaw.doi_som
+  DisplayName: "\u0110\xF3i S\u1EDBm"
+  Description: "\u0110\u1ED9 no t\u1EE5t nhanh h\u01A1n 10%, b\xE1o \u0111\xF3i s\u1EDBm h\u01A1n; kh\xF4ng m\u1EA5t th\xEAm m\xE1u."
+  CompensatedBy: 
+  Implemented: 1
